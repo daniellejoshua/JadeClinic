@@ -1,16 +1,62 @@
 ﻿Imports Microsoft.Data.SqlClient
 Imports System.IO
 Imports System.Drawing.Imaging
+Imports MessagingToolkit.Barcode
+Imports MessagingToolkit.Barcode.Common
 
 Public Class AddProduct
     Private selectedImagePath As String = ""
     Private customCategories As New List(Of String)
+    Private isEditMode As Boolean = False
+    Private editProductId As Integer = 0
+    Private currentBarcode As String = ""
+
+    ' Public property to set edit mode
+    Public Sub SetEditMode(productId As Integer)
+        isEditMode = True
+        editProductId = productId
+    End Sub
 
     Private Sub AddProduct_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         LoadCategories()
         LoadSuppliers()
         SetupFormDefaults()
         SetupExpiryDateVisibility()
+        SetupNumericInputValidation()
+
+        ' Add close button for borderless form
+        Dim btnClose As New Label()
+        btnClose.Text = "✕"
+        btnClose.Font = New Font("Arial", 16, FontStyle.Bold)
+        btnClose.ForeColor = Color.Gray
+        btnClose.Cursor = Cursors.Hand
+        btnClose.Location = New Point(Me.ClientSize.Width - 40, 15)
+        btnClose.Size = New Size(30, 30)
+        btnClose.TextAlign = ContentAlignment.MiddleCenter
+        AddHandler btnClose.Click, Sub(s, ev) Me.Close()
+        AddHandler btnClose.MouseEnter, Sub(s, ev) btnClose.ForeColor = Color.Red
+        AddHandler btnClose.MouseLeave, Sub(s, ev) btnClose.ForeColor = Color.Gray
+        Me.Controls.Add(btnClose)
+        btnClose.BringToFront()
+
+        ' Make form topless by hiding title elements
+        Guna2HtmlLabel6.Visible = False
+        Guna2Panel1.Visible = False
+        Guna2Panel2.Location = New Point(Guna2Panel2.Location.X, 20) ' Move up to fill space
+
+        ' Load product data if in edit mode
+        If isEditMode Then
+            LoadProductData()
+            ' Change title to Edit Product
+            Guna2HtmlLabel6.Text = "Edit Product"
+            ' Show barcode section for edit mode
+            BarcodeImage.Visible = True
+            PrintBarcodeTextBox.Visible = True
+        Else
+            ' Hide barcode section for add mode
+            BarcodeImage.Visible = False
+            PrintBarcodeTextBox.Visible = False
+        End If
     End Sub
 
     Private Sub SetupFormDefaults()
@@ -28,6 +74,12 @@ Public Class AddProduct
 
         ' Add "Add Custom" option to category combo
         cmbCategory.Items.Add("Add Custom Category...")
+
+        ' Set placeholder text for numeric fields
+        CostPriceTextBox.PlaceholderText = "0.00"
+        SellingPriceTextBox.PlaceholderText = "0.00"
+        WholeSaleTextbox.PlaceholderText = "0.00"
+        ReOrderLevelTextBox.PlaceholderText = "0"
     End Sub
 
     Private Sub LoadCategories()
@@ -150,10 +202,18 @@ Public Class AddProduct
 
     Private Sub btnAddStock_Click(sender As Object, e As EventArgs) Handles btnAddStock.Click
         If ValidateForm() Then
-            If SaveProduct() Then
-                MessageBox.Show("Product added successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information)
-                ClearForm()
-                Me.DialogResult = DialogResult.OK ' Set dialog result to OK for parent form to handle
+            If isEditMode Then
+                If UpdateProduct() Then
+                    MessageBox.Show("Product updated successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                    Me.DialogResult = DialogResult.OK
+                    Me.Close()
+                End If
+            Else
+                If SaveProduct() Then
+                    MessageBox.Show("Product added successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                    ClearForm()
+                    Me.DialogResult = DialogResult.OK
+                End If
             End If
         End If
     End Sub
@@ -174,32 +234,32 @@ Public Class AddProduct
 
         ' Validate reorder level
         Dim reorderLevel As Integer
-        If Not String.IsNullOrWhiteSpace(ReOrderLevelTextBox.Text) AndAlso Not Integer.TryParse(ReOrderLevelTextBox.Text.Trim(), reorderLevel) Then
-            MessageBox.Show("Reorder level must be a valid number!", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        If Not String.IsNullOrWhiteSpace(ReOrderLevelTextBox.Text) AndAlso (Not Integer.TryParse(ReOrderLevelTextBox.Text.Trim(), reorderLevel) OrElse reorderLevel < 0) Then
+            MessageBox.Show("Reorder level must be a valid non-negative number!", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
             ReOrderLevelTextBox.Focus()
             Return False
         End If
 
         ' Validate cost price
         Dim costPrice As Decimal
-        If String.IsNullOrWhiteSpace(CostPriceTextBox.Text) OrElse Not Decimal.TryParse(CostPriceTextBox.Text.Trim(), costPrice) Then
-            MessageBox.Show("Valid cost price is required!", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        If String.IsNullOrWhiteSpace(CostPriceTextBox.Text) OrElse Not Decimal.TryParse(CostPriceTextBox.Text.Trim(), costPrice) OrElse costPrice <= 0 Then
+            MessageBox.Show("Valid cost price (greater than 0) is required!", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
             CostPriceTextBox.Focus()
             Return False
         End If
 
         ' Validate selling price
         Dim sellingPrice As Decimal
-        If String.IsNullOrWhiteSpace(SellingPriceTextBox.Text) OrElse Not Decimal.TryParse(SellingPriceTextBox.Text.Trim(), sellingPrice) Then
-            MessageBox.Show("Valid selling price is required!", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        If String.IsNullOrWhiteSpace(SellingPriceTextBox.Text) OrElse Not Decimal.TryParse(SellingPriceTextBox.Text.Trim(), sellingPrice) OrElse sellingPrice <= 0 Then
+            MessageBox.Show("Valid selling price (greater than 0) is required!", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
             SellingPriceTextBox.Focus()
             Return False
         End If
 
         ' Validate wholesale price if provided
         Dim wholesalePrice As Decimal
-        If Not String.IsNullOrWhiteSpace(WholeSaleTextbox.Text) AndAlso Not Decimal.TryParse(WholeSaleTextbox.Text.Trim(), wholesalePrice) Then
-            MessageBox.Show("Wholesale price must be a valid number!", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        If Not String.IsNullOrWhiteSpace(WholeSaleTextbox.Text) AndAlso (Not Decimal.TryParse(WholeSaleTextbox.Text.Trim(), wholesalePrice) OrElse wholesalePrice <= 0) Then
+            MessageBox.Show("Wholesale price must be a valid number greater than 0!", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
             WholeSaleTextbox.Focus()
             Return False
         End If
@@ -224,15 +284,12 @@ Public Class AddProduct
                 conn.Open()
                 Using transaction As SqlTransaction = conn.BeginTransaction()
                     Try
-                        ' Generate unique product code
-                        Dim productCode As String = GenerateProductCode(conn, transaction)
-
                         ' Prepare product data
                         Dim selectedCategory As String = cmbCategory.SelectedItem.ToString()
                         Dim isEndo As Boolean = selectedCategory.ToLower().Contains("endo")
                         Dim expiryDate As Date? = If(isEndo, Guna2DateTimePicker1.Value.Date, Nothing)
 
-                        ' Insert product
+                        ' Insert product with temporary product code
                         Dim insertQuery As String = "INSERT INTO Products (ProductCode, Barcode, ProductName, Category, Unit, " &
                                                    "CurrentStock, ReorderLevel, CostPrice, SellingPrice, WholesalePrice, " &
                                                    "HasExpiry, ExpiryDate, SupplierID, IsActive, Created, UpdatedAt) " &
@@ -240,13 +297,11 @@ Public Class AddProduct
                                                    "@CurrentStock, @ReorderLevel, @CostPrice, @SellingPrice, @WholesalePrice, " &
                                                    "@HasExpiry, @ExpiryDate, @SupplierID, 1, GETDATE(), GETDATE()); SELECT SCOPE_IDENTITY()"
 
+                        Dim productId As Integer
+
                         Using cmd As New SqlCommand(insertQuery, conn, transaction)
-                            cmd.Parameters.AddWithValue("@ProductCode", productCode)
-
-                            ' Generate unique barcode - use product code or combination
-                            Dim barcode As String = productCode & DateTime.Now.Millisecond.ToString()
-                            cmd.Parameters.AddWithValue("@Barcode", barcode)
-
+                            cmd.Parameters.AddWithValue("@ProductCode", "TEMP_CODE")
+                            cmd.Parameters.AddWithValue("@Barcode", "TEMP_BARCODE")
                             cmd.Parameters.AddWithValue("@ProductName", txtProductName.Text.Trim())
                             cmd.Parameters.AddWithValue("@Category", selectedCategory)
                             cmd.Parameters.AddWithValue("@Unit", If(UnitCmbBox.SelectedItem IsNot Nothing, UnitCmbBox.SelectedItem.ToString(), "PCS"))
@@ -272,13 +327,25 @@ Public Class AddProduct
                             End If
                             cmd.Parameters.AddWithValue("@SupplierID", supplierId)
 
-                            Dim productId As Integer = Convert.ToInt32(cmd.ExecuteScalar())
-
-                            ' Save product image if selected
-                            If Not String.IsNullOrWhiteSpace(selectedImagePath) AndAlso IO.File.Exists(selectedImagePath) Then
-                                SaveProductImage(conn, transaction, productId, selectedImagePath)
-                            End If
+                            productId = Convert.ToInt32(cmd.ExecuteScalar())
                         End Using
+
+                        ' Update with final ProductCode and simple Barcode
+                        Dim finalProductCode As String = GenerateFinalProductCode(productId)
+                        Dim simpleBarcode As String = $"P{productId.ToString("D8")}" ' Simple barcode for new products
+
+                        Dim updateQuery As String = "UPDATE Products SET ProductCode = @ProductCode, Barcode = @Barcode WHERE ProductID = @ProductID"
+                        Using cmdUpdate As New SqlCommand(updateQuery, conn, transaction)
+                            cmdUpdate.Parameters.AddWithValue("@ProductCode", finalProductCode)
+                            cmdUpdate.Parameters.AddWithValue("@Barcode", simpleBarcode)
+                            cmdUpdate.Parameters.AddWithValue("@ProductID", productId)
+                            cmdUpdate.ExecuteNonQuery()
+                        End Using
+
+                        ' Save product image if selected
+                        If Not String.IsNullOrWhiteSpace(selectedImagePath) AndAlso IO.File.Exists(selectedImagePath) Then
+                            SaveProductImage(conn, transaction, productId, selectedImagePath)
+                        End If
 
                         transaction.Commit()
                         Return True
@@ -295,19 +362,105 @@ Public Class AddProduct
         End Try
     End Function
 
-    Private Function GenerateProductCode(conn As SqlConnection, transaction As SqlTransaction) As String
-        ' Generate unique product code like P00001, P00002, etc.
+    Private Function UpdateProduct() As Boolean
         Try
-            Dim query As String = "SELECT ISNULL(MAX(CAST(SUBSTRING(ProductCode, 2, LEN(ProductCode)) AS INT)), 0) + 1 FROM Products WHERE ProductCode LIKE 'P%' AND ISNUMERIC(SUBSTRING(ProductCode, 2, LEN(ProductCode))) = 1"
-            Using cmd As New SqlCommand(query, conn, transaction)
-                Dim result As Object = cmd.ExecuteScalar()
-                Dim nextId As Integer = If(result Is Nothing OrElse IsDBNull(result), 1, Convert.ToInt32(result))
-                Return "P" & nextId.ToString("D5")
+            Dim connStr As String = Connection.GetConnectionString()
+            Using conn As New SqlConnection(connStr)
+                conn.Open()
+                Using transaction As SqlTransaction = conn.BeginTransaction()
+                    Try
+                        ' Prepare product data
+                        Dim selectedCategory As String = cmbCategory.SelectedItem.ToString()
+                        Dim isEndo As Boolean = selectedCategory.ToLower().Contains("endo")
+                        Dim expiryDate As Date? = If(isEndo, Guna2DateTimePicker1.Value.Date, Nothing)
+
+                        ' Generate new barcode for edited product
+                        Dim newBarcode As String = GenerateBarcode(editProductId)
+
+                        ' Update product
+                        Dim updateQuery As String = "UPDATE Products SET Barcode = @Barcode, ProductName = @ProductName, Category = @Category, Unit = @Unit, " &
+                                                   "ReorderLevel = @ReorderLevel, CostPrice = @CostPrice, SellingPrice = @SellingPrice, " &
+                                                   "WholesalePrice = @WholesalePrice, HasExpiry = @HasExpiry, ExpiryDate = @ExpiryDate, " &
+                                                   "SupplierID = @SupplierID, UpdatedAt = GETDATE() WHERE ProductID = @ProductID"
+
+                        Using cmd As New SqlCommand(updateQuery, conn, transaction)
+                            cmd.Parameters.AddWithValue("@Barcode", newBarcode)
+                            cmd.Parameters.AddWithValue("@ProductName", txtProductName.Text.Trim())
+                            cmd.Parameters.AddWithValue("@Category", selectedCategory)
+                            cmd.Parameters.AddWithValue("@Unit", If(UnitCmbBox.SelectedItem IsNot Nothing, UnitCmbBox.SelectedItem.ToString(), "PCS"))
+                            cmd.Parameters.AddWithValue("@ReorderLevel", If(String.IsNullOrWhiteSpace(ReOrderLevelTextBox.Text), 10, Convert.ToInt32(ReOrderLevelTextBox.Text.Trim())))
+                            cmd.Parameters.AddWithValue("@CostPrice", Convert.ToDecimal(CostPriceTextBox.Text.Trim()))
+                            cmd.Parameters.AddWithValue("@SellingPrice", Convert.ToDecimal(SellingPriceTextBox.Text.Trim()))
+                            cmd.Parameters.AddWithValue("@WholesalePrice", If(String.IsNullOrWhiteSpace(WholeSaleTextbox.Text), DBNull.Value, Convert.ToDecimal(WholeSaleTextbox.Text.Trim())))
+                            cmd.Parameters.AddWithValue("@HasExpiry", isEndo)
+                            If isEndo Then
+                                cmd.Parameters.AddWithValue("@ExpiryDate", Guna2DateTimePicker1.Value.Date)
+                            Else
+                                cmd.Parameters.AddWithValue("@ExpiryDate", DBNull.Value)
+                            End If
+
+                            ' Get selected supplier ID
+                            Dim supplierId As Object = DBNull.Value
+                            If SupplierCMbBox.SelectedItem IsNot Nothing AndAlso SupplierCMbBox.SelectedItem.ToString() <> "+ Add New Supplier" Then
+                                Dim supplierData As Dictionary(Of String, Integer) = TryCast(SupplierCMbBox.Tag, Dictionary(Of String, Integer))
+                                If supplierData IsNot Nothing AndAlso supplierData.ContainsKey(SupplierCMbBox.SelectedItem.ToString()) Then
+                                    supplierId = supplierData(SupplierCMbBox.SelectedItem.ToString())
+                                End If
+                            End If
+                            cmd.Parameters.AddWithValue("@SupplierID", supplierId)
+                            cmd.Parameters.AddWithValue("@ProductID", editProductId)
+
+                            cmd.ExecuteNonQuery()
+                        End Using
+
+                        ' Update product image if new one selected
+                        If Not String.IsNullOrWhiteSpace(selectedImagePath) AndAlso IO.File.Exists(selectedImagePath) Then
+                            ' Delete old image
+                            Dim deleteImageQuery As String = "DELETE FROM ProductImages WHERE ProductID = @ProductID"
+                            Using cmdDelete As New SqlCommand(deleteImageQuery, conn, transaction)
+                                cmdDelete.Parameters.AddWithValue("@ProductID", editProductId)
+                                cmdDelete.ExecuteNonQuery()
+                            End Using
+
+                            ' Save new image
+                            SaveProductImage(conn, transaction, editProductId, selectedImagePath)
+                        End If
+
+                        transaction.Commit()
+
+                        ' Generate and display barcode after successful update
+                        GenerateAndDisplayBarcode(newBarcode)
+
+                        Return True
+
+                    Catch ex As Exception
+                        transaction.Rollback()
+                        Throw ex
+                    End Try
+                End Using
             End Using
         Catch ex As Exception
-            ' Fallback - generate code based on timestamp
-            Return "P" & DateTime.Now.Ticks.ToString().Substring(DateTime.Now.Ticks.ToString().Length - 5)
+            MessageBox.Show("Error updating product: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            Return False
         End Try
+    End Function
+
+    Private Function GenerateProductCode(conn As SqlConnection, transaction As SqlTransaction) As String
+        ' Generate unique product code using ProductID + DateTime format: P[ID]-YYYYMMDD-HHMMSS
+        ' This will be finalized after getting the ProductID from the database
+        Return "TEMP_CODE"
+    End Function
+
+    Private Function GenerateFinalProductCode(productId As Integer) As String
+        ' Generate unique product code: P[ID]-YYYYMMDD-HHmmss
+        Dim dateTimeStr As String = DateTime.Now.ToString("yyyyMMdd-HHmmss")
+        Return $"P{productId.ToString("D5")}-{dateTimeStr}"
+    End Function
+
+    Private Function GenerateBarcode(productId As Integer) As String
+        ' Generate barcode: format as PXXXXYYYYMMDDHHMMSS where XXXX is product ID
+        Dim dateTimeStr As String = DateTime.Now.ToString("yyyyMMddHHmmss")
+        Return $"P{productId.ToString("D4")}{dateTimeStr}"
     End Function
 
     Private Sub SaveProductImage(conn As SqlConnection, transaction As SqlTransaction, productId As Integer, imagePath As String)
@@ -327,6 +480,99 @@ Public Class AddProduct
         Catch ex As Exception
             ' Log error but don't fail the entire transaction
             Console.WriteLine("Error saving product image: " & ex.Message)
+        End Try
+    End Sub
+
+    Private Sub LoadProductData()
+        Try
+            Dim connStr As String = Connection.GetConnectionString()
+            Using conn As New SqlConnection(connStr)
+                conn.Open()
+
+                Dim query As String = "SELECT p.*, " &
+                                     "(SELECT TOP 1 ImageData FROM ProductImages WHERE ProductID = p.ProductID) AS ProductImage " &
+                                     "FROM Products p WHERE p.ProductID = @ProductID"
+
+                Using cmd As New SqlCommand(query, conn)
+                    cmd.Parameters.AddWithValue("@ProductID", editProductId)
+
+                    Using reader As SqlDataReader = cmd.ExecuteReader()
+                        If reader.Read() Then
+                            ' Populate form fields
+                            txtProductName.Text = reader("ProductName").ToString()
+
+                            ' Set category
+                            Dim category As String = reader("Category").ToString()
+                            If cmbCategory.Items.Contains(category) Then
+                                cmbCategory.SelectedItem = category
+                            End If
+
+                            ' Set unit
+                            Dim unit As String = reader("Unit").ToString()
+                            If UnitCmbBox.Items.Contains(unit) Then
+                                UnitCmbBox.SelectedItem = unit
+                            End If
+
+                            ' Set prices
+                            If Not IsDBNull(reader("CostPrice")) Then
+                                CostPriceTextBox.Text = Convert.ToDecimal(reader("CostPrice")).ToString("0.00")
+                            End If
+
+                            If Not IsDBNull(reader("SellingPrice")) Then
+                                SellingPriceTextBox.Text = Convert.ToDecimal(reader("SellingPrice")).ToString("0.00")
+                            End If
+
+                            If Not IsDBNull(reader("WholesalePrice")) Then
+                                WholeSaleTextbox.Text = Convert.ToDecimal(reader("WholesalePrice")).ToString("0.00")
+                            End If
+
+                            ' Set reorder level
+                            If Not IsDBNull(reader("ReorderLevel")) Then
+                                ReOrderLevelTextBox.Text = reader("ReorderLevel").ToString()
+                            End If
+
+                            ' Set supplier
+                            If Not IsDBNull(reader("SupplierID")) Then
+                                Dim supplierId As Integer = Convert.ToInt32(reader("SupplierID"))
+                                Dim supplierData As Dictionary(Of String, Integer) = TryCast(SupplierCMbBox.Tag, Dictionary(Of String, Integer))
+                                If supplierData IsNot Nothing Then
+                                    For Each kvp In supplierData
+                                        If kvp.Value = supplierId Then
+                                            SupplierCMbBox.SelectedItem = kvp.Key
+                                            Exit For
+                                        End If
+                                    Next
+                                End If
+                            End If
+
+                            ' Load expiry date if applicable
+                            If Not IsDBNull(reader("HasExpiry")) AndAlso Convert.ToBoolean(reader("HasExpiry")) Then
+                                If Not IsDBNull(reader("ExpiryDate")) Then
+                                    Guna2DateTimePicker1.Value = Convert.ToDateTime(reader("ExpiryDate"))
+                                    Guna2DateTimePicker1.Visible = True
+                                    Guna2HtmlLabel8.Visible = True
+                                End If
+                            End If
+
+                            ' Load product image
+                            If Not IsDBNull(reader("ProductImage")) Then
+                                Dim imgBytes As Byte() = CType(reader("ProductImage"), Byte())
+                                Using ms As New MemoryStream(imgBytes)
+                                    ProductImage.Image = Image.FromStream(ms)
+                                End Using
+                            End If
+
+                            ' Load and display barcode
+                            If Not IsDBNull(reader("Barcode")) Then
+                                Dim barcode As String = reader("Barcode").ToString()
+                                GenerateAndDisplayBarcode(barcode)
+                            End If
+                        End If
+                    End Using
+                End Using
+            End Using
+        Catch ex As Exception
+            MessageBox.Show("Error loading product data: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
 
@@ -362,28 +608,119 @@ Public Class AddProduct
         End If
     End Sub
 
+    Private Sub SetupNumericInputValidation()
+        ' Add numeric input validation for price fields and reorder level
+        AddHandler CostPriceTextBox.KeyPress, AddressOf NumericTextBox_KeyPress
+        AddHandler SellingPriceTextBox.KeyPress, AddressOf NumericTextBox_KeyPress
+        AddHandler WholeSaleTextbox.KeyPress, AddressOf NumericTextBox_KeyPress
+        AddHandler ReOrderLevelTextBox.KeyPress, AddressOf IntegerTextBox_KeyPress
+    End Sub
+
+    Private Sub NumericTextBox_KeyPress(sender As Object, e As KeyPressEventArgs)
+        ' Allow digits, decimal point, and backspace for decimal numbers
+        If Not Char.IsDigit(e.KeyChar) AndAlso Not e.KeyChar = "." AndAlso Not e.KeyChar = ChrW(Keys.Back) Then
+            e.Handled = True
+        End If
+
+        ' Allow only one decimal point
+        If e.KeyChar = "." AndAlso DirectCast(sender, TextBox).Text.Contains(".") Then
+            e.Handled = True
+        End If
+    End Sub
+
+    Private Sub IntegerTextBox_KeyPress(sender As Object, e As KeyPressEventArgs)
+        ' Allow only digits and backspace for integers
+        If Not Char.IsDigit(e.KeyChar) AndAlso Not e.KeyChar = ChrW(Keys.Back) Then
+            e.Handled = True
+        End If
+    End Sub
+
+    Private Sub GenerateAndDisplayBarcode(barcodeText As String)
+        Try
+            ' Create barcode encoder
+            Dim encoder As New BarcodeEncoder()
+
+            ' Generate barcode image
+            Dim barcodeImg As Bitmap = encoder.Encode(BarcodeFormat.Code128, barcodeText)
+
+            ' Display in picture box
+            BarcodeImage.Image = barcodeImg
+
+            ' Store current barcode
+            currentBarcode = barcodeText
+
+        Catch ex As Exception
+            MessageBox.Show("Error generating barcode: " & ex.Message, "Barcode Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
+
+    Private Sub PrintBarcodeTextBox_Click(sender As Object, e As EventArgs) Handles PrintBarcodeTextBox.Click
+        If String.IsNullOrWhiteSpace(currentBarcode) Then
+            MessageBox.Show("No barcode to print. Please save the product first.", "Print Barcode", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Return
+        End If
+
+        Try
+            ' Create print dialog
+            Using printDialog As New PrintDialog()
+                If printDialog.ShowDialog() = DialogResult.OK Then
+                    ' Create print document
+                    Dim printDoc As New Printing.PrintDocument()
+                    printDoc.PrinterSettings = printDialog.PrinterSettings
+
+                    AddHandler printDoc.PrintPage, Sub(s, ev)
+                                                       ' Print the barcode image
+                                                       If BarcodeImage.Image IsNot Nothing Then
+                                                           ' Center the barcode on the page
+                                                           Dim x As Integer = (ev.PageBounds.Width - BarcodeImage.Image.Width) \ 2
+                                                           Dim y As Integer = 100
+                                                           ev.Graphics.DrawImage(BarcodeImage.Image, x, y)
+
+                                                           ' Print barcode text below
+                                                           Dim font As New Font("Arial", 12, FontStyle.Bold)
+                                                           Dim textSize As SizeF = ev.Graphics.MeasureString(currentBarcode, font)
+                                                           Dim textX As Single = (ev.PageBounds.Width - textSize.Width) / 2
+                                                           Dim textY As Single = y + BarcodeImage.Image.Height + 20
+                                                           ev.Graphics.DrawString(currentBarcode, font, Brushes.Black, textX, textY)
+
+                                                           ' Print product name
+                                                           Dim nameFont As New Font("Arial", 10, FontStyle.Regular)
+                                                           Dim nameSize As SizeF = ev.Graphics.MeasureString(txtProductName.Text, nameFont)
+                                                           Dim nameX As Single = (ev.PageBounds.Width - nameSize.Width) / 2
+                                                           Dim nameY As Single = textY + 30
+                                                           ev.Graphics.DrawString(txtProductName.Text, nameFont, Brushes.Black, nameX, nameY)
+                                                       End If
+                                                   End Sub
+
+                    printDoc.Print()
+                    MessageBox.Show("Barcode sent to printer successfully!", "Print Complete", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                End If
+            End Using
+        Catch ex As Exception
+            MessageBox.Show("Error printing barcode: " & ex.Message, "Print Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
+
     Private Sub AddNewSupplier()
         ' Create overlay panel for modal effect
         Dim overlayPanel As New Panel()
-        overlayPanel.BackColor = Color.FromArgb(150, 0, 0, 0) ' Semi-transparent black
+        overlayPanel.BackColor = Color.FromArgb(150, 0, 0, 0)
         overlayPanel.Dock = DockStyle.Fill
         overlayPanel.Location = New Point(0, 0)
         overlayPanel.Size = Me.ClientSize
         Me.Controls.Add(overlayPanel)
         overlayPanel.BringToFront()
 
-        ' Create a simple input form for supplier details
+        ' Create supplier form
         Dim supplierForm As New Form()
         supplierForm.Text = ""
         supplierForm.Size = New Size(500, 450)
         supplierForm.StartPosition = FormStartPosition.CenterParent
         supplierForm.FormBorderStyle = FormBorderStyle.None
-        supplierForm.MaximizeBox = False
-        supplierForm.MinimizeBox = False
         supplierForm.BackColor = Color.FromArgb(30, 30, 30)
         supplierForm.ShowInTaskbar = False
 
-        ' Add rounded corners effect
+        ' Add rounded corners
         Dim path As New System.Drawing.Drawing2D.GraphicsPath()
         path.AddArc(0, 0, 20, 20, 180, 90)
         path.AddArc(supplierForm.Width - 20, 0, 20, 20, 270, 90)
@@ -399,13 +736,13 @@ Public Class AddProduct
         borderPanel.Padding = New Padding(2)
         supplierForm.Controls.Add(borderPanel)
 
-        ' Inner panel for content
+        ' Inner panel
         Dim contentPanel As New Panel()
         contentPanel.BackColor = Color.FromArgb(30, 30, 30)
         contentPanel.Dock = DockStyle.Fill
         borderPanel.Controls.Add(contentPanel)
 
-        ' Title Label with close button area
+        ' Title panel
         Dim titlePanel As New Panel()
         titlePanel.BackColor = Color.FromArgb(40, 40, 40)
         titlePanel.Dock = DockStyle.Top
@@ -437,7 +774,7 @@ Public Class AddProduct
         AddHandler btnClose.MouseLeave, Sub(s, ev) btnClose.ForeColor = Color.Gray
         titlePanel.Controls.Add(btnClose)
 
-        ' Main content panel
+        ' Main panel
         Dim mainPanel As New Panel()
         mainPanel.Location = New Point(0, 60)
         mainPanel.Size = New Size(500, 390)
@@ -536,25 +873,21 @@ Public Class AddProduct
         btnSave.FlatAppearance.BorderSize = 0
         btnSave.Cursor = Cursors.Hand
         AddHandler btnSave.Click, Sub(s, ev)
-                                      ' Validate supplier name
                                       If String.IsNullOrWhiteSpace(txtName.Text) Then
                                           MessageBox.Show("Supplier name is required!", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
                                           txtName.Focus()
                                           Return
                                       End If
 
-                                      ' Check if supplier already exists
                                       If CheckSupplierExists(txtName.Text.Trim()) Then
                                           MessageBox.Show("A supplier with this name already exists!", "Duplicate Supplier", MessageBoxButtons.OK, MessageBoxIcon.Warning)
                                           txtName.Focus()
                                           Return
                                       End If
 
-                                      ' Save supplier
                                       If SaveSupplier(txtName.Text.Trim(), txtContact.Text.Trim(), txtPhone.Text.Trim(), txtEmail.Text.Trim()) Then
                                           MessageBox.Show("Supplier added successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information)
-                                          LoadSuppliers() ' Reload suppliers
-                                          ' Select the newly added supplier
+                                          LoadSuppliers()
                                           SupplierCMbBox.SelectedItem = txtName.Text.Trim()
                                           overlayPanel.Dispose()
                                           supplierForm.Close()
@@ -582,21 +915,13 @@ Public Class AddProduct
                                     End Sub
         buttonPanel.Controls.Add(btnCancel)
 
-        ' Handle form closing to remove overlay
+        ' Handle form closing
         AddHandler supplierForm.FormClosed, Sub(s, ev)
                                                 If overlayPanel IsNot Nothing AndAlso Not overlayPanel.IsDisposed Then
                                                     Me.Controls.Remove(overlayPanel)
                                                     overlayPanel.Dispose()
                                                 End If
                                             End Sub
-
-        ' Prevent closing with escape or alt+F4
-        AddHandler supplierForm.FormClosing, Sub(s, ev)
-                                                 If ev.CloseReason = CloseReason.UserClosing Then
-                                                     ' Only allow closing via buttons
-                                                     ev.Cancel = False
-                                                 End If
-                                             End Sub
 
         supplierForm.ShowDialog(Me)
     End Sub

@@ -24,8 +24,10 @@ Partial Class AddProduct
     Private Sub InitializeComponent()
         Dim CustomizableEdges1 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges2 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges23 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges24 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges25 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges26 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges3 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges4 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges5 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges6 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges7 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
@@ -44,11 +46,14 @@ Partial Class AddProduct
         Dim CustomizableEdges20 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges21 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges22 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges3 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges4 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges23 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges24 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Guna2HtmlLabel6 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2Panel1 = New Guna.UI2.WinForms.Guna2Panel()
         Guna2Panel2 = New Guna.UI2.WinForms.Guna2Panel()
+        PrintBarcodeTextBox = New Guna.UI2.WinForms.Guna2HtmlLabel()
+        BarcodeImage = New Guna.UI2.WinForms.Guna2PictureBox()
+        SupplierCMbBox = New Guna.UI2.WinForms.Guna2ComboBox()
         Guna2HtmlLabel8 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2DateTimePicker1 = New Guna.UI2.WinForms.Guna2DateTimePicker()
         Guna2HtmlLabel2 = New Guna.UI2.WinForms.Guna2HtmlLabel()
@@ -70,8 +75,8 @@ Partial Class AddProduct
         Guna2HtmlLabel15 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         UnitCmbBox = New Guna.UI2.WinForms.Guna2ComboBox()
         Guna2HtmlLabel11 = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        SupplierCMbBox = New Guna.UI2.WinForms.Guna2ComboBox()
         Guna2Panel2.SuspendLayout()
+        CType(BarcodeImage, ComponentModel.ISupportInitialize).BeginInit()
         CType(ProductImage, ComponentModel.ISupportInitialize).BeginInit()
         SuspendLayout()
         ' 
@@ -98,6 +103,8 @@ Partial Class AddProduct
         ' 
         ' Guna2Panel2
         ' 
+        Guna2Panel2.Controls.Add(PrintBarcodeTextBox)
+        Guna2Panel2.Controls.Add(BarcodeImage)
         Guna2Panel2.Controls.Add(SupplierCMbBox)
         Guna2Panel2.Controls.Add(Guna2HtmlLabel8)
         Guna2Panel2.Controls.Add(Guna2DateTimePicker1)
@@ -120,12 +127,57 @@ Partial Class AddProduct
         Guna2Panel2.Controls.Add(Guna2HtmlLabel15)
         Guna2Panel2.Controls.Add(UnitCmbBox)
         Guna2Panel2.Controls.Add(Guna2HtmlLabel11)
-        Guna2Panel2.CustomizableEdges = CustomizableEdges23
+        Guna2Panel2.CustomizableEdges = CustomizableEdges25
         Guna2Panel2.Location = New Point(12, 67)
         Guna2Panel2.Name = "Guna2Panel2"
-        Guna2Panel2.ShadowDecoration.CustomizableEdges = CustomizableEdges24
+        Guna2Panel2.ShadowDecoration.CustomizableEdges = CustomizableEdges26
         Guna2Panel2.Size = New Size(704, 782)
         Guna2Panel2.TabIndex = 79
+        ' 
+        ' PrintBarcodeTextBox
+        ' 
+        PrintBarcodeTextBox.BackColor = Color.Transparent
+        PrintBarcodeTextBox.Font = New Font("Poppins", 9.0F, FontStyle.Underline, GraphicsUnit.Point, CByte(0))
+        PrintBarcodeTextBox.ForeColor = Color.White
+        PrintBarcodeTextBox.Location = New Point(445, 197)
+        PrintBarcodeTextBox.Name = "PrintBarcodeTextBox"
+        PrintBarcodeTextBox.Size = New Size(105, 28)
+        PrintBarcodeTextBox.TabIndex = 118
+        PrintBarcodeTextBox.Text = "Print Barcode"
+        ' 
+        ' BarcodeImage
+        ' 
+        BarcodeImage.BorderRadius = 10
+        BarcodeImage.CustomizableEdges = CustomizableEdges3
+        BarcodeImage.ImageRotate = 0F
+        BarcodeImage.Location = New Point(399, 35)
+        BarcodeImage.Name = "BarcodeImage"
+        BarcodeImage.ShadowDecoration.CustomizableEdges = CustomizableEdges4
+        BarcodeImage.Size = New Size(196, 140)
+        BarcodeImage.SizeMode = PictureBoxSizeMode.StretchImage
+        BarcodeImage.TabIndex = 117
+        BarcodeImage.TabStop = False
+        ' 
+        ' SupplierCMbBox
+        ' 
+        SupplierCMbBox.BackColor = Color.Transparent
+        SupplierCMbBox.BorderRadius = 10
+        SupplierCMbBox.BorderThickness = 0
+        SupplierCMbBox.CustomizableEdges = CustomizableEdges5
+        SupplierCMbBox.DrawMode = DrawMode.OwnerDrawFixed
+        SupplierCMbBox.DropDownStyle = ComboBoxStyle.DropDownList
+        SupplierCMbBox.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
+        SupplierCMbBox.FocusedColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
+        SupplierCMbBox.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
+        SupplierCMbBox.Font = New Font("Poppins Light", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        SupplierCMbBox.ForeColor = Color.White
+        SupplierCMbBox.ItemHeight = 40
+        SupplierCMbBox.Items.AddRange(New Object() {"T-shirt", "Jersey", "Caps", "Key-Chains", "Ski-Masks", "Shorts", "Pants", "Towels", "Hoodies", "Slides", "Bags", "Socks"})
+        SupplierCMbBox.Location = New Point(15, 506)
+        SupplierCMbBox.Name = "SupplierCMbBox"
+        SupplierCMbBox.ShadowDecoration.CustomizableEdges = CustomizableEdges6
+        SupplierCMbBox.Size = New Size(316, 46)
+        SupplierCMbBox.TabIndex = 116
         ' 
         ' Guna2HtmlLabel8
         ' 
@@ -141,14 +193,14 @@ Partial Class AddProduct
         ' Guna2DateTimePicker1
         ' 
         Guna2DateTimePicker1.Checked = True
-        Guna2DateTimePicker1.CustomizableEdges = CustomizableEdges5
+        Guna2DateTimePicker1.CustomizableEdges = CustomizableEdges7
         Guna2DateTimePicker1.Font = New Font("Segoe UI", 9.0F)
         Guna2DateTimePicker1.Format = DateTimePickerFormat.Long
         Guna2DateTimePicker1.Location = New Point(15, 605)
         Guna2DateTimePicker1.MaxDate = New Date(9998, 12, 31, 0, 0, 0, 0)
         Guna2DateTimePicker1.MinDate = New Date(1753, 1, 1, 0, 0, 0, 0)
         Guna2DateTimePicker1.Name = "Guna2DateTimePicker1"
-        Guna2DateTimePicker1.ShadowDecoration.CustomizableEdges = CustomizableEdges6
+        Guna2DateTimePicker1.ShadowDecoration.CustomizableEdges = CustomizableEdges8
         Guna2DateTimePicker1.Size = New Size(250, 45)
         Guna2DateTimePicker1.TabIndex = 112
         Guna2DateTimePicker1.Value = New Date(2026, 2, 1, 19, 57, 39, 293)
@@ -168,7 +220,7 @@ Partial Class AddProduct
         ' 
         ReOrderLevelTextBox.BorderRadius = 10
         ReOrderLevelTextBox.BorderThickness = 0
-        ReOrderLevelTextBox.CustomizableEdges = CustomizableEdges7
+        ReOrderLevelTextBox.CustomizableEdges = CustomizableEdges9
         ReOrderLevelTextBox.DefaultText = ""
         ReOrderLevelTextBox.DisabledState.BorderColor = Color.FromArgb(CByte(208), CByte(208), CByte(208))
         ReOrderLevelTextBox.DisabledState.FillColor = Color.FromArgb(CByte(226), CByte(226), CByte(226))
@@ -184,7 +236,7 @@ Partial Class AddProduct
         ReOrderLevelTextBox.Name = "ReOrderLevelTextBox"
         ReOrderLevelTextBox.PlaceholderText = ""
         ReOrderLevelTextBox.SelectedText = ""
-        ReOrderLevelTextBox.ShadowDecoration.CustomizableEdges = CustomizableEdges8
+        ReOrderLevelTextBox.ShadowDecoration.CustomizableEdges = CustomizableEdges10
         ReOrderLevelTextBox.Size = New Size(136, 46)
         ReOrderLevelTextBox.TabIndex = 109
         ' 
@@ -203,7 +255,7 @@ Partial Class AddProduct
         ' 
         WholeSaleTextbox.BorderRadius = 10
         WholeSaleTextbox.BorderThickness = 0
-        WholeSaleTextbox.CustomizableEdges = CustomizableEdges9
+        WholeSaleTextbox.CustomizableEdges = CustomizableEdges11
         WholeSaleTextbox.DefaultText = ""
         WholeSaleTextbox.DisabledState.BorderColor = Color.FromArgb(CByte(208), CByte(208), CByte(208))
         WholeSaleTextbox.DisabledState.FillColor = Color.FromArgb(CByte(226), CByte(226), CByte(226))
@@ -219,7 +271,7 @@ Partial Class AddProduct
         WholeSaleTextbox.Name = "WholeSaleTextbox"
         WholeSaleTextbox.PlaceholderText = ""
         WholeSaleTextbox.SelectedText = ""
-        WholeSaleTextbox.ShadowDecoration.CustomizableEdges = CustomizableEdges10
+        WholeSaleTextbox.ShadowDecoration.CustomizableEdges = CustomizableEdges12
         WholeSaleTextbox.Size = New Size(136, 46)
         WholeSaleTextbox.TabIndex = 105
         ' 
@@ -238,7 +290,7 @@ Partial Class AddProduct
         ' 
         SellingPriceTextBox.BorderRadius = 10
         SellingPriceTextBox.BorderThickness = 0
-        SellingPriceTextBox.CustomizableEdges = CustomizableEdges11
+        SellingPriceTextBox.CustomizableEdges = CustomizableEdges13
         SellingPriceTextBox.DefaultText = ""
         SellingPriceTextBox.DisabledState.BorderColor = Color.FromArgb(CByte(208), CByte(208), CByte(208))
         SellingPriceTextBox.DisabledState.FillColor = Color.FromArgb(CByte(226), CByte(226), CByte(226))
@@ -254,7 +306,7 @@ Partial Class AddProduct
         SellingPriceTextBox.Name = "SellingPriceTextBox"
         SellingPriceTextBox.PlaceholderText = ""
         SellingPriceTextBox.SelectedText = ""
-        SellingPriceTextBox.ShadowDecoration.CustomizableEdges = CustomizableEdges12
+        SellingPriceTextBox.ShadowDecoration.CustomizableEdges = CustomizableEdges14
         SellingPriceTextBox.Size = New Size(136, 46)
         SellingPriceTextBox.TabIndex = 103
         ' 
@@ -283,11 +335,11 @@ Partial Class AddProduct
         ' ProductImage
         ' 
         ProductImage.BorderRadius = 10
-        ProductImage.CustomizableEdges = CustomizableEdges13
+        ProductImage.CustomizableEdges = CustomizableEdges15
         ProductImage.ImageRotate = 0F
         ProductImage.Location = New Point(15, 35)
         ProductImage.Name = "ProductImage"
-        ProductImage.ShadowDecoration.CustomizableEdges = CustomizableEdges14
+        ProductImage.ShadowDecoration.CustomizableEdges = CustomizableEdges16
         ProductImage.Size = New Size(196, 140)
         ProductImage.SizeMode = PictureBoxSizeMode.StretchImage
         ProductImage.TabIndex = 98
@@ -297,7 +349,7 @@ Partial Class AddProduct
         ' 
         CostPriceTextBox.BorderRadius = 10
         CostPriceTextBox.BorderThickness = 0
-        CostPriceTextBox.CustomizableEdges = CustomizableEdges15
+        CostPriceTextBox.CustomizableEdges = CustomizableEdges17
         CostPriceTextBox.DefaultText = ""
         CostPriceTextBox.DisabledState.BorderColor = Color.FromArgb(CByte(208), CByte(208), CByte(208))
         CostPriceTextBox.DisabledState.FillColor = Color.FromArgb(CByte(226), CByte(226), CByte(226))
@@ -313,7 +365,7 @@ Partial Class AddProduct
         CostPriceTextBox.Name = "CostPriceTextBox"
         CostPriceTextBox.PlaceholderText = ""
         CostPriceTextBox.SelectedText = ""
-        CostPriceTextBox.ShadowDecoration.CustomizableEdges = CustomizableEdges16
+        CostPriceTextBox.ShadowDecoration.CustomizableEdges = CustomizableEdges18
         CostPriceTextBox.Size = New Size(136, 46)
         CostPriceTextBox.TabIndex = 97
         ' 
@@ -344,7 +396,7 @@ Partial Class AddProduct
         cmbCategory.BackColor = Color.Transparent
         cmbCategory.BorderRadius = 10
         cmbCategory.BorderThickness = 0
-        cmbCategory.CustomizableEdges = CustomizableEdges17
+        cmbCategory.CustomizableEdges = CustomizableEdges19
         cmbCategory.DrawMode = DrawMode.OwnerDrawFixed
         cmbCategory.DropDownStyle = ComboBoxStyle.DropDownList
         cmbCategory.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
@@ -356,7 +408,7 @@ Partial Class AddProduct
         cmbCategory.Items.AddRange(New Object() {"T-shirt", "Jersey", "Caps", "Key-Chains", "Ski-Masks", "Shorts", "Pants", "Towels", "Hoodies", "Slides", "Bags", "Socks"})
         cmbCategory.Location = New Point(281, 307)
         cmbCategory.Name = "cmbCategory"
-        cmbCategory.ShadowDecoration.CustomizableEdges = CustomizableEdges18
+        cmbCategory.ShadowDecoration.CustomizableEdges = CustomizableEdges20
         cmbCategory.Size = New Size(240, 46)
         cmbCategory.TabIndex = 94
         ' 
@@ -364,7 +416,7 @@ Partial Class AddProduct
         ' 
         txtProductName.BorderRadius = 10
         txtProductName.BorderThickness = 0
-        txtProductName.CustomizableEdges = CustomizableEdges19
+        txtProductName.CustomizableEdges = CustomizableEdges21
         txtProductName.DefaultText = ""
         txtProductName.DisabledState.BorderColor = Color.FromArgb(CByte(208), CByte(208), CByte(208))
         txtProductName.DisabledState.FillColor = Color.FromArgb(CByte(226), CByte(226), CByte(226))
@@ -380,7 +432,7 @@ Partial Class AddProduct
         txtProductName.Name = "txtProductName"
         txtProductName.PlaceholderText = ""
         txtProductName.SelectedText = ""
-        txtProductName.ShadowDecoration.CustomizableEdges = CustomizableEdges20
+        txtProductName.ShadowDecoration.CustomizableEdges = CustomizableEdges22
         txtProductName.Size = New Size(250, 46)
         txtProductName.TabIndex = 93
         ' 
@@ -398,7 +450,7 @@ Partial Class AddProduct
         ' btnAddStock
         ' 
         btnAddStock.BorderRadius = 10
-        btnAddStock.CustomizableEdges = CustomizableEdges21
+        btnAddStock.CustomizableEdges = CustomizableEdges23
         btnAddStock.DisabledState.BorderColor = Color.DarkGray
         btnAddStock.DisabledState.CustomBorderColor = Color.DarkGray
         btnAddStock.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
@@ -408,7 +460,7 @@ Partial Class AddProduct
         btnAddStock.ForeColor = Color.Black
         btnAddStock.Location = New Point(525, 691)
         btnAddStock.Name = "btnAddStock"
-        btnAddStock.ShadowDecoration.CustomizableEdges = CustomizableEdges22
+        btnAddStock.ShadowDecoration.CustomizableEdges = CustomizableEdges24
         btnAddStock.Size = New Size(119, 57)
         btnAddStock.TabIndex = 91
         btnAddStock.Text = "Save"
@@ -429,7 +481,7 @@ Partial Class AddProduct
         UnitCmbBox.BackColor = Color.Transparent
         UnitCmbBox.BorderRadius = 10
         UnitCmbBox.BorderThickness = 0
-        UnitCmbBox.CustomizableEdges = CustomizableEdges22
+        UnitCmbBox.CustomizableEdges = CustomizableEdges24
         UnitCmbBox.DrawMode = DrawMode.OwnerDrawFixed
         UnitCmbBox.DropDownStyle = ComboBoxStyle.DropDownList
         UnitCmbBox.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
@@ -441,7 +493,7 @@ Partial Class AddProduct
         UnitCmbBox.Items.AddRange(New Object() {"PCS", "BOX", "PACK", "BOTTLE", "TUBE", "SET", "PAIR", "DOZEN", "REAM", "PCS", "BOX", "PACK", "BOTTLE", "TUBE", "SET", "PAIR", "DOZEN", "REAM"})
         UnitCmbBox.Location = New Point(537, 307)
         UnitCmbBox.Name = "UnitCmbBox"
-        UnitCmbBox.ShadowDecoration.CustomizableEdges = CustomizableEdges22
+        UnitCmbBox.ShadowDecoration.CustomizableEdges = CustomizableEdges24
         UnitCmbBox.Size = New Size(120, 46)
         UnitCmbBox.TabIndex = 115
         ' 
@@ -456,27 +508,6 @@ Partial Class AddProduct
         Guna2HtmlLabel11.TabIndex = 96
         Guna2HtmlLabel11.Text = "Unit"
         ' 
-        ' SupplierCMbBox
-        ' 
-        SupplierCMbBox.BackColor = Color.Transparent
-        SupplierCMbBox.BorderRadius = 10
-        SupplierCMbBox.BorderThickness = 0
-        SupplierCMbBox.CustomizableEdges = CustomizableEdges3
-        SupplierCMbBox.DrawMode = DrawMode.OwnerDrawFixed
-        SupplierCMbBox.DropDownStyle = ComboBoxStyle.DropDownList
-        SupplierCMbBox.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
-        SupplierCMbBox.FocusedColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
-        SupplierCMbBox.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
-        SupplierCMbBox.Font = New Font("Poppins Light", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        SupplierCMbBox.ForeColor = Color.White
-        SupplierCMbBox.ItemHeight = 40
-        SupplierCMbBox.Items.AddRange(New Object() {"T-shirt", "Jersey", "Caps", "Key-Chains", "Ski-Masks", "Shorts", "Pants", "Towels", "Hoodies", "Slides", "Bags", "Socks"})
-        SupplierCMbBox.Location = New Point(15, 506)
-        SupplierCMbBox.Name = "SupplierCMbBox"
-        SupplierCMbBox.ShadowDecoration.CustomizableEdges = CustomizableEdges4
-        SupplierCMbBox.Size = New Size(316, 46)
-        SupplierCMbBox.TabIndex = 116
-        ' 
         ' AddProduct
         ' 
         AutoScaleDimensions = New SizeF(8.0F, 20.0F)
@@ -486,10 +517,12 @@ Partial Class AddProduct
         Controls.Add(Guna2Panel2)
         Controls.Add(Guna2Panel1)
         Controls.Add(Guna2HtmlLabel6)
+        FormBorderStyle = FormBorderStyle.None
         Name = "AddProduct"
         StartPosition = FormStartPosition.CenterScreen
         Guna2Panel2.ResumeLayout(False)
         Guna2Panel2.PerformLayout()
+        CType(BarcodeImage, ComponentModel.ISupportInitialize).EndInit()
         CType(ProductImage, ComponentModel.ISupportInitialize).EndInit()
         ResumeLayout(False)
         PerformLayout()
@@ -520,4 +553,6 @@ Partial Class AddProduct
     Friend WithEvents Guna2DateTimePicker1 As Guna.UI2.WinForms.Guna2DateTimePicker
     Friend WithEvents Guna2HtmlLabel11 As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents SupplierCMbBox As Guna.UI2.WinForms.Guna2ComboBox
+    Friend WithEvents PrintBarcodeTextBox As Guna.UI2.WinForms.Guna2HtmlLabel
+    Friend WithEvents BarcodeImage As Guna.UI2.WinForms.Guna2PictureBox
 End Class

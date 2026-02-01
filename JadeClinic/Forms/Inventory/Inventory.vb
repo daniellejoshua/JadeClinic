@@ -15,6 +15,11 @@ Public Class Inventory
         ' Add scroll event handler
         AddHandler stockPanel.Scroll, AddressOf StockPanel_Scroll
 
+        ' Make form non-resizable
+        Me.FormBorderStyle = FormBorderStyle.FixedDialog
+        Me.MaximizeBox = False
+        Me.MinimizeBox = False
+
         LoadProducts()
     End Sub
 
@@ -287,19 +292,6 @@ Public Class Inventory
         AddHandler lblEdit.Click, AddressOf EditProduct_Click
         productPanel.Controls.Add(lblEdit)
 
-        ' Delete icon
-        Dim lblDelete As New Label()
-        lblDelete.Text = "🗑️"
-        lblDelete.Font = New Font("Segoe UI Emoji", 14, FontStyle.Regular)
-        lblDelete.Cursor = Cursors.Hand
-        lblDelete.Location = New Point(820, 20)
-        lblDelete.Size = New Size(35, 30)
-        lblDelete.BackColor = Color.White
-        lblDelete.ForeColor = Color.Red
-        lblDelete.Tag = productData("ProductID")
-        AddHandler lblDelete.Click, AddressOf DeleteProduct_Click
-        productPanel.Controls.Add(lblDelete)
-
         ' Add panel to stock panel
         stockPanel.Controls.Add(productPanel)
         productPanel.BringToFront()
@@ -307,27 +299,47 @@ Public Class Inventory
 
     Private Sub EditProduct_Click(sender As Object, e As EventArgs)
         Dim productId As Integer = Convert.ToInt32(DirectCast(sender, Label).Tag)
-        MessageBox.Show($"Edit product ID: {productId}", "Edit Product", MessageBoxButtons.OK, MessageBoxIcon.Information)
-        ' TODO: Open edit form with product details
-    End Sub
 
-    Private Sub DeleteProduct_Click(sender As Object, e As EventArgs)
-        Dim productId As Integer = Convert.ToInt32(DirectCast(sender, Label).Tag)
-        Dim result As DialogResult = MessageBox.Show("Are you sure you want to delete this product?",
-                                                     "Confirm Delete",
-                                                     MessageBoxButtons.YesNo,
-                                                     MessageBoxIcon.Warning)
-        If result = DialogResult.Yes Then
-            ' TODO: Implement delete logic
-            MessageBox.Show($"Delete product ID: {productId}", "Delete Product", MessageBoxButtons.OK, MessageBoxIcon.Information)
-            LoadProducts() ' Reload after delete
+        ' Create overlay panel for modal effect
+        Dim overlayPanel As New Panel()
+        overlayPanel.BackColor = Color.FromArgb(100, 0, 0, 0) ' Semi-transparent black, less dark
+        overlayPanel.Dock = DockStyle.Fill
+        overlayPanel.Location = New Point(0, 0)
+        overlayPanel.Size = Me.ClientSize
+        Me.Controls.Add(overlayPanel)
+        overlayPanel.BringToFront()
+
+        ' Create and show Edit Product form
+        Dim editProductForm As New AddProduct()
+        editProductForm.SetEditMode(productId)
+        editProductForm.StartPosition = FormStartPosition.CenterParent
+
+        ' Handle form closing to remove overlay
+        AddHandler editProductForm.FormClosed, Sub(s, ev)
+                                                   If overlayPanel IsNot Nothing AndAlso Not overlayPanel.IsDisposed Then
+                                                       Me.Controls.Remove(overlayPanel)
+                                                       overlayPanel.Dispose()
+                                                   End If
+                                               End Sub
+
+        Dim result As DialogResult = editProductForm.ShowDialog(Me)
+
+        ' Cleanup overlay if still exists
+        If overlayPanel IsNot Nothing AndAlso Not overlayPanel.IsDisposed Then
+            Me.Controls.Remove(overlayPanel)
+            overlayPanel.Dispose()
+        End If
+
+        ' Refresh the inventory list if product was updated
+        If result = DialogResult.OK Then
+            LoadProducts()
         End If
     End Sub
 
     Private Sub Guna2Button1_Click(sender As Object, e As EventArgs) Handles Guna2Button1.Click
         ' Create overlay panel for modal effect
         Dim overlayPanel As New Panel()
-        overlayPanel.BackColor = Color.FromArgb(150, 0, 0, 0) ' Semi-transparent black
+        overlayPanel.BackColor = Color.FromArgb(100, 0, 0, 0) ' Semi-transparent black, less dark
         overlayPanel.Dock = DockStyle.Fill
         overlayPanel.Location = New Point(0, 0)
         overlayPanel.Size = Me.ClientSize
