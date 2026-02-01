@@ -1,0 +1,23 @@
+JADE DENTAL SUPPLY POS AND INVENTORY GUIDE
+
+
+This will guide you through the process of setting up and using the Jade Dental Supply POS and Inventory System.
+
+This system is designed to streamline sales transactions and manage inventory efficiently. USING
+SQL SERVER EXPRESS for networks
+SSMS for database management
+
+
+
+Rules and Guidelines:
+1. All transactions must be recorded in the POS system. on the Sales Table
+2. Inventory levels must be updated after each sale or restock.
+3. Regularly back up the database to prevent data loss.
+4. Only authorized personnel should have access to the POS and inventory system.
+5. Ensure that all product information is accurate and up-to-date.
+6. Follow local regulations regarding sales tax and reporting.
+
+
+Dont Forget Edge Case Scenarios:
+1. Handling returns and exchanges: Ensure the system can process returns and update inventory accordingly.
+2. Managing out-of-stock items: Implement a notification system for low stock levels.
