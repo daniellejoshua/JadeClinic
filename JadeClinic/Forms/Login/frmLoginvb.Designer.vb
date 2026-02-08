@@ -30,8 +30,6 @@ Partial Class frmLoginvb
         Dim CustomizableEdges4 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges5 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges6 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges9 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges10 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Guna2Panel1 = New Guna.UI2.WinForms.Guna2Panel()
         Guna2HtmlLabel5 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2CheckBox1 = New Guna.UI2.WinForms.Guna2CheckBox()
@@ -45,7 +43,6 @@ Partial Class frmLoginvb
         txtPassword = New Guna.UI2.WinForms.Guna2TextBox()
         PictureBox1 = New PictureBox()
         SqlCommand1 = New Microsoft.Data.SqlClient.SqlCommand()
-        Guna2Button1 = New Guna.UI2.WinForms.Guna2Button()
         Guna2Panel1.SuspendLayout()
         CType(PictureBox1, ComponentModel.ISupportInitialize).BeginInit()
         SuspendLayout()
@@ -171,7 +168,7 @@ Partial Class frmLoginvb
         txtUserName.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtUserName.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtUserName.Font = New Font("Segoe UI", 9F)
-        txtUserName.ForeColor = Color.White
+        txtUserName.ForeColor = Color.Black
         txtUserName.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtUserName.Location = New Point(135, 210)
         txtUserName.Margin = New Padding(3, 4, 3, 4)
@@ -218,7 +215,7 @@ Partial Class frmLoginvb
         txtPassword.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtPassword.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtPassword.Font = New Font("Segoe UI", 9F)
-        txtPassword.ForeColor = Color.White
+        txtPassword.ForeColor = Color.Black
         txtPassword.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtPassword.Location = New Point(135, 331)
         txtPassword.Margin = New Padding(3, 4, 3, 4)
@@ -246,32 +243,12 @@ Partial Class frmLoginvb
         SqlCommand1.CommandTimeout = 30
         SqlCommand1.EnableOptimizedParameterBinding = False
         ' 
-        ' Guna2Button1
-        ' 
-        Guna2Button1.BackColor = Color.Transparent
-        Guna2Button1.BorderRadius = 10
-        Guna2Button1.CustomizableEdges = CustomizableEdges9
-        Guna2Button1.DisabledState.BorderColor = Color.DarkGray
-        Guna2Button1.DisabledState.CustomBorderColor = Color.DarkGray
-        Guna2Button1.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
-        Guna2Button1.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        Guna2Button1.FillColor = Color.FromArgb(CByte(246), CByte(245), CByte(255))
-        Guna2Button1.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2Button1.ForeColor = Color.Black
-        Guna2Button1.Location = New Point(216, 406)
-        Guna2Button1.Name = "Guna2Button1"
-        Guna2Button1.ShadowDecoration.CustomizableEdges = CustomizableEdges10
-        Guna2Button1.Size = New Size(133, 57)
-        Guna2Button1.TabIndex = 12
-        Guna2Button1.Text = "Login"
-        ' 
         ' frmLoginvb
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
         BackColor = Color.White
         ClientSize = New Size(1494, 875)
-        Controls.Add(Guna2Button1)
         Controls.Add(Guna2Panel1)
         Controls.Add(PictureBox1)
         FormBorderStyle = FormBorderStyle.FixedDialog
@@ -299,5 +276,4 @@ Partial Class frmLoginvb
     Friend WithEvents Guna2CheckBox1 As Guna.UI2.WinForms.Guna2CheckBox
     Friend WithEvents Guna2HtmlLabel5 As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents SqlCommand1 As Microsoft.Data.SqlClient.SqlCommand
-    Friend WithEvents Guna2Button1 As Guna.UI2.WinForms.Guna2Button
 End Class

@@ -137,7 +137,7 @@ Partial Class AddProduct
         ' PrintBarcodeTextBox
         ' 
         PrintBarcodeTextBox.BackColor = Color.Transparent
-        PrintBarcodeTextBox.Font = New Font("Poppins", 9.0F, FontStyle.Underline, GraphicsUnit.Point, CByte(0))
+        PrintBarcodeTextBox.Font = New Font("Poppins", 9F, FontStyle.Underline, GraphicsUnit.Point, CByte(0))
         PrintBarcodeTextBox.ForeColor = Color.White
         PrintBarcodeTextBox.Location = New Point(445, 197)
         PrintBarcodeTextBox.Name = "PrintBarcodeTextBox"
@@ -194,7 +194,8 @@ Partial Class AddProduct
         ' 
         Guna2DateTimePicker1.Checked = True
         Guna2DateTimePicker1.CustomizableEdges = CustomizableEdges7
-        Guna2DateTimePicker1.Font = New Font("Segoe UI", 9.0F)
+        Guna2DateTimePicker1.FillColor = Color.White
+        Guna2DateTimePicker1.Font = New Font("Segoe UI", 9F)
         Guna2DateTimePicker1.Format = DateTimePickerFormat.Long
         Guna2DateTimePicker1.Location = New Point(15, 605)
         Guna2DateTimePicker1.MaxDate = New Date(9998, 12, 31, 0, 0, 0, 0)
@@ -228,7 +229,7 @@ Partial Class AddProduct
         ReOrderLevelTextBox.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         ReOrderLevelTextBox.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
         ReOrderLevelTextBox.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
-        ReOrderLevelTextBox.Font = New Font("Segoe UI", 9.0F)
+        ReOrderLevelTextBox.Font = New Font("Segoe UI", 9F)
         ReOrderLevelTextBox.ForeColor = Color.White
         ReOrderLevelTextBox.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         ReOrderLevelTextBox.Location = New Point(15, 415)
@@ -263,7 +264,7 @@ Partial Class AddProduct
         WholeSaleTextbox.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         WholeSaleTextbox.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
         WholeSaleTextbox.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
-        WholeSaleTextbox.Font = New Font("Segoe UI", 9.0F)
+        WholeSaleTextbox.Font = New Font("Segoe UI", 9F)
         WholeSaleTextbox.ForeColor = Color.White
         WholeSaleTextbox.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         WholeSaleTextbox.Location = New Point(500, 415)
@@ -298,7 +299,7 @@ Partial Class AddProduct
         SellingPriceTextBox.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         SellingPriceTextBox.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
         SellingPriceTextBox.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
-        SellingPriceTextBox.Font = New Font("Segoe UI", 9.0F)
+        SellingPriceTextBox.Font = New Font("Segoe UI", 9F)
         SellingPriceTextBox.ForeColor = Color.White
         SellingPriceTextBox.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         SellingPriceTextBox.Location = New Point(337, 415)
@@ -324,7 +325,7 @@ Partial Class AddProduct
         ' lblProductPicturetrigger
         ' 
         lblProductPicturetrigger.BackColor = Color.Transparent
-        lblProductPicturetrigger.Font = New Font("Poppins", 9.0F, FontStyle.Underline, GraphicsUnit.Point, CByte(0))
+        lblProductPicturetrigger.Font = New Font("Poppins", 9F, FontStyle.Underline, GraphicsUnit.Point, CByte(0))
         lblProductPicturetrigger.ForeColor = Color.White
         lblProductPicturetrigger.Location = New Point(15, 197)
         lblProductPicturetrigger.Name = "lblProductPicturetrigger"
@@ -357,7 +358,7 @@ Partial Class AddProduct
         CostPriceTextBox.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         CostPriceTextBox.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
         CostPriceTextBox.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
-        CostPriceTextBox.Font = New Font("Segoe UI", 9.0F)
+        CostPriceTextBox.Font = New Font("Segoe UI", 9F)
         CostPriceTextBox.ForeColor = Color.White
         CostPriceTextBox.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         CostPriceTextBox.Location = New Point(175, 415)
@@ -424,7 +425,7 @@ Partial Class AddProduct
         txtProductName.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtProductName.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
         txtProductName.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
-        txtProductName.Font = New Font("Segoe UI", 9.0F)
+        txtProductName.Font = New Font("Segoe UI", 9F)
         txtProductName.ForeColor = Color.White
         txtProductName.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtProductName.Location = New Point(15, 307)
@@ -439,7 +440,7 @@ Partial Class AddProduct
         ' Guna2HtmlLabel1
         ' 
         Guna2HtmlLabel1.BackColor = Color.Transparent
-        Guna2HtmlLabel1.Font = New Font("Poppins", 9.0F, FontStyle.Underline, GraphicsUnit.Point, CByte(0))
+        Guna2HtmlLabel1.Font = New Font("Poppins", 9F, FontStyle.Underline, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel1.ForeColor = Color.White
         Guna2HtmlLabel1.Location = New Point(445, 709)
         Guna2HtmlLabel1.Name = "Guna2HtmlLabel1"
@@ -456,7 +457,7 @@ Partial Class AddProduct
         btnAddStock.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         btnAddStock.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
         btnAddStock.FillColor = Color.White
-        btnAddStock.Font = New Font("Poppins Medium", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        btnAddStock.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         btnAddStock.ForeColor = Color.Black
         btnAddStock.Location = New Point(525, 691)
         btnAddStock.Name = "btnAddStock"
@@ -510,10 +511,10 @@ Partial Class AddProduct
         ' 
         ' AddProduct
         ' 
-        AutoScaleDimensions = New SizeF(8.0F, 20.0F)
+        AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
         BackColor = Color.FromArgb(CByte(30), CByte(30), CByte(30))
-        ClientSize = New Size(720, 848)
+        ClientSize = New Size(688, 848)
         Controls.Add(Guna2Panel2)
         Controls.Add(Guna2Panel1)
         Controls.Add(Guna2HtmlLabel6)

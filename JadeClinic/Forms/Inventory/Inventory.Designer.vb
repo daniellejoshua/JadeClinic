@@ -22,10 +22,10 @@ Partial Class Inventory
     'Do not modify it using the code editor.
     <System.Diagnostics.DebuggerStepThrough()>
     Private Sub InitializeComponent()
-        Dim CustomizableEdges15 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges16 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges1 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges2 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges17 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges18 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges3 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges4 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges5 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
@@ -38,10 +38,8 @@ Partial Class Inventory
         Dim CustomizableEdges12 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges13 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges14 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges31 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges32 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges17 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges18 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges15 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges16 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges19 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges20 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges21 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
@@ -51,39 +49,8 @@ Partial Class Inventory
         Dim CustomizableEdges25 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges26 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges27 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges28 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges29 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges30 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges33 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges34 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges35 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges36 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges37 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges38 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges39 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges40 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges41 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         DashboardPanel = New Guna.UI2.WinForms.Guna2Panel()
-        Guna2HtmlLabel13 = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        Guna2CirclePictureBox5 = New Guna.UI2.WinForms.Guna2CirclePictureBox()
-        Guna2CircleButton5 = New Guna.UI2.WinForms.Guna2CircleButton()
-        toOrderFormLbl = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        toOrderFormIcon = New Guna.UI2.WinForms.Guna2CirclePictureBox()
-        btnToOrderForm = New Guna.UI2.WinForms.Guna2CircleButton()
-        Guna2HtmlLabel24 = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        Guna2CirclePictureBox3 = New Guna.UI2.WinForms.Guna2CirclePictureBox()
-        Guna2CircleButton3 = New Guna.UI2.WinForms.Guna2CircleButton()
-        Guna2HtmlLabel25 = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        Guna2CirclePictureBox4 = New Guna.UI2.WinForms.Guna2CirclePictureBox()
-        Guna2CircleButton4 = New Guna.UI2.WinForms.Guna2CircleButton()
-        Guna2HtmlLabel23 = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        Guna2CirclePictureBox2 = New Guna.UI2.WinForms.Guna2CirclePictureBox()
-        Guna2CircleButton2 = New Guna.UI2.WinForms.Guna2CircleButton()
         PictureBox9 = New PictureBox()
-        Guna2HtmlLabel22 = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        Guna2CirclePictureBox1 = New Guna.UI2.WinForms.Guna2CirclePictureBox()
-        Guna2CircleButton1 = New Guna.UI2.WinForms.Guna2CircleButton()
-        Guna2Panel1 = New Guna.UI2.WinForms.Guna2Panel()
         FilterPanel = New Guna.UI2.WinForms.Guna2Panel()
         txtSearch = New Guna.UI2.WinForms.Guna2TextBox()
         Guna2HtmlLabel14 = New Guna.UI2.WinForms.Guna2HtmlLabel()
@@ -107,13 +74,7 @@ Partial Class Inventory
         Guna2CirclePictureBox6 = New Guna.UI2.WinForms.Guna2CirclePictureBox()
         Guna2HtmlLabel1 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         DashboardPanel.SuspendLayout()
-        CType(Guna2CirclePictureBox5, ComponentModel.ISupportInitialize).BeginInit()
-        CType(toOrderFormIcon, ComponentModel.ISupportInitialize).BeginInit()
-        CType(Guna2CirclePictureBox3, ComponentModel.ISupportInitialize).BeginInit()
-        CType(Guna2CirclePictureBox4, ComponentModel.ISupportInitialize).BeginInit()
-        CType(Guna2CirclePictureBox2, ComponentModel.ISupportInitialize).BeginInit()
         CType(PictureBox9, ComponentModel.ISupportInitialize).BeginInit()
-        CType(Guna2CirclePictureBox1, ComponentModel.ISupportInitialize).BeginInit()
         FilterPanel.SuspendLayout()
         panelAllFilter.SuspendLayout()
         CType(Guna2CirclePictureBox6, ComponentModel.ISupportInitialize).BeginInit()
@@ -122,307 +83,26 @@ Partial Class Inventory
         ' DashboardPanel
         ' 
         DashboardPanel.BorderRadius = 30
-        DashboardPanel.Controls.Add(Guna2HtmlLabel13)
-        DashboardPanel.Controls.Add(Guna2CirclePictureBox5)
-        DashboardPanel.Controls.Add(Guna2CircleButton5)
-        DashboardPanel.Controls.Add(toOrderFormLbl)
-        DashboardPanel.Controls.Add(toOrderFormIcon)
-        DashboardPanel.Controls.Add(btnToOrderForm)
-        DashboardPanel.Controls.Add(Guna2HtmlLabel24)
-        DashboardPanel.Controls.Add(Guna2CirclePictureBox3)
-        DashboardPanel.Controls.Add(Guna2CircleButton3)
-        DashboardPanel.Controls.Add(Guna2HtmlLabel25)
-        DashboardPanel.Controls.Add(Guna2CirclePictureBox4)
-        DashboardPanel.Controls.Add(Guna2CircleButton4)
-        DashboardPanel.Controls.Add(Guna2HtmlLabel23)
-        DashboardPanel.Controls.Add(Guna2CirclePictureBox2)
-        DashboardPanel.Controls.Add(Guna2CircleButton2)
         DashboardPanel.Controls.Add(PictureBox9)
-        DashboardPanel.Controls.Add(Guna2HtmlLabel22)
-        DashboardPanel.Controls.Add(Guna2CirclePictureBox1)
-        DashboardPanel.Controls.Add(Guna2CircleButton1)
-        DashboardPanel.Controls.Add(Guna2Panel1)
-        DashboardPanel.CustomizableEdges = CustomizableEdges15
-        DashboardPanel.FillColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
+        DashboardPanel.CustomizableEdges = CustomizableEdges1
+        DashboardPanel.FillColor = Color.White
         DashboardPanel.Location = New Point(-33, 5)
         DashboardPanel.Name = "DashboardPanel"
-        DashboardPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges16
+        DashboardPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges2
         DashboardPanel.Size = New Size(236, 885)
         DashboardPanel.TabIndex = 7
-        ' 
-        ' Guna2HtmlLabel13
-        ' 
-        Guna2HtmlLabel13.BackColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
-        Guna2HtmlLabel13.Font = New Font("Poppins", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel13.ForeColor = Color.White
-        Guna2HtmlLabel13.Location = New Point(85, 746)
-        Guna2HtmlLabel13.Name = "Guna2HtmlLabel13"
-        Guna2HtmlLabel13.Size = New Size(88, 32)
-        Guna2HtmlLabel13.TabIndex = 54
-        Guna2HtmlLabel13.Text = "Audit Logs"
-        ' 
-        ' Guna2CirclePictureBox5
-        ' 
-        Guna2CirclePictureBox5.BackColor = Color.White
-        Guna2CirclePictureBox5.FillColor = Color.Transparent
-        Guna2CirclePictureBox5.ImageRotate = 0F
-        Guna2CirclePictureBox5.Location = New Point(110, 710)
-        Guna2CirclePictureBox5.Name = "Guna2CirclePictureBox5"
-        Guna2CirclePictureBox5.ShadowDecoration.CustomizableEdges = CustomizableEdges1
-        Guna2CirclePictureBox5.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
-        Guna2CirclePictureBox5.Size = New Size(31, 24)
-        Guna2CirclePictureBox5.SizeMode = PictureBoxSizeMode.StretchImage
-        Guna2CirclePictureBox5.TabIndex = 52
-        Guna2CirclePictureBox5.TabStop = False
-        ' 
-        ' Guna2CircleButton5
-        ' 
-        Guna2CircleButton5.BackColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
-        Guna2CircleButton5.DisabledState.BorderColor = Color.DarkGray
-        Guna2CircleButton5.DisabledState.CustomBorderColor = Color.DarkGray
-        Guna2CircleButton5.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
-        Guna2CircleButton5.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        Guna2CircleButton5.FillColor = Color.White
-        Guna2CircleButton5.Font = New Font("Segoe UI", 9F)
-        Guna2CircleButton5.ForeColor = Color.White
-        Guna2CircleButton5.Location = New Point(103, 704)
-        Guna2CircleButton5.Name = "Guna2CircleButton5"
-        Guna2CircleButton5.ShadowDecoration.CustomizableEdges = CustomizableEdges2
-        Guna2CircleButton5.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
-        Guna2CircleButton5.Size = New Size(45, 36)
-        Guna2CircleButton5.TabIndex = 53
-        ' 
-        ' toOrderFormLbl
-        ' 
-        toOrderFormLbl.BackColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
-        toOrderFormLbl.Font = New Font("Poppins", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        toOrderFormLbl.ForeColor = Color.White
-        toOrderFormLbl.Location = New Point(100, 634)
-        toOrderFormLbl.Name = "toOrderFormLbl"
-        toOrderFormLbl.Size = New Size(54, 32)
-        toOrderFormLbl.TabIndex = 51
-        toOrderFormLbl.Text = "Oders"
-        ' 
-        ' toOrderFormIcon
-        ' 
-        toOrderFormIcon.BackColor = Color.White
-        toOrderFormIcon.FillColor = Color.Transparent
-        toOrderFormIcon.ImageRotate = 0F
-        toOrderFormIcon.Location = New Point(110, 589)
-        toOrderFormIcon.Name = "toOrderFormIcon"
-        toOrderFormIcon.ShadowDecoration.CustomizableEdges = CustomizableEdges3
-        toOrderFormIcon.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
-        toOrderFormIcon.Size = New Size(31, 24)
-        toOrderFormIcon.SizeMode = PictureBoxSizeMode.StretchImage
-        toOrderFormIcon.TabIndex = 49
-        toOrderFormIcon.TabStop = False
-        ' 
-        ' btnToOrderForm
-        ' 
-        btnToOrderForm.BackColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
-        btnToOrderForm.DisabledState.BorderColor = Color.DarkGray
-        btnToOrderForm.DisabledState.CustomBorderColor = Color.DarkGray
-        btnToOrderForm.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
-        btnToOrderForm.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        btnToOrderForm.FillColor = Color.White
-        btnToOrderForm.Font = New Font("Segoe UI", 9F)
-        btnToOrderForm.ForeColor = Color.White
-        btnToOrderForm.Location = New Point(103, 583)
-        btnToOrderForm.Name = "btnToOrderForm"
-        btnToOrderForm.ShadowDecoration.CustomizableEdges = CustomizableEdges4
-        btnToOrderForm.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
-        btnToOrderForm.Size = New Size(45, 36)
-        btnToOrderForm.TabIndex = 50
-        ' 
-        ' Guna2HtmlLabel24
-        ' 
-        Guna2HtmlLabel24.BackColor = Color.FromArgb(CByte(30), CByte(30), CByte(30))
-        Guna2HtmlLabel24.Font = New Font("Poppins", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel24.ForeColor = Color.White
-        Guna2HtmlLabel24.Location = New Point(85, 508)
-        Guna2HtmlLabel24.Name = "Guna2HtmlLabel24"
-        Guna2HtmlLabel24.Size = New Size(84, 32)
-        Guna2HtmlLabel24.TabIndex = 48
-        Guna2HtmlLabel24.Text = "Inventory"
-        ' 
-        ' Guna2CirclePictureBox3
-        ' 
-        Guna2CirclePictureBox3.BackColor = Color.White
-        Guna2CirclePictureBox3.FillColor = Color.Transparent
-        Guna2CirclePictureBox3.ImageRotate = 0F
-        Guna2CirclePictureBox3.Location = New Point(110, 468)
-        Guna2CirclePictureBox3.Name = "Guna2CirclePictureBox3"
-        Guna2CirclePictureBox3.ShadowDecoration.CustomizableEdges = CustomizableEdges5
-        Guna2CirclePictureBox3.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
-        Guna2CirclePictureBox3.Size = New Size(31, 24)
-        Guna2CirclePictureBox3.SizeMode = PictureBoxSizeMode.StretchImage
-        Guna2CirclePictureBox3.TabIndex = 46
-        Guna2CirclePictureBox3.TabStop = False
-        ' 
-        ' Guna2CircleButton3
-        ' 
-        Guna2CircleButton3.BackColor = Color.FromArgb(CByte(30), CByte(30), CByte(30))
-        Guna2CircleButton3.DisabledState.BorderColor = Color.DarkGray
-        Guna2CircleButton3.DisabledState.CustomBorderColor = Color.DarkGray
-        Guna2CircleButton3.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
-        Guna2CircleButton3.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        Guna2CircleButton3.FillColor = Color.White
-        Guna2CircleButton3.Font = New Font("Segoe UI", 9F)
-        Guna2CircleButton3.ForeColor = Color.White
-        Guna2CircleButton3.Location = New Point(103, 462)
-        Guna2CircleButton3.Name = "Guna2CircleButton3"
-        Guna2CircleButton3.ShadowDecoration.CustomizableEdges = CustomizableEdges6
-        Guna2CircleButton3.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
-        Guna2CircleButton3.Size = New Size(45, 36)
-        Guna2CircleButton3.TabIndex = 47
-        ' 
-        ' Guna2HtmlLabel25
-        ' 
-        Guna2HtmlLabel25.BackColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
-        Guna2HtmlLabel25.Font = New Font("Poppins", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel25.ForeColor = Color.White
-        Guna2HtmlLabel25.Location = New Point(103, 390)
-        Guna2HtmlLabel25.Name = "Guna2HtmlLabel25"
-        Guna2HtmlLabel25.Size = New Size(42, 32)
-        Guna2HtmlLabel25.TabIndex = 45
-        Guna2HtmlLabel25.Text = "Staff"
-        ' 
-        ' Guna2CirclePictureBox4
-        ' 
-        Guna2CirclePictureBox4.BackColor = Color.White
-        Guna2CirclePictureBox4.FillColor = Color.Transparent
-        Guna2CirclePictureBox4.ImageRotate = 0F
-        Guna2CirclePictureBox4.Location = New Point(110, 352)
-        Guna2CirclePictureBox4.Name = "Guna2CirclePictureBox4"
-        Guna2CirclePictureBox4.ShadowDecoration.CustomizableEdges = CustomizableEdges7
-        Guna2CirclePictureBox4.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
-        Guna2CirclePictureBox4.Size = New Size(31, 24)
-        Guna2CirclePictureBox4.SizeMode = PictureBoxSizeMode.StretchImage
-        Guna2CirclePictureBox4.TabIndex = 43
-        Guna2CirclePictureBox4.TabStop = False
-        ' 
-        ' Guna2CircleButton4
-        ' 
-        Guna2CircleButton4.BackColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
-        Guna2CircleButton4.DisabledState.BorderColor = Color.DarkGray
-        Guna2CircleButton4.DisabledState.CustomBorderColor = Color.DarkGray
-        Guna2CircleButton4.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
-        Guna2CircleButton4.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        Guna2CircleButton4.FillColor = Color.White
-        Guna2CircleButton4.Font = New Font("Segoe UI", 9F)
-        Guna2CircleButton4.ForeColor = Color.White
-        Guna2CircleButton4.Location = New Point(103, 346)
-        Guna2CircleButton4.Name = "Guna2CircleButton4"
-        Guna2CircleButton4.ShadowDecoration.CustomizableEdges = CustomizableEdges8
-        Guna2CircleButton4.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
-        Guna2CircleButton4.Size = New Size(45, 36)
-        Guna2CircleButton4.TabIndex = 44
-        ' 
-        ' Guna2HtmlLabel23
-        ' 
-        Guna2HtmlLabel23.BackColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
-        Guna2HtmlLabel23.Font = New Font("Poppins", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel23.ForeColor = Color.White
-        Guna2HtmlLabel23.Location = New Point(65, 269)
-        Guna2HtmlLabel23.Name = "Guna2HtmlLabel23"
-        Guna2HtmlLabel23.Size = New Size(126, 32)
-        Guna2HtmlLabel23.TabIndex = 42
-        Guna2HtmlLabel23.Text = "Order Records"
-        ' 
-        ' Guna2CirclePictureBox2
-        ' 
-        Guna2CirclePictureBox2.BackColor = Color.White
-        Guna2CirclePictureBox2.FillColor = Color.Transparent
-        Guna2CirclePictureBox2.ImageRotate = 0F
-        Guna2CirclePictureBox2.Location = New Point(110, 233)
-        Guna2CirclePictureBox2.Name = "Guna2CirclePictureBox2"
-        Guna2CirclePictureBox2.ShadowDecoration.CustomizableEdges = CustomizableEdges9
-        Guna2CirclePictureBox2.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
-        Guna2CirclePictureBox2.Size = New Size(31, 24)
-        Guna2CirclePictureBox2.SizeMode = PictureBoxSizeMode.StretchImage
-        Guna2CirclePictureBox2.TabIndex = 40
-        Guna2CirclePictureBox2.TabStop = False
-        ' 
-        ' Guna2CircleButton2
-        ' 
-        Guna2CircleButton2.BackColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
-        Guna2CircleButton2.DisabledState.BorderColor = Color.DarkGray
-        Guna2CircleButton2.DisabledState.CustomBorderColor = Color.DarkGray
-        Guna2CircleButton2.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
-        Guna2CircleButton2.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        Guna2CircleButton2.FillColor = Color.White
-        Guna2CircleButton2.Font = New Font("Segoe UI", 9F)
-        Guna2CircleButton2.ForeColor = Color.White
-        Guna2CircleButton2.Location = New Point(103, 227)
-        Guna2CircleButton2.Name = "Guna2CircleButton2"
-        Guna2CircleButton2.ShadowDecoration.CustomizableEdges = CustomizableEdges10
-        Guna2CircleButton2.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
-        Guna2CircleButton2.Size = New Size(45, 36)
-        Guna2CircleButton2.TabIndex = 41
         ' 
         ' PictureBox9
         ' 
         PictureBox9.BackColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
-        PictureBox9.Location = New Point(52, -8)
+        PictureBox9.ErrorImage = My.Resources.Resources.Jade_Dental_Logo
+        PictureBox9.Image = My.Resources.Resources.Jade_Dental_Logo
+        PictureBox9.Location = New Point(62, 3)
         PictureBox9.Name = "PictureBox9"
-        PictureBox9.Size = New Size(161, 105)
+        PictureBox9.Size = New Size(121, 100)
         PictureBox9.SizeMode = PictureBoxSizeMode.StretchImage
         PictureBox9.TabIndex = 39
         PictureBox9.TabStop = False
-        ' 
-        ' Guna2HtmlLabel22
-        ' 
-        Guna2HtmlLabel22.BackColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
-        Guna2HtmlLabel22.Font = New Font("Poppins", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel22.ForeColor = Color.White
-        Guna2HtmlLabel22.Location = New Point(79, 155)
-        Guna2HtmlLabel22.Name = "Guna2HtmlLabel22"
-        Guna2HtmlLabel22.Size = New Size(97, 32)
-        Guna2HtmlLabel22.TabIndex = 36
-        Guna2HtmlLabel22.Text = "Dashboard"
-        ' 
-        ' Guna2CirclePictureBox1
-        ' 
-        Guna2CirclePictureBox1.BackColor = Color.White
-        Guna2CirclePictureBox1.FillColor = Color.Transparent
-        Guna2CirclePictureBox1.ImageRotate = 0F
-        Guna2CirclePictureBox1.Location = New Point(110, 117)
-        Guna2CirclePictureBox1.Name = "Guna2CirclePictureBox1"
-        Guna2CirclePictureBox1.ShadowDecoration.CustomizableEdges = CustomizableEdges11
-        Guna2CirclePictureBox1.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
-        Guna2CirclePictureBox1.Size = New Size(31, 24)
-        Guna2CirclePictureBox1.SizeMode = PictureBoxSizeMode.StretchImage
-        Guna2CirclePictureBox1.TabIndex = 7
-        Guna2CirclePictureBox1.TabStop = False
-        ' 
-        ' Guna2CircleButton1
-        ' 
-        Guna2CircleButton1.BackColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
-        Guna2CircleButton1.DisabledState.BorderColor = Color.DarkGray
-        Guna2CircleButton1.DisabledState.CustomBorderColor = Color.DarkGray
-        Guna2CircleButton1.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
-        Guna2CircleButton1.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        Guna2CircleButton1.FillColor = Color.White
-        Guna2CircleButton1.Font = New Font("Segoe UI", 9F)
-        Guna2CircleButton1.ForeColor = Color.White
-        Guna2CircleButton1.Location = New Point(103, 111)
-        Guna2CircleButton1.Name = "Guna2CircleButton1"
-        Guna2CircleButton1.ShadowDecoration.CustomizableEdges = CustomizableEdges12
-        Guna2CircleButton1.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
-        Guna2CircleButton1.Size = New Size(45, 36)
-        Guna2CircleButton1.TabIndex = 7
-        ' 
-        ' Guna2Panel1
-        ' 
-        Guna2Panel1.BackColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
-        Guna2Panel1.BorderRadius = 10
-        Guna2Panel1.CustomizableEdges = CustomizableEdges13
-        Guna2Panel1.FillColor = Color.FromArgb(CByte(30), CByte(30), CByte(30))
-        Guna2Panel1.Location = New Point(65, 437)
-        Guna2Panel1.Name = "Guna2Panel1"
-        Guna2Panel1.ShadowDecoration.CustomizableEdges = CustomizableEdges14
-        Guna2Panel1.Size = New Size(125, 118)
-        Guna2Panel1.TabIndex = 39
         ' 
         ' FilterPanel
         ' 
@@ -439,11 +119,11 @@ Partial Class Inventory
         FilterPanel.Controls.Add(Guna2HtmlLabel10)
         FilterPanel.Controls.Add(Guna2ComboBox1)
         FilterPanel.Controls.Add(panelAllFilter)
-        FilterPanel.CustomizableEdges = CustomizableEdges31
+        FilterPanel.CustomizableEdges = CustomizableEdges17
         FilterPanel.FillColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
         FilterPanel.Location = New Point(243, 167)
         FilterPanel.Name = "FilterPanel"
-        FilterPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges32
+        FilterPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges18
         FilterPanel.Size = New Size(428, 756)
         FilterPanel.TabIndex = 8
         ' 
@@ -452,7 +132,7 @@ Partial Class Inventory
         txtSearch.BackColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
         txtSearch.BorderRadius = 10
         txtSearch.BorderThickness = 0
-        txtSearch.CustomizableEdges = CustomizableEdges17
+        txtSearch.CustomizableEdges = CustomizableEdges3
         txtSearch.DefaultText = ""
         txtSearch.DisabledState.BorderColor = Color.FromArgb(CByte(208), CByte(208), CByte(208))
         txtSearch.DisabledState.FillColor = Color.FromArgb(CByte(226), CByte(226), CByte(226))
@@ -468,7 +148,7 @@ Partial Class Inventory
         txtSearch.Name = "txtSearch"
         txtSearch.PlaceholderText = ""
         txtSearch.SelectedText = ""
-        txtSearch.ShadowDecoration.CustomizableEdges = CustomizableEdges18
+        txtSearch.ShadowDecoration.CustomizableEdges = CustomizableEdges4
         txtSearch.Size = New Size(396, 46)
         txtSearch.TabIndex = 79
         ' 
@@ -488,7 +168,7 @@ Partial Class Inventory
         txtFilterPrice.BackColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
         txtFilterPrice.BorderRadius = 10
         txtFilterPrice.BorderThickness = 0
-        txtFilterPrice.CustomizableEdges = CustomizableEdges19
+        txtFilterPrice.CustomizableEdges = CustomizableEdges5
         txtFilterPrice.DefaultText = ""
         txtFilterPrice.DisabledState.BorderColor = Color.FromArgb(CByte(208), CByte(208), CByte(208))
         txtFilterPrice.DisabledState.FillColor = Color.FromArgb(CByte(226), CByte(226), CByte(226))
@@ -504,7 +184,7 @@ Partial Class Inventory
         txtFilterPrice.Name = "txtFilterPrice"
         txtFilterPrice.PlaceholderText = ""
         txtFilterPrice.SelectedText = ""
-        txtFilterPrice.ShadowDecoration.CustomizableEdges = CustomizableEdges20
+        txtFilterPrice.ShadowDecoration.CustomizableEdges = CustomizableEdges6
         txtFilterPrice.Size = New Size(396, 46)
         txtFilterPrice.TabIndex = 77
         ' 
@@ -513,7 +193,7 @@ Partial Class Inventory
         txtFilterQuantity.BackColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
         txtFilterQuantity.BorderRadius = 10
         txtFilterQuantity.BorderThickness = 0
-        txtFilterQuantity.CustomizableEdges = CustomizableEdges21
+        txtFilterQuantity.CustomizableEdges = CustomizableEdges7
         txtFilterQuantity.DefaultText = ""
         txtFilterQuantity.DisabledState.BorderColor = Color.FromArgb(CByte(208), CByte(208), CByte(208))
         txtFilterQuantity.DisabledState.FillColor = Color.FromArgb(CByte(226), CByte(226), CByte(226))
@@ -529,14 +209,14 @@ Partial Class Inventory
         txtFilterQuantity.Name = "txtFilterQuantity"
         txtFilterQuantity.PlaceholderText = ""
         txtFilterQuantity.SelectedText = ""
-        txtFilterQuantity.ShadowDecoration.CustomizableEdges = CustomizableEdges22
+        txtFilterQuantity.ShadowDecoration.CustomizableEdges = CustomizableEdges8
         txtFilterQuantity.Size = New Size(396, 46)
         txtFilterQuantity.TabIndex = 76
         ' 
         ' btnResetFilter
         ' 
         btnResetFilter.BorderRadius = 10
-        btnResetFilter.CustomizableEdges = CustomizableEdges23
+        btnResetFilter.CustomizableEdges = CustomizableEdges9
         btnResetFilter.DisabledState.BorderColor = Color.DarkGray
         btnResetFilter.DisabledState.CustomBorderColor = Color.DarkGray
         btnResetFilter.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
@@ -546,7 +226,7 @@ Partial Class Inventory
         btnResetFilter.ForeColor = Color.Black
         btnResetFilter.Location = New Point(73, 560)
         btnResetFilter.Name = "btnResetFilter"
-        btnResetFilter.ShadowDecoration.CustomizableEdges = CustomizableEdges24
+        btnResetFilter.ShadowDecoration.CustomizableEdges = CustomizableEdges10
         btnResetFilter.Size = New Size(270, 57)
         btnResetFilter.TabIndex = 53
         btnResetFilter.Text = "Reset Filters"
@@ -589,7 +269,7 @@ Partial Class Inventory
         StockCmbBox.BackColor = Color.Transparent
         StockCmbBox.BorderRadius = 10
         StockCmbBox.BorderThickness = 0
-        StockCmbBox.CustomizableEdges = CustomizableEdges25
+        StockCmbBox.CustomizableEdges = CustomizableEdges11
         StockCmbBox.DrawMode = DrawMode.OwnerDrawFixed
         StockCmbBox.DropDownStyle = ComboBoxStyle.DropDownList
         StockCmbBox.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
@@ -601,7 +281,7 @@ Partial Class Inventory
         StockCmbBox.Items.AddRange(New Object() {"All", "Active", "Out of Stock", "Low on Stock"})
         StockCmbBox.Location = New Point(23, 296)
         StockCmbBox.Name = "StockCmbBox"
-        StockCmbBox.ShadowDecoration.CustomizableEdges = CustomizableEdges26
+        StockCmbBox.ShadowDecoration.CustomizableEdges = CustomizableEdges12
         StockCmbBox.Size = New Size(396, 46)
         StockCmbBox.TabIndex = 54
         ' 
@@ -621,7 +301,7 @@ Partial Class Inventory
         Guna2ComboBox1.BackColor = Color.Transparent
         Guna2ComboBox1.BorderRadius = 10
         Guna2ComboBox1.BorderThickness = 0
-        Guna2ComboBox1.CustomizableEdges = CustomizableEdges27
+        Guna2ComboBox1.CustomizableEdges = CustomizableEdges13
         Guna2ComboBox1.DrawMode = DrawMode.OwnerDrawFixed
         Guna2ComboBox1.DropDownStyle = ComboBoxStyle.DropDownList
         Guna2ComboBox1.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
@@ -632,7 +312,7 @@ Partial Class Inventory
         Guna2ComboBox1.ItemHeight = 40
         Guna2ComboBox1.Location = New Point(23, 206)
         Guna2ComboBox1.Name = "Guna2ComboBox1"
-        Guna2ComboBox1.ShadowDecoration.CustomizableEdges = CustomizableEdges28
+        Guna2ComboBox1.ShadowDecoration.CustomizableEdges = CustomizableEdges14
         Guna2ComboBox1.Size = New Size(396, 46)
         Guna2ComboBox1.TabIndex = 39
         ' 
@@ -642,11 +322,11 @@ Partial Class Inventory
         panelAllFilter.BorderRadius = 10
         panelAllFilter.Controls.Add(Guna2HtmlLabel4)
         panelAllFilter.Controls.Add(Guna2HtmlLabel21)
-        panelAllFilter.CustomizableEdges = CustomizableEdges29
+        panelAllFilter.CustomizableEdges = CustomizableEdges15
         panelAllFilter.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
         panelAllFilter.Location = New Point(23, 20)
         panelAllFilter.Name = "panelAllFilter"
-        panelAllFilter.ShadowDecoration.CustomizableEdges = CustomizableEdges30
+        panelAllFilter.ShadowDecoration.CustomizableEdges = CustomizableEdges16
         panelAllFilter.Size = New Size(195, 50)
         panelAllFilter.TabIndex = 36
         ' 
@@ -676,17 +356,17 @@ Partial Class Inventory
         ' 
         stockPanel.AutoScroll = True
         stockPanel.BorderRadius = 10
-        stockPanel.CustomizableEdges = CustomizableEdges33
+        stockPanel.CustomizableEdges = CustomizableEdges19
         stockPanel.Location = New Point(686, 157)
         stockPanel.Name = "stockPanel"
-        stockPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges34
+        stockPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges20
         stockPanel.Size = New Size(920, 696)
         stockPanel.TabIndex = 61
         ' 
         ' Guna2Button1
         ' 
         Guna2Button1.BorderRadius = 7
-        Guna2Button1.CustomizableEdges = CustomizableEdges35
+        Guna2Button1.CustomizableEdges = CustomizableEdges21
         Guna2Button1.DisabledState.BorderColor = Color.DarkGray
         Guna2Button1.DisabledState.CustomBorderColor = Color.DarkGray
         Guna2Button1.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
@@ -696,7 +376,7 @@ Partial Class Inventory
         Guna2Button1.ForeColor = Color.Black
         Guna2Button1.Location = New Point(1265, 105)
         Guna2Button1.Name = "Guna2Button1"
-        Guna2Button1.ShadowDecoration.CustomizableEdges = CustomizableEdges36
+        Guna2Button1.ShadowDecoration.CustomizableEdges = CustomizableEdges22
         Guna2Button1.Size = New Size(186, 41)
         Guna2Button1.TabIndex = 60
         Guna2Button1.Text = "Add New Product"
@@ -704,7 +384,7 @@ Partial Class Inventory
         ' btnManagePromotions
         ' 
         btnManagePromotions.BorderRadius = 7
-        btnManagePromotions.CustomizableEdges = CustomizableEdges37
+        btnManagePromotions.CustomizableEdges = CustomizableEdges23
         btnManagePromotions.DisabledState.BorderColor = Color.DarkGray
         btnManagePromotions.DisabledState.CustomBorderColor = Color.DarkGray
         btnManagePromotions.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
@@ -714,14 +394,14 @@ Partial Class Inventory
         btnManagePromotions.ForeColor = Color.Black
         btnManagePromotions.Location = New Point(1011, 105)
         btnManagePromotions.Name = "btnManagePromotions"
-        btnManagePromotions.ShadowDecoration.CustomizableEdges = CustomizableEdges38
+        btnManagePromotions.ShadowDecoration.CustomizableEdges = CustomizableEdges24
         btnManagePromotions.Size = New Size(202, 41)
         btnManagePromotions.TabIndex = 61
         ' 
         ' Exportbtn
         ' 
         Exportbtn.BorderRadius = 10
-        Exportbtn.CustomizableEdges = CustomizableEdges39
+        Exportbtn.CustomizableEdges = CustomizableEdges25
         Exportbtn.DisabledState.BorderColor = Color.DarkGray
         Exportbtn.DisabledState.CustomBorderColor = Color.DarkGray
         Exportbtn.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
@@ -731,7 +411,7 @@ Partial Class Inventory
         Exportbtn.ForeColor = Color.Black
         Exportbtn.Location = New Point(1490, 105)
         Exportbtn.Name = "Exportbtn"
-        Exportbtn.ShadowDecoration.CustomizableEdges = CustomizableEdges40
+        Exportbtn.ShadowDecoration.CustomizableEdges = CustomizableEdges26
         Exportbtn.Size = New Size(86, 40)
         Exportbtn.TabIndex = 67
         Exportbtn.Text = "Export"
@@ -752,7 +432,7 @@ Partial Class Inventory
         Guna2CirclePictureBox6.ImageRotate = 0F
         Guna2CirclePictureBox6.Location = New Point(1440, 20)
         Guna2CirclePictureBox6.Name = "Guna2CirclePictureBox6"
-        Guna2CirclePictureBox6.ShadowDecoration.CustomizableEdges = CustomizableEdges41
+        Guna2CirclePictureBox6.ShadowDecoration.CustomizableEdges = CustomizableEdges27
         Guna2CirclePictureBox6.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
         Guna2CirclePictureBox6.Size = New Size(31, 28)
         Guna2CirclePictureBox6.TabIndex = 73
@@ -788,14 +468,7 @@ Partial Class Inventory
         StartPosition = FormStartPosition.CenterScreen
         Text = "Inventory"
         DashboardPanel.ResumeLayout(False)
-        DashboardPanel.PerformLayout()
-        CType(Guna2CirclePictureBox5, ComponentModel.ISupportInitialize).EndInit()
-        CType(toOrderFormIcon, ComponentModel.ISupportInitialize).EndInit()
-        CType(Guna2CirclePictureBox3, ComponentModel.ISupportInitialize).EndInit()
-        CType(Guna2CirclePictureBox4, ComponentModel.ISupportInitialize).EndInit()
-        CType(Guna2CirclePictureBox2, ComponentModel.ISupportInitialize).EndInit()
         CType(PictureBox9, ComponentModel.ISupportInitialize).EndInit()
-        CType(Guna2CirclePictureBox1, ComponentModel.ISupportInitialize).EndInit()
         FilterPanel.ResumeLayout(False)
         FilterPanel.PerformLayout()
         panelAllFilter.ResumeLayout(False)
@@ -806,23 +479,7 @@ Partial Class Inventory
     End Sub
 
     Friend WithEvents DashboardPanel As Guna.UI2.WinForms.Guna2Panel
-    Friend WithEvents toOrderFormLbl As Guna.UI2.WinForms.Guna2HtmlLabel
-    Friend WithEvents toOrderFormIcon As Guna.UI2.WinForms.Guna2CirclePictureBox
-    Friend WithEvents btnToOrderForm As Guna.UI2.WinForms.Guna2CircleButton
-    Friend WithEvents Guna2HtmlLabel24 As Guna.UI2.WinForms.Guna2HtmlLabel
-    Friend WithEvents Guna2CirclePictureBox3 As Guna.UI2.WinForms.Guna2CirclePictureBox
-    Friend WithEvents Guna2CircleButton3 As Guna.UI2.WinForms.Guna2CircleButton
-    Friend WithEvents Guna2HtmlLabel25 As Guna.UI2.WinForms.Guna2HtmlLabel
-    Friend WithEvents Guna2CirclePictureBox4 As Guna.UI2.WinForms.Guna2CirclePictureBox
-    Friend WithEvents Guna2CircleButton4 As Guna.UI2.WinForms.Guna2CircleButton
-    Friend WithEvents Guna2HtmlLabel23 As Guna.UI2.WinForms.Guna2HtmlLabel
-    Friend WithEvents Guna2CirclePictureBox2 As Guna.UI2.WinForms.Guna2CirclePictureBox
-    Friend WithEvents Guna2CircleButton2 As Guna.UI2.WinForms.Guna2CircleButton
     Friend WithEvents PictureBox9 As PictureBox
-    Friend WithEvents Guna2HtmlLabel22 As Guna.UI2.WinForms.Guna2HtmlLabel
-    Friend WithEvents Guna2CirclePictureBox1 As Guna.UI2.WinForms.Guna2CirclePictureBox
-    Friend WithEvents Guna2CircleButton1 As Guna.UI2.WinForms.Guna2CircleButton
-    Friend WithEvents Guna2Panel1 As Guna.UI2.WinForms.Guna2Panel
     Friend WithEvents FilterPanel As Guna.UI2.WinForms.Guna2Panel
     Friend WithEvents Guna2Panel4 As Guna.UI2.WinForms.Guna2Panel
     Friend WithEvents Guna2HtmlLabel7 As Guna.UI2.WinForms.Guna2HtmlLabel
@@ -848,9 +505,6 @@ Partial Class Inventory
     Friend WithEvents txtFilterQuantity As Guna.UI2.WinForms.Guna2TextBox
     Friend WithEvents btnManagePromotions As Guna.UI2.WinForms.Guna2Button
     Friend WithEvents Exportbtn As Guna.UI2.WinForms.Guna2Button
-    Friend WithEvents Guna2HtmlLabel13 As Guna.UI2.WinForms.Guna2HtmlLabel
-    Friend WithEvents Guna2CirclePictureBox5 As Guna.UI2.WinForms.Guna2CirclePictureBox
-    Friend WithEvents Guna2CircleButton5 As Guna.UI2.WinForms.Guna2CircleButton
     Friend WithEvents lblUsername As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents Guna2CirclePictureBox6 As Guna.UI2.WinForms.Guna2CirclePictureBox
     Friend WithEvents txtSearch As Guna.UI2.WinForms.Guna2TextBox
