@@ -16,7 +16,7 @@ Public Class IdleTimeoutManager
 
     ' Timer and settings
     Private WithEvents idleTimer As Timer
-    Private ReadOnly IDLE_TIMEOUT_SECONDS As Integer = 30 ' 30 seconds for testing
+    Private ReadOnly IDLE_TIMEOUT_SECONDS As Integer = 5 ' 30 seconds for testing
     Private isTimerEnabled As Boolean = True
     Private currentForm As Form
     Private overlay As Panel
@@ -31,22 +31,73 @@ Public Class IdleTimeoutManager
 
     ' Start monitoring idle time for a form
     Public Sub StartMonitoring(form As Form)
-        currentForm = form
-        ResetIdleTimer()
-        AttachEventHandlers(form)
+        Try
+            Console.WriteLine($"Starting monitoring for form: {form?.Name}")
+
+            ' Stop any existing monitoring first
+            If currentForm IsNot Nothing AndAlso currentForm IsNot form Then
+                Console.WriteLine($"Stopping previous monitoring for: {currentForm?.Name}")
+                StopMonitoring(currentForm)
+            End If
+
+            ' Set new current form
+            currentForm = form
+
+            ' Ensure timer is enabled and properly configured
+            isTimerEnabled = True
+
+            ' Reset and start timer
+            ResetIdleTimer()
+
+            ' Attach event handlers to form and all controls
+            AttachEventHandlers(form)
+
+            Console.WriteLine($"Monitoring started successfully for {form?.Name}")
+
+        Catch ex As Exception
+            Console.WriteLine($"Error starting monitoring: {ex.Message}")
+        End Try
     End Sub
 
     ' Stop monitoring when form closes
     Public Sub StopMonitoring(form As Form)
-        If currentForm Is form Then
-            idleTimer.Stop()
-            DetachEventHandlers(form)
-            If overlay IsNot Nothing AndAlso overlay.Parent IsNot Nothing Then
-                overlay.Parent.Controls.Remove(overlay)
-                overlay.Dispose()
-                overlay = Nothing
+        Try
+            If currentForm Is form Then
+                Console.WriteLine($"Stopping monitoring for form: {form?.Name}")
+
+                ' Stop the timer
+                idleTimer.Stop()
+
+                ' Detach event handlers if form is not disposed
+                If form IsNot Nothing AndAlso Not form.IsDisposed Then
+                    DetachEventHandlers(form)
+                End If
+
+                ' Remove overlay if it exists
+                If overlay IsNot Nothing AndAlso overlay.Parent IsNot Nothing Then
+                    overlay.Parent.Controls.Remove(overlay)
+                    overlay.Dispose()
+                    overlay = Nothing
+                End If
+
+                ' Close password dialog if it's open
+                If passwordDialog IsNot Nothing AndAlso Not passwordDialog.IsDisposed Then
+                    passwordDialog.Close()
+                    passwordDialog = Nothing
+                End If
+
+                ' Clear current form reference
+                currentForm = Nothing
+
+                Console.WriteLine("Monitoring stopped successfully")
             End If
-        End If
+        Catch ex As Exception
+            Console.WriteLine($"Error stopping monitoring: {ex.Message}")
+            ' Force cleanup even on error
+            currentForm = Nothing
+            overlay = Nothing
+            passwordDialog = Nothing
+        End Try
     End Sub
 
     ' Reset the idle timer (call this on any user activity)
@@ -103,25 +154,46 @@ Public Class IdleTimeoutManager
 
     ' Handle idle timeout
     Private Sub OnIdleTimeout(sender As Object, e As EventArgs) Handles idleTimer.Tick
-        If currentForm IsNot Nothing AndAlso Not currentForm.IsDisposed Then
-            idleTimer.Stop()
-            ShowPasswordDialog()
-        End If
+        Try
+            ' Check if we have a valid current form and user session
+            If currentForm IsNot Nothing AndAlso Not currentForm.IsDisposed AndAlso
+               Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+                idleTimer.Stop()
+                ShowPasswordDialog()
+            Else
+                ' Invalid state - stop the timer and reset
+                Console.WriteLine("Invalid state detected in OnIdleTimeout - resetting manager")
+                DisableTimer()
+                ResetManagerState()
+            End If
+        Catch ex As Exception
+            Console.WriteLine($"Error in OnIdleTimeout: {ex.Message}")
+            ' On error, disable the timer to prevent further issues
+            DisableTimer()
+        End Try
     End Sub
 
     ' Show password re-authentication dialog
     Private Sub ShowPasswordDialog()
         Try
+            ' Additional validation before showing dialog
+            If currentForm Is Nothing OrElse currentForm.IsDisposed OrElse
+               String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+                Console.WriteLine("Cannot show password dialog - invalid state")
+                ResetManagerState()
+                Return
+            End If
+
             ' Disable timer while showing dialog
             DisableTimer()
 
             ' Create overlay to block interaction with main form
             CreateOverlay()
 
-            ' Create password dialog
+            ' Create password dialog - Made wider to prevent text cutoff
             passwordDialog = New Form()
             passwordDialog.Text = "Session Timeout"
-            passwordDialog.Size = New Size(400, 300)
+            passwordDialog.Size = New Size(480, 320) ' Increased from 400x300 to 480x320
             passwordDialog.StartPosition = FormStartPosition.CenterParent
             passwordDialog.FormBorderStyle = FormBorderStyle.FixedDialog
             passwordDialog.MaximizeBox = False
@@ -131,7 +203,7 @@ Public Class IdleTimeoutManager
 
             ' Title label
             Dim lblTitle As New Label()
-            lblTitle.Text = "🔒 Session Timeout"
+            lblTitle.Text = "?? Session Timeout"
             lblTitle.Font = New Font("Poppins", 16, FontStyle.Bold)
             lblTitle.ForeColor = System.Drawing.Color.FromArgb(254, 191, 16) ' Golden Yellow
             lblTitle.BackColor = System.Drawing.Color.Transparent
@@ -139,15 +211,15 @@ Public Class IdleTimeoutManager
             lblTitle.Location = New Point(0, 30)
             passwordDialog.Controls.Add(lblTitle)
 
-            ' Instruction label
+            ' Instruction label - Increased width for better text layout
             Dim lblInstruction As New Label()
             lblInstruction.Text = "Your session has timed out due to inactivity." & vbCrLf & "Please enter your password to continue."
             lblInstruction.Font = New Font("Poppins", 10, FontStyle.Regular)
             lblInstruction.ForeColor = System.Drawing.Color.White
             lblInstruction.BackColor = System.Drawing.Color.Transparent
             lblInstruction.AutoSize = False
-            lblInstruction.Size = New Size(350, 50)
-            lblInstruction.Location = New Point(25, 80)
+            lblInstruction.Size = New Size(420, 50) ' Increased from 350 to 420
+            lblInstruction.Location = New Point(30, 80) ' Adjusted left margin slightly
             lblInstruction.TextAlign = ContentAlignment.MiddleCenter
             passwordDialog.Controls.Add(lblInstruction)
 
@@ -158,21 +230,21 @@ Public Class IdleTimeoutManager
             lblUsername.ForeColor = System.Drawing.Color.FromArgb(190, 154, 48) ' Rich Olive
             lblUsername.BackColor = System.Drawing.Color.Transparent
             lblUsername.AutoSize = True
-            lblUsername.Location = New Point(25, 140)
+            lblUsername.Location = New Point(30, 140) ' Adjusted left margin
             passwordDialog.Controls.Add(lblUsername)
 
-            ' Password textbox
+            ' Password textbox - Made wider to match form width
             Dim txtPassword As New TextBox()
             txtPassword.PasswordChar = "•"c
             txtPassword.Font = New Font("Poppins", 12, FontStyle.Regular)
             txtPassword.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
             txtPassword.ForeColor = System.Drawing.Color.White
-            txtPassword.Location = New Point(25, 170)
-            txtPassword.Size = New Size(330, 35)
+            txtPassword.Location = New Point(30, 170)
+            txtPassword.Size = New Size(420, 35) ' Increased from 330 to 420
             txtPassword.BorderStyle = BorderStyle.FixedSingle
             passwordDialog.Controls.Add(txtPassword)
 
-            ' Continue button
+            ' Continue button - Better positioning with more space
             Dim btnContinue As New Button()
             btnContinue.Text = "Continue"
             btnContinue.Font = New Font("Poppins", 10, FontStyle.Bold)
@@ -180,11 +252,11 @@ Public Class IdleTimeoutManager
             btnContinue.ForeColor = System.Drawing.Color.Black
             btnContinue.FlatStyle = FlatStyle.Flat
             btnContinue.FlatAppearance.BorderSize = 0
-            btnContinue.Size = New Size(100, 35)
-            btnContinue.Location = New Point(175, 220)
+            btnContinue.Size = New Size(120, 35) ' Increased width from 100 to 120
+            btnContinue.Location = New Point(200, 230) ' Repositioned for better centering
             btnContinue.Cursor = Cursors.Hand
 
-            ' Logout button
+            ' Logout button - Better positioning with more space
             Dim btnLogout As New Button()
             btnLogout.Text = "Logout"
             btnLogout.Font = New Font("Poppins", 10, FontStyle.Regular)
@@ -192,16 +264,16 @@ Public Class IdleTimeoutManager
             btnLogout.ForeColor = System.Drawing.Color.White
             btnLogout.FlatStyle = FlatStyle.Flat
             btnLogout.FlatAppearance.BorderSize = 0
-            btnLogout.Size = New Size(100, 35)
-            btnLogout.Location = New Point(285, 220)
+            btnLogout.Size = New Size(120, 35) ' Increased width from 100 to 120
+            btnLogout.Location = New Point(330, 230) ' Repositioned for better spacing
             btnLogout.Cursor = Cursors.Hand
 
             passwordDialog.Controls.AddRange({btnContinue, btnLogout})
 
             ' Center title after form is created
             AddHandler passwordDialog.Load, Sub()
-                                                 lblTitle.Location = New Point((passwordDialog.Width - lblTitle.Width) / 2, 30)
-                                             End Sub
+                                                lblTitle.Location = New Point((passwordDialog.Width - lblTitle.Width) / 2, 30)
+                                            End Sub
 
             ' Event handlers
             AddHandler btnContinue.Click, Sub()
@@ -224,8 +296,8 @@ Public Class IdleTimeoutManager
 
         Catch ex As Exception
             Console.WriteLine($"Error showing password dialog: {ex.Message}")
-            ' If there's an error, just enable the timer again
-            EnableTimer()
+            ' If there's an error, reset the manager state
+            ResetManagerState()
         End Try
     End Sub
 
@@ -307,24 +379,166 @@ Public Class IdleTimeoutManager
                 Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Session Timeout Logout", "User logged out due to idle timeout")
             End If
 
-            ' Close the dialog
-            dialog.Close()
+            ' CRITICAL: Store reference to current form before clearing it
+            Dim formToClose As Form = currentForm
+
+            ' Stop monitoring completely before logout
+            DisableTimer()
+
+            ' Clear monitoring but keep the form reference for closing
+            If currentForm IsNot Nothing Then
+                StopMonitoring(currentForm) ' This will set currentForm = Nothing
+            End If
+
+            ' Close the timeout dialog first
+            If dialog IsNot Nothing AndAlso Not dialog.IsDisposed Then
+                dialog.Close()
+            End If
             RemoveOverlay()
 
             ' Clear user session
             frmLoginvb.LogoutUser()
 
-            ' Close current form and show login
-            If currentForm IsNot Nothing AndAlso Not currentForm.IsDisposed Then
-                currentForm.Hide()
+            ' Now close the actual form that was being monitored - SET NAVIGATION FLAG
+            If formToClose IsNot Nothing AndAlso Not formToClose.IsDisposed Then
+                Console.WriteLine($"Closing monitored form: {formToClose.Name}")
+
+                ' Check if the form has an isNavigating property (like Dashboard)
+                Try
+                    Dim isNavigatingField = formToClose.GetType().GetField("isNavigating",
+                        Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.Instance)
+                    If isNavigatingField IsNot Nothing Then
+                        isNavigatingField.SetValue(formToClose, True)
+                        Console.WriteLine("Set isNavigating flag to True")
+                    End If
+                Catch
+                    ' If field doesn't exist, continue without error
+                End Try
+
+                formToClose.Close() ' Close instead of Hide to properly dispose
             End If
 
-            Dim loginForm As New frmLoginvb()
-            loginForm.Show()
+            ' Reset the singleton instance state completely
+            ResetManagerState()
+
+            ' Show login form
+            Try
+                Dim loginForm As New frmLoginvb()
+                loginForm.Show()
+            Catch loginEx As Exception
+                Console.WriteLine($"Error creating login form: {loginEx.Message}")
+                ' If we can't show login form, try to exit gracefully
+                MessageBox.Show("Session ended. Please restart the application.", "Logout Complete",
+                               MessageBoxButtons.OK, MessageBoxIcon.Information)
+                Application.Exit()
+            End Try
 
         Catch ex As Exception
             Console.WriteLine($"Error during logout: {ex.Message}")
-            Application.Exit()
+
+            ' Don't exit immediately - try to recover
+            Try
+                ' Clean up what we can
+                DisableTimer()
+                ResetManagerState()
+
+                ' Close any open dialogs
+                If dialog IsNot Nothing AndAlso Not dialog.IsDisposed Then
+                    dialog.Close()
+                End If
+
+                ' Clear session
+                frmLoginvb.LogoutUser()
+
+                ' Try to show login form
+                Dim loginForm As New frmLoginvb()
+                loginForm.Show()
+
+                ' Show a user-friendly message
+                MessageBox.Show("Your session has been ended due to a timeout. Please login again.",
+                               "Session Timeout", MessageBoxButtons.OK, MessageBoxIcon.Information)
+
+            Catch recoveryEx As Exception
+                Console.WriteLine($"Error during logout recovery: {recoveryEx.Message}")
+                ' Only exit as last resort
+                MessageBox.Show("Session ended due to an error. The application will now close.",
+                               "Session Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                Application.Exit()
+            End Try
+        End Try
+    End Sub
+
+    ' Add a new method to reset the manager state completely
+    Private Sub ResetManagerState()
+        Try
+            ' Stop and dispose timer
+            If idleTimer IsNot Nothing Then
+                idleTimer.Stop()
+                RemoveHandler idleTimer.Tick, AddressOf OnIdleTimeout
+                idleTimer.Dispose()
+                idleTimer = Nothing
+            End If
+
+            ' Clear form references
+            currentForm = Nothing
+
+            ' Remove overlay if exists
+            RemoveOverlay()
+
+            ' Close password dialog if open
+            If passwordDialog IsNot Nothing AndAlso Not passwordDialog.IsDisposed Then
+                passwordDialog.Close()
+                passwordDialog = Nothing
+            End If
+
+            ' Reset state variables
+            isTimerEnabled = True
+
+            ' Recreate the timer for next login session
+            idleTimer = New Timer()
+            idleTimer.Interval = IDLE_TIMEOUT_SECONDS * 1000
+            AddHandler idleTimer.Tick, AddressOf OnIdleTimeout
+
+            Console.WriteLine("IdleTimeoutManager state reset successfully")
+
+        Catch ex As Exception
+            Console.WriteLine($"Error resetting manager state: {ex.Message}")
+        End Try
+    End Sub
+
+    ' Also add a public method to reset from external calls
+    Public Sub ResetManager()
+        Try
+            Console.WriteLine("Public ResetManager called")
+
+            ' Complete reset of the singleton instance
+            DisableTimer()
+
+            ' Clear all references
+            currentForm = Nothing
+            overlay = Nothing
+            passwordDialog = Nothing
+
+            ' Reset timer state
+            isTimerEnabled = True
+
+            ' Dispose and recreate timer
+            If idleTimer IsNot Nothing Then
+                idleTimer.Stop()
+                RemoveHandler idleTimer.Tick, AddressOf OnIdleTimeout
+                idleTimer.Dispose()
+                idleTimer = Nothing
+            End If
+
+            ' Create fresh timer
+            idleTimer = New Timer()
+            idleTimer.Interval = IDLE_TIMEOUT_SECONDS * 1000
+            AddHandler idleTimer.Tick, AddressOf OnIdleTimeout
+
+            Console.WriteLine("IdleTimeoutManager completely reset for new session")
+
+        Catch ex As Exception
+            Console.WriteLine($"Error in public ResetManager: {ex.Message}")
         End Try
     End Sub
 
