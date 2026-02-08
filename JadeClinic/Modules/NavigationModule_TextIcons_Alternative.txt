@@ -1,0 +1,34 @@
+' ALTERNATIVE: Text-Based Icons (No Emojis)
+' If you prefer to keep Poppins font, you can replace the emojis with text symbols
+
+' Replace these emoji navigation items:
+' New NavigationItem("?? Dashboard", "??", GetType(Dashboard), UserRole.Staff),
+' New NavigationItem("?? POS / Sales", "??", GetType(Sales), UserRole.Staff),
+' New NavigationItem("?? Inventory", "??", GetType(Inventory), UserRole.Manager),
+' New NavigationItem("?? Sales Records", "??", GetType(Sales), UserRole.Manager),
+' New NavigationItem("?? Staff Management", "??", GetType(Staff), UserRole.Manager),
+' New NavigationItem("?? Inventory Logs", "??", GetType(InventoryLog), UserRole.Manager),
+' New NavigationItem("?? Audit Logs", "??", Nothing, UserRole.Admin),
+' New NavigationItem("?? System Settings", "??", Nothing, UserRole.Admin, True)
+
+' With these text-based alternatives:
+' New NavigationItem("? Dashboard", "?", GetType(Dashboard), UserRole.Staff),
+' New NavigationItem("$ POS / Sales", "$", GetType(Sales), UserRole.Staff),
+' New NavigationItem("? Inventory", "?", GetType(Inventory), UserRole.Manager),
+' New NavigationItem("? Sales Records", "?", GetType(Sales), UserRole.Manager),
+' New NavigationItem("? Staff Management", "?", GetType(Staff), UserRole.Manager),
+' New NavigationItem("? Inventory Logs", "?", GetType(InventoryLog), UserRole.Manager),
+' New NavigationItem("? Audit Logs", "?", Nothing, UserRole.Admin),
+' New NavigationItem("? System Settings", "?", Nothing, UserRole.Admin, True)
+
+' And also change logout button from:
+' btn.Text = "?? Logout"
+' To:
+' btn.Text = "? Logout"
+
+' And role label from:
+' roleLabel.Text = $"?? {roleText}"
+' To:
+' roleLabel.Text = $"• {roleText}"
+
+' These symbols are supported by most fonts including Poppins.

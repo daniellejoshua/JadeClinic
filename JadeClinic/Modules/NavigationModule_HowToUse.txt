@@ -1,0 +1,102 @@
+' HOW TO USE THE MODULAR NAVIGATION SYSTEM
+' ==========================================
+
+' 1. Add this import to the top of any form:
+' Imports [YourProjectName] ' Replace with your actual project name if needed
+
+' 2. In your form, ensure you have a Guna2Panel for navigation (e.g., "NavigationPanel")
+
+' 3. In your Form_Load event, add this single line:
+' NavigationModule.CreateNavigationMenu(Me, NavigationPanel, LogoControl, "CurrentPageName")
+
+' EXAMPLE IMPLEMENTATION:
+' ======================
+
+Public Class ExampleForm
+    Private isNavigating As Boolean = False ' Required for proper form closing
+    
+    Private Sub ExampleForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        ' Your existing form initialization code...
+        
+        ' Add navigation menu - ONE LINE ONLY!
+        NavigationModule.CreateNavigationMenu(Me, NavigationPanel, PictureBox1, "Inventory")
+        '                                      |    |              |            |
+        '                                      |    |              |            ??? Current page name
+        '                                      |    |              ??? Logo control (optional, can be Nothing)
+        '                                      |    ??? Navigation panel (Guna2Panel)
+        '                                      ??? Current form reference
+        
+        ' Continue with your other initialization...
+    End Sub
+    
+    ' IMPORTANT: Add this FormClosing handler to prevent exit confirmation when navigating
+    Private Sub ExampleForm_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
+        If isNavigating Then
+            Return ' Don't show exit confirmation when navigating programmatically
+        End If
+        
+        ' Your existing form closing logic here...
+    End Sub
+End Class
+
+' ROLE-BASED ACCESS:
+' ==================
+' The navigation automatically shows/hides menu items based on user role:
+' 
+' STAFF (Level 1):
+'   - ?? Dashboard
+'   - ?? POS / Sales
+'
+' MANAGER (Level 2):
+'   - ?? Dashboard  
+'   - ?? POS / Sales
+'   - ?? Inventory
+'   - ?? Sales Records
+'   - ?? Staff Management  
+'   - ?? Inventory Logs
+'
+' ADMIN (Level 3):
+'   - All Manager permissions PLUS:
+'   - ?? Audit Logs
+'   - ?? System Settings
+'
+' PERMISSION CHECKING:
+' ===================
+' You can also check permissions in your code:
+'
+' If NavigationModule.HasPermission(NavigationModule.UserRole.Manager) Then
+'     ' User has Manager or Admin permissions
+'     EnableManagerFeatures()
+' End If
+'
+' Dim roleText As String = NavigationModule.GetRoleDisplayText()
+' MessageBox.Show($"Current user role: {roleText}")
+
+' COLOR SCHEME:
+' =============
+' The navigation uses the JadeClinic color palette automatically:
+' - Golden Yellow (#FECF10) for active buttons
+' - Dark Slate (#2B2F32) for navigation background  
+' - Deep Charcoal (#1A1D1F) for main backgrounds
+' - And all other colors from the palette
+
+' CUSTOMIZATION:
+' ==============
+' To add new navigation items, edit the NavigationItems array in NavigationModule.vb:
+'
+' New NavigationItem("?? New Feature", "??", GetType(NewFeatureForm), UserRole.Manager)
+'                     |                 |     |                        |
+'                     |                 |     |                        ??? Minimum role required
+'                     |                 |     ??? Form type to open
+'                     |                 ??? Icon (for future use)
+'                     ??? Display text
+
+' BENEFITS:
+' =========
+' ? Consistent navigation across all forms
+' ? Role-based access control built-in
+' ? Professional JadeClinic styling
+' ? Single line of code to implement
+' ? Automatic user info display
+' ? Centralized navigation logic
+' ? Easy to maintain and update

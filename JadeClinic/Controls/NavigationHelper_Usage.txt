@@ -1,0 +1,111 @@
+' ================================
+' NAVIGATIONHELPER - USAGE GUIDE
+' ================================
+
+' SIMPLE IMPLEMENTATION - ONE LINE PER FORM:
+' ==========================================
+
+' 1. In ANY form's Load event, just add this single line:
+NavigationHelper.CreateNavigation(Me, YourNavigationPanel, YourLogo, "PageName")
+
+' EXAMPLES FOR DIFFERENT FORMS:
+' ==============================
+
+' DASHBOARD FORM:
+Private Sub Dashboard_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+    ' Your existing initialization code...
+    
+    NavigationHelper.CreateNavigation(Me, DashboardPanel, PictureBox9, "Dashboard")
+    
+    ' Continue with other initialization...
+End Sub
+
+' INVENTORY FORM:
+Private Sub Inventory_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+    NavigationHelper.CreateNavigation(Me, NavigationPanel, LogoPictureBox, "Inventory")
+    ' Other code...
+End Sub
+
+' SALES FORM:
+Private Sub Sales_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+    NavigationHelper.CreateNavigation(Me, SidePanel, Nothing, "POS")
+    ' Note: Logo can be Nothing if you don't have one
+End Sub
+
+' STAFF FORM:
+Private Sub Staff_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+    NavigationHelper.CreateNavigation(Me, NavPanel, CompanyLogo, "Staff")
+End Sub
+
+' REQUIRED FORM SETUP:
+' ====================
+
+' 1. Each form needs an isNavigating field for proper form closing:
+Private isNavigating As Boolean = False
+
+' 2. Add this FormClosing handler to prevent exit confirmation during navigation:
+Private Sub YourForm_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
+    If isNavigating Then
+        Return ' Don't show confirmation when navigating
+    End If
+    ' Your existing form closing logic here...
+End Sub
+
+' ROLE-BASED ACCESS IS AUTOMATIC:
+' ================================
+
+' STAFF USERS SEE:
+' - ?? Dashboard
+' - ?? POS / Sales
+
+' MANAGER USERS SEE:
+' - ?? Dashboard
+' - ?? POS / Sales  
+' - ?? Inventory
+' - ?? Sales Records
+' - ?? Staff Management
+' - ?? Inventory Logs
+
+' ADMIN USERS SEE:
+' - All Manager items PLUS:
+' - ?? Audit Logs
+' - ?? System Settings
+
+' PERMISSION CHECKING:
+' ====================
+
+' Check if user has specific permissions:
+If NavigationHelper.HasPermission(NavigationHelper.UserRole.Manager) Then
+    ' User is Manager or Admin
+    EnableManagerFeatures()
+End If
+
+' Get role display text:
+Dim roleText As String = NavigationHelper.GetRoleDisplayText()
+
+' ADVANTAGES OF NAVIGATIONHELPER OVER MODULE:
+' ===========================================
+
+' ? More reliable than modules for UI operations
+' ? Better error handling and isolation
+' ? Easier debugging and maintenance
+' ? Proper encapsulation of navigation logic
+' ? Safer access to user session data
+' ? Works consistently across all forms
+' ? No dependency issues or module conflicts
+
+' CUSTOMIZATION:
+' ==============
+
+' To add new navigation items, edit NavigationItems array in NavigationHelper.vb:
+' New NavigationItem("?? New Feature", "??", GetType(NewForm), UserRole.Manager)
+
+' To change colors, update the color constants in NavigationHelper.vb
+
+' TROUBLESHOOTING:
+' ===============
+
+' If emojis show as ??, the NavigationHelper uses Segoe UI font which supports emojis
+' If you prefer text symbols, see NavigationModule_TextIcons_Alternative.txt
+
+' The NavigationHelper is self-contained and handles all navigation logic internally

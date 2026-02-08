@@ -3,42 +3,52 @@ Imports System.Configuration
 
 Public Class FormFirstRun
     Private Sub FormFirstRun_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        ' Set default selection
+        ' For standalone deployment, simplify the interface
+        ' Hide network options since this is now a standalone app
+        rbNetwork.Visible = False
+        txtServer.Visible = False
+
+        ' Always select local and disable the option
         rbLocal.Checked = True
-        txtServer.Enabled = False
-        btnSave.Enabled = False
+        rbLocal.Text = "Standalone Database (LocalDB)"
+        rbLocal.Enabled = False
 
-        ' Show computer name
+        ' Update labels
         lblComputerName.Text = $"Computer: {Environment.MachineName}"
-        txtServer.Text = Environment.MachineName
-    End Sub
+        lblStatus.Text = "Ready to initialize standalone database"
+        lblStatus.ForeColor = Color.Blue
 
-    Private Sub rbNetwork_CheckedChanged(sender As Object, e As EventArgs) Handles rbNetwork.CheckedChanged
-        txtServer.Enabled = rbNetwork.Checked
+        btnSave.Enabled = True
+        btnTest.Text = "Test Database"
+        btnSave.Text = "Initialize Database"
     End Sub
 
     Private Sub btnTest_Click(sender As Object, e As EventArgs) Handles btnTest.Click
-        Dim server As String = GetSelectedServer()
-        TestDatabaseConnection(server)
+        TestDatabaseConnection()
     End Sub
 
-    Private Function GetSelectedServer() As String
-        If rbLocal.Checked Then
-            Return "localhost"
-        Else
-            Return If(String.IsNullOrEmpty(txtServer.Text), "localhost", txtServer.Text)
-        End If
-    End Function
-
     Private Sub btnSave_Click(sender As Object, e As EventArgs) Handles btnSave.Click
-        Dim server As String = GetSelectedServer()
-        Connection.SaveConnectionString(server)
+        Try
+            ' Initialize the database
+            If Connection.InitializeDatabase() Then
+                Connection.SaveConnectionString()
 
-        MessageBox.Show($"Configuration saved!{vbCrLf}Server: {server}",
-                      "Success", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                MessageBox.Show($"Standalone database initialized successfully!{vbCrLf}" &
+                              $"Location: {Application.StartupPath}\App_Data{vbCrLf}" &
+                              $"Database: JadeDentalSupply.mdf",
+                              "Success", MessageBoxButtons.OK, MessageBoxIcon.Information)
 
-        Me.DialogResult = DialogResult.OK
-        Me.Close()
+                Me.DialogResult = DialogResult.OK
+                Me.Close()
+            Else
+                MessageBox.Show("Failed to initialize database. Please check the error details.",
+                              "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            End If
+
+        Catch ex As Exception
+            MessageBox.Show($"Error initializing database: {ex.Message}",
+                          "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
     End Sub
 
     Private Sub btnCancel_Click(sender As Object, e As EventArgs) Handles btnCancel.Click
@@ -46,25 +56,17 @@ Public Class FormFirstRun
         Me.Close()
     End Sub
 
-    Private Sub TestDatabaseConnection(server As String)
+    Private Sub TestDatabaseConnection()
         Try
-            Dim connStr As String = Connection.BuildConnectionString(server)  ' Uses the function from Connection module
-
-            Using conn As New SqlConnection(connStr)
-                conn.Open()
-
-                Using cmd As New SqlCommand("SELECT @@SERVERNAME, DB_NAME()", conn)
-                    Using reader As SqlDataReader = cmd.ExecuteReader()
-                        If reader.Read() Then
-                            lblStatus.Text = $"✅ Connected!{vbCrLf}" &
-                                           $"Server: {reader.GetString(0)}{vbCrLf}" &
-                                           $"Database: {reader.GetString(1)}"
-                            lblStatus.ForeColor = Color.Green
-                            btnSave.Enabled = True
-                        End If
-                    End Using
-                End Using
-            End Using
+            If Connection.TestConnection() Then
+                lblStatus.Text = "✅ Database connection successful!"
+                lblStatus.ForeColor = Color.Green
+                btnSave.Enabled = True
+            Else
+                lblStatus.Text = "❌ Database connection failed"
+                lblStatus.ForeColor = Color.Red
+                btnSave.Enabled = False
+            End If
 
         Catch ex As Exception
             lblStatus.Text = $"❌ Error: {ex.Message}"
@@ -72,5 +74,4 @@ Public Class FormFirstRun
             btnSave.Enabled = False
         End Try
     End Sub
-
 End Class
