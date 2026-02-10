@@ -1,6 +1,7 @@
 ﻿Imports System.Windows.Forms
 Imports Microsoft.Data.SqlClient
 Imports BCrypt.Net
+Imports System.Threading.Tasks
 
 Public Class IdleTimeoutManager
     ' Singleton instance
@@ -16,7 +17,7 @@ Public Class IdleTimeoutManager
 
     ' Timer and settings
     Private WithEvents idleTimer As Timer
-    Private ReadOnly IDLE_TIMEOUT_SECONDS As Integer = 5 ' 30 seconds for testing
+    Private ReadOnly IDLE_TIMEOUT_SECONDS As Integer = 30 ' 30 seconds for testing
     Private isTimerEnabled As Boolean = True
     Private currentForm As Form
     Private overlay As Panel
@@ -46,8 +47,17 @@ Public Class IdleTimeoutManager
             ' Ensure timer is enabled and properly configured
             isTimerEnabled = True
 
-            ' Reset and start timer
-            ResetIdleTimer()
+            ' Ensure timer exists and is properly configured
+            If idleTimer Is Nothing Then
+                Console.WriteLine("Creating new timer in StartMonitoring")
+                idleTimer = New Timer()
+                idleTimer.Interval = IDLE_TIMEOUT_SECONDS * 1000
+                AddHandler idleTimer.Tick, AddressOf OnIdleTimeout
+            End If
+
+            ' CRITICAL: Use delayed start to prevent immediate timeout
+            Console.WriteLine("Starting monitoring with delay to prevent immediate timeout")
+            StartTimerWithDelay()
 
             ' Attach event handlers to form and all controls
             AttachEventHandlers(form)
@@ -120,6 +130,100 @@ Public Class IdleTimeoutManager
         ResetIdleTimer()
     End Sub
 
+    ' Restart timer with delay to prevent immediate timeout after validation
+    Private Sub RestartTimerWithDelay()
+        Try
+            Console.WriteLine("Restarting timer with delay to prevent immediate timeout")
+
+            ' Ensure timer is stopped and dialog is cleared
+            If idleTimer IsNot Nothing Then
+                idleTimer.Stop()
+            End If
+
+            ' Clear dialog reference to prevent double triggering
+            If passwordDialog IsNot Nothing Then
+                passwordDialog = Nothing
+            End If
+
+            ' Set enabled state
+            isTimerEnabled = True
+
+            ' Create a delay timer to restart the idle timer
+            Dim delayTimer As New Timer()
+            delayTimer.Interval = 5000 ' Increased to 5 second delay to prevent immediate re-trigger
+            AddHandler delayTimer.Tick, Sub()
+                                            Try
+                                                delayTimer.Stop()
+                                                delayTimer.Dispose()
+
+                                                ' Now safely restart the idle timer
+                                                If isTimerEnabled AndAlso idleTimer IsNot Nothing AndAlso
+                                                currentForm IsNot Nothing AndAlso Not currentForm.IsDisposed AndAlso
+                                                Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) AndAlso
+                                                passwordDialog Is Nothing Then ' Additional check to ensure no dialog is active
+
+                                                    idleTimer.Start()
+                                                    Console.WriteLine("Idle timer restarted after delay")
+                                                Else
+                                                    Console.WriteLine("Cannot restart timer - invalid state or dialog still active")
+                                                End If
+                                            Catch ex As Exception
+                                                Console.WriteLine($"Error in delay timer: {ex.Message}")
+                                            End Try
+                                        End Sub
+
+            delayTimer.Start()
+            Console.WriteLine("Delay timer started - idle timer will restart in 5 seconds")
+
+        Catch ex As Exception
+            Console.WriteLine($"Error restarting timer with delay: {ex.Message}")
+        End Try
+    End Sub
+
+    ' Start timer with delay to prevent immediate timeout when monitoring starts
+    Private Sub StartTimerWithDelay()
+        Try
+            Console.WriteLine("Starting timer with delay to prevent immediate timeout")
+
+            ' Ensure timer is stopped
+            If idleTimer IsNot Nothing Then
+                idleTimer.Stop()
+            End If
+
+            ' Set enabled state
+            isTimerEnabled = True
+
+            ' Create a delay timer to start the idle timer
+            Dim delayTimer As New Timer()
+            delayTimer.Interval = 3000 ' 3 second delay for initial start
+            AddHandler delayTimer.Tick, Sub()
+                                            Try
+                                                delayTimer.Stop()
+                                                delayTimer.Dispose()
+
+                                                ' Now safely start the idle timer
+                                                If isTimerEnabled AndAlso idleTimer IsNot Nothing AndAlso
+                                                currentForm IsNot Nothing AndAlso Not currentForm.IsDisposed AndAlso
+                                                Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+
+                                                    idleTimer.Start()
+                                                    Console.WriteLine("Idle timer started after initial delay")
+                                                Else
+                                                    Console.WriteLine("Cannot start timer - invalid state")
+                                                End If
+                                            Catch ex As Exception
+                                                Console.WriteLine($"Error in initial delay timer: {ex.Message}")
+                                            End Try
+                                        End Sub
+
+            delayTimer.Start()
+            Console.WriteLine("Initial delay timer started - idle timer will start in 3 seconds")
+
+        Catch ex As Exception
+            Console.WriteLine($"Error starting timer with delay: {ex.Message}")
+        End Try
+    End Sub
+
     ' Attach event handlers to form and all its controls
     Private Sub AttachEventHandlers(control As Control)
         ' Add event handlers for user activity
@@ -155,16 +259,19 @@ Public Class IdleTimeoutManager
     ' Handle idle timeout
     Private Sub OnIdleTimeout(sender As Object, e As EventArgs) Handles idleTimer.Tick
         Try
-            ' Check if we have a valid current form and user session
+            ' Check if we have a valid current form and user session AND no dialog is already showing
             If currentForm IsNot Nothing AndAlso Not currentForm.IsDisposed AndAlso
-               Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+               Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) AndAlso
+               passwordDialog Is Nothing Then ' Ensure no dialog is already active
                 idleTimer.Stop()
                 ShowPasswordDialog()
             Else
-                ' Invalid state - stop the timer and reset
-                Console.WriteLine("Invalid state detected in OnIdleTimeout - resetting manager")
+                ' Invalid state or dialog already showing - stop the timer
+                Console.WriteLine("Invalid state detected in OnIdleTimeout or dialog already showing - stopping timer")
                 DisableTimer()
-                ResetManagerState()
+                If passwordDialog IsNot Nothing Then
+                    Console.WriteLine("Password dialog already active, not creating new one")
+                End If
             End If
         Catch ex As Exception
             Console.WriteLine($"Error in OnIdleTimeout: {ex.Message}")
@@ -178,9 +285,12 @@ Public Class IdleTimeoutManager
         Try
             ' Additional validation before showing dialog
             If currentForm Is Nothing OrElse currentForm.IsDisposed OrElse
-               String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
-                Console.WriteLine("Cannot show password dialog - invalid state")
-                ResetManagerState()
+               String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) OrElse
+               passwordDialog IsNot Nothing Then ' Prevent multiple dialogs
+                Console.WriteLine("Cannot show password dialog - invalid state or dialog already exists")
+                If passwordDialog IsNot Nothing Then
+                    Console.WriteLine("Password dialog already active")
+                End If
                 Return
             End If
 
@@ -190,89 +300,116 @@ Public Class IdleTimeoutManager
             ' Create overlay to block interaction with main form
             CreateOverlay()
 
-            ' Create password dialog - Made wider to prevent text cutoff
+            ' Create password dialog with new design - Dim Gray background with Gold/White text
             passwordDialog = New Form()
             passwordDialog.Text = "Session Timeout"
-            passwordDialog.Size = New Size(480, 320) ' Increased from 400x300 to 480x320
+            passwordDialog.Size = New Size(500, 380) ' Increased size for better spacing
             passwordDialog.StartPosition = FormStartPosition.CenterParent
             passwordDialog.FormBorderStyle = FormBorderStyle.FixedDialog
             passwordDialog.MaximizeBox = False
             passwordDialog.MinimizeBox = False
-            passwordDialog.BackColor = System.Drawing.Color.FromArgb(41, 44, 45)
+            passwordDialog.ControlBox = False ' Disable X button - user must choose Continue or Logout
+            passwordDialog.BackColor = System.Drawing.Color.FromArgb(70, 70, 70) ' Dim Gray background
             passwordDialog.TopMost = True
 
-            ' Title label
+            ' Title label with Golden Yellow
             Dim lblTitle As New Label()
-            lblTitle.Text = "?? Session Timeout"
-            lblTitle.Font = New Font("Poppins", 16, FontStyle.Bold)
+            lblTitle.Text = "🔒 Session Timeout"
+            lblTitle.Font = New Font("Segoe UI", 18, FontStyle.Bold)
             lblTitle.ForeColor = System.Drawing.Color.FromArgb(254, 191, 16) ' Golden Yellow
             lblTitle.BackColor = System.Drawing.Color.Transparent
             lblTitle.AutoSize = True
-            lblTitle.Location = New Point(0, 30)
+            lblTitle.Location = New Point(0, 25)
             passwordDialog.Controls.Add(lblTitle)
 
-            ' Instruction label - Increased width for better text layout
+            ' Instruction label with White text
             Dim lblInstruction As New Label()
             lblInstruction.Text = "Your session has timed out due to inactivity." & vbCrLf & "Please enter your password to continue."
-            lblInstruction.Font = New Font("Poppins", 10, FontStyle.Regular)
-            lblInstruction.ForeColor = System.Drawing.Color.White
+            lblInstruction.Font = New Font("Segoe UI", 11, FontStyle.Regular)
+            lblInstruction.ForeColor = System.Drawing.Color.White ' White text
             lblInstruction.BackColor = System.Drawing.Color.Transparent
             lblInstruction.AutoSize = False
-            lblInstruction.Size = New Size(420, 50) ' Increased from 350 to 420
-            lblInstruction.Location = New Point(30, 80) ' Adjusted left margin slightly
+            lblInstruction.Size = New Size(440, 60)
+            lblInstruction.Location = New Point(30, 80)
             lblInstruction.TextAlign = ContentAlignment.MiddleCenter
             passwordDialog.Controls.Add(lblInstruction)
 
-            ' Username label (read-only)
+            ' Username label with Golden Yellow
             Dim lblUsername As New Label()
             lblUsername.Text = $"User: {frmLoginvb.LoggedInUsername}"
-            lblUsername.Font = New Font("Poppins", 9, FontStyle.Regular)
-            lblUsername.ForeColor = System.Drawing.Color.FromArgb(190, 154, 48) ' Rich Olive
+            lblUsername.Font = New Font("Segoe UI", 10, FontStyle.Bold)
+            lblUsername.ForeColor = System.Drawing.Color.FromArgb(254, 191, 16) ' Golden Yellow
             lblUsername.BackColor = System.Drawing.Color.Transparent
             lblUsername.AutoSize = True
-            lblUsername.Location = New Point(30, 140) ' Adjusted left margin
+            lblUsername.Location = New Point(30, 155)
             passwordDialog.Controls.Add(lblUsername)
 
-            ' Password textbox - Made wider to match form width
+            ' Password label with White text
+            Dim lblPasswordLabel As New Label()
+            lblPasswordLabel.Text = "Password:"
+            lblPasswordLabel.Font = New Font("Segoe UI", 10, FontStyle.Regular)
+            lblPasswordLabel.ForeColor = System.Drawing.Color.White ' White text
+            lblPasswordLabel.BackColor = System.Drawing.Color.Transparent
+            lblPasswordLabel.AutoSize = True
+            lblPasswordLabel.Location = New Point(30, 185)
+            passwordDialog.Controls.Add(lblPasswordLabel)
+
+            ' Password textbox with darker gray background and white text
             Dim txtPassword As New TextBox()
             txtPassword.PasswordChar = "•"c
-            txtPassword.Font = New Font("Poppins", 12, FontStyle.Regular)
-            txtPassword.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
-            txtPassword.ForeColor = System.Drawing.Color.White
-            txtPassword.Location = New Point(30, 170)
-            txtPassword.Size = New Size(420, 35) ' Increased from 330 to 420
+            txtPassword.Font = New Font("Segoe UI", 12, FontStyle.Regular)
+            txtPassword.BackColor = System.Drawing.Color.FromArgb(50, 50, 50) ' Darker gray
+            txtPassword.ForeColor = System.Drawing.Color.White ' White text
+            txtPassword.Location = New Point(30, 210)
+            txtPassword.Size = New Size(440, 35)
             txtPassword.BorderStyle = BorderStyle.FixedSingle
             passwordDialog.Controls.Add(txtPassword)
 
-            ' Continue button - Better positioning with more space
+            ' Continue button with Golden Yellow background and black text
             Dim btnContinue As New Button()
             btnContinue.Text = "Continue"
-            btnContinue.Font = New Font("Poppins", 10, FontStyle.Bold)
+            btnContinue.Font = New Font("Segoe UI", 11, FontStyle.Bold)
             btnContinue.BackColor = System.Drawing.Color.FromArgb(254, 191, 16) ' Golden Yellow
-            btnContinue.ForeColor = System.Drawing.Color.Black
+            btnContinue.ForeColor = System.Drawing.Color.Black ' Black text for contrast
             btnContinue.FlatStyle = FlatStyle.Flat
             btnContinue.FlatAppearance.BorderSize = 0
-            btnContinue.Size = New Size(120, 35) ' Increased width from 100 to 120
-            btnContinue.Location = New Point(200, 230) ' Repositioned for better centering
+            btnContinue.Size = New Size(130, 40)
+            btnContinue.Location = New Point(210, 270)
             btnContinue.Cursor = Cursors.Hand
 
-            ' Logout button - Better positioning with more space
+            ' Add hover effect for Continue button
+            AddHandler btnContinue.MouseEnter, Sub()
+                                                   btnContinue.BackColor = System.Drawing.Color.FromArgb(220, 165, 12) ' Darker gold on hover
+                                               End Sub
+            AddHandler btnContinue.MouseLeave, Sub()
+                                                   btnContinue.BackColor = System.Drawing.Color.FromArgb(254, 191, 16) ' Back to original gold
+                                               End Sub
+
+            ' Logout button with Alert Red background and white text
             Dim btnLogout As New Button()
             btnLogout.Text = "Logout"
-            btnLogout.Font = New Font("Poppins", 10, FontStyle.Regular)
+            btnLogout.Font = New Font("Segoe UI", 11, FontStyle.Regular)
             btnLogout.BackColor = System.Drawing.Color.FromArgb(255, 71, 87) ' Alert Red
-            btnLogout.ForeColor = System.Drawing.Color.White
+            btnLogout.ForeColor = System.Drawing.Color.White ' White text
             btnLogout.FlatStyle = FlatStyle.Flat
             btnLogout.FlatAppearance.BorderSize = 0
-            btnLogout.Size = New Size(120, 35) ' Increased width from 100 to 120
-            btnLogout.Location = New Point(330, 230) ' Repositioned for better spacing
+            btnLogout.Size = New Size(130, 40)
+            btnLogout.Location = New Point(350, 270)
             btnLogout.Cursor = Cursors.Hand
+
+            ' Add hover effect for Logout button
+            AddHandler btnLogout.MouseEnter, Sub()
+                                                 btnLogout.BackColor = System.Drawing.Color.FromArgb(220, 50, 50) ' Darker red on hover
+                                             End Sub
+            AddHandler btnLogout.MouseLeave, Sub()
+                                                 btnLogout.BackColor = System.Drawing.Color.FromArgb(255, 71, 87) ' Back to original red
+                                             End Sub
 
             passwordDialog.Controls.AddRange({btnContinue, btnLogout})
 
             ' Center title after form is created
             AddHandler passwordDialog.Load, Sub()
-                                                lblTitle.Location = New Point((passwordDialog.Width - lblTitle.Width) / 2, 30)
+                                                lblTitle.Location = New Point((passwordDialog.Width - lblTitle.Width) / 2, 25)
                                             End Sub
 
             ' Event handlers
@@ -292,7 +429,17 @@ Public Class IdleTimeoutManager
 
             ' Show dialog
             txtPassword.Focus()
-            passwordDialog.ShowDialog(currentForm)
+
+            ' IMPORTANT: Use ShowDialog asynchronously to prevent timer conflicts
+            Task.Run(Sub()
+                         Try
+                             Me.currentForm.Invoke(Sub()
+                                                       passwordDialog.ShowDialog(currentForm)
+                                                   End Sub)
+                         Catch ex As Exception
+                             Console.WriteLine($"Error showing dialog: {ex.Message}")
+                         End Try
+                     End Sub)
 
         Catch ex As Exception
             Console.WriteLine($"Error showing password dialog: {ex.Message}")
@@ -352,8 +499,12 @@ Public Class IdleTimeoutManager
                         ' Log the session continuation
                         Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Session Continued", "User re-authenticated after idle timeout")
 
-                        ' Re-enable timer
-                        EnableTimer()
+                        ' CRITICAL: Add delay before restarting timer to prevent immediate timeout
+                        Console.WriteLine("Password validated - restarting timer with delay")
+                        RestartTimerWithDelay()
+
+                        ' Dispose the dialog to prevent memory leaks
+                        passwordDialog = Nothing
                     Else
                         ' Invalid password
                         MessageBox.Show("Incorrect password. Please try again.", "Authentication Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)

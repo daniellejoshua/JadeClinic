@@ -22,6 +22,13 @@ Public Class Staff
         Me.Text = "Staff Management"
         ' Prevent resizing of all columns and rows
 
+        ' Check if user has Admin role - restrict access
+        If Not IsUserAdmin() Then
+            MessageBox.Show("Access denied. Only administrators can access Staff Management.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Me.Close()
+            Return
+        End If
+
         ' Create navigation menu (hardcoded from Dashboard)
         CreateNavigationMenu()
 
@@ -288,6 +295,17 @@ Public Class Staff
             Return False
         End If
         Return True
+    End Function
+
+    ' Helper method to check if current user is Admin
+    Private Function IsUserAdmin() As Boolean
+        Try
+            Dim currentRole As String = If(frmLoginvb.LoggedInRole, "").ToUpper()
+            Return currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR"
+        Catch ex As Exception
+            Console.WriteLine($"Error checking admin role: {ex.Message}")
+            Return False
+        End Try
     End Function
 
     Private Sub InitializeDataGridView()
@@ -694,26 +712,25 @@ Public Class Staff
     End Function
 
     Private Sub EditUser(userData As Dictionary(Of String, Object))
-        ' Ask for PIN before allowing edit
-        If Not ShowPinDialog("Enter your PIN to edit staff details:") Then
-            MessageBox.Show("Incorrect PIN. Edit cancelled.", "Authentication Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)
-            Return
-        End If
+        ' Open AddStaff form in edit mode
+        Try
+            Dim addStaffForm As New AddStaff()
 
-        ' For now, show a message - later implement EditStaff form
-        MessageBox.Show("Edit functionality will be implemented.", "Coming Soon", MessageBoxButtons.OK, MessageBoxIcon.Information)
+            ' Set the form to edit mode and pass the user data
+            addStaffForm.SetEditMode(userData)
 
-        ' Refresh the data
-        LoadUsersData(If(SortBy.SelectedItem IsNot Nothing, SortBy.SelectedItem.ToString(), ""))
+            ' Show the form as a modal dialog
+            Dim result = addStaffForm.ShowDialog()
+
+            ' Refresh the staff list after editing
+            LoadUsersData(If(SortBy.SelectedItem IsNot Nothing, SortBy.SelectedItem.ToString(), ""))
+
+        Catch ex As Exception
+            MessageBox.Show($"Error opening Edit Staff form: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
     End Sub
 
     Private Sub DeleteUser(userData As Dictionary(Of String, Object))
-        ' Ask for PIN before allowing delete
-        If Not ShowPinDialog("Enter your PIN to delete this staff member:") Then
-            MessageBox.Show("Incorrect PIN. Delete cancelled.", "Authentication Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)
-            Return
-        End If
-
         Dim username As String = userData("Username").ToString()
         Dim userId As Integer = CInt(userData("UserID"))
 
@@ -767,14 +784,17 @@ Public Class Staff
     End Sub
 
     Private Sub btnDiscount_Click(sender As Object, e As EventArgs) Handles btnDiscount.Click
-        ' Ask for PIN before allowing add
-        If Not ShowPinDialog("Enter your PIN to add a new staff member:") Then
-            MessageBox.Show("Incorrect PIN. Add cancelled.", "Authentication Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)
-            Return
-        End If
+        ' Open AddStaff form for adding new staff members
+        Try
+            Dim addStaffForm As New AddStaff()
+            addStaffForm.ShowDialog()
 
-        ' For now, show a message - later implement AddStaff form
-        MessageBox.Show("Add staff functionality will be implemented.", "Coming Soon", MessageBoxButtons.OK, MessageBoxIcon.Information)
+            ' Refresh the staff list after adding new staff
+            LoadUsersData(If(SortBy.SelectedItem IsNot Nothing, SortBy.SelectedItem.ToString(), ""))
+
+        Catch ex As Exception
+            MessageBox.Show($"Error opening Add Staff form: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
     End Sub
 
     Private Sub Staff_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
@@ -903,21 +923,23 @@ Public Class Staff
             AddHandler navPOSBtn.Click, AddressOf NavPOS_Click
             buttonIndex += 1
 
-            ' Inventory Button (not active)
-            Dim navInventoryBtn = CreateLargeNavButton("📦 Inventory", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-            AddHandler navInventoryBtn.Click, AddressOf NavInventory_Click
-            buttonIndex += 1
-
-            ' Manager and Admin only buttons
+            ' Manager and Admin only buttons - Inventory moved here
             If currentRole = "MANAGER" Or currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
+                ' Inventory Button (only for Manager and Admin)
+                Dim navInventoryBtn = CreateLargeNavButton("📦 Inventory", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
+                AddHandler navInventoryBtn.Click, AddressOf NavInventory_Click
+                buttonIndex += 1
+
                 ' Sales Records Button
                 Dim navSalesRecordsBtn = CreateLargeNavButton("📊 Sales Records", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
                 AddHandler navSalesRecordsBtn.Click, AddressOf NavSalesRecords_Click
                 buttonIndex += 1
 
-                ' Staff Management Button (ACTIVE - we're on this page)
-                Dim navStaffBtn = CreateLargeNavButton("👥 Staff", startY + buttonIndex * (buttonHeight + buttonSpacing), True, buttonWidth, buttonHeight)
-                buttonIndex += 1
+                ' Staff Management Button (ACTIVE - we're on this page) - Only for Admin
+                If currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
+                    Dim navStaffBtn = CreateLargeNavButton("👥 Staff", startY + buttonIndex * (buttonHeight + buttonSpacing), True, buttonWidth, buttonHeight)
+                    buttonIndex += 1
+                End If
 
                 ' Inventory Logs Button
                 Dim navInventoryLogBtn = CreateLargeNavButton("📋 Inventory Logs", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)

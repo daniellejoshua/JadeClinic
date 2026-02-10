@@ -1181,7 +1181,7 @@ Public Class Dashboard
 
             ' Manager and Admin only buttons
             If currentRole = "MANAGER" Or currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
-                ' Inventory Button
+                ' Inventory Button (only for Manager and Admin)
                 navInventoryBtn = CreateLargeNavButton("📦 Inventory", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
                 AddHandler navInventoryBtn.Click, AddressOf NavInventory_Click
                 buttonIndex += 1

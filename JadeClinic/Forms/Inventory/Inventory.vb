@@ -14,7 +14,11 @@ Public Class Inventory
     ' Navigation flag to prevent exit confirmation on programmatic close
     Private isNavigating As Boolean = False
 
-    Private Sub Inventory_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+    ' Profile dropdown panel
+    Private profileDropdownPanel As Panel = Nothing
+    Private isProfileDropdownVisible As Boolean = False
+
+    Private Async Sub Inventory_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         ' Enable double buffering for smooth scrolling
         SetDoubleBuffered(stockPanel)
 
@@ -26,8 +30,16 @@ Public Class Inventory
         Me.MaximizeBox = False
         Me.MinimizeBox = False
 
+        ' Validate user session
+        If Not ValidateUserSession() Then
+            Return
+        End If
+
         ' Create navigation menu (hardcoded from Dashboard)
         CreateNavigationMenu()
+
+        ' Initialize profile section
+        InitializeProfileSection()
 
         ' Setup filter events
         SetupFilterEvents()
@@ -38,8 +50,13 @@ Public Class Inventory
         ' Set button text
         btnManagePromotions.Text = "Manage Stock"
 
-        ' Show loading overlay and load products asynchronously
-        ShowLoadingOverlay()
+        ' Update form title to show logged-in user
+        Me.Text = $"Inventory - {frmLoginvb.LoggedInUsername}"
+
+        ' Start idle timeout monitoring
+        IdleTimeoutManager.Instance.StartMonitoring(Me)
+
+        ' Load products asynchronously (ShowLoadingOverlay is now called inside LoadProductsAsync)
         LoadProductsAsync()
     End Sub
 
@@ -53,17 +70,54 @@ Public Class Inventory
     End Sub
 
     Private Sub ShowLoadingOverlay()
-        ' Create loading overlay
+        ' Create loading overlay with DarkGray background
         loadingOverlay = New Panel()
-        loadingOverlay.BackColor = Color.FromArgb(200, 30, 30, 30) ' Semi-transparent dark
+        loadingOverlay.BackColor = Color.DarkGray ' Changed to DarkGray
         loadingOverlay.Dock = DockStyle.Fill
         loadingOverlay.Location = New Point(0, 0)
         loadingOverlay.Size = Me.ClientSize
 
-
-        ' Add overlay to form
+        ' Add overlay to form first
         Me.Controls.Add(loadingOverlay)
         loadingOverlay.BringToFront()
+
+        ' Create loading label
+        Dim loadingLabel As New Label With {
+            .Text = "Loading Inventory...",
+            .ForeColor = Color.White,
+            .Font = New Font("Poppins", 16, FontStyle.Regular),
+            .AutoSize = True,
+            .BackColor = Color.Transparent
+        }
+
+        ' Add label to overlay
+        loadingOverlay.Controls.Add(loadingLabel)
+
+        ' Center the label after it's added to the overlay
+        CenterLoadingLabel(loadingLabel)
+
+        ' Add resize handler to keep label centered
+        AddHandler loadingOverlay.SizeChanged, Sub()
+                                                   CenterLoadingLabel(loadingLabel)
+                                               End Sub
+    End Sub
+
+    Private Sub CenterLoadingLabel(loadingLabel As Label)
+        Try
+            If loadingLabel IsNot Nothing AndAlso loadingOverlay IsNot Nothing Then
+                ' Force the label to measure its size
+                loadingLabel.AutoSize = True
+                Application.DoEvents() ' Let the system calculate the size
+
+                ' Center the label
+                loadingLabel.Location = New Point(
+                    (loadingOverlay.Width - loadingLabel.Width) \ 2,
+                    (loadingOverlay.Height - loadingLabel.Height) \ 2
+                )
+            End If
+        Catch ex As Exception
+            ' Silent fail for centering issues
+        End Try
     End Sub
 
     Private Sub HideLoadingOverlay()
@@ -76,10 +130,23 @@ Public Class Inventory
 
     Private Async Sub LoadProductsAsync()
         Try
+            ' Show loading panel first with minimum display time
+            ShowLoadingOverlay()
+            Await Task.Delay(200) ' Let UI render the overlay
+
+            ' Start timing to ensure minimum loading display time
+            Dim startTime As DateTime = DateTime.Now
+
             ' Run the loading operation on a background thread
             Await Task.Run(Sub()
                                LoadProductsFromDatabase()
                            End Sub)
+
+            ' Ensure minimum loading display time of 1 second
+            Dim elapsedMs As Integer = CInt((DateTime.Now - startTime).TotalMilliseconds)
+            If elapsedMs < 1000 Then
+                Await Task.Delay(1000 - elapsedMs)
+            End If
 
             ' Update UI on the main thread
             Me.Invoke(Sub()
@@ -625,6 +692,12 @@ Public Class Inventory
 
     ' FormClosing event handler with exit confirmation
     Private Sub Inventory_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
+        ' Stop idle timeout monitoring
+        IdleTimeoutManager.Instance.StopMonitoring(Me)
+
+        ' Hide loading overlay if it's still visible
+        HideLoadingOverlay()
+
         ' If this is programmatic navigation, don't show confirmation
         If isNavigating Then
             Return
@@ -777,32 +850,6 @@ Public Class Inventory
                 buttonIndex += 1
             End If
 
-            ' Add separator line before logout
-            Dim separator2 As New Panel()
-            separator2.BackColor = Color.FromArgb(220, 220, 220) ' Light Gray for white background
-            separator2.Size = New Size(availableWidth - 40, 2)
-            separator2.Location = New Point(40, startY + buttonIndex * (buttonHeight + buttonSpacing) + 10)
-            DashboardPanel.Controls.Add(separator2)
-
-            ' Logout Button (at bottom with Alert Red styling)
-            Dim navLogoutBtn = CreateLargeNavButton("🚪 Logout", startY + buttonIndex * (buttonHeight + buttonSpacing) + 30, False, buttonWidth, buttonHeight)
-            navLogoutBtn.FillColor = Color.FromArgb(255, 71, 87) ' Alert Red #FF4757
-            navLogoutBtn.ForeColor = Color.White
-
-            ' Override hover effects for logout button to maintain red background
-            RemoveHandler navLogoutBtn.MouseEnter, Nothing
-            RemoveHandler navLogoutBtn.MouseLeave, Nothing
-            AddHandler navLogoutBtn.MouseEnter, Sub()
-                                                    navLogoutBtn.FillColor = Color.FromArgb(220, 50, 50) ' Slightly darker red on hover
-                                                    navLogoutBtn.Font = New Font("Poppins", 9, FontStyle.Bold)
-                                                End Sub
-            AddHandler navLogoutBtn.MouseLeave, Sub()
-                                                    navLogoutBtn.FillColor = Color.FromArgb(255, 71, 87) ' Back to original red
-                                                    navLogoutBtn.Font = New Font("Poppins", 10, FontStyle.Regular)
-                                                End Sub
-
-            AddHandler navLogoutBtn.Click, AddressOf NavLogout_Click
-
         Catch ex As Exception
             Console.WriteLine($"Error creating navigation menu: {ex.Message}")
         End Try
@@ -816,7 +863,7 @@ Public Class Inventory
         btn.Size = New Size(buttonWidth, buttonHeight)
         btn.Location = New Point(20, yPosition)
         btn.BorderRadius = 12
-        btn.Font = New Font("Poppins", 10, FontStyle.Regular)
+        btn.Font = New Font("Segoe UI Emoji", 10, FontStyle.Regular)
         btn.TextAlign = HorizontalAlignment.Left
 
         ' Apply new color scheme
@@ -838,7 +885,7 @@ Public Class Inventory
                                        If Not isActive Then
                                            btn.FillColor = Color.FromArgb(240, 240, 240) ' Light Gray hover for white background
                                            btn.BorderColor = Color.FromArgb(190, 154, 48) ' Rich Olive border #BE9A30
-                                           btn.Font = New Font("Poppins", 9, FontStyle.Bold)
+                                           btn.Font = New Font("Segoe UI Emoji", 9, FontStyle.Bold)
                                        End If
                                    End Sub
 
@@ -846,7 +893,7 @@ Public Class Inventory
                                        If Not isActive Then
                                            btn.FillColor = Color.Transparent
                                            btn.BorderColor = Color.FromArgb(200, 200, 200) ' Light Gray border
-                                           btn.Font = New Font("Poppins", 10, FontStyle.Regular)
+                                           btn.Font = New Font("Segoe UI Emoji", 10, FontStyle.Regular)
                                        End If
                                    End Sub
 
@@ -908,7 +955,255 @@ Public Class Inventory
         End If
     End Sub
 
-    Private Sub PictureBox9_Click(sender As Object, e As EventArgs) Handles PictureBox9.Click
+    Private Sub InitializeProfileSection()
+        Try
+            ' Set username without emoji
+            lblUsername.Text = frmLoginvb.LoggedInUsername
+            lblUsername.Font = New Font("Poppins", 10.0F, FontStyle.Regular)
+            lblUsername.ForeColor = System.Drawing.Color.White
 
+            ' Load user profile picture
+            LoadUserProfilePicture()
+
+            ' Add click event to profile picture and username
+            AddHandler Guna2CirclePictureBox5.Click, AddressOf ProfilePicture_Click
+            AddHandler lblUsername.Click, AddressOf ProfilePicture_Click
+
+            ' Add hover effects
+            AddHandler Guna2CirclePictureBox5.MouseEnter, Sub()
+                                                              Guna2CirclePictureBox5.Cursor = Cursors.Hand
+                                                          End Sub
+            AddHandler lblUsername.MouseEnter, Sub()
+                                                   lblUsername.Cursor = Cursors.Hand
+                                               End Sub
+
+        Catch ex As Exception
+            ' Fallback if there's an error
+            lblUsername.Text = frmLoginvb.LoggedInUsername
+            Guna2CirclePictureBox5.Image = CreateDefaultProfileAvatar(frmLoginvb.LoggedInUsername)
+        End Try
     End Sub
+
+    Private Sub LoadUserProfilePicture()
+        Try
+            If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+                ' Query to get the logged-in user's photo
+                Dim query As String = "SELECT Photo FROM Users WHERE Username = @Username"
+                Dim parameters As SqlParameter() = {
+                    New SqlParameter("@Username", frmLoginvb.LoggedInUsername)
+                }
+
+                Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters)
+                    If reader.Read() Then
+                        ' Configure the PictureBox for circular profile picture
+                        Guna2CirclePictureBox5.SizeMode = PictureBoxSizeMode.Zoom
+                        Guna2CirclePictureBox5.BorderStyle = BorderStyle.None
+
+                        If Not IsDBNull(reader("Photo")) Then
+                            ' Load user's actual photo
+                            Dim photoBytes As Byte() = CType(reader("Photo"), Byte())
+                            Using ms As New IO.MemoryStream(photoBytes)
+                                Dim loadedImage As Image = Image.FromStream(ms)
+                                Guna2CirclePictureBox5.Image = New Bitmap(loadedImage)
+                                loadedImage.Dispose()
+                            End Using
+                        Else
+                            ' Create and display default avatar
+                            Guna2CirclePictureBox5.Image = CreateDefaultProfileAvatar(frmLoginvb.LoggedInUsername)
+                        End If
+                    End If
+                End Using
+            End If
+        Catch ex As Exception
+            ' If there's an error, show default avatar
+            Guna2CirclePictureBox5.Image = CreateDefaultProfileAvatar(If(frmLoginvb.LoggedInUsername, "User"))
+        End Try
+    End Sub
+
+    ' Create default profile avatar method
+    Private Function CreateDefaultProfileAvatar(username As String) As System.Drawing.Image
+        Dim bitmap As New Bitmap(50, 50)
+        Using g As Graphics = Graphics.FromImage(bitmap)
+            ' Enable anti-aliasing for smooth circles
+            g.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias
+
+            ' Fill background with a color based on username
+            Dim colors() As System.Drawing.Color = {
+                System.Drawing.Color.FromArgb(255, 107, 107),
+                System.Drawing.Color.FromArgb(78, 205, 196),
+                System.Drawing.Color.FromArgb(85, 98, 112),
+                System.Drawing.Color.FromArgb(129, 236, 236),
+                System.Drawing.Color.FromArgb(116, 185, 255)
+            }
+            Dim colorIndex As Integer = Math.Abs(username.GetHashCode()) Mod colors.Length
+            g.FillEllipse(New SolidBrush(colors(colorIndex)), 0, 0, 50, 50)
+
+            ' Draw initials
+            Dim initials As String = ""
+            If username.Length > 0 Then
+                initials = username.Substring(0, 1).ToUpper()
+                If username.Length > 1 Then
+                    For i As Integer = 1 To username.Length - 1
+                        If Char.IsUpper(username(i)) OrElse username(i) = " "c Then
+                            If username(i) <> " "c Then
+                                initials += username(i).ToString().ToUpper()
+                                Exit For
+                            End If
+                        End If
+                    Next
+                End If
+            End If
+
+            Using font As New System.Drawing.Font("Poppins", 14, System.Drawing.FontStyle.Bold)
+                Dim textSize = g.MeasureString(initials, font)
+                g.DrawString(initials, font, Brushes.White,
+                    (50 - textSize.Width) / 2, (50 - textSize.Height) / 2)
+            End Using
+        End Using
+        Return bitmap
+    End Function
+
+    Private Sub ProfilePicture_Click(sender As Object, e As EventArgs)
+        ToggleProfileDropdown()
+    End Sub
+
+    Private Sub ToggleProfileDropdown()
+        If isProfileDropdownVisible Then
+            HideProfileDropdown()
+        Else
+            ShowProfileDropdown()
+        End If
+    End Sub
+
+    Private Sub ShowProfileDropdown()
+        If profileDropdownPanel IsNot Nothing Then
+            HideProfileDropdown()
+        End If
+
+        ' Create dropdown panel
+        profileDropdownPanel = New Panel()
+        profileDropdownPanel.Size = New System.Drawing.Size(200, 100)
+        profileDropdownPanel.BackColor = System.Drawing.Color.FromArgb(41, 44, 45)
+        profileDropdownPanel.BorderStyle = BorderStyle.FixedSingle
+
+        ' Position below the profile picture
+        Dim profileLocation = Guna2CirclePictureBox5.Location
+        profileDropdownPanel.Location = New Point(profileLocation.X - 90, profileLocation.Y + Guna2CirclePictureBox5.Height + 5)
+
+        ' Create Profile Settings button
+        Dim btnProfileSettings As New Label()
+        btnProfileSettings.Text = "⚙️ Profile Settings"
+        btnProfileSettings.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
+        btnProfileSettings.ForeColor = System.Drawing.Color.White
+        btnProfileSettings.BackColor = System.Drawing.Color.Transparent
+        btnProfileSettings.Size = New System.Drawing.Size(190, 40)
+        btnProfileSettings.Location = New Point(5, 5)
+        btnProfileSettings.TextAlign = ContentAlignment.MiddleLeft
+        btnProfileSettings.Cursor = Cursors.Hand
+
+        ' Add hover effect to Profile Settings
+        AddHandler btnProfileSettings.MouseEnter, Sub()
+                                                      btnProfileSettings.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
+                                                  End Sub
+        AddHandler btnProfileSettings.MouseLeave, Sub()
+                                                      btnProfileSettings.BackColor = System.Drawing.Color.Transparent
+                                                  End Sub
+
+        ' Add click event to Profile Settings
+        AddHandler btnProfileSettings.Click, Sub()
+                                                 HideProfileDropdown()
+                                                 NavigateToProfileSettings()
+                                             End Sub
+
+        ' Create Log Out button
+        Dim btnLogOut As New Label()
+        btnLogOut.Text = "🚪 Log Out"
+        btnLogOut.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
+        btnLogOut.ForeColor = System.Drawing.Color.White
+        btnLogOut.BackColor = System.Drawing.Color.Transparent
+        btnLogOut.Size = New System.Drawing.Size(190, 40)
+        btnLogOut.Location = New Point(5, 50)
+        btnLogOut.TextAlign = ContentAlignment.MiddleLeft
+        btnLogOut.Cursor = Cursors.Hand
+
+        ' Add hover effect to Log Out
+        AddHandler btnLogOut.MouseEnter, Sub()
+                                             btnLogOut.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
+                                         End Sub
+        AddHandler btnLogOut.MouseLeave, Sub()
+                                             btnLogOut.BackColor = System.Drawing.Color.Transparent
+                                         End Sub
+
+        ' Add click event to Log Out - JUST LOGOUT, DON'T EXIT APPLICATION
+        AddHandler btnLogOut.Click, Sub()
+                                        ' Confirm logout before proceeding
+                                        Dim result As DialogResult = MessageBox.Show("Are you sure you want to logout?", "Confirm Logout", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
+
+                                        If result = DialogResult.Yes Then
+                                            ' Log the logout action
+                                            If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+                                                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Log Out", "User logged out of the application.")
+                                            End If
+
+                                            ' Clear user session and return to login (don't exit application)
+                                            frmLoginvb.LogoutUser()
+
+                                            ' Navigate to login form without closing the application
+                                            isNavigating = True
+                                            Me.Hide()
+                                            Dim loginForm As New frmLoginvb()
+                                            loginForm.Show()
+                                        End If
+                                    End Sub
+
+        ' Add buttons to panel
+        profileDropdownPanel.Controls.Add(btnProfileSettings)
+        profileDropdownPanel.Controls.Add(btnLogOut)
+
+        ' Add panel to form
+        Me.Controls.Add(profileDropdownPanel)
+        profileDropdownPanel.BringToFront()
+
+        ' Add click event to form to hide dropdown when clicked elsewhere
+        AddHandler Me.Click, AddressOf Form_Click
+
+        isProfileDropdownVisible = True
+    End Sub
+
+    Private Sub HideProfileDropdown()
+        If profileDropdownPanel IsNot Nothing Then
+            Me.Controls.Remove(profileDropdownPanel)
+            profileDropdownPanel.Dispose()
+            profileDropdownPanel = Nothing
+        End If
+        isProfileDropdownVisible = False
+
+        ' Remove form click event
+        RemoveHandler Me.Click, AddressOf Form_Click
+    End Sub
+
+    Private Sub Form_Click(sender As Object, e As EventArgs)
+        ' Hide dropdown when clicking elsewhere on the form
+        HideProfileDropdown()
+    End Sub
+
+    Private Sub NavigateToProfileSettings()
+        If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+            Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Navigation", "Navigated from Inventory to ProfileSettings")
+        End If
+        isNavigating = True
+        ' Implement ProfileSettings form later
+        MessageBox.Show("Profile Settings will be implemented.", "Coming Soon", MessageBoxButtons.OK, MessageBoxIcon.Information)
+    End Sub
+
+    ' Helper method to validate user session
+    Private Function ValidateUserSession() As Boolean
+        If String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+            MessageBox.Show("User session expired. Please log in again.", "Session Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            frmLoginvb.Show()
+            Me.Hide()
+            Return False
+        End If
+        Return True
+    End Function
 End Class

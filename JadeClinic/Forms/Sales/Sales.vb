@@ -5,11 +5,20 @@ Public Class Sales
     ' Navigation flag to prevent exit confirmation on programmatic close
     Private isNavigating As Boolean = False
 
+    ' Profile dropdown panel
+    Private profileDropdownPanel As Panel = Nothing
+    Private isProfileDropdownVisible As Boolean = False
+
     Private Sub Sales_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         ' Make form non-resizable
         Me.FormBorderStyle = FormBorderStyle.FixedDialog
         Me.MaximizeBox = False
         Me.MinimizeBox = False
+
+        ' Enhanced CategoryPanel (main focus area)
+        CategoryPanel.BorderColor = Color.FromArgb(254, 191, 16) ' Golden Yellow
+        CategoryPanel.ShadowDecoration.Depth = 8 ' Deep shadow
+        CategoryPanel.BorderRadius = 12 ' Rounded corners
 
         ' Create navigation menu (hardcoded)
         CreateNavigationMenu()
@@ -116,13 +125,13 @@ Public Class Sales
             Dim navPOSBtn = CreateLargeNavButton("🛒 POS / Sales", startY + buttonIndex * (buttonHeight + buttonSpacing), True, buttonWidth, buttonHeight)
             buttonIndex += 1
 
-            ' Inventory Button (not active)
-            Dim navInventoryBtn = CreateLargeNavButton("📦 Inventory", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-            AddHandler navInventoryBtn.Click, AddressOf NavInventory_Click
-            buttonIndex += 1
-
-            ' Manager and Admin only buttons
+            ' Manager and Admin only buttons - Inventory moved here
             If currentRole = "MANAGER" Or currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
+                ' Inventory Button (only for Manager and Admin)
+                Dim navInventoryBtn = CreateLargeNavButton("📦 Inventory", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
+                AddHandler navInventoryBtn.Click, AddressOf NavInventory_Click
+                buttonIndex += 1
+
                 ' Sales Records Button
                 Dim navSalesRecordsBtn = CreateLargeNavButton("📊 Sales Records", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
                 AddHandler navSalesRecordsBtn.Click, AddressOf NavSalesRecords_Click
@@ -152,31 +161,7 @@ Public Class Sales
                 buttonIndex += 1
             End If
 
-            ' Add separator line before logout
-            Dim separator2 As New Panel()
-            separator2.BackColor = System.Drawing.Color.FromArgb(220, 220, 220) ' Light Gray for white background
-            separator2.Size = New System.Drawing.Size(availableWidth - 40, 2)
-            separator2.Location = New Point(40, startY + buttonIndex * (buttonHeight + buttonSpacing) + 10)
-            DashboardPanel.Controls.Add(separator2)
-
-            ' Logout Button (at bottom with Alert Red styling)
-            Dim navLogoutBtn = CreateLargeNavButton("🚪 Logout", startY + buttonIndex * (buttonHeight + buttonSpacing) + 30, False, buttonWidth, buttonHeight)
-            navLogoutBtn.FillColor = System.Drawing.Color.FromArgb(255, 71, 87) ' Alert Red #FF4757
-            navLogoutBtn.ForeColor = System.Drawing.Color.White
-
-            ' Override hover effects for logout button to maintain red background
-            RemoveHandler navLogoutBtn.MouseEnter, Nothing
-            RemoveHandler navLogoutBtn.MouseLeave, Nothing
-            AddHandler navLogoutBtn.MouseEnter, Sub()
-                                                    navLogoutBtn.FillColor = System.Drawing.Color.FromArgb(220, 50, 50) ' Slightly darker red on hover
-                                                    navLogoutBtn.Font = New Font("Poppins", 9, FontStyle.Bold)
-                                                End Sub
-            AddHandler navLogoutBtn.MouseLeave, Sub()
-                                                    navLogoutBtn.FillColor = System.Drawing.Color.FromArgb(255, 71, 87) ' Back to original red
-                                                    navLogoutBtn.Font = New Font("Poppins", 10, FontStyle.Regular)
-                                                End Sub
-
-            AddHandler navLogoutBtn.Click, AddressOf NavLogout_Click
+            ' No more logout button in navigation - removed separator and logout button
 
         Catch ex As Exception
             Console.WriteLine($"Error creating navigation menu: {ex.Message}")
@@ -244,13 +229,25 @@ Public Class Sales
 
     Private Sub InitializeProfileSection()
         Try
-            ' Set username
+            ' Set username without emoji
             lblUsername.Text = frmLoginvb.LoggedInUsername
             lblUsername.Font = New Font("Poppins", 10.0F, FontStyle.Regular)
             lblUsername.ForeColor = System.Drawing.Color.White
 
             ' Load user profile picture
             LoadUserProfilePicture()
+
+            ' Add click event to profile picture and username
+            AddHandler Guna2CirclePictureBox5.Click, AddressOf ProfilePicture_Click
+            AddHandler lblUsername.Click, AddressOf ProfilePicture_Click
+
+            ' Add hover effects
+            AddHandler Guna2CirclePictureBox5.MouseEnter, Sub()
+                                                              Guna2CirclePictureBox5.Cursor = Cursors.Hand
+                                                          End Sub
+            AddHandler lblUsername.MouseEnter, Sub()
+                                                   lblUsername.Cursor = Cursors.Hand
+                                               End Sub
 
         Catch ex As Exception
             ' Fallback if there's an error
@@ -278,7 +275,9 @@ Public Class Sales
                             ' Load user's actual photo
                             Dim photoBytes As Byte() = CType(reader("Photo"), Byte())
                             Using ms As New IO.MemoryStream(photoBytes)
-                                Guna2CirclePictureBox5.Image = System.Drawing.Image.FromStream(ms)
+                                Dim loadedImage As Image = Image.FromStream(ms)
+                                Guna2CirclePictureBox5.Image = New Bitmap(loadedImage)
+                                loadedImage.Dispose()
                             End Using
                         Else
                             ' Create and display default avatar
@@ -376,12 +375,17 @@ Public Class Sales
         Dim result As DialogResult = MessageBox.Show("Are you sure you want to logout?", "Confirm Logout", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
 
         If result = DialogResult.Yes Then
-            ' Clear user session
+            ' Log the logout action
+            If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Log Out", "User logged out of the application.")
+            End If
+
+            ' Clear user session and return to login (don't exit application)
             frmLoginvb.LogoutUser()
 
-            ' Navigate to login
+            ' Navigate to login form without closing the application
             isNavigating = True
-            Me.Close()
+            Me.Hide()
             Dim loginForm As New frmLoginvb()
             loginForm.Show()
         End If
@@ -426,5 +430,167 @@ Public Class Sales
                 e.Cancel = True
             End If
         End If
+    End Sub
+
+    Private Sub CategoryPanel_Paint(sender As Object, e As PaintEventArgs) Handles CategoryPanel.Paint
+
+    End Sub
+
+    Private Sub Guna2HtmlLabel16_Click(sender As Object, e As EventArgs)
+
+    End Sub
+
+    Private Sub btnShorts_Click(sender As Object, e As EventArgs)
+    End Sub
+
+    Private Sub Guna2HtmlLabel39_Click(sender As Object, e As EventArgs)
+    End Sub
+
+    Private Sub PictureBox12_Click(sender As Object, e As EventArgs)
+    End Sub
+
+    Private Sub orderSummaryPanel_Paint(sender As Object, e As PaintEventArgs) Handles orderSummaryPanel.Paint
+
+    End Sub
+
+    Private Sub totalPanel_Paint(sender As Object, e As PaintEventArgs) Handles totalPanel.Paint
+
+    End Sub
+
+    Private Sub Guna2Button2_Click(sender As Object, e As EventArgs)
+
+    End Sub
+
+    Private Sub ProfilePicture_Click(sender As Object, e As EventArgs)
+        ToggleProfileDropdown()
+    End Sub
+
+    Private Sub ToggleProfileDropdown()
+        If isProfileDropdownVisible Then
+            HideProfileDropdown()
+        Else
+            ShowProfileDropdown()
+        End If
+    End Sub
+
+    Private Sub ShowProfileDropdown()
+        If profileDropdownPanel IsNot Nothing Then
+            HideProfileDropdown()
+        End If
+
+        ' Create dropdown panel
+        profileDropdownPanel = New Panel()
+        profileDropdownPanel.Size = New System.Drawing.Size(200, 100)
+        profileDropdownPanel.BackColor = System.Drawing.Color.FromArgb(41, 44, 45)
+        profileDropdownPanel.BorderStyle = BorderStyle.FixedSingle
+
+        ' Position below the profile picture
+        Dim profileLocation = Guna2CirclePictureBox5.Location
+        profileDropdownPanel.Location = New Point(profileLocation.X - 90, profileLocation.Y + Guna2CirclePictureBox5.Height + 5)
+
+        ' Create Profile Settings button
+        Dim btnProfileSettings As New Label()
+        btnProfileSettings.Text = "⚙️ Profile Settings"
+        btnProfileSettings.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
+        btnProfileSettings.ForeColor = System.Drawing.Color.White
+        btnProfileSettings.BackColor = System.Drawing.Color.Transparent
+        btnProfileSettings.Size = New System.Drawing.Size(190, 40)
+        btnProfileSettings.Location = New Point(5, 5)
+        btnProfileSettings.TextAlign = ContentAlignment.MiddleLeft
+        btnProfileSettings.Cursor = Cursors.Hand
+
+        ' Add hover effect to Profile Settings
+        AddHandler btnProfileSettings.MouseEnter, Sub()
+                                                      btnProfileSettings.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
+                                                  End Sub
+        AddHandler btnProfileSettings.MouseLeave, Sub()
+                                                      btnProfileSettings.BackColor = System.Drawing.Color.Transparent
+                                                  End Sub
+
+        ' Add click event to Profile Settings
+        AddHandler btnProfileSettings.Click, Sub()
+                                                 HideProfileDropdown()
+                                                 NavigateToProfileSettings()
+                                             End Sub
+
+        ' Create Log Out button
+        Dim btnLogOut As New Label()
+        btnLogOut.Text = "🚪 Log Out"
+        btnLogOut.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
+        btnLogOut.ForeColor = System.Drawing.Color.White
+        btnLogOut.BackColor = System.Drawing.Color.Transparent
+        btnLogOut.Size = New System.Drawing.Size(190, 40)
+        btnLogOut.Location = New Point(5, 50)
+        btnLogOut.TextAlign = ContentAlignment.MiddleLeft
+        btnLogOut.Cursor = Cursors.Hand
+
+        ' Add hover effect to Log Out
+        AddHandler btnLogOut.MouseEnter, Sub()
+                                             btnLogOut.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
+                                         End Sub
+        AddHandler btnLogOut.MouseLeave, Sub()
+                                             btnLogOut.BackColor = System.Drawing.Color.Transparent
+                                         End Sub
+
+        ' Add click event to Log Out - JUST LOGOUT, DON'T EXIT APPLICATION
+        AddHandler btnLogOut.Click, Sub()
+                                        ' Confirm logout before proceeding
+                                        Dim result As DialogResult = MessageBox.Show("Are you sure you want to logout?", "Confirm Logout", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
+
+                                        If result = DialogResult.Yes Then
+                                            ' Log the logout action
+                                            If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+                                                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Log Out", "User logged out of the application.")
+                                            End If
+
+                                            ' Clear user session and return to login (don't exit application)
+                                            frmLoginvb.LogoutUser()
+
+                                            ' Navigate to login form without closing the application
+                                            isNavigating = True
+                                            Me.Hide()
+                                            Dim loginForm As New frmLoginvb()
+                                            loginForm.Show()
+                                        End If
+                                    End Sub
+
+        ' Add buttons to panel
+        profileDropdownPanel.Controls.Add(btnProfileSettings)
+        profileDropdownPanel.Controls.Add(btnLogOut)
+
+        ' Add panel to form
+        Me.Controls.Add(profileDropdownPanel)
+        profileDropdownPanel.BringToFront()
+
+        ' Add click event to form to hide dropdown when clicked elsewhere
+        AddHandler Me.Click, AddressOf Form_Click
+
+        isProfileDropdownVisible = True
+    End Sub
+
+    Private Sub HideProfileDropdown()
+        If profileDropdownPanel IsNot Nothing Then
+            Me.Controls.Remove(profileDropdownPanel)
+            profileDropdownPanel.Dispose()
+            profileDropdownPanel = Nothing
+        End If
+        isProfileDropdownVisible = False
+
+        ' Remove form click event
+        RemoveHandler Me.Click, AddressOf Form_Click
+    End Sub
+
+    Private Sub Form_Click(sender As Object, e As EventArgs)
+        ' Hide dropdown when clicking elsewhere on the form
+        HideProfileDropdown()
+    End Sub
+
+    Private Sub NavigateToProfileSettings()
+        If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+            Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Navigation", "Navigated from Sales to ProfileSettings")
+        End If
+        isNavigating = True
+        ' Implement ProfileSettings form later
+        MessageBox.Show("Profile Settings will be implemented.", "Coming Soon", MessageBoxButtons.OK, MessageBoxIcon.Information)
     End Sub
 End Class
