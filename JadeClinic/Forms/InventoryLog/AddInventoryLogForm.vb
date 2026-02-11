@@ -320,8 +320,8 @@ Public Class AddInventoryLogForm
                 Using transaction = conn.BeginTransaction()
                     Try
                         ' Insert inventory log
-                        Dim logQuery = "INSERT INTO InventoryLog (ProductID, TransactionType, Quantity, PreviousStock, NewStock, SupplierID, Reference, Notes, CreatedAt) " &
-                                      "VALUES (@ProductID, @TransactionType, @Quantity, @PreviousStock, @NewStock, @SupplierID, @Reference, @Notes, GETDATE())"
+                        Dim logQuery = "INSERT INTO InventoryLog (ProductID, TransactionType, Quantity, PreviousStock, NewStock, SupplierID, UserID, Reference, Notes, CreatedAt) " &
+                                      "VALUES (@ProductID, @TransactionType, @Quantity, @PreviousStock, @NewStock, @SupplierID, @UserID, @Reference, @Notes, GETDATE())"
 
                         Using cmd As New SqlCommand(logQuery, conn, transaction)
                             cmd.Parameters.AddWithValue("@ProductID", productId)
@@ -330,6 +330,7 @@ Public Class AddInventoryLogForm
                             cmd.Parameters.AddWithValue("@PreviousStock", currentStock)
                             cmd.Parameters.AddWithValue("@NewStock", newStock)
                             cmd.Parameters.AddWithValue("@SupplierID", supplierId)
+                            cmd.Parameters.AddWithValue("@UserID", frmLoginvb.LoggedInUserID) ' Add the required UserID
                             cmd.Parameters.AddWithValue("@Reference", If(String.IsNullOrWhiteSpace(txtReference.Text), DBNull.Value, txtReference.Text.Trim()))
                             cmd.Parameters.AddWithValue("@Notes", If(String.IsNullOrWhiteSpace(txtNotes.Text), DBNull.Value, txtNotes.Text.Trim()))
                             cmd.ExecuteNonQuery()
@@ -345,7 +346,7 @@ Public Class AddInventoryLogForm
 
                         transaction.Commit()
                         MessageBox.Show("Inventory log saved successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information)
-                        
+
                         Me.DialogResult = DialogResult.OK
                         Me.Close()
 

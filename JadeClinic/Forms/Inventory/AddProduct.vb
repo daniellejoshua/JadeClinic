@@ -397,20 +397,29 @@ Public Class AddProduct
                             cmd.ExecuteNonQuery()
                         End Using
 
+                        ' Flag to track if we need cleanup (only when image is actually updated)
+                        Dim imageWasUpdated As Boolean = False
+
                         ' Update product image if new one selected
                         If Not String.IsNullOrWhiteSpace(selectedImagePath) AndAlso IO.File.Exists(selectedImagePath) Then
-                            ' Delete old image
-                            Dim deleteImageQuery As String = "DELETE FROM ProductImages WHERE ProductID = @ProductID"
-                            Using cmdDelete As New SqlCommand(deleteImageQuery, conn, transaction)
+                            ' Delete old image mapping (not the image itself, as it might be used by other products)
+                            Dim deleteMappingQuery As String = "DELETE FROM ProductImageMapping WHERE ProductID = @ProductID"
+                            Using cmdDelete As New SqlCommand(deleteMappingQuery, conn, transaction)
                                 cmdDelete.Parameters.AddWithValue("@ProductID", editProductId)
                                 cmdDelete.ExecuteNonQuery()
                             End Using
 
                             ' Save new image
                             SaveProductImage(conn, transaction, editProductId, selectedImagePath)
+                            imageWasUpdated = True
                         End If
 
                         transaction.Commit()
+
+                        ' Only cleanup orphaned images if an image was actually updated
+                        If imageWasUpdated Then
+                            CleanupOrphanedImages()
+                        End If
 
                         ' Get the existing ProductCode for barcode display (don't regenerate)
                         Dim getCodeQuery As String = "SELECT ProductCode FROM Products WHERE ProductID = @ProductID"
@@ -715,6 +724,49 @@ Public Class AddProduct
             End Using
         Catch ex As Exception
             MessageBox.Show("Error printing barcode: " & ex.Message, "Print Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
+
+    ' Smart cleanup for orphaned images - only runs when images are actually updated
+    Private Sub CleanupOrphanedImages()
+        Try
+            ' Run cleanup in a separate transaction to avoid affecting main operation
+            Dim connStr As String = Connection.GetConnectionString()
+            Using cleanupConn As New SqlConnection(connStr)
+                cleanupConn.Open()
+                
+                ' Get count of orphaned images first
+                Dim countQuery As String = "SELECT COUNT(*) FROM ProductImages WHERE ImageID NOT IN (SELECT DISTINCT ImageID FROM ProductImageMapping)"
+                Dim orphanCount As Integer
+                
+                Using countCmd As New SqlCommand(countQuery, cleanupConn)
+                    orphanCount = Convert.ToInt32(countCmd.ExecuteScalar())
+                End Using
+                
+                If orphanCount > 0 Then
+                    ' Delete orphaned images
+                    Dim deleteQuery As String = "DELETE FROM ProductImages WHERE ImageID NOT IN (SELECT DISTINCT ImageID FROM ProductImageMapping)"
+                    Dim deletedCount As Integer
+                    
+                    Using deleteCmd As New SqlCommand(deleteQuery, cleanupConn)
+                        deletedCount = deleteCmd.ExecuteNonQuery()
+                    End Using
+                    
+                    ' Log the cleanup activity
+                    Console.WriteLine($"🗑️ Cleaned up {deletedCount} orphaned image(s) during product update")
+                    
+                    ' Log audit trail for cleanup
+                    Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Image Cleanup", 
+                                     $"Cleaned up {deletedCount} orphaned product images during product update")
+                Else
+                    Console.WriteLine("✅ No orphaned images found - database optimized")
+                End If
+            End Using
+            
+        Catch ex As Exception
+            ' Log error but don't fail the main operation since product update succeeded
+            Console.WriteLine($"⚠️ Image cleanup warning: {ex.Message}")
+            ' Don't show error to user since the main product update was successful
         End Try
     End Sub
 End Class
