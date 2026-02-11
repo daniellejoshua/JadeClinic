@@ -204,4 +204,82 @@ Public Class ImageCompression
 
         Return $"{size:F1} {sizes(order)}"
     End Function
+
+    ' Compress image to specified quality (1-100)
+    Public Shared Function CompressImage(imageBytes As Byte(), quality As Integer) As Byte()
+        Try
+            Using originalStream As New MemoryStream(imageBytes)
+                Using originalImage As Image = Image.FromStream(originalStream)
+                    
+                    ' Get JPEG codec
+                    Dim jpegCodec As ImageCodecInfo = GetEncoderInfo("image/jpeg")
+                    If jpegCodec Is Nothing Then
+                        Return imageBytes ' Return original if no JPEG codec found
+                    End If
+                    
+                    ' Set quality parameters
+                    Dim encoderParams As New EncoderParameters(1)
+                    encoderParams.Param(0) = New EncoderParameter(Encoder.Quality, CLng(quality))
+                    
+                    ' Compress and return
+                    Using compressedStream As New MemoryStream()
+                        originalImage.Save(compressedStream, jpegCodec, encoderParams)
+                        Return compressedStream.ToArray()
+                    End Using
+                End Using
+            End Using
+        Catch ex As Exception
+            ' If compression fails, return original
+            Console.WriteLine($"Image compression failed: {ex.Message}")
+            Return imageBytes
+        End Try
+    End Function
+
+    ' Get encoder info for specified MIME type
+    Private Shared Function GetEncoderInfo(mimeType As String) As ImageCodecInfo
+        Try
+            Dim codecs As ImageCodecInfo() = ImageCodecInfo.GetImageEncoders()
+            For Each codec In codecs
+                If codec.MimeType = mimeType Then
+                    Return codec
+                End If
+            Next
+            Return Nothing
+        Catch ex As Exception
+            Return Nothing
+        End Try
+    End Function
+
+    ' Resize image to maximum dimensions while maintaining aspect ratio
+    Public Shared Function ResizeImage(imageBytes As Byte(), maxWidth As Integer, maxHeight As Integer) As Byte()
+        Try
+            Using originalStream As New MemoryStream(imageBytes)
+                Using originalImage As Image = Image.FromStream(originalStream)
+                    
+                    ' Calculate new dimensions
+                    Dim ratio As Double = Math.Min(maxWidth / originalImage.Width, maxHeight / originalImage.Height)
+                    Dim newWidth As Integer = CInt(originalImage.Width * ratio)
+                    Dim newHeight As Integer = CInt(originalImage.Height * ratio)
+                    
+                    ' Create resized image
+                    Using resizedImage As New Bitmap(newWidth, newHeight)
+                        Using graphics As Graphics = Graphics.FromImage(resizedImage)
+                            graphics.InterpolationMode = Drawing2D.InterpolationMode.HighQualityBicubic
+                            graphics.DrawImage(originalImage, 0, 0, newWidth, newHeight)
+                        End Using
+                        
+                        ' Convert back to bytes
+                        Using resultStream As New MemoryStream()
+                            resizedImage.Save(resultStream, ImageFormat.Jpeg)
+                            Return resultStream.ToArray()
+                        End Using
+                    End Using
+                End Using
+            End Using
+        Catch ex As Exception
+            ' If resize fails, return original
+            Console.WriteLine($"Image resize failed: {ex.Message}")
+            Return imageBytes
+        End Try
+    End Function
 End Class

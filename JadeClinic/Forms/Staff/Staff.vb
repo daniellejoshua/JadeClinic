@@ -499,7 +499,7 @@ Public Class Staff
                     Guna2DataGridView1.Rows(rowIndex).Cells("FullName").Value = fullName
                     Guna2DataGridView1.Rows(rowIndex).Cells("UserRole").Value = userRole
                     Guna2DataGridView1.Rows(rowIndex).Cells("IsActive").Value = If(isActive, "✅ Active", "❌ Inactive")
-                    Guna2DataGridView1.Rows(rowIndex).Cells("Actions").Value = "👁️  |  ✏️  |  🗑️"
+                    Guna2DataGridView1.Rows(rowIndex).Cells("Actions").Value = "👁️      |    ✏️  "
 
                     ' Store actual data in row tag for editing purposes (REMOVED PASSWORD AND QR CODE FIELDS)
                     Guna2DataGridView1.Rows(rowIndex).Tag = New Dictionary(Of String, Object) From {

@@ -22,33 +22,34 @@ Partial Class Inventory
     'Do not modify it using the code editor.
     <System.Diagnostics.DebuggerStepThrough()>
     Private Sub InitializeComponent()
-        Dim CustomizableEdges28 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges29 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges44 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges45 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges30 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges31 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges32 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges33 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges34 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges35 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges36 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges37 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges38 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges39 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges40 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges41 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges42 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges43 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges46 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges47 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges48 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges49 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges50 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges51 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges52 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges53 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges54 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges1 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges2 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges17 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges18 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges3 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges4 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges5 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges6 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges7 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges8 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges9 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges10 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges11 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges12 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges13 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges14 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges15 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges16 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges19 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges20 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges21 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges22 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges23 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges24 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges25 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim DataGridViewCellStyle1 As DataGridViewCellStyle = New DataGridViewCellStyle()
+        Dim DataGridViewCellStyle2 As DataGridViewCellStyle = New DataGridViewCellStyle()
+        Dim DataGridViewCellStyle3 As DataGridViewCellStyle = New DataGridViewCellStyle()
         DashboardPanel = New Guna.UI2.WinForms.Guna2Panel()
         PictureBox9 = New PictureBox()
         FilterPanel = New Guna.UI2.WinForms.Guna2Panel()
@@ -66,29 +67,30 @@ Partial Class Inventory
         panelAllFilter = New Guna.UI2.WinForms.Guna2Panel()
         Guna2HtmlLabel4 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2HtmlLabel21 = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        stockPanel = New Guna.UI2.WinForms.Guna2Panel()
         Guna2Button1 = New Guna.UI2.WinForms.Guna2Button()
         btnManagePromotions = New Guna.UI2.WinForms.Guna2Button()
         Exportbtn = New Guna.UI2.WinForms.Guna2Button()
         lblUsername = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2CirclePictureBox5 = New Guna.UI2.WinForms.Guna2CirclePictureBox()
         Guna2HtmlLabel1 = New Guna.UI2.WinForms.Guna2HtmlLabel()
+        Guna2DataGridView1 = New Guna.UI2.WinForms.Guna2DataGridView()
         DashboardPanel.SuspendLayout()
         CType(PictureBox9, ComponentModel.ISupportInitialize).BeginInit()
         FilterPanel.SuspendLayout()
         panelAllFilter.SuspendLayout()
         CType(Guna2CirclePictureBox5, ComponentModel.ISupportInitialize).BeginInit()
+        CType(Guna2DataGridView1, ComponentModel.ISupportInitialize).BeginInit()
         SuspendLayout()
         ' 
         ' DashboardPanel
         ' 
         DashboardPanel.BorderRadius = 30
         DashboardPanel.Controls.Add(PictureBox9)
-        DashboardPanel.CustomizableEdges = CustomizableEdges28
+        DashboardPanel.CustomizableEdges = CustomizableEdges1
         DashboardPanel.FillColor = Color.White
         DashboardPanel.Location = New Point(-33, 5)
         DashboardPanel.Name = "DashboardPanel"
-        DashboardPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges29
+        DashboardPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges2
         DashboardPanel.Size = New Size(236, 885)
         DashboardPanel.TabIndex = 7
         ' 
@@ -119,36 +121,37 @@ Partial Class Inventory
         FilterPanel.Controls.Add(Guna2HtmlLabel10)
         FilterPanel.Controls.Add(Guna2ComboBox1)
         FilterPanel.Controls.Add(panelAllFilter)
-        FilterPanel.CustomizableEdges = CustomizableEdges44
-        FilterPanel.FillColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
-        FilterPanel.Location = New Point(243, 167)
+        FilterPanel.CustomizableEdges = CustomizableEdges17
+        FilterPanel.FillColor = Color.White
+        FilterPanel.ForeColor = Color.FromArgb(CByte(50), CByte(50), CByte(50))
+        FilterPanel.Location = New Point(224, 167)
         FilterPanel.Name = "FilterPanel"
-        FilterPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges45
+        FilterPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges18
         FilterPanel.Size = New Size(428, 756)
         FilterPanel.TabIndex = 8
         ' 
         ' txtSearch
         ' 
-        txtSearch.BackColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
+        txtSearch.BackColor = Color.White
         txtSearch.BorderRadius = 10
         txtSearch.BorderThickness = 0
-        txtSearch.CustomizableEdges = CustomizableEdges30
+        txtSearch.CustomizableEdges = CustomizableEdges3
         txtSearch.DefaultText = ""
         txtSearch.DisabledState.BorderColor = Color.FromArgb(CByte(208), CByte(208), CByte(208))
         txtSearch.DisabledState.FillColor = Color.FromArgb(CByte(226), CByte(226), CByte(226))
         txtSearch.DisabledState.ForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtSearch.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
-        txtSearch.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
+        txtSearch.FillColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         txtSearch.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
-        txtSearch.Font = New Font("Segoe UI", 9F)
-        txtSearch.ForeColor = Color.White
+        txtSearch.Font = New Font("Segoe UI", 9.0F)
+        txtSearch.ForeColor = Color.FromArgb(CByte(50), CByte(50), CByte(50))
         txtSearch.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtSearch.Location = New Point(23, 114)
         txtSearch.Margin = New Padding(3, 4, 3, 4)
         txtSearch.Name = "txtSearch"
         txtSearch.PlaceholderText = ""
         txtSearch.SelectedText = ""
-        txtSearch.ShadowDecoration.CustomizableEdges = CustomizableEdges31
+        txtSearch.ShadowDecoration.CustomizableEdges = CustomizableEdges4
         txtSearch.Size = New Size(396, 46)
         txtSearch.TabIndex = 79
         ' 
@@ -156,7 +159,7 @@ Partial Class Inventory
         ' 
         Guna2HtmlLabel14.BackColor = Color.Transparent
         Guna2HtmlLabel14.Font = New Font("Poppins Medium", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel14.ForeColor = Color.White
+        Guna2HtmlLabel14.ForeColor = Color.FromArgb(CByte(50), CByte(50), CByte(50))
         Guna2HtmlLabel14.Location = New Point(23, 85)
         Guna2HtmlLabel14.Name = "Guna2HtmlLabel14"
         Guna2HtmlLabel14.Size = New Size(64, 32)
@@ -165,68 +168,69 @@ Partial Class Inventory
         ' 
         ' txtFilterPrice
         ' 
-        txtFilterPrice.BackColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
+        txtFilterPrice.BackColor = Color.White
         txtFilterPrice.BorderRadius = 10
         txtFilterPrice.BorderThickness = 0
-        txtFilterPrice.CustomizableEdges = CustomizableEdges32
+        txtFilterPrice.CustomizableEdges = CustomizableEdges5
         txtFilterPrice.DefaultText = ""
         txtFilterPrice.DisabledState.BorderColor = Color.FromArgb(CByte(208), CByte(208), CByte(208))
         txtFilterPrice.DisabledState.FillColor = Color.FromArgb(CByte(226), CByte(226), CByte(226))
         txtFilterPrice.DisabledState.ForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtFilterPrice.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
-        txtFilterPrice.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
+        txtFilterPrice.FillColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         txtFilterPrice.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
-        txtFilterPrice.Font = New Font("Segoe UI", 9F)
-        txtFilterPrice.ForeColor = Color.White
+        txtFilterPrice.Font = New Font("Segoe UI", 9.0F)
+        txtFilterPrice.ForeColor = Color.FromArgb(CByte(50), CByte(50), CByte(50))
         txtFilterPrice.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtFilterPrice.Location = New Point(23, 469)
         txtFilterPrice.Margin = New Padding(3, 4, 3, 4)
         txtFilterPrice.Name = "txtFilterPrice"
         txtFilterPrice.PlaceholderText = ""
         txtFilterPrice.SelectedText = ""
-        txtFilterPrice.ShadowDecoration.CustomizableEdges = CustomizableEdges33
+        txtFilterPrice.ShadowDecoration.CustomizableEdges = CustomizableEdges6
         txtFilterPrice.Size = New Size(396, 46)
         txtFilterPrice.TabIndex = 77
         ' 
         ' txtFilterQuantity
         ' 
-        txtFilterQuantity.BackColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
+        txtFilterQuantity.BackColor = Color.White
         txtFilterQuantity.BorderRadius = 10
         txtFilterQuantity.BorderThickness = 0
-        txtFilterQuantity.CustomizableEdges = CustomizableEdges34
+        txtFilterQuantity.CustomizableEdges = CustomizableEdges7
         txtFilterQuantity.DefaultText = ""
         txtFilterQuantity.DisabledState.BorderColor = Color.FromArgb(CByte(208), CByte(208), CByte(208))
         txtFilterQuantity.DisabledState.FillColor = Color.FromArgb(CByte(226), CByte(226), CByte(226))
         txtFilterQuantity.DisabledState.ForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtFilterQuantity.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
-        txtFilterQuantity.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
+        txtFilterQuantity.FillColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         txtFilterQuantity.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
-        txtFilterQuantity.Font = New Font("Segoe UI", 9F)
-        txtFilterQuantity.ForeColor = Color.White
+        txtFilterQuantity.Font = New Font("Segoe UI", 9.0F)
+        txtFilterQuantity.ForeColor = Color.FromArgb(CByte(50), CByte(50), CByte(50))
         txtFilterQuantity.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtFilterQuantity.Location = New Point(23, 387)
         txtFilterQuantity.Margin = New Padding(3, 4, 3, 4)
         txtFilterQuantity.Name = "txtFilterQuantity"
         txtFilterQuantity.PlaceholderText = ""
         txtFilterQuantity.SelectedText = ""
-        txtFilterQuantity.ShadowDecoration.CustomizableEdges = CustomizableEdges35
+        txtFilterQuantity.ShadowDecoration.CustomizableEdges = CustomizableEdges8
         txtFilterQuantity.Size = New Size(396, 46)
         txtFilterQuantity.TabIndex = 76
         ' 
         ' btnResetFilter
         ' 
+        btnResetFilter.BackColor = Color.White
         btnResetFilter.BorderRadius = 10
-        btnResetFilter.CustomizableEdges = CustomizableEdges36
+        btnResetFilter.CustomizableEdges = CustomizableEdges9
         btnResetFilter.DisabledState.BorderColor = Color.DarkGray
         btnResetFilter.DisabledState.CustomBorderColor = Color.DarkGray
         btnResetFilter.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         btnResetFilter.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        btnResetFilter.FillColor = Color.White
-        btnResetFilter.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        btnResetFilter.FillColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
+        btnResetFilter.Font = New Font("Poppins Medium", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         btnResetFilter.ForeColor = Color.Black
         btnResetFilter.Location = New Point(73, 560)
         btnResetFilter.Name = "btnResetFilter"
-        btnResetFilter.ShadowDecoration.CustomizableEdges = CustomizableEdges37
+        btnResetFilter.ShadowDecoration.CustomizableEdges = CustomizableEdges10
         btnResetFilter.Size = New Size(270, 57)
         btnResetFilter.TabIndex = 53
         btnResetFilter.Text = "Reset Filters"
@@ -235,7 +239,7 @@ Partial Class Inventory
         ' 
         Guna2HtmlLabel15.BackColor = Color.Transparent
         Guna2HtmlLabel15.Font = New Font("Poppins Medium", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel15.ForeColor = Color.White
+        Guna2HtmlLabel15.ForeColor = Color.FromArgb(CByte(50), CByte(50), CByte(50))
         Guna2HtmlLabel15.Location = New Point(23, 440)
         Guna2HtmlLabel15.Name = "Guna2HtmlLabel15"
         Guna2HtmlLabel15.Size = New Size(46, 32)
@@ -246,7 +250,7 @@ Partial Class Inventory
         ' 
         Guna2HtmlLabel12.BackColor = Color.Transparent
         Guna2HtmlLabel12.Font = New Font("Poppins Medium", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel12.ForeColor = Color.White
+        Guna2HtmlLabel12.ForeColor = Color.FromArgb(CByte(50), CByte(50), CByte(50))
         Guna2HtmlLabel12.Location = New Point(23, 356)
         Guna2HtmlLabel12.Name = "Guna2HtmlLabel12"
         Guna2HtmlLabel12.Size = New Size(176, 32)
@@ -257,7 +261,7 @@ Partial Class Inventory
         ' 
         Guna2HtmlLabel11.BackColor = Color.Transparent
         Guna2HtmlLabel11.Font = New Font("Poppins Medium", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel11.ForeColor = Color.White
+        Guna2HtmlLabel11.ForeColor = Color.FromArgb(CByte(50), CByte(50), CByte(50))
         Guna2HtmlLabel11.Location = New Point(23, 258)
         Guna2HtmlLabel11.Name = "Guna2HtmlLabel11"
         Guna2HtmlLabel11.Size = New Size(51, 32)
@@ -269,19 +273,19 @@ Partial Class Inventory
         StockCmbBox.BackColor = Color.Transparent
         StockCmbBox.BorderRadius = 10
         StockCmbBox.BorderThickness = 0
-        StockCmbBox.CustomizableEdges = CustomizableEdges38
+        StockCmbBox.CustomizableEdges = CustomizableEdges11
         StockCmbBox.DrawMode = DrawMode.OwnerDrawFixed
         StockCmbBox.DropDownStyle = ComboBoxStyle.DropDownList
-        StockCmbBox.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
+        StockCmbBox.FillColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         StockCmbBox.FocusedColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         StockCmbBox.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         StockCmbBox.Font = New Font("Poppins Light", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        StockCmbBox.ForeColor = Color.White
+        StockCmbBox.ForeColor = Color.FromArgb(CByte(50), CByte(50), CByte(50))
         StockCmbBox.ItemHeight = 40
         StockCmbBox.Items.AddRange(New Object() {"All", "Active", "Out of Stock", "Low on Stock"})
         StockCmbBox.Location = New Point(23, 296)
         StockCmbBox.Name = "StockCmbBox"
-        StockCmbBox.ShadowDecoration.CustomizableEdges = CustomizableEdges39
+        StockCmbBox.ShadowDecoration.CustomizableEdges = CustomizableEdges12
         StockCmbBox.Size = New Size(396, 46)
         StockCmbBox.TabIndex = 54
         ' 
@@ -289,7 +293,7 @@ Partial Class Inventory
         ' 
         Guna2HtmlLabel10.BackColor = Color.Transparent
         Guna2HtmlLabel10.Font = New Font("Poppins Medium", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel10.ForeColor = Color.White
+        Guna2HtmlLabel10.ForeColor = Color.FromArgb(CByte(50), CByte(50), CByte(50))
         Guna2HtmlLabel10.Location = New Point(23, 168)
         Guna2HtmlLabel10.Name = "Guna2HtmlLabel10"
         Guna2HtmlLabel10.Size = New Size(84, 32)
@@ -301,39 +305,39 @@ Partial Class Inventory
         Guna2ComboBox1.BackColor = Color.Transparent
         Guna2ComboBox1.BorderRadius = 10
         Guna2ComboBox1.BorderThickness = 0
-        Guna2ComboBox1.CustomizableEdges = CustomizableEdges40
+        Guna2ComboBox1.CustomizableEdges = CustomizableEdges13
         Guna2ComboBox1.DrawMode = DrawMode.OwnerDrawFixed
         Guna2ComboBox1.DropDownStyle = ComboBoxStyle.DropDownList
-        Guna2ComboBox1.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
+        Guna2ComboBox1.FillColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         Guna2ComboBox1.FocusedColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         Guna2ComboBox1.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         Guna2ComboBox1.Font = New Font("Poppins Light", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2ComboBox1.ForeColor = Color.White
+        Guna2ComboBox1.ForeColor = Color.FromArgb(CByte(50), CByte(50), CByte(50))
         Guna2ComboBox1.ItemHeight = 40
         Guna2ComboBox1.Location = New Point(23, 206)
         Guna2ComboBox1.Name = "Guna2ComboBox1"
-        Guna2ComboBox1.ShadowDecoration.CustomizableEdges = CustomizableEdges41
+        Guna2ComboBox1.ShadowDecoration.CustomizableEdges = CustomizableEdges14
         Guna2ComboBox1.Size = New Size(396, 46)
         Guna2ComboBox1.TabIndex = 39
         ' 
         ' panelAllFilter
         ' 
-        panelAllFilter.BackColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
+        panelAllFilter.BackColor = Color.White
         panelAllFilter.BorderRadius = 10
         panelAllFilter.Controls.Add(Guna2HtmlLabel4)
         panelAllFilter.Controls.Add(Guna2HtmlLabel21)
-        panelAllFilter.CustomizableEdges = CustomizableEdges42
-        panelAllFilter.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
+        panelAllFilter.CustomizableEdges = CustomizableEdges15
+        panelAllFilter.FillColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         panelAllFilter.Location = New Point(23, 20)
         panelAllFilter.Name = "panelAllFilter"
-        panelAllFilter.ShadowDecoration.CustomizableEdges = CustomizableEdges43
+        panelAllFilter.ShadowDecoration.CustomizableEdges = CustomizableEdges16
         panelAllFilter.Size = New Size(195, 50)
         panelAllFilter.TabIndex = 36
         ' 
         ' Guna2HtmlLabel4
         ' 
         Guna2HtmlLabel4.BackColor = Color.Transparent
-        Guna2HtmlLabel4.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Guna2HtmlLabel4.Font = New Font("Poppins Light", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel4.ForeColor = Color.White
         Guna2HtmlLabel4.Location = New Point(89, 13)
         Guna2HtmlLabel4.Name = "Guna2HtmlLabel4"
@@ -344,7 +348,7 @@ Partial Class Inventory
         ' Guna2HtmlLabel21
         ' 
         Guna2HtmlLabel21.BackColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
-        Guna2HtmlLabel21.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Guna2HtmlLabel21.Font = New Font("Poppins", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel21.ForeColor = Color.White
         Guna2HtmlLabel21.Location = New Point(323, 13)
         Guna2HtmlLabel21.Name = "Guna2HtmlLabel21"
@@ -352,31 +356,20 @@ Partial Class Inventory
         Guna2HtmlLabel21.TabIndex = 37
         Guna2HtmlLabel21.Text = "55.00"
         ' 
-        ' stockPanel
-        ' 
-        stockPanel.AutoScroll = True
-        stockPanel.BorderRadius = 10
-        stockPanel.CustomizableEdges = CustomizableEdges46
-        stockPanel.Location = New Point(686, 157)
-        stockPanel.Name = "stockPanel"
-        stockPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges47
-        stockPanel.Size = New Size(920, 696)
-        stockPanel.TabIndex = 61
-        ' 
         ' Guna2Button1
         ' 
         Guna2Button1.BorderRadius = 7
-        Guna2Button1.CustomizableEdges = CustomizableEdges48
+        Guna2Button1.CustomizableEdges = CustomizableEdges19
         Guna2Button1.DisabledState.BorderColor = Color.DarkGray
         Guna2Button1.DisabledState.CustomBorderColor = Color.DarkGray
         Guna2Button1.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         Guna2Button1.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
         Guna2Button1.FillColor = Color.White
-        Guna2Button1.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Guna2Button1.Font = New Font("Poppins Medium", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2Button1.ForeColor = Color.Black
         Guna2Button1.Location = New Point(1265, 105)
         Guna2Button1.Name = "Guna2Button1"
-        Guna2Button1.ShadowDecoration.CustomizableEdges = CustomizableEdges49
+        Guna2Button1.ShadowDecoration.CustomizableEdges = CustomizableEdges20
         Guna2Button1.Size = New Size(186, 41)
         Guna2Button1.TabIndex = 60
         Guna2Button1.Text = "Add New Product"
@@ -384,34 +377,34 @@ Partial Class Inventory
         ' btnManagePromotions
         ' 
         btnManagePromotions.BorderRadius = 7
-        btnManagePromotions.CustomizableEdges = CustomizableEdges50
+        btnManagePromotions.CustomizableEdges = CustomizableEdges21
         btnManagePromotions.DisabledState.BorderColor = Color.DarkGray
         btnManagePromotions.DisabledState.CustomBorderColor = Color.DarkGray
         btnManagePromotions.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         btnManagePromotions.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
         btnManagePromotions.FillColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
-        btnManagePromotions.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        btnManagePromotions.Font = New Font("Poppins Medium", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         btnManagePromotions.ForeColor = Color.Black
         btnManagePromotions.Location = New Point(1011, 105)
         btnManagePromotions.Name = "btnManagePromotions"
-        btnManagePromotions.ShadowDecoration.CustomizableEdges = CustomizableEdges51
+        btnManagePromotions.ShadowDecoration.CustomizableEdges = CustomizableEdges22
         btnManagePromotions.Size = New Size(202, 41)
         btnManagePromotions.TabIndex = 61
         ' 
         ' Exportbtn
         ' 
         Exportbtn.BorderRadius = 10
-        Exportbtn.CustomizableEdges = CustomizableEdges52
+        Exportbtn.CustomizableEdges = CustomizableEdges23
         Exportbtn.DisabledState.BorderColor = Color.DarkGray
         Exportbtn.DisabledState.CustomBorderColor = Color.DarkGray
         Exportbtn.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         Exportbtn.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
         Exportbtn.FillColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
-        Exportbtn.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Exportbtn.Font = New Font("Poppins Medium", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Exportbtn.ForeColor = Color.Black
         Exportbtn.Location = New Point(1490, 105)
         Exportbtn.Name = "Exportbtn"
-        Exportbtn.ShadowDecoration.CustomizableEdges = CustomizableEdges53
+        Exportbtn.ShadowDecoration.CustomizableEdges = CustomizableEdges24
         Exportbtn.Size = New Size(86, 40)
         Exportbtn.TabIndex = 67
         Exportbtn.Text = "Export"
@@ -419,7 +412,7 @@ Partial Class Inventory
         ' lblUsername
         ' 
         lblUsername.BackColor = Color.Transparent
-        lblUsername.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        lblUsername.Font = New Font("Poppins Light", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         lblUsername.ForeColor = Color.White
         lblUsername.Location = New Point(1477, 20)
         lblUsername.Name = "lblUsername"
@@ -432,7 +425,7 @@ Partial Class Inventory
         Guna2CirclePictureBox5.ImageRotate = 0F
         Guna2CirclePictureBox5.Location = New Point(1440, 20)
         Guna2CirclePictureBox5.Name = "Guna2CirclePictureBox5"
-        Guna2CirclePictureBox5.ShadowDecoration.CustomizableEdges = CustomizableEdges54
+        Guna2CirclePictureBox5.ShadowDecoration.CustomizableEdges = CustomizableEdges25
         Guna2CirclePictureBox5.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
         Guna2CirclePictureBox5.Size = New Size(31, 28)
         Guna2CirclePictureBox5.TabIndex = 73
@@ -449,12 +442,64 @@ Partial Class Inventory
         Guna2HtmlLabel1.TabIndex = 52
         Guna2HtmlLabel1.Text = "Inventory"
         ' 
+        ' Guna2DataGridView1
+        ' 
+        DataGridViewCellStyle1.BackColor = Color.White
+        Guna2DataGridView1.AlternatingRowsDefaultCellStyle = DataGridViewCellStyle1
+        DataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleLeft
+        DataGridViewCellStyle2.BackColor = Color.FromArgb(CByte(100), CByte(88), CByte(255))
+        DataGridViewCellStyle2.Font = New Font("Segoe UI", 9.0F)
+        DataGridViewCellStyle2.ForeColor = Color.White
+        DataGridViewCellStyle2.SelectionBackColor = SystemColors.Highlight
+        DataGridViewCellStyle2.SelectionForeColor = SystemColors.HighlightText
+        DataGridViewCellStyle2.WrapMode = DataGridViewTriState.True
+        Guna2DataGridView1.ColumnHeadersDefaultCellStyle = DataGridViewCellStyle2
+        Guna2DataGridView1.ColumnHeadersHeight = 4
+        Guna2DataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.EnableResizing
+        DataGridViewCellStyle3.Alignment = DataGridViewContentAlignment.MiddleLeft
+        DataGridViewCellStyle3.BackColor = Color.White
+        DataGridViewCellStyle3.Font = New Font("Segoe UI", 9.0F)
+        DataGridViewCellStyle3.ForeColor = Color.FromArgb(CByte(71), CByte(69), CByte(94))
+        DataGridViewCellStyle3.SelectionBackColor = Color.FromArgb(CByte(231), CByte(229), CByte(255))
+        DataGridViewCellStyle3.SelectionForeColor = Color.FromArgb(CByte(71), CByte(69), CByte(94))
+        DataGridViewCellStyle3.WrapMode = DataGridViewTriState.False
+        Guna2DataGridView1.DefaultCellStyle = DataGridViewCellStyle3
+        Guna2DataGridView1.GridColor = Color.FromArgb(CByte(231), CByte(229), CByte(255))
+        Guna2DataGridView1.Location = New Point(673, 167)
+        Guna2DataGridView1.Name = "Guna2DataGridView1"
+        Guna2DataGridView1.RowHeadersVisible = False
+        Guna2DataGridView1.RowHeadersWidth = 51
+        Guna2DataGridView1.Size = New Size(924, 708)
+        Guna2DataGridView1.TabIndex = 75
+        Guna2DataGridView1.ThemeStyle.AlternatingRowsStyle.BackColor = Color.White
+        Guna2DataGridView1.ThemeStyle.AlternatingRowsStyle.Font = Nothing
+        Guna2DataGridView1.ThemeStyle.AlternatingRowsStyle.ForeColor = Color.Empty
+        Guna2DataGridView1.ThemeStyle.AlternatingRowsStyle.SelectionBackColor = Color.Empty
+        Guna2DataGridView1.ThemeStyle.AlternatingRowsStyle.SelectionForeColor = Color.Empty
+        Guna2DataGridView1.ThemeStyle.BackColor = Color.White
+        Guna2DataGridView1.ThemeStyle.GridColor = Color.FromArgb(CByte(231), CByte(229), CByte(255))
+        Guna2DataGridView1.ThemeStyle.HeaderStyle.BackColor = Color.FromArgb(CByte(100), CByte(88), CByte(255))
+        Guna2DataGridView1.ThemeStyle.HeaderStyle.BorderStyle = DataGridViewHeaderBorderStyle.None
+        Guna2DataGridView1.ThemeStyle.HeaderStyle.Font = New Font("Segoe UI", 9.0F)
+        Guna2DataGridView1.ThemeStyle.HeaderStyle.ForeColor = Color.White
+        Guna2DataGridView1.ThemeStyle.HeaderStyle.HeaightSizeMode = DataGridViewColumnHeadersHeightSizeMode.EnableResizing
+        Guna2DataGridView1.ThemeStyle.HeaderStyle.Height = 4
+        Guna2DataGridView1.ThemeStyle.ReadOnly = False
+        Guna2DataGridView1.ThemeStyle.RowsStyle.BackColor = Color.White
+        Guna2DataGridView1.ThemeStyle.RowsStyle.BorderStyle = DataGridViewCellBorderStyle.SingleHorizontal
+        Guna2DataGridView1.ThemeStyle.RowsStyle.Font = New Font("Segoe UI", 9.0F)
+        Guna2DataGridView1.ThemeStyle.RowsStyle.ForeColor = Color.FromArgb(CByte(71), CByte(69), CByte(94))
+        Guna2DataGridView1.ThemeStyle.RowsStyle.Height = 29
+        Guna2DataGridView1.ThemeStyle.RowsStyle.SelectionBackColor = Color.FromArgb(CByte(231), CByte(229), CByte(255))
+        Guna2DataGridView1.ThemeStyle.RowsStyle.SelectionForeColor = Color.FromArgb(CByte(71), CByte(69), CByte(94))
+        ' 
         ' Inventory
         ' 
-        AutoScaleDimensions = New SizeF(8F, 20F)
+        AutoScaleDimensions = New SizeF(8.0F, 20.0F)
         AutoScaleMode = AutoScaleMode.Font
-        BackColor = Color.FromArgb(CByte(30), CByte(30), CByte(30))
+        BackColor = Color.DarkGray
         ClientSize = New Size(1609, 875)
+        Controls.Add(Guna2DataGridView1)
         Controls.Add(lblUsername)
         Controls.Add(Guna2CirclePictureBox5)
         Controls.Add(Exportbtn)
@@ -463,7 +508,6 @@ Partial Class Inventory
         Controls.Add(Guna2HtmlLabel1)
         Controls.Add(FilterPanel)
         Controls.Add(DashboardPanel)
-        Controls.Add(stockPanel)
         Name = "Inventory"
         StartPosition = FormStartPosition.CenterScreen
         Text = "Inventory"
@@ -474,6 +518,7 @@ Partial Class Inventory
         panelAllFilter.ResumeLayout(False)
         panelAllFilter.PerformLayout()
         CType(Guna2CirclePictureBox5, ComponentModel.ISupportInitialize).EndInit()
+        CType(Guna2DataGridView1, ComponentModel.ISupportInitialize).EndInit()
         ResumeLayout(False)
         PerformLayout()
     End Sub
@@ -499,7 +544,6 @@ Partial Class Inventory
     Friend WithEvents StockCmbBox As Guna.UI2.WinForms.Guna2ComboBox
     Friend WithEvents Guna2HtmlLabel15 As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents btnResetFilter As Guna.UI2.WinForms.Guna2Button
-    Friend WithEvents stockPanel As Guna.UI2.WinForms.Guna2Panel
     Friend WithEvents Guna2Button1 As Guna.UI2.WinForms.Guna2Button
     Friend WithEvents txtFilterPrice As Guna.UI2.WinForms.Guna2TextBox
     Friend WithEvents txtFilterQuantity As Guna.UI2.WinForms.Guna2TextBox
@@ -510,4 +554,5 @@ Partial Class Inventory
     Friend WithEvents txtSearch As Guna.UI2.WinForms.Guna2TextBox
     Private WithEvents Guna2HtmlLabel14 As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents Guna2HtmlLabel1 As Guna.UI2.WinForms.Guna2HtmlLabel
+    Friend WithEvents Guna2DataGridView1 As Guna.UI2.WinForms.Guna2DataGridView
 End Class

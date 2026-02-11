@@ -18,12 +18,18 @@ Public Class Inventory
     Private profileDropdownPanel As Panel = Nothing
     Private isProfileDropdownVisible As Boolean = False
 
+    ' Custom tooltip implementation for better DataGridView support
+    Private customTooltip As ToolTip
+    Private tooltipTimer As Timer
+    Private currentTooltipCell As DataGridViewCell = Nothing
+    Private lastMousePosition As Point = Point.Empty
+
     Private Async Sub Inventory_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         ' Enable double buffering for smooth scrolling
-        SetDoubleBuffered(stockPanel)
+        SetDoubleBuffered(Guna2DataGridView1)
 
-        ' Add scroll event handler
-        AddHandler stockPanel.Scroll, AddressOf StockPanel_Scroll
+        ' Initialize custom tooltip system
+        InitializeCustomTooltip()
 
         ' Make form non-resizable
         Me.FormBorderStyle = FormBorderStyle.FixedDialog
@@ -58,6 +64,84 @@ Public Class Inventory
 
         ' Load products asynchronously (ShowLoadingOverlay is now called inside LoadProductsAsync)
         LoadProductsAsync()
+    End Sub
+
+    Private Sub InitializeCustomTooltip()
+        Try
+            ' Create main tooltip
+            customTooltip = New ToolTip()
+            customTooltip.AutoPopDelay = 8000  ' Show for 8 seconds
+            customTooltip.InitialDelay = 300   ' Show after 300ms
+            customTooltip.ReshowDelay = 100    ' Quick reshow
+            customTooltip.ShowAlways = True
+            customTooltip.UseAnimation = True
+            customTooltip.UseFading = True
+            customTooltip.IsBalloon = False
+
+            ' Create timer for delayed tooltip display
+            tooltipTimer = New Timer()
+            tooltipTimer.Interval = 500  ' 500ms delay
+            AddHandler tooltipTimer.Tick, AddressOf TooltipTimer_Tick
+
+        Catch ex As Exception
+            ' Fallback if tooltip initialization fails
+            customTooltip = New ToolTip()
+        End Try
+    End Sub
+
+    Private Sub TooltipTimer_Tick(sender As Object, e As EventArgs)
+        Try
+            ' Stop the timer
+            tooltipTimer.Stop()
+
+            ' Show tooltip if we still have a valid cell and mouse hasn't moved significantly
+            If currentTooltipCell IsNot Nothing AndAlso currentTooltipCell.DataGridView IsNot Nothing Then
+                Dim currentMousePos As Point = Guna2DataGridView1.PointToClient(Cursor.Position)
+
+                ' Check if mouse is still in a reasonable area
+                If Math.Abs(currentMousePos.X - lastMousePosition.X) < 10 AndAlso
+                   Math.Abs(currentMousePos.Y - lastMousePosition.Y) < 10 Then
+                    ShowTooltipForCell(currentTooltipCell)
+                End If
+            End If
+
+        Catch ex As Exception
+            ' Silent fail
+        End Try
+    End Sub
+
+    Private Sub ShowTooltipForCell(cell As DataGridViewCell)
+        Try
+            If cell IsNot Nothing AndAlso cell.RowIndex >= 0 AndAlso
+               Guna2DataGridView1.Columns(cell.ColumnIndex).Name = "ProductName" Then
+
+                Dim productData As Dictionary(Of String, Object) = CType(Guna2DataGridView1.Rows(cell.RowIndex).Tag, Dictionary(Of String, Object))
+
+                If productData IsNot Nothing Then
+                    Dim fullProductName As String = productData("ProductName").ToString()
+                    Dim productCode As String = productData("ProductCode").ToString()
+                    Dim category As String = productData("Category").ToString()
+
+                    ' Create tooltip text without barcode (since ProductCode serves as barcode now)
+                    Dim tooltipText As String = $"Product: {fullProductName}" & Environment.NewLine &
+                                               $"Code: {productCode}" & Environment.NewLine &
+                                               $"Category: {category}"
+
+                    ' Calculate tooltip position
+                    Dim cellRect As Rectangle = Guna2DataGridView1.GetCellDisplayRectangle(cell.ColumnIndex, cell.RowIndex, False)
+                    Dim tooltipPoint As Point = Guna2DataGridView1.PointToScreen(New Point(cellRect.X + 10, cellRect.Y + cellRect.Height + 5))
+
+                    ' Hide any existing tooltip first
+                    customTooltip.Hide(Guna2DataGridView1)
+
+                    ' Show new tooltip
+                    customTooltip.Show(tooltipText, Guna2DataGridView1, Guna2DataGridView1.PointToClient(tooltipPoint))
+                End If
+            End If
+
+        Catch ex As Exception
+            ' Silent fail
+        End Try
     End Sub
 
     Private Sub SetDoubleBuffered(ctrl As Control)
@@ -178,11 +262,14 @@ Public Class Inventory
             Using conn As New SqlConnection(connStr)
                 conn.Open()
 
-                ' Query to get ALL products but store in memory
-                Dim query As String = "SELECT p.ProductID, p.ProductCode, p.Barcode, p.ProductName, p.Category, " &
+                ' Query to get ALL products but store in memory - updated for new image mapping system
+                Dim query As String = "SELECT p.ProductID, p.ProductCode, p.ProductName, p.Category, " &
                                      "p.Unit, p.CurrentStock, p.ReorderLevel, p.CostPrice, p.SellingPrice, " &
-                                     "(SELECT TOP 1 ImageData FROM ProductImages WHERE ProductID = p.ProductID) AS ProductImage " &
-                                     "FROM Products p WHERE p.IsActive = 1 ORDER BY p.ProductName"
+                                     "pi.ImageData AS ProductImage " &
+                                     "FROM Products p " &
+                                     "LEFT JOIN ProductImageMapping pim ON p.ProductID = pim.ProductID " &
+                                     "LEFT JOIN ProductImages pi ON pim.ImageID = pi.ImageID " &
+                                     "WHERE p.IsActive = 1 ORDER BY p.ProductName"
 
                 Using cmd As New SqlCommand(query, conn)
                     Using reader As SqlDataReader = cmd.ExecuteReader()
@@ -192,7 +279,6 @@ Public Class Inventory
                             Dim productData As New Dictionary(Of String, Object) From {
                                 {"ProductID", reader("ProductID")},
                                 {"ProductCode", reader("ProductCode")},
-                                {"Barcode", reader("Barcode")},
                                 {"ProductName", reader("ProductName")},
                                 {"Category", reader("Category")},
                                 {"Unit", reader("Unit")},
@@ -225,8 +311,8 @@ Public Class Inventory
         ' Set default values
         StockCmbBox.SelectedIndex = 0 ' Select "All"
 
-        ' Set placeholder text for better UX
-        txtSearch.PlaceholderText = "Search by name, code, category, or barcode..."
+        ' Set placeholder text for better UX - updated to remove barcode reference
+        txtSearch.PlaceholderText = "Search by name, code, or category..."
         txtFilterQuantity.PlaceholderText = "Minimum quantity (e.g., 10)"
         txtFilterPrice.PlaceholderText = "Minimum price (e.g., 100.00)"
     End Sub
@@ -261,264 +347,512 @@ Public Class Inventory
     End Sub
 
     Private Sub RefreshProductDisplay()
-        ' Set up virtual scrolling
-        stockPanel.AutoScroll = True
-        stockPanel.Controls.Clear()
-
-        ' Create a spacer panel to enable scrolling
-        Dim spacer As New Panel()
-        spacer.Size = New Size(1, filteredProducts.Count * itemHeight)
-        spacer.Location = New Point(0, 0)
-        stockPanel.Controls.Add(spacer)
-
-        ' Render only visible items
-        RenderVisibleItems()
+        ' Set up DataGridView instead of virtual scrolling panels
+        SetupProductDataGrid()
+        LoadProductsIntoDataGrid()
     End Sub
 
-    Private Sub StockPanel_Scroll(sender As Object, e As ScrollEventArgs)
-        ' Only re-render on vertical scroll
-        If e.ScrollOrientation = ScrollOrientation.VerticalScroll Then
-            RenderVisibleItems()
-        End If
+    Private Sub SetupProductDataGrid()
+        Try
+            ' Use the existing Guna2DataGridView1 control
+            Dim productDataGrid As Guna.UI2.WinForms.Guna2DataGridView = Guna2DataGridView1
+
+            ' Set DataGridView properties
+            productDataGrid.AutoGenerateColumns = False
+            productDataGrid.AllowUserToAddRows = False
+            productDataGrid.AllowUserToDeleteRows = False
+            productDataGrid.AllowUserToResizeColumns = False
+            productDataGrid.AllowUserToResizeRows = False
+            productDataGrid.ReadOnly = True
+            productDataGrid.SelectionMode = DataGridViewSelectionMode.FullRowSelect
+            productDataGrid.MultiSelect = False
+            productDataGrid.ScrollBars = ScrollBars.Vertical
+            productDataGrid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
+            productDataGrid.RowHeadersVisible = False
+            productDataGrid.EnableHeadersVisualStyles = False
+
+            ' Disable DataGridView's built-in tooltips to prevent conflicts
+            productDataGrid.ShowCellToolTips = False
+
+            ' Apply improved gray color scheme with better contrast
+            Dim RichOlive As Color = Color.FromArgb(190, 154, 48)
+            Dim GoldenYellow As Color = Color.FromArgb(254, 191, 16)
+            Dim LightGray As Color = Color.FromArgb(248, 248, 248)      ' Very light gray background
+            Dim MediumGray As Color = Color.FromArgb(235, 235, 235)     ' Subtle alternating rows
+            Dim DarkGray As Color = Color.FromArgb(80, 80, 80)          ' Dark gray text
+            Dim BorderGray As Color = Color.FromArgb(220, 220, 220)     ' Light gray borders
+
+            ' Background and grid styling with gray theme
+            productDataGrid.BackgroundColor = LightGray
+            productDataGrid.GridColor = BorderGray ' Light gray grid lines
+            productDataGrid.BorderStyle = BorderStyle.None
+            productDataGrid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal
+
+            ' Cell styling with enhanced gray scheme and improved selection colors
+            productDataGrid.DefaultCellStyle.BackColor = LightGray
+            productDataGrid.AlternatingRowsDefaultCellStyle.BackColor = MediumGray ' Subtle gray alternation
+            ' FIXED: Also set alternating row selection colors
+            productDataGrid.AlternatingRowsDefaultCellStyle.SelectionBackColor = Color.FromArgb(120, 120, 120) ' Dark gray selection
+            productDataGrid.AlternatingRowsDefaultCellStyle.SelectionForeColor = Color.White ' White text on dark gray selection
+
+            productDataGrid.DefaultCellStyle.ForeColor = DarkGray ' Dark gray text instead of black
+
+            ' FIXED: Better selection colors - dark grayish instead of black
+            productDataGrid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(120, 120, 120) ' Dark gray selection
+            productDataGrid.DefaultCellStyle.SelectionForeColor = Color.White ' White text on dark gray selection
+
+            productDataGrid.DefaultCellStyle.Font = New Font("Poppins", 9.5F, FontStyle.Regular)
+            productDataGrid.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
+            productDataGrid.DefaultCellStyle.Padding = New Padding(10, 6, 10, 6)
+
+            ' Header styling with Rich Olive theme
+            productDataGrid.ColumnHeadersDefaultCellStyle.BackColor = RichOlive
+            productDataGrid.ColumnHeadersDefaultCellStyle.ForeColor = Color.White
+            productDataGrid.ColumnHeadersDefaultCellStyle.SelectionBackColor = RichOlive
+            productDataGrid.ColumnHeadersDefaultCellStyle.Font = New Font("Poppins SemiBold", 10.5F, FontStyle.Bold)
+            productDataGrid.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
+            productDataGrid.ColumnHeadersHeight = 55
+            productDataGrid.RowTemplate.Height = 75
+            productDataGrid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing
+
+            ' Clear existing columns
+            productDataGrid.Columns.Clear()
+
+            ' Add Product Name column (with image and code) - Enhanced with better selection
+            Dim colProductName As New DataGridViewTextBoxColumn()
+            colProductName.Name = "ProductName"
+            colProductName.HeaderText = "Product Information"
+            colProductName.FillWeight = 45
+            colProductName.DefaultCellStyle.Font = New Font("Poppins SemiBold", 9.5F, FontStyle.Regular)
+            colProductName.DefaultCellStyle.ForeColor = RichOlive
+            colProductName.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft
+            colProductName.DefaultCellStyle.Padding = New Padding(5, 5, 5, 5)
+            ' Set selection colors for this column
+            colProductName.DefaultCellStyle.SelectionBackColor = Color.FromArgb(120, 120, 120)
+            colProductName.DefaultCellStyle.SelectionForeColor = Color.White
+            productDataGrid.Columns.Add(colProductName)
+
+            ' Add Category column - Enhanced with gray text and better selection
+            Dim colCategory As New DataGridViewTextBoxColumn()
+            colCategory.Name = "Category"
+            colCategory.HeaderText = "Category"
+            colCategory.FillWeight = 18
+            colCategory.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
+            colCategory.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
+            colCategory.DefaultCellStyle.ForeColor = DarkGray
+            colCategory.DefaultCellStyle.SelectionBackColor = Color.FromArgb(120, 120, 120)
+            colCategory.DefaultCellStyle.SelectionForeColor = Color.White
+            productDataGrid.Columns.Add(colCategory)
+
+            ' Add Unit column - Enhanced with gray text and better selection
+            Dim colUnit As New DataGridViewTextBoxColumn()
+            colUnit.Name = "Unit"
+            colUnit.HeaderText = "Unit"
+            colUnit.FillWeight = 10
+            colUnit.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
+            colUnit.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
+            colUnit.DefaultCellStyle.ForeColor = DarkGray
+            colUnit.DefaultCellStyle.SelectionBackColor = Color.FromArgb(120, 120, 120)
+            colUnit.DefaultCellStyle.SelectionForeColor = Color.White
+            productDataGrid.Columns.Add(colUnit)
+
+            ' Add Stock column - Enhanced
+            Dim colStock As New DataGridViewTextBoxColumn()
+            colStock.Name = "CurrentStock"
+            colStock.HeaderText = "Stock"
+            colStock.FillWeight = 10
+            colStock.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
+            colStock.DefaultCellStyle.Font = New Font("Poppins SemiBold", 9.5F, FontStyle.Bold)
+            colStock.DefaultCellStyle.ForeColor = DarkGray
+            ' Ensure consistent selection colors for stock column
+            colStock.DefaultCellStyle.SelectionBackColor = Color.FromArgb(120, 120, 120) ' Same dark gray as other columns
+            colStock.DefaultCellStyle.SelectionForeColor = Color.White ' White text for visibility
+            productDataGrid.Columns.Add(colStock)
+
+            ' Add Cost Price column - Enhanced with gray text and better selection
+            Dim colCostPrice As New DataGridViewTextBoxColumn()
+            colCostPrice.Name = "CostPrice"
+            colCostPrice.HeaderText = "Cost"
+            colCostPrice.FillWeight = 12
+            colCostPrice.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
+            colCostPrice.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
+            colCostPrice.DefaultCellStyle.ForeColor = DarkGray
+            colCostPrice.DefaultCellStyle.SelectionBackColor = Color.FromArgb(120, 120, 120)
+            colCostPrice.DefaultCellStyle.SelectionForeColor = Color.White
+            productDataGrid.Columns.Add(colCostPrice)
+
+            ' Add Selling Price column - Enhanced with Golden Yellow and better selection
+            Dim colSellingPrice As New DataGridViewTextBoxColumn()
+            colSellingPrice.Name = "SellingPrice"
+            colSellingPrice.HeaderText = "Price"
+            colSellingPrice.FillWeight = 15
+            colSellingPrice.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
+            colSellingPrice.DefaultCellStyle.Font = New Font("PoppinsSemiBold", 9.5F, FontStyle.Bold)
+            colSellingPrice.DefaultCellStyle.ForeColor = Color.FromArgb(200, 140, 0) ' Darker golden color for better visibility on gray
+            colSellingPrice.DefaultCellStyle.SelectionBackColor = Color.FromArgb(120, 120, 120)
+            colSellingPrice.DefaultCellStyle.SelectionForeColor = Color.White
+            productDataGrid.Columns.Add(colSellingPrice)
+
+            ' Add Actions column as text column instead of button - Enhanced with gray background
+            Dim colActions As New DataGridViewTextBoxColumn()
+            colActions.Name = "Actions"
+            colActions.HeaderText = ""
+            colActions.ReadOnly = True
+            colActions.FillWeight = 10
+            colActions.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
+            colActions.DefaultCellStyle.BackColor = Color.FromArgb(240, 240, 240)
+            colActions.DefaultCellStyle.ForeColor = RichOlive
+            colActions.DefaultCellStyle.SelectionBackColor = Color.FromArgb(140, 140, 140) ' Slightly lighter gray for actions
+            colActions.DefaultCellStyle.SelectionForeColor = Color.White
+            colActions.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
+            ' Make it look clickable
+            colActions.DefaultCellStyle.ForeColor = Color.FromArgb(50, 100, 200) ' Blue text to indicate it's clickable
+            productDataGrid.Columns.Add(colActions)
+
+            ' Add event handler for button clicks
+            RemoveHandler productDataGrid.CellContentClick, AddressOf ProductDataGrid_CellContentClick
+            AddHandler productDataGrid.CellContentClick, AddressOf ProductDataGrid_CellContentClick
+
+            ' Add custom cell painting for enhanced display
+            RemoveHandler productDataGrid.CellPainting, AddressOf ProductDataGrid_CellPainting
+            AddHandler productDataGrid.CellPainting, AddressOf ProductDataGrid_CellPainting
+
+            ' Add enhanced mouse events for custom tooltip functionality
+            RemoveHandler productDataGrid.CellMouseEnter, AddressOf ProductDataGrid_CellMouseEnter
+            AddHandler productDataGrid.CellMouseEnter, AddressOf ProductDataGrid_CellMouseEnter
+
+            RemoveHandler productDataGrid.CellMouseLeave, AddressOf ProductDataGrid_CellMouseLeave
+            AddHandler productDataGrid.CellMouseLeave, AddressOf ProductDataGrid_CellMouseLeave
+
+            RemoveHandler productDataGrid.MouseMove, AddressOf ProductDataGrid_MouseMove
+            AddHandler productDataGrid.MouseMove, AddressOf ProductDataGrid_MouseMove
+
+            ' Add focus events to handle Alt+Tab better
+            RemoveHandler productDataGrid.Enter, AddressOf ProductDataGrid_Enter
+            AddHandler productDataGrid.Enter, AddressOf ProductDataGrid_Enter
+
+            RemoveHandler productDataGrid.Leave, AddressOf ProductDataGrid_Leave
+            AddHandler productDataGrid.Leave, AddressOf ProductDataGrid_Leave
+
+        Catch ex As Exception
+            MessageBox.Show($"Error setting up DataGrid: {ex.Message}", "DataGrid Setup Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
     End Sub
 
-    Private Sub RenderVisibleItems()
-        ' Calculate which items should be visible based on scroll position
-        Dim scrollPos As Integer = stockPanel.VerticalScroll.Value
-        Dim startIndex As Integer = Math.Max(0, (scrollPos \ itemHeight) - 2) ' 2 item buffer above
-        Dim endIndex As Integer = Math.Min(filteredProducts.Count - 1, startIndex + visibleItemCount + 4) ' 2 item buffer below
+    Private Sub LoadProductsIntoDataGrid()
+        Try
+            ' Use the existing Guna2DataGridView1 control
+            Dim productDataGrid As Guna.UI2.WinForms.Guna2DataGridView = Guna2DataGridView1
 
-        ' Clear existing product panels (keep the spacer)
-        For i As Integer = stockPanel.Controls.Count - 1 To 0 Step -1
-            If TypeOf stockPanel.Controls(i) Is Guna.UI2.WinForms.Guna2Panel Then
-                stockPanel.Controls.RemoveAt(i)
+            ' Clear existing rows
+            productDataGrid.Rows.Clear()
+
+            ' Load filtered products into DataGridView
+            For Each productData As Dictionary(Of String, Object) In filteredProducts
+                Try
+                    ' Create display text for product name ONLY (remove code duplication)
+                    Dim productName As String = productData("ProductName").ToString()
+                    Dim displayName As String = productName
+
+                    ' Truncate long names with ellipsis for better layout
+                    If displayName.Length > 40 Then ' Increased character limit since we have more space
+                        displayName = displayName.Substring(0, 37) + "..."
+                    End If
+
+                    ' Get stock values for color coding
+                    Dim currentStock As Integer = Convert.ToInt32(productData("CurrentStock"))
+                    Dim reorderLevel As Integer = Convert.ToInt32(productData("ReorderLevel"))
+
+                    ' Add row to DataGridView - with simple Edit text in Actions column
+                    Dim rowIndex As Integer = productDataGrid.Rows.Add(
+                        displayName,  ' ProductName (clean, with code shown in custom painting)
+                        productData("Category").ToString(),     ' Category
+                        productData("Unit").ToString(),         ' Unit
+                        currentStock.ToString(),                ' CurrentStock
+                        "₱" & Convert.ToDecimal(productData("CostPrice")).ToString("N2"),    ' CostPrice
+                        "₱" & Convert.ToDecimal(productData("SellingPrice")).ToString("N2"), ' SellingPrice
+                        "✏️"  ' Actions - simple text
+                    )
+
+                    ' Store product data in row tag for edit functionality
+                    productDataGrid.Rows(rowIndex).Tag = productData
+
+                    ' Apply stock level color coding with improved colors for gray background
+                    ' FIXED: Maintain stock colors even when row is selected by using custom painting
+                    If currentStock = 0 Then
+                        productDataGrid.Rows(rowIndex).Cells("CurrentStock").Style.ForeColor = Color.FromArgb(200, 40, 50) ' Darker red for better contrast
+                        productDataGrid.Rows(rowIndex).Cells("CurrentStock").Style.Font = New Font("Poppins", 9.5F, FontStyle.Bold)
+                        ' Store stock level in cell tag for custom painting
+                        productDataGrid.Rows(rowIndex).Cells("CurrentStock").Tag = "OUT_OF_STOCK"
+                    ElseIf currentStock <= reorderLevel Then
+                        productDataGrid.Rows(rowIndex).Cells("CurrentStock").Style.ForeColor = Color.FromArgb(200, 140, 0) ' Darker amber/orange for better contrast
+                        productDataGrid.Rows(rowIndex).Cells("CurrentStock").Style.Font = New Font("Poppins", 9.5F, FontStyle.Bold)
+                        ' Store stock level in cell tag for custom painting
+                        productDataGrid.Rows(rowIndex).Cells("CurrentStock").Tag = "LOW_STOCK"
+                    Else
+                        productDataGrid.Rows(rowIndex).Cells("CurrentStock").Style.ForeColor = Color.FromArgb(20, 140, 50) ' Darker green for better contrast
+                        productDataGrid.Rows(rowIndex).Cells("CurrentStock").Style.Font = New Font("Poppins", 9.5F, FontStyle.Bold)
+                        ' Store stock level in cell tag for custom painting
+                        productDataGrid.Rows(rowIndex).Cells("CurrentStock").Tag = "IN_STOCK"
+                    End If
+
+                    ' Make row non-resizable
+                    productDataGrid.Rows(rowIndex).Resizable = DataGridViewTriState.False
+
+                Catch ex As Exception
+                    ' Continue with next product if there's an error with this one
+                    Continue For
+                End Try
+            Next
+
+        Catch ex As Exception
+            MessageBox.Show($"Error loading products into DataGrid: {ex.Message}", "Load Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
+
+    Private Sub ProductDataGrid_CellContentClick(sender As Object, e As DataGridViewCellEventArgs)
+        Try
+            If e.RowIndex >= 0 AndAlso e.ColumnIndex >= 0 Then
+                Dim productDataGrid As Guna.UI2.WinForms.Guna2DataGridView = CType(sender, Guna.UI2.WinForms.Guna2DataGridView)
+
+                ' Check if the Actions column was clicked
+                If productDataGrid.Columns(e.ColumnIndex).Name = "Actions" Then
+                    ' Get product data from row tag
+                    Dim productData As Dictionary(Of String, Object) = CType(productDataGrid.Rows(e.RowIndex).Tag, Dictionary(Of String, Object))
+
+                    If productData IsNot Nothing Then
+                        Dim productId As Integer = Convert.ToInt32(productData("ProductID"))
+                        EditProduct_Click_FromGrid(productId)
+                    End If
+                End If
             End If
-        Next
+        Catch ex As Exception
+            MessageBox.Show($"Error handling edit action: {ex.Message}", "Edit Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
 
-        ' Render visible items
-        For i As Integer = startIndex To endIndex
-            If i >= 0 AndAlso i < filteredProducts.Count Then
-                CreateProductPanel(filteredProducts(i), i)
+    Private Sub EditProduct_Click_FromGrid(productId As Integer)
+        Try
+            ' Create overlay panel for modal effect
+            Dim overlayPanel As New Panel()
+            overlayPanel.BackColor = Color.FromArgb(100, 0, 0, 0) ' Semi-transparent black
+            overlayPanel.Dock = DockStyle.Fill
+            overlayPanel.Location = New Point(0, 0)
+            overlayPanel.Size = Me.ClientSize
+            Me.Controls.Add(overlayPanel)
+            overlayPanel.BringToFront()
+
+            ' Create and show Edit Product form
+            Dim editProductForm As New AddProduct()
+            editProductForm.SetEditMode(productId)
+            editProductForm.StartPosition = FormStartPosition.CenterParent
+
+            ' Handle form closing to remove overlay
+            AddHandler editProductForm.FormClosed, Sub(s, ev)
+                                                       If overlayPanel IsNot Nothing AndAlso Not overlayPanel.IsDisposed Then
+                                                           Me.Controls.Remove(overlayPanel)
+                                                           overlayPanel.Dispose()
+                                                       End If
+                                                   End Sub
+
+            Dim result As DialogResult = editProductForm.ShowDialog(Me)
+
+            ' Cleanup overlay if still exists
+            If overlayPanel IsNot Nothing AndAlso Not overlayPanel.IsDisposed Then
+                Me.Controls.Remove(overlayPanel)
+                overlayPanel.Dispose()
             End If
-        Next
+
+            ' Refresh the inventory list if product was updated
+            If result = DialogResult.OK Then
+                LoadProducts()
+            End If
+
+        Catch ex As Exception
+            MessageBox.Show($"Error opening edit form: {ex.Message}", "Edit Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
     End Sub
 
-    Private Sub CreateProductPanel(productData As Dictionary(Of String, Object), index As Integer)
-        ' Create product panel
-        Dim productPanel As New Guna.UI2.WinForms.Guna2Panel()
-        productPanel.Size = New Size(870, 70)
-        productPanel.Location = New Point(10, index * itemHeight + 10)
-        productPanel.FillColor = Color.White
-        productPanel.BorderRadius = 8
-        productPanel.BorderColor = Color.FromArgb(240, 240, 240)
-        productPanel.BorderThickness = 1
+    Private Sub ProductDataGrid_CellPainting(sender As Object, e As DataGridViewCellPaintingEventArgs)
+        Try
+            ' Customize both ProductName and CurrentStock columns
+            If e.ColumnIndex >= 0 AndAlso e.RowIndex >= 0 Then
+                Dim productDataGrid As Guna.UI2.WinForms.Guna2DataGridView = CType(sender, Guna.UI2.WinForms.Guna2DataGridView)
 
-        ' Product image
-        Dim picProductImage As New Guna.UI2.WinForms.Guna2PictureBox()
-        picProductImage.Size = New Size(60, 60)
-        picProductImage.Location = New Point(10, 5)
-        picProductImage.BackColor = Color.White
-        picProductImage.BorderRadius = 8
-        picProductImage.SizeMode = PictureBoxSizeMode.Zoom
+                ' Handle ProductName column for image and enhanced layout
+                If productDataGrid.Columns(e.ColumnIndex).Name = "ProductName" Then
+                    ' Get the product data
+                    Dim productData As Dictionary(Of String, Object) = CType(productDataGrid.Rows(e.RowIndex).Tag, Dictionary(Of String, Object))
 
-        If productData("ProductImage") IsNot Nothing Then
-            Try
-                Dim imgBytes As Byte() = CType(productData("ProductImage"), Byte())
-                Using ms As New MemoryStream(imgBytes)
-                    picProductImage.Image = Image.FromStream(ms)
-                End Using
-            Catch
-                ' Image failed to load
-            End Try
-        End If
-        productPanel.Controls.Add(picProductImage)
+                    If productData IsNot Nothing Then
+                        e.Handled = True
+                        e.PaintBackground(e.ClipBounds, True)
 
-        ' Product Name
-        Dim lblProductName As New Guna.UI2.WinForms.Guna2HtmlLabel()
-        lblProductName.Text = productData("ProductName").ToString()
-        lblProductName.Font = New Font("Poppins", 9, FontStyle.Bold)
-        lblProductName.ForeColor = Color.FromArgb(60, 60, 60)
-        lblProductName.Location = New Point(80, 8)
-        lblProductName.AutoSize = True
-        productPanel.Controls.Add(lblProductName)
+                        ' Define brand colors with improved gray scheme
+                        Dim RichOlive As Color = Color.FromArgb(190, 154, 48)
+                        Dim DarkGray As Color = Color.FromArgb(80, 80, 80)
+                        Dim MediumGray As Color = Color.FromArgb(120, 120, 120)
+                        Dim LightGray As Color = Color.FromArgb(200, 200, 200)
 
-        ' Product Code
-        Dim lblProductCode As New Guna.UI2.WinForms.Guna2HtmlLabel()
-        lblProductCode.Text = "Code: " & productData("ProductCode").ToString()
-        lblProductCode.Font = New Font("Poppins", 7.5F, FontStyle.Regular)
-        lblProductCode.ForeColor = Color.Gray
-        lblProductCode.Location = New Point(80, 28)
-        lblProductCode.AutoSize = True
-        productPanel.Controls.Add(lblProductCode)
+                        ' Calculate layout dimensions with better spacing
+                        Dim imageSize As Integer = 50
+                        Dim padding As Integer = 10
+                        Dim imageRect As New Rectangle(
+                            e.CellBounds.Left + padding,
+                            e.CellBounds.Top + ((e.CellBounds.Height - imageSize) \ 2),
+                            imageSize, imageSize)
 
-        ' Barcode
-        Dim lblBarcode As New Guna.UI2.WinForms.Guna2HtmlLabel()
-        lblBarcode.Text = "📦 " & productData("Barcode").ToString()
-        lblBarcode.Font = New Font("Poppins", 7.5F, FontStyle.Regular)
-        lblBarcode.ForeColor = Color.Gray
-        lblBarcode.Location = New Point(80, 46)
-        lblBarcode.AutoSize = True
-        productPanel.Controls.Add(lblBarcode)
+                        ' Draw product image with improved placeholder styling
+                        Try
+                            If productData("ProductImage") IsNot Nothing Then
+                                Dim imgBytes As Byte() = CType(productData("ProductImage"), Byte())
+                                Using ms As New MemoryStream(imgBytes)
+                                    Using img As Image = Image.FromStream(ms)
+                                        ' Draw image with simple rectangle
+                                        e.Graphics.DrawImage(img, imageRect)
 
-        ' Category
-        Dim lblCategoryTitle As New Guna.UI2.WinForms.Guna2HtmlLabel()
-        lblCategoryTitle.Text = "Category"
-        lblCategoryTitle.Font = New Font("Poppins", 8, FontStyle.Bold)
-        lblCategoryTitle.ForeColor = Color.Gray
-        lblCategoryTitle.Location = New Point(300, 8)
-        lblCategoryTitle.AutoSize = True
-        productPanel.Controls.Add(lblCategoryTitle)
+                                        ' Draw subtle border around image
+                                        Using borderPen As New Pen(LightGray, 1)
+                                            e.Graphics.DrawRectangle(borderPen, imageRect)
+                                        End Using
+                                    End Using
+                                End Using
+                            Else
+                                ' Draw professional placeholder with gray theme
+                                Using bgBrush As New SolidBrush(Color.FromArgb(245, 245, 245))
+                                    e.Graphics.FillRectangle(bgBrush, imageRect)
+                                End Using
 
-        Dim lblCategory As New Guna.UI2.WinForms.Guna2HtmlLabel()
-        lblCategory.Text = productData("Category").ToString()
-        lblCategory.Font = New Font("Poppins", 8, FontStyle.Regular)
-        lblCategory.ForeColor = Color.FromArgb(60, 60, 60)
-        lblCategory.Location = New Point(300, 28)
-        lblCategory.AutoSize = True
-        productPanel.Controls.Add(lblCategory)
+                                Using borderPen As New Pen(LightGray, 1)
+                                    e.Graphics.DrawRectangle(borderPen, imageRect)
+                                End Using
 
-        ' Unit
-        Dim lblUnitTitle As New Guna.UI2.WinForms.Guna2HtmlLabel()
-        lblUnitTitle.Text = "Unit"
-        lblUnitTitle.Font = New Font("Poppins", 8, FontStyle.Bold)
-        lblUnitTitle.ForeColor = Color.Gray
-        lblUnitTitle.Location = New Point(410, 8)
-        lblUnitTitle.AutoSize = True
-        productPanel.Controls.Add(lblUnitTitle)
+                                ' Draw camera icon placeholder
+                                Using placeholderFont As New Font("Segoe UI", 8, FontStyle.Regular)
+                                    Using placeholderBrush As New SolidBrush(MediumGray)
+                                        Dim placeholderFormat As New StringFormat() With {
+                                            .Alignment = StringAlignment.Center,
+                                            .LineAlignment = StringAlignment.Center
+                                        }
+                                        e.Graphics.DrawString("📷", placeholderFont, placeholderBrush, imageRect, placeholderFormat)
+                                    End Using
+                                End Using
+                            End If
+                        Catch
+                            ' Fallback placeholder on image error with gray theme
+                            Using bgBrush As New SolidBrush(Color.FromArgb(245, 245, 245))
+                                e.Graphics.FillRectangle(bgBrush, imageRect)
+                            End Using
+                            Using borderPen As New Pen(RichOlive, 1)
+                                e.Graphics.DrawRectangle(borderPen, imageRect)
+                            End Using
 
-        Dim lblUnit As New Guna.UI2.WinForms.Guna2HtmlLabel()
-        lblUnit.Text = productData("Unit").ToString()
-        lblUnit.Font = New Font("Poppins", 8, FontStyle.Regular)
-        lblUnit.ForeColor = Color.FromArgb(60, 60, 60)
-        lblUnit.Location = New Point(410, 28)
-        lblUnit.AutoSize = True
-        productPanel.Controls.Add(lblUnit)
+                            ' Add "No Image" text
+                            Using noImageFont As New Font("Poppins", 7, FontStyle.Regular)
+                                Using noImageBrush As New SolidBrush(MediumGray)
+                                    Dim noImageFormat As New StringFormat() With {
+                                        .Alignment = StringAlignment.Center,
+                                        .LineAlignment = StringAlignment.Center
+                                    }
+                                    e.Graphics.DrawString("No Image", noImageFont, noImageBrush, imageRect, noImageFormat)
+                                End Using
+                            End Using
+                        End Try
 
-        ' Current Stock
-        Dim lblStockTitle As New Guna.UI2.WinForms.Guna2HtmlLabel()
-        lblStockTitle.Text = "Stock"
-        lblStockTitle.Font = New Font("Poppins", 8, FontStyle.Bold)
-        lblStockTitle.ForeColor = Color.Gray
-        lblStockTitle.Location = New Point(490, 8)
-        lblStockTitle.AutoSize = True
-        productPanel.Controls.Add(lblStockTitle)
+                        ' Calculate text area with proper spacing
+                        Dim textStartX As Integer = imageRect.Right + (padding * 2)
+                        Dim textWidth As Integer = e.CellBounds.Width - textStartX - padding
+                        Dim textRect As New Rectangle(textStartX, e.CellBounds.Top + 8, textWidth, e.CellBounds.Height - 16)
 
-        Dim currentStock As Integer
-        If Not Integer.TryParse(productData("CurrentStock").ToString(), currentStock) Then
-            currentStock = 0
-        End If
+                        ' Get clean product name
+                        Dim productName As String = productData("ProductName").ToString()
+                        Dim displayName As String = productName
 
-        Dim reorderLevel As Integer
-        If Not Integer.TryParse(productData("ReorderLevel").ToString(), reorderLevel) Then
-            reorderLevel = 0
-        End If
+                        ' Truncate if needed for layout
+                        Dim isNameTruncated As Boolean = False
+                        If displayName.Length > 40 Then
+                            displayName = displayName.Substring(0, 37) + "..."
+                            isNameTruncated = True
+                        End If
 
-        Dim lblStock As New Guna.UI2.WinForms.Guna2HtmlLabel()
-        lblStock.Text = currentStock.ToString()
-        lblStock.Font = New Font("Poppins", 9, FontStyle.Bold)
-        lblStock.Location = New Point(490, 28)
-        lblStock.AutoSize = True
+                        ' Draw main product name with enhanced Poppins typography
+                        Using productNameFont As New Font("Poppins SemiBold", 10.5F, FontStyle.Bold)
+                            Using productNameBrush As New SolidBrush(RichOlive)
+                                Dim nameFormat As New StringFormat() With {
+                                    .LineAlignment = StringAlignment.Near,
+                                    .Alignment = StringAlignment.Near,
+                                    .Trimming = StringTrimming.EllipsisCharacter,
+                                    .FormatFlags = StringFormatFlags.NoWrap
+                                }
 
-        ' Color code stock levels
-        If currentStock = 0 Then
-            lblStock.ForeColor = Color.Red
-        ElseIf currentStock <= reorderLevel Then
-            lblStock.ForeColor = Color.Orange
-        Else
-            lblStock.ForeColor = Color.Green
-        End If
-        productPanel.Controls.Add(lblStock)
+                                ' Calculate name area (upper portion)
+                                Dim nameRect As New Rectangle(textRect.X, textRect.Y + 2, textRect.Width, (textRect.Height * 60) \ 100)
+                                e.Graphics.DrawString(displayName, productNameFont, productNameBrush, nameRect, nameFormat)
+                            End Using
+                        End Using
 
-        ' Cost Price
-        Dim lblCostTitle As New Guna.UI2.WinForms.Guna2HtmlLabel()
-        lblCostTitle.Text = "Cost"
-        lblCostTitle.Font = New Font("Poppins", 8, FontStyle.Bold)
-        lblCostTitle.ForeColor = Color.Gray
-        lblCostTitle.Location = New Point(560, 8)
-        lblCostTitle.AutoSize = True
-        productPanel.Controls.Add(lblCostTitle)
+                        ' Draw product code as subtitle with consistent spacing
+                        Dim productCode As String = productData("ProductCode").ToString()
 
-        Dim lblCost As New Label()
-        lblCost.Text = "₱" & Convert.ToDecimal(productData("CostPrice")).ToString("N2")
-        lblCost.Font = New Font("Poppins", 8, FontStyle.Regular)
-        lblCost.ForeColor = Color.FromArgb(60, 60, 60)
-        lblCost.Location = New Point(560, 28)
-        lblCost.AutoSize = True
-        lblCost.BackColor = Color.White
-        productPanel.Controls.Add(lblCost)
+                        ' Check if row is selected to use appropriate text color
+                        Dim isRowSelected As Boolean = productDataGrid.Rows(e.RowIndex).Selected
+                        Dim codeTextColor As Color = If(isRowSelected, Color.White, MediumGray)
 
-        ' Selling Price
-        Dim lblPriceTitle As New Guna.UI2.WinForms.Guna2HtmlLabel()
-        lblPriceTitle.Text = "Price"
-        lblPriceTitle.Font = New Font("Poppins", 8, FontStyle.Bold)
-        lblPriceTitle.ForeColor = Color.Gray
-        lblPriceTitle.Location = New Point(650, 8)
-        lblPriceTitle.AutoSize = True
-        productPanel.Controls.Add(lblPriceTitle)
+                        Using codeFont As New Font("Poppins", 8.5F, FontStyle.Regular)
+                            Using codeBrush As New SolidBrush(codeTextColor)
+                                Dim codeFormat As New StringFormat() With {
+                                    .LineAlignment = StringAlignment.Near,
+                                    .Alignment = StringAlignment.Near
+                                }
 
-        Dim lblPrice As New Label()
-        lblPrice.Text = "₱" & Convert.ToDecimal(productData("SellingPrice")).ToString("N2")
-        lblPrice.Font = New Font("Poppins", 9, FontStyle.Bold)
-        lblPrice.ForeColor = Color.FromArgb(100, 88, 255)
-        lblPrice.Location = New Point(650, 28)
-        lblPrice.AutoSize = True
-        lblPrice.BackColor = Color.White
-        productPanel.Controls.Add(lblPrice)
+                                ' Calculate code area (lower portion)
+                                Dim codeYStart As Integer = textRect.Y + (textRect.Height * 60) \ 100
+                                Dim codeRect As New Rectangle(textRect.X, codeYStart + 4, textWidth, (textRect.Height * 40) \ 100)
+                                e.Graphics.DrawString($"Code: {productCode}", codeFont, codeBrush, codeRect, codeFormat)
+                            End Using
+                        End Using
+                    End If
 
-        ' Edit icon
-        Dim lblEdit As New Label()
-        lblEdit.Text = "✏️"
-        lblEdit.Font = New Font("Segoe UI Emoji", 14, FontStyle.Regular)
-        lblEdit.Cursor = Cursors.Hand
-        lblEdit.Location = New Point(770, 20)
-        lblEdit.Size = New Size(35, 30)
-        lblEdit.BackColor = Color.White
-        lblEdit.Tag = productData("ProductID")
-        AddHandler lblEdit.Click, AddressOf EditProduct_Click
-        productPanel.Controls.Add(lblEdit)
+                    ' Handle CurrentStock column for maintaining color coding when selected
+                ElseIf productDataGrid.Columns(e.ColumnIndex).Name = "CurrentStock" Then
+                    ' Get stock status from cell tag
+                    Dim stockStatus As String = If(productDataGrid.Rows(e.RowIndex).Cells("CurrentStock").Tag?.ToString(), "IN_STOCK")
+                    Dim isRowSelected As Boolean = productDataGrid.Rows(e.RowIndex).Selected
 
-        ' Add panel to stock panel
-        stockPanel.Controls.Add(productPanel)
-        productPanel.BringToFront()
-    End Sub
+                    ' Only handle custom painting if row is selected (to maintain color coding)
+                    If isRowSelected Then
+                        e.Handled = True
+                        e.PaintBackground(e.ClipBounds, True)
 
-    Private Sub EditProduct_Click(sender As Object, e As EventArgs)
-        Dim productId As Integer = Convert.ToInt32(DirectCast(sender, Label).Tag)
+                        ' Determine text color based on stock status
+                        Dim textColor As Color
+                        Select Case stockStatus
+                            Case "OUT_OF_STOCK"
+                                textColor = Color.FromArgb(255, 100, 100) ' Lighter red for dark background
+                            Case "LOW_STOCK"
+                                textColor = Color.FromArgb(255, 200, 50) ' Lighter amber for dark background
+                            Case Else ' "IN_STOCK"
+                                textColor = Color.FromArgb(100, 255, 130) ' Lighter green for dark background
+                        End Select
 
-        ' Create overlay panel for modal effect
-        Dim overlayPanel As New Panel()
-        overlayPanel.BackColor = Color.FromArgb(100, 0, 0, 0) ' Semi-transparent black
-        overlayPanel.Dock = DockStyle.Fill
-        overlayPanel.Location = New Point(0, 0)
-        overlayPanel.Size = Me.ClientSize
-        Me.Controls.Add(overlayPanel)
-        overlayPanel.BringToFront()
+                        ' Draw the stock number with appropriate color
+                        Using stockFont As New Font("Poppins", 9.5F, FontStyle.Bold)
+                            Using stockBrush As New SolidBrush(textColor)
+                                Dim stockFormat As New StringFormat() With {
+                                    .Alignment = StringAlignment.Center,
+                                    .LineAlignment = StringAlignment.Center
+                                }
 
-        ' Create and show Edit Product form
-        Dim editProductForm As New AddProduct()
-        editProductForm.SetEditMode(productId)
-        editProductForm.StartPosition = FormStartPosition.CenterParent
-
-        ' Handle form closing to remove overlay
-        AddHandler editProductForm.FormClosed, Sub(s, ev)
-                                                   If overlayPanel IsNot Nothing AndAlso Not overlayPanel.IsDisposed Then
-                                                       Me.Controls.Remove(overlayPanel)
-                                                       overlayPanel.Dispose()
-                                                   End If
-                                               End Sub
-
-        Dim result As DialogResult = editProductForm.ShowDialog(Me)
-
-        ' Cleanup overlay if still exists
-        If overlayPanel IsNot Nothing AndAlso Not overlayPanel.IsDisposed Then
-            Me.Controls.Remove(overlayPanel)
-            overlayPanel.Dispose()
-        End If
-
-        ' Refresh the inventory list if product was updated
-        If result = DialogResult.OK Then
-            LoadProducts()
-        End If
+                                Dim stockText As String = If(e.Value IsNot Nothing, e.Value.ToString(), "0")
+                                e.Graphics.DrawString(stockText, stockFont, stockBrush, e.CellBounds, stockFormat)
+                            End Using
+                        End Using
+                    End If
+                End If
+            End If
+        Catch ex As Exception
+            ' Silent fail for custom painting to prevent crashes
+        End Try
     End Sub
 
     Private Sub Guna2Button1_Click(sender As Object, e As EventArgs) Handles Guna2Button1.Click
@@ -580,16 +914,15 @@ Public Class Inventory
 
     Private Function MatchesFilter(product As Dictionary(Of String, Object)) As Boolean
         Try
-            ' Search filter
+            ' Search filter - ProductCode can be used for scanning now, so it covers barcode functionality
             Dim searchText As String = txtSearch.Text.Trim().ToLower()
             If Not String.IsNullOrWhiteSpace(searchText) Then
                 Dim productName As String = product("ProductName").ToString().ToLower()
                 Dim productCode As String = product("ProductCode").ToString().ToLower()
                 Dim category As String = product("Category").ToString().ToLower()
-                Dim barcode As String = product("Barcode").ToString().ToLower()
 
                 If Not (productName.Contains(searchText) Or productCode.Contains(searchText) Or
-                       category.Contains(searchText) Or barcode.Contains(searchText)) Then
+                       category.Contains(searchText)) Then
                     Return False
                 End If
             End If
@@ -697,6 +1030,20 @@ Public Class Inventory
 
         ' Hide loading overlay if it's still visible
         HideLoadingOverlay()
+
+        ' Dispose of custom tooltip system
+        If tooltipTimer IsNot Nothing Then
+            tooltipTimer.Stop()
+            tooltipTimer.Dispose()
+            tooltipTimer = Nothing
+        End If
+
+        If customTooltip IsNot Nothing Then
+            customTooltip.Dispose()
+            customTooltip = Nothing
+        End If
+
+        currentTooltipCell = Nothing
 
         ' If this is programmatic navigation, don't show confirmation
         If isNavigating Then
@@ -1206,4 +1553,126 @@ Public Class Inventory
         End If
         Return True
     End Function
+
+    Private Sub StockPanel_Scroll(sender As Object, e As ScrollEventArgs)
+        ' This method is no longer used since we're using DataGridView
+        ' Keeping for compatibility but can be removed in the future
+    End Sub
+
+    Private Sub RenderVisibleItems()
+        ' This method is no longer used since DataGridView handles virtual scrolling
+        ' Keeping for compatibility but can be removed in the future
+    End Sub
+
+    Private Sub CreateProductPanel(productData As Dictionary(Of String, Object), index As Integer)
+        ' This method has been replaced by DataGridView implementation
+        ' Keeping for compatibility but can be removed in the future
+    End Sub
+
+    Private Sub EditProduct_Click(sender As Object, e As EventArgs)
+        ' This method has been replaced by EditProduct_Click_FromGrid
+        ' Keeping for compatibility but can be removed in the future
+    End Sub
+
+    Private Sub ProductDataGrid_CellMouseEnter(sender As Object, e As DataGridViewCellEventArgs)
+        Try
+            If e.RowIndex >= 0 AndAlso e.ColumnIndex >= 0 Then
+                Dim productDataGrid As Guna.UI2.WinForms.Guna2DataGridView = CType(sender, Guna.UI2.WinForms.Guna2DataGridView)
+
+                ' Only handle ProductName column for tooltips
+                If productDataGrid.Columns(e.ColumnIndex).Name = "ProductName" Then
+                    ' Store the cell for tooltip display
+                    currentTooltipCell = productDataGrid.Rows(e.RowIndex).Cells(e.ColumnIndex)
+                    lastMousePosition = productDataGrid.PointToClient(Cursor.Position)
+
+                    ' Start tooltip timer
+                    tooltipTimer.Stop()
+                    tooltipTimer.Start()
+                End If
+
+                ' Handle cursor for Actions column
+                If productDataGrid.Columns(e.ColumnIndex).Name = "Actions" Then
+                    productDataGrid.Cursor = Cursors.Hand
+                End If
+            End If
+        Catch ex As Exception
+            ' Silent fail
+        End Try
+    End Sub
+
+    Private Sub ProductDataGrid_CellMouseLeave(sender As Object, e As DataGridViewCellEventArgs)
+        Try
+            ' Stop tooltip timer and hide tooltip
+            tooltipTimer.Stop()
+            currentTooltipCell = Nothing
+
+            ' Hide tooltip
+            If customTooltip IsNot Nothing Then
+                customTooltip.Hide(Guna2DataGridView1)
+            End If
+
+            ' Reset cursor
+            Guna2DataGridView1.Cursor = Cursors.Default
+
+        Catch ex As Exception
+            ' Silent fail
+        End Try
+    End Sub
+
+    Private Sub ProductDataGrid_MouseMove(sender As Object, e As MouseEventArgs)
+        Try
+            ' Update last mouse position for tooltip accuracy
+            lastMousePosition = e.Location
+
+            ' Get cell at current mouse position
+            Dim hit As DataGridView.HitTestInfo = Guna2DataGridView1.HitTest(e.X, e.Y)
+
+            If hit.RowIndex >= 0 AndAlso hit.ColumnIndex >= 0 Then
+                ' Update cursor based on column
+                If Guna2DataGridView1.Columns(hit.ColumnIndex).Name = "Actions" Then
+                    Guna2DataGridView1.Cursor = Cursors.Hand
+                Else
+                    Guna2DataGridView1.Cursor = Cursors.Default
+                End If
+
+                ' If mouse moved significantly, reset tooltip
+                If currentTooltipCell IsNot Nothing AndAlso
+                   (hit.RowIndex <> currentTooltipCell.RowIndex OrElse hit.ColumnIndex <> currentTooltipCell.ColumnIndex) Then
+                    tooltipTimer.Stop()
+                    customTooltip.Hide(Guna2DataGridView1)
+                    currentTooltipCell = Nothing
+                End If
+            End If
+
+        Catch ex As Exception
+            ' Silent fail
+        End Try
+    End Sub
+
+    Private Sub ProductDataGrid_Enter(sender As Object, e As EventArgs)
+        Try
+            ' DataGridView gained focus - this helps with Alt+Tab scenarios
+            ' Reset tooltip state to prevent lingering tooltips
+            tooltipTimer.Stop()
+            currentTooltipCell = Nothing
+            If customTooltip IsNot Nothing Then
+                customTooltip.Hide(Guna2DataGridView1)
+            End If
+        Catch ex As Exception
+            ' Silent fail
+        End Try
+    End Sub
+
+    Private Sub ProductDataGrid_Leave(sender As Object, e As EventArgs)
+        Try
+            ' DataGridView lost focus - hide tooltips
+            tooltipTimer.Stop()
+            currentTooltipCell = Nothing
+            If customTooltip IsNot Nothing Then
+                customTooltip.Hide(Guna2DataGridView1)
+            End If
+        Catch ex As Exception
+            ' Silent fail
+        End Try
+    End Sub
 End Class

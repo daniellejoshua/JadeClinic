@@ -116,7 +116,6 @@ Public Class DatabaseInitializer
             "CREATE TABLE Products(" &
             "ProductID int IDENTITY(1,1) PRIMARY KEY, " &
             "ProductCode nvarchar(50) NOT NULL UNIQUE, " &
-            "Barcode nvarchar(100) NOT NULL UNIQUE, " &
             "ProductName nvarchar(200) NOT NULL, " &
             "Category nvarchar(100) NULL, " &
             "Unit nvarchar(20) DEFAULT 'PCS', " &
@@ -180,7 +179,7 @@ Public Class DatabaseInitializer
         Dim query As String = "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='ProductImages' AND xtype='U') " &
             "CREATE TABLE ProductImages(" &
             "ImageID int IDENTITY(1,1) PRIMARY KEY, " &
-            "ProductID int NOT NULL, " &
+            "ImageHash nvarchar(255) NOT NULL UNIQUE, " &
             "ImageType nvarchar(10) DEFAULT 'thumb', " &
             "ImageData varbinary(max) NOT NULL, " &
             "CreatedAt datetime DEFAULT getdate(), " &
@@ -188,14 +187,37 @@ Public Class DatabaseInitializer
 
         DatabaseHelper.ExecuteNonQuery(query, Nothing)
 
-        ' Add index for ProductImages (from your SQL script)
-        Dim indexQuery As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_ProductImages_Product') " &
-            "CREATE NONCLUSTERED INDEX IX_ProductImages_Product ON ProductImages (ProductID ASC, ImageType ASC)"
+        ' Create ProductImageMapping table for many-to-many relationship
+        Dim mappingQuery As String = "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='ProductImageMapping' AND xtype='U') " &
+            "CREATE TABLE ProductImageMapping(" &
+            "MappingID int IDENTITY(1,1) PRIMARY KEY, " &
+            "ProductID int NOT NULL, " &
+            "ImageID int NOT NULL, " &
+            "CreatedAt datetime DEFAULT getdate(), " &
+            "FOREIGN KEY (ProductID) REFERENCES Products(ProductID), " &
+            "FOREIGN KEY (ImageID) REFERENCES ProductImages(ImageID), " &
+            "UNIQUE(ProductID, ImageID))"
+
+        DatabaseHelper.ExecuteNonQuery(mappingQuery, Nothing)
+
+        ' Add index for ProductImages hash (for duplicate detection)
+        Dim hashIndexQuery As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_ProductImages_Hash') " &
+            "CREATE NONCLUSTERED INDEX IX_ProductImages_Hash ON ProductImages (ImageHash ASC)"
 
         Try
-            DatabaseHelper.ExecuteNonQuery(indexQuery, Nothing)
+            DatabaseHelper.ExecuteNonQuery(hashIndexQuery, Nothing)
         Catch ex As Exception
-            Console.WriteLine($"Note: Could not create ProductImages index: {ex.Message}")
+            Console.WriteLine($"Note: Could not create ImageHash index: {ex.Message}")
+        End Try
+
+        ' Add index for ProductImageMapping (for product image lookups)
+        Dim mappingIndexQuery As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_ProductImageMapping_Product') " &
+            "CREATE NONCLUSTERED INDEX IX_ProductImageMapping_Product ON ProductImageMapping (ProductID ASC)"
+
+        Try
+            DatabaseHelper.ExecuteNonQuery(mappingIndexQuery, Nothing)
+        Catch ex As Exception
+            Console.WriteLine($"Note: Could not create ProductImageMapping index: {ex.Message}")
         End Try
     End Sub
 

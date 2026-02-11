@@ -18,8 +18,11 @@ Public Class AddProduct
     End Sub
 
     Private Sub AddProduct_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        ' Start idle timeout monitoring for modal forms
+        IdleTimeoutManager.Instance.StartMonitoring(Me)
+
         LoadCategories()
-        LoadSuppliers()
+        ' Removed: LoadSuppliers() - no longer needed
         SetupFormDefaults()
         SetupExpiryDateVisibility()
         SetupNumericInputValidation()
@@ -62,7 +65,7 @@ Public Class AddProduct
     Private Sub SetupFormDefaults()
         ' Set default values
         cmbCategory.SelectedIndex = -1
-        SupplierCMbBox.SelectedIndex = -1
+        ' Removed: SupplierCMbBox.SelectedIndex = -1
         Guna2DateTimePicker1.Value = DateTime.Now.AddMonths(12) ' Default expiry 1 year from now
         Guna2DateTimePicker1.Visible = False
         Guna2HtmlLabel8.Visible = False
@@ -80,6 +83,18 @@ Public Class AddProduct
         SellingPriceTextBox.PlaceholderText = "0.00"
         WholeSaleTextbox.PlaceholderText = "0.00"
         ReOrderLevelTextBox.PlaceholderText = "0"
+
+        ' Hide supplier controls since we're removing this functionality
+        If Me.Controls.Contains(SupplierCMbBox) Then
+            SupplierCMbBox.Visible = False
+        End If
+
+        ' Hide supplier label too
+        For Each ctrl As Control In Me.Controls
+            If TypeOf ctrl Is Label AndAlso ctrl.Text.ToLower().Contains("supplier") Then
+                ctrl.Visible = False
+            End If
+        Next
     End Sub
 
     Private Sub LoadCategories()
@@ -106,40 +121,6 @@ Public Class AddProduct
         End Try
     End Sub
 
-    Private Sub LoadSuppliers()
-        Try
-            Dim connStr As String = Connection.GetConnectionString()
-            Using conn As New SqlConnection(connStr)
-                conn.Open()
-
-                Dim query As String = "SELECT SupplierID, SupplierName FROM Suppliers WHERE IsActive = 1 ORDER BY SupplierName"
-                Using cmd As New SqlCommand(query, conn)
-                    Using reader As SqlDataReader = cmd.ExecuteReader()
-                        SupplierCMbBox.Items.Clear()
-
-                        ' Add "New Supplier" option at the top
-                        SupplierCMbBox.Items.Add("+ Add New Supplier")
-
-                        ' Create a dictionary to store supplier data
-                        Dim supplierData As New Dictionary(Of String, Integer)
-
-                        While reader.Read()
-                            Dim supplierName As String = reader("SupplierName").ToString()
-                            Dim supplierId As Integer = Convert.ToInt32(reader("SupplierID"))
-
-                            SupplierCMbBox.Items.Add(supplierName)
-                            supplierData.Add(supplierName, supplierId)
-                        End While
-
-                        ' Store supplier data for later use
-                        SupplierCMbBox.Tag = supplierData
-                    End Using
-                End Using
-            End Using
-        Catch ex As Exception
-            MessageBox.Show("Error loading suppliers: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-        End Try
-    End Sub
 
     Private Sub SetupExpiryDateVisibility()
         ' Initially hide expiry date controls - only show for ENDO type categories
@@ -256,12 +237,40 @@ Public Class AddProduct
             Return False
         End If
 
+        ' NEW: Validate that selling price is higher than cost price
+        If sellingPrice <= costPrice Then
+            MessageBox.Show("Selling price must be higher than cost price!" & Environment.NewLine &
+                          $"Cost Price: ₱{costPrice:N2}" & Environment.NewLine &
+                          $"Selling Price: ₱{sellingPrice:N2}", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            SellingPriceTextBox.Focus()
+            Return False
+        End If
+
         ' Validate wholesale price if provided
         Dim wholesalePrice As Decimal
-        If Not String.IsNullOrWhiteSpace(WholeSaleTextbox.Text) AndAlso (Not Decimal.TryParse(WholeSaleTextbox.Text.Trim(), wholesalePrice) OrElse wholesalePrice <= 0) Then
-            MessageBox.Show("Wholesale price must be a valid number greater than 0!", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-            WholeSaleTextbox.Focus()
-            Return False
+        If Not String.IsNullOrWhiteSpace(WholeSaleTextbox.Text) Then
+            If Not Decimal.TryParse(WholeSaleTextbox.Text.Trim(), wholesalePrice) OrElse wholesalePrice <= 0 Then
+                MessageBox.Show("Wholesale price must be a valid number greater than 0!", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                WholeSaleTextbox.Focus()
+                Return False
+            End If
+
+            ' NEW: Validate wholesale price is between cost price and selling price
+            If wholesalePrice < costPrice Then
+                MessageBox.Show("Wholesale price cannot be lower than cost price!" & Environment.NewLine &
+                              $"Cost Price: ₱{costPrice:N2}" & Environment.NewLine &
+                              $"Wholesale Price: ₱{wholesalePrice:N2}", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                WholeSaleTextbox.Focus()
+                Return False
+            End If
+
+            If wholesalePrice >= sellingPrice Then
+                MessageBox.Show("Wholesale price must be lower than selling price!" & Environment.NewLine &
+                              $"Wholesale Price: ₱{wholesalePrice:N2}" & Environment.NewLine &
+                              $"Selling Price: ₱{sellingPrice:N2}", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                WholeSaleTextbox.Focus()
+                Return False
+            End If
         End If
 
         ' Check if endo category and expiry date is required
@@ -289,19 +298,18 @@ Public Class AddProduct
                         Dim isEndo As Boolean = selectedCategory.ToLower().Contains("endo")
                         Dim expiryDate As Date? = If(isEndo, Guna2DateTimePicker1.Value.Date, Nothing)
 
-                        ' Insert product with temporary product code
-                        Dim insertQuery As String = "INSERT INTO Products (ProductCode, Barcode, ProductName, Category, Unit, " &
+                        ' Insert product with temporary product code (removed SupplierID)
+                        Dim insertQuery As String = "INSERT INTO Products (ProductCode, ProductName, Category, Unit, " &
                                                    "CurrentStock, ReorderLevel, CostPrice, SellingPrice, WholesalePrice, " &
-                                                   "HasExpiry, ExpiryDate, SupplierID, IsActive, Created, UpdatedAt) " &
-                                                   "VALUES (@ProductCode, @Barcode, @ProductName, @Category, @Unit, " &
+                                                   "HasExpiry, ExpiryDate, IsActive, Created, UpdatedAt) " &
+                                                   "VALUES (@ProductCode, @ProductName, @Category, @Unit, " &
                                                    "@CurrentStock, @ReorderLevel, @CostPrice, @SellingPrice, @WholesalePrice, " &
-                                                   "@HasExpiry, @ExpiryDate, @SupplierID, 1, GETDATE(), GETDATE()); SELECT SCOPE_IDENTITY()"
+                                                   "@HasExpiry, @ExpiryDate, 1, GETDATE(), GETDATE()); SELECT SCOPE_IDENTITY()"
 
                         Dim productId As Integer
 
                         Using cmd As New SqlCommand(insertQuery, conn, transaction)
                             cmd.Parameters.AddWithValue("@ProductCode", "TEMP_CODE")
-                            cmd.Parameters.AddWithValue("@Barcode", "TEMP_BARCODE")
                             cmd.Parameters.AddWithValue("@ProductName", txtProductName.Text.Trim())
                             cmd.Parameters.AddWithValue("@Category", selectedCategory)
                             cmd.Parameters.AddWithValue("@Unit", If(UnitCmbBox.SelectedItem IsNot Nothing, UnitCmbBox.SelectedItem.ToString(), "PCS"))
@@ -317,27 +325,15 @@ Public Class AddProduct
                                 cmd.Parameters.AddWithValue("@ExpiryDate", DBNull.Value)
                             End If
 
-                            ' Get selected supplier ID
-                            Dim supplierId As Object = DBNull.Value
-                            If SupplierCMbBox.SelectedItem IsNot Nothing AndAlso SupplierCMbBox.SelectedItem.ToString() <> "+ Add New Supplier" Then
-                                Dim supplierData As Dictionary(Of String, Integer) = TryCast(SupplierCMbBox.Tag, Dictionary(Of String, Integer))
-                                If supplierData IsNot Nothing AndAlso supplierData.ContainsKey(SupplierCMbBox.SelectedItem.ToString()) Then
-                                    supplierId = supplierData(SupplierCMbBox.SelectedItem.ToString())
-                                End If
-                            End If
-                            cmd.Parameters.AddWithValue("@SupplierID", supplierId)
-
                             productId = Convert.ToInt32(cmd.ExecuteScalar())
                         End Using
 
-                        ' Update with final ProductCode and simple Barcode
-                        Dim finalProductCode As String = GenerateFinalProductCode(productId)
-                        Dim simpleBarcode As String = $"P{productId.ToString("D8")}" ' Simple barcode for new products
+                        ' Update with final ProductCode (no separate barcode field)
+                        Dim finalProductCode As String = Utilities.GenerateProductCode(productId)
 
-                        Dim updateQuery As String = "UPDATE Products SET ProductCode = @ProductCode, Barcode = @Barcode WHERE ProductID = @ProductID"
+                        Dim updateQuery As String = "UPDATE Products SET ProductCode = @ProductCode WHERE ProductID = @ProductID"
                         Using cmdUpdate As New SqlCommand(updateQuery, conn, transaction)
                             cmdUpdate.Parameters.AddWithValue("@ProductCode", finalProductCode)
-                            cmdUpdate.Parameters.AddWithValue("@Barcode", simpleBarcode)
                             cmdUpdate.Parameters.AddWithValue("@ProductID", productId)
                             cmdUpdate.ExecuteNonQuery()
                         End Using
@@ -348,7 +344,7 @@ Public Class AddProduct
                         End If
 
                         transaction.Commit()
-                        Return True
+                            Return True
 
                     Catch ex As Exception
                         transaction.Rollback()
@@ -374,17 +370,13 @@ Public Class AddProduct
                         Dim isEndo As Boolean = selectedCategory.ToLower().Contains("endo")
                         Dim expiryDate As Date? = If(isEndo, Guna2DateTimePicker1.Value.Date, Nothing)
 
-                        ' Generate new barcode for edited product
-                        Dim newBarcode As String = GenerateBarcode(editProductId)
-
-                        ' Update product
-                        Dim updateQuery As String = "UPDATE Products SET Barcode = @Barcode, ProductName = @ProductName, Category = @Category, Unit = @Unit, " &
+                        ' Update product WITHOUT changing ProductCode (keep original for barcode consistency) and removed SupplierID
+                        Dim updateQuery As String = "UPDATE Products SET ProductName = @ProductName, Category = @Category, Unit = @Unit, " &
                                                    "ReorderLevel = @ReorderLevel, CostPrice = @CostPrice, SellingPrice = @SellingPrice, " &
                                                    "WholesalePrice = @WholesalePrice, HasExpiry = @HasExpiry, ExpiryDate = @ExpiryDate, " &
-                                                   "SupplierID = @SupplierID, UpdatedAt = GETDATE() WHERE ProductID = @ProductID"
+                                                   "UpdatedAt = GETDATE() WHERE ProductID = @ProductID"
 
                         Using cmd As New SqlCommand(updateQuery, conn, transaction)
-                            cmd.Parameters.AddWithValue("@Barcode", newBarcode)
                             cmd.Parameters.AddWithValue("@ProductName", txtProductName.Text.Trim())
                             cmd.Parameters.AddWithValue("@Category", selectedCategory)
                             cmd.Parameters.AddWithValue("@Unit", If(UnitCmbBox.SelectedItem IsNot Nothing, UnitCmbBox.SelectedItem.ToString(), "PCS"))
@@ -399,15 +391,7 @@ Public Class AddProduct
                                 cmd.Parameters.AddWithValue("@ExpiryDate", DBNull.Value)
                             End If
 
-                            ' Get selected supplier ID
-                            Dim supplierId As Object = DBNull.Value
-                            If SupplierCMbBox.SelectedItem IsNot Nothing AndAlso SupplierCMbBox.SelectedItem.ToString() <> "+ Add New Supplier" Then
-                                Dim supplierData As Dictionary(Of String, Integer) = TryCast(SupplierCMbBox.Tag, Dictionary(Of String, Integer))
-                                If supplierData IsNot Nothing AndAlso supplierData.ContainsKey(SupplierCMbBox.SelectedItem.ToString()) Then
-                                    supplierId = supplierData(SupplierCMbBox.SelectedItem.ToString())
-                                End If
-                            End If
-                            cmd.Parameters.AddWithValue("@SupplierID", supplierId)
+                            ' Removed: supplier ID logic since we're not using suppliers
                             cmd.Parameters.AddWithValue("@ProductID", editProductId)
 
                             cmd.ExecuteNonQuery()
@@ -428,8 +412,17 @@ Public Class AddProduct
 
                         transaction.Commit()
 
-                        ' Generate and display barcode after successful update
-                        GenerateAndDisplayBarcode(newBarcode)
+                        ' Get the existing ProductCode for barcode display (don't regenerate)
+                        Dim getCodeQuery As String = "SELECT ProductCode FROM Products WHERE ProductID = @ProductID"
+                        Using getCodeCmd As New SqlCommand(getCodeQuery, conn)
+                            getCodeCmd.Parameters.AddWithValue("@ProductID", editProductId)
+                            Dim existingProductCode As String = getCodeCmd.ExecuteScalar()?.ToString()
+
+                            ' Display barcode with existing ProductCode (no regeneration)
+                            If Not String.IsNullOrEmpty(existingProductCode) Then
+                                GenerateAndDisplayBarcode(existingProductCode)
+                            End If
+                        End Using
 
                         Return True
 
@@ -445,38 +438,74 @@ Public Class AddProduct
         End Try
     End Function
 
-    Private Function GenerateProductCode(conn As SqlConnection, transaction As SqlTransaction) As String
-        ' Generate unique product code using ProductID + DateTime format: P[ID]-YYYYMMDD-HHMMSS
-        ' This will be finalized after getting the ProductID from the database
-        Return "TEMP_CODE"
-    End Function
-
-    Private Function GenerateFinalProductCode(productId As Integer) As String
-        ' Generate unique product code: P[ID]-YYYYMMDD-HHmmss
-        Dim dateTimeStr As String = DateTime.Now.ToString("yyyyMMdd-HHmmss")
-        Return $"P{productId.ToString("D5")}-{dateTimeStr}"
-    End Function
-
-    Private Function GenerateBarcode(productId As Integer) As String
-        ' Generate barcode: format as PXXXXYYYYMMDDHHMMSS where XXXX is product ID
-        Dim dateTimeStr As String = DateTime.Now.ToString("yyyyMMddHHmmss")
-        Return $"P{productId.ToString("D4")}{dateTimeStr}"
-    End Function
-
     Private Sub SaveProductImage(conn As SqlConnection, transaction As SqlTransaction, productId As Integer, imagePath As String)
         Try
-            ' Read image file
-            Dim imageBytes As Byte() = IO.File.ReadAllBytes(imagePath)
+            ' Read image file and compress if needed
+            Dim originalBytes As Byte() = IO.File.ReadAllBytes(imagePath)
+            Dim imageBytes As Byte()
 
-            ' Insert into ProductImages table
-            Dim query As String = "INSERT INTO ProductImages (ProductID, ImageType, ImageData, CreatedAt, UpdatedAt) " &
-                                 "VALUES (@ProductID, 'thumb', @ImageData, GETDATE(), GETDATE())"
+            ' Use compression if image is larger than 500KB
+            If originalBytes.Length > 500000 Then
+                ' Assuming ImageCompression utility exists
+                imageBytes = ImageCompression.CompressImage(originalBytes, 85) ' 85% quality
+            Else
+                imageBytes = originalBytes
+            End If
 
-            Using cmd As New SqlCommand(query, conn, transaction)
-                cmd.Parameters.AddWithValue("@ProductID", productId)
-                cmd.Parameters.AddWithValue("@ImageData", imageBytes)
-                cmd.ExecuteNonQuery()
+            ' Generate hash for the image
+            Dim imageHash As String = Utilities.GenerateImageHash(imageBytes)
+
+            ' Check if image with same hash already exists
+            Dim existingImageId As Integer? = Nothing
+
+            ' Check for existing image with same hash
+            Dim checkHashQuery As String = "SELECT TOP 1 ImageID FROM ProductImages WHERE ImageHash = @ImageHash"
+            Using checkCmd As New SqlCommand(checkHashQuery, conn, transaction)
+                checkCmd.Parameters.AddWithValue("@ImageHash", imageHash)
+                Dim result = checkCmd.ExecuteScalar()
+
+                If result IsNot Nothing AndAlso Not IsDBNull(result) Then
+                    existingImageId = Convert.ToInt32(result)
+                End If
             End Using
+
+            Dim imageId As Integer
+
+            If existingImageId.HasValue Then
+                ' Reuse existing image
+                imageId = existingImageId.Value
+                Console.WriteLine($"Reusing existing image with hash: {imageHash}")
+            Else
+                ' Save new image with hash
+                Dim insertImageQuery As String = "INSERT INTO ProductImages (ImageHash, ImageType, ImageData, CreatedAt, UpdatedAt) " &
+                                               "VALUES (@ImageHash, 'thumb', @ImageData, GETDATE(), GETDATE()); SELECT SCOPE_IDENTITY()"
+
+                Using insertCmd As New SqlCommand(insertImageQuery, conn, transaction)
+                    insertCmd.Parameters.AddWithValue("@ImageHash", imageHash)
+                    insertCmd.Parameters.AddWithValue("@ImageData", imageBytes)
+                    imageId = Convert.ToInt32(insertCmd.ExecuteScalar())
+                End Using
+
+                Console.WriteLine($"Saved new image with hash: {imageHash}")
+            End If
+
+            ' Create mapping between product and image (delete existing mapping first)
+            Dim deleteMappingQuery As String = "DELETE FROM ProductImageMapping WHERE ProductID = @ProductID"
+            Using deleteCmd As New SqlCommand(deleteMappingQuery, conn, transaction)
+                deleteCmd.Parameters.AddWithValue("@ProductID", productId)
+                deleteCmd.ExecuteNonQuery()
+            End Using
+
+            ' Insert new mapping
+            Dim insertMappingQuery As String = "INSERT INTO ProductImageMapping (ProductID, ImageID, CreatedAt) " &
+                                             "VALUES (@ProductID, @ImageID, GETDATE())"
+
+            Using mapCmd As New SqlCommand(insertMappingQuery, conn, transaction)
+                mapCmd.Parameters.AddWithValue("@ProductID", productId)
+                mapCmd.Parameters.AddWithValue("@ImageID", imageId)
+                mapCmd.ExecuteNonQuery()
+            End Using
+
         Catch ex As Exception
             ' Log error but don't fail the entire transaction
             Console.WriteLine("Error saving product image: " & ex.Message)
@@ -489,9 +518,11 @@ Public Class AddProduct
             Using conn As New SqlConnection(connStr)
                 conn.Open()
 
-                Dim query As String = "SELECT p.*, " &
-                                     "(SELECT TOP 1 ImageData FROM ProductImages WHERE ProductID = p.ProductID) AS ProductImage " &
-                                     "FROM Products p WHERE p.ProductID = @ProductID"
+                Dim query As String = "SELECT p.*, pi.ImageData AS ProductImage " +
+                                     "FROM Products p " +
+                                     "LEFT JOIN ProductImageMapping pim ON p.ProductID = pim.ProductID " +
+                                     "LEFT JOIN ProductImages pi ON pim.ImageID = pi.ImageID " +
+                                     "WHERE p.ProductID = @ProductID"
 
                 Using cmd As New SqlCommand(query, conn)
                     cmd.Parameters.AddWithValue("@ProductID", editProductId)
@@ -531,19 +562,7 @@ Public Class AddProduct
                                 ReOrderLevelTextBox.Text = reader("ReorderLevel").ToString()
                             End If
 
-                            ' Set supplier
-                            If Not IsDBNull(reader("SupplierID")) Then
-                                Dim supplierId As Integer = Convert.ToInt32(reader("SupplierID"))
-                                Dim supplierData As Dictionary(Of String, Integer) = TryCast(SupplierCMbBox.Tag, Dictionary(Of String, Integer))
-                                If supplierData IsNot Nothing Then
-                                    For Each kvp In supplierData
-                                        If kvp.Value = supplierId Then
-                                            SupplierCMbBox.SelectedItem = kvp.Key
-                                            Exit For
-                                        End If
-                                    Next
-                                End If
-                            End If
+                            ' Removed: supplier loading logic since we're not using suppliers
 
                             ' Load expiry date if applicable
                             If Not IsDBNull(reader("HasExpiry")) AndAlso Convert.ToBoolean(reader("HasExpiry")) Then
@@ -562,10 +581,10 @@ Public Class AddProduct
                                 End Using
                             End If
 
-                            ' Load and display barcode
-                            If Not IsDBNull(reader("Barcode")) Then
-                                Dim barcode As String = reader("Barcode").ToString()
-                                GenerateAndDisplayBarcode(barcode)
+                            ' Load and display barcode using ProductCode
+                            If Not IsDBNull(reader("ProductCode")) Then
+                                Dim productCode As String = reader("ProductCode").ToString()
+                                GenerateAndDisplayBarcode(productCode)
                             End If
                         End If
                     End Using
@@ -579,7 +598,7 @@ Public Class AddProduct
     Private Sub ClearForm()
         txtProductName.Clear()
         cmbCategory.SelectedIndex = -1
-        SupplierCMbBox.SelectedIndex = -1
+        ' Removed: SupplierCMbBox.SelectedIndex = -1
         CostPriceTextBox.Clear()
         SellingPriceTextBox.Clear()
         WholeSaleTextbox.Clear()
@@ -595,18 +614,16 @@ Public Class AddProduct
         Me.Close()
     End Sub
 
+    ' Form closing event to stop idle timeout monitoring
+    Private Sub AddProduct_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
+        ' Stop idle timeout monitoring when form closes
+        IdleTimeoutManager.Instance.StopMonitoring(Me)
+    End Sub
+
     Private Function IsNumeric(text As String) As Boolean
         Dim dummy As Double
         Return Double.TryParse(text, dummy)
     End Function
-
-    Private Sub SupplierCMbBox_SelectedIndexChanged(sender As Object, e As EventArgs) Handles SupplierCMbBox.SelectedIndexChanged
-        If SupplierCMbBox.SelectedItem IsNot Nothing Then
-            If SupplierCMbBox.SelectedItem.ToString() = "+ Add New Supplier" Then
-                AddNewSupplier()
-            End If
-        End If
-    End Sub
 
     Private Sub SetupNumericInputValidation()
         ' Add numeric input validation for price fields and reorder level
@@ -635,19 +652,19 @@ Public Class AddProduct
         End If
     End Sub
 
-    Private Sub GenerateAndDisplayBarcode(barcodeText As String)
+    Private Sub GenerateAndDisplayBarcode(productCode As String)
         Try
-            ' Create barcode encoder
+            ' Create barcode encoder using ProductCode (which now serves as both identifier and barcode)
             Dim encoder As New BarcodeEncoder()
 
-            ' Generate barcode image
-            Dim barcodeImg As Bitmap = encoder.Encode(BarcodeFormat.Code128, barcodeText)
+            ' Generate barcode image using ProductCode
+            Dim barcodeImg As Bitmap = encoder.Encode(BarcodeFormat.Code128, productCode)
 
             ' Display in picture box
             BarcodeImage.Image = barcodeImg
 
-            ' Store current barcode
-            currentBarcode = barcodeText
+            ' Store current product code as barcode
+            currentBarcode = productCode
 
         Catch ex As Exception
             MessageBox.Show("Error generating barcode: " & ex.Message, "Barcode Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
@@ -700,288 +717,4 @@ Public Class AddProduct
             MessageBox.Show("Error printing barcode: " & ex.Message, "Print Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
-
-    Private Sub AddNewSupplier()
-        ' Create overlay panel for modal effect
-        Dim overlayPanel As New Panel()
-        overlayPanel.BackColor = Color.FromArgb(150, 0, 0, 0)
-        overlayPanel.Dock = DockStyle.Fill
-        overlayPanel.Location = New Point(0, 0)
-        overlayPanel.Size = Me.ClientSize
-        Me.Controls.Add(overlayPanel)
-        overlayPanel.BringToFront()
-
-        ' Create supplier form
-        Dim supplierForm As New Form()
-        supplierForm.Text = ""
-        supplierForm.Size = New Size(500, 450)
-        supplierForm.StartPosition = FormStartPosition.CenterParent
-        supplierForm.FormBorderStyle = FormBorderStyle.None
-        supplierForm.BackColor = Color.FromArgb(30, 30, 30)
-        supplierForm.ShowInTaskbar = False
-
-        ' Add rounded corners
-        Dim path As New System.Drawing.Drawing2D.GraphicsPath()
-        path.AddArc(0, 0, 20, 20, 180, 90)
-        path.AddArc(supplierForm.Width - 20, 0, 20, 20, 270, 90)
-        path.AddArc(supplierForm.Width - 20, supplierForm.Height - 20, 20, 20, 0, 90)
-        path.AddArc(0, supplierForm.Height - 20, 20, 20, 90, 90)
-        path.CloseAllFigures()
-        supplierForm.Region = New Region(path)
-
-        ' Add border panel
-        Dim borderPanel As New Panel()
-        borderPanel.BackColor = Color.FromArgb(61, 65, 66)
-        borderPanel.Dock = DockStyle.Fill
-        borderPanel.Padding = New Padding(2)
-        supplierForm.Controls.Add(borderPanel)
-
-        ' Inner panel
-        Dim contentPanel As New Panel()
-        contentPanel.BackColor = Color.FromArgb(30, 30, 30)
-        contentPanel.Dock = DockStyle.Fill
-        borderPanel.Controls.Add(contentPanel)
-
-        ' Title panel
-        Dim titlePanel As New Panel()
-        titlePanel.BackColor = Color.FromArgb(40, 40, 40)
-        titlePanel.Dock = DockStyle.Top
-        titlePanel.Height = 60
-        contentPanel.Controls.Add(titlePanel)
-
-        Dim lblTitle As New Label()
-        lblTitle.Text = "Add New Supplier"
-        lblTitle.Font = New Font("Poppins SemiBold", 14, FontStyle.Bold)
-        lblTitle.ForeColor = Color.White
-        lblTitle.Location = New Point(20, 15)
-        lblTitle.AutoSize = True
-        titlePanel.Controls.Add(lblTitle)
-
-        ' Close button
-        Dim btnClose As New Label()
-        btnClose.Text = "✕"
-        btnClose.Font = New Font("Arial", 16, FontStyle.Bold)
-        btnClose.ForeColor = Color.Gray
-        btnClose.Cursor = Cursors.Hand
-        btnClose.Location = New Point(460, 15)
-        btnClose.Size = New Size(30, 30)
-        btnClose.TextAlign = ContentAlignment.MiddleCenter
-        AddHandler btnClose.Click, Sub(s, ev)
-                                       overlayPanel.Dispose()
-                                       supplierForm.Close()
-                                   End Sub
-        AddHandler btnClose.MouseEnter, Sub(s, ev) btnClose.ForeColor = Color.Red
-        AddHandler btnClose.MouseLeave, Sub(s, ev) btnClose.ForeColor = Color.Gray
-        titlePanel.Controls.Add(btnClose)
-
-        ' Main panel
-        Dim mainPanel As New Panel()
-        mainPanel.Location = New Point(0, 60)
-        mainPanel.Size = New Size(500, 390)
-        mainPanel.BackColor = Color.FromArgb(30, 30, 30)
-        mainPanel.AutoScroll = True
-        contentPanel.Controls.Add(mainPanel)
-
-        ' Supplier Name
-        Dim lblName As New Label()
-        lblName.Text = "Supplier Name *"
-        lblName.Font = New Font("Poppins", 10)
-        lblName.ForeColor = Color.White
-        lblName.Location = New Point(30, 20)
-        lblName.AutoSize = True
-        mainPanel.Controls.Add(lblName)
-
-        Dim txtName As New TextBox()
-        txtName.Font = New Font("Poppins", 10)
-        txtName.Location = New Point(30, 50)
-        txtName.Size = New Size(430, 35)
-        txtName.BackColor = Color.FromArgb(45, 45, 45)
-        txtName.ForeColor = Color.White
-        txtName.BorderStyle = BorderStyle.FixedSingle
-        mainPanel.Controls.Add(txtName)
-
-        ' Contact Person
-        Dim lblContact As New Label()
-        lblContact.Text = "Contact Person"
-        lblContact.Font = New Font("Poppins", 10)
-        lblContact.ForeColor = Color.White
-        lblContact.Location = New Point(30, 100)
-        lblContact.AutoSize = True
-        mainPanel.Controls.Add(lblContact)
-
-        Dim txtContact As New TextBox()
-        txtContact.Font = New Font("Poppins", 10)
-        txtContact.Location = New Point(30, 130)
-        txtContact.Size = New Size(430, 35)
-        txtContact.BackColor = Color.FromArgb(45, 45, 45)
-        txtContact.ForeColor = Color.White
-        txtContact.BorderStyle = BorderStyle.FixedSingle
-        mainPanel.Controls.Add(txtContact)
-
-        ' Phone
-        Dim lblPhone As New Label()
-        lblPhone.Text = "Phone"
-        lblPhone.Font = New Font("Poppins", 10)
-        lblPhone.ForeColor = Color.White
-        lblPhone.Location = New Point(30, 180)
-        lblPhone.AutoSize = True
-        mainPanel.Controls.Add(lblPhone)
-
-        Dim txtPhone As New TextBox()
-        txtPhone.Font = New Font("Poppins", 10)
-        txtPhone.Location = New Point(30, 210)
-        txtPhone.Size = New Size(430, 35)
-        txtPhone.BackColor = Color.FromArgb(45, 45, 45)
-        txtPhone.ForeColor = Color.White
-        txtPhone.BorderStyle = BorderStyle.FixedSingle
-        mainPanel.Controls.Add(txtPhone)
-
-        ' Email
-        Dim lblEmail As New Label()
-        lblEmail.Text = "Email"
-        lblEmail.Font = New Font("Poppins", 10)
-        lblEmail.ForeColor = Color.White
-        lblEmail.Location = New Point(30, 260)
-        lblEmail.AutoSize = True
-        mainPanel.Controls.Add(lblEmail)
-
-        Dim txtEmail As New TextBox()
-        txtEmail.Font = New Font("Poppins", 10)
-        txtEmail.Location = New Point(30, 290)
-        txtEmail.Size = New Size(430, 35)
-        txtEmail.BackColor = Color.FromArgb(45, 45, 45)
-        txtEmail.ForeColor = Color.White
-        txtEmail.BorderStyle = BorderStyle.FixedSingle
-        mainPanel.Controls.Add(txtEmail)
-
-        ' Button Panel
-        Dim buttonPanel As New Panel()
-        buttonPanel.Location = New Point(30, 340)
-        buttonPanel.Size = New Size(430, 40)
-        buttonPanel.BackColor = Color.Transparent
-        mainPanel.Controls.Add(buttonPanel)
-
-        ' Save Button
-        Dim btnSave As New Button()
-        btnSave.Text = "Save Supplier"
-        btnSave.Font = New Font("Poppins SemiBold", 10, FontStyle.Bold)
-        btnSave.Location = New Point(300, 0)
-        btnSave.Size = New Size(130, 40)
-        btnSave.BackColor = Color.White
-        btnSave.ForeColor = Color.Black
-        btnSave.FlatStyle = FlatStyle.Flat
-        btnSave.FlatAppearance.BorderSize = 0
-        btnSave.Cursor = Cursors.Hand
-        AddHandler btnSave.Click, Sub(s, ev)
-                                      If String.IsNullOrWhiteSpace(txtName.Text) Then
-                                          MessageBox.Show("Supplier name is required!", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-                                          txtName.Focus()
-                                          Return
-                                      End If
-
-                                      If CheckSupplierExists(txtName.Text.Trim()) Then
-                                          MessageBox.Show("A supplier with this name already exists!", "Duplicate Supplier", MessageBoxButtons.OK, MessageBoxIcon.Warning)
-                                          txtName.Focus()
-                                          Return
-                                      End If
-
-                                      If SaveSupplier(txtName.Text.Trim(), txtContact.Text.Trim(), txtPhone.Text.Trim(), txtEmail.Text.Trim()) Then
-                                          MessageBox.Show("Supplier added successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information)
-                                          LoadSuppliers()
-                                          SupplierCMbBox.SelectedItem = txtName.Text.Trim()
-                                          overlayPanel.Dispose()
-                                          supplierForm.Close()
-                                      Else
-                                          MessageBox.Show("Failed to add supplier. Please try again.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-                                      End If
-                                  End Sub
-        buttonPanel.Controls.Add(btnSave)
-
-        ' Cancel Button
-        Dim btnCancel As New Button()
-        btnCancel.Text = "Cancel"
-        btnCancel.Font = New Font("Poppins", 10)
-        btnCancel.Location = New Point(160, 0)
-        btnCancel.Size = New Size(130, 40)
-        btnCancel.BackColor = Color.FromArgb(60, 60, 60)
-        btnCancel.ForeColor = Color.White
-        btnCancel.FlatStyle = FlatStyle.Flat
-        btnCancel.FlatAppearance.BorderSize = 0
-        btnCancel.Cursor = Cursors.Hand
-        AddHandler btnCancel.Click, Sub(s, ev)
-                                        SupplierCMbBox.SelectedIndex = -1
-                                        overlayPanel.Dispose()
-                                        supplierForm.Close()
-                                    End Sub
-        buttonPanel.Controls.Add(btnCancel)
-
-        ' Handle form closing
-        AddHandler supplierForm.FormClosed, Sub(s, ev)
-                                                If overlayPanel IsNot Nothing AndAlso Not overlayPanel.IsDisposed Then
-                                                    Me.Controls.Remove(overlayPanel)
-                                                    overlayPanel.Dispose()
-                                                End If
-                                            End Sub
-
-        supplierForm.ShowDialog(Me)
-    End Sub
-
-    Private Function CheckSupplierExists(supplierName As String) As Boolean
-        Try
-            Dim connStr As String = Connection.GetConnectionString()
-            Using conn As New SqlConnection(connStr)
-                conn.Open()
-                Dim query As String = "SELECT COUNT(*) FROM Suppliers WHERE LOWER(SupplierName) = LOWER(@SupplierName) AND IsActive = 1"
-                Using cmd As New SqlCommand(query, conn)
-                    cmd.Parameters.AddWithValue("@SupplierName", supplierName)
-                    Dim count As Integer = Convert.ToInt32(cmd.ExecuteScalar())
-                    Return count > 0
-                End Using
-            End Using
-        Catch ex As Exception
-            MessageBox.Show("Error checking supplier: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-            Return False
-        End Try
-    End Function
-
-    Private Function SaveSupplier(supplierName As String, contactPerson As String, phone As String, email As String) As Boolean
-        Try
-            Dim connStr As String = Connection.GetConnectionString()
-            Using conn As New SqlConnection(connStr)
-                conn.Open()
-
-                ' Generate unique supplier code
-                Dim supplierCode As String = GenerateSupplierCode(conn)
-
-                Dim query As String = "INSERT INTO Suppliers (SupplierCode, SupplierName, ContactPerson, Phone, Email, IsActive) " +
-                                     "VALUES (@SupplierCode, @SupplierName, @ContactPerson, @Phone, @Email, 1)"
-                Using cmd As New SqlCommand(query, conn)
-                    cmd.Parameters.AddWithValue("@SupplierCode", supplierCode)
-                    cmd.Parameters.AddWithValue("@SupplierName", supplierName)
-                    cmd.Parameters.AddWithValue("@ContactPerson", If(String.IsNullOrWhiteSpace(contactPerson), DBNull.Value, contactPerson))
-                    cmd.Parameters.AddWithValue("@Phone", If(String.IsNullOrWhiteSpace(phone), DBNull.Value, phone))
-                    cmd.Parameters.AddWithValue("@Email", If(String.IsNullOrWhiteSpace(email), DBNull.Value, email))
-                    cmd.ExecuteNonQuery()
-                    Return True
-                End Using
-            End Using
-        Catch ex As Exception
-            MessageBox.Show("Error saving supplier: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-            Return False
-        End Try
-    End Function
-
-    Private Function GenerateSupplierCode(conn As SqlConnection) As String
-        Try
-            Dim query As String = "SELECT ISNULL(MAX(CAST(SUBSTRING(SupplierCode, 2, LEN(SupplierCode)) AS INT)), 0) + 1 FROM Suppliers WHERE SupplierCode LIKE 'S%' AND ISNUMERIC(SUBSTRING(SupplierCode, 2, LEN(SupplierCode))) = 1"
-            Using cmd As New SqlCommand(query, conn)
-                Dim result As Object = cmd.ExecuteScalar()
-                Dim nextId As Integer = If(result Is Nothing OrElse IsDBNull(result), 1, Convert.ToInt32(result))
-                Return "S" & nextId.ToString("D5")
-            End Using
-        Catch ex As Exception
-            ' Fallback - generate code based on timestamp
-            Return "S" & DateTime.Now.Ticks.ToString().Substring(DateTime.Now.Ticks.ToString().Length - 5)
-        End Try
-    End Function
 End Class

@@ -137,4 +137,53 @@ Module Utilities
             Console.WriteLine($"Audit logging failed: {ex.Message}")
         End Try
     End Sub
+
+    ' Generate product code without dashes - format: P[ID]YYYYMMDDHHMMSS
+    Public Function GenerateProductCode(productId As Integer) As String
+        Try
+            ' Generate product code without dashes: P[ID]YYYYMMDDHHMMSS
+            Dim timestamp As String = DateTime.Now.ToString("yyyyMMddHHmmss")
+            Return $"P{productId.ToString("D5")}{timestamp}"
+        Catch ex As Exception
+            ' Fallback to simple format if timestamp fails
+            Return $"P{productId.ToString("D8")}"
+        End Try
+    End Function
+
+    ' Generate SHA-256 hash for image content
+    Public Function GenerateImageHash(imageBytes As Byte()) As String
+        Try
+            Using sha256 As SHA256 = SHA256.Create()
+                Dim hashBytes As Byte() = sha256.ComputeHash(imageBytes)
+                Return Convert.ToBase64String(hashBytes)
+            End Using
+        Catch ex As Exception
+            ' Fallback to simple hash if SHA256 fails
+            Return imageBytes.Length.ToString() & DateTime.Now.Ticks.ToString()
+        End Try
+    End Function
+
+    ' Check if image with same hash already exists and return existing ID
+    Public Function GetExistingImageId(imageHash As String) As Integer?
+        Try
+            Dim connStr As String = Connection.GetConnectionString()
+            Using conn As New SqlConnection(connStr)
+                conn.Open()
+
+                Dim query As String = "SELECT TOP 1 ImageID FROM ProductImages WHERE ImageHash = @ImageHash"
+                Using cmd As New SqlCommand(query, conn)
+                    cmd.Parameters.AddWithValue("@ImageHash", imageHash)
+                    Dim result = cmd.ExecuteScalar()
+
+                    If result IsNot Nothing AndAlso Not IsDBNull(result) Then
+                        Return Convert.ToInt32(result)
+                    Else
+                        Return Nothing
+                    End If
+                End Using
+            End Using
+        Catch ex As Exception
+            Return Nothing ' If error occurs, proceed with saving new image
+        End Try
+    End Function
 End Module

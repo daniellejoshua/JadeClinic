@@ -114,7 +114,6 @@ Public Class DatabaseHelper
             "CREATE TABLE IF NOT EXISTS Products (
                 ProductID INT IDENTITY(1,1) PRIMARY KEY,
                 ProductCode NVARCHAR(50),
-                Barcode NVARCHAR(100),
                 ProductName NVARCHAR(200) NOT NULL,
                 Category NVARCHAR(100),
                 Unit NVARCHAR(50),
