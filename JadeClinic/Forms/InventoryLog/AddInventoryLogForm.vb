@@ -245,9 +245,9 @@ Public Class AddInventoryLogForm
 
         yPos += 90
 
-        ' Supplier (optional)
+        ' Supplier (required)
         Dim lblSupplier As New Label()
-        lblSupplier.Text = "Supplier (Optional)"
+        lblSupplier.Text = "Supplier *"
         lblSupplier.Font = New Font("Poppins", 10, FontStyle.Bold)
         lblSupplier.ForeColor = Color.White
         lblSupplier.Location = New Point(30, yPos)
@@ -265,7 +265,10 @@ Public Class AddInventoryLogForm
         For Each supplier In suppliers
             cmbSupplier.Items.Add(supplier("SupplierName").ToString())
         Next
+        cmbSupplier.Items.Add("Add New Supplier...")
         cmbSupplier.SelectedIndex = 0
+        ' Add event handler for handling new supplier option
+        AddHandler cmbSupplier.SelectedIndexChanged, AddressOf cmbSupplier_SelectedIndexChanged
         Me.Controls.Add(cmbSupplier)
 
         yPos += 90
@@ -350,96 +353,400 @@ Public Class AddInventoryLogForm
         UpdateBatchFieldsVisibility()
     End Sub
 
-    Private Sub UpdateBatchFieldsVisibility()
-    Try
-        ' Get references to batch controls
-        Dim lblBatchNumber As Label = Me.Controls.OfType(Of Label).FirstOrDefault(Function(c) c.Name = "lblBatchNumber")
-        Dim txtBatchNumber As TextBox = Me.Controls.OfType(Of TextBox).FirstOrDefault(Function(c) c.Name = "txtBatchNumber")
-        Dim lblExpiryDate As Label = Me.Controls.OfType(Of Label).FirstOrDefault(Function(c) c.Name = "lblExpiryDate")
-        Dim dtpExpiryDate As DateTimePicker = Me.Controls.OfType(Of DateTimePicker).FirstOrDefault(Function(c) c.Name = "dtpExpiryDate")
+    ' Event handler for supplier dropdown selection
+    Private Sub cmbSupplier_SelectedIndexChanged(sender As Object, e As EventArgs)
+        If cmbSupplier.SelectedItem IsNot Nothing Then
+            Dim selectedSupplier As String = cmbSupplier.SelectedItem.ToString()
 
-        ' Show batch fields if:
-        ' 1. Product is ENDO category AND
-        ' 2. Transaction type is "IN" (Stock In)
-        Dim shouldShowBatchFields As Boolean = False
-        
-        If cmbProduct.SelectedIndex >= 0 AndAlso cmbTransactionType.SelectedIndex >= 0 Then
-            Dim selectedProduct = products(cmbProduct.SelectedIndex)
-            Dim productCategory As String = selectedProduct("Category").ToString().ToUpper()
-            Dim transactionType As String = cmbTransactionType.SelectedItem.ToString()
-            
-            ' Show batch fields for ENDO products during Stock IN operations
-            shouldShowBatchFields = (productCategory = "ENDO" AndAlso transactionType = "IN")
-            
-            ' Auto-generate batch number if showing batch fields
-            If shouldShowBatchFields AndAlso txtBatchNumber IsNot Nothing Then
-                Dim productId As Integer = Convert.ToInt32(selectedProduct("ProductID"))
-                Dim nextBatchNumber As String = GenerateNextBatchNumber(productId, productCategory)
-                txtBatchNumber.Text = nextBatchNumber
-                txtBatchNumber.ReadOnly = True ' Make it read-only since it's auto-generated
+            If selectedSupplier = "Add New Supplier..." Then
+                ' Show dialog to add new supplier
+                AddNewSupplier()
             End If
         End If
+    End Sub
 
-        ' Update visibility
-        If lblBatchNumber IsNot Nothing Then lblBatchNumber.Visible = shouldShowBatchFields
-        If txtBatchNumber IsNot Nothing Then 
-            txtBatchNumber.Visible = shouldShowBatchFields
-            If Not shouldShowBatchFields Then
-                txtBatchNumber.Text = "" ' Clear when hidden
-                txtBatchNumber.ReadOnly = False
-            End If
-        End If
-        If lblExpiryDate IsNot Nothing Then
-            lblExpiryDate.Visible = shouldShowBatchFields
-            If shouldShowBatchFields Then
-                lblExpiryDate.Text = "Expiry Date *" ' Make it required for ENDO
-                lblExpiryDate.ForeColor = Color.FromArgb(255, 100, 100) ' Light red to indicate required
-            End If
-        End If
-        If dtpExpiryDate IsNot Nothing Then dtpExpiryDate.Visible = shouldShowBatchFields
-        
-    Catch ex As Exception
-        ' Silent fail - batch fields will remain in their current state
-    End Try
-End Sub
+    Private Sub AddNewSupplier()
+        ' Create overlay panel for modal effect
+        Dim overlayPanel As New Panel()
+        overlayPanel.BackColor = Color.FromArgb(150, 0, 0, 0)
+        overlayPanel.Dock = DockStyle.Fill
+        overlayPanel.Location = New Point(0, 0)
+        overlayPanel.Size = Me.ClientSize
+        Me.Controls.Add(overlayPanel)
+        overlayPanel.BringToFront()
 
-Private Function GenerateNextBatchNumber(productId As Integer, productCategory As String) As String
-    Try
-        Dim connStr As String = Connection.GetConnectionString()
-        Using conn As New SqlConnection(connStr)
-            conn.Open()
-            
-            ' Get the highest batch number for this product
-            Dim query As String = "SELECT MAX(BatchNumber) FROM InventoryLog WHERE ProductID = @ProductID AND BatchNumber IS NOT NULL"
-            Using cmd As New SqlCommand(query, conn)
-                cmd.Parameters.AddWithValue("@ProductID", productId)
-                
-                Dim lastBatch As String = cmd.ExecuteScalar()?.ToString()
-                
-                If String.IsNullOrWhiteSpace(lastBatch) Then
-                    ' First batch for this product
-                    Return $"{productCategory}-BATCH-001"
-                Else
-                    ' Extract the number from the last batch and increment
-                    Dim batchParts() As String = lastBatch.Split("-"c)
-                    If batchParts.Length >= 3 Then
-                        Dim lastNumber As Integer
-                        If Integer.TryParse(batchParts(batchParts.Length - 1), lastNumber) Then
-                            Dim nextNumber As Integer = lastNumber + 1
-                            Return $"{productCategory}-BATCH-{nextNumber:D3}"
-                        End If
-                    End If
-                    
-                    ' Fallback: if we can't parse, start from 001
-                    Return $"{productCategory}-BATCH-001"
-                End If
+        ' Create supplier form
+        Dim supplierForm As New Form()
+        supplierForm.Text = ""
+        supplierForm.Size = New Size(500, 450)
+        supplierForm.StartPosition = FormStartPosition.CenterParent
+        supplierForm.FormBorderStyle = FormBorderStyle.None
+        supplierForm.BackColor = Color.FromArgb(30, 30, 30)
+        supplierForm.ShowInTaskbar = False
+
+        ' Add rounded corners
+        Dim path As New System.Drawing.Drawing2D.GraphicsPath()
+        path.AddArc(0, 0, 20, 20, 180, 90)
+        path.AddArc(supplierForm.Width - 20, 0, 20, 20, 270, 90)
+        path.AddArc(supplierForm.Width - 20, supplierForm.Height - 20, 20, 20, 0, 90)
+        path.AddArc(0, supplierForm.Height - 20, 20, 20, 90, 90)
+        path.CloseAllFigures()
+        supplierForm.Region = New Region(path)
+
+        ' Add border panel
+        Dim borderPanel As New Panel()
+        borderPanel.BackColor = Color.FromArgb(61, 65, 66)
+        borderPanel.Dock = DockStyle.Fill
+        borderPanel.Padding = New Padding(2)
+        supplierForm.Controls.Add(borderPanel)
+
+        ' Inner panel
+        Dim contentPanel As New Panel()
+        contentPanel.BackColor = Color.FromArgb(30, 30, 30)
+        contentPanel.Dock = DockStyle.Fill
+        borderPanel.Controls.Add(contentPanel)
+
+        ' Title panel
+        Dim titlePanel As New Panel()
+        titlePanel.BackColor = Color.FromArgb(40, 40, 40)
+        titlePanel.Dock = DockStyle.Top
+        titlePanel.Height = 60
+        contentPanel.Controls.Add(titlePanel)
+
+        Dim lblTitle As New Label()
+        lblTitle.Text = "Add New Supplier"
+        lblTitle.Font = New Font("Poppins SemiBold", 14, FontStyle.Bold)
+        lblTitle.ForeColor = Color.White
+        lblTitle.Location = New Point(20, 15)
+        lblTitle.AutoSize = True
+        titlePanel.Controls.Add(lblTitle)
+
+        ' Close button
+        Dim btnClose As New Label()
+        btnClose.Text = "?"
+        btnClose.Font = New Font("Arial", 16, FontStyle.Bold)
+        btnClose.ForeColor = Color.Gray
+        btnClose.Cursor = Cursors.Hand
+        btnClose.Location = New Point(460, 15)
+        btnClose.Size = New Size(30, 30)
+        btnClose.TextAlign = ContentAlignment.MiddleCenter
+        AddHandler btnClose.Click, Sub(s, ev)
+                                       overlayPanel.Dispose()
+                                       supplierForm.Close()
+                                   End Sub
+        AddHandler btnClose.MouseEnter, Sub(s, ev) btnClose.ForeColor = Color.Red
+        AddHandler btnClose.MouseLeave, Sub(s, ev) btnClose.ForeColor = Color.Gray
+        titlePanel.Controls.Add(btnClose)
+
+        ' Main panel
+        Dim mainPanel As New Panel()
+        mainPanel.Location = New Point(0, 60)
+        mainPanel.Size = New Size(500, 390)
+        mainPanel.BackColor = Color.FromArgb(30, 30, 30)
+        mainPanel.AutoScroll = True
+        contentPanel.Controls.Add(mainPanel)
+
+        ' Supplier Name
+        Dim lblName As New Label()
+        lblName.Text = "Supplier Name *"
+        lblName.Font = New Font("Poppins", 10)
+        lblName.ForeColor = Color.White
+        lblName.Location = New Point(30, 20)
+        lblName.AutoSize = True
+        mainPanel.Controls.Add(lblName)
+
+        Dim txtName As New TextBox()
+        txtName.Font = New Font("Poppins", 10)
+        txtName.Location = New Point(30, 50)
+        txtName.Size = New Size(430, 35)
+        txtName.BackColor = Color.FromArgb(45, 45, 45)
+        txtName.ForeColor = Color.White
+        txtName.BorderStyle = BorderStyle.FixedSingle
+        mainPanel.Controls.Add(txtName)
+
+        ' Contact Person
+        Dim lblContact As New Label()
+        lblContact.Text = "Contact Person"
+        lblContact.Font = New Font("Poppins", 10)
+        lblContact.ForeColor = Color.White
+        lblContact.Location = New Point(30, 100)
+        lblContact.AutoSize = True
+        mainPanel.Controls.Add(lblContact)
+
+        Dim txtContact As New TextBox()
+        txtContact.Font = New Font("Poppins", 10)
+        txtContact.Location = New Point(30, 130)
+        txtContact.Size = New Size(430, 35)
+        txtContact.BackColor = Color.FromArgb(45, 45, 45)
+        txtContact.ForeColor = Color.White
+        txtContact.BorderStyle = BorderStyle.FixedSingle
+        mainPanel.Controls.Add(txtContact)
+
+        ' Phone
+        Dim lblPhone As New Label()
+        lblPhone.Text = "Phone"
+        lblPhone.Font = New Font("Poppins", 10)
+        lblPhone.ForeColor = Color.White
+        lblPhone.Location = New Point(30, 180)
+        lblPhone.AutoSize = True
+        mainPanel.Controls.Add(lblPhone)
+
+        Dim txtPhone As New TextBox()
+        txtPhone.Font = New Font("Poppins", 10)
+        txtPhone.Location = New Point(30, 210)
+        txtPhone.Size = New Size(430, 35)
+        txtPhone.BackColor = Color.FromArgb(45, 45, 45)
+        txtPhone.ForeColor = Color.White
+        txtPhone.BorderStyle = BorderStyle.FixedSingle
+        mainPanel.Controls.Add(txtPhone)
+
+        ' Email
+        Dim lblEmail As New Label()
+        lblEmail.Text = "Email"
+        lblEmail.Font = New Font("Poppins", 10)
+        lblEmail.ForeColor = Color.White
+        lblEmail.Location = New Point(30, 260)
+        lblEmail.AutoSize = True
+        mainPanel.Controls.Add(lblEmail)
+
+        Dim txtEmail As New TextBox()
+        txtEmail.Font = New Font("Poppins", 10)
+        txtEmail.Location = New Point(30, 290)
+        txtEmail.Size = New Size(430, 35)
+        txtEmail.BackColor = Color.FromArgb(45, 45, 45)
+        txtEmail.ForeColor = Color.White
+        txtEmail.BorderStyle = BorderStyle.FixedSingle
+        mainPanel.Controls.Add(txtEmail)
+
+        ' Button Panel
+        Dim buttonPanel As New Panel()
+        buttonPanel.Location = New Point(30, 340)
+        buttonPanel.Size = New Size(430, 40)
+        buttonPanel.BackColor = Color.Transparent
+        mainPanel.Controls.Add(buttonPanel)
+
+        ' Save Button
+        Dim btnSave As New Button()
+        btnSave.Text = "Save Supplier"
+        btnSave.Font = New Font("Poppins SemiBold", 10, FontStyle.Bold)
+        btnSave.Location = New Point(300, 0)
+        btnSave.Size = New Size(130, 40)
+        btnSave.BackColor = Color.White
+        btnSave.ForeColor = Color.Black
+        btnSave.FlatStyle = FlatStyle.Flat
+        btnSave.FlatAppearance.BorderSize = 0
+        btnSave.Cursor = Cursors.Hand
+        AddHandler btnSave.Click, Sub(s, ev)
+                                      If String.IsNullOrWhiteSpace(txtName.Text) Then
+                                          MessageBox.Show("Supplier name is required!", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                                          txtName.Focus()
+                                          Return
+                                      End If
+
+                                      If CheckSupplierExists(txtName.Text.Trim()) Then
+                                          MessageBox.Show("A supplier with this name already exists!", "Duplicate Supplier", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                                          txtName.Focus()
+                                          Return
+                                      End If
+
+                                      If SaveSupplier(txtName.Text.Trim(), txtContact.Text.Trim(), txtPhone.Text.Trim(), txtEmail.Text.Trim()) Then
+                                          MessageBox.Show("Supplier added successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                                          LoadSuppliers()
+                                          ' Rebuild supplier dropdown
+                                          cmbSupplier.Items.Clear()
+                                          cmbSupplier.Items.Add("-- Select Supplier --")
+                                          For Each supplier In suppliers
+                                              cmbSupplier.Items.Add(supplier("SupplierName").ToString())
+                                          Next
+                                          cmbSupplier.Items.Add("Add New Supplier...")
+                                          ' Select the newly added supplier
+                                          cmbSupplier.SelectedItem = txtName.Text.Trim()
+                                          overlayPanel.Dispose()
+                                          supplierForm.Close()
+                                      Else
+                                          MessageBox.Show("Failed to add supplier. Please try again.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                                      End If
+                                  End Sub
+        buttonPanel.Controls.Add(btnSave)
+
+        ' Cancel Button
+        Dim btnCancel As New Button()
+        btnCancel.Text = "Cancel"
+        btnCancel.Font = New Font("Poppins", 10)
+        btnCancel.Location = New Point(160, 0)
+        btnCancel.Size = New Size(130, 40)
+        btnCancel.BackColor = Color.FromArgb(60, 60, 60)
+        btnCancel.ForeColor = Color.White
+        btnCancel.FlatStyle = FlatStyle.Flat
+        btnCancel.FlatAppearance.BorderSize = 0
+        btnCancel.Cursor = Cursors.Hand
+        AddHandler btnCancel.Click, Sub(s, ev)
+                                        cmbSupplier.SelectedIndex = 0 ' Reset to "-- Select Supplier --"
+                                        overlayPanel.Dispose()
+                                        supplierForm.Close()
+                                    End Sub
+        buttonPanel.Controls.Add(btnCancel)
+
+        ' Handle form closing
+        AddHandler supplierForm.FormClosed, Sub(s, ev)
+                                                If overlayPanel IsNot Nothing AndAlso Not overlayPanel.IsDisposed Then
+                                                    Me.Controls.Remove(overlayPanel)
+                                                    overlayPanel.Dispose()
+                                                End If
+                                            End Sub
+
+        supplierForm.ShowDialog(Me)
+    End Sub
+
+    Private Function CheckSupplierExists(supplierName As String) As Boolean
+        Try
+            Dim connStr As String = Connection.GetConnectionString()
+            Using conn As New SqlConnection(connStr)
+                conn.Open()
+                Dim query As String = "SELECT COUNT(*) FROM Suppliers WHERE LOWER(SupplierName) = LOWER(@SupplierName) AND IsActive = 1"
+                Using cmd As New SqlCommand(query, conn)
+                    cmd.Parameters.AddWithValue("@SupplierName", supplierName)
+                    Dim count As Integer = Convert.ToInt32(cmd.ExecuteScalar())
+                    Return count > 0
+                End Using
             End Using
-        End Using
-    Catch ex As Exception
-        ' Fallback batch number generation
-        Return $"{productCategory}-BATCH-{DateTime.Now:yyyyMMdd}-001"
-    End Try
-End Function
+        Catch ex As Exception
+            MessageBox.Show("Error checking supplier: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            Return False
+        End Try
+    End Function
+
+    Private Function SaveSupplier(supplierName As String, contactPerson As String, phone As String, email As String) As Boolean
+        Try
+            Dim connStr As String = Connection.GetConnectionString()
+            Using conn As New SqlConnection(connStr)
+                conn.Open()
+
+                ' Generate unique supplier code
+                Dim supplierCode As String = GenerateSupplierCode(conn)
+
+                Dim query As String = "INSERT INTO Suppliers (SupplierCode, SupplierName, ContactPerson, Phone, Email, IsActive) " +
+                                     "VALUES (@SupplierCode, @SupplierName, @ContactPerson, @Phone, @Email, 1)"
+                Using cmd As New SqlCommand(query, conn)
+                    cmd.Parameters.AddWithValue("@SupplierCode", supplierCode)
+                    cmd.Parameters.AddWithValue("@SupplierName", supplierName)
+                    cmd.Parameters.AddWithValue("@ContactPerson", If(String.IsNullOrWhiteSpace(contactPerson), DBNull.Value, contactPerson))
+                    cmd.Parameters.AddWithValue("@Phone", If(String.IsNullOrWhiteSpace(phone), DBNull.Value, phone))
+                    cmd.Parameters.AddWithValue("@Email", If(String.IsNullOrWhiteSpace(email), DBNull.Value, email))
+                    cmd.ExecuteNonQuery()
+                    Return True
+                End Using
+            End Using
+        Catch ex As Exception
+            MessageBox.Show("Error saving supplier: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            Return False
+        End Try
+    End Function
+
+    Private Function GenerateSupplierCode(conn As SqlConnection) As String
+        Try
+            Dim query As String = "SELECT ISNULL(MAX(CAST(SUBSTRING(SupplierCode, 2, LEN(SupplierCode)) AS INT)), 0) + 1 FROM Suppliers WHERE SupplierCode LIKE 'S%' AND ISNUMERIC(SUBSTRING(SupplierCode, 2, LEN(SupplierCode))) = 1"
+            Using cmd As New SqlCommand(query, conn)
+                Dim result As Object = cmd.ExecuteScalar()
+                Dim nextId As Integer = If(result Is Nothing OrElse IsDBNull(result), 1, Convert.ToInt32(result))
+                Return "S" & nextId.ToString("D5")
+            End Using
+        Catch ex As Exception
+            ' Fallback - generate code based on timestamp
+            Return "S" & DateTime.Now.Ticks.ToString().Substring(DateTime.Now.Ticks.ToString().Length - 5)
+        End Try
+    End Function
+
+    Private Sub UpdateBatchFieldsVisibility()
+        Try
+            ' Get references to batch controls
+            Dim lblBatchNumber As Label = Me.Controls.OfType(Of Label).FirstOrDefault(Function(c) c.Name = "lblBatchNumber")
+            Dim txtBatchNumber As TextBox = Me.Controls.OfType(Of TextBox).FirstOrDefault(Function(c) c.Name = "txtBatchNumber")
+            Dim lblExpiryDate As Label = Me.Controls.OfType(Of Label).FirstOrDefault(Function(c) c.Name = "lblExpiryDate")
+            Dim dtpExpiryDate As DateTimePicker = Me.Controls.OfType(Of DateTimePicker).FirstOrDefault(Function(c) c.Name = "dtpExpiryDate")
+
+            ' Show batch fields if:
+            ' 1. Product is ENDO category AND
+            ' 2. Transaction type is "IN" (Stock In)
+            Dim shouldShowBatchFields As Boolean = False
+
+            If cmbProduct.SelectedIndex >= 0 AndAlso cmbTransactionType.SelectedIndex >= 0 Then
+                Dim selectedProduct = products(cmbProduct.SelectedIndex)
+                Dim productCategory As String = selectedProduct("Category").ToString().ToUpper()
+                Dim transactionType As String = cmbTransactionType.SelectedItem.ToString()
+
+                ' Show batch fields for ENDO products during Stock IN operations
+                shouldShowBatchFields = (productCategory = "ENDO" AndAlso transactionType = "IN")
+
+                ' Auto-generate batch number if showing batch fields
+                If shouldShowBatchFields AndAlso txtBatchNumber IsNot Nothing Then
+                    Dim productId As Integer = Convert.ToInt32(selectedProduct("ProductID"))
+                    Dim nextBatchNumber As String = GenerateNextBatchNumber(productId, productCategory)
+                    txtBatchNumber.Text = nextBatchNumber
+                    txtBatchNumber.ReadOnly = True ' Make it read-only since it's auto-generated
+                End If
+            End If
+
+            ' Update visibility
+            If lblBatchNumber IsNot Nothing Then lblBatchNumber.Visible = shouldShowBatchFields
+            If txtBatchNumber IsNot Nothing Then
+                txtBatchNumber.Visible = shouldShowBatchFields
+                If Not shouldShowBatchFields Then
+                    txtBatchNumber.Text = "" ' Clear when hidden
+                    txtBatchNumber.ReadOnly = False
+                End If
+            End If
+            If lblExpiryDate IsNot Nothing Then
+                lblExpiryDate.Visible = shouldShowBatchFields
+                If shouldShowBatchFields Then
+                    lblExpiryDate.Text = "Expiry Date *" ' Make it required for ENDO
+                    lblExpiryDate.ForeColor = Color.FromArgb(255, 100, 100) ' Light red to indicate required
+                End If
+            End If
+            If dtpExpiryDate IsNot Nothing Then dtpExpiryDate.Visible = shouldShowBatchFields
+
+        Catch ex As Exception
+            ' Silent fail - batch fields will remain in their current state
+        End Try
+    End Sub
+
+    Private Function GenerateNextBatchNumber(productId As Integer, productCategory As String) As String
+        Try
+            Dim connStr As String = Connection.GetConnectionString()
+            Using conn As New SqlConnection(connStr)
+                conn.Open()
+
+                ' Get the highest batch number for this product
+                Dim query As String = "SELECT MAX(BatchNumber) FROM InventoryLog WHERE ProductID = @ProductID AND BatchNumber IS NOT NULL"
+                Using cmd As New SqlCommand(query, conn)
+                    cmd.Parameters.AddWithValue("@ProductID", productId)
+
+                    Dim lastBatch As String = cmd.ExecuteScalar()?.ToString()
+
+                    If String.IsNullOrWhiteSpace(lastBatch) Then
+                        ' First batch for this product
+                        Return $"{productCategory}-BATCH-001"
+                    Else
+                        ' Extract the number from the last batch and increment
+                        Dim batchParts() As String = lastBatch.Split("-"c)
+                        If batchParts.Length >= 3 Then
+                            Dim lastNumber As Integer
+                            If Integer.TryParse(batchParts(batchParts.Length - 1), lastNumber) Then
+                                Dim nextNumber As Integer = lastNumber + 1
+                                Return $"{productCategory}-BATCH-{nextNumber:D3}"
+                            End If
+                        End If
+
+                        ' Fallback: if we can't parse, start from 001
+                        Return $"{productCategory}-BATCH-001"
+                    End If
+                End Using
+            End Using
+        Catch ex As Exception
+            ' Fallback batch number generation
+            Return $"{productCategory}-BATCH-{DateTime.Now:yyyyMMdd}-001"
+        End Try
+    End Function
 
     Private Function ValidateInputs() As Boolean
         If cmbProduct.SelectedIndex = -1 Then
@@ -461,23 +768,30 @@ End Function
             Return False
         End If
 
+        ' Validate supplier selection (now required)
+        If cmbSupplier.SelectedIndex <= 0 OrElse cmbSupplier.SelectedItem.ToString() = "-- Select Supplier --" OrElse cmbSupplier.SelectedItem.ToString() = "Add New Supplier..." Then
+            MessageBox.Show("Please select a supplier!", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            cmbSupplier.Focus()
+            Return False
+        End If
+
         ' Validate batch fields for ENDO products during Stock IN
         Dim selectedProduct = products(cmbProduct.SelectedIndex)
         Dim productCategory As String = selectedProduct("Category").ToString().ToUpper()
         Dim transactionType As String = cmbTransactionType.SelectedItem.ToString()
-        
+
         If productCategory = "ENDO" AndAlso transactionType = "IN" Then
             ' Get batch controls
             Dim txtBatchNumber As TextBox = Me.Controls.OfType(Of TextBox).FirstOrDefault(Function(c) c.Name = "txtBatchNumber")
             Dim dtpExpiryDate As DateTimePicker = Me.Controls.OfType(Of DateTimePicker).FirstOrDefault(Function(c) c.Name = "dtpExpiryDate")
-            
+
             ' Validate batch number
             If txtBatchNumber IsNot Nothing AndAlso String.IsNullOrWhiteSpace(txtBatchNumber.Text) Then
                 MessageBox.Show("Batch number is required for ENDO products!", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
                 txtBatchNumber.Focus()
                 Return False
             End If
-            
+
             ' Validate expiry date
             If dtpExpiryDate IsNot Nothing AndAlso dtpExpiryDate.Value.Date <= DateTime.Now.Date Then
                 MessageBox.Show("Expiry date must be in the future for ENDO products!", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
@@ -503,7 +817,7 @@ End Function
             ' Calculate new stock
             Dim quantity = Convert.ToInt32(txtQuantity.Text)
             Dim newStock = currentStock
-            
+
             Select Case cmbTransactionType.SelectedItem.ToString()
                 Case "IN"
                     newStock = currentStock + quantity
@@ -517,20 +831,20 @@ End Function
                     newStock = quantity ' For adjustments, quantity is the new stock level
             End Select
 
-            ' Get supplier ID if selected
+            ' Get supplier ID (now required)
             Dim supplierId As Object = DBNull.Value
-            If cmbSupplier.SelectedIndex > 0 Then
+            If cmbSupplier.SelectedIndex > 0 AndAlso cmbSupplier.SelectedItem.ToString() <> "-- Select Supplier --" AndAlso cmbSupplier.SelectedItem.ToString() <> "Add New Supplier..." Then
                 supplierId = suppliers(cmbSupplier.SelectedIndex - 1)("SupplierID")
             End If
 
             ' Get batch information for ENDO products during Stock IN
             Dim batchNumber As String = Nothing
             Dim expiryDate As DateTime? = Nothing
-            
+
             If productCategory = "ENDO" AndAlso cmbTransactionType.SelectedItem.ToString() = "IN" Then
                 Dim txtBatchNumber As TextBox = Me.Controls.OfType(Of TextBox).FirstOrDefault(Function(c) c.Name = "txtBatchNumber")
                 Dim dtpExpiryDate As DateTimePicker = Me.Controls.OfType(Of DateTimePicker).FirstOrDefault(Function(c) c.Name = "dtpExpiryDate")
-                
+
                 If txtBatchNumber IsNot Nothing Then batchNumber = txtBatchNumber.Text.Trim()
                 If dtpExpiryDate IsNot Nothing Then expiryDate = dtpExpiryDate.Value.Date
             End If
@@ -569,10 +883,10 @@ End Function
                         End Using
 
                         transaction.Commit()
-                        MessageBox.Show("Inventory log saved successfully!" & 
+                        MessageBox.Show("Inventory log saved successfully!" &
                                       If(Not String.IsNullOrWhiteSpace(batchNumber), Environment.NewLine & $"Batch: {batchNumber}", ""),
                                       "Success", MessageBoxButtons.OK, MessageBoxIcon.Information)
-                        
+
                         Me.DialogResult = DialogResult.OK
                         Me.Close()
 
