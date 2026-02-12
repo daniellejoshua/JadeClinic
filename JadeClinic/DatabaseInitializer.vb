@@ -22,10 +22,13 @@ Public Class DatabaseInitializer
             ' Create initial data
             CreateInitialData()
 
-            Console.WriteLine("? Database schema created successfully!")
+            ' Update database for batch tracking support (for existing databases)
+            BatchTrackingMigration.UpdateDatabaseForBatchTracking()
+
+            Console.WriteLine("🎉 Database schema created successfully!")
 
         Catch ex As Exception
-            Console.WriteLine($"? Error creating database schema: {ex.Message}")
+            Console.WriteLine($"❌ Error creating database schema: {ex.Message}")
             Throw New Exception($"Failed to create database schema: {ex.Message}")
         End Try
     End Sub
@@ -123,8 +126,6 @@ Public Class DatabaseInitializer
             "ReorderLevel int DEFAULT 10, " &
             "CostPrice decimal(18,2) NOT NULL, " &
             "SellingPrice decimal(18,2) NOT NULL, " &
-            "HasExpiry bit DEFAULT 0, " &
-            "ExpiryDate date NULL, " &
             "SupplierID int NULL, " &
             "IsActive bit DEFAULT 1, " &
             "Created datetime DEFAULT getdate(), " &
@@ -325,6 +326,8 @@ Public Class DatabaseInitializer
             "Quantity int NOT NULL CHECK (Quantity > 0), " &
             "PreviousStock int NULL, " &
             "NewStock int NULL, " &
+            "BatchNumber nvarchar(50) NULL, " &
+            "ExpiryDate date NULL, " &
             "SupplierID int NULL, " &
             "UserID int NOT NULL, " &
             "Reference varchar(100) NULL, " &
@@ -335,6 +338,19 @@ Public Class DatabaseInitializer
             "FOREIGN KEY (UserID) REFERENCES Users(UserID))"
 
         DatabaseHelper.ExecuteNonQuery(query, Nothing)
+
+        ' Add BatchNumber and ExpiryDate columns if they don't exist (for existing databases)
+        Try
+            Dim addBatchQuery As String = "IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'InventoryLog' AND COLUMN_NAME = 'BatchNumber') " &
+                "ALTER TABLE InventoryLog ADD BatchNumber nvarchar(50) NULL"
+            DatabaseHelper.ExecuteNonQuery(addBatchQuery, Nothing)
+
+            Dim addExpiryQuery As String = "IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'InventoryLog' AND COLUMN_NAME = 'ExpiryDate') " &
+                "ALTER TABLE InventoryLog ADD ExpiryDate date NULL"
+            DatabaseHelper.ExecuteNonQuery(addExpiryQuery, Nothing)
+        Catch ex As Exception
+            Console.WriteLine($"Note: Could not add batch/expiry columns: {ex.Message}")
+        End Try
 
         ' Add index for ProductID and CreatedAt (for product history)
         Dim productDateIndexQuery As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_InventoryLog_Product_Date') " &
@@ -364,6 +380,26 @@ Public Class DatabaseInitializer
             DatabaseHelper.ExecuteNonQuery(userIndexQuery, Nothing)
         Catch ex As Exception
             Console.WriteLine($"Note: Could not create User index: {ex.Message}")
+        End Try
+
+        ' Add index for BatchNumber (for batch tracking queries)
+        Dim batchIndexQuery As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_InventoryLog_Batch') " &
+            "CREATE NONCLUSTERED INDEX IX_InventoryLog_Batch ON InventoryLog (BatchNumber ASC) WHERE BatchNumber IS NOT NULL"
+
+        Try
+            DatabaseHelper.ExecuteNonQuery(batchIndexQuery, Nothing)
+        Catch ex As Exception
+            Console.WriteLine($"Note: Could not create BatchNumber index: {ex.Message}")
+        End Try
+
+        ' Add index for ExpiryDate (for expiry tracking)
+        Dim expiryIndexQuery As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_InventoryLog_Expiry') " &
+            "CREATE NONCLUSTERED INDEX IX_InventoryLog_Expiry ON InventoryLog (ExpiryDate ASC) WHERE ExpiryDate IS NOT NULL"
+
+        Try
+            DatabaseHelper.ExecuteNonQuery(expiryIndexQuery, Nothing)
+        Catch ex As Exception
+            Console.WriteLine($"Note: Could not create ExpiryDate index: {ex.Message}")
         End Try
     End Sub
 

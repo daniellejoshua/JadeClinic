@@ -68,6 +68,18 @@ Public Class Inventory
 
     Private Sub InitializeCustomTooltip()
         Try
+            ' Dispose any existing tooltip and timer first
+            If customTooltip IsNot Nothing Then
+                customTooltip.Dispose()
+                customTooltip = Nothing
+            End If
+
+            If tooltipTimer IsNot Nothing Then
+                tooltipTimer.Stop()
+                tooltipTimer.Dispose()
+                tooltipTimer = Nothing
+            End If
+
             ' Create main tooltip
             customTooltip = New ToolTip()
             customTooltip.AutoPopDelay = 8000  ' Show for 8 seconds
@@ -85,7 +97,12 @@ Public Class Inventory
 
         Catch ex As Exception
             ' Fallback if tooltip initialization fails
-            customTooltip = New ToolTip()
+            Try
+                customTooltip = New ToolTip()
+            Catch
+                ' If even basic tooltip fails, leave as Nothing and handle in other methods
+                customTooltip = Nothing
+            End Try
         End Try
     End Sub
 
@@ -1031,7 +1048,7 @@ Public Class Inventory
         ' Hide loading overlay if it's still visible
         HideLoadingOverlay()
 
-        ' Dispose of custom tooltip system
+        ' Dispose of custom tooltip system with null checks
         If tooltipTimer IsNot Nothing Then
             tooltipTimer.Stop()
             tooltipTimer.Dispose()
@@ -1602,11 +1619,13 @@ Public Class Inventory
 
     Private Sub ProductDataGrid_CellMouseLeave(sender As Object, e As DataGridViewCellEventArgs)
         Try
-            ' Stop tooltip timer and hide tooltip
-            tooltipTimer.Stop()
+            ' Stop tooltip timer and hide tooltip with null checks
+            If tooltipTimer IsNot Nothing Then
+                tooltipTimer.Stop()
+            End If
             currentTooltipCell = Nothing
 
-            ' Hide tooltip
+            ' Hide tooltip with null check
             If customTooltip IsNot Nothing Then
                 customTooltip.Hide(Guna2DataGridView1)
             End If
@@ -1652,8 +1671,10 @@ Public Class Inventory
     Private Sub ProductDataGrid_Enter(sender As Object, e As EventArgs)
         Try
             ' DataGridView gained focus - this helps with Alt+Tab scenarios
-            ' Reset tooltip state to prevent lingering tooltips
-            tooltipTimer.Stop()
+            ' Reset tooltip state to prevent lingering tooltips with null checks
+            If tooltipTimer IsNot Nothing Then
+                tooltipTimer.Stop()
+            End If
             currentTooltipCell = Nothing
             If customTooltip IsNot Nothing Then
                 customTooltip.Hide(Guna2DataGridView1)
@@ -1665,8 +1686,10 @@ Public Class Inventory
 
     Private Sub ProductDataGrid_Leave(sender As Object, e As EventArgs)
         Try
-            ' DataGridView lost focus - hide tooltips
-            tooltipTimer.Stop()
+            ' DataGridView lost focus - hide tooltips with null checks
+            If tooltipTimer IsNot Nothing Then
+                tooltipTimer.Stop()
+            End If
             currentTooltipCell = Nothing
             If customTooltip IsNot Nothing Then
                 customTooltip.Hide(Guna2DataGridView1)

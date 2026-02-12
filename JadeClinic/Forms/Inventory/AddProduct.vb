@@ -24,7 +24,6 @@ Public Class AddProduct
         LoadCategories()
         ' Removed: LoadSuppliers() - no longer needed
         SetupFormDefaults()
-        SetupExpiryDateVisibility()
         SetupNumericInputValidation()
 
         ' Add close button for borderless form
@@ -66,17 +65,14 @@ Public Class AddProduct
         ' Set default values
         cmbCategory.SelectedIndex = -1
         ' Removed: SupplierCMbBox.SelectedIndex = -1
-        Guna2DateTimePicker1.Value = DateTime.Now.AddMonths(12) ' Default expiry 1 year from now
-        Guna2DateTimePicker1.Visible = False
-        Guna2HtmlLabel8.Visible = False
 
         ' Setup Unit dropdown
         UnitCmbBox.Items.Clear()
         UnitCmbBox.Items.AddRange(New String() {"PCS", "BOX", "PACK", "BOTTLE", "TUBE", "SET", "PAIR", "DOZEN", "REAM"})
         UnitCmbBox.SelectedItem = "PCS" ' Default to PCS
 
-        ' Add "Add Custom" option to category combo
-        cmbCategory.Items.Add("Add Custom Category...")
+        ' Initialize main categories first, then load existing ones
+        InitializeMainCategories()
 
         ' Set placeholder text for numeric fields
         CostPriceTextBox.PlaceholderText = "0.00"
@@ -98,34 +94,13 @@ Public Class AddProduct
     End Sub
 
     Private Sub LoadCategories()
+        ' This method is now replaced by InitializeMainCategories
+        ' Keeping for compatibility but redirect to new method
         Try
-            Dim connStr As String = Connection.GetConnectionString()
-            Using conn As New SqlConnection(connStr)
-                conn.Open()
-
-                ' Get distinct categories from existing products
-                Dim query As String = "SELECT DISTINCT Category FROM Products WHERE Category IS NOT NULL AND IsActive = 1 ORDER BY Category"
-                Using cmd As New SqlCommand(query, conn)
-                    Using reader As SqlDataReader = cmd.ExecuteReader()
-                        cmbCategory.Items.Clear()
-                        While reader.Read()
-                            If Not IsDBNull(reader("Category")) Then
-                                cmbCategory.Items.Add(reader("Category").ToString())
-                            End If
-                        End While
-                    End Using
-                End Using
-            End Using
+            InitializeMainCategories()
         Catch ex As Exception
             MessageBox.Show("Error loading categories: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
-    End Sub
-
-
-    Private Sub SetupExpiryDateVisibility()
-        ' Initially hide expiry date controls - only show for ENDO type categories
-        Guna2DateTimePicker1.Visible = False
-        Guna2HtmlLabel8.Visible = False
     End Sub
 
     Private Sub cmbCategory_SelectedIndexChanged(sender As Object, e As EventArgs) Handles cmbCategory.SelectedIndexChanged
@@ -135,19 +110,8 @@ Public Class AddProduct
             If selectedCategory = "Add Custom Category..." Then
                 ' Show dialog to add custom category
                 AddCustomCategory()
-            Else
-                ' Check if selected category is ENDO type (contains "endo" case insensitive)
-                Dim isEndo As Boolean = selectedCategory.ToLower().Contains("endo")
-
-                ' Show/hide expiry date based on category
-                Guna2DateTimePicker1.Visible = isEndo
-                Guna2HtmlLabel8.Visible = isEndo
-
-                If isEndo Then
-                    Guna2HtmlLabel8.Text = "Expiry Date *"
-                    Guna2HtmlLabel8.ForeColor = Color.Red ' Indicate required
-                End If
             End If
+            ' Note: Expiry date logic removed - expiry tracking moved to InventoryLog
         End If
     End Sub
 
@@ -237,7 +201,7 @@ Public Class AddProduct
             Return False
         End If
 
-        ' NEW: Validate that selling price is higher than cost price
+        ' Validate that selling price is higher than cost price
         If sellingPrice <= costPrice Then
             MessageBox.Show("Selling price must be higher than cost price!" & Environment.NewLine &
                           $"Cost Price: ₱{costPrice:N2}" & Environment.NewLine &
@@ -255,7 +219,7 @@ Public Class AddProduct
                 Return False
             End If
 
-            ' NEW: Validate wholesale price is between cost price and selling price
+            ' Validate wholesale price is between cost price and selling price
             If wholesalePrice < costPrice Then
                 MessageBox.Show("Wholesale price cannot be lower than cost price!" & Environment.NewLine &
                               $"Cost Price: ₱{costPrice:N2}" & Environment.NewLine &
@@ -273,15 +237,7 @@ Public Class AddProduct
             End If
         End If
 
-        ' Check if endo category and expiry date is required
-        Dim selectedCategory As String = cmbCategory.SelectedItem.ToString()
-        Dim isEndo As Boolean = selectedCategory.ToLower().Contains("endo")
-
-        If isEndo AndAlso Guna2DateTimePicker1.Value.Date <= DateTime.Now.Date Then
-            MessageBox.Show("Expiry date must be in the future for endo products!", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-            Guna2DateTimePicker1.Focus()
-            Return False
-        End If
+        ' Note: Expiry date validation removed - expiry tracking moved to InventoryLog
 
         Return True
     End Function
@@ -293,18 +249,16 @@ Public Class AddProduct
                 conn.Open()
                 Using transaction As SqlTransaction = conn.BeginTransaction()
                     Try
-                        ' Prepare product data
+                        ' Prepare product data (removed expiry logic)
                         Dim selectedCategory As String = cmbCategory.SelectedItem.ToString()
-                        Dim isEndo As Boolean = selectedCategory.ToLower().Contains("endo")
-                        Dim expiryDate As Date? = If(isEndo, Guna2DateTimePicker1.Value.Date, Nothing)
 
-                        ' Insert product with temporary product code (removed SupplierID)
+                        ' Insert product with temporary product code (removed SupplierID and expiry fields)
                         Dim insertQuery As String = "INSERT INTO Products (ProductCode, ProductName, Category, Unit, " &
                                                    "CurrentStock, ReorderLevel, CostPrice, SellingPrice, WholesalePrice, " &
-                                                   "HasExpiry, ExpiryDate, IsActive, Created, UpdatedAt) " &
+                                                   "IsActive, Created, UpdatedAt) " &
                                                    "VALUES (@ProductCode, @ProductName, @Category, @Unit, " &
                                                    "@CurrentStock, @ReorderLevel, @CostPrice, @SellingPrice, @WholesalePrice, " &
-                                                   "@HasExpiry, @ExpiryDate, 1, GETDATE(), GETDATE()); SELECT SCOPE_IDENTITY()"
+                                                   "1, GETDATE(), GETDATE()); SELECT SCOPE_IDENTITY()"
 
                         Dim productId As Integer
 
@@ -318,12 +272,6 @@ Public Class AddProduct
                             cmd.Parameters.AddWithValue("@CostPrice", Convert.ToDecimal(CostPriceTextBox.Text.Trim()))
                             cmd.Parameters.AddWithValue("@SellingPrice", Convert.ToDecimal(SellingPriceTextBox.Text.Trim()))
                             cmd.Parameters.AddWithValue("@WholesalePrice", If(String.IsNullOrWhiteSpace(WholeSaleTextbox.Text), DBNull.Value, Convert.ToDecimal(WholeSaleTextbox.Text.Trim())))
-                            cmd.Parameters.AddWithValue("@HasExpiry", isEndo)
-                            If isEndo Then
-                                cmd.Parameters.AddWithValue("@ExpiryDate", Guna2DateTimePicker1.Value.Date)
-                            Else
-                                cmd.Parameters.AddWithValue("@ExpiryDate", DBNull.Value)
-                            End If
 
                             productId = Convert.ToInt32(cmd.ExecuteScalar())
                         End Using
@@ -344,7 +292,7 @@ Public Class AddProduct
                         End If
 
                         transaction.Commit()
-                            Return True
+                        Return True
 
                     Catch ex As Exception
                         transaction.Rollback()
@@ -365,16 +313,13 @@ Public Class AddProduct
                 conn.Open()
                 Using transaction As SqlTransaction = conn.BeginTransaction()
                     Try
-                        ' Prepare product data
+                        ' Prepare product data (removed expiry logic)
                         Dim selectedCategory As String = cmbCategory.SelectedItem.ToString()
-                        Dim isEndo As Boolean = selectedCategory.ToLower().Contains("endo")
-                        Dim expiryDate As Date? = If(isEndo, Guna2DateTimePicker1.Value.Date, Nothing)
 
-                        ' Update product WITHOUT changing ProductCode (keep original for barcode consistency) and removed SupplierID
+                        ' Update product WITHOUT changing ProductCode (keep original for barcode consistency) and removed expiry fields
                         Dim updateQuery As String = "UPDATE Products SET ProductName = @ProductName, Category = @Category, Unit = @Unit, " &
                                                    "ReorderLevel = @ReorderLevel, CostPrice = @CostPrice, SellingPrice = @SellingPrice, " &
-                                                   "WholesalePrice = @WholesalePrice, HasExpiry = @HasExpiry, ExpiryDate = @ExpiryDate, " &
-                                                   "UpdatedAt = GETDATE() WHERE ProductID = @ProductID"
+                                                   "WholesalePrice = @WholesalePrice, UpdatedAt = GETDATE() WHERE ProductID = @ProductID"
 
                         Using cmd As New SqlCommand(updateQuery, conn, transaction)
                             cmd.Parameters.AddWithValue("@ProductName", txtProductName.Text.Trim())
@@ -384,14 +329,6 @@ Public Class AddProduct
                             cmd.Parameters.AddWithValue("@CostPrice", Convert.ToDecimal(CostPriceTextBox.Text.Trim()))
                             cmd.Parameters.AddWithValue("@SellingPrice", Convert.ToDecimal(SellingPriceTextBox.Text.Trim()))
                             cmd.Parameters.AddWithValue("@WholesalePrice", If(String.IsNullOrWhiteSpace(WholeSaleTextbox.Text), DBNull.Value, Convert.ToDecimal(WholeSaleTextbox.Text.Trim())))
-                            cmd.Parameters.AddWithValue("@HasExpiry", isEndo)
-                            If isEndo Then
-                                cmd.Parameters.AddWithValue("@ExpiryDate", Guna2DateTimePicker1.Value.Date)
-                            Else
-                                cmd.Parameters.AddWithValue("@ExpiryDate", DBNull.Value)
-                            End If
-
-                            ' Removed: supplier ID logic since we're not using suppliers
                             cmd.Parameters.AddWithValue("@ProductID", editProductId)
 
                             cmd.ExecuteNonQuery()
@@ -409,7 +346,7 @@ Public Class AddProduct
                                 cmdDelete.ExecuteNonQuery()
                             End Using
 
-                            ' Save new image
+                            ' Save new image using the corrected method
                             SaveProductImage(conn, transaction, editProductId, selectedImagePath)
                             imageWasUpdated = True
                         End If
@@ -449,77 +386,96 @@ Public Class AddProduct
 
     Private Sub SaveProductImage(conn As SqlConnection, transaction As SqlTransaction, productId As Integer, imagePath As String)
         Try
-            ' Read image file and compress if needed
-            Dim originalBytes As Byte() = IO.File.ReadAllBytes(imagePath)
-            Dim imageBytes As Byte()
+            ' Read the image file and convert to byte array
+            Dim imageData As Byte() = File.ReadAllBytes(imagePath)
 
-            ' Use compression if image is larger than 500KB
-            If originalBytes.Length > 500000 Then
-                ' Assuming ImageCompression utility exists
-                imageBytes = ImageCompression.CompressImage(originalBytes, 85) ' 85% quality
-            Else
-                imageBytes = originalBytes
-            End If
+            ' Create a hash for the image to prevent duplicates
+            Dim imageHash As String = Convert.ToBase64String(System.Security.Cryptography.SHA256.Create().ComputeHash(imageData))
 
-            ' Generate hash for the image
-            Dim imageHash As String = Utilities.GenerateImageHash(imageBytes)
-
-            ' Check if image with same hash already exists
-            Dim existingImageId As Integer? = Nothing
-
-            ' Check for existing image with same hash
-            Dim checkHashQuery As String = "SELECT TOP 1 ImageID FROM ProductImages WHERE ImageHash = @ImageHash"
-            Using checkCmd As New SqlCommand(checkHashQuery, conn, transaction)
+            ' First, check if this image already exists in ProductImages
+            Dim existingImageId As Object = Nothing
+            Dim checkImageQuery As String = "SELECT ImageID FROM ProductImages WHERE ImageHash = @ImageHash"
+            Using checkCmd As New SqlCommand(checkImageQuery, conn, transaction)
                 checkCmd.Parameters.AddWithValue("@ImageHash", imageHash)
-                Dim result = checkCmd.ExecuteScalar()
-
-                If result IsNot Nothing AndAlso Not IsDBNull(result) Then
-                    existingImageId = Convert.ToInt32(result)
-                End If
+                existingImageId = checkCmd.ExecuteScalar()
             End Using
 
             Dim imageId As Integer
 
-            If existingImageId.HasValue Then
-                ' Reuse existing image
-                imageId = existingImageId.Value
-                Console.WriteLine($"Reusing existing image with hash: {imageHash}")
+            If existingImageId IsNot Nothing Then
+                ' Use existing image
+                imageId = Convert.ToInt32(existingImageId)
             Else
-                ' Save new image with hash
-                Dim insertImageQuery As String = "INSERT INTO ProductImages (ImageHash, ImageType, ImageData, CreatedAt, UpdatedAt) " &
-                                               "VALUES (@ImageHash, 'thumb', @ImageData, GETDATE(), GETDATE()); SELECT SCOPE_IDENTITY()"
+                ' Insert new image into ProductImages table
+                Dim insertImageQuery As String = "INSERT INTO ProductImages (ImageHash, ImageType, ImageData, CreatedAt, UpdatedAt) VALUES (@ImageHash, @ImageType, @ImageData, GETDATE(), GETDATE()); SELECT SCOPE_IDENTITY()"
+                Using cmdImage As New SqlCommand(insertImageQuery, conn, transaction)
+                    cmdImage.Parameters.AddWithValue("@ImageHash", imageHash)
+                    cmdImage.Parameters.AddWithValue("@ImageType", "thumb") ' Default type
+                    cmdImage.Parameters.AddWithValue("@ImageData", imageData)
 
-                Using insertCmd As New SqlCommand(insertImageQuery, conn, transaction)
-                    insertCmd.Parameters.AddWithValue("@ImageHash", imageHash)
-                    insertCmd.Parameters.AddWithValue("@ImageData", imageBytes)
-                    imageId = Convert.ToInt32(insertCmd.ExecuteScalar())
+                    imageId = Convert.ToInt32(cmdImage.ExecuteScalar())
                 End Using
-
-                Console.WriteLine($"Saved new image with hash: {imageHash}")
             End If
 
-            ' Create mapping between product and image (delete existing mapping first)
-            Dim deleteMappingQuery As String = "DELETE FROM ProductImageMapping WHERE ProductID = @ProductID"
-            Using deleteCmd As New SqlCommand(deleteMappingQuery, conn, transaction)
-                deleteCmd.Parameters.AddWithValue("@ProductID", productId)
-                deleteCmd.ExecuteNonQuery()
+            ' Now create the mapping between product and image
+            Dim insertMappingQuery As String = "INSERT INTO ProductImageMapping (ProductID, ImageID, CreatedAt) VALUES (@ProductID, @ImageID, GETDATE())"
+            Using cmdMapping As New SqlCommand(insertMappingQuery, conn, transaction)
+                cmdMapping.Parameters.AddWithValue("@ProductID", productId)
+                cmdMapping.Parameters.AddWithValue("@ImageID", imageId)
+
+                cmdMapping.ExecuteNonQuery()
             End Using
 
-            ' Insert new mapping
-            Dim insertMappingQuery As String = "INSERT INTO ProductImageMapping (ProductID, ImageID, CreatedAt) " &
-                                             "VALUES (@ProductID, @ImageID, GETDATE())"
-
-            Using mapCmd As New SqlCommand(insertMappingQuery, conn, transaction)
-                mapCmd.Parameters.AddWithValue("@ProductID", productId)
-                mapCmd.Parameters.AddWithValue("@ImageID", imageId)
-                mapCmd.ExecuteNonQuery()
-            End Using
+            ' Optionally, optimize the image (resize, compress, etc.) before saving
+            OptimizeImage(imagePath)
 
         Catch ex As Exception
-            ' Log error but don't fail the entire transaction
-            Console.WriteLine("Error saving product image: " & ex.Message)
+            Throw New Exception("Error saving product image: " & ex.Message, ex)
         End Try
     End Sub
+
+    Private Sub OptimizeImage(imagePath As String)
+        ' Simplified image optimization to avoid GDI+ errors
+        Try
+            ' Skip optimization if it's causing issues
+            ' Just validate the image can be loaded
+            Using testImage As Image = Image.FromFile(imagePath)
+                ' If we can load it, it's fine to use as is
+                Console.WriteLine($"Image loaded successfully: {testImage.Width}x{testImage.Height}")
+            End Using
+        Catch ex As Exception
+            ' Log the warning but don't break the process
+            Console.WriteLine($"Warning: Image optimization skipped: {ex.Message}")
+            ' The image was already saved successfully, so this doesn't affect functionality
+        End Try
+    End Sub
+
+    Private Function ResizeImage(originalImage As Image, maxWidth As Integer, maxHeight As Integer) As Image
+        Dim ratioX As Double = maxWidth / originalImage.Width
+        Dim ratioY As Double = maxHeight / originalImage.Height
+        Dim ratio As Double = Math.Min(ratioX, ratioY)
+
+        Dim newWidth As Integer = CInt(originalImage.Width * ratio)
+        Dim newHeight As Integer = CInt(originalImage.Height * ratio)
+
+        Dim newImage As New Bitmap(newWidth, newHeight)
+        Using g As Graphics = Graphics.FromImage(newImage)
+            g.InterpolationMode = Drawing2D.InterpolationMode.HighQualityBicubic
+            g.DrawImage(originalImage, 0, 0, newWidth, newHeight)
+        End Using
+
+        Return newImage
+    End Function
+
+    Private Function GetEncoderInfo(mimeType As String) As ImageCodecInfo
+        Dim codecs As ImageCodecInfo() = ImageCodecInfo.GetImageDecoders()
+        For Each c As ImageCodecInfo In codecs
+            If c.MimeType = mimeType Then
+                Return c
+            End If
+        Next
+        Return Nothing
+    End Function
 
     Private Sub LoadProductData()
         Try
@@ -527,6 +483,7 @@ Public Class AddProduct
             Using conn As New SqlConnection(connStr)
                 conn.Open()
 
+                ' Updated query to use the correct table structure
                 Dim query As String = "SELECT p.*, pi.ImageData AS ProductImage " +
                                      "FROM Products p " +
                                      "LEFT JOIN ProductImageMapping pim ON p.ProductID = pim.ProductID " +
@@ -571,23 +528,18 @@ Public Class AddProduct
                                 ReOrderLevelTextBox.Text = reader("ReorderLevel").ToString()
                             End If
 
-                            ' Removed: supplier loading logic since we're not using suppliers
-
-                            ' Load expiry date if applicable
-                            If Not IsDBNull(reader("HasExpiry")) AndAlso Convert.ToBoolean(reader("HasExpiry")) Then
-                                If Not IsDBNull(reader("ExpiryDate")) Then
-                                    Guna2DateTimePicker1.Value = Convert.ToDateTime(reader("ExpiryDate"))
-                                    Guna2DateTimePicker1.Visible = True
-                                    Guna2HtmlLabel8.Visible = True
-                                End If
-                            End If
-
-                            ' Load product image
+                            ' Load product image with proper error handling
                             If Not IsDBNull(reader("ProductImage")) Then
-                                Dim imgBytes As Byte() = CType(reader("ProductImage"), Byte())
-                                Using ms As New MemoryStream(imgBytes)
-                                    ProductImage.Image = Image.FromStream(ms)
-                                End Using
+                                Try
+                                    Dim imgBytes As Byte() = CType(reader("ProductImage"), Byte())
+                                    Using ms As New MemoryStream(imgBytes)
+                                        ProductImage.Image = Image.FromStream(ms)
+                                    End Using
+                                Catch imgEx As Exception
+                                    ' If image loading fails, just skip it (don't break the form load)
+                                    Console.WriteLine($"Warning: Could not load product image: {imgEx.Message}")
+                                    ProductImage.Image = Nothing
+                                End Try
                             End If
 
                             ' Load and display barcode using ProductCode
@@ -614,25 +566,61 @@ Public Class AddProduct
         ReOrderLevelTextBox.Clear()
         ProductImage.Image = Nothing
         selectedImagePath = ""
-        Guna2DateTimePicker1.Value = DateTime.Now.AddMonths(12)
-        SetupExpiryDateVisibility()
+        ' Note: Expiry date clearing removed - expiry tracking moved to InventoryLog
     End Sub
 
-    Private Sub Guna2HtmlLabel1_Click(sender As Object, e As EventArgs) Handles Guna2HtmlLabel1.Click
-        ' Cancel button
-        Me.Close()
+    Private Sub InitializeMainCategories()
+        Try
+            ' Main categories for dental supply management
+            Dim mainCategories As String() = {"ORTHO", "CONSUMABLES", "SURGERY", "RESTO", "ENDO", "COSMETIC"}
+
+            ' Clear existing categories and add main categories first
+            cmbCategory.Items.Clear()
+
+            For Each category As String In mainCategories
+                cmbCategory.Items.Add(category)
+            Next
+
+            ' Load additional categories from database (existing products)
+            LoadAdditionalCategories()
+
+            ' Add "Add Custom" option at the end
+            cmbCategory.Items.Add("Add Custom Category...")
+
+        Catch ex As Exception
+            MessageBox.Show("Error initializing categories: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
     End Sub
 
-    ' Form closing event to stop idle timeout monitoring
-    Private Sub AddProduct_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
-        ' Stop idle timeout monitoring when form closes
-        IdleTimeoutManager.Instance.StopMonitoring(Me)
-    End Sub
+    Private Sub LoadAdditionalCategories()
+        Try
+            Dim connStr As String = Connection.GetConnectionString()
+            Using conn As New SqlConnection(connStr)
+                conn.Open()
 
-    Private Function IsNumeric(text As String) As Boolean
-        Dim dummy As Double
-        Return Double.TryParse(text, dummy)
-    End Function
+                ' Get distinct categories from existing products that are not in main categories
+                Dim mainCategoriesString As String = "'ORTHO','CONSUMABLES','SURGERY','RESTO','ENDO','COSMETIC'"
+                Dim query As String = $"SELECT DISTINCT Category FROM Products WHERE Category IS NOT NULL AND IsActive = 1 AND Category NOT IN ({mainCategoriesString}) ORDER BY Category"
+
+                Using cmd As New SqlCommand(query, conn)
+                    Using reader As SqlDataReader = cmd.ExecuteReader()
+                        While reader.Read()
+                            If Not IsDBNull(reader("Category")) Then
+                                Dim category As String = reader("Category").ToString()
+                                ' Only add if it's not already in the list
+                                If Not cmbCategory.Items.Contains(category) Then
+                                    cmbCategory.Items.Add(category)
+                                End If
+                            End If
+                        End While
+                    End Using
+                End Using
+            End Using
+        Catch ex As Exception
+            ' Silent fail - main categories are already loaded
+            Console.WriteLine("Note: Could not load additional categories: " & ex.Message)
+        End Try
+    End Sub
 
     Private Sub SetupNumericInputValidation()
         ' Add numeric input validation for price fields and reorder level
@@ -678,6 +666,60 @@ Public Class AddProduct
         Catch ex As Exception
             MessageBox.Show("Error generating barcode: " & ex.Message, "Barcode Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
+    End Sub
+
+    ' Smart cleanup for orphaned images - only runs when images are actually updated
+    Private Sub CleanupOrphanedImages()
+        Try
+            ' Run cleanup in a separate transaction to avoid affecting main operation
+            Dim connStr As String = Connection.GetConnectionString()
+            Using cleanupConn As New SqlConnection(connStr)
+                cleanupConn.Open()
+
+                ' Get count of orphaned images first
+                Dim countQuery As String = "SELECT COUNT(*) FROM ProductImages WHERE ImageID NOT IN (SELECT DISTINCT ImageID FROM ProductImageMapping)"
+                Dim orphanCount As Integer
+
+                Using countCmd As New SqlCommand(countQuery, cleanupConn)
+                    orphanCount = Convert.ToInt32(countCmd.ExecuteScalar())
+                End Using
+
+                If orphanCount > 0 Then
+                    ' Delete orphaned images
+                    Dim deleteQuery As String = "DELETE FROM ProductImages WHERE ImageID NOT IN (SELECT DISTINCT ImageID FROM ProductImageMapping)"
+                    Dim deletedCount As Integer
+
+                    Using deleteCmd As New SqlCommand(deleteQuery, cleanupConn)
+                        deletedCount = deleteCmd.ExecuteNonQuery()
+                    End Using
+
+                    ' Log the cleanup activity
+                    Console.WriteLine($"🗑️ Cleaned up {deletedCount} orphaned image(s) during product update")
+
+                    ' Log audit trail for cleanup
+                    Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Image Cleanup",
+                                     $"Cleaned up {deletedCount} orphaned product images during product update")
+                Else
+                    Console.WriteLine("✅ No orphaned images found - database optimized")
+                End If
+            End Using
+
+        Catch ex As Exception
+            ' Log error but don't fail the main operation since product update succeeded
+            Console.WriteLine($"⚠️ Image cleanup warning: {ex.Message}")
+            ' Don't show error to user since the main product update was successful
+        End Try
+    End Sub
+
+    Private Sub Guna2HtmlLabel1_Click(sender As Object, e As EventArgs) Handles Guna2HtmlLabel1.Click
+        ' Cancel button
+        Me.Close()
+    End Sub
+
+    ' Form closing event to stop idle timeout monitoring
+    Private Sub AddProduct_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
+        ' Stop idle timeout monitoring when form closes
+        IdleTimeoutManager.Instance.StopMonitoring(Me)
     End Sub
 
     Private Sub PrintBarcodeTextBox_Click(sender As Object, e As EventArgs) Handles PrintBarcodeTextBox.Click
@@ -727,46 +769,7 @@ Public Class AddProduct
         End Try
     End Sub
 
-    ' Smart cleanup for orphaned images - only runs when images are actually updated
-    Private Sub CleanupOrphanedImages()
-        Try
-            ' Run cleanup in a separate transaction to avoid affecting main operation
-            Dim connStr As String = Connection.GetConnectionString()
-            Using cleanupConn As New SqlConnection(connStr)
-                cleanupConn.Open()
-                
-                ' Get count of orphaned images first
-                Dim countQuery As String = "SELECT COUNT(*) FROM ProductImages WHERE ImageID NOT IN (SELECT DISTINCT ImageID FROM ProductImageMapping)"
-                Dim orphanCount As Integer
-                
-                Using countCmd As New SqlCommand(countQuery, cleanupConn)
-                    orphanCount = Convert.ToInt32(countCmd.ExecuteScalar())
-                End Using
-                
-                If orphanCount > 0 Then
-                    ' Delete orphaned images
-                    Dim deleteQuery As String = "DELETE FROM ProductImages WHERE ImageID NOT IN (SELECT DISTINCT ImageID FROM ProductImageMapping)"
-                    Dim deletedCount As Integer
-                    
-                    Using deleteCmd As New SqlCommand(deleteQuery, cleanupConn)
-                        deletedCount = deleteCmd.ExecuteNonQuery()
-                    End Using
-                    
-                    ' Log the cleanup activity
-                    Console.WriteLine($"🗑️ Cleaned up {deletedCount} orphaned image(s) during product update")
-                    
-                    ' Log audit trail for cleanup
-                    Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Image Cleanup", 
-                                     $"Cleaned up {deletedCount} orphaned product images during product update")
-                Else
-                    Console.WriteLine("✅ No orphaned images found - database optimized")
-                End If
-            End Using
-            
-        Catch ex As Exception
-            ' Log error but don't fail the main operation since product update succeeded
-            Console.WriteLine($"⚠️ Image cleanup warning: {ex.Message}")
-            ' Don't show error to user since the main product update was successful
-        End Try
+    Private Sub Guna2Panel1_Paint(sender As Object, e As PaintEventArgs) Handles Guna2Panel1.Paint
+
     End Sub
 End Class
