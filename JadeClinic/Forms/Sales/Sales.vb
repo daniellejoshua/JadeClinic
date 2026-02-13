@@ -1250,19 +1250,25 @@ Public Class Sales
 
         ' Add a back button to total received panel
         Dim btnBackTotal As New Guna.UI2.WinForms.Guna2Button()
-        btnBackTotal.Text = "‹ Back"
-        btnBackTotal.Font = New Font("Poppins SemiBold", 12.0F, FontStyle.Regular)
+        btnBackTotal.Text = "‹"
+        btnBackTotal.Font = New Font("Poppins", 12.0F, FontStyle.Regular)
         btnBackTotal.ForeColor = PureWhite
         btnBackTotal.FillColor = AlertRed
-        btnBackTotal.Size = New Size(80, 35)
+        btnBackTotal.Size = New Size(34, 33)
         btnBackTotal.BackColor = DarkSlate
         btnBackTotal.BorderRadius = 8
-        btnBackTotal.Location = New Point(totalReceivedPanel.Width - 100, 15)
+        btnBackTotal.Location = New Point(totalReceivedPanel.Width - 400, 15)
         AddHandler btnBackTotal.Click, Sub(sender, e)
+                                           ' Remove the payment panel
                                            If totalReceivedPanel IsNot Nothing AndAlso Me.Controls.Contains(totalReceivedPanel) Then
                                                Me.Controls.Remove(totalReceivedPanel)
-                                               totalPanelActive = False
+                                               totalReceivedPanel = Nothing
                                            End If
+
+                                           ' Reset panel states
+                                           totalPanelActive = False
+                                           pinPanelActive = False
+
                                            ' Reset labels
                                            If lblChange IsNot Nothing Then
                                                lblChange.Text = "0.00"
@@ -1270,7 +1276,25 @@ Public Class Sales
                                            If totalRLbl IsNot Nothing Then
                                                totalRLbl.Text = "0.00"
                                            End If
-                                           ShowCustomerSelectionPanel()
+
+                                           ' Reset entered amount
+                                           enteredAmount = ""
+
+                                           ' Show the original payment button and hide confirm button
+                                           btnPayment.Visible = True
+                                           confirmBtn.Visible = False
+
+                                           ' Make sure the order summary panel is visible and brought to front
+                                           If orderSummaryPanel IsNot Nothing Then
+                                               orderSummaryPanel.Visible = True
+                                               orderSummaryPanel.BringToFront()
+                                           End If
+
+                                           ' Refresh the order display to show all cart items
+                                           RefreshOrderDisplay()
+
+                                           ' Re-enable barcode input focus
+                                           FocusBarcodeInputIfAllowed()
                                        End Sub
         totalReceivedPanel.Controls.Add(btnBackTotal)
 
@@ -1317,14 +1341,23 @@ Public Class Sales
             totalRLbl.Text = lblAmountDisplay.Text
         End If
 
-        ' Compute change in real-time
-        Dim orderTotal As Decimal = 0D
-        If totalLbl IsNot Nothing AndAlso Decimal.TryParse(totalLbl.Text, orderTotal) Then
-            Dim changeVal As Decimal = displayValue - orderTotal
+        ' Compute change in real-time - only if an amount has been entered
+        If enteredAmount.Length = 0 Then
+            ' No amount entered yet, show 0.00 for change
             If lblChange IsNot Nothing Then
-                lblChange.Text = changeVal.ToString("F2")
+                lblChange.Text = "0.00"
                 lblChange.ForeColor = SuccessGreen
                 lblChange.Visible = True
+            End If
+        Else
+            Dim orderTotal As Decimal = 0D
+            If totalLbl IsNot Nothing AndAlso Decimal.TryParse(totalLbl.Text, orderTotal) Then
+                Dim changeVal As Decimal = displayValue - orderTotal
+                If lblChange IsNot Nothing Then
+                    lblChange.Text = changeVal.ToString("F2")
+                    lblChange.ForeColor = SuccessGreen
+                    lblChange.Visible = True
+                End If
             End If
         End If
     End Sub
@@ -1335,8 +1368,6 @@ Public Class Sales
         If Not pinPanelActive AndAlso Not totalPanelActive Then
             If lblChange IsNot Nothing Then
                 lblChange.Text = "0.00"
-            End If
-            If totalRLbl IsNot Nothing Then
                 totalRLbl.Text = "0.00"
             End If
         End If
@@ -1386,7 +1417,7 @@ Public Class Sales
 
             Dim lblCustomer As New Guna.UI2.WinForms.Guna2HtmlLabel()
             lblCustomer.Text = displayName
-            lblCustomer.Font = New Font("Poppins Light", 9.0F, FontStyle.Regular)
+            lblCustomer.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
             lblCustomer.ForeColor = Color.White
             lblCustomer.Location = New Point(lblOrderId.Right + 20, 10)
             lblCustomer.AutoSize = True
@@ -1404,7 +1435,7 @@ Public Class Sales
             ' Quantity
             Dim lblQuantity As New Guna.UI2.WinForms.Guna2HtmlLabel()
             lblQuantity.Text = prod("Quantity").ToString() & "x"
-            lblQuantity.Font = New Font("Poppins Light", 9.0F, FontStyle.Regular)
+            lblQuantity.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
             lblQuantity.ForeColor = Color.FromArgb(119, 121, 121)
             lblQuantity.Location = New Point(290, 10)
             lblQuantity.AutoSize = True
@@ -1478,9 +1509,9 @@ Public Class Sales
         End If
         ' Do NOT set totalRLbl here
         ' Show taxLbl as 12%
-        If taxLbl IsNot Nothing Then
-            taxLbl.Text = "12%"
-        End If
+        ' If taxLbl IsNot Nothing Then
+        '     taxLbl.Text = "12%"
+        ' End If
     End Sub
 
     ' Confirm payment and process order
@@ -2144,4 +2175,57 @@ Public Class Sales
         ' For now, show coming soon message
         MessageBox.Show("Audit Logs feature coming soon!", "Feature Coming Soon", MessageBoxButtons.OK, MessageBoxIcon.Information)
     End Sub
+    Private Sub HandleTotalAmountKeyboardInput(e As KeyEventArgs)
+        ' Handle numeric keys (0-9)
+        If (e.KeyCode >= Keys.D0 AndAlso e.KeyCode <= Keys.D9) OrElse
+           (e.KeyCode >= Keys.NumPad0 AndAlso e.KeyCode <= Keys.NumPad9) Then
+
+            Dim digit As String = ""
+            If e.KeyCode >= Keys.D0 AndAlso e.KeyCode <= Keys.D9 Then
+                digit = (e.KeyCode - Keys.D0).ToString()
+            Else
+                digit = (e.KeyCode - Keys.NumPad0).ToString()
+            End If
+
+            If enteredAmount.Length < 10 Then
+                enteredAmount &= digit
+                UpdateAmountDisplay()
+            End If
+            e.Handled = True
+
+            ' Handle backspace
+        ElseIf e.KeyCode = Keys.Back Then
+            If enteredAmount.Length > 0 Then
+                enteredAmount = enteredAmount.Substring(0, enteredAmount.Length - 1)
+                UpdateAmountDisplay()
+            End If
+            e.Handled = True
+
+            ' Handle Enter key to confirm payment
+        ElseIf e.KeyCode = Keys.Enter Then
+            confirmBtn.PerformClick()
+            e.Handled = True
+
+            ' Handle Escape to go back to PIN panel
+        ElseIf e.KeyCode = Keys.Escape Then
+            If totalReceivedPanel IsNot Nothing AndAlso Me.Controls.Contains(totalReceivedPanel) Then
+                Me.Controls.Remove(totalReceivedPanel)
+                totalPanelActive = False
+            End If
+            ' Reset change label and totalRLbl when going back to PIN panel
+            If lblChange IsNot Nothing Then
+                lblChange.Text = "0.00"
+                totalRLbl.Text = "0.00"
+            End If
+            e.Handled = True
+        End If
+    End Sub
+    ' Add this method to handle form-level key events
+    Private Sub Sales_KeyDown(sender As Object, e As KeyEventArgs) Handles MyBase.KeyDown
+        ' Only handle keyboard input when the total amount panel is active
+        If totalPanelActive Then
+            HandleTotalAmountKeyboardInput(e)
+        End If
+    End Sub
+
 End Class
