@@ -236,6 +236,8 @@ Public Class DatabaseInitializer
             "PaymentMethod nvarchar(20) DEFAULT 'Cash', " &
             "IsVoid bit DEFAULT 0, " &
             "Reference nvarchar(100) NULL, " &
+            "SalesData nvarchar(max) not null," &
+            "Status nvarchar(50) DEFAULT 'Completed', " &
             "FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID), " &
             "FOREIGN KEY (UserID) REFERENCES Users(UserID))"
 

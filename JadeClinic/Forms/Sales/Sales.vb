@@ -15,7 +15,7 @@ Public Class Sales
     Private isDiscountDialogOpen As Boolean = False
     Private pinPanelButtons As List(Of Guna.UI2.WinForms.Guna2Button) ' Repurposed for customer panel buttons
     Private totalPanelButtons As List(Of Guna.UI2.WinForms.Guna2Button)
-    Private pinPanelActive As Boolean = False ' Repurposed for customer selection panel
+    Private pinPanelActive As Boolean = False ' Repurposed for customer selection
     Private totalPanelActive As Boolean = False
 
     Private enteredAmount As String = ""
@@ -47,6 +47,14 @@ Public Class Sales
     Private selectedCustomerName As String = "Walk-in Customer"
     Private selectedCustomerPhone As String = ""
     Private selectedCustomerEmail As String = ""
+    ' Add customer selection variables at the top of the class (around line 70, after the existing panel declarations)
+    Private customerSelectionPanel As Guna.UI2.WinForms.Guna2Panel = Nothing
+    Private selectedCustomerType As String = "Walk-in" ' Walk-in, Dentist, Clinic, Hospital
+
+
+    ' Add these variables at the top of the Sales class (around line 30):
+    Private selectedPaymentMethod As String = "Cash" ' Cash, GCash, Card
+    Private paymentReference As String = ""
 
     ' Helper function to normalize category names
     Private Function NormalizeCategory(name As String) As String
@@ -1082,7 +1090,10 @@ Public Class Sales
     ' Private selectedCustomerId As Integer? = Nothing - REMOVED DUPLICATE
     ' Private selectedCustomerName As String = "Walk-in Customer" - REMOVED DUPLICATE
 
-    ' Payment and discount methods - Updated to remove PIN
+    ' Payment and discount methods - Updated to show customer selection FIRST
+    ' Replace the existing customer and payment methods with these new modal implementations
+
+    ' Payment and discount methods - Updated to use modals
     Private Sub btnPayment_Click(sender As Object, e As EventArgs) Handles btnPayment.Click
         ' Validate user session
         If Not ValidateUserSession() Then
@@ -1095,8 +1106,1035 @@ Public Class Sales
             Return
         End If
 
-        ' Show customer selection panel instead of PIN
-        ShowCustomerSelectionPanel()
+        ' STEP 1: Show customer information modal FIRST
+        ShowCustomerInformationModal()
+    End Sub
+
+    ' NEW: Customer Information Modal
+    ' NEW: Enhanced Customer Information Modal with improved spacing and design
+    ' NEW: Enhanced Customer Information Modal with improved spacing and design
+    Private Sub ShowCustomerInformationModal()
+        ' Create customer information modal form
+        Dim customerForm As New Form()
+        customerForm.Text = "Customer Information"
+        customerForm.Size = New Size(550, 600) ' Increased size for better spacing
+        customerForm.StartPosition = FormStartPosition.CenterParent
+        customerForm.FormBorderStyle = FormBorderStyle.FixedDialog
+        customerForm.MaximizeBox = False
+        customerForm.MinimizeBox = False
+        customerForm.BackColor = DarkSlate ' Use existing color palette
+        customerForm.ShowInTaskbar = False
+
+        ' Get total amount for display
+        Dim totalAmount As Decimal = 0D
+        If totalLbl IsNot Nothing Then
+            Decimal.TryParse(totalLbl.Text, totalAmount)
+        End If
+
+        ' Header section with improved spacing
+        Dim headerPanel As New Panel()
+        headerPanel.Size = New Size(480, 90)
+        headerPanel.Location = New Point(20, 20)
+        headerPanel.BackColor = Color.Transparent
+        customerForm.Controls.Add(headerPanel)
+
+        ' Title with better typography
+        Dim lblTitle As New Label()
+        lblTitle.Text = "CUSTOMER INFORMATION"
+        lblTitle.Font = New Font("Poppins", 18, FontStyle.Bold)
+        lblTitle.ForeColor = PureWhite
+        lblTitle.Location = New Point(0, 0)
+        lblTitle.Size = New Size(480, 35)
+        lblTitle.TextAlign = ContentAlignment.MiddleCenter
+        headerPanel.Controls.Add(lblTitle)
+
+        ' Order total display with accent color
+        Dim lblOrderTotal As New Label()
+        lblOrderTotal.Text = $"Order Total: ₱{totalAmount:F2}"
+        lblOrderTotal.Font = New Font("Poppins", 14, FontStyle.Bold)
+        lblOrderTotal.ForeColor = GoldenYellow ' Use brand color
+        lblOrderTotal.Location = New Point(0, 45)
+        lblOrderTotal.Size = New Size(480, 30)
+        lblOrderTotal.TextAlign = ContentAlignment.MiddleCenter
+        headerPanel.Controls.Add(lblOrderTotal)
+
+        ' Separator line
+        Dim separator As New Panel()
+        separator.Size = New Size(440, 2)
+        separator.Location = New Point(40, 130)
+        separator.BackColor = RichOlive ' Use secondary accent color
+        customerForm.Controls.Add(separator)
+
+        ' Customer Type Section with improved spacing
+        Dim customerTypeSection As New Panel()
+        customerTypeSection.Size = New Size(480, 80)
+        customerTypeSection.Location = New Point(20, 150)
+        customerTypeSection.BackColor = Color.Transparent
+        customerForm.Controls.Add(customerTypeSection)
+
+        Dim lblCustomerType As New Label()
+        lblCustomerType.Text = "Customer Type"
+        lblCustomerType.Font = New Font("Poppins", 12, FontStyle.Bold)
+        lblCustomerType.ForeColor = LightSilver ' Use secondary text color
+        lblCustomerType.Location = New Point(0, 0)
+        lblCustomerType.Size = New Size(150, 25)
+        customerTypeSection.Controls.Add(lblCustomerType)
+
+        ' Customer type buttons with improved spacing and styling
+        Dim buttonWidth As Integer = 140
+        Dim buttonHeight As Integer = 50
+        Dim buttonSpacing As Integer = 20
+        Dim startX As Integer = (480 - (3 * buttonWidth + 2 * buttonSpacing)) / 2
+
+        Dim btnWalkIn As New Guna.UI2.WinForms.Guna2Button()
+        btnWalkIn.Text = "🚶 Walk-in"
+        btnWalkIn.Size = New Size(buttonWidth, buttonHeight)
+        btnWalkIn.Location = New Point(startX, 30)
+        btnWalkIn.Font = New Font("Poppins", 10, FontStyle.Bold)
+        btnWalkIn.ForeColor = DeepCharcoal
+        btnWalkIn.FillColor = If(selectedCustomerType = "Walk-in", GoldenYellow, Graphite)
+        btnWalkIn.BorderRadius = 12
+        btnWalkIn.BorderThickness = 1
+        btnWalkIn.BorderColor = If(selectedCustomerType = "Walk-in", GoldenYellow, SteelGray)
+        customerTypeSection.Controls.Add(btnWalkIn)
+
+        Dim btnDentist As New Guna.UI2.WinForms.Guna2Button()
+        btnDentist.Text = "🦷 Dentist"
+        btnDentist.Size = New Size(buttonWidth, buttonHeight)
+        btnDentist.Location = New Point(startX + buttonWidth + buttonSpacing, 30)
+        btnDentist.Font = New Font("Poppins", 10, FontStyle.Bold)
+        btnDentist.ForeColor = DeepCharcoal
+        btnDentist.FillColor = If(selectedCustomerType = "Dentist", GoldenYellow, Graphite)
+        btnDentist.BorderRadius = 12
+        btnDentist.BorderThickness = 1
+        btnDentist.BorderColor = If(selectedCustomerType = "Dentist", GoldenYellow, SteelGray)
+        customerTypeSection.Controls.Add(btnDentist)
+
+        Dim btnClinic As New Guna.UI2.WinForms.Guna2Button()
+        btnClinic.Text = "🏥 Clinic"
+        btnClinic.Size = New Size(buttonWidth, buttonHeight)
+        btnClinic.Location = New Point(startX + 2 * (buttonWidth + buttonSpacing), 30)
+        btnClinic.Font = New Font("Poppins", 10, FontStyle.Bold)
+        btnClinic.ForeColor = DeepCharcoal
+        btnClinic.FillColor = If(selectedCustomerType = "Clinic", GoldenYellow, Graphite)
+        btnClinic.BorderRadius = 12
+        btnClinic.BorderThickness = 1
+        btnClinic.BorderColor = If(selectedCustomerType = "Clinic", GoldenYellow, SteelGray)
+        customerTypeSection.Controls.Add(btnClinic)
+
+        ' Helper function to update button colors with proper styling
+        Dim UpdateCustomerTypeButtons = Sub()
+                                            ' Update Walk-in button
+                                            btnWalkIn.FillColor = If(selectedCustomerType = "Walk-in", GoldenYellow, Graphite)
+                                            btnWalkIn.BorderColor = If(selectedCustomerType = "Walk-in", GoldenYellow, SteelGray)
+                                            btnWalkIn.ForeColor = If(selectedCustomerType = "Walk-in", DeepCharcoal, PureWhite)
+
+                                            ' Update Dentist button
+                                            btnDentist.FillColor = If(selectedCustomerType = "Dentist", GoldenYellow, Graphite)
+                                            btnDentist.BorderColor = If(selectedCustomerType = "Dentist", GoldenYellow, SteelGray)
+                                            btnDentist.ForeColor = If(selectedCustomerType = "Dentist", DeepCharcoal, PureWhite)
+
+                                            ' Update Clinic button
+                                            btnClinic.FillColor = If(selectedCustomerType = "Clinic", GoldenYellow, Graphite)
+                                            btnClinic.BorderColor = If(selectedCustomerType = "Clinic", GoldenYellow, SteelGray)
+                                            btnClinic.ForeColor = If(selectedCustomerType = "Clinic", DeepCharcoal, PureWhite)
+                                        End Sub
+
+        ' Button hover effects
+        AddHandler btnWalkIn.MouseEnter, Sub() If selectedCustomerType <> "Walk-in" Then btnWalkIn.FillColor = SteelGray
+        AddHandler btnWalkIn.MouseLeave, Sub() If selectedCustomerType <> "Walk-in" Then btnWalkIn.FillColor = Graphite
+        AddHandler btnDentist.MouseEnter, Sub() If selectedCustomerType <> "Dentist" Then btnDentist.FillColor = SteelGray
+        AddHandler btnDentist.MouseLeave, Sub() If selectedCustomerType <> "Dentist" Then btnDentist.FillColor = Graphite
+        AddHandler btnClinic.MouseEnter, Sub() If selectedCustomerType <> "Clinic" Then btnClinic.FillColor = SteelGray
+        AddHandler btnClinic.MouseLeave, Sub() If selectedCustomerType <> "Clinic" Then btnClinic.FillColor = Graphite
+
+        ' Button click events
+        AddHandler btnWalkIn.Click, Sub()
+                                        selectedCustomerType = "Walk-in"
+                                        ' Only reset details if switching TO walk-in, preserve if coming back
+                                        If selectedCustomerType = "Walk-in" AndAlso selectedCustomerName <> "Walk-in Customer" Then
+                                            selectedCustomerName = "Walk-in Customer"
+                                            selectedCustomerPhone = ""
+                                            selectedCustomerEmail = ""
+                                        End If
+                                        UpdateCustomerTypeButtons()
+                                    End Sub
+
+        AddHandler btnDentist.Click, Sub()
+                                         selectedCustomerType = "Dentist"
+                                         UpdateCustomerTypeButtons()
+                                     End Sub
+
+        AddHandler btnClinic.Click, Sub()
+                                        selectedCustomerType = "Clinic"
+                                        UpdateCustomerTypeButtons()
+                                    End Sub
+
+        ' Customer Details Section with improved spacing
+        Dim detailsSection As New Panel()
+        detailsSection.Size = New Size(480, 140)
+        detailsSection.Location = New Point(20, 250)
+        detailsSection.BackColor = Color.Transparent
+        customerForm.Controls.Add(detailsSection)
+
+        ' Customer Name Input with enhanced styling
+        Dim lblName As New Label()
+        lblName.Text = "Customer Name"
+        lblName.Font = New Font("Poppins", 11, FontStyle.Regular)
+        lblName.ForeColor = LightSilver
+        lblName.Location = New Point(0, 0)
+        lblName.Size = New Size(150, 25)
+        detailsSection.Controls.Add(lblName)
+
+        Dim txtCustomerName As New Guna.UI2.WinForms.Guna2TextBox()
+        txtCustomerName.Size = New Size(460, 40)
+        txtCustomerName.Location = New Point(0, 25)
+        txtCustomerName.PlaceholderText = "Enter customer name (optional for walk-in)"
+        txtCustomerName.PlaceholderForeColor = SteelGray
+        txtCustomerName.Font = New Font("Poppins", 11, FontStyle.Regular)
+        txtCustomerName.BorderRadius = 10
+        txtCustomerName.FillColor = PureWhite
+        txtCustomerName.ForeColor = DeepCharcoal
+        txtCustomerName.BorderColor = SteelGray
+        txtCustomerName.BorderThickness = 1
+        ' PRESERVE EXISTING CUSTOMER DATA: Set text to current values
+        txtCustomerName.Text = selectedCustomerName
+        detailsSection.Controls.Add(txtCustomerName)
+
+        ' Phone and Email inputs (side by side with proper spacing)
+        Dim lblPhone As New Label()
+        lblPhone.Text = "Phone Number"
+        lblPhone.Font = New Font("Poppins", 11, FontStyle.Regular)
+        lblPhone.ForeColor = LightSilver
+        lblPhone.Location = New Point(0, 80)
+        lblPhone.Size = New Size(150, 25)
+        detailsSection.Controls.Add(lblPhone)
+
+        Dim txtPhone As New Guna.UI2.WinForms.Guna2TextBox()
+        txtPhone.Size = New Size(220, 40)
+        txtPhone.Location = New Point(0, 105)
+        txtPhone.PlaceholderText = "Phone (optional)"
+        txtPhone.PlaceholderForeColor = SteelGray
+        txtPhone.Font = New Font("Poppins", 11, FontStyle.Regular)
+        txtPhone.BorderRadius = 10
+        txtPhone.FillColor = PureWhite
+        txtPhone.ForeColor = DeepCharcoal
+        txtPhone.BorderColor = SteelGray
+        txtPhone.BorderThickness = 1
+
+        ' PRESERVE EXISTING CUSTOMER DATA: Set text to current values
+        txtPhone.Text = selectedCustomerPhone
+        detailsSection.Controls.Add(txtPhone)
+
+        Dim lblEmail As New Label()
+        lblEmail.Text = "Email Address"
+        lblEmail.Font = New Font("Poppins", 11, FontStyle.Regular)
+        lblEmail.ForeColor = LightSilver
+        lblEmail.Location = New Point(240, 80)
+        lblEmail.Size = New Size(150, 25)
+        detailsSection.Controls.Add(lblEmail)
+
+        Dim txtEmail As New Guna.UI2.WinForms.Guna2TextBox()
+        txtEmail.Size = New Size(220, 40)
+        txtEmail.Location = New Point(240, 105)
+        txtEmail.PlaceholderText = "Email (optional)"
+        txtEmail.PlaceholderForeColor = SteelGray
+        txtEmail.Font = New Font("Poppins", 11, FontStyle.Regular)
+        txtEmail.BorderRadius = 10
+        txtEmail.FillColor = PureWhite
+        txtEmail.ForeColor = DeepCharcoal
+        txtEmail.BorderColor = SteelGray
+        txtEmail.BorderThickness = 1
+        txtEmail.BringToFront()
+        ' PRESERVE EXISTING CUSTOMER DATA: Set text to current values
+        txtEmail.Text = selectedCustomerEmail
+        detailsSection.Controls.Add(txtEmail)
+
+        ' Action buttons section with improved spacing
+        Dim buttonSection As New Panel()
+        buttonSection.Size = New Size(500, 50)
+        buttonSection.Location = New Point(0, 450)
+        buttonSection.BackColor = Color.Transparent
+        customerForm.Controls.Add(buttonSection)
+
+        Dim btnContinue As New Guna.UI2.WinForms.Guna2Button()
+        btnContinue.Text = "Continue"
+        btnContinue.Size = New Size(200, 50)
+        btnContinue.Location = New Point(260, 0)
+        btnContinue.Font = New Font("Poppins", 12, FontStyle.Bold)
+        btnContinue.ForeColor = DeepCharcoal
+        btnContinue.FillColor = SuccessGreen
+        btnContinue.BorderRadius = 12
+        btnContinue.BorderThickness = 0
+        ' Enhanced hover effects
+        AddHandler btnContinue.MouseEnter, Sub()
+                                               btnContinue.FillColor = GoldenYellow
+                                               btnContinue.ForeColor = DeepCharcoal
+                                           End Sub
+        AddHandler btnContinue.MouseLeave, Sub()
+                                               btnContinue.FillColor = SuccessGreen
+                                               btnContinue.ForeColor = DeepCharcoal
+                                           End Sub
+        AddHandler btnContinue.Click, Sub()
+                                          ' Save customer information (PRESERVE DATA)
+                                          selectedCustomerName = If(String.IsNullOrWhiteSpace(txtCustomerName.Text),
+                                                             If(selectedCustomerType = "Walk-in", "Walk-in Customer", $"{selectedCustomerType} Customer"),
+                                                             txtCustomerName.Text.Trim())
+                                          selectedCustomerPhone = txtPhone.Text.Trim()
+                                          selectedCustomerEmail = txtEmail.Text.Trim()
+
+                                          ' Close customer form and show payment method modal
+                                          customerForm.DialogResult = DialogResult.OK
+                                          customerForm.Close()
+                                      End Sub
+        buttonSection.Controls.Add(btnContinue)
+
+        Dim btnCancel As New Guna.UI2.WinForms.Guna2Button()
+        btnCancel.Text = "Cancel"
+        btnCancel.Size = New Size(140, 50)
+        btnCancel.Location = New Point(100, 0)
+        btnCancel.Font = New Font("Poppins", 12, FontStyle.Regular)
+        btnCancel.ForeColor = PureWhite
+        btnCancel.FillColor = AlertRed
+        btnCancel.BorderRadius = 12
+        btnCancel.BorderThickness = 0
+        ' Enhanced hover effects
+        AddHandler btnCancel.MouseEnter, Sub()
+                                             btnCancel.FillColor = Color.FromArgb(220, 60, 75)
+                                         End Sub
+        AddHandler btnCancel.MouseLeave, Sub()
+                                             btnCancel.FillColor = AlertRed
+                                         End Sub
+        AddHandler btnCancel.Click, Sub()
+                                        ' PRESERVE DATA: Save current form values before closing
+                                        If Not String.IsNullOrWhiteSpace(txtCustomerName.Text) Then
+                                            selectedCustomerName = txtCustomerName.Text.Trim()
+                                        End If
+                                        selectedCustomerPhone = txtPhone.Text.Trim()
+                                        selectedCustomerEmail = txtEmail.Text.Trim()
+
+                                        customerForm.DialogResult = DialogResult.Cancel
+                                        customerForm.Close()
+                                    End Sub
+        buttonSection.Controls.Add(btnCancel)
+
+        ' Initial button state update
+        UpdateCustomerTypeButtons()
+
+        ' FIXED: Remove the fade-in animation to avoid the ShowDialog conflict
+        ' Set opacity to full immediately instead of using Show() + animation
+        customerForm.Opacity = 1.0
+
+        ' Show modal and handle result - FIXED: No longer conflicts with Show()
+        Dim result As DialogResult = customerForm.ShowDialog()
+
+        If result = DialogResult.OK Then
+            ' Continue to payment method selection
+            ShowPaymentMethodModal()
+        End If
+        ' Note: If result is DialogResult.Cancel, customer data is already preserved
+
+        customerForm.Dispose()
+    End Sub
+
+    ' NEW: Payment Method Modal
+    Private Sub ShowPaymentMethodModal()
+        ' Create payment method modal form
+        Dim paymentForm As New Form()
+        paymentForm.Text = "Select Payment Method"
+        paymentForm.Size = New Size(600, 450)
+        paymentForm.StartPosition = FormStartPosition.CenterParent
+        paymentForm.FormBorderStyle = FormBorderStyle.FixedDialog
+        paymentForm.MaximizeBox = False
+        paymentForm.MinimizeBox = False
+        paymentForm.BackColor = DarkSlate
+        paymentForm.ShowInTaskbar = False
+
+        ' Get total amount
+        Dim totalAmount As Decimal = 0D
+        If totalLbl IsNot Nothing Then
+            Decimal.TryParse(totalLbl.Text, totalAmount)
+        End If
+
+        ' Title
+        Dim lblTitle As New Label()
+        lblTitle.Text = "Select Payment Method"
+        lblTitle.Font = New Font("Poppins", 18, FontStyle.Bold)
+        lblTitle.ForeColor = PureWhite
+        lblTitle.Location = New Point(20, 20)
+        lblTitle.Size = New Size(560, 30)
+        lblTitle.TextAlign = ContentAlignment.MiddleCenter
+        paymentForm.Controls.Add(lblTitle)
+
+        ' Customer info display
+        Dim lblCustomerInfo As New Label()
+        lblCustomerInfo.Text = $"Customer: {selectedCustomerName} ({selectedCustomerType})"
+        lblCustomerInfo.Font = New Font("Poppins", 12, FontStyle.Regular)
+        lblCustomerInfo.ForeColor = GoldenYellow
+        lblCustomerInfo.Location = New Point(20, 60)
+        lblCustomerInfo.Size = New Size(560, 25)
+        lblCustomerInfo.TextAlign = ContentAlignment.MiddleCenter
+        paymentForm.Controls.Add(lblCustomerInfo)
+
+        ' Total amount display
+        Dim lblTotal As New Label()
+        lblTotal.Text = $"Total Amount: ₱{totalAmount:F2}"
+        lblTotal.Font = New Font("Poppins", 16, FontStyle.Bold)
+        lblTotal.ForeColor = SuccessGreen
+        lblTotal.Location = New Point(20, 100)
+        lblTotal.Size = New Size(560, 30)
+        lblTotal.TextAlign = ContentAlignment.MiddleCenter
+        paymentForm.Controls.Add(lblTotal)
+
+        ' Payment method buttons (centered)
+        Dim buttonStartX As Integer = (paymentForm.Width - (3 * 150 + 2 * 40)) / 2 ' 3 buttons with 40px spacing
+
+        ' Cash button
+        Dim btnCash As New Guna.UI2.WinForms.Guna2Button()
+        btnCash.Text = "💵" & vbCrLf & "Cash"
+        btnCash.Size = New Size(150, 100)
+        btnCash.Location = New Point(buttonStartX, 160)
+        btnCash.Font = New Font("Poppins", 12, FontStyle.Bold)
+        btnCash.ForeColor = DeepCharcoal
+        btnCash.FillColor = SuccessGreen
+        btnCash.BorderRadius = 15
+        btnCash.TextAlign = HorizontalAlignment.Center
+        AddHandler btnCash.Click, Sub()
+                                      selectedPaymentMethod = "Cash"
+                                      paymentReference = ""
+                                      paymentForm.DialogResult = DialogResult.OK
+                                      paymentForm.Close()
+                                  End Sub
+        AddHandler btnCash.MouseEnter, Sub() btnCash.FillColor = GoldenYellow
+        AddHandler btnCash.MouseLeave, Sub() btnCash.FillColor = SuccessGreen
+        paymentForm.Controls.Add(btnCash)
+
+        ' GCash button
+        Dim btnGCash As New Guna.UI2.WinForms.Guna2Button()
+        btnGCash.Text = "📱" & vbCrLf & "GCash"
+        btnGCash.Size = New Size(150, 100)
+        btnGCash.Location = New Point(buttonStartX + 190, 160)
+        btnGCash.Font = New Font("Poppins", 12, FontStyle.Bold)
+        btnGCash.ForeColor = PureWhite
+        btnGCash.FillColor = Color.FromArgb(0, 120, 212) ' Blue for GCash
+        btnGCash.BorderRadius = 15
+        btnGCash.TextAlign = HorizontalAlignment.Center
+        AddHandler btnGCash.Click, Sub()
+                                       selectedPaymentMethod = "GCash"
+                                       paymentForm.DialogResult = DialogResult.Yes ' Special result for reference input
+                                       paymentForm.Close()
+                                   End Sub
+        AddHandler btnGCash.MouseEnter, Sub() btnGCash.FillColor = GoldenYellow
+        AddHandler btnGCash.MouseLeave, Sub() btnGCash.FillColor = Color.FromArgb(0, 120, 212)
+        paymentForm.Controls.Add(btnGCash)
+
+        ' Card button
+        Dim btnCard As New Guna.UI2.WinForms.Guna2Button()
+        btnCard.Text = "💳" & vbCrLf & "Card"
+        btnCard.Size = New Size(150, 100)
+        btnCard.Location = New Point(buttonStartX + 380, 160)
+        btnCard.Font = New Font("Poppins", 12, FontStyle.Bold)
+        btnCard.ForeColor = PureWhite
+        btnCard.FillColor = Color.FromArgb(138, 43, 226) ' Purple for Card
+        btnCard.BorderRadius = 15
+        btnCard.TextAlign = HorizontalAlignment.Center
+        AddHandler btnCard.Click, Sub()
+                                      selectedPaymentMethod = "Card"
+                                      paymentForm.DialogResult = DialogResult.Yes ' Special result for reference input
+                                      paymentForm.Close()
+                                  End Sub
+        AddHandler btnCard.MouseEnter, Sub() btnCard.FillColor = GoldenYellow
+        AddHandler btnCard.MouseLeave, Sub() btnCard.FillColor = Color.FromArgb(138, 43, 226)
+        paymentForm.Controls.Add(btnCard)
+
+        ' Action buttons
+        Dim btnBackToCustomer As New Guna.UI2.WinForms.Guna2Button()
+        btnBackToCustomer.Text = "← Back to Customer"
+        btnBackToCustomer.Size = New Size(180, 50)
+        btnBackToCustomer.Location = New Point(120, 320)
+        btnBackToCustomer.Font = New Font("Poppins", 11, FontStyle.Regular)
+        btnBackToCustomer.ForeColor = PureWhite
+        btnBackToCustomer.FillColor = SteelGray
+        btnBackToCustomer.BorderRadius = 12
+        AddHandler btnBackToCustomer.Click, Sub()
+                                                paymentForm.DialogResult = DialogResult.Retry ' Special result to go back
+                                                paymentForm.Close()
+                                            End Sub
+        AddHandler btnBackToCustomer.MouseEnter, Sub() btnBackToCustomer.FillColor = Graphite
+        AddHandler btnBackToCustomer.MouseLeave, Sub() btnBackToCustomer.FillColor = SteelGray
+        paymentForm.Controls.Add(btnBackToCustomer)
+
+        Dim btnCancel As New Guna.UI2.WinForms.Guna2Button()
+        btnCancel.Text = "Cancel"
+        btnCancel.Size = New Size(120, 50)
+        btnCancel.Location = New Point(320, 320)
+        btnCancel.Font = New Font("Poppins", 11, FontStyle.Regular)
+        btnCancel.ForeColor = PureWhite
+        btnCancel.FillColor = AlertRed
+        btnCancel.BorderRadius = 12
+        AddHandler btnCancel.Click, Sub()
+                                        paymentForm.DialogResult = DialogResult.Cancel
+                                        paymentForm.Close()
+                                    End Sub
+        AddHandler btnCancel.MouseEnter, Sub() btnCancel.FillColor = Color.FromArgb(200, 50, 50)
+        AddHandler btnCancel.MouseLeave, Sub() btnCancel.FillColor = AlertRed
+        paymentForm.Controls.Add(btnCancel)
+
+        ' Show modal and handle result
+        Dim result As DialogResult = paymentForm.ShowDialog()
+        paymentForm.Dispose()
+
+        Select Case result
+            Case DialogResult.OK
+                ' Cash payment - proceed to cash amount input
+                ShowCashAmountInputModal()
+
+            Case DialogResult.Yes
+                ' GCash/Card payment - show reference input first, then complete
+                If ShowReferenceInputModal() Then
+                    ' Reference entered successfully, complete the sale
+                    confirmBtn.PerformClick()
+                End If
+
+            Case DialogResult.Retry
+                ' Back to customer - show customer modal again
+                ShowCustomerInformationModal()
+
+            Case DialogResult.Cancel
+                ' Cancel - do nothing, return to normal state
+                Return
+        End Select
+    End Sub
+
+    ' NEW: Reference Input Modal for GCash/Card payments
+    Private Function ShowReferenceInputModal() As Boolean
+        ' Create reference input modal form
+        Dim refForm As New Form()
+        refForm.Text = $"{selectedPaymentMethod} Payment Reference"
+        refForm.Size = New Size(450, 300)
+        refForm.StartPosition = FormStartPosition.CenterParent
+        refForm.FormBorderStyle = FormBorderStyle.FixedDialog
+        refForm.MaximizeBox = False
+        refForm.MinimizeBox = False
+        refForm.BackColor = DarkSlate
+        refForm.ShowInTaskbar = False
+
+        ' Get total amount
+        Dim totalAmount As Decimal = 0D
+        If totalLbl IsNot Nothing Then
+            Decimal.TryParse(totalLbl.Text, totalAmount)
+        End If
+
+        ' Title
+        Dim lblTitle As New Label()
+        lblTitle.Text = $"{selectedPaymentMethod} Payment"
+        lblTitle.Font = New Font("Poppins", 16, FontStyle.Bold)
+        lblTitle.ForeColor = PureWhite
+        lblTitle.Location = New Point(20, 20)
+        lblTitle.Size = New Size(410, 30)
+        lblTitle.TextAlign = ContentAlignment.MiddleCenter
+        refForm.Controls.Add(lblTitle)
+
+        ' Total amount display
+        Dim lblTotal As New Label()
+        lblTotal.Text = $"Total: ₱{totalAmount:F2}"
+        lblTotal.Font = New Font("Poppins", 14, FontStyle.Bold)
+        lblTotal.ForeColor = GoldenYellow
+        lblTotal.Location = New Point(20, 60)
+        lblTotal.Size = New Size(410, 25)
+        lblTotal.TextAlign = ContentAlignment.MiddleCenter
+        refForm.Controls.Add(lblTotal)
+
+        ' Reference input
+        Dim lblReference As New Label()
+        lblReference.Text = "Enter Reference Number:"
+        lblReference.Font = New Font("Poppins", 12, FontStyle.Regular)
+        lblReference.ForeColor = PureWhite
+        lblReference.Location = New Point(30, 110)
+        lblReference.Size = New Size(200, 25)
+        refForm.Controls.Add(lblReference)
+
+        Dim txtReference As New Guna.UI2.WinForms.Guna2TextBox()
+        txtReference.Size = New Size(390, 40)
+        txtReference.Location = New Point(30, 140)
+        txtReference.PlaceholderText = "Enter transaction reference number"
+        txtReference.Font = New Font("Poppins", 12, FontStyle.Regular)
+        txtReference.BorderRadius = 8
+        txtReference.FillColor = PureWhite
+        txtReference.ForeColor = DeepCharcoal
+        refForm.Controls.Add(txtReference)
+
+        ' Action buttons
+        Dim btnComplete As New Guna.UI2.WinForms.Guna2Button()
+        btnComplete.Text = "Complete Payment"
+        btnComplete.Size = New Size(180, 50)
+        btnComplete.Location = New Point(240, 200)
+        btnComplete.Font = New Font("Poppins", 12, FontStyle.Bold)
+        btnComplete.ForeColor = DeepCharcoal
+        btnComplete.FillColor = SuccessGreen
+        btnComplete.BorderRadius = 12
+        AddHandler btnComplete.Click, Sub()
+                                          If String.IsNullOrWhiteSpace(txtReference.Text) Then
+                                              MessageBox.Show("Please enter a reference number.", "Missing Reference", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                                              Return
+                                          End If
+                                          paymentReference = txtReference.Text.Trim()
+                                          refForm.DialogResult = DialogResult.OK
+                                          refForm.Close()
+                                      End Sub
+        AddHandler btnComplete.MouseEnter, Sub() btnComplete.FillColor = GoldenYellow
+        AddHandler btnComplete.MouseLeave, Sub() btnComplete.FillColor = SuccessGreen
+        refForm.Controls.Add(btnComplete)
+
+        Dim btnBack As New Guna.UI2.WinForms.Guna2Button()
+        btnBack.Text = "← Back"
+        btnBack.Size = New Size(120, 50)
+        btnBack.Location = New Point(100, 200)
+        btnBack.Font = New Font("Poppins", 12, FontStyle.Regular)
+        btnBack.ForeColor = PureWhite
+        btnBack.FillColor = SteelGray
+        btnBack.BorderRadius = 12
+        AddHandler btnBack.Click, Sub()
+                                      refForm.DialogResult = DialogResult.Cancel
+                                      refForm.Close()
+                                  End Sub
+        AddHandler btnBack.MouseEnter, Sub() btnBack.FillColor = Graphite
+        AddHandler btnBack.MouseLeave, Sub() btnBack.FillColor = SteelGray
+        refForm.Controls.Add(btnBack)
+
+        ' Show modal and return result
+        Dim result As Boolean = refForm.ShowDialog() = DialogResult.OK
+        refForm.Dispose()
+
+        If Not result Then
+            ' User cancelled, go back to payment method selection
+            ShowPaymentMethodModal()
+        End If
+
+        Return result
+    End Function
+
+    ' NEW: Cash Amount Input Modal
+    ' ENHANCED: Cash Amount Input Modal with improved spacing and keyboard support
+    Private Sub ShowCashAmountInputModal()
+        ' Create cash amount input modal form
+        Dim cashForm As New Form()
+        cashForm.Text = "Cash Payment"
+        cashForm.Size = New Size(500, 850) ' Increased size for better spacing
+        cashForm.StartPosition = FormStartPosition.CenterParent
+        cashForm.FormBorderStyle = FormBorderStyle.FixedDialog
+        cashForm.MaximizeBox = False
+        cashForm.MinimizeBox = False
+        cashForm.BackColor = DarkSlate
+        cashForm.ShowInTaskbar = False
+        cashForm.KeyPreview = True ' Enable keyboard input for the form
+
+        ' Get total amount
+        Dim totalAmount As Decimal = 0D
+        If totalLbl IsNot Nothing Then
+            Decimal.TryParse(totalLbl.Text, totalAmount)
+        End If
+
+        ' Header section with improved spacing
+        Dim headerSection As New Panel()
+        headerSection.Size = New Size(460, 120)
+        headerSection.Location = New Point(20, 20)
+        headerSection.BackColor = Color.Transparent
+        cashForm.Controls.Add(headerSection)
+
+        ' Title with better typography
+        Dim lblTitle As New Label()
+        lblTitle.Text = "CASH PAYMENT"
+        lblTitle.Font = New Font("Poppins", 18, FontStyle.Bold)
+        lblTitle.ForeColor = PureWhite
+        lblTitle.Location = New Point(0, 0)
+        lblTitle.Size = New Size(460, 35)
+        lblTitle.TextAlign = ContentAlignment.MiddleCenter
+        headerSection.Controls.Add(lblTitle)
+
+        ' Customer info with better spacing
+        Dim lblCustomer As New Label()
+        lblCustomer.Text = $"Customer: {selectedCustomerName}"
+        lblCustomer.Font = New Font("Poppins", 12, FontStyle.Regular)
+        lblCustomer.ForeColor = GoldenYellow
+        lblCustomer.Location = New Point(0, 40)
+        lblCustomer.Size = New Size(460, 25)
+        lblCustomer.TextAlign = ContentAlignment.MiddleCenter
+        headerSection.Controls.Add(lblCustomer)
+
+        ' Order total display
+        Dim lblOrderTotal As New Label()
+        lblOrderTotal.Text = $"Total Due: ₱{totalAmount:F2}"
+        lblOrderTotal.Font = New Font("Poppins", 14, FontStyle.Bold)
+        lblOrderTotal.ForeColor = LightSilver
+        lblOrderTotal.Location = New Point(0, 70)
+        lblOrderTotal.Size = New Size(460, 30)
+        lblOrderTotal.TextAlign = ContentAlignment.MiddleCenter
+        headerSection.Controls.Add(lblOrderTotal)
+
+        ' Separator line
+        Dim separator As New Panel()
+        separator.Size = New Size(420, 2)
+        separator.Location = New Point(40, 155)
+        separator.BackColor = RichOlive
+        cashForm.Controls.Add(separator)
+
+        ' Amount display section with improved spacing
+        Dim amountSection As New Panel()
+        amountSection.Size = New Size(460, 140)
+        amountSection.Location = New Point(20, 170)
+        amountSection.BackColor = Color.Transparent
+        cashForm.Controls.Add(amountSection)
+
+        ' Amount received label
+        Dim lblAmountReceived As New Label()
+        lblAmountReceived.Text = "Amount Received"
+        lblAmountReceived.Font = New Font("Poppins", 12, FontStyle.Regular)
+        lblAmountReceived.ForeColor = LightSilver
+        lblAmountReceived.Location = New Point(0, 0)
+        lblAmountReceived.Size = New Size(460, 25)
+        lblAmountReceived.TextAlign = ContentAlignment.MiddleCenter
+        amountSection.Controls.Add(lblAmountReceived)
+
+        ' Amount display
+        enteredAmount = "" ' Reset amount
+        lblAmountDisplay = New Guna.UI2.WinForms.Guna2HtmlLabel()
+        lblAmountDisplay.Text = "₱0.00"
+        lblAmountDisplay.Font = New Font("Segoe UI", 32, FontStyle.Bold)
+        lblAmountDisplay.ForeColor = GoldenYellow
+        lblAmountDisplay.AutoSize = True
+        lblAmountDisplay.Location = New Point((460 - 150) / 2, 35) ' Will be repositioned by UpdateAmountDisplay
+        amountSection.Controls.Add(lblAmountDisplay)
+
+        ' Change display with better layout
+        Dim changeSection As New Panel()
+        changeSection.Size = New Size(460, 50)
+        changeSection.Location = New Point(20, 300)
+        changeSection.BackColor = Color.Transparent
+        cashForm.Controls.Add(changeSection)
+
+        Dim lblChangeLabel As New Label()
+        lblChangeLabel.Text = "Change:"
+        lblChangeLabel.Font = New Font("Poppins", 12, FontStyle.Regular)
+        lblChangeLabel.ForeColor = PureWhite
+        lblChangeLabel.Location = New Point(100, 10)
+        lblChangeLabel.Size = New Size(100, 25)
+        changeSection.Controls.Add(lblChangeLabel)
+
+        Dim lblChangeAmount As New Label()
+        lblChangeAmount.Text = "₱0.00"
+        lblChangeAmount.Font = New Font("Poppins", 14, FontStyle.Bold)
+        lblChangeAmount.ForeColor = SuccessGreen
+        lblChangeAmount.Location = New Point(240, 10)
+        lblChangeAmount.Size = New Size(200, 55)
+        changeSection.Controls.Add(lblChangeAmount)
+
+        ' Update amount display function for this modal
+        Dim UpdateCashAmountDisplay = Sub()
+                                          ' Format as decimal with two places
+                                          Dim displayValue As Decimal = 0D
+                                          Dim amountText As String = enteredAmount
+
+                                          ' Handle decimal formatting
+                                          If amountText.Contains(".") Then
+                                              ' User entered a decimal point
+                                              If Decimal.TryParse(amountText, displayValue) Then
+                                                  lblAmountDisplay.Text = $"₱{displayValue:F2}"
+                                              Else
+                                                  lblAmountDisplay.Text = "₱0.00"
+                                              End If
+                                          Else
+                                              ' No decimal point, treat as cents
+                                              If amountText.Length = 0 Then
+                                                  displayValue = 0
+                                              ElseIf Decimal.TryParse(amountText, displayValue) Then
+                                                  displayValue = displayValue / 100
+                                              End If
+                                              lblAmountDisplay.Text = $"₱{displayValue:F2}"
+                                          End If
+
+                                          ' Center the amount display
+                                          lblAmountDisplay.Location = New Point((460 - lblAmountDisplay.Width) / 2, 35)
+
+                                          ' Update change calculation
+                                          Dim changeVal As Decimal = displayValue - totalAmount
+                                          lblChangeAmount.Text = $"₱{changeVal:F2}"
+                                          lblChangeAmount.ForeColor = If(changeVal >= 0, SuccessGreen, AlertRed)
+                                      End Sub
+
+        ' Keypad section with improved spacing
+        Dim keypadSection As New Panel()
+        keypadSection.Size = New Size(460, 240)
+        keypadSection.Location = New Point(20, 350)
+        keypadSection.BackColor = Color.Transparent
+        cashForm.Controls.Add(keypadSection)
+
+        ' Keypad buttons with better spacing
+        Dim buttonSize As Integer = 70
+        Dim buttonSpacing As Integer = 15
+        Dim buttonStartX As Integer = (460 - (buttonSize * 3 + buttonSpacing * 2)) / 2
+        Dim buttonStartY As Integer = 0
+        Dim buttonTexts As String() = {"1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "⌫"}
+
+        For i = 0 To buttonTexts.Length - 1
+            Dim button As New Guna.UI2.WinForms.Guna2Button()
+            button.Size = New Size(buttonSize, buttonSize)
+            button.BorderRadius = 12
+            button.FillColor = SteelGray
+            button.ForeColor = PureWhite
+            button.Font = New Font("Poppins", 14, FontStyle.Bold)
+            button.Text = buttonTexts(i)
+            button.BorderThickness = 1
+            button.BorderColor = Graphite
+
+            ' Special styling for backspace button
+            If button.Text = "⌫" Then
+                button.FillColor = AlertRed
+                button.BorderColor = AlertRed
+            End If
+
+            ' Add hover effect
+            AddHandler button.MouseEnter, Sub()
+                                              If button.Text = "⌫" Then
+                                                  button.FillColor = Color.FromArgb(220, 60, 75)
+                                              Else
+                                                  button.FillColor = GoldenYellow
+                                                  button.ForeColor = DeepCharcoal
+                                              End If
+                                          End Sub
+            AddHandler button.MouseLeave, Sub()
+                                              If button.Text = "⌫" Then
+                                                  button.FillColor = AlertRed
+                                                  button.ForeColor = PureWhite
+                                              Else
+                                                  button.FillColor = SteelGray
+                                                  button.ForeColor = PureWhite
+                                              End If
+                                          End Sub
+
+            Dim row = i \ 3
+            Dim col = i Mod 3
+            button.Location = New Point(buttonStartX + col * (buttonSize + buttonSpacing), buttonStartY + row * (buttonSize + buttonSpacing))
+
+            AddHandler button.Click, Sub(sender As Object, e As EventArgs)
+                                         Dim btn As Guna.UI2.WinForms.Guna2Button = CType(sender, Guna.UI2.WinForms.Guna2Button)
+                                         ProcessKeypadInput(btn.Text, UpdateCashAmountDisplay)
+                                     End Sub
+            keypadSection.Controls.Add(button)
+        Next
+
+        ' Quick amount buttons section
+        Dim quickAmountSection As New Panel()
+        quickAmountSection.Size = New Size(460, 50)
+        quickAmountSection.Location = New Point(20, 600)
+        quickAmountSection.BackColor = Color.Transparent
+        cashForm.Controls.Add(quickAmountSection)
+
+        Dim btnExact As New Guna.UI2.WinForms.Guna2Button()
+        btnExact.Text = $"Exact Amount"
+        btnExact.Size = New Size(140, 40)
+        btnExact.Location = New Point(0, 5)
+        btnExact.Font = New Font("Poppins", 10, FontStyle.Bold)
+        btnExact.ForeColor = DeepCharcoal
+        btnExact.FillColor = LightSilver
+        btnExact.BorderRadius = 10
+        AddHandler btnExact.Click, Sub()
+                                       enteredAmount = totalAmount.ToString("F2")
+                                       If enteredAmount.Contains(".") Then
+                                           ' Keep decimal format for exact amounts
+                                       Else
+                                           enteredAmount = enteredAmount.Replace(".", "")
+                                           If enteredAmount.EndsWith("00") Then
+                                               enteredAmount = enteredAmount.Substring(0, enteredAmount.Length - 2)
+                                           End If
+                                       End If
+                                       UpdateCashAmountDisplay()
+                                   End Sub
+        AddHandler btnExact.MouseEnter, Sub() btnExact.FillColor = GoldenYellow
+        AddHandler btnExact.MouseLeave, Sub() btnExact.FillColor = LightSilver
+        quickAmountSection.Controls.Add(btnExact)
+
+        ' Clear button
+        Dim btnClear As New Guna.UI2.WinForms.Guna2Button()
+        btnClear.Text = "Clear"
+        btnClear.Size = New Size(100, 40)
+        btnClear.Location = New Point(160, 5)
+        btnClear.Font = New Font("Poppins", 10, FontStyle.Bold)
+        btnClear.ForeColor = PureWhite
+        btnClear.FillColor = SteelGray
+        btnClear.BorderRadius = 10
+        AddHandler btnClear.Click, Sub()
+                                       enteredAmount = ""
+                                       UpdateCashAmountDisplay()
+                                   End Sub
+        AddHandler btnClear.MouseEnter, Sub() btnClear.FillColor = Graphite
+        AddHandler btnClear.MouseLeave, Sub() btnClear.FillColor = SteelGray
+        quickAmountSection.Controls.Add(btnClear)
+
+        ' Action buttons section
+        Dim actionSection As New Panel()
+        actionSection.Size = New Size(460, 60)
+        actionSection.Location = New Point(20, 660)
+        actionSection.BackColor = Color.Transparent
+        cashForm.Controls.Add(actionSection)
+
+        Dim btnComplete As New Guna.UI2.WinForms.Guna2Button()
+        btnComplete.Text = "Complete Sale"
+        btnComplete.Size = New Size(160, 50)
+        btnComplete.Location = New Point(280, 5)
+        btnComplete.Font = New Font("Poppins", 12, FontStyle.Bold)
+        btnComplete.ForeColor = DeepCharcoal
+        btnComplete.FillColor = SuccessGreen
+        btnComplete.BorderRadius = 12
+        AddHandler btnComplete.Click, Sub()
+                                          Dim receivedAmount As Decimal = 0D
+                                          Dim amountText As String = lblAmountDisplay.Text.Replace("₱", "")
+                                          If Not Decimal.TryParse(amountText, receivedAmount) OrElse receivedAmount < totalAmount Then
+                                              MessageBox.Show("Amount received must be greater than or equal to order total.", "Payment Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                                              Return
+                                          End If
+                                          cashForm.DialogResult = DialogResult.OK
+                                          cashForm.Close()
+                                      End Sub
+        AddHandler btnComplete.MouseEnter, Sub() btnComplete.FillColor = GoldenYellow
+        AddHandler btnComplete.MouseLeave, Sub() btnComplete.FillColor = SuccessGreen
+        actionSection.Controls.Add(btnComplete)
+
+        Dim btnBack As New Guna.UI2.WinForms.Guna2Button()
+        btnBack.Text = "← Back"
+        btnBack.Size = New Size(120, 50)
+        btnBack.Location = New Point(40, 5)
+        btnBack.Font = New Font("Poppins", 11, FontStyle.Regular)
+        btnBack.ForeColor = PureWhite
+        btnBack.FillColor = SteelGray
+        btnBack.BorderRadius = 12
+        AddHandler btnBack.Click, Sub()
+                                      cashForm.DialogResult = DialogResult.Cancel
+                                      cashForm.Close()
+                                  End Sub
+        AddHandler btnBack.MouseEnter, Sub() btnBack.FillColor = Graphite
+        AddHandler btnBack.MouseLeave, Sub() btnBack.FillColor = SteelGray
+        actionSection.Controls.Add(btnBack)
+
+        Dim btnCancel As New Guna.UI2.WinForms.Guna2Button()
+        btnCancel.Text = "Cancel"
+        btnCancel.Size = New Size(120, 50)
+        btnCancel.Location = New Point(170, 5)
+        btnCancel.Font = New Font("Poppins", 11, FontStyle.Regular)
+        btnCancel.ForeColor = PureWhite
+        btnCancel.FillColor = AlertRed
+        btnCancel.BorderRadius = 12
+        AddHandler btnCancel.Click, Sub()
+                                        cashForm.DialogResult = DialogResult.Abort
+                                        cashForm.Close()
+                                    End Sub
+        AddHandler btnCancel.MouseEnter, Sub() btnCancel.FillColor = Color.FromArgb(200, 50, 50)
+        AddHandler btnCancel.MouseLeave, Sub() btnCancel.FillColor = AlertRed
+        actionSection.Controls.Add(btnCancel)
+
+        ' ENHANCED: Add comprehensive keyboard support
+        AddHandler cashForm.KeyDown, Sub(sender As Object, e As KeyEventArgs)
+                                         ' Handle number keys (0-9)
+                                         If (e.KeyCode >= Keys.D0 AndAlso e.KeyCode <= Keys.D9) OrElse
+                                         (e.KeyCode >= Keys.NumPad0 AndAlso e.KeyCode <= Keys.NumPad9) Then
+                                             Dim digit As String = ""
+                                             If e.KeyCode >= Keys.D0 AndAlso e.KeyCode <= Keys.D9 Then
+                                                 digit = (e.KeyCode - Keys.D0).ToString()
+                                             Else
+                                                 digit = (e.KeyCode - Keys.NumPad0).ToString()
+                                             End If
+                                             ProcessKeypadInput(digit, UpdateCashAmountDisplay)
+                                             e.Handled = True
+
+                                             ' Handle decimal point
+                                         ElseIf e.KeyCode = Keys.Decimal OrElse e.KeyCode = Keys.OemPeriod Then
+                                             ProcessKeypadInput(".", UpdateCashAmountDisplay)
+                                             e.Handled = True
+
+                                             ' Handle backspace/delete
+                                         ElseIf e.KeyCode = Keys.Back OrElse e.KeyCode = Keys.Delete Then
+                                             ProcessKeypadInput("⌫", UpdateCashAmountDisplay)
+                                             e.Handled = True
+
+                                             ' Handle Enter key to complete payment
+                                         ElseIf e.KeyCode = Keys.Enter Then
+                                             btnComplete.PerformClick()
+                                             e.Handled = True
+
+                                             ' Handle Escape to cancel
+                                         ElseIf e.KeyCode = Keys.Escape Then
+                                             btnBack.PerformClick()
+                                             e.Handled = True
+
+                                             ' Handle C key for clear
+                                         ElseIf e.KeyCode = Keys.C Then
+                                             btnClear.PerformClick()
+                                             e.Handled = True
+
+                                             ' Handle E key for exact amount
+                                         ElseIf e.KeyCode = Keys.E Then
+                                             btnExact.PerformClick()
+                                             e.Handled = True
+                                         End If
+                                     End Sub
+
+        ' Initial amount display update
+        UpdateCashAmountDisplay()
+
+        ' Show modal and handle result
+        Dim result As DialogResult = cashForm.ShowDialog()
+        cashForm.Dispose()
+
+        Select Case result
+            Case DialogResult.OK
+                ' Complete the sale with cash payment
+                confirmBtn.PerformClick()
+
+            Case DialogResult.Cancel
+                ' Back to payment method selection
+                ShowPaymentMethodModal()
+
+            Case DialogResult.Abort
+                ' Cancel completely - return to normal state
+                Return
+        End Select
+    End Sub
+
+    ' HELPER: Process keypad input consistently
+    Private Sub ProcessKeypadInput(input As String, updateCallback As Action)
+        Select Case input
+            Case "⌫" ' Backspace
+                If enteredAmount.Length > 0 Then
+                    enteredAmount = enteredAmount.Substring(0, enteredAmount.Length - 1)
+                End If
+
+            Case "." ' Decimal point
+                ' Allow only one decimal point and only if there are digits
+                If Not enteredAmount.Contains(".") AndAlso enteredAmount.Length > 0 Then
+                    enteredAmount &= "."
+                End If
+
+            Case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" ' Digits
+                If enteredAmount.Length < 12 Then ' Prevent overflow
+                    enteredAmount &= input
+                End If
+        End Select
+
+        ' Call the update callback
+        updateCallback()
+    End Sub
+
+    ' REMOVE/COMMENT OUT the old panel-based methods:
+    ' - ShowCustomerDetailsPanel()
+    ' - ShowPaymentMethodSelectionModal() (the old one)
+    ' - ShowReferenceInputPanel()
+    ' - ShowCustomerSelectionPanel()
+    ' - UpdateCustomerTypeButtons()
+
+    ' Keep the existing confirmBtn_Click, UpdateAmountDisplay, and other core functionality unchanged
+    Private Sub UpdateCustomerTypeButtons()
+        ' This will be handled by the lambda function in ShowCustomerDetailsPanel
+        ' Just here for reference
     End Sub
 
     Private Sub ShowCustomerSelectionPanel()
@@ -1310,6 +2348,11 @@ Public Class Sales
     End Sub
 
     Private Sub UpdateAmountDisplay()
+        ' Check if lblAmountDisplay exists before using it
+        If lblAmountDisplay Is Nothing Then
+            Return ' Exit if lblAmountDisplay hasn't been created yet
+        End If
+
         ' Format as decimal with two places
         Dim displayValue As Decimal = 0D
         Dim amountText As String = enteredAmount
@@ -1528,76 +2571,100 @@ Public Class Sales
             If totalLbl IsNot Nothing Then
                 Decimal.TryParse(totalLbl.Text, orderTotal)
             End If
-            If lblAmountDisplay IsNot Nothing Then
-                Decimal.TryParse(lblAmountDisplay.Text, receivedAmount)
-            End If
 
-            If receivedAmount < orderTotal Then
-                MessageBox.Show("Total received must be greater than or equal to order total.", "Payment Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
-                Return
-            End If
-
-            If totalRLbl IsNot Nothing Then
-                totalRLbl.Text = lblAmountDisplay.Text
+            ' For Cash payment, get received amount; for others, use exact amount
+            If selectedPaymentMethod = "Cash" Then
+                If lblAmountDisplay IsNot Nothing Then
+                    Decimal.TryParse(lblAmountDisplay.Text, receivedAmount)
+                End If
+                If receivedAmount < orderTotal Then
+                    MessageBox.Show("Total received must be greater than or equal to order total.", "Payment Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                    Return
+                End If
+            Else
+                receivedAmount = orderTotal ' Exact amount for non-cash payments
             End If
 
             ' Get userId from logged-in username
             Dim userIdQuery As String = "SELECT UserID FROM Users WHERE Username = @Username"
             Dim userIdParams As SqlParameter() = {
-                New SqlParameter("@Username", frmLoginvb.LoggedInUsername)
-            }
+            New SqlParameter("@Username", frmLoginvb.LoggedInUsername)
+        }
             Dim userIdResult = Utilities.ExecuteScalar(userIdQuery, userIdParams)
 
             If userIdResult Is Nothing OrElse IsDBNull(userIdResult) Then
                 MessageBox.Show("Invalid user session. Please log in again.", "Authentication Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-                frmLoginvb.Show()
-                Me.Hide()
                 Return
             End If
 
             Dim userId As Integer = Convert.ToInt32(userIdResult)
-
-            ' Calculate change
             Dim changeAmount As Decimal = receivedAmount - orderTotal
 
-            ' Insert sale record with customer information
-            Dim saleQuery As String = "INSERT INTO Sales (CustomerID, UserID, SaleDate, TotalAmount, DiscountAmount, TaxAmount, Status, CustomerName, CustomerPhone, CustomerEmail, AmountReceived, ChangeAmount) OUTPUT INSERTED.SaleID VALUES (@CustomerID, @UserID, @SaleDate, @TotalAmount, @DiscountAmount, @TaxAmount, @Status, @CustomerName, @CustomerPhone, @CustomerEmail, @AmountReceived, @ChangeAmount)"
+            ' Create JSON data structure
+            Dim saleData As New Dictionary(Of String, Object) From {
+            {"customer", New Dictionary(Of String, Object) From {
+                {"name", selectedCustomerName},
+                {"phone", selectedCustomerPhone},
+                {"email", selectedCustomerEmail}
+            }},
+            {"payment", New Dictionary(Of String, Object) From {
+                {"method", selectedPaymentMethod},
+                {"reference", If(String.IsNullOrEmpty(paymentReference), Nothing, paymentReference)},
+                {"subtotal", orderTotal / 1.12D},
+                {"discount", New Dictionary(Of String, Object) From {
+                    {"type", discountType},
+                    {"value", discountValue},
+                    {"amount", discountAmount}
+                }},
+                {"tax", orderTotal - (orderTotal / 1.12D)},
+                {"total", orderTotal},
+                {"received", receivedAmount},
+                {"change", changeAmount}
+            }},
+            {"items", currentOrderList},
+            {"cashier", frmLoginvb.LoggedInUsername},
+            {"saleDate", DateTime.Now}
+        }
+
+            ' Convert to JSON
+            Dim jsonData As String = Newtonsoft.Json.JsonConvert.SerializeObject(saleData, Newtonsoft.Json.Formatting.Indented)
+
+            ' Insert sale record with JSON data
+            Dim saleQuery As String = "INSERT INTO Sales (UserID, SaleDate, TotalAmount, AmountPaid, PaymentMethod, SalesData, Status, Reference) OUTPUT INSERTED.SaleID VALUES (@UserID, @SaleDate, @TotalAmount, @AmountPaid, @PaymentMethod, @SalesData, @Status, @Reference)"
             Dim saleParams As SqlParameter() = {
-                New SqlParameter("@CustomerID", If(selectedCustomerId.HasValue, selectedCustomerId.Value, DBNull.Value)),
-                New SqlParameter("@UserID", userId),
-                New SqlParameter("@SaleDate", DateTime.Now),
-                New SqlParameter("@TotalAmount", orderTotal),
-                New SqlParameter("@DiscountAmount", discountAmount),
-                New SqlParameter("@TaxAmount", orderTotal - (orderTotal / 1.12D)),
-                New SqlParameter("@Status", "Completed"),
-                New SqlParameter("@CustomerName", selectedCustomerName),
-                New SqlParameter("@CustomerPhone", If(String.IsNullOrEmpty(selectedCustomerPhone), DBNull.Value, selectedCustomerPhone)),
-                New SqlParameter("@CustomerEmail", If(String.IsNullOrEmpty(selectedCustomerEmail), DBNull.Value, selectedCustomerEmail)),
-                New SqlParameter("@AmountReceived", receivedAmount),
-                New SqlParameter("@ChangeAmount", changeAmount)
-            }
+            New SqlParameter("@UserID", userId),
+            New SqlParameter("@SaleDate", DateTime.Now),
+            New SqlParameter("@TotalAmount", orderTotal),
+            New SqlParameter("@AmountPaid", receivedAmount),
+            New SqlParameter("@PaymentMethod", selectedPaymentMethod),
+            New SqlParameter("@SalesData", jsonData),
+            New SqlParameter("@Status", "Completed"),
+            New SqlParameter("@Reference", If(String.IsNullOrEmpty(paymentReference), DBNull.Value, paymentReference))
+        }
 
             Dim saleId As Integer = Convert.ToInt32(Utilities.ExecuteScalar(saleQuery, saleParams))
 
-            ' Insert sale items and update stock
+            ' Update product stock - FIXED: Use correct column names for SaleItems table
             For Each item In currentOrderList
-                ' Insert sale item
-                Dim itemQuery As String = "INSERT INTO SaleItems (SaleID, ProductID, Quantity, UnitPrice, TotalPrice) VALUES (@SaleID, @ProductID, @Quantity, @UnitPrice, @TotalPrice)"
+                Dim unitPrice As Decimal = Convert.ToDecimal(item("Price")) * CInt(item("Quantity"))
+                Dim quantity As Integer = CInt(item("Quantity"))
+
+                ' Insert sale item - REMOVED TotalPrice parameter since it's a computed column
+                Dim itemQuery As String = "INSERT INTO SaleItems (SaleID, ProductID, Quantity, UnitPrice) VALUES (@SaleID, @ProductID, @Quantity, @UnitPrice)"
                 Dim itemParams As SqlParameter() = {
-                    New SqlParameter("@SaleID", saleId),
-                    New SqlParameter("@ProductID", item("ProductID")),
-                    New SqlParameter("@Quantity", item("Quantity")),
-                    New SqlParameter("@UnitPrice", item("Price")),
-                    New SqlParameter("@TotalPrice", Convert.ToDecimal(item("Price")) * CInt(item("Quantity")))
-                }
+                New SqlParameter("@SaleID", saleId),
+                New SqlParameter("@ProductID", item("ProductID")),
+                New SqlParameter("@Quantity", quantity),
+                New SqlParameter("@UnitPrice", unitPrice)
+            }
                 Utilities.ExecuteNonQuery(itemQuery, itemParams)
 
                 ' Update product stock
                 Dim stockQuery As String = "UPDATE Products SET CurrentStock = CurrentStock - @Quantity WHERE ProductID = @ProductID"
                 Dim stockParams As SqlParameter() = {
-                    New SqlParameter("@Quantity", item("Quantity")),
-                    New SqlParameter("@ProductID", item("ProductID"))
-                }
+                New SqlParameter("@Quantity", quantity),
+                New SqlParameter("@ProductID", item("ProductID"))
+            }
                 Utilities.ExecuteNonQuery(stockQuery, stockParams)
             Next
 
@@ -1614,23 +2681,21 @@ Public Class Sales
             ' Print receipt
             PrintReceipt()
 
-            ' Build order details for audit log
-            Dim orderDetails As New List(Of String)()
-            For Each item In currentOrderList
-                orderDetails.Add($"{item("ProductName")} x{item("Quantity")} = ₱{Convert.ToDecimal(item("Price")) * CInt(item("Quantity")):F2}")
-            Next
-
-            ' Insert comprehensive audit log
-            Dim auditDetails As String = $"Sale ID: {saleId}, Customer: {selectedCustomerName}, Items: [{String.Join(", ", orderDetails)}], Subtotal: ₱{receiptSubtotal:F2}"
-            If discountAmount > 0 Then
-                auditDetails += $", Discount ({discountType}): -₱{discountAmount:F2}"
+            ' Log the transaction
+            Dim auditDetails As String = $"Sale ID: {saleId}, Payment: {selectedPaymentMethod}"
+            If Not String.IsNullOrEmpty(paymentReference) Then
+                auditDetails += $", Ref: {paymentReference}"
             End If
-            auditDetails += $", Tax: ₱{receiptTax:F2}, Total: ₱{orderTotal:F2}, Received: ₱{receivedAmount:F2}, Change: ₱{changeAmount:F2}"
+            auditDetails += $", Total: ₱{orderTotal:F2}, Received: ₱{receivedAmount:F2}"
 
             Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Sale Completed", auditDetails)
 
             ' Show success message
-            MessageBox.Show($"Sale completed successfully! Sale ID: {saleId}{Environment.NewLine}Customer: {selectedCustomerName}", "Sale Completed", MessageBoxButtons.OK, MessageBoxIcon.Information)
+            Dim successMessage As String = $"Sale completed successfully! Sale ID: {saleId}{Environment.NewLine}Payment Method: {selectedPaymentMethod}"
+            If Not String.IsNullOrEmpty(paymentReference) Then
+                successMessage += $"{Environment.NewLine}Reference: {paymentReference}"
+            End If
+            MessageBox.Show(successMessage, "Sale Completed", MessageBoxButtons.OK, MessageBoxIcon.Information)
 
             ' Reset for next sale
             ResetSale()
@@ -1670,54 +2735,65 @@ Public Class Sales
         selectedCustomerName = "Walk-in Customer"
         selectedCustomerPhone = ""
         selectedCustomerEmail = ""
+        selectedCustomerType = "Walk-in"
+
+        ' Reset payment info
+        selectedPaymentMethod = "Cash"
+        paymentReference = ""
 
         ' Reset discount
         discountAmount = 0
         discountType = "None"
         discountValue = 0
 
-        ' Clear panels
-        If totalReceivedPanel IsNot Nothing AndAlso Me.Controls.Contains(totalReceivedPanel) Then
-            Me.Controls.Remove(totalReceivedPanel)
-            totalReceivedPanel = Nothing
-        End If
+        ' Reset UI elements
+        If lblSubTotal IsNot Nothing Then lblSubTotal.Text = "0.00"
+        If taxLbl IsNot Nothing Then taxLbl.Text = "0.00"
+        If totalLbl IsNot Nothing Then totalLbl.Text = "0.00"
+        If totalRLbl IsNot Nothing Then totalRLbl.Text = "0.00"
+        lblChange.Text = "0.00"
 
+        ' Clear product cards
+        For Each card In productCardControls
+            If TypeOf card Is Guna.UI2.WinForms.Guna2Panel Then
+                card.Dispose()
+            End If
+        Next
+        productCardControls.Clear()
+
+        ' Reset category panel to initial state
+        CategoryPanel.Controls.Clear()
+        For Each control As Control In originalCategoryPanelControls
+            CategoryPanel.Controls.Add(control)
+        Next
+        AddNewCategoryButtonsFromDB()
+        ArrangeCategoryButtonsFlexWrap()
+
+        ' Reinitialize UI components
+        FocusBarcodeInputIfAllowed()
+        InitializeOrderId()
+
+        ' Clear any open panels
         If pinPanel IsNot Nothing AndAlso Me.Controls.Contains(pinPanel) Then
             Me.Controls.Remove(pinPanel)
+            pinPanel.Dispose()
             pinPanel = Nothing
         End If
 
-        ' Reset panel states
-        pinPanelActive = False
-        totalPanelActive = False
-
-        ' Reset displays
-        RefreshOrderDisplay()
-
-        ' Return to main category view
-        If backCategory.Visible Then
-            backCategory.PerformClick()
+        If totalReceivedPanel IsNot Nothing AndAlso Me.Controls.Contains(totalReceivedPanel) Then
+            Me.Controls.Remove(totalReceivedPanel)
+            totalReceivedPanel.Dispose()
+            totalReceivedPanel = Nothing
         End If
 
-        ' Reset entered amount
-        enteredAmount = ""
-
-        ' Update order ID for next sale
-        InitializeOrderId()
-
-        ' Update category counts
-        UpdateCategoryItemCounts()
-
-        ' Reset UI state
-        confirmBtn.Visible = False
-        btnPayment.Visible = True
-
-        ' Ensure orderSummaryPanel is visible and properly restored
-        If Not Me.Controls.Contains(orderSummaryPanel) Then
-            Me.Controls.Add(orderSummaryPanel)
+        If customerSelectionPanel IsNot Nothing AndAlso Me.Controls.Contains(customerSelectionPanel) Then
+            Me.Controls.Remove(customerSelectionPanel)
+            customerSelectionPanel.Dispose()
+            customerSelectionPanel = Nothing
         End If
-        orderSummaryPanel.Visible = True
-        orderSummaryPanel.BringToFront()
+
+        ' Re-enable form controls
+        Me.Enabled = True
     End Sub
 
     ' Initialize order ID display
