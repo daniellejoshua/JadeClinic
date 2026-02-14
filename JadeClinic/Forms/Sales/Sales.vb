@@ -72,25 +72,95 @@ Public Class Sales
 
     Private WithEvents txtBarcodeInput As New TextBox With {.Visible = True, .TabIndex = 0}
 
-    ' Dental Clinic Color Palette Constants
-    Private ReadOnly GoldenYellow As Color = Color.FromArgb(254, 191, 16)      ' #FECF10 - Primary brand color
-    Private ReadOnly RichOlive As Color = Color.FromArgb(190, 154, 48)         ' #BE9A30 - Secondary accent
-    Private ReadOnly DeepCharcoal As Color = Color.FromArgb(26, 29, 31)        ' #1A1D1F - Primary dark
-    Private ReadOnly DarkSlate As Color = Color.FromArgb(43, 47, 50)           ' #2B2F32 - Secondary dark
-    Private ReadOnly Graphite As Color = Color.FromArgb(61, 65, 69)            ' #3D4145 - Card background
-    Private ReadOnly SteelGray As Color = Color.FromArgb(74, 79, 84)           ' #4A4F54 - Interactive elements
-    Private ReadOnly PureWhite As Color = Color.FromArgb(255, 255, 255)        ' #FFFFFF - Text on dark
-    Private ReadOnly LightSilver As Color = Color.FromArgb(225, 229, 233)      ' #E1E5E9 - Secondary text
-    Private ReadOnly SuccessGreen As Color = Color.FromArgb(16, 216, 98)       ' #10D862 - Success states
-    Private ReadOnly AlertRed As Color = Color.FromArgb(255, 71, 87)           ' #FF4757 - Error/Alert states
-
     Private pinPanel As Guna.UI2.WinForms.Guna2Panel = Nothing ' Repurposed for customer selection
     Private totalReceivedPanel As Guna.UI2.WinForms.Guna2Panel = Nothing
+    ' Dynamic color properties that use the theme system
+    ' Dynamic color properties that use the CompanySettingsManager
+    Private ReadOnly Property GoldenYellow As Color
+        Get
+            Return CompanySettingsManager.Instance.GetColor("PrimaryColor")
+        End Get
+    End Property
+
+    Private ReadOnly Property RichOlive As Color
+        Get
+            Return CompanySettingsManager.Instance.GetColor("SecondaryColor")
+        End Get
+    End Property
+
+    Private ReadOnly Property DeepCharcoal As Color
+        Get
+            Return CompanySettingsManager.Instance.GetColor("BackgroundDark")
+        End Get
+    End Property
+
+    Private ReadOnly Property DarkSlate As Color
+        Get
+            Return CompanySettingsManager.Instance.GetColor("BackgroundMid")
+        End Get
+    End Property
+
+    Private ReadOnly Property Graphite As Color
+        Get
+            Return CompanySettingsManager.Instance.GetColor("BackgroundLight")
+        End Get
+    End Property
+
+    Private ReadOnly Property SteelGray As Color
+        Get
+            Return CompanySettingsManager.Instance.GetColor("InteractiveColor")
+        End Get
+    End Property
+
+    Private ReadOnly Property PureWhite As Color
+        Get
+            Return CompanySettingsManager.Instance.GetColor("TextPrimary")
+        End Get
+    End Property
+
+    Private ReadOnly Property LightSilver As Color
+        Get
+            Return CompanySettingsManager.Instance.GetColor("TextSecondary")
+        End Get
+    End Property
+
+    Private ReadOnly Property SuccessGreen As Color
+        Get
+            Return CompanySettingsManager.Instance.GetColor("SuccessColor")
+        End Get
+    End Property
+
+    Private ReadOnly Property AlertRed As Color
+        Get
+            Return CompanySettingsManager.Instance.GetColor("ErrorColor")
+        End Get
+    End Property
+    Private Sub ApplyCustomTheme()
+        ' 🔥 DEBUG: Show what colors are being loaded
+        CompanySettingsManager.Instance.DebugColorLoadingWithMessageBox()
+
+        Dim debugMsg As String = "Sales form color properties:" & vbCrLf
+        debugMsg &= $"PrimaryColor (GoldenYellow): {GoldenYellow}" & vbCrLf
+        debugMsg &= $"SecondaryColor (RichOlive): {RichOlive}" & vbCrLf
+        debugMsg &= $"BackgroundDark (DeepCharcoal): {DeepCharcoal}" & vbCrLf
+        debugMsg &= $"BackgroundMid (DarkSlate): {DarkSlate}" & vbCrLf
+        MessageBox.Show(debugMsg, "Sales Colors")
+
+        ' Apply colors using CompanySettingsManager directly
+        Me.BackColor = CompanySettingsManager.Instance.GetColor("BackgroundDark")
+        CategoryPanel.BorderColor = CompanySettingsManager.Instance.GetColor("PrimaryColor")
+        CategoryPanel.FillColor = CompanySettingsManager.Instance.GetColor("BackgroundMid")
+
+        ' Apply to navigation
+        DashboardPanel.FillColor = Color.White ' Keep navigation white
+
+        MessageBox.Show("Colors applied to Sales form!", "Theme Applied")
+    End Sub
 
     Private Sub Sales_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         Me.KeyPreview = True
         originalCategoryPanelControls = New List(Of Control)(CategoryPanel.Controls.Cast(Of Control)())
-
+        ApplyCustomTheme()
         ' Make form non-resizable
         Me.FormBorderStyle = FormBorderStyle.FixedDialog
         Me.MaximizeBox = False
@@ -3606,4 +3676,7 @@ Public Class Sales
         End If
     End Sub
 
+    Private Sub DashboardPanel_Paint(sender As Object, e As PaintEventArgs) Handles DashboardPanel.Paint
+
+    End Sub
 End Class

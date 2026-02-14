@@ -19,9 +19,89 @@ Public Class frmLoginvb
 
     Private pinInput As String = "" ' Class-level for consistency
 
+    ' Dynamic color properties that use the theme system
+    Private ReadOnly Property GoldenYellow As Color
+        Get
+            Return CompanySettingsManager.Instance.GetColor("PrimaryColor")
+        End Get
+    End Property
+
+    Private ReadOnly Property RichOlive As Color
+        Get
+            Return CompanySettingsManager.Instance.GetColor("SecondaryColor")
+        End Get
+    End Property
+
+    Private ReadOnly Property DeepCharcoal As Color
+        Get
+            Return CompanySettingsManager.Instance.GetColor("BackgroundDark")
+        End Get
+    End Property
+
+    Private ReadOnly Property DarkSlate As Color
+        Get
+            Return CompanySettingsManager.Instance.GetColor("BackgroundMid")
+        End Get
+    End Property
+
+    Private ReadOnly Property Graphite As Color
+        Get
+            Return CompanySettingsManager.Instance.GetColor("BackgroundLight")
+        End Get
+    End Property
+
+    Private ReadOnly Property SteelGray As Color
+        Get
+            Return CompanySettingsManager.Instance.GetColor("InteractiveColor")
+        End Get
+    End Property
+
+    Private ReadOnly Property PureWhite As Color
+        Get
+            Return CompanySettingsManager.Instance.GetColor("TextPrimary")
+        End Get
+    End Property
+
+    Private ReadOnly Property LightSilver As Color
+        Get
+            Return CompanySettingsManager.Instance.GetColor("TextSecondary")
+        End Get
+    End Property
+
+    Private ReadOnly Property SuccessGreen As Color
+        Get
+            Return CompanySettingsManager.Instance.GetColor("SuccessColor")
+        End Get
+    End Property
+
+    Private ReadOnly Property AlertRed As Color
+        Get
+            Return CompanySettingsManager.Instance.GetColor("ErrorColor")
+        End Get
+    End Property
+    Private Sub ApplyCustomTheme()
+        ' Apply colors using CompanySettingsManager directly
+        Me.BackColor = CompanySettingsManager.Instance.GetColor("BackgroundDark")  ' Deep Charcoal
+        Guna2Panel1.FillColor = CompanySettingsManager.Instance.GetColor("BackgroundMid")  ' Dark Slate
+        Guna2Panel1.BorderColor = CompanySettingsManager.Instance.GetColor("PrimaryColor")  ' Golden Yellow
+
+        ' Apply to buttons and labels
+        BtnLogin.FillColor = CompanySettingsManager.Instance.GetColor("PrimaryColor")  ' Golden Yellow
+        BtnLogin.ForeColor = CompanySettingsManager.Instance.GetColor("BackgroundDark")  ' Deep Charcoal
+        Guna2CheckBox1.ForeColor = CompanySettingsManager.Instance.GetColor("TextSecondary")  ' Light Silver
+        lblForgotPass.ForeColor = CompanySettingsManager.Instance.GetColor("TextSecondary")  ' Light Silver
+        Guna2HtmlLabel5.ForeColor = CompanySettingsManager.Instance.GetColor("TextPrimary")  ' Pure White
+
+        ' Apply to PictureBox1 (logo) - keep as is or adjust if needed
+        ' PictureBox1.BackColor = CompanySettingsManager.Instance.GetColor("BackgroundDark")
+
+        ' Debug message (optional - remove after testing)
+        MessageBox.Show("Theme applied to Login form!", "Theme Applied")
+    End Sub
     Private Sub frmLoginvb_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         Guna2Panel1.BorderRadius = 50
         Me.MaximizeBox = False
+        ApplyCustomTheme()
 
         ' Center Guna2Panel1
         Guna2Panel1.Left = (Me.ClientSize.Width - Guna2Panel1.Width) \ 2

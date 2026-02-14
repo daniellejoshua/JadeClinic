@@ -19,44 +19,44 @@ Partial Class Sales
 
     <System.Diagnostics.DebuggerStepThrough()>
     Private Sub InitializeComponent()
-        Dim CustomizableEdges41 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges42 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges29 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges30 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges31 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges32 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges33 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges34 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges35 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges36 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges37 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges38 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges39 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges40 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges43 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges44 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges51 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges52 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges45 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges46 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges47 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges48 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges49 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges50 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges53 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges54 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges55 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges56 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges13 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges14 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges1 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges2 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges3 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges4 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges5 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges6 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges7 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges8 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges9 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges10 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges11 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges12 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges15 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges16 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges23 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges24 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges17 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges18 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges19 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges20 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges21 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges22 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges25 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges26 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges27 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges28 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         LabelTitle = New Label()
         CategoryPanel = New Guna.UI2.WinForms.Guna2Panel()
         Label6 = New Label()
         Guna2HtmlLabel11 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2HtmlLabel12 = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        Me.CosmeticCatBtn = New Guna.UI2.WinForms.Guna2Button()
+        CosmeticCatBtn = New Guna.UI2.WinForms.Guna2Button()
         Label5 = New Label()
         Guna2HtmlLabel9 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2HtmlLabel10 = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        Me.EndoCatBtn = New Guna.UI2.WinForms.Guna2Button()
+        EndoCatBtn = New Guna.UI2.WinForms.Guna2Button()
         Label3 = New Label()
         Guna2HtmlLabel3 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2HtmlLabel4 = New Guna.UI2.WinForms.Guna2HtmlLabel()
@@ -64,15 +64,15 @@ Partial Class Sales
         Label2 = New Label()
         Guna2HtmlLabel5 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2HtmlLabel6 = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        Me.OrthoCatBtn = New Guna.UI2.WinForms.Guna2Button()
+        OrthoCatBtn = New Guna.UI2.WinForms.Guna2Button()
         Label4 = New Label()
         Guna2HtmlLabel7 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2HtmlLabel8 = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        Me.ConsumablesCatBtn = New Guna.UI2.WinForms.Guna2Button()
+        ConsumablesCatBtn = New Guna.UI2.WinForms.Guna2Button()
         Label1 = New Label()
         Guna2HtmlLabel1 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2HtmlLabel2 = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        Me.SurgeryCatBtn = New Guna.UI2.WinForms.Guna2Button()
+        SurgeryCatBtn = New Guna.UI2.WinForms.Guna2Button()
         orderSummaryPanel = New Guna.UI2.WinForms.Guna2Panel()
         lblOrderId = New Label()
         totalPanel = New Guna.UI2.WinForms.Guna2Panel()
@@ -121,11 +121,11 @@ Partial Class Sales
         CategoryPanel.Controls.Add(Label6)
         CategoryPanel.Controls.Add(Guna2HtmlLabel11)
         CategoryPanel.Controls.Add(Guna2HtmlLabel12)
-        CategoryPanel.Controls.Add(Me.CosmeticCatBtn)
+        CategoryPanel.Controls.Add(CosmeticCatBtn)
         CategoryPanel.Controls.Add(Label5)
         CategoryPanel.Controls.Add(Guna2HtmlLabel9)
         CategoryPanel.Controls.Add(Guna2HtmlLabel10)
-        CategoryPanel.Controls.Add(Me.EndoCatBtn)
+        CategoryPanel.Controls.Add(EndoCatBtn)
         CategoryPanel.Controls.Add(Label3)
         CategoryPanel.Controls.Add(Guna2HtmlLabel3)
         CategoryPanel.Controls.Add(Guna2HtmlLabel4)
@@ -133,21 +133,21 @@ Partial Class Sales
         CategoryPanel.Controls.Add(Label2)
         CategoryPanel.Controls.Add(Guna2HtmlLabel5)
         CategoryPanel.Controls.Add(Guna2HtmlLabel6)
-        CategoryPanel.Controls.Add(Me.OrthoCatBtn)
+        CategoryPanel.Controls.Add(OrthoCatBtn)
         CategoryPanel.Controls.Add(Label4)
         CategoryPanel.Controls.Add(Guna2HtmlLabel7)
         CategoryPanel.Controls.Add(Guna2HtmlLabel8)
-        CategoryPanel.Controls.Add(Me.ConsumablesCatBtn)
+        CategoryPanel.Controls.Add(ConsumablesCatBtn)
         CategoryPanel.Controls.Add(Label1)
         CategoryPanel.Controls.Add(Guna2HtmlLabel1)
         CategoryPanel.Controls.Add(Guna2HtmlLabel2)
-        CategoryPanel.Controls.Add(Me.SurgeryCatBtn)
-        CategoryPanel.CustomizableEdges = CustomizableEdges41
+        CategoryPanel.Controls.Add(SurgeryCatBtn)
+        CategoryPanel.CustomizableEdges = CustomizableEdges13
         CategoryPanel.FillColor = Color.White
         CategoryPanel.ForeColor = Color.White
         CategoryPanel.Location = New Point(209, 96)
         CategoryPanel.Name = "CategoryPanel"
-        CategoryPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges42
+        CategoryPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges14
         CategoryPanel.Size = New Size(963, 767)
         CategoryPanel.TabIndex = 2
         ' 
@@ -187,20 +187,20 @@ Partial Class Sales
         ' 
         ' CosmeticCatBtn
         ' 
-        Me.CosmeticCatBtn.BackColor = Color.Transparent
-        Me.CosmeticCatBtn.BorderColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
-        Me.CosmeticCatBtn.BorderRadius = 20
-        Me.CosmeticCatBtn.CustomizableEdges = CustomizableEdges29
-        Me.CosmeticCatBtn.FillColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
-        Me.CosmeticCatBtn.Font = New Font("Segoe UI", 12F)
-        Me.CosmeticCatBtn.ForeColor = Color.White
-        Me.CosmeticCatBtn.Location = New Point(287, 200)
-        Me.CosmeticCatBtn.Name = "CosmeticCatBtn"
-        Me.CosmeticCatBtn.PressedColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
-        Me.CosmeticCatBtn.RightToLeft = RightToLeft.Yes
-        Me.CosmeticCatBtn.ShadowDecoration.CustomizableEdges = CustomizableEdges30
-        Me.CosmeticCatBtn.Size = New Size(167, 146)
-        Me.CosmeticCatBtn.TabIndex = 75
+        CosmeticCatBtn.BackColor = Color.Transparent
+        CosmeticCatBtn.BorderColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
+        CosmeticCatBtn.BorderRadius = 20
+        CosmeticCatBtn.CustomizableEdges = CustomizableEdges1
+        CosmeticCatBtn.FillColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
+        CosmeticCatBtn.Font = New Font("Segoe UI", 12F)
+        CosmeticCatBtn.ForeColor = Color.White
+        CosmeticCatBtn.Location = New Point(287, 200)
+        CosmeticCatBtn.Name = "CosmeticCatBtn"
+        CosmeticCatBtn.PressedColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
+        CosmeticCatBtn.RightToLeft = RightToLeft.Yes
+        CosmeticCatBtn.ShadowDecoration.CustomizableEdges = CustomizableEdges2
+        CosmeticCatBtn.Size = New Size(167, 146)
+        CosmeticCatBtn.TabIndex = 75
         ' 
         ' Label5
         ' 
@@ -238,20 +238,20 @@ Partial Class Sales
         ' 
         ' EndoCatBtn
         ' 
-        Me.EndoCatBtn.BackColor = Color.White
-        Me.EndoCatBtn.BorderColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
-        Me.EndoCatBtn.BorderRadius = 20
-        Me.EndoCatBtn.CustomizableEdges = CustomizableEdges31
-        Me.EndoCatBtn.FillColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
-        Me.EndoCatBtn.Font = New Font("Segoe UI", 12F)
-        Me.EndoCatBtn.ForeColor = Color.White
-        Me.EndoCatBtn.Location = New Point(63, 200)
-        Me.EndoCatBtn.Name = "EndoCatBtn"
-        Me.EndoCatBtn.PressedColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
-        Me.EndoCatBtn.RightToLeft = RightToLeft.Yes
-        Me.EndoCatBtn.ShadowDecoration.CustomizableEdges = CustomizableEdges32
-        Me.EndoCatBtn.Size = New Size(167, 146)
-        Me.EndoCatBtn.TabIndex = 71
+        EndoCatBtn.BackColor = Color.White
+        EndoCatBtn.BorderColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
+        EndoCatBtn.BorderRadius = 20
+        EndoCatBtn.CustomizableEdges = CustomizableEdges3
+        EndoCatBtn.FillColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
+        EndoCatBtn.Font = New Font("Segoe UI", 12F)
+        EndoCatBtn.ForeColor = Color.White
+        EndoCatBtn.Location = New Point(63, 200)
+        EndoCatBtn.Name = "EndoCatBtn"
+        EndoCatBtn.PressedColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
+        EndoCatBtn.RightToLeft = RightToLeft.Yes
+        EndoCatBtn.ShadowDecoration.CustomizableEdges = CustomizableEdges4
+        EndoCatBtn.Size = New Size(167, 146)
+        EndoCatBtn.TabIndex = 71
         ' 
         ' Label3
         ' 
@@ -292,7 +292,7 @@ Partial Class Sales
         RestoCatBtn.BackColor = Color.Transparent
         RestoCatBtn.BorderColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
         RestoCatBtn.BorderRadius = 20
-        RestoCatBtn.CustomizableEdges = CustomizableEdges33
+        RestoCatBtn.CustomizableEdges = CustomizableEdges5
         RestoCatBtn.FillColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         RestoCatBtn.Font = New Font("Segoe UI", 12F)
         RestoCatBtn.ForeColor = Color.White
@@ -300,7 +300,7 @@ Partial Class Sales
         RestoCatBtn.Name = "RestoCatBtn"
         RestoCatBtn.PressedColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
         RestoCatBtn.RightToLeft = RightToLeft.Yes
-        RestoCatBtn.ShadowDecoration.CustomizableEdges = CustomizableEdges34
+        RestoCatBtn.ShadowDecoration.CustomizableEdges = CustomizableEdges6
         RestoCatBtn.Size = New Size(167, 146)
         RestoCatBtn.TabIndex = 67
         ' 
@@ -340,20 +340,20 @@ Partial Class Sales
         ' 
         ' OrthoCatBtn
         ' 
-        Me.OrthoCatBtn.BackColor = Color.White
-        Me.OrthoCatBtn.BorderColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
-        Me.OrthoCatBtn.BorderRadius = 20
-        Me.OrthoCatBtn.CustomizableEdges = CustomizableEdges35
-        Me.OrthoCatBtn.FillColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
-        Me.OrthoCatBtn.Font = New Font("Segoe UI", 12F)
-        Me.OrthoCatBtn.ForeColor = Color.White
-        Me.OrthoCatBtn.Location = New Point(63, 20)
-        Me.OrthoCatBtn.Name = "OrthoCatBtn"
-        Me.OrthoCatBtn.PressedColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
-        Me.OrthoCatBtn.RightToLeft = RightToLeft.Yes
-        Me.OrthoCatBtn.ShadowDecoration.CustomizableEdges = CustomizableEdges36
-        Me.OrthoCatBtn.Size = New Size(167, 146)
-        Me.OrthoCatBtn.TabIndex = 63
+        OrthoCatBtn.BackColor = Color.White
+        OrthoCatBtn.BorderColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
+        OrthoCatBtn.BorderRadius = 20
+        OrthoCatBtn.CustomizableEdges = CustomizableEdges7
+        OrthoCatBtn.FillColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
+        OrthoCatBtn.Font = New Font("Segoe UI", 12F)
+        OrthoCatBtn.ForeColor = Color.White
+        OrthoCatBtn.Location = New Point(63, 20)
+        OrthoCatBtn.Name = "OrthoCatBtn"
+        OrthoCatBtn.PressedColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
+        OrthoCatBtn.RightToLeft = RightToLeft.Yes
+        OrthoCatBtn.ShadowDecoration.CustomizableEdges = CustomizableEdges8
+        OrthoCatBtn.Size = New Size(167, 146)
+        OrthoCatBtn.TabIndex = 63
         ' 
         ' Label4
         ' 
@@ -391,37 +391,37 @@ Partial Class Sales
         ' 
         ' ConsumablesCatBtn
         ' 
-        Me.ConsumablesCatBtn.BackColor = Color.Transparent
-        Me.ConsumablesCatBtn.BorderColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
-        Me.ConsumablesCatBtn.BorderRadius = 20
-        Me.ConsumablesCatBtn.CustomizableEdges = CustomizableEdges37
-        Me.ConsumablesCatBtn.FillColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
-        Me.ConsumablesCatBtn.Font = New Font("Segoe UI", 12F)
-        Me.ConsumablesCatBtn.ForeColor = Color.White
-        Me.ConsumablesCatBtn.Location = New Point(287, 20)
-        Me.ConsumablesCatBtn.Name = "ConsumablesCatBtn"
-        Me.ConsumablesCatBtn.PressedColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
-        Me.ConsumablesCatBtn.RightToLeft = RightToLeft.Yes
-        Me.ConsumablesCatBtn.ShadowDecoration.CustomizableEdges = CustomizableEdges38
-        Me.ConsumablesCatBtn.Size = New Size(167, 146)
-        Me.ConsumablesCatBtn.TabIndex = 59
+        ConsumablesCatBtn.BackColor = Color.Transparent
+        ConsumablesCatBtn.BorderColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
+        ConsumablesCatBtn.BorderRadius = 20
+        ConsumablesCatBtn.CustomizableEdges = CustomizableEdges9
+        ConsumablesCatBtn.FillColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
+        ConsumablesCatBtn.Font = New Font("Segoe UI", 12F)
+        ConsumablesCatBtn.ForeColor = Color.White
+        ConsumablesCatBtn.Location = New Point(287, 20)
+        ConsumablesCatBtn.Name = "ConsumablesCatBtn"
+        ConsumablesCatBtn.PressedColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
+        ConsumablesCatBtn.RightToLeft = RightToLeft.Yes
+        ConsumablesCatBtn.ShadowDecoration.CustomizableEdges = CustomizableEdges10
+        ConsumablesCatBtn.Size = New Size(167, 146)
+        ConsumablesCatBtn.TabIndex = 59
         ' 
         ' Label1
         ' 
         Label1.AutoSize = True
         Label1.BackColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
-        Label1.Font = New Font("Poppins Light", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Label1.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Label1.ForeColor = Color.White
         Label1.Location = New Point(531, 124)
         Label1.Name = "Label1"
-        Label1.Size = New Size(56, 28)
+        Label1.Size = New Size(65, 26)
         Label1.TabIndex = 57
         Label1.Text = "0 Items"
         ' 
         ' Guna2HtmlLabel1
         ' 
         Guna2HtmlLabel1.BackColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
-        Guna2HtmlLabel1.Font = New Font("Poppins Medium", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Guna2HtmlLabel1.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel1.ForeColor = Color.White
         Guna2HtmlLabel1.Location = New Point(531, 102)
         Guna2HtmlLabel1.Name = "Guna2HtmlLabel1"
@@ -429,22 +429,31 @@ Partial Class Sales
         Guna2HtmlLabel1.TabIndex = 56
         Guna2HtmlLabel1.Text = "SURGERY"
         ' 
+        ' Guna2HtmlLabel2
+        ' 
+        Guna2HtmlLabel2.BackColor = Color.Transparent
+        Guna2HtmlLabel2.Location = New Point(0, 0)
+        Guna2HtmlLabel2.Name = "Guna2HtmlLabel2"
+        Guna2HtmlLabel2.Size = New Size(0, 0)
+        Guna2HtmlLabel2.TabIndex = 79
+        Guna2HtmlLabel2.Text = Nothing
+        ' 
         ' SurgeryCatBtn
         ' 
-        Me.SurgeryCatBtn.BackColor = Color.Transparent
-        Me.SurgeryCatBtn.BorderColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
-        Me.SurgeryCatBtn.BorderRadius = 20
-        Me.SurgeryCatBtn.CustomizableEdges = CustomizableEdges39
-        Me.SurgeryCatBtn.FillColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
-        Me.SurgeryCatBtn.Font = New Font("Segoe UI", 12.0F)
-        Me.SurgeryCatBtn.ForeColor = Color.White
-        Me.SurgeryCatBtn.Location = New Point(512, 20)
-        Me.SurgeryCatBtn.Name = "SurgeryCatBtn"
-        Me.SurgeryCatBtn.PressedColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
-        Me.SurgeryCatBtn.RightToLeft = RightToLeft.Yes
-        Me.SurgeryCatBtn.ShadowDecoration.CustomizableEdges = CustomizableEdges40
-        Me.SurgeryCatBtn.Size = New Size(167, 146)
-        Me.SurgeryCatBtn.TabIndex = 55
+        SurgeryCatBtn.BackColor = Color.Transparent
+        SurgeryCatBtn.BorderColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
+        SurgeryCatBtn.BorderRadius = 20
+        SurgeryCatBtn.CustomizableEdges = CustomizableEdges11
+        SurgeryCatBtn.FillColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
+        SurgeryCatBtn.Font = New Font("Segoe UI", 12F)
+        SurgeryCatBtn.ForeColor = Color.White
+        SurgeryCatBtn.Location = New Point(512, 20)
+        SurgeryCatBtn.Name = "SurgeryCatBtn"
+        SurgeryCatBtn.PressedColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
+        SurgeryCatBtn.RightToLeft = RightToLeft.Yes
+        SurgeryCatBtn.ShadowDecoration.CustomizableEdges = CustomizableEdges12
+        SurgeryCatBtn.Size = New Size(167, 146)
+        SurgeryCatBtn.TabIndex = 55
         ' 
         ' orderSummaryPanel
         ' 
@@ -452,11 +461,11 @@ Partial Class Sales
         orderSummaryPanel.BackColor = Color.Transparent
         orderSummaryPanel.BorderRadius = 10
         orderSummaryPanel.BorderThickness = 1
-        orderSummaryPanel.CustomizableEdges = CustomizableEdges43
+        orderSummaryPanel.CustomizableEdges = CustomizableEdges15
         orderSummaryPanel.FillColor = Color.White
         orderSummaryPanel.Location = New Point(1178, 96)
         orderSummaryPanel.Name = "orderSummaryPanel"
-        orderSummaryPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges44
+        orderSummaryPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges16
         orderSummaryPanel.Size = New Size(427, 449)
         orderSummaryPanel.TabIndex = 3
         ' 
@@ -489,11 +498,11 @@ Partial Class Sales
         totalPanel.Controls.Add(Guna2HtmlLabel29)
         totalPanel.Controls.Add(lblSubTotal)
         totalPanel.Controls.Add(Guna2HtmlLabel26)
-        totalPanel.CustomizableEdges = CustomizableEdges51
+        totalPanel.CustomizableEdges = CustomizableEdges23
         totalPanel.FillColor = Color.White
         totalPanel.Location = New Point(1178, 551)
         totalPanel.Name = "totalPanel"
-        totalPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges52
+        totalPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges24
         totalPanel.Size = New Size(427, 319)
         totalPanel.TabIndex = 38
         ' 
@@ -501,17 +510,17 @@ Partial Class Sales
         ' 
         confirmBtn.BackColor = Color.White
         confirmBtn.BorderRadius = 10
-        confirmBtn.CustomizableEdges = CustomizableEdges45
+        confirmBtn.CustomizableEdges = CustomizableEdges17
         confirmBtn.DisabledState.BorderColor = Color.DarkGray
         confirmBtn.DisabledState.CustomBorderColor = Color.DarkGray
         confirmBtn.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         confirmBtn.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
         confirmBtn.FillColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
-        confirmBtn.Font = New Font("Poppins Medium", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        confirmBtn.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         confirmBtn.ForeColor = Color.Black
         confirmBtn.Location = New Point(20, 260)
         confirmBtn.Name = "confirmBtn"
-        confirmBtn.ShadowDecoration.CustomizableEdges = CustomizableEdges46
+        confirmBtn.ShadowDecoration.CustomizableEdges = CustomizableEdges18
         confirmBtn.Size = New Size(180, 40)
         confirmBtn.TabIndex = 62
         confirmBtn.Text = "Confirm Payment"
@@ -520,7 +529,7 @@ Partial Class Sales
         ' lblChange
         ' 
         lblChange.BackColor = Color.White
-        lblChange.Font = New Font("Poppins", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        lblChange.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         lblChange.ForeColor = Color.Black
         lblChange.Location = New Point(342, 197)
         lblChange.Name = "lblChange"
@@ -531,7 +540,7 @@ Partial Class Sales
         ' Guna2HtmlLabel17
         ' 
         Guna2HtmlLabel17.BackColor = Color.White
-        Guna2HtmlLabel17.Font = New Font("Poppins", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Guna2HtmlLabel17.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel17.ForeColor = Color.Black
         Guna2HtmlLabel17.Location = New Point(20, 197)
         Guna2HtmlLabel17.Name = "Guna2HtmlLabel17"
@@ -542,7 +551,7 @@ Partial Class Sales
         ' totalRLbl
         ' 
         totalRLbl.BackColor = Color.White
-        totalRLbl.Font = New Font("Poppins", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        totalRLbl.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         totalRLbl.ForeColor = Color.Black
         totalRLbl.Location = New Point(342, 163)
         totalRLbl.Name = "totalRLbl"
@@ -553,7 +562,7 @@ Partial Class Sales
         ' Guna2HtmlLabel32
         ' 
         Guna2HtmlLabel32.BackColor = Color.White
-        Guna2HtmlLabel32.Font = New Font("Poppins", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Guna2HtmlLabel32.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel32.ForeColor = Color.Black
         Guna2HtmlLabel32.Location = New Point(20, 163)
         Guna2HtmlLabel32.Name = "Guna2HtmlLabel32"
@@ -564,17 +573,17 @@ Partial Class Sales
         ' btnDiscount
         ' 
         btnDiscount.BorderRadius = 10
-        btnDiscount.CustomizableEdges = CustomizableEdges47
+        btnDiscount.CustomizableEdges = CustomizableEdges19
         btnDiscount.DisabledState.BorderColor = Color.DarkGray
         btnDiscount.DisabledState.CustomBorderColor = Color.DarkGray
         btnDiscount.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         btnDiscount.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
         btnDiscount.FillColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
-        btnDiscount.Font = New Font("Poppins Medium", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        btnDiscount.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         btnDiscount.ForeColor = Color.Black
         btnDiscount.Location = New Point(250, 260)
         btnDiscount.Name = "btnDiscount"
-        btnDiscount.ShadowDecoration.CustomizableEdges = CustomizableEdges48
+        btnDiscount.ShadowDecoration.CustomizableEdges = CustomizableEdges20
         btnDiscount.Size = New Size(147, 40)
         btnDiscount.TabIndex = 63
         btnDiscount.Text = "Discount"
@@ -582,17 +591,17 @@ Partial Class Sales
         ' btnPayment
         ' 
         btnPayment.BorderRadius = 10
-        btnPayment.CustomizableEdges = CustomizableEdges49
+        btnPayment.CustomizableEdges = CustomizableEdges21
         btnPayment.DisabledState.BorderColor = Color.DarkGray
         btnPayment.DisabledState.CustomBorderColor = Color.DarkGray
         btnPayment.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         btnPayment.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
         btnPayment.FillColor = Color.White
-        btnPayment.Font = New Font("Poppins Medium", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        btnPayment.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         btnPayment.ForeColor = Color.Black
         btnPayment.Location = New Point(20, 260)
         btnPayment.Name = "btnPayment"
-        btnPayment.ShadowDecoration.CustomizableEdges = CustomizableEdges50
+        btnPayment.ShadowDecoration.CustomizableEdges = CustomizableEdges22
         btnPayment.Size = New Size(180, 40)
         btnPayment.TabIndex = 38
         btnPayment.Text = "Payment"
@@ -600,7 +609,7 @@ Partial Class Sales
         ' totalLbl
         ' 
         totalLbl.BackColor = Color.White
-        totalLbl.Font = New Font("Poppins", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        totalLbl.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         totalLbl.ForeColor = Color.Black
         totalLbl.Location = New Point(342, 118)
         totalLbl.Name = "totalLbl"
@@ -611,7 +620,7 @@ Partial Class Sales
         ' lbl2
         ' 
         lbl2.BackColor = Color.White
-        lbl2.Font = New Font("Poppins", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        lbl2.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         lbl2.ForeColor = Color.Black
         lbl2.Location = New Point(20, 118)
         lbl2.Name = "lbl2"
@@ -622,7 +631,7 @@ Partial Class Sales
         ' Guna2HtmlLabel30
         ' 
         Guna2HtmlLabel30.BackColor = Color.White
-        Guna2HtmlLabel30.Font = New Font("Poppins Light", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Guna2HtmlLabel30.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel30.ForeColor = Color.Black
         Guna2HtmlLabel30.Location = New Point(20, 84)
         Guna2HtmlLabel30.Name = "Guna2HtmlLabel30"
@@ -633,7 +642,7 @@ Partial Class Sales
         ' taxLbl
         ' 
         taxLbl.BackColor = Color.White
-        taxLbl.Font = New Font("Poppins", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        taxLbl.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         taxLbl.ForeColor = Color.Black
         taxLbl.Location = New Point(349, 59)
         taxLbl.Name = "taxLbl"
@@ -644,7 +653,7 @@ Partial Class Sales
         ' Guna2HtmlLabel29
         ' 
         Guna2HtmlLabel29.BackColor = Color.White
-        Guna2HtmlLabel29.Font = New Font("Poppins", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Guna2HtmlLabel29.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel29.ForeColor = Color.Black
         Guna2HtmlLabel29.Location = New Point(20, 59)
         Guna2HtmlLabel29.Name = "Guna2HtmlLabel29"
@@ -655,7 +664,7 @@ Partial Class Sales
         ' lblSubTotal
         ' 
         lblSubTotal.BackColor = Color.White
-        lblSubTotal.Font = New Font("Poppins", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        lblSubTotal.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         lblSubTotal.ForeColor = Color.Black
         lblSubTotal.Location = New Point(342, 25)
         lblSubTotal.Name = "lblSubTotal"
@@ -666,7 +675,7 @@ Partial Class Sales
         ' Guna2HtmlLabel26
         ' 
         Guna2HtmlLabel26.BackColor = Color.White
-        Guna2HtmlLabel26.Font = New Font("Poppins", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Guna2HtmlLabel26.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel26.ForeColor = Color.Black
         Guna2HtmlLabel26.Location = New Point(20, 25)
         Guna2HtmlLabel26.Name = "Guna2HtmlLabel26"
@@ -678,11 +687,11 @@ Partial Class Sales
         ' 
         DashboardPanel.BorderRadius = 30
         DashboardPanel.Controls.Add(PictureBox9)
-        DashboardPanel.CustomizableEdges = CustomizableEdges53
+        DashboardPanel.CustomizableEdges = CustomizableEdges25
         DashboardPanel.FillColor = Color.White
         DashboardPanel.Location = New Point(-33, 5)
         DashboardPanel.Name = "DashboardPanel"
-        DashboardPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges54
+        DashboardPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges26
         DashboardPanel.Size = New Size(236, 885)
         DashboardPanel.TabIndex = 6
         ' 
@@ -708,7 +717,7 @@ Partial Class Sales
         backCategory.ForeColor = Color.Black
         backCategory.Location = New Point(231, 28)
         backCategory.Name = "backCategory"
-        backCategory.ShadowDecoration.CustomizableEdges = CustomizableEdges55
+        backCategory.ShadowDecoration.CustomizableEdges = CustomizableEdges27
         backCategory.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
         backCategory.Size = New Size(34, 33)
         backCategory.TabIndex = 39
@@ -719,7 +728,7 @@ Partial Class Sales
         Guna2CirclePictureBox5.ImageRotate = 0F
         Guna2CirclePictureBox5.Location = New Point(1440, 20)
         Guna2CirclePictureBox5.Name = "Guna2CirclePictureBox5"
-        Guna2CirclePictureBox5.ShadowDecoration.CustomizableEdges = CustomizableEdges56
+        Guna2CirclePictureBox5.ShadowDecoration.CustomizableEdges = CustomizableEdges28
         Guna2CirclePictureBox5.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
         Guna2CirclePictureBox5.Size = New Size(31, 28)
         Guna2CirclePictureBox5.TabIndex = 40
@@ -728,7 +737,7 @@ Partial Class Sales
         ' lblUsername
         ' 
         lblUsername.BackColor = Color.Transparent
-        lblUsername.Font = New Font("Poppins Light", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        lblUsername.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         lblUsername.ForeColor = Color.White
         lblUsername.Location = New Point(1477, 20)
         lblUsername.Name = "lblUsername"
@@ -738,7 +747,7 @@ Partial Class Sales
         ' 
         ' Sales
         ' 
-        AutoScaleDimensions = New SizeF(8.0F, 20.0F)
+        AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
         BackColor = Color.DarkGray
         ClientSize = New Size(1609, 875)

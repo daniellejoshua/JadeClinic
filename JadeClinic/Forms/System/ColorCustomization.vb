@@ -354,8 +354,16 @@ Public Class ColorCustomization
 
     Private Sub BtnSave_Click(sender As Object, e As EventArgs)
         Try
+            Console.WriteLine("=== SAVING COLOR SETTINGS ===")
             SaveColorSettings()
-            MessageBox.Show("Color settings saved successfully! Changes will be applied when you restart the application.", "Settings Saved", MessageBoxButtons.OK, MessageBoxIcon.Information)
+
+            ' 🔥 CRITICAL: Clear the cache
+            CompanySettingsManager.Instance.RefreshCache()
+            Console.WriteLine("Cache refreshed after save")
+
+            MessageBox.Show("Color settings saved successfully!" & vbCrLf & vbCrLf &
+                       "Changes will be applied when you restart the application.",
+                       "Settings Saved", MessageBoxButtons.OK, MessageBoxIcon.Information)
 
             ' Log the action
             Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Color Settings Updated", "Application color scheme changed")
@@ -363,42 +371,94 @@ Public Class ColorCustomization
             Me.DialogResult = DialogResult.OK
             Me.Close()
         Catch ex As Exception
+            Console.WriteLine($"❌ Save error: {ex.ToString()}")
             MessageBox.Show($"Error saving color settings: {ex.Message}", "Save Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
 
+    Private Sub SaveColorSettings()
+        Try
+            MessageBox.Show("=== SAVING COLOR SETTINGS ===")
+
+            ' Check if we need to create the table first
+            EnsureColorSettingsTableExists()
+
+            ' Check if an active record already exists
+            Dim existingCount As Integer = 0
+            Dim countQuery As String = "SELECT COUNT(*) FROM ColorSettings WHERE IsActive = 1"
+            Dim countResult = Utilities.ExecuteScalar(countQuery, New SqlParameter() {})
+            If countResult IsNot Nothing Then
+                existingCount = Convert.ToInt32(countResult)
+            End If
+
+            MessageBox.Show($"Found {existingCount} active color records")
+
+            Dim sql As String
+            Dim parameters As New List(Of SqlParameter)()
+
+            If existingCount > 0 Then
+                ' UPDATE existing active record
+                MessageBox.Show("Updating existing color record")
+                sql = "UPDATE ColorSettings SET " &
+                  "PrimaryColor = @PrimaryColor, " &
+                  "SecondaryColor = @SecondaryColor, " &
+                  "BackgroundDark = @BackgroundDark, " &
+                  "BackgroundMid = @BackgroundMid, " &
+                  "BackgroundLight = @BackgroundLight, " &
+                  "InteractiveColor = @InteractiveColor, " &
+                  "TextPrimary = @TextPrimary, " &
+                  "TextSecondary = @TextSecondary, " &
+                  "SuccessColor = @SuccessColor, " &
+                  "ErrorColor = @ErrorColor, " &
+                  "LastModified = @LastModified " &
+                  "WHERE IsActive = 1"
+            Else
+                ' INSERT new record (first time only)
+                MessageBox.Show("Inserting new color record")
+                sql = "INSERT INTO ColorSettings (PrimaryColor, SecondaryColor, BackgroundDark, BackgroundMid, BackgroundLight, InteractiveColor, TextPrimary, TextSecondary, SuccessColor, ErrorColor, IsActive, DateCreated, LastModified) VALUES (@PrimaryColor, @SecondaryColor, @BackgroundDark, @BackgroundMid, @BackgroundLight, @InteractiveColor, @TextPrimary, @TextSecondary, @SuccessColor, @ErrorColor, 1, @DateCreated, @LastModified)"
+                parameters.Add(New SqlParameter("@DateCreated", DateTime.Now))
+            End If
+
+            ' Add common parameters
+            parameters.Add(New SqlParameter("@PrimaryColor", ColorToString(primaryColor)))
+            parameters.Add(New SqlParameter("@SecondaryColor", ColorToString(secondaryColor)))
+            parameters.Add(New SqlParameter("@BackgroundDark", ColorToString(backgroundDarkColor)))
+            parameters.Add(New SqlParameter("@BackgroundMid", ColorToString(backgroundMidColor)))
+            parameters.Add(New SqlParameter("@BackgroundLight", ColorToString(backgroundLightColor)))
+            parameters.Add(New SqlParameter("@InteractiveColor", ColorToString(interactiveColor)))
+            parameters.Add(New SqlParameter("@TextPrimary", ColorToString(textPrimaryColor)))
+            parameters.Add(New SqlParameter("@TextSecondary", ColorToString(textSecondaryColor)))
+            parameters.Add(New SqlParameter("@SuccessColor", ColorToString(successColor)))
+            parameters.Add(New SqlParameter("@ErrorColor", ColorToString(errorColor)))
+            parameters.Add(New SqlParameter("@LastModified", DateTime.Now))
+
+            ' DEBUG: Show colors being saved
+            MessageBox.Show($"Saving colors:{vbCrLf}" &
+                       $"Primary: {ColorToString(primaryColor)}{vbCrLf}" &
+                       $"Secondary: {ColorToString(secondaryColor)}{vbCrLf}" &
+                       $"Background Dark: {ColorToString(backgroundDarkColor)}{vbCrLf}" &
+                       $"Background Mid: {ColorToString(backgroundMidColor)}")
+
+            Dim result = Utilities.ExecuteNonQuery(sql, parameters.ToArray())
+            MessageBox.Show($"{If(existingCount > 0, "Updated", "Inserted")} {result} color record")
+
+            If result = 0 Then
+                Throw New Exception("No color settings were saved to the database")
+            End If
+
+            MessageBox.Show("--- SaveColorSettings Complete ---")
+
+        Catch ex As Exception
+            MessageBox.Show($"❌ SaveColorSettings error: {ex.Message}")
+            Throw
+        End Try
+    End Sub
     Private Sub BtnCancel_Click(sender As Object, e As EventArgs)
         Me.DialogResult = DialogResult.Cancel
         Me.Close()
     End Sub
 
-    Private Sub SaveColorSettings()
-        ' Check if we need to create the table first
-        EnsureColorSettingsTableExists()
 
-        ' Deactivate existing settings
-        Utilities.ExecuteNonQuery("UPDATE ColorSettings SET IsActive = 0 WHERE IsActive = 1", New SqlParameter() {})
-
-        ' Insert new color settings
-        Dim sql As String = "INSERT INTO ColorSettings (PrimaryColor, SecondaryColor, BackgroundDark, BackgroundMid, BackgroundLight, InteractiveColor, TextPrimary, TextSecondary, SuccessColor, ErrorColor, IsActive, DateCreated, LastModified) VALUES (@PrimaryColor, @SecondaryColor, @BackgroundDark, @BackgroundMid, @BackgroundLight, @InteractiveColor, @TextPrimary, @TextSecondary, @SuccessColor, @ErrorColor, 1, @DateCreated, @LastModified)"
-
-        Dim parameters As SqlParameter() = {
-        New SqlParameter("@PrimaryColor", ColorToString(primaryColor)),
-        New SqlParameter("@SecondaryColor", ColorToString(secondaryColor)),
-        New SqlParameter("@BackgroundDark", ColorToString(backgroundDarkColor)),
-        New SqlParameter("@BackgroundMid", ColorToString(backgroundMidColor)),
-        New SqlParameter("@BackgroundLight", ColorToString(backgroundLightColor)),
-        New SqlParameter("@InteractiveColor", ColorToString(interactiveColor)),
-        New SqlParameter("@TextPrimary", ColorToString(textPrimaryColor)),
-        New SqlParameter("@TextSecondary", ColorToString(textSecondaryColor)),
-        New SqlParameter("@SuccessColor", ColorToString(successColor)),
-        New SqlParameter("@ErrorColor", ColorToString(errorColor)),
-        New SqlParameter("@DateCreated", DateTime.Now),
-        New SqlParameter("@LastModified", DateTime.Now)
-    }
-
-        Utilities.ExecuteNonQuery(sql, parameters)
-    End Sub
 
     Private Sub EnsureColorSettingsTableExists()
         Try

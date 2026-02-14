@@ -1,4 +1,4 @@
-Imports Microsoft.Data.SqlClient
+﻿Imports Microsoft.Data.SqlClient
 Imports System.IO
 Imports System.Drawing
 
@@ -206,6 +206,15 @@ Public Class CompanySettingsManager
     End Sub
 
     ''' <summary>
+    ''' Clear only the color cache to force reload of color settings
+    ''' </summary>
+    Public Sub ClearColorCache()
+        _cachedColors = Nothing
+        _lastColorCacheUpdate = DateTime.MinValue
+        Console.WriteLine("Color cache cleared - colors will reload on next access")
+    End Sub
+
+    ''' <summary>
     ''' Check if settings have been configured
     ''' </summary>
     Public Function IsConfigured() As Boolean
@@ -254,40 +263,143 @@ Public Class CompanySettingsManager
 
     Private Sub LoadColorsFromDatabase()
         Try
+            Console.WriteLine("🔄 Loading colors from database...")
+
+
+
             _cachedColors = New Dictionary(Of String, Color)()
-            
+
             Dim query As String = "SELECT * FROM ColorSettings WHERE IsActive = 1 ORDER BY DateCreated DESC"
             Using reader As SqlDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
                 If reader.Read() Then
+                    Console.WriteLine("✅ Found active ColorSettings record")
                     For i = 0 To reader.FieldCount - 1
                         Dim fieldName = reader.GetName(i)
                         If Not reader.IsDBNull(i) AndAlso fieldName.ToLower().Contains("color") Then
                             Dim colorString = reader.GetValue(i).ToString()
                             _cachedColors(fieldName) = ColorFromString(colorString)
+                            Console.WriteLine($"  Loaded {fieldName}: {colorString} -> {ColorFromString(colorString)}")
                         End If
                     Next
+                    Console.WriteLine($"✅ Loaded {_cachedColors.Count} colors from database")
+                Else
+                    Console.WriteLine("❌ No active ColorSettings found - using defaults")
                 End If
             End Using
-            
+
             _lastColorCacheUpdate = DateTime.Now
-            
+
         Catch ex As Exception
-            Console.WriteLine($"Error loading color settings from database: {ex.Message}")
-            ' Use defaults if loading fails
-            _cachedColors = New Dictionary(Of String, Color)()
-            ' Load default colors
-            _cachedColors("PrimaryColor") = GetDefaultColor("PrimaryColor")
-            _cachedColors("SecondaryColor") = GetDefaultColor("SecondaryColor")
-            _cachedColors("BackgroundDark") = GetDefaultColor("BackgroundDark")
-            _cachedColors("BackgroundMid") = GetDefaultColor("BackgroundMid")
-            _cachedColors("BackgroundLight") = GetDefaultColor("BackgroundLight")
-            _cachedColors("InteractiveColor") = GetDefaultColor("InteractiveColor")
-            _cachedColors("TextPrimary") = GetDefaultColor("TextPrimary")
-            _cachedColors("TextSecondary") = GetDefaultColor("TextSecondary")
-            _cachedColors("SuccessColor") = GetDefaultColor("SuccessColor")
-            _cachedColors("ErrorColor") = GetDefaultColor("ErrorColor")
+            Console.WriteLine($"❌ Error loading color settings from database: {ex.Message}")
+            Console.WriteLine($"❌ Full exception: {ex.ToString()}")
+
+            ' 🔥 IMPORTANT: Don't override saved colors, just use what we have
+            ' If there's an error, still try to load defaults but don't clear existing cache
+            If _cachedColors Is Nothing OrElse _cachedColors.Count = 0 Then
+                Console.WriteLine("⚠️  No cached colors available, loading defaults as fallback")
+            Else
+                Console.WriteLine("⚠️  Keeping existing cached colors despite database error")
+            End If
+
             _lastColorCacheUpdate = DateTime.Now
         End Try
+    End Sub
+    ''' <summary>
+    ''' Debug method to see what's happening with color loading
+    ''' </summary>
+    Public Sub DebugColorLoading()
+        Console.WriteLine("=== COMPANYSETTINGSMANAGER DEBUG ===")
+        Console.WriteLine($"Color cache last updated: {_lastColorCacheUpdate}")
+        Console.WriteLine($"Color cache exists: {_cachedColors IsNot Nothing}")
+
+        If _cachedColors IsNot Nothing Then
+            Console.WriteLine($"Cached colors count: {_cachedColors.Count}")
+            For Each kvp In _cachedColors
+                Console.WriteLine($"  {kvp.Key}: {kvp.Value}")
+            Next
+        End If
+
+        ' Force reload and show what we get
+        Console.WriteLine("--- Forcing color reload from database ---")
+        Try
+            _cachedColors = New Dictionary(Of String, Color)()
+
+            Dim query As String = "SELECT * FROM ColorSettings WHERE IsActive = 1 ORDER BY DateCreated DESC"
+            Using reader As SqlDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
+                If reader.Read() Then
+                    Console.WriteLine("✅ Found ColorSettings record in database")
+                    For i = 0 To reader.FieldCount - 1
+                        Dim fieldName = reader.GetName(i)
+                        Dim fieldValue = If(reader.IsDBNull(i), "NULL", reader.GetValue(i).ToString())
+                        Console.WriteLine($"  Database field {fieldName}: {fieldValue}")
+
+                        If Not reader.IsDBNull(i) AndAlso fieldName.ToLower().Contains("color") Then
+                            Dim colorString = reader.GetValue(i).ToString()
+                            _cachedColors(fieldName) = ColorFromString(colorString)
+                            Console.WriteLine($"    --> Parsed as color: {ColorFromString(colorString)}")
+                        End If
+                    Next
+                Else
+                    Console.WriteLine("❌ No ColorSettings record found in database")
+                End If
+            End Using
+
+            _lastColorCacheUpdate = DateTime.Now
+            Console.WriteLine($"After manual reload - colors count: {_cachedColors.Count}")
+
+        Catch ex As Exception
+            Console.WriteLine($"❌ Error in debug color reload: {ex.Message}")
+        End Try
+        Console.WriteLine("=====================================")
+    End Sub
+    ''' <summary>
+    ''' Debug method to show color loading with MessageBox
+    ''' </summary>
+    Public Sub DebugColorLoadingWithMessageBox()
+        Dim debugMsg As String = "=== COMPANYSETTINGSMANAGER DEBUG ===" & vbCrLf
+        debugMsg &= $"Color cache exists: {_cachedColors IsNot Nothing}" & vbCrLf
+
+        If _cachedColors IsNot Nothing Then
+            debugMsg &= $"Cached colors count: {_cachedColors.Count}" & vbCrLf
+            For Each kvp In _cachedColors
+                debugMsg &= $"  {kvp.Key}: {kvp.Value}" & vbCrLf
+            Next
+        End If
+
+        ' Force reload and show what we get
+        debugMsg &= "--- Forcing color reload from database ---" & vbCrLf
+        Try
+            _cachedColors = New Dictionary(Of String, Color)()
+
+            Dim query As String = "SELECT * FROM ColorSettings WHERE IsActive = 1 ORDER BY DateCreated DESC"
+            Using reader As SqlDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
+                If reader.Read() Then
+                    debugMsg &= "✅ Found ColorSettings record in database" & vbCrLf
+                    For i = 0 To reader.FieldCount - 1
+                        Dim fieldName = reader.GetName(i)
+                        Dim fieldValue = If(reader.IsDBNull(i), "NULL", reader.GetValue(i).ToString())
+                        debugMsg &= $"  Database field {fieldName}: {fieldValue}" & vbCrLf
+
+                        If Not reader.IsDBNull(i) AndAlso fieldName.ToLower().Contains("color") Then
+                            Dim colorString = reader.GetValue(i).ToString()
+                            _cachedColors(fieldName) = ColorFromString(colorString)
+                            debugMsg &= $"    --> Parsed as color: {ColorFromString(colorString)}" & vbCrLf
+                        End If
+                    Next
+                Else
+                    debugMsg &= "❌ No ColorSettings record found in database" & vbCrLf
+                End If
+            End Using
+
+            _lastColorCacheUpdate = DateTime.Now
+            debugMsg &= $"After manual reload - colors count: {_cachedColors.Count}" & vbCrLf
+
+        Catch ex As Exception
+            debugMsg &= $"❌ Error in debug color reload: {ex.Message}" & vbCrLf
+        End Try
+        debugMsg &= "=====================================" & vbCrLf
+
+        MessageBox.Show(debugMsg, "Color Debug Info")
     End Sub
 
     ''' <summary>
