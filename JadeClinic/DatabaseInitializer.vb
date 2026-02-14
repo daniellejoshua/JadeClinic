@@ -1,5 +1,6 @@
 ﻿Imports Microsoft.Data.SqlClient
 Imports System.Configuration
+Imports System.IO
 
 Public Class DatabaseInitializer
 
@@ -18,6 +19,8 @@ Public Class DatabaseInitializer
             CreateSaleItemsTableActual()
             CreateInventoryLogTableActual()
             CreateAuditLogTableActual()
+            CreateCompanySettingsTableActual() ' Add company settings table
+            CreateColorSettingsTableActual() ' Add color settings table
 
             ' Create initial data
             CreateInitialData()
@@ -428,10 +431,55 @@ Public Class DatabaseInitializer
         End Try
     End Sub
 
+    ' FIXED: Restore the proper function name and add the actual logo resource conversion
+    Private Shared Sub CreateCompanySettingsTableActual()
+        Dim query As String = "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='CompanySettings' AND xtype='U') " &
+            "CREATE TABLE CompanySettings(" &
+            "SettingID int IDENTITY(1,1) PRIMARY KEY, " &
+            "CompanyName nvarchar(200) NOT NULL, " &
+            "TIN nvarchar(50) NULL, " &
+            "Address nvarchar(500) NULL, " &
+            "Phone nvarchar(50) NULL, " &
+            "Email nvarchar(100) NULL, " &
+            "Website nvarchar(200) NULL, " &
+            "Logo varbinary(max) NULL, " &
+            "BIRAuthNumber nvarchar(100) NULL, " &
+            "PTUNumber nvarchar(100) NULL, " &
+            "ValidityYears int NOT NULL DEFAULT 5, " &
+            "ReceiptFooter nvarchar(300) NULL, " &
+            "IsActive bit NOT NULL DEFAULT 1, " &
+            "DateCreated datetime2 NOT NULL DEFAULT GETDATE()," &
+            "LastModified datetime2 NOT NULL DEFAULT GETDATE())"
+
+        DatabaseHelper.ExecuteNonQuery(query, Nothing)
+    End Sub
+
+    Private Shared Sub CreateColorSettingsTableActual()
+        Dim query As String = "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='ColorSettings' AND xtype='U') " &
+            "CREATE TABLE ColorSettings(" &
+            "SettingID int IDENTITY(1,1) PRIMARY KEY, " &
+            "PrimaryColor nvarchar(20) NOT NULL DEFAULT '#FECF10', " &
+            "SecondaryColor nvarchar(20) NOT NULL DEFAULT '#BE9A30', " &
+            "BackgroundDark nvarchar(20) NOT NULL DEFAULT '#1A1D1F', " &
+            "BackgroundMid nvarchar(20) NOT NULL DEFAULT '#2B2F32', " &
+            "BackgroundLight nvarchar(20) NOT NULL DEFAULT '#3D4145', " &
+            "InteractiveColor nvarchar(20) NOT NULL DEFAULT '#4A4F54', " &
+            "TextPrimary nvarchar(20) NOT NULL DEFAULT '#FFFFFF', " &
+            "TextSecondary nvarchar(20) NOT NULL DEFAULT '#E1E5E9', " &
+            "SuccessColor nvarchar(20) NOT NULL DEFAULT '#10D862', " &
+            "ErrorColor nvarchar(20) NOT NULL DEFAULT '#FF4757', " &
+            "IsActive bit NOT NULL DEFAULT 1, " &
+            "DateCreated datetime2 NOT NULL DEFAULT GETDATE(), " &
+            "LastModified datetime2 NOT NULL DEFAULT GETDATE())"
+
+        DatabaseHelper.ExecuteNonQuery(query, Nothing)
+    End Sub
+
     Private Shared Sub CreateInitialData()
         CreateDefaultAdminUser()
         CreateDefaultSuppliers()
         CreateDefaultCustomers()
+        CreateDefaultCompanySettings() ' Add default company settings
     End Sub
 
     Private Shared Sub CreateDefaultAdminUser()
@@ -458,7 +506,7 @@ Public Class DatabaseInitializer
                 ' Generate passkeys for admin user
                 CreateDefaultPasskeys(adminUserId)
 
-                Console.WriteLine("? Default admin user created (username: admin, password: admin123, PIN: 1234)")
+                Console.WriteLine("✅ Default admin user created (username: admin, password: admin123, PIN: 1234)")
             End If
         Catch ex As Exception
             Console.WriteLine($"Warning: Could not create default admin user: {ex.Message}")
@@ -480,7 +528,7 @@ Public Class DatabaseInitializer
 
             DatabaseHelper.ExecuteNonQuery(updatePasskeysQuery, passkeyParams)
 
-            Console.WriteLine($"? Generated 3 recovery passkeys: {String.Join(", ", passkeys)}")
+            Console.WriteLine($"🔑 Generated 3 recovery passkeys: {String.Join(", ", passkeys)}")
         Catch ex As Exception
             Console.WriteLine($"Warning: Could not create default passkeys: {ex.Message}")
         End Try
@@ -572,6 +620,52 @@ Public Class DatabaseInitializer
             Next
         Catch ex As Exception
             Console.WriteLine($"Warning: Could not create default customers: {ex.Message}")
+        End Try
+    End Sub
+
+    ' ENHANCED: Include actual Jade Dental Clinic logo from resources as default
+    Private Shared Sub CreateDefaultCompanySettings()
+        Try
+            Dim checkSql As String = "SELECT COUNT(*) FROM CompanySettings WHERE IsActive = 1"
+            Dim settingsCount = Utilities.ExecuteScalar(checkSql, New SqlParameter() {})
+
+            If Convert.ToInt32(settingsCount) = 0 Then
+                ' Convert Jade Dental Logo resource to byte array
+                Dim logoBytes As Byte() = Nothing
+                Try
+                    ' Get the Jade Dental Logo from resources
+                    Using logoImage As System.Drawing.Image = My.Resources.Jade_Dental_Logo
+                        If logoImage IsNot Nothing Then
+                            Using ms As New MemoryStream()
+                                logoImage.Save(ms, System.Drawing.Imaging.ImageFormat.Png)
+                                logoBytes = ms.ToArray()
+                            End Using
+                        End If
+                    End Using
+                Catch logoEx As Exception
+                    Console.WriteLine($"Note: Could not load Jade Dental Logo from resources: {logoEx.Message}")
+                    ' Continue without logo - will use default
+                End Try
+
+                Dim sql As String = "INSERT INTO CompanySettings (CompanyName, TIN, Address, Phone, Email, Website, Logo, BIRAuthNumber, PTUNumber, ReceiptFooter) VALUES (@CompanyName, @TIN, @Address, @Phone, @Email, @Website, @Logo, @BIRAuthNumber, @PTUNumber, @ReceiptFooter)"
+                Dim params As SqlParameter() = {
+                    New SqlParameter("@CompanyName", "JADE CLINIC"),
+                    New SqlParameter("@TIN", "123-456-789-000"),
+                    New SqlParameter("@Address", "123 Medical Plaza, Makati City, Philippines"),
+                    New SqlParameter("@Phone", "(02) 8123-4567"),
+                    New SqlParameter("@Email", "admin@jadeclinic.com"),
+                    New SqlParameter("@Website", "www.jadeclinic.com"),
+                    New SqlParameter("@Logo", If(logoBytes, DBNull.Value)),
+                    New SqlParameter("@BIRAuthNumber", "ATP-2024-000001"),
+                    New SqlParameter("@PTUNumber", "PTU-2024-001"),
+                    New SqlParameter("@ReceiptFooter", "Thank you for your business!" & vbCrLf & "Have a great day!")
+                }
+
+                Utilities.ExecuteNonQuery(sql, params)
+                Console.WriteLine("✅ Default company settings created with Jade Dental Clinic logo")
+            End If
+        Catch ex As Exception
+            Console.WriteLine($"Warning: Could not create default company settings: {ex.Message}")
         End Try
     End Sub
 End Class

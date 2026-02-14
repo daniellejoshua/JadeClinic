@@ -748,101 +748,7 @@ Public Class Sales
     End Sub
 
     ' Enhanced receipt printing
-    Private Sub OnPrintPage(sender As Object, e As PrintPageEventArgs)
-        Try
-            Dim regularFont As New Font("Arial", 8)
-            Dim boldFont As New Font("Arial", 10, FontStyle.Bold)
-            Dim headerFont As New Font("Arial", 12, FontStyle.Bold)
-            Dim brush As New SolidBrush(Color.Black)
-            Dim yPosition As Integer = 10
-            Dim centerX As Integer = e.MarginBounds.Width \ 2
 
-            ' Store Header
-            e.Graphics.DrawString("JADE CLINIC", headerFont, brush, centerX - 60, yPosition)
-            yPosition += 25
-            e.Graphics.DrawString("Dental Supply Management", regularFont, brush, centerX - 80, yPosition)
-            yPosition += 15
-            e.Graphics.DrawString("Tel: (123) 456-7890", regularFont, brush, centerX - 50, yPosition)
-            yPosition += 20
-            e.Graphics.DrawString("=====================================", regularFont, brush, 10, yPosition)
-            yPosition += 20
-
-            ' Receipt details
-            e.Graphics.DrawString("SALES RECEIPT", boldFont, brush, centerX - 45, yPosition)
-            yPosition += 25
-            e.Graphics.DrawString($"Receipt #: {receiptOrderId}", regularFont, brush, 10, yPosition)
-            yPosition += 15
-            e.Graphics.DrawString($"Date: {DateTime.Now:MM/dd/yyyy HH:mm:ss}", regularFont, brush, 10, yPosition)
-            yPosition += 15
-            e.Graphics.DrawString($"Cashier: {frmLoginvb.LoggedInUsername}", regularFont, brush, 10, yPosition)
-            yPosition += 15
-            e.Graphics.DrawString($"Customer: {receiptCustomerName}", regularFont, brush, 10, yPosition)
-            yPosition += 20
-            e.Graphics.DrawString("=====================================", regularFont, brush, 10, yPosition)
-            yPosition += 15
-
-            ' Items
-            For Each item In receiptItems
-                Dim itemName As String = item("ProductName").ToString()
-                Dim quantity As Integer = CInt(item("Quantity"))
-                Dim price As Decimal = Convert.ToDecimal(item("Price"))
-                Dim total As Decimal = price * quantity
-
-                ' Truncate long product names
-                If itemName.Length > 25 Then
-                    itemName = itemName.Substring(0, 22) & "..."
-                End If
-
-                e.Graphics.DrawString($"{itemName}", regularFont, brush, 10, yPosition)
-                yPosition += 15
-                e.Graphics.DrawString($"  {quantity}x ?{price:F2}", regularFont, brush, 20, yPosition)
-                e.Graphics.DrawString($"?{total:F2}", regularFont, brush, e.MarginBounds.Width - 60, yPosition)
-                yPosition += 15
-            Next
-
-            yPosition += 10
-            e.Graphics.DrawString("-------------------------------------", regularFont, brush, 10, yPosition)
-            yPosition += 15
-
-            ' Totals
-            e.Graphics.DrawString($"Subtotal:", regularFont, brush, 10, yPosition)
-            e.Graphics.DrawString($"?{receiptSubtotal:F2}", regularFont, brush, e.MarginBounds.Width - 80, yPosition)
-            yPosition += 15
-
-            If discountAmount > 0 Then
-                e.Graphics.DrawString($"Discount ({discountType}):", regularFont, brush, 10, yPosition)
-                e.Graphics.DrawString($"-?{discountAmount:F2}", regularFont, brush, e.MarginBounds.Width - 80, yPosition)
-                yPosition += 15
-            End If
-
-            e.Graphics.DrawString($"Tax (12%):", regularFont, brush, 10, yPosition)
-            e.Graphics.DrawString($"?{receiptTax:F2}", regularFont, brush, e.MarginBounds.Width - 80, yPosition)
-            yPosition += 15
-
-            e.Graphics.DrawString($"TOTAL:", boldFont, brush, 10, yPosition)
-            e.Graphics.DrawString($"?{receiptTotalAmount:F2}", boldFont, brush, e.MarginBounds.Width - 80, yPosition)
-            yPosition += 20
-
-            e.Graphics.DrawString($"Amount Received:", regularFont, brush, 10, yPosition)
-            e.Graphics.DrawString($"?{receiptAmountReceived:F2}", regularFont, brush, e.MarginBounds.Width - 80, yPosition)
-            yPosition += 15
-
-            e.Graphics.DrawString($"Change:", boldFont, brush, 10, yPosition)
-            e.Graphics.DrawString($"?{receiptChange:F2}", boldFont, brush, e.MarginBounds.Width - 80, yPosition)
-            yPosition += 30
-
-            ' Footer
-            e.Graphics.DrawString("=====================================", regularFont, brush, 10, yPosition)
-            yPosition += 20
-            e.Graphics.DrawString("Thank you for your business!", regularFont, brush, centerX - 70, yPosition)
-            yPosition += 15
-            e.Graphics.DrawString("Have a great day!", regularFont, brush, centerX - 45, yPosition)
-
-        Catch ex As Exception
-            ' If printing fails, just log it
-            Console.WriteLine($"Print error: {ex.Message}")
-        End Try
-    End Sub
 
     Private Sub CreateNavigationMenu()
         Try
@@ -865,9 +771,12 @@ Public Class Sales
             ' Logo area (keep existing PictureBox9)
             PictureBox9.BringToFront()
 
+            ' UPDATED: Get company name from settings
+            Dim companyName As String = CompanySettingsManager.Instance.GetSettingString("CompanyName", "JADE CLINIC")
+
             ' Add title label - positioned below logo with Golden Yellow
             Dim titleLabel As New Label()
-            titleLabel.Text = "JADE CLINIC"
+            titleLabel.Text = companyName
             titleLabel.Font = New Font("Poppins", 14, FontStyle.Bold)
             titleLabel.ForeColor = System.Drawing.Color.FromArgb(254, 191, 16) ' Golden Yellow #FECF10
             titleLabel.BackColor = System.Drawing.Color.Transparent
@@ -960,7 +869,7 @@ Public Class Sales
 
                 ' System Settings Button
                 Dim systemSettingsBtn = CreateLargeNavButton("⚙️ System", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-                AddHandler systemSettingsBtn.Click, Sub() MessageBox.Show("System Settings feature coming soon!", "Coming Soon", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                AddHandler systemSettingsBtn.Click, AddressOf NavSystemSettings_Click
                 buttonIndex += 1
             End If
 
@@ -971,6 +880,218 @@ Public Class Sales
         End Try
     End Sub
 
+    ' Add the System Settings navigation handler
+    Private Sub NavSystemSettings_Click(sender As Object, e As EventArgs)
+        isNavigating = True
+        Sys.Show()
+        Me.Close()
+    End Sub
+
+    ' UPDATED: Enhanced receipt printing using company settings
+    ' UPDATED: Enhanced receipt printing using company settings
+    ' UPDATED: Enhanced receipt printing with cleaner formatting (no pipe separators)
+    Private Sub OnPrintPage(sender As Object, e As PrintPageEventArgs)
+        Try
+            Dim regularFont As New Font("Arial", 8)
+            Dim boldFont As New Font("Arial", 10, FontStyle.Bold)
+            Dim headerFont As New Font("Arial", 12, FontStyle.Bold)
+            Dim brush As New SolidBrush(Color.Black)
+            Dim yPosition As Integer = 10
+            Dim centerX As Integer = e.MarginBounds.Width \ 2
+
+            ' UPDATED: Use CompanySettingsManager for receipt header
+            Dim companyName As String = CompanySettingsManager.Instance.GetSettingString("CompanyName", "JADE CLINIC")
+            Dim companyPhone As String = CompanySettingsManager.Instance.GetSettingString("Phone", "(02) 8123-4567")
+            Dim companyAddress As String = CompanySettingsManager.Instance.GetSettingString("Address", "")
+            Dim companyWebsite As String = CompanySettingsManager.Instance.GetSettingString("Website", "")
+            Dim companyTIN As String = CompanySettingsManager.Instance.GetSettingString("TIN", "123-456-789-000")
+
+            ' Store Header with company settings
+            e.Graphics.DrawString(companyName, headerFont, brush, CSng(centerX - (companyName.Length * 3.5)), CSng(yPosition))
+            yPosition += 25
+            e.Graphics.DrawString("Dental Supply Management", regularFont, brush, CSng(centerX - 80), CSng(yPosition))
+            yPosition += 15
+
+            ' Add TIN if available
+            If Not String.IsNullOrEmpty(companyTIN) Then
+                e.Graphics.DrawString($"TIN: {companyTIN}", regularFont, brush, CSng(centerX - 50), CSng(yPosition))
+                yPosition += 15
+            End If
+
+            ' Add phone
+            e.Graphics.DrawString($"Tel: {companyPhone}", regularFont, brush, CSng(centerX - 50), CSng(yPosition))
+            yPosition += 15
+
+            ' Add address if available
+            If Not String.IsNullOrEmpty(companyAddress) Then
+                e.Graphics.DrawString(companyAddress, regularFont, brush, CSng(centerX - (companyAddress.Length * 2)), CSng(yPosition))
+                yPosition += 15
+            End If
+
+            ' Add website if available
+            If Not String.IsNullOrEmpty(companyWebsite) Then
+                e.Graphics.DrawString(companyWebsite, regularFont, brush, CSng(centerX - (companyWebsite.Length * 2.5)), CSng(yPosition))
+                yPosition += 15
+            End If
+
+            e.Graphics.DrawString("=====================================", regularFont, brush, 10, yPosition)
+            yPosition += 20
+
+            ' Receipt details
+            e.Graphics.DrawString("SALES RECEIPT", boldFont, brush, CSng(centerX - 45), CSng(yPosition))
+            yPosition += 25
+            e.Graphics.DrawString($"Receipt #: {receiptOrderId}", regularFont, brush, 10, yPosition)
+            yPosition += 15
+            e.Graphics.DrawString($"Date: {DateTime.Now:MM/dd/yyyy HH:mm:ss}", regularFont, brush, 10, yPosition)
+            yPosition += 15
+            e.Graphics.DrawString($"Cashier: {frmLoginvb.LoggedInUsername}", regularFont, brush, 10, yPosition)
+            yPosition += 15
+            e.Graphics.DrawString($"Customer: {receiptCustomerName}", regularFont, brush, 10, yPosition)
+            yPosition += 20
+            e.Graphics.DrawString("=====================================", regularFont, brush, 10, yPosition)
+            yPosition += 15
+
+            ' IMPROVED: Items section with better spacing (no separators)
+            For Each item In receiptItems
+                Dim itemName As String = item("ProductName").ToString()
+                Dim quantity As Integer = CInt(item("Quantity"))
+                Dim price As Decimal = Convert.ToDecimal(item("Price"))
+                Dim total As Decimal = price * quantity
+
+                ' Truncate long product names
+                If itemName.Length > 30 Then
+                    itemName = itemName.Substring(0, 27) & "..."
+                End If
+
+                ' Item line with quantity and name
+                e.Graphics.DrawString($"{quantity}x {itemName}", regularFont, brush, 10, yPosition)
+                yPosition += 12
+
+                ' Price line with unit price and total (indented)
+                e.Graphics.DrawString($"@ ₱{price:F2}", regularFont, brush, 20, yPosition)
+                e.Graphics.DrawString($"₱{total:F2}", regularFont, brush, CSng(e.MarginBounds.Width - 60), CSng(yPosition))
+                yPosition += 15
+
+                ' Add small spacing between items
+                yPosition += 3
+            Next
+
+            e.Graphics.DrawString("=====================================", regularFont, brush, 10, yPosition)
+            yPosition += 15
+
+            ' FIXED: Correct VAT breakdown calculation
+            Dim vatInclusiveSubtotal As Decimal = receiptSubtotal * 1.12D
+            Dim discountedVatInclusive As Decimal = vatInclusiveSubtotal - discountAmount
+            Dim vatableSales As Decimal = discountedVatInclusive / 1.12D
+            Dim vatAmount As Decimal = vatableSales * 0.12D
+
+            ' Show discount if applied
+            If discountAmount > 0 Then
+                e.Graphics.DrawString($"Subtotal:", regularFont, brush, 10, yPosition)
+                e.Graphics.DrawString($"₱{vatInclusiveSubtotal:F2}", regularFont, brush, CSng(e.MarginBounds.Width - 80), CSng(yPosition))
+                yPosition += 12
+
+                e.Graphics.DrawString($"Discount ({discountType}):", regularFont, brush, 10, yPosition)
+                e.Graphics.DrawString($"-₱{discountAmount:F2}", regularFont, brush, CSng(e.MarginBounds.Width - 80), CSng(yPosition))
+                yPosition += 15
+            End If
+
+            ' Subtotal (VAT Inclusive) after discount
+            e.Graphics.DrawString($"SUB-TOTAL (VAT Inclusive):", regularFont, brush, 10, yPosition)
+            e.Graphics.DrawString($"₱{discountedVatInclusive:F2}", regularFont, brush, CSng(e.MarginBounds.Width - 80), CSng(yPosition))
+            yPosition += 15
+
+            e.Graphics.DrawString("=====================================", regularFont, brush, 10, yPosition)
+            yPosition += 15
+
+            ' VAT breakdown with better alignment
+            e.Graphics.DrawString($"VATable Sales:", regularFont, brush, 10, yPosition)
+            e.Graphics.DrawString($"₱{vatableSales:F2}", regularFont, brush, CSng(e.MarginBounds.Width - 80), CSng(yPosition))
+            yPosition += 12
+
+            e.Graphics.DrawString($"VAT (12%):", regularFont, brush, 10, yPosition)
+            e.Graphics.DrawString($"₱{vatAmount:F2}", regularFont, brush, CSng(e.MarginBounds.Width - 80), CSng(yPosition))
+            yPosition += 15
+
+            e.Graphics.DrawString("=====================================", regularFont, brush, 10, yPosition)
+            yPosition += 15
+
+            e.Graphics.DrawString($"TOTAL AMOUNT DUE:", boldFont, brush, 10, yPosition)
+            e.Graphics.DrawString($"₱{receiptTotalAmount:F2}", boldFont, brush, CSng(e.MarginBounds.Width - 80), CSng(yPosition))
+            yPosition += 25
+
+            e.Graphics.DrawString("=====================================", regularFont, brush, 10, yPosition)
+            yPosition += 15
+
+            ' Payment Information with cleaner formatting
+            e.Graphics.DrawString("PAYMENT INFORMATION:", boldFont, brush, 10, yPosition)
+            yPosition += 15
+
+            e.Graphics.DrawString($"Payment Method: {selectedPaymentMethod}", regularFont, brush, 10, yPosition)
+            yPosition += 12
+
+            If Not String.IsNullOrEmpty(paymentReference) Then
+                e.Graphics.DrawString($"Reference: {paymentReference}", regularFont, brush, 10, yPosition)
+                yPosition += 12
+            End If
+
+            e.Graphics.DrawString($"Amount Received:", regularFont, brush, 10, yPosition)
+            e.Graphics.DrawString($"₱{receiptAmountReceived:F2}", regularFont, brush, CSng(e.MarginBounds.Width - 80), CSng(yPosition))
+            yPosition += 12
+
+            e.Graphics.DrawString($"Change:", boldFont, brush, 10, yPosition)
+            e.Graphics.DrawString($"₱{receiptChange:F2}", boldFont, brush, CSng(e.MarginBounds.Width - 80), CSng(yPosition))
+            yPosition += 25
+
+            ' BIR Compliance footer
+            Dim birAuthNumber As String = CompanySettingsManager.Instance.GetSettingString("BIRAuthNumber", "ATP-2024-000001")
+            Dim ptuNumber As String = CompanySettingsManager.Instance.GetSettingString("PTUNumber", "PTU-2024-001")
+            Dim validityYears As Integer = CInt(CompanySettingsManager.Instance.GetSetting("ValidityYears", 5))
+
+            e.Graphics.DrawString($"BIR Authority to Print No.: {birAuthNumber}", regularFont, brush, 10, yPosition)
+            yPosition += 12
+            e.Graphics.DrawString($"PTU No.: {ptuNumber}", regularFont, brush, 10, yPosition)
+            yPosition += 12
+            e.Graphics.DrawString($"""This Invoice is valid for {validityYears} years from ATP date.""", regularFont, brush, 10, yPosition)
+            yPosition += 20
+
+            ' Custom footer message
+            Dim footerMessage As String = CompanySettingsManager.Instance.GetSettingString("ReceiptFooter", "Thank you for your business!" & vbCrLf & "Have a great day!")
+            Dim footerLines() As String = footerMessage.Split({vbCrLf, vbLf}, StringSplitOptions.RemoveEmptyEntries)
+
+            e.Graphics.DrawString("=====================================", regularFont, brush, 10, yPosition)
+            yPosition += 15
+
+            For Each line As String In footerLines
+                e.Graphics.DrawString(line, regularFont, brush, CSng(centerX - (line.Length * 2.5)), CSng(yPosition))
+                yPosition += 15
+            Next
+
+        Catch ex As Exception
+            Console.WriteLine($"Print error: {ex.Message}")
+        End Try
+    End Sub
+
+    ' UPDATED: Print receipt method with dynamic title
+    Private Sub PrintReceipt()
+        Try
+            Dim companyName As String = CompanySettingsManager.Instance.GetSettingString("CompanyName", "JADE CLINIC")
+
+            Dim printDoc As New PrintDocument()
+            printDoc.DefaultPageSettings.PaperSize = New PaperSize("Receipt", 300, 700)
+            printDoc.DefaultPageSettings.Margins = New Margins(10, 10, 10, 10)
+
+            AddHandler printDoc.PrintPage, AddressOf OnPrintPage
+
+            Dim printPreview As New PrintPreviewDialog()
+            printPreview.Document = printDoc
+            printPreview.Text = $"Receipt Preview - {companyName}"
+            printPreview.WindowState = FormWindowState.Maximized
+            printPreview.ShowDialog()
+        Catch ex As Exception
+            MessageBox.Show($"Error printing receipt: {ex.Message}", "Print Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
     Private Function CreateLargeNavButton(text As String, yPosition As Integer, isActive As Boolean, buttonWidth As Integer, buttonHeight As Integer) As Guna.UI2.WinForms.Guna2Button
         Dim btn As New Guna.UI2.WinForms.Guna2Button()
 
@@ -1716,11 +1837,12 @@ Public Class Sales
 
     ' NEW: Cash Amount Input Modal
     ' ENHANCED: Cash Amount Input Modal with improved spacing and keyboard support
+    ' ENHANCED: Cash Amount Input Modal with comprehensive improvements
     Private Sub ShowCashAmountInputModal()
         ' Create cash amount input modal form
         Dim cashForm As New Form()
         cashForm.Text = "Cash Payment"
-        cashForm.Size = New Size(500, 850) ' Increased size for better spacing
+        cashForm.Size = New Size(520, 750) ' Slightly increased for better spacing
         cashForm.StartPosition = FormStartPosition.CenterParent
         cashForm.FormBorderStyle = FormBorderStyle.FixedDialog
         cashForm.MaximizeBox = False
@@ -1737,7 +1859,7 @@ Public Class Sales
 
         ' Header section with improved spacing
         Dim headerSection As New Panel()
-        headerSection.Size = New Size(460, 120)
+        headerSection.Size = New Size(480, 120)
         headerSection.Location = New Point(20, 20)
         headerSection.BackColor = Color.Transparent
         cashForm.Controls.Add(headerSection)
@@ -1748,7 +1870,7 @@ Public Class Sales
         lblTitle.Font = New Font("Poppins", 18, FontStyle.Bold)
         lblTitle.ForeColor = PureWhite
         lblTitle.Location = New Point(0, 0)
-        lblTitle.Size = New Size(460, 35)
+        lblTitle.Size = New Size(480, 35)
         lblTitle.TextAlign = ContentAlignment.MiddleCenter
         headerSection.Controls.Add(lblTitle)
 
@@ -1758,7 +1880,7 @@ Public Class Sales
         lblCustomer.Font = New Font("Poppins", 12, FontStyle.Regular)
         lblCustomer.ForeColor = GoldenYellow
         lblCustomer.Location = New Point(0, 40)
-        lblCustomer.Size = New Size(460, 25)
+        lblCustomer.Size = New Size(480, 25)
         lblCustomer.TextAlign = ContentAlignment.MiddleCenter
         headerSection.Controls.Add(lblCustomer)
 
@@ -1768,20 +1890,20 @@ Public Class Sales
         lblOrderTotal.Font = New Font("Poppins", 14, FontStyle.Bold)
         lblOrderTotal.ForeColor = LightSilver
         lblOrderTotal.Location = New Point(0, 70)
-        lblOrderTotal.Size = New Size(460, 30)
+        lblOrderTotal.Size = New Size(480, 30)
         lblOrderTotal.TextAlign = ContentAlignment.MiddleCenter
         headerSection.Controls.Add(lblOrderTotal)
 
         ' Separator line
         Dim separator As New Panel()
-        separator.Size = New Size(420, 2)
+        separator.Size = New Size(440, 2)
         separator.Location = New Point(40, 155)
         separator.BackColor = RichOlive
         cashForm.Controls.Add(separator)
 
         ' Amount display section with improved spacing
         Dim amountSection As New Panel()
-        amountSection.Size = New Size(460, 140)
+        amountSection.Size = New Size(480, 120)
         amountSection.Location = New Point(20, 170)
         amountSection.BackColor = Color.Transparent
         cashForm.Controls.Add(amountSection)
@@ -1792,7 +1914,7 @@ Public Class Sales
         lblAmountReceived.Font = New Font("Poppins", 12, FontStyle.Regular)
         lblAmountReceived.ForeColor = LightSilver
         lblAmountReceived.Location = New Point(0, 0)
-        lblAmountReceived.Size = New Size(460, 25)
+        lblAmountReceived.Size = New Size(480, 25)
         lblAmountReceived.TextAlign = ContentAlignment.MiddleCenter
         amountSection.Controls.Add(lblAmountReceived)
 
@@ -1800,15 +1922,25 @@ Public Class Sales
         enteredAmount = "" ' Reset amount
         lblAmountDisplay = New Guna.UI2.WinForms.Guna2HtmlLabel()
         lblAmountDisplay.Text = "₱0.00"
-        lblAmountDisplay.Font = New Font("Segoe UI", 32, FontStyle.Bold)
+        lblAmountDisplay.Font = New Font("Segoe UI", 28, FontStyle.Bold)
         lblAmountDisplay.ForeColor = GoldenYellow
         lblAmountDisplay.AutoSize = True
-        lblAmountDisplay.Location = New Point((460 - 150) / 2, 35) ' Will be repositioned by UpdateAmountDisplay
+        lblAmountDisplay.Location = New Point((480 - 150) / 2, 30)
         amountSection.Controls.Add(lblAmountDisplay)
+
+        ' Input hint label
+        Dim lblInputHint As New Label()
+        lblInputHint.Text = "Type amount or use keypad below"
+        lblInputHint.Font = New Font("Poppins", 9, FontStyle.Italic)
+        lblInputHint.ForeColor = SteelGray
+        lblInputHint.Location = New Point(0, 90)
+        lblInputHint.Size = New Size(480, 20)
+        lblInputHint.TextAlign = ContentAlignment.MiddleCenter
+        amountSection.Controls.Add(lblInputHint)
 
         ' Change display with better layout
         Dim changeSection As New Panel()
-        changeSection.Size = New Size(460, 50)
+        changeSection.Size = New Size(480, 40)
         changeSection.Location = New Point(20, 300)
         changeSection.BackColor = Color.Transparent
         cashForm.Controls.Add(changeSection)
@@ -1817,54 +1949,80 @@ Public Class Sales
         lblChangeLabel.Text = "Change:"
         lblChangeLabel.Font = New Font("Poppins", 12, FontStyle.Regular)
         lblChangeLabel.ForeColor = PureWhite
-        lblChangeLabel.Location = New Point(100, 10)
-        lblChangeLabel.Size = New Size(100, 25)
+        lblChangeLabel.Location = New Point(160, 5)
+        lblChangeLabel.Size = New Size(80, 25)
         changeSection.Controls.Add(lblChangeLabel)
 
         Dim lblChangeAmount As New Label()
         lblChangeAmount.Text = "₱0.00"
         lblChangeAmount.Font = New Font("Poppins", 14, FontStyle.Bold)
         lblChangeAmount.ForeColor = SuccessGreen
-        lblChangeAmount.Location = New Point(240, 10)
-        lblChangeAmount.Size = New Size(200, 55)
+        lblChangeAmount.Location = New Point(250, 5)
+        lblChangeAmount.Size = New Size(120, 25)
         changeSection.Controls.Add(lblChangeAmount)
 
-        ' Update amount display function for this modal
+        ' ENHANCED: Update amount display function with better decimal handling
+        ' ENHANCED: Update amount display function with better decimal handling
         Dim UpdateCashAmountDisplay = Sub()
                                           ' Format as decimal with two places
                                           Dim displayValue As Decimal = 0D
                                           Dim amountText As String = enteredAmount
 
-                                          ' Handle decimal formatting
-                                          If amountText.Contains(".") Then
-                                              ' User entered a decimal point
+                                          ' IMPROVED: Better decimal handling
+                                          If String.IsNullOrEmpty(amountText) Then
+                                              displayValue = 0
+                                              lblAmountDisplay.Text = "₱0.00"
+                                          ElseIf amountText.Contains(".") Then
+                                              ' User entered a decimal point - parse directly
                                               If Decimal.TryParse(amountText, displayValue) Then
+                                                  lblAmountDisplay.Text = $"₱{displayValue:F2}"
+                                              Else
+                                                  ' Handle incomplete decimal input (like "123.")
+                                                  If amountText.EndsWith(".") AndAlso amountText.Length > 1 Then
+                                                      Dim wholePart As String = amountText.Substring(0, amountText.Length - 1)
+                                                      If Decimal.TryParse(wholePart, displayValue) Then
+                                                          lblAmountDisplay.Text = $"₱{displayValue}.00"
+                                                      Else
+                                                          lblAmountDisplay.Text = "₱0.00"
+                                                      End If
+                                                  Else
+                                                      lblAmountDisplay.Text = "₱0.00"
+                                                  End If
+                                              End If
+                                          Else
+                                              ' No decimal point, treat as whole currency units (NOT cents)
+                                              If Decimal.TryParse(amountText, displayValue) Then
+                                                  ' FIXED: Don't divide by 100 - treat as direct currency amount
                                                   lblAmountDisplay.Text = $"₱{displayValue:F2}"
                                               Else
                                                   lblAmountDisplay.Text = "₱0.00"
                                               End If
-                                          Else
-                                              ' No decimal point, treat as cents
-                                              If amountText.Length = 0 Then
-                                                  displayValue = 0
-                                              ElseIf Decimal.TryParse(amountText, displayValue) Then
-                                                  displayValue = displayValue / 100
-                                              End If
-                                              lblAmountDisplay.Text = $"₱{displayValue:F2}"
                                           End If
 
                                           ' Center the amount display
-                                          lblAmountDisplay.Location = New Point((460 - lblAmountDisplay.Width) / 2, 35)
+                                          lblAmountDisplay.Location = New Point((480 - lblAmountDisplay.Width) / 2, 30)
 
                                           ' Update change calculation
                                           Dim changeVal As Decimal = displayValue - totalAmount
                                           lblChangeAmount.Text = $"₱{changeVal:F2}"
                                           lblChangeAmount.ForeColor = If(changeVal >= 0, SuccessGreen, AlertRed)
+
+                                          ' Update input hint based on state
+                                          If String.IsNullOrEmpty(amountText) Then
+                                              lblInputHint.Text = "Type amount or use keypad below"
+                                              lblInputHint.ForeColor = SteelGray
+                                          ElseIf changeVal >= 0 Then
+                                              lblInputHint.Text = "✓ Sufficient amount entered"
+                                              lblInputHint.ForeColor = SuccessGreen
+                                          Else
+                                              lblInputHint.Text = "⚠ Insufficient amount"
+                                              lblInputHint.ForeColor = AlertRed
+                                          End If
                                       End Sub
 
         ' Keypad section with improved spacing
         Dim keypadSection As New Panel()
-        keypadSection.Size = New Size(460, 240)
+        keypadSection.Size = New Size(480, 240)
         keypadSection.Location = New Point(20, 350)
         keypadSection.BackColor = Color.Transparent
         cashForm.Controls.Add(keypadSection)
@@ -1872,36 +2030,44 @@ Public Class Sales
         ' Keypad buttons with better spacing
         Dim buttonSize As Integer = 70
         Dim buttonSpacing As Integer = 15
-        Dim buttonStartX As Integer = (460 - (buttonSize * 3 + buttonSpacing * 2)) / 2
+        Dim buttonStartX As Integer = (480 - (buttonSize * 3 + buttonSpacing * 2)) / 2
         Dim buttonStartY As Integer = 0
-        Dim buttonTexts As String() = {"1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "⌫"}
+        Dim buttonTexts As String() = {"1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "X"}
 
         For i = 0 To buttonTexts.Length - 1
             Dim button As New Guna.UI2.WinForms.Guna2Button()
             button.Size = New Size(buttonSize, buttonSize)
-            button.BorderRadius = 12
-            button.FillColor = SteelGray
+            button.BorderRadius = 10
+            button.FillColor = SteelGray ' Updated color
+            button.BackColor = DarkSlate
             button.ForeColor = PureWhite
             button.Font = New Font("Poppins", 14, FontStyle.Bold)
             button.Text = buttonTexts(i)
-            button.BorderThickness = 1
-            button.BorderColor = Graphite
+            button.TabStop = False
 
-            ' Special styling for backspace button
+            ' Special styling for different buttons
             If button.Text = "⌫" Then
                 button.FillColor = AlertRed
                 button.BorderColor = AlertRed
+            ElseIf button.Text = "." Then
+                ' Visual hint that decimal requires digits first
+                button.Font = New Font("Poppins", 18, FontStyle.Bold)
             End If
 
-            ' Add hover effect
+            ' Add hover effect with validation feedback
             AddHandler button.MouseEnter, Sub()
-                                              If button.Text = "⌫" Then
+                                              If button.Text = "." AndAlso enteredAmount.Length = 0 Then
+                                                  ' Show visual feedback that decimal point needs digits first
+                                                  button.FillColor = AlertRed
+                                                  button.ForeColor = PureWhite
+                                              ElseIf button.Text = "⌫" Then
                                                   button.FillColor = Color.FromArgb(220, 60, 75)
                                               Else
                                                   button.FillColor = GoldenYellow
                                                   button.ForeColor = DeepCharcoal
                                               End If
                                           End Sub
+
             AddHandler button.MouseLeave, Sub()
                                               If button.Text = "⌫" Then
                                                   button.FillColor = AlertRed
@@ -1918,14 +2084,28 @@ Public Class Sales
 
             AddHandler button.Click, Sub(sender As Object, e As EventArgs)
                                          Dim btn As Guna.UI2.WinForms.Guna2Button = CType(sender, Guna.UI2.WinForms.Guna2Button)
-                                         ProcessKeypadInput(btn.Text, UpdateCashAmountDisplay)
+                                         If btn.Text = "X" Then
+                                             If enteredAmount.Length > 0 Then
+                                                 enteredAmount = enteredAmount.Substring(0, enteredAmount.Length - 1)
+                                             End If
+                                         ElseIf btn.Text = "." Then
+                                             ' Allow only one decimal point
+                                             If Not enteredAmount.Contains(".") AndAlso enteredAmount.Length > 0 Then
+                                                 enteredAmount &= "."
+                                             End If
+                                         ElseIf btn.Text >= "0" And btn.Text <= "9" Then
+                                             If enteredAmount.Length < 10 Then
+                                                 enteredAmount &= btn.Text
+                                             End If
+                                         End If
+                                         UpdateAmountDisplay()
                                      End Sub
             keypadSection.Controls.Add(button)
         Next
 
         ' Quick amount buttons section
         Dim quickAmountSection As New Panel()
-        quickAmountSection.Size = New Size(460, 50)
+        quickAmountSection.Size = New Size(480, 50)
         quickAmountSection.Location = New Point(20, 600)
         quickAmountSection.BackColor = Color.Transparent
         cashForm.Controls.Add(quickAmountSection)
@@ -1939,19 +2119,10 @@ Public Class Sales
         btnExact.FillColor = LightSilver
         btnExact.BorderRadius = 10
         AddHandler btnExact.Click, Sub()
+                                       ' Set the exact total amount directly
                                        enteredAmount = totalAmount.ToString("F2")
-                                       If enteredAmount.Contains(".") Then
-                                           ' Keep decimal format for exact amounts
-                                       Else
-                                           enteredAmount = enteredAmount.Replace(".", "")
-                                           If enteredAmount.EndsWith("00") Then
-                                               enteredAmount = enteredAmount.Substring(0, enteredAmount.Length - 2)
-                                           End If
-                                       End If
                                        UpdateCashAmountDisplay()
                                    End Sub
-        AddHandler btnExact.MouseEnter, Sub() btnExact.FillColor = GoldenYellow
-        AddHandler btnExact.MouseLeave, Sub() btnExact.FillColor = LightSilver
         quickAmountSection.Controls.Add(btnExact)
 
         ' Clear button
@@ -1973,7 +2144,7 @@ Public Class Sales
 
         ' Action buttons section
         Dim actionSection As New Panel()
-        actionSection.Size = New Size(460, 60)
+        actionSection.Size = New Size(480, 60)
         actionSection.Location = New Point(20, 660)
         actionSection.BackColor = Color.Transparent
         cashForm.Controls.Add(actionSection)
@@ -1981,7 +2152,7 @@ Public Class Sales
         Dim btnComplete As New Guna.UI2.WinForms.Guna2Button()
         btnComplete.Text = "Complete Sale"
         btnComplete.Size = New Size(160, 50)
-        btnComplete.Location = New Point(280, 5)
+        btnComplete.Location = New Point(300, 5)
         btnComplete.Font = New Font("Poppins", 12, FontStyle.Bold)
         btnComplete.ForeColor = DeepCharcoal
         btnComplete.FillColor = SuccessGreen
@@ -2032,7 +2203,7 @@ Public Class Sales
         AddHandler btnCancel.MouseLeave, Sub() btnCancel.FillColor = AlertRed
         actionSection.Controls.Add(btnCancel)
 
-        ' ENHANCED: Add comprehensive keyboard support
+        ' ENHANCED: Keyboard support with better decimal validation
         AddHandler cashForm.KeyDown, Sub(sender As Object, e As KeyEventArgs)
                                          ' Handle number keys (0-9)
                                          If (e.KeyCode >= Keys.D0 AndAlso e.KeyCode <= Keys.D9) OrElse
@@ -2043,17 +2214,17 @@ Public Class Sales
                                              Else
                                                  digit = (e.KeyCode - Keys.NumPad0).ToString()
                                              End If
-                                             ProcessKeypadInput(digit, UpdateCashAmountDisplay)
+                                             ProcessKeypadInputEnhanced(digit, UpdateCashAmountDisplay)
                                              e.Handled = True
 
                                              ' Handle decimal point
                                          ElseIf e.KeyCode = Keys.Decimal OrElse e.KeyCode = Keys.OemPeriod Then
-                                             ProcessKeypadInput(".", UpdateCashAmountDisplay)
+                                             ProcessKeypadInputEnhanced(".", UpdateCashAmountDisplay)
                                              e.Handled = True
 
                                              ' Handle backspace/delete
                                          ElseIf e.KeyCode = Keys.Back OrElse e.KeyCode = Keys.Delete Then
-                                             ProcessKeypadInput("⌫", UpdateCashAmountDisplay)
+                                             ProcessKeypadInputEnhanced("⌫", UpdateCashAmountDisplay)
                                              e.Handled = True
 
                                              ' Handle Enter key to complete payment
@@ -2100,6 +2271,46 @@ Public Class Sales
         End Select
     End Sub
 
+    ' ENHANCED: Process keypad input with comprehensive decimal validation
+    Private Sub ProcessKeypadInputEnhanced(input As String, updateCallback As Action)
+        Select Case input
+            Case "⌫" ' Backspace
+                If enteredAmount.Length > 0 Then
+                    enteredAmount = enteredAmount.Substring(0, enteredAmount.Length - 1)
+                End If
+
+            Case "." ' Decimal point
+                ' STRICT VALIDATION: Must have digits first AND no existing decimal point
+                If enteredAmount.Length > 0 AndAlso Not enteredAmount.Contains(".") Then
+                    enteredAmount &= "."
+                End If
+
+            Case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" ' Digits
+                ' Enhanced length validation based on decimal presence
+                Dim maxLength As Integer
+                If enteredAmount.Contains(".") Then
+                    ' Allow more total length when decimal is present (e.g., 999999.99)
+                    maxLength = 12
+                    ' Also limit decimal places to 2
+                    Dim decimalIndex As Integer = enteredAmount.IndexOf(".")
+                    Dim decimalPlaces As Integer = enteredAmount.Length - decimalIndex - 1
+                    If decimalPlaces >= 2 Then
+                        Return ' Don't add more digits after 2 decimal places
+                    End If
+                Else
+                    ' Limit whole number length
+                    maxLength = 8 ' Allows up to 99,999,999
+                End If
+
+                If enteredAmount.Length < maxLength Then
+                    enteredAmount &= input
+                End If
+        End Select
+
+        ' Call the update callback
+        updateCallback()
+    End Sub
+
     ' HELPER: Process keypad input consistently
     Private Sub ProcessKeypadInput(input As String, updateCallback As Action)
         Select Case input
@@ -2115,7 +2326,7 @@ Public Class Sales
                 End If
 
             Case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" ' Digits
-                If enteredAmount.Length < 12 Then ' Prevent overflow
+                If enteredAmount.Length < 10 Then ' Prevent overflow
                     enteredAmount &= input
                 End If
         End Select
@@ -2174,7 +2385,7 @@ Public Class Sales
         lblAmountDisplay = New Guna.UI2.WinForms.Guna2HtmlLabel()
         lblAmountDisplay.Text = "0.00"
         lblAmountDisplay.Font = New Font("Poppins SemiBold", 28.0F, FontStyle.Regular)
-        lblAmountDisplay.ForeColor = GoldenYellow ' Updated color for emphasis
+        lblAmountDisplay.ForeColor = GoldenYellow
         lblAmountDisplay.AutoSize = True
         lblAmountDisplay.Location = New Point((totalReceivedPanel.Width - lblAmountDisplay.Width) / 2, 80)
         totalReceivedPanel.Controls.Add(lblAmountDisplay)
@@ -2199,18 +2410,41 @@ Public Class Sales
             button.FillColor = SteelGray ' Updated color
             button.BackColor = DarkSlate
             button.ForeColor = PureWhite
-            button.Font = New Font("Poppins SemiBold", 12.0F, FontStyle.Regular)
+            button.Font = New Font("Poppins", 14, FontStyle.Bold)
             button.Text = buttonTexts(i)
             button.TabStop = False
 
-            ' Add hover effect
+            ' Special styling for different buttons
+            If button.Text = "⌫" Then
+                button.FillColor = AlertRed
+                button.BorderColor = AlertRed
+            ElseIf button.Text = "." Then
+                ' Visual hint that decimal requires digits first
+                button.Font = New Font("Poppins", 18, FontStyle.Bold)
+            End If
+
+            ' Add hover effect with validation feedback
             AddHandler button.MouseEnter, Sub()
-                                              button.FillColor = GoldenYellow
-                                              button.ForeColor = DeepCharcoal
+                                              If button.Text = "." AndAlso enteredAmount.Length = 0 Then
+                                                  ' Show visual feedback that decimal point needs digits first
+                                                  button.FillColor = AlertRed
+                                                  button.ForeColor = PureWhite
+                                              ElseIf button.Text = "⌫" Then
+                                                  button.FillColor = Color.FromArgb(220, 60, 75)
+                                              Else
+                                                  button.FillColor = GoldenYellow
+                                                  button.ForeColor = DeepCharcoal
+                                              End If
                                           End Sub
+
             AddHandler button.MouseLeave, Sub()
-                                              button.FillColor = SteelGray
-                                              button.ForeColor = PureWhite
+                                              If button.Text = "⌫" Then
+                                                  button.FillColor = AlertRed
+                                                  button.ForeColor = PureWhite
+                                              Else
+                                                  button.FillColor = SteelGray
+                                                  button.ForeColor = PureWhite
+                                              End If
                                           End Sub
 
             Dim row = i \ 3
@@ -2239,7 +2473,7 @@ Public Class Sales
             totalPanelButtons.Add(button)
         Next
 
-        ' Quick amount buttons
+        ' Quick amount buttons section
         Dim totalAmount As Decimal = 0D
         If totalLbl IsNot Nothing Then
             Decimal.TryParse(totalLbl.Text, totalAmount)
@@ -2253,12 +2487,9 @@ Public Class Sales
         btnExact.Font = New Font("Poppins", 9, FontStyle.Bold)
         btnExact.ForeColor = DeepCharcoal
         btnExact.FillColor = LightSilver
-        btnExact.BorderRadius = 8
+        btnExact.BorderRadius = 10
         AddHandler btnExact.Click, Sub()
-                                       enteredAmount = totalAmount.ToString("F2").Replace(".", "")
-                                       If enteredAmount.EndsWith("00") Then
-                                           enteredAmount = enteredAmount.Substring(0, enteredAmount.Length - 2)
-                                       End If
+                                       enteredAmount = totalAmount.ToString("F2")
                                        UpdateAmountDisplay()
                                    End Sub
         totalReceivedPanel.Controls.Add(btnExact)
@@ -2406,6 +2637,7 @@ Public Class Sales
     End Sub
 
     ' Refresh the order display in the order summary panel
+    ' FIXED: Refresh the order display with correct VAT calculations
     Private Sub RefreshOrderDisplay()
         ' Reset change label and totalRLbl when in normal order summary mode
         If Not pinPanelActive AndAlso Not totalPanelActive Then
@@ -2427,7 +2659,8 @@ Public Class Sales
         Dim panelHeight As Integer = 50
         Dim marginY As Integer = 10
         Dim currentY As Integer = 50 ' Start after Order ID/OrderName labels
-        Dim subtotal As Decimal = 0
+        Dim subtotalVatInclusive As Decimal = 0
+
         For i = 0 To currentOrderList.Count - 1
             Dim prod = currentOrderList(i)
             Dim orderPanel As New Guna.UI2.WinForms.Guna2Panel()
@@ -2483,7 +2716,7 @@ Public Class Sales
             lblQuantity.Location = New Point(290, 10)
             lblQuantity.AutoSize = True
 
-            ' Price (use the promotional price if available)
+            ' FIXED: Price calculation - treat as VAT-inclusive
             Dim priceVal As Decimal = Convert.ToDecimal(prod("Price")) * CInt(prod("Quantity"))
             Dim lblTotal As New Guna.UI2.WinForms.Guna2HtmlLabel()
             lblTotal.Text = priceVal.ToString("F2")
@@ -2534,30 +2767,38 @@ Public Class Sales
             orderPanel.Controls.Add(lblTotal)
 
             orderSummaryPanel.Controls.Add(orderPanel)
-            subtotal += priceVal
+            subtotalVatInclusive += priceVal
         Next
 
-        ' Update subtotal label
+        ' FIXED: Correct VAT calculations
+        ' Apply discount first to the VAT-inclusive subtotal
+        Dim discountedSubtotalVatInclusive As Decimal = subtotalVatInclusive - discountAmount
+
+        ' Calculate VATable sales (net of VAT) from the discounted VAT-inclusive amount
+        Dim vatableSales As Decimal = discountedSubtotalVatInclusive / 1.12D
+
+        ' Calculate VAT amount (12% of VATable sales)
+        Dim vatAmount As Decimal = vatableSales * 0.12D
+
+        ' Total should equal VATable sales + VAT
+        Dim totalAmount As Decimal = vatableSales + vatAmount
+
+        ' Update UI labels
         If lblSubTotal IsNot Nothing Then
-            lblSubTotal.Text = subtotal.ToString("F2")
+            lblSubTotal.Text = discountedSubtotalVatInclusive.ToString("F2") ' Show VAT-inclusive subtotal after discount
         End If
 
-        ' Apply discount if any
-        Dim discountedSubtotal As Decimal = subtotal - discountAmount
+        If taxLbl IsNot Nothing Then
+            taxLbl.Text = vatAmount.ToString("F2") ' Show actual VAT amount
+        End If
 
-        ' Calculate and show 12% tax on discounted amount
-        Dim totalWithTax As Decimal = discountedSubtotal * 1.12D
         If totalLbl IsNot Nothing Then
-            totalLbl.Text = totalWithTax.ToString("F2")
+            totalLbl.Text = totalAmount.ToString("F2") ' This should equal discountedSubtotalVatInclusive
         End If
-        ' Do NOT set totalRLbl here
-        ' Show taxLbl as 12%
-        ' If taxLbl IsNot Nothing Then
-        '     taxLbl.Text = "12%"
-        ' End If
     End Sub
 
-    ' Confirm payment and process order
+    ' FIXED: Enhanced receipt printing with correct VAT breakdown
+    ' FIXED: Update the confirmBtn_Click method to set correct receipt values
     Private Sub confirmBtn_Click(sender As Object, e As EventArgs) Handles confirmBtn.Click
         Try
             ' Validate user session
@@ -2575,21 +2816,29 @@ Public Class Sales
             ' For Cash payment, get received amount; for others, use exact amount
             If selectedPaymentMethod = "Cash" Then
                 If lblAmountDisplay IsNot Nothing Then
-                    Decimal.TryParse(lblAmountDisplay.Text, receivedAmount)
+                    ' FIXED: Remove currency symbol before parsing
+                    Dim amountText As String = lblAmountDisplay.Text.Replace("₱", "").Trim()
+                    If Not Decimal.TryParse(amountText, receivedAmount) Then
+                        MessageBox.Show("Invalid amount entered.", "Payment Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                        Return
+                    End If
                 End If
                 If receivedAmount < orderTotal Then
-                    MessageBox.Show("Total received must be greater than or equal to order total.", "Payment Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                    MessageBox.Show($"Amount received (₱{receivedAmount:F2}) must be greater than or equal to order total (₱{orderTotal:F2}).", "Payment Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
                     Return
                 End If
             Else
                 receivedAmount = orderTotal ' Exact amount for non-cash payments
             End If
 
+            ' FIXED: Declare changeAmount variable
+            Dim changeAmount As Decimal = receivedAmount - orderTotal
+
             ' Get userId from logged-in username
             Dim userIdQuery As String = "SELECT UserID FROM Users WHERE Username = @Username"
             Dim userIdParams As SqlParameter() = {
-            New SqlParameter("@Username", frmLoginvb.LoggedInUsername)
-        }
+                New SqlParameter("@Username", frmLoginvb.LoggedInUsername)
+            }
             Dim userIdResult = Utilities.ExecuteScalar(userIdQuery, userIdParams)
 
             If userIdResult Is Nothing OrElse IsDBNull(userIdResult) Then
@@ -2598,33 +2847,32 @@ Public Class Sales
             End If
 
             Dim userId As Integer = Convert.ToInt32(userIdResult)
-            Dim changeAmount As Decimal = receivedAmount - orderTotal
 
             ' Create JSON data structure
             Dim saleData As New Dictionary(Of String, Object) From {
-            {"customer", New Dictionary(Of String, Object) From {
-                {"name", selectedCustomerName},
-                {"phone", selectedCustomerPhone},
-                {"email", selectedCustomerEmail}
-            }},
-            {"payment", New Dictionary(Of String, Object) From {
-                {"method", selectedPaymentMethod},
-                {"reference", If(String.IsNullOrEmpty(paymentReference), Nothing, paymentReference)},
-                {"subtotal", orderTotal / 1.12D},
-                {"discount", New Dictionary(Of String, Object) From {
-                    {"type", discountType},
-                    {"value", discountValue},
-                    {"amount", discountAmount}
+                {"customer", New Dictionary(Of String, Object) From {
+                    {"name", selectedCustomerName},
+                    {"phone", selectedCustomerPhone},
+                    {"email", selectedCustomerEmail}
                 }},
-                {"tax", orderTotal - (orderTotal / 1.12D)},
-                {"total", orderTotal},
-                {"received", receivedAmount},
-                {"change", changeAmount}
-            }},
-            {"items", currentOrderList},
-            {"cashier", frmLoginvb.LoggedInUsername},
-            {"saleDate", DateTime.Now}
-        }
+                {"payment", New Dictionary(Of String, Object) From {
+                    {"method", selectedPaymentMethod},
+                    {"reference", If(String.IsNullOrEmpty(paymentReference), Nothing, paymentReference)},
+                    {"subtotal", orderTotal / 1.12D},
+                    {"discount", New Dictionary(Of String, Object) From {
+                        {"type", discountType},
+                        {"value", discountValue},
+                        {"amount", discountAmount}
+                    }},
+                    {"tax", orderTotal - (orderTotal / 1.12D)},
+                    {"total", orderTotal},
+                    {"received", receivedAmount},
+                    {"change", changeAmount}
+                }},
+                {"items", currentOrderList},
+                {"cashier", frmLoginvb.LoggedInUsername},
+                {"saleDate", DateTime.Now}
+            }
 
             ' Convert to JSON
             Dim jsonData As String = Newtonsoft.Json.JsonConvert.SerializeObject(saleData, Newtonsoft.Json.Formatting.Indented)
@@ -2632,50 +2880,56 @@ Public Class Sales
             ' Insert sale record with JSON data
             Dim saleQuery As String = "INSERT INTO Sales (UserID, SaleDate, TotalAmount, AmountPaid, PaymentMethod, SalesData, Status, Reference) OUTPUT INSERTED.SaleID VALUES (@UserID, @SaleDate, @TotalAmount, @AmountPaid, @PaymentMethod, @SalesData, @Status, @Reference)"
             Dim saleParams As SqlParameter() = {
-            New SqlParameter("@UserID", userId),
-            New SqlParameter("@SaleDate", DateTime.Now),
-            New SqlParameter("@TotalAmount", orderTotal),
-            New SqlParameter("@AmountPaid", receivedAmount),
-            New SqlParameter("@PaymentMethod", selectedPaymentMethod),
-            New SqlParameter("@SalesData", jsonData),
-            New SqlParameter("@Status", "Completed"),
-            New SqlParameter("@Reference", If(String.IsNullOrEmpty(paymentReference), DBNull.Value, paymentReference))
-        }
+                New SqlParameter("@UserID", userId),
+                New SqlParameter("@SaleDate", DateTime.Now),
+                New SqlParameter("@TotalAmount", orderTotal),
+                New SqlParameter("@AmountPaid", receivedAmount),
+                New SqlParameter("@PaymentMethod", selectedPaymentMethod),
+                New SqlParameter("@SalesData", jsonData),
+                New SqlParameter("@Status", "Completed"),
+                New SqlParameter("@Reference", If(String.IsNullOrEmpty(paymentReference), DBNull.Value, paymentReference))
+            }
 
             Dim saleId As Integer = Convert.ToInt32(Utilities.ExecuteScalar(saleQuery, saleParams))
 
             ' Update product stock - FIXED: Use correct column names for SaleItems table
             For Each item In currentOrderList
-                Dim unitPrice As Decimal = Convert.ToDecimal(item("Price")) * CInt(item("Quantity"))
+                Dim unitPrice As Decimal = Convert.ToDecimal(item("Price"))
                 Dim quantity As Integer = CInt(item("Quantity"))
 
-                ' Insert sale item - REMOVED TotalPrice parameter since it's a computed column
+                ' Insert sale item - using UnitPrice (price per unit)
                 Dim itemQuery As String = "INSERT INTO SaleItems (SaleID, ProductID, Quantity, UnitPrice) VALUES (@SaleID, @ProductID, @Quantity, @UnitPrice)"
                 Dim itemParams As SqlParameter() = {
-                New SqlParameter("@SaleID", saleId),
-                New SqlParameter("@ProductID", item("ProductID")),
-                New SqlParameter("@Quantity", quantity),
-                New SqlParameter("@UnitPrice", unitPrice)
-            }
+                    New SqlParameter("@SaleID", saleId),
+                    New SqlParameter("@ProductID", item("ProductID")),
+                    New SqlParameter("@Quantity", quantity),
+                    New SqlParameter("@UnitPrice", unitPrice)
+                }
                 Utilities.ExecuteNonQuery(itemQuery, itemParams)
 
                 ' Update product stock
                 Dim stockQuery As String = "UPDATE Products SET CurrentStock = CurrentStock - @Quantity WHERE ProductID = @ProductID"
                 Dim stockParams As SqlParameter() = {
-                New SqlParameter("@Quantity", quantity),
-                New SqlParameter("@ProductID", item("ProductID"))
-            }
+                    New SqlParameter("@Quantity", quantity),
+                    New SqlParameter("@ProductID", item("ProductID"))
+                }
                 Utilities.ExecuteNonQuery(stockQuery, stockParams)
             Next
 
-            ' Prepare receipt data
+            ' Prepare receipt data with correct VAT calculations
             receiptOrderId = saleId.ToString()
             receiptCustomerName = selectedCustomerName
             receiptTotalAmount = orderTotal
             receiptAmountReceived = receivedAmount
             receiptChange = changeAmount
-            receiptSubtotal = orderTotal / 1.12D
-            receiptTax = orderTotal - receiptSubtotal
+
+            ' FIXED: Calculate correct values for receipt VAT breakdown
+            Dim vatInclusiveAfterDiscount As Decimal = orderTotal
+            Dim vatableSales As Decimal = vatInclusiveAfterDiscount / 1.12D
+            Dim vatAmount As Decimal = vatableSales * 0.12D
+
+            receiptSubtotal = vatableSales ' VATable sales (net of VAT)
+            receiptTax = vatAmount ' Actual VAT amount
             receiptItems = New List(Of Dictionary(Of String, Object))(currentOrderList)
 
             ' Print receipt
@@ -2690,6 +2944,9 @@ Public Class Sales
 
             Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Sale Completed", auditDetails)
 
+            ' Add this line after the successful sale completion message
+            ' In the confirmBtn_Click method, after the success message:
+
             ' Show success message
             Dim successMessage As String = $"Sale completed successfully! Sale ID: {saleId}{Environment.NewLine}Payment Method: {selectedPaymentMethod}"
             If Not String.IsNullOrEmpty(paymentReference) Then
@@ -2697,8 +2954,11 @@ Public Class Sales
             End If
             MessageBox.Show(successMessage, "Sale Completed", MessageBoxButtons.OK, MessageBoxIcon.Information)
 
-            ' Reset for next sale
+            ' ENHANCED: Reset for next sale with proper refresh
             ResetSale()
+
+            ' ENHANCED: Additional refresh to ensure UI is clean
+            Application.DoEvents()
 
         Catch ex As Exception
             MessageBox.Show($"Error processing sale: {ex.Message}", "Processing Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
@@ -2706,26 +2966,10 @@ Public Class Sales
         End Try
     End Sub
 
-    ' Print receipt
-    Private Sub PrintReceipt()
-        Try
-            Dim printDoc As New PrintDocument()
-            printDoc.DefaultPageSettings.PaperSize = New PaperSize("Receipt", 300, 700)
-            printDoc.DefaultPageSettings.Margins = New Margins(10, 10, 10, 10)
-
-            AddHandler printDoc.PrintPage, AddressOf OnPrintPage
-
-            Dim printPreview As New PrintPreviewDialog()
-            printPreview.Document = printDoc
-            printPreview.Text = "Receipt Preview - Jade Clinic"
-            printPreview.WindowState = FormWindowState.Maximized
-            printPreview.ShowDialog()
-        Catch ex As Exception
-            MessageBox.Show($"Error printing receipt: {ex.Message}", "Print Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-        End Try
-    End Sub
-
+    ' Confirm payment and process order
+    ' Replace the confirmBtn_Click method's payment validation section with this
     ' Reset sale data for next transaction
+    ' ENHANCED: Reset sale data for next transaction with proper order panel refresh
     Private Sub ResetSale()
         ' Clear order
         currentOrderList.Clear()
@@ -2746,12 +2990,12 @@ Public Class Sales
         discountType = "None"
         discountValue = 0
 
-        ' Reset UI elements
+        ' ENHANCED: Reset UI elements and refresh order display
         If lblSubTotal IsNot Nothing Then lblSubTotal.Text = "0.00"
         If taxLbl IsNot Nothing Then taxLbl.Text = "0.00"
         If totalLbl IsNot Nothing Then totalLbl.Text = "0.00"
         If totalRLbl IsNot Nothing Then totalRLbl.Text = "0.00"
-        lblChange.Text = "0.00"
+        If lblChange IsNot Nothing Then lblChange.Text = "0.00"
 
         ' Clear product cards
         For Each card In productCardControls
@@ -2769,9 +3013,19 @@ Public Class Sales
         AddNewCategoryButtonsFromDB()
         ArrangeCategoryButtonsFlexWrap()
 
-        ' Reinitialize UI components
-        FocusBarcodeInputIfAllowed()
+        ' CRITICAL: Clear the order summary panel and refresh display
+        ' Remove all product items from order summary panel
+        For i = orderSummaryPanel.Controls.Count - 1 To 0 Step -1
+            Dim ctrl = orderSummaryPanel.Controls(i)
+            If TypeOf ctrl Is Guna.UI2.WinForms.Guna2Panel Then
+                orderSummaryPanel.Controls.RemoveAt(i)
+                ctrl.Dispose()
+            End If
+        Next
+
+        ' ENHANCED: Initialize next order ID and refresh order display
         InitializeOrderId()
+        RefreshOrderDisplay()
 
         ' Clear any open panels
         If pinPanel IsNot Nothing AndAlso Me.Controls.Contains(pinPanel) Then
@@ -2792,11 +3046,44 @@ Public Class Sales
             customerSelectionPanel = Nothing
         End If
 
-        ' Re-enable form controls
+        ' ENHANCED: Reset panel states and button visibility
+        pinPanelActive = False
+        totalPanelActive = False
+
+        ' Ensure payment and confirm buttons are in correct state
+        If btnPayment IsNot Nothing Then btnPayment.Visible = True
+        If confirmBtn IsNot Nothing Then confirmBtn.Visible = False
+
+        ' ENHANCED: Refresh UI and bring order panel to front
+        If orderSummaryPanel IsNot Nothing Then
+            orderSummaryPanel.Visible = True
+            orderSummaryPanel.BringToFront()
+            orderSummaryPanel.Refresh()
+        End If
+
+        ' Return to categories view
+        If LabelTitle IsNot Nothing Then LabelTitle.Text = "Categories"
+        If backCategory IsNot Nothing Then backCategory.Visible = False
+
+        ' ENHANCED: Reset scroll positions
+        If CategoryPanel IsNot Nothing Then
+            CategoryPanel.AutoScrollPosition = New Point(0, 0)
+            CategoryPanel.Refresh()
+        End If
+
+        ' Re-enable form controls and focus
         Me.Enabled = True
+        FocusBarcodeInputIfAllowed()
+
+        ' ENHANCED: Force a complete UI refresh
+        Me.Refresh()
+        Application.DoEvents()
+
+        ' Log the reset action
+        Console.WriteLine($"Sale reset completed. Next Order ID: {lblOrderId?.Text}")
     End Sub
 
-    ' Initialize order ID display
+    ' ENHANCED: Initialize order ID display with better error handling
     Private Sub InitializeOrderId()
         Try
             Dim nextOrderId As Integer = 1
@@ -2806,11 +3093,26 @@ Public Class Sales
                     nextOrderId = Convert.ToInt32(reader("NextOrderID"))
                 End If
             End Using
-            lblOrderId.Text = $"Order ID: {nextOrderId}"
+
+            ' ENHANCED: Update order ID display with proper formatting
+            If lblOrderId IsNot Nothing Then
+                lblOrderId.Text = $"Sale ID: {nextOrderId}"
+                lblOrderId.Refresh()
+            End If
+
+            ' Log the new order ID for debugging
+            Console.WriteLine($"Initialized next Order ID: {nextOrderId}")
         Catch ex As Exception
-            lblOrderId.Text = "Order ID: 1"
+            ' Fallback to default if database error
+            If lblOrderId IsNot Nothing Then
+                lblOrderId.Text = "Sale ID: 1"
+            End If
+            Console.WriteLine($"Error initializing Order ID: {ex.Message}")
         End Try
     End Sub
+
+    ' Initialize order ID display
+
 
     ' Discount button click handler
     Private Sub btnDiscount_Click(sender As Object, e As EventArgs) Handles btnDiscount.Click
