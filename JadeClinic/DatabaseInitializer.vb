@@ -20,8 +20,7 @@ Public Class DatabaseInitializer
             CreateInventoryLogTableActual()
             CreateAuditLogTableActual()
             CreateCompanySettingsTableActual() ' Add company settings table
-            CreateColorSettingsTableActual() ' Add color settings table
-            CreateDefaultColorSettings()
+
             ' Create initial data
             CreateInitialData()
 
@@ -453,26 +452,7 @@ Public Class DatabaseInitializer
 
         DatabaseHelper.ExecuteNonQuery(query, Nothing)
     End Sub
-    Private Shared Sub CreateColorSettingsTableActual()
-        Dim query As String = "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='ColorSettings' AND xtype='U') " &
-        "CREATE TABLE ColorSettings(" &
-        "SettingID int IDENTITY(1,1) PRIMARY KEY, " &
-        "PrimaryColor nvarchar(20) NOT NULL DEFAULT '#FECF10', " &
-        "SecondaryColor nvarchar(20) NOT NULL DEFAULT '#BE9A30', " &
-        "BackgroundDark nvarchar(20) NOT NULL DEFAULT '#1A1D1F', " &
-        "BackgroundMid nvarchar(20) NOT NULL DEFAULT '#2B2F32', " &
-        "BackgroundLight nvarchar(20) NOT NULL DEFAULT '#3D4145', " &
-        "InteractiveColor nvarchar(20) NOT NULL DEFAULT '#4A4F54', " &
-        "TextPrimary nvarchar(20) NOT NULL DEFAULT '#FFFFFF', " &
-        "TextSecondary nvarchar(20) NOT NULL DEFAULT '#E1E5E9', " &
-        "SuccessColor nvarchar(20) NOT NULL DEFAULT '#10D862', " &
-        "ErrorColor nvarchar(20) NOT NULL DEFAULT '#FF4757', " &
-        "IsActive bit NOT NULL DEFAULT 1, " &
-        "DateCreated datetime2 NOT NULL DEFAULT GETDATE(), " &
-        "LastModified datetime2 NOT NULL DEFAULT GETDATE())"
 
-        DatabaseHelper.ExecuteNonQuery(query, Nothing)
-    End Sub
 
     Private Shared Sub CreateInitialData()
         CreateDefaultAdminUser()
@@ -670,31 +650,4 @@ Public Class DatabaseInitializer
 
 
     ' 🔥 ADD THIS NEW METHOD:
-    Private Shared Sub CreateDefaultColorSettings()
-        Try
-            Dim checkSql As String = "SELECT COUNT(*) FROM ColorSettings WHERE IsActive = 1"
-            Dim colorCount = Utilities.ExecuteScalar(checkSql, New SqlParameter() {})
-
-            If Convert.ToInt32(colorCount) = 0 Then
-                Dim sql As String = "INSERT INTO ColorSettings (PrimaryColor, SecondaryColor, BackgroundDark, BackgroundMid, BackgroundLight, InteractiveColor, TextPrimary, TextSecondary, SuccessColor, ErrorColor, IsActive) VALUES (@PrimaryColor, @SecondaryColor, @BackgroundDark, @BackgroundMid, @BackgroundLight, @InteractiveColor, @TextPrimary, @TextSecondary, @SuccessColor, @ErrorColor, 1)"
-                Dim params As SqlParameter() = {
-                    New SqlParameter("@PrimaryColor", "#FECF10"),  ' Golden Yellow
-                    New SqlParameter("@SecondaryColor", "#BE9A30"), ' Rich Olive
-                    New SqlParameter("@BackgroundDark", "#1A1D1F"), ' Deep Charcoal
-                    New SqlParameter("@BackgroundMid", "#2B2F32"),  ' Dark Slate
-                    New SqlParameter("@BackgroundLight", "#3D4145"), ' Graphite
-                    New SqlParameter("@InteractiveColor", "#4A4F54"), ' Steel Gray
-                    New SqlParameter("@TextPrimary", "#FFFFFF"),     ' Pure White
-                    New SqlParameter("@TextSecondary", "#E1E5E9"),   ' Light Silver
-                    New SqlParameter("@SuccessColor", "#10D862"),    ' Success Green
-                    New SqlParameter("@ErrorColor", "#FF4757")       ' Alert Red
-                }
-
-                Utilities.ExecuteNonQuery(sql, params)
-                Console.WriteLine("✅ Default color settings created")
-            End If
-        Catch ex As Exception
-            Console.WriteLine($"Warning: Could not create default color settings: {ex.Message}")
-        End Try
-    End Sub
 End Class

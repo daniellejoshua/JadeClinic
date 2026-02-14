@@ -85,21 +85,7 @@ Public Class Sys
                                                      btnDatabaseBackup.BorderThickness = 0
                                                  End Sub
 
-        ' Color Customization button
-        btnColorCustomization.BorderRadius = 15
-        btnColorCustomization.ShadowDecoration.Enabled = True
-        btnColorCustomization.ShadowDecoration.Depth = 8
-        btnColorCustomization.FillColor = DarkSlate
 
-        AddHandler btnColorCustomization.MouseEnter, Sub()
-                                                         btnColorCustomization.FillColor = SteelGray
-                                                         btnColorCustomization.BorderThickness = 2
-                                                         btnColorCustomization.BorderColor = GoldenYellow
-                                                     End Sub
-        AddHandler btnColorCustomization.MouseLeave, Sub()
-                                                         btnColorCustomization.FillColor = DarkSlate
-                                                         btnColorCustomization.BorderThickness = 0
-                                                     End Sub
     End Sub
 
     ' Create navigation menu
@@ -492,14 +478,6 @@ Public Class Sys
         End Try
     End Sub
 
-    Private Sub btnColorCustomization_Click(sender As Object, e As EventArgs) Handles btnColorCustomization.Click
-        Try
-            Dim colorCustomizationForm As New ColorCustomization()
-            colorCustomizationForm.ShowDialog()
-        Catch ex As Exception
-            MessageBox.Show($"Error opening Color Customization: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-        End Try
-    End Sub
 
     Private Sub ShowDatabaseBackupDialog()
         Dim backupForm As New Form()
