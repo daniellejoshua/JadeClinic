@@ -12,7 +12,6 @@ Public Class DatabaseInitializer
             ' Create tables in the right order (no foreign key dependencies first)
             CreateUsersTableActual() ' Match your real schema with passkeys in Users table
             CreateSuppliersTableActual()
-            CreateCustomersTableActual()
             CreateProductsTableActual()
             CreateProductImagesTableActual()
             CreateSalesTableActual()
@@ -101,20 +100,7 @@ Public Class DatabaseInitializer
         DatabaseHelper.ExecuteNonQuery(query, Nothing)
     End Sub
 
-    Private Shared Sub CreateCustomersTableActual()
-        Dim query As String = "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Customers' AND xtype='U') " &
-            "CREATE TABLE Customers(" &
-            "CustomerID int IDENTITY(1,1) PRIMARY KEY, " &
-            "CustomerCode nvarchar(50) NOT NULL UNIQUE, " &
-            "CustomerName nvarchar(200) NOT NULL, " &
-            "ContactPerson nvarchar(100) NULL, " &
-            "Phone nvarchar(20) NULL, " &
-            "Email nvarchar(100) NULL, " &
-            "CustomerType nvarchar(20) DEFAULT 'Dentist', " &
-            "IsActive bit DEFAULT 1)"
 
-        DatabaseHelper.ExecuteNonQuery(query, Nothing)
-    End Sub
 
     Private Shared Sub CreateProductsTableActual()
         Dim query As String = "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Products' AND xtype='U') " &
@@ -230,7 +216,6 @@ Public Class DatabaseInitializer
             "SaleID int IDENTITY(1,1) PRIMARY KEY, " &
             "SaleNumber AS ('SALE'+right('00000'+CONVERT(nvarchar(10),SaleID),5)) PERSISTED, " &
             "SaleDate datetime DEFAULT getdate(), " &
-            "CustomerID int NULL, " &
             "CustomerName nvarchar(200) NULL, " &
             "UserID int NULL, " &
             "TotalAmount decimal(18,2) DEFAULT 0, " &
@@ -240,7 +225,6 @@ Public Class DatabaseInitializer
             "Reference nvarchar(100) NULL, " &
             "SalesData nvarchar(max) not null," &
             "Status nvarchar(50) DEFAULT 'Completed', " &
-            "FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID), " &
             "FOREIGN KEY (UserID) REFERENCES Users(UserID))"
 
         DatabaseHelper.ExecuteNonQuery(query, Nothing)
@@ -255,15 +239,6 @@ Public Class DatabaseInitializer
             Console.WriteLine($"Note: Could not create SaleDate index: {ex.Message}")
         End Try
 
-        ' Add index for CustomerID (foreign key lookups)
-        Dim customerIndexQuery As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Sales_Customer') " &
-            "CREATE NONCLUSTERED INDEX IX_Sales_Customer ON Sales (CustomerID ASC) WHERE CustomerID IS NOT NULL"
-
-        Try
-            DatabaseHelper.ExecuteNonQuery(customerIndexQuery, Nothing)
-        Catch ex As Exception
-            Console.WriteLine($"Note: Could not create Customer index: {ex.Message}")
-        End Try
 
         ' Add index for UserID (to track sales by user)
         Dim userIndexQuery As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Sales_User') " &

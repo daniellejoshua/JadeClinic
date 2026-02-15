@@ -49,6 +49,7 @@ Partial Class Sales
         Dim CustomizableEdges28 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         LabelTitle = New Label()
         CategoryPanel = New Guna.UI2.WinForms.Guna2Panel()
+        Label7 = New Label()
         Label6 = New Label()
         Guna2HtmlLabel11 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2HtmlLabel12 = New Guna.UI2.WinForms.Guna2HtmlLabel()
@@ -118,6 +119,7 @@ Partial Class Sales
         CategoryPanel.AutoScroll = True
         CategoryPanel.BackColor = Color.Transparent
         CategoryPanel.BorderRadius = 10
+        CategoryPanel.Controls.Add(Label7)
         CategoryPanel.Controls.Add(Label6)
         CategoryPanel.Controls.Add(Guna2HtmlLabel11)
         CategoryPanel.Controls.Add(Guna2HtmlLabel12)
@@ -148,8 +150,20 @@ Partial Class Sales
         CategoryPanel.Location = New Point(209, 96)
         CategoryPanel.Name = "CategoryPanel"
         CategoryPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges14
-        CategoryPanel.Size = New Size(963, 767)
+        CategoryPanel.Size = New Size(868, 767)
         CategoryPanel.TabIndex = 2
+        ' 
+        ' Label7
+        ' 
+        Label7.AutoSize = True
+        Label7.BackColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
+        Label7.Font = New Font("Segoe UI", 22.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Label7.ForeColor = Color.White
+        Label7.Location = New Point(539, 29)
+        Label7.Name = "Label7"
+        Label7.Size = New Size(73, 50)
+        Label7.TabIndex = 80
+        Label7.Text = "🔪"
         ' 
         ' Label6
         ' 
@@ -157,18 +171,18 @@ Partial Class Sales
         Label6.BackColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         Label6.Font = New Font("Segoe UI", 22.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Label6.ForeColor = Color.White
-        Label6.Location = New Point(370, 209)
+        Label6.Location = New Point(332, 209)
         Label6.Name = "Label6"
         Label6.Size = New Size(73, 50)
         Label6.TabIndex = 78
-        Label6.Text = ChrW(55358) & ChrW(56759)
+        Label6.Text = "✨"
         ' 
         ' Guna2HtmlLabel11
         ' 
         Guna2HtmlLabel11.BackColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         Guna2HtmlLabel11.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel11.ForeColor = Color.White
-        Guna2HtmlLabel11.Location = New Point(306, 304)
+        Guna2HtmlLabel11.Location = New Point(268, 304)
         Guna2HtmlLabel11.Name = "Guna2HtmlLabel11"
         Guna2HtmlLabel11.Size = New Size(56, 28)
         Guna2HtmlLabel11.TabIndex = 77
@@ -179,7 +193,7 @@ Partial Class Sales
         Guna2HtmlLabel12.BackColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         Guna2HtmlLabel12.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel12.ForeColor = Color.White
-        Guna2HtmlLabel12.Location = New Point(306, 282)
+        Guna2HtmlLabel12.Location = New Point(268, 282)
         Guna2HtmlLabel12.Name = "Guna2HtmlLabel12"
         Guna2HtmlLabel12.Size = New Size(88, 28)
         Guna2HtmlLabel12.TabIndex = 76
@@ -194,7 +208,7 @@ Partial Class Sales
         CosmeticCatBtn.FillColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         CosmeticCatBtn.Font = New Font("Segoe UI", 12F)
         CosmeticCatBtn.ForeColor = Color.White
-        CosmeticCatBtn.Location = New Point(287, 200)
+        CosmeticCatBtn.Location = New Point(249, 200)
         CosmeticCatBtn.Name = "CosmeticCatBtn"
         CosmeticCatBtn.PressedColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
         CosmeticCatBtn.RightToLeft = RightToLeft.Yes
@@ -208,18 +222,18 @@ Partial Class Sales
         Label5.BackColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         Label5.Font = New Font("Segoe UI", 22.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Label5.ForeColor = Color.White
-        Label5.Location = New Point(146, 209)
+        Label5.Location = New Point(117, 209)
         Label5.Name = "Label5"
         Label5.Size = New Size(73, 50)
         Label5.TabIndex = 74
-        Label5.Text = ChrW(55358) & ChrW(56759)
+        Label5.Text = "🔬"
         ' 
         ' Guna2HtmlLabel9
         ' 
         Guna2HtmlLabel9.BackColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         Guna2HtmlLabel9.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel9.ForeColor = Color.White
-        Guna2HtmlLabel9.Location = New Point(82, 304)
+        Guna2HtmlLabel9.Location = New Point(53, 304)
         Guna2HtmlLabel9.Name = "Guna2HtmlLabel9"
         Guna2HtmlLabel9.Size = New Size(56, 28)
         Guna2HtmlLabel9.TabIndex = 73
@@ -230,7 +244,7 @@ Partial Class Sales
         Guna2HtmlLabel10.BackColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         Guna2HtmlLabel10.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel10.ForeColor = Color.White
-        Guna2HtmlLabel10.Location = New Point(82, 282)
+        Guna2HtmlLabel10.Location = New Point(53, 282)
         Guna2HtmlLabel10.Name = "Guna2HtmlLabel10"
         Guna2HtmlLabel10.Size = New Size(45, 28)
         Guna2HtmlLabel10.TabIndex = 72
@@ -245,7 +259,7 @@ Partial Class Sales
         EndoCatBtn.FillColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         EndoCatBtn.Font = New Font("Segoe UI", 12F)
         EndoCatBtn.ForeColor = Color.White
-        EndoCatBtn.Location = New Point(63, 200)
+        EndoCatBtn.Location = New Point(34, 200)
         EndoCatBtn.Name = "EndoCatBtn"
         EndoCatBtn.PressedColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
         EndoCatBtn.RightToLeft = RightToLeft.Yes
@@ -259,18 +273,18 @@ Partial Class Sales
         Label3.BackColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         Label3.Font = New Font("Segoe UI", 22.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Label3.ForeColor = Color.White
-        Label3.Location = New Point(823, 29)
+        Label3.Location = New Point(749, 29)
         Label3.Name = "Label3"
         Label3.Size = New Size(73, 50)
         Label3.TabIndex = 70
-        Label3.Text = ChrW(55358) & ChrW(56759)
+        Label3.Text = "🔨"
         ' 
         ' Guna2HtmlLabel3
         ' 
         Guna2HtmlLabel3.BackColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         Guna2HtmlLabel3.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel3.ForeColor = Color.White
-        Guna2HtmlLabel3.Location = New Point(759, 124)
+        Guna2HtmlLabel3.Location = New Point(685, 124)
         Guna2HtmlLabel3.Name = "Guna2HtmlLabel3"
         Guna2HtmlLabel3.Size = New Size(56, 28)
         Guna2HtmlLabel3.TabIndex = 69
@@ -281,7 +295,7 @@ Partial Class Sales
         Guna2HtmlLabel4.BackColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         Guna2HtmlLabel4.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel4.ForeColor = Color.White
-        Guna2HtmlLabel4.Location = New Point(759, 102)
+        Guna2HtmlLabel4.Location = New Point(685, 102)
         Guna2HtmlLabel4.Name = "Guna2HtmlLabel4"
         Guna2HtmlLabel4.Size = New Size(49, 28)
         Guna2HtmlLabel4.TabIndex = 68
@@ -296,7 +310,7 @@ Partial Class Sales
         RestoCatBtn.FillColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         RestoCatBtn.Font = New Font("Segoe UI", 12F)
         RestoCatBtn.ForeColor = Color.White
-        RestoCatBtn.Location = New Point(740, 20)
+        RestoCatBtn.Location = New Point(666, 20)
         RestoCatBtn.Name = "RestoCatBtn"
         RestoCatBtn.PressedColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
         RestoCatBtn.RightToLeft = RightToLeft.Yes
@@ -310,7 +324,7 @@ Partial Class Sales
         Label2.BackColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         Label2.Font = New Font("Segoe UI", 22.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Label2.ForeColor = Color.White
-        Label2.Location = New Point(146, 29)
+        Label2.Location = New Point(117, 29)
         Label2.Name = "Label2"
         Label2.Size = New Size(73, 50)
         Label2.TabIndex = 66
@@ -321,7 +335,7 @@ Partial Class Sales
         Guna2HtmlLabel5.BackColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         Guna2HtmlLabel5.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel5.ForeColor = Color.White
-        Guna2HtmlLabel5.Location = New Point(82, 124)
+        Guna2HtmlLabel5.Location = New Point(53, 124)
         Guna2HtmlLabel5.Name = "Guna2HtmlLabel5"
         Guna2HtmlLabel5.Size = New Size(56, 28)
         Guna2HtmlLabel5.TabIndex = 65
@@ -332,7 +346,7 @@ Partial Class Sales
         Guna2HtmlLabel6.BackColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         Guna2HtmlLabel6.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel6.ForeColor = Color.White
-        Guna2HtmlLabel6.Location = New Point(82, 102)
+        Guna2HtmlLabel6.Location = New Point(53, 102)
         Guna2HtmlLabel6.Name = "Guna2HtmlLabel6"
         Guna2HtmlLabel6.Size = New Size(54, 28)
         Guna2HtmlLabel6.TabIndex = 64
@@ -347,7 +361,7 @@ Partial Class Sales
         OrthoCatBtn.FillColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         OrthoCatBtn.Font = New Font("Segoe UI", 12F)
         OrthoCatBtn.ForeColor = Color.White
-        OrthoCatBtn.Location = New Point(63, 20)
+        OrthoCatBtn.Location = New Point(34, 20)
         OrthoCatBtn.Name = "OrthoCatBtn"
         OrthoCatBtn.PressedColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
         OrthoCatBtn.RightToLeft = RightToLeft.Yes
@@ -361,18 +375,18 @@ Partial Class Sales
         Label4.BackColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         Label4.Font = New Font("Segoe UI", 22.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Label4.ForeColor = Color.White
-        Label4.Location = New Point(370, 29)
+        Label4.Location = New Point(332, 29)
         Label4.Name = "Label4"
         Label4.Size = New Size(73, 50)
         Label4.TabIndex = 62
-        Label4.Text = ChrW(55358) & ChrW(56759)
+        Label4.Text = ChrW(55358) & ChrW(56827)
         ' 
         ' Guna2HtmlLabel7
         ' 
         Guna2HtmlLabel7.BackColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         Guna2HtmlLabel7.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel7.ForeColor = Color.White
-        Guna2HtmlLabel7.Location = New Point(306, 124)
+        Guna2HtmlLabel7.Location = New Point(268, 124)
         Guna2HtmlLabel7.Name = "Guna2HtmlLabel7"
         Guna2HtmlLabel7.Size = New Size(56, 28)
         Guna2HtmlLabel7.TabIndex = 61
@@ -383,7 +397,7 @@ Partial Class Sales
         Guna2HtmlLabel8.BackColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         Guna2HtmlLabel8.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel8.ForeColor = Color.White
-        Guna2HtmlLabel8.Location = New Point(306, 102)
+        Guna2HtmlLabel8.Location = New Point(268, 102)
         Guna2HtmlLabel8.Name = "Guna2HtmlLabel8"
         Guna2HtmlLabel8.Size = New Size(112, 28)
         Guna2HtmlLabel8.TabIndex = 60
@@ -398,7 +412,7 @@ Partial Class Sales
         ConsumablesCatBtn.FillColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         ConsumablesCatBtn.Font = New Font("Segoe UI", 12F)
         ConsumablesCatBtn.ForeColor = Color.White
-        ConsumablesCatBtn.Location = New Point(287, 20)
+        ConsumablesCatBtn.Location = New Point(249, 20)
         ConsumablesCatBtn.Name = "ConsumablesCatBtn"
         ConsumablesCatBtn.PressedColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
         ConsumablesCatBtn.RightToLeft = RightToLeft.Yes
@@ -412,7 +426,7 @@ Partial Class Sales
         Label1.BackColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         Label1.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Label1.ForeColor = Color.White
-        Label1.Location = New Point(531, 124)
+        Label1.Location = New Point(476, 124)
         Label1.Name = "Label1"
         Label1.Size = New Size(65, 26)
         Label1.TabIndex = 57
@@ -423,7 +437,7 @@ Partial Class Sales
         Guna2HtmlLabel1.BackColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         Guna2HtmlLabel1.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel1.ForeColor = Color.White
-        Guna2HtmlLabel1.Location = New Point(531, 102)
+        Guna2HtmlLabel1.Location = New Point(476, 102)
         Guna2HtmlLabel1.Name = "Guna2HtmlLabel1"
         Guna2HtmlLabel1.Size = New Size(69, 28)
         Guna2HtmlLabel1.TabIndex = 56
@@ -434,7 +448,7 @@ Partial Class Sales
         Guna2HtmlLabel2.BackColor = Color.Transparent
         Guna2HtmlLabel2.Location = New Point(0, 0)
         Guna2HtmlLabel2.Name = "Guna2HtmlLabel2"
-        Guna2HtmlLabel2.Size = New Size(0, 0)
+        Guna2HtmlLabel2.Size = New Size(3, 2)
         Guna2HtmlLabel2.TabIndex = 79
         Guna2HtmlLabel2.Text = Nothing
         ' 
@@ -447,7 +461,7 @@ Partial Class Sales
         SurgeryCatBtn.FillColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         SurgeryCatBtn.Font = New Font("Segoe UI", 12F)
         SurgeryCatBtn.ForeColor = Color.White
-        SurgeryCatBtn.Location = New Point(512, 20)
+        SurgeryCatBtn.Location = New Point(457, 20)
         SurgeryCatBtn.Name = "SurgeryCatBtn"
         SurgeryCatBtn.PressedColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
         SurgeryCatBtn.RightToLeft = RightToLeft.Yes
@@ -463,10 +477,10 @@ Partial Class Sales
         orderSummaryPanel.BorderThickness = 1
         orderSummaryPanel.CustomizableEdges = CustomizableEdges15
         orderSummaryPanel.FillColor = Color.White
-        orderSummaryPanel.Location = New Point(1178, 96)
+        orderSummaryPanel.Location = New Point(1083, 96)
         orderSummaryPanel.Name = "orderSummaryPanel"
         orderSummaryPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges16
-        orderSummaryPanel.Size = New Size(427, 449)
+        orderSummaryPanel.Size = New Size(522, 449)
         orderSummaryPanel.TabIndex = 3
         ' 
         ' lblOrderId
@@ -500,10 +514,10 @@ Partial Class Sales
         totalPanel.Controls.Add(Guna2HtmlLabel26)
         totalPanel.CustomizableEdges = CustomizableEdges23
         totalPanel.FillColor = Color.White
-        totalPanel.Location = New Point(1178, 551)
+        totalPanel.Location = New Point(1083, 551)
         totalPanel.Name = "totalPanel"
         totalPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges24
-        totalPanel.Size = New Size(427, 319)
+        totalPanel.Size = New Size(522, 319)
         totalPanel.TabIndex = 38
         ' 
         ' confirmBtn
@@ -518,7 +532,7 @@ Partial Class Sales
         confirmBtn.FillColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
         confirmBtn.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         confirmBtn.ForeColor = Color.Black
-        confirmBtn.Location = New Point(20, 260)
+        confirmBtn.Location = New Point(64, 260)
         confirmBtn.Name = "confirmBtn"
         confirmBtn.ShadowDecoration.CustomizableEdges = CustomizableEdges18
         confirmBtn.Size = New Size(180, 40)
@@ -531,7 +545,7 @@ Partial Class Sales
         lblChange.BackColor = Color.White
         lblChange.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         lblChange.ForeColor = Color.Black
-        lblChange.Location = New Point(342, 197)
+        lblChange.Location = New Point(367, 197)
         lblChange.Name = "lblChange"
         lblChange.Size = New Size(33, 28)
         lblChange.TabIndex = 60
@@ -542,7 +556,7 @@ Partial Class Sales
         Guna2HtmlLabel17.BackColor = Color.White
         Guna2HtmlLabel17.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel17.ForeColor = Color.Black
-        Guna2HtmlLabel17.Location = New Point(20, 197)
+        Guna2HtmlLabel17.Location = New Point(82, 197)
         Guna2HtmlLabel17.Name = "Guna2HtmlLabel17"
         Guna2HtmlLabel17.Size = New Size(63, 28)
         Guna2HtmlLabel17.TabIndex = 59
@@ -553,7 +567,7 @@ Partial Class Sales
         totalRLbl.BackColor = Color.White
         totalRLbl.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         totalRLbl.ForeColor = Color.Black
-        totalRLbl.Location = New Point(342, 163)
+        totalRLbl.Location = New Point(367, 163)
         totalRLbl.Name = "totalRLbl"
         totalRLbl.Size = New Size(33, 28)
         totalRLbl.TabIndex = 57
@@ -564,7 +578,7 @@ Partial Class Sales
         Guna2HtmlLabel32.BackColor = Color.White
         Guna2HtmlLabel32.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel32.ForeColor = Color.Black
-        Guna2HtmlLabel32.Location = New Point(20, 163)
+        Guna2HtmlLabel32.Location = New Point(82, 163)
         Guna2HtmlLabel32.Name = "Guna2HtmlLabel32"
         Guna2HtmlLabel32.Size = New Size(113, 28)
         Guna2HtmlLabel32.TabIndex = 58
@@ -581,7 +595,7 @@ Partial Class Sales
         btnDiscount.FillColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
         btnDiscount.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         btnDiscount.ForeColor = Color.Black
-        btnDiscount.Location = New Point(250, 260)
+        btnDiscount.Location = New Point(312, 260)
         btnDiscount.Name = "btnDiscount"
         btnDiscount.ShadowDecoration.CustomizableEdges = CustomizableEdges20
         btnDiscount.Size = New Size(147, 40)
@@ -611,7 +625,7 @@ Partial Class Sales
         totalLbl.BackColor = Color.White
         totalLbl.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         totalLbl.ForeColor = Color.Black
-        totalLbl.Location = New Point(342, 118)
+        totalLbl.Location = New Point(367, 118)
         totalLbl.Name = "totalLbl"
         totalLbl.Size = New Size(33, 28)
         totalLbl.TabIndex = 55
@@ -622,7 +636,7 @@ Partial Class Sales
         lbl2.BackColor = Color.White
         lbl2.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         lbl2.ForeColor = Color.Black
-        lbl2.Location = New Point(20, 118)
+        lbl2.Location = New Point(82, 118)
         lbl2.Name = "lbl2"
         lbl2.Size = New Size(41, 28)
         lbl2.TabIndex = 56
@@ -635,16 +649,16 @@ Partial Class Sales
         Guna2HtmlLabel30.ForeColor = Color.Black
         Guna2HtmlLabel30.Location = New Point(20, 84)
         Guna2HtmlLabel30.Name = "Guna2HtmlLabel30"
-        Guna2HtmlLabel30.Size = New Size(395, 28)
+        Guna2HtmlLabel30.Size = New Size(472, 28)
         Guna2HtmlLabel30.TabIndex = 38
-        Guna2HtmlLabel30.Text = "--------------------------------------------------------"
+        Guna2HtmlLabel30.Text = "-------------------------------------------------------------------" & vbCrLf
         ' 
         ' taxLbl
         ' 
         taxLbl.BackColor = Color.White
         taxLbl.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         taxLbl.ForeColor = Color.Black
-        taxLbl.Location = New Point(349, 59)
+        taxLbl.Location = New Point(374, 59)
         taxLbl.Name = "taxLbl"
         taxLbl.Size = New Size(26, 28)
         taxLbl.TabIndex = 53
@@ -655,7 +669,7 @@ Partial Class Sales
         Guna2HtmlLabel29.BackColor = Color.White
         Guna2HtmlLabel29.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel29.ForeColor = Color.Black
-        Guna2HtmlLabel29.Location = New Point(20, 59)
+        Guna2HtmlLabel29.Location = New Point(82, 59)
         Guna2HtmlLabel29.Name = "Guna2HtmlLabel29"
         Guna2HtmlLabel29.Size = New Size(29, 28)
         Guna2HtmlLabel29.TabIndex = 54
@@ -666,7 +680,7 @@ Partial Class Sales
         lblSubTotal.BackColor = Color.White
         lblSubTotal.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         lblSubTotal.ForeColor = Color.Black
-        lblSubTotal.Location = New Point(342, 25)
+        lblSubTotal.Location = New Point(367, 25)
         lblSubTotal.Name = "lblSubTotal"
         lblSubTotal.Size = New Size(33, 28)
         lblSubTotal.TabIndex = 38
@@ -677,7 +691,7 @@ Partial Class Sales
         Guna2HtmlLabel26.BackColor = Color.White
         Guna2HtmlLabel26.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel26.ForeColor = Color.Black
-        Guna2HtmlLabel26.Location = New Point(20, 25)
+        Guna2HtmlLabel26.Location = New Point(82, 25)
         Guna2HtmlLabel26.Name = "Guna2HtmlLabel26"
         Guna2HtmlLabel26.Size = New Size(68, 28)
         Guna2HtmlLabel26.TabIndex = 52
@@ -824,4 +838,5 @@ Partial Class Sales
     Friend WithEvents Guna2HtmlLabel3 As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents Guna2HtmlLabel4 As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents RestoCatBtn As Guna.UI2.WinForms.Guna2Button
+    Friend WithEvents Label7 As Label
 End Class

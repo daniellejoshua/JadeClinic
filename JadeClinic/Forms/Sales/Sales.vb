@@ -2638,6 +2638,10 @@ Public Class Sales
 
     ' Refresh the order display in the order summary panel
     ' FIXED: Refresh the order display with correct VAT calculations
+    ' Refresh the order display in the order summary panel
+    ' FIXED: Refresh the order display with correct VAT calculations
+    ' Refresh the order display in the order summary panel
+    ' FIXED: Refresh the order display with correct VAT calculations
     Private Sub RefreshOrderDisplay()
         ' Reset change label and totalRLbl when in normal order summary mode
         If Not pinPanelActive AndAlso Not totalPanelActive Then
@@ -2664,9 +2668,9 @@ Public Class Sales
         For i = 0 To currentOrderList.Count - 1
             Dim prod = currentOrderList(i)
             Dim orderPanel As New Guna.UI2.WinForms.Guna2Panel()
-            orderPanel.Size = New Size(orderSummaryPanel.Width - 25, panelHeight)
+            orderPanel.Size = New Size(orderSummaryPanel.Width - 40, panelHeight) ' Made wider by reducing margin from 25 to 15
             orderPanel.BorderRadius = 10
-            orderPanel.FillColor = Color.FromArgb(61, 65, 66)
+            orderPanel.FillColor = RichOlive ' Changed to RichOlive (RGB 190, 154, 48)
             orderPanel.Location = New Point(20, currentY)
             currentY += panelHeight + marginY
 
@@ -2682,19 +2686,19 @@ Public Class Sales
             Dim lblOrderId As New Guna.UI2.WinForms.Guna2HtmlLabel()
             lblOrderId.Text = (i + 1).ToString("D2")
             lblOrderId.Font = New Font("Poppins Light", 9.0F, FontStyle.Regular)
-            lblOrderId.ForeColor = Color.White
+            lblOrderId.ForeColor = PureWhite ' Already white
             lblOrderId.Location = New Point(12, 10)
             lblOrderId.AutoSize = True
 
             ' Product Name with ellipsis and tooltip
             Dim fullProductName As String = prod("ProductName").ToString()
-            Dim maxNameLength As Integer = 15
+            Dim maxNameLength As Integer = 30
             Dim displayName As String = If(fullProductName.Length > maxNameLength, fullProductName.Substring(0, maxNameLength) & "...", fullProductName)
 
             Dim lblCustomer As New Guna.UI2.WinForms.Guna2HtmlLabel()
             lblCustomer.Text = displayName
             lblCustomer.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
-            lblCustomer.ForeColor = Color.White
+            lblCustomer.ForeColor = PureWhite ' Already white
             lblCustomer.Location = New Point(lblOrderId.Right + 20, 10)
             lblCustomer.AutoSize = True
 
@@ -2712,30 +2716,18 @@ Public Class Sales
             Dim lblQuantity As New Guna.UI2.WinForms.Guna2HtmlLabel()
             lblQuantity.Text = prod("Quantity").ToString() & "x"
             lblQuantity.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
-            lblQuantity.ForeColor = Color.FromArgb(119, 121, 121)
-            lblQuantity.Location = New Point(290, 10)
+            lblQuantity.ForeColor = Color.White ' Keep as is for contrast
+            lblQuantity.Location = New Point(340, 10)
             lblQuantity.AutoSize = True
 
             ' FIXED: Price calculation - treat as VAT-inclusive
             Dim priceVal As Decimal = Convert.ToDecimal(prod("Price")) * CInt(prod("Quantity"))
             Dim lblTotal As New Guna.UI2.WinForms.Guna2HtmlLabel()
-            lblTotal.Text = priceVal.ToString("F2")
+            lblTotal.Text = priceVal.ToString("N2") ' Changed to N2 for comma formatting
             lblTotal.Font = New Font("Poppins Regular", 9.0F)
-            lblTotal.ForeColor = If(hasPromotion, Color.FromArgb(255, 69, 0), Color.White) ' Orange for promo items
-            lblTotal.Location = New Point(orderPanel.Width - 70, 12)
+            lblTotal.ForeColor = If(hasPromotion, Color.FromArgb(255, 69, 0), PureWhite) ' White for normal, orange for promo
+            lblTotal.Location = New Point(orderPanel.Width - 85, 12)
             lblTotal.AutoSize = True
-
-            ' Check if this item has promotion and show indicator
-            If hasPromotion Then
-                ' Show promotion indicator
-                Dim lblPromoIndicator As New Label()
-                lblPromoIndicator.Text = "🏷️"  ' Sale tag emoji
-                lblPromoIndicator.Font = New Font("Segoe UI Emoji", 10.0F, FontStyle.Regular)
-                lblPromoIndicator.ForeColor = Color.White
-                lblPromoIndicator.Location = New Point(170, 12)
-                lblPromoIndicator.AutoSize = True
-                orderPanel.Controls.Add(lblPromoIndicator)
-            End If
 
             ' Add double-click handlers to all child controls so they trigger the panel's double-click
             AddHandler lblOrderId.DoubleClick, Sub(sender As Object, e As EventArgs)
@@ -2753,11 +2745,11 @@ Public Class Sales
 
             ' Add hover effect to indicate interactivity
             AddHandler orderPanel.MouseEnter, Sub(sender As Object, e As EventArgs)
-                                                  orderPanel.FillColor = Color.FromArgb(71, 75, 76)
+                                                  orderPanel.FillColor = Color.FromArgb(210, 174, 68) ' Lighter RichOlive for hover
                                                   orderPanel.Cursor = Cursors.Hand
                                               End Sub
             AddHandler orderPanel.MouseLeave, Sub(sender As Object, e As EventArgs)
-                                                  orderPanel.FillColor = Color.FromArgb(61, 65, 66)
+                                                  orderPanel.FillColor = RichOlive ' Back to RichOlive
                                                   orderPanel.Cursor = Cursors.Default
                                               End Sub
 
@@ -2783,17 +2775,17 @@ Public Class Sales
         ' Total should equal VATable sales + VAT
         Dim totalAmount As Decimal = vatableSales + vatAmount
 
-        ' Update UI labels
+        ' Update UI labels with comma formatting
         If lblSubTotal IsNot Nothing Then
-            lblSubTotal.Text = discountedSubtotalVatInclusive.ToString("F2") ' Show VAT-inclusive subtotal after discount
+            lblSubTotal.Text = discountedSubtotalVatInclusive.ToString("N2") ' Changed to N2 for comma formatting
         End If
 
         If taxLbl IsNot Nothing Then
-            taxLbl.Text = vatAmount.ToString("F2") ' Show actual VAT amount
+            taxLbl.Text = vatAmount.ToString("N2") ' Changed to N2 for comma formatting
         End If
 
         If totalLbl IsNot Nothing Then
-            totalLbl.Text = totalAmount.ToString("F2") ' This should equal discountedSubtotalVatInclusive
+            totalLbl.Text = totalAmount.ToString("N2") ' Changed to N2 for comma formatting
         End If
     End Sub
 
@@ -3606,4 +3598,7 @@ Public Class Sales
         End If
     End Sub
 
+    Private Sub Guna2HtmlLabel17_Click(sender As Object, e As EventArgs) Handles Guna2HtmlLabel17.Click
+
+    End Sub
 End Class
