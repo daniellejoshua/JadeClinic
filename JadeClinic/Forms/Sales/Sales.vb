@@ -86,7 +86,134 @@ Public Class Sales
 
     Private pinPanel As Guna.UI2.WinForms.Guna2Panel = Nothing ' Repurposed for customer selection
     Private totalReceivedPanel As Guna.UI2.WinForms.Guna2Panel = Nothing
+    ' Add these variables at the top of the Sales class
+    Private barcodeBuffer As String = ""
+    Private lastKeyTime As DateTime = DateTime.Now
+    Private Const BARCODE_TIMEOUT As Integer = 100 ' milliseconds between barcode characters
 
+    ' FIXED: Enhanced barcode scanning with proper key handling
+
+
+    ' FIXED: Proper barcode key input handling
+    ' FIXED: Remove Ctrl key, only use Shift for quantity selection
+    Private Sub HandleBarcodeKeyInput(e As KeyEventArgs)
+        Dim currentTime As DateTime = DateTime.Now
+
+        ' Check if this is part of a barcode scan (fast input) or manual typing (slow input)
+        If (currentTime - lastKeyTime).TotalMilliseconds > BARCODE_TIMEOUT Then
+            ' Reset buffer if too much time has passed (not a continuous barcode scan)
+            barcodeBuffer = ""
+        End If
+
+        lastKeyTime = currentTime
+
+        ' Handle different key types
+        Select Case e.KeyCode
+            Case Keys.Enter
+                ' Process the complete barcode
+                If Not String.IsNullOrEmpty(barcodeBuffer) Then
+                    Console.WriteLine($"Processing barcode from buffer: '{barcodeBuffer}'")
+
+                    ' FIXED: Only check for Shift key (removed Ctrl)
+                    Dim shouldShowQuantitySelector As Boolean = e.Shift
+
+                    ProcessBarcodeWithModifiers(barcodeBuffer, shouldShowQuantitySelector)
+                    barcodeBuffer = ""
+                End If
+                e.Handled = True
+
+            Case Keys.D0 To Keys.D9, Keys.NumPad0 To Keys.NumPad9
+                ' Add digits to barcode buffer
+                Dim digit As String = ""
+                If e.KeyCode >= Keys.D0 AndAlso e.KeyCode <= Keys.D9 Then
+                    digit = (e.KeyCode - Keys.D0).ToString()
+                Else
+                    digit = (e.KeyCode - Keys.NumPad0).ToString()
+                End If
+                barcodeBuffer += digit
+                e.Handled = True
+
+            Case Keys.A To Keys.Z
+                ' Add letters to barcode buffer (some barcodes contain letters)
+                If Not e.Control AndAlso Not e.Alt Then ' Allow Ctrl+A, Alt+Tab, etc.
+                    barcodeBuffer += e.KeyCode.ToString()
+                    e.Handled = True
+                End If
+
+            Case Keys.OemMinus, Keys.Subtract
+                ' Add dash/hyphen for barcode formats like PRD-001234
+                barcodeBuffer += "-"
+                e.Handled = True
+
+            Case Keys.Back, Keys.Delete
+                ' Allow backspace/delete to clear buffer
+                If barcodeBuffer.Length > 0 Then
+                    barcodeBuffer = barcodeBuffer.Substring(0, barcodeBuffer.Length - 1)
+                End If
+                e.Handled = True
+
+            Case Keys.Escape
+                ' Clear barcode buffer on Escape
+                barcodeBuffer = ""
+                e.Handled = True
+
+            Case Else
+                ' Block all other keys during normal operation to prevent interference
+                If Not e.Control AndAlso Not e.Alt Then ' Allow system shortcuts
+                    e.Handled = True
+                End If
+        End Select
+
+        ' Show current buffer for debugging
+        If barcodeBuffer.Length > 0 Then
+            Console.WriteLine($"Barcode buffer: '{barcodeBuffer}'")
+        End If
+    End Sub
+    ' FIXED: Process barcode with proper modifier key detection
+    Private Sub ProcessBarcodeWithModifiers(barcode As String, shouldShowQuantitySelector As Boolean)
+        Try
+            Console.WriteLine($"ProcessBarcodeWithModifiers called with: '{barcode}', ShowQuantity: {shouldShowQuantitySelector}")
+
+            ' Look for product by ProductCode
+            Dim query As String = "SELECT ProductID, ProductName, SellingPrice, ProductCode, CurrentStock, Category FROM Products WHERE ProductCode = @ProductCode AND IsActive = 1"
+            Dim param As New SqlParameter("@ProductCode", barcode)
+
+            Using reader As SqlDataReader = Utilities.ExecuteReader(query, {param})
+                If reader.Read() Then
+                    Console.WriteLine($"Product found: {reader("ProductName")}")
+
+                    Dim productData As New Dictionary(Of String, Object) From {
+                    {"ProductID", reader("ProductID")},
+                    {"ProductName", reader("ProductName")},
+                    {"Price", reader("SellingPrice")},
+                    {"ProductCode", reader("ProductCode")},
+                    {"Category", reader("Category")},
+                    {"CurrentStock", reader("CurrentStock")}
+                }
+
+                    ' FIXED: Use the quantity selector flag directly
+                    If shouldShowQuantitySelector Then
+                        Console.WriteLine("Showing quantity selector for barcode scan")
+                        ShowQuantitySelector(productData)
+                    Else
+                        Console.WriteLine("Adding single item from barcode scan")
+                        ShowProductDetailsPanel(productData)
+
+                        ' Show notification for successful barcode scan
+                        ShowBarcodeAddedNotification(productData("ProductName").ToString())
+                    End If
+
+                Else
+                    Console.WriteLine($"No product found for barcode: '{barcode}'")
+                    ShowBarcodeNotFoundNotification(barcode)
+                End If
+            End Using
+
+        Catch ex As Exception
+            Console.WriteLine($"Error in ProcessBarcodeWithModifiers: {ex.Message}")
+            ShowBarcodeErrorNotification(ex.Message)
+        End Try
+    End Sub
     Private Sub Sales_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         Me.KeyPreview = True
         originalCategoryPanelControls = New List(Of Control)(CategoryPanel.Controls.Cast(Of Control)())
@@ -127,13 +254,13 @@ Public Class Sales
         ' Add tooltip for all category buttons
         Dim toolTip As New ToolTip()
         Dim categoryButtons As New Dictionary(Of Guna.UI2.WinForms.Guna2Button, String) From {
-            {Me.OrthoCatBtn, "ORTHO"},
-            {Me.ConsumablesCatBtn, "CONSUMABLES"},
-            {Me.SurgeryCatBtn, "SURGERY"},
-            {RestoCatBtn, "RESTO"},
-            {Me.EndoCatBtn, "ENDO"},
-            {Me.CosmeticCatBtn, "COSMETIC"}
-        }
+        {Me.OrthoCatBtn, "ORTHO"},
+        {Me.ConsumablesCatBtn, "CONSUMABLES"},
+        {Me.SurgeryCatBtn, "SURGERY"},
+        {RestoCatBtn, "RESTO"},
+        {Me.EndoCatBtn, "ENDO"},
+        {Me.CosmeticCatBtn, "COSMETIC"}
+    }
 
         For Each kvp In categoryButtons
             toolTip.SetToolTip(kvp.Key, $"Click to view {kvp.Value} products")
@@ -202,16 +329,11 @@ Public Class Sales
 
         UpdateCategoryItemCounts()
 
-        Me.Controls.Add(txtBarcodeInput)
-        txtBarcodeInput.Location = New Point(300, 200) ' Off-screen
-        txtBarcodeInput.Width = 200
-        txtBarcodeInput.Height = 20
-        txtBarcodeInput.BackColor = Color.White
-        txtBarcodeInput.Focus()
-        AddHandler Me.Activated, Sub() FocusBarcodeInputIfAllowed()
-        AddHandler Me.Click, Sub() FocusBarcodeInputIfAllowed()
-    End Sub
+        ' REMOVED: All txtBarcodeInput setup since we handle barcode input directly through form KeyDown
+        ' No longer need the txtBarcodeInput control
 
+        ' Add keyboard instructions for users
+    End Sub
     Public Sub ShowCategoryProducts(categoryName As String)
         ' Clear the CategoryPanel
         CategoryPanel.Controls.Clear()
@@ -292,7 +414,7 @@ Public Class Sales
                 ' Add product price
                 Dim originalPrice As Decimal = Convert.ToDecimal(reader("SellingPrice"))
                 Dim lblProductPrice As New Label()
-                lblProductPrice.Text = $"Price: ?{originalPrice:F2}"
+                lblProductPrice.Text = $"Price: ₱{originalPrice:F2}"  ' FIXED: Changed ? to ₱
                 lblProductPrice.ForeColor = LightSilver ' Updated color
                 lblProductPrice.Font = New Font("Poppins Light", 9.0F, FontStyle.Regular)
                 lblProductPrice.Location = New Point(10, cardHeight - 90)
@@ -341,26 +463,132 @@ Public Class Sales
 
                 ' Save product data for details
                 Dim productData As New Dictionary(Of String, Object) From {
-                    {"ProductID", reader("ProductID")},
-                    {"ProductName", reader("ProductName")},
-                    {"Price", originalPrice},
-                    {"ProductCode", reader("ProductCode")},
-                    {"Category", reader("Category")},
-                    {"CurrentStock", stock}
-                }
+                {"ProductID", reader("ProductID")},
+                {"ProductName", reader("ProductName")},
+                {"Price", originalPrice},
+                {"ProductCode", reader("ProductCode")},
+                {"Category", reader("Category")},
+                {"CurrentStock", stock}
+            }
 
-                ' Add click handler to show details
+                ' Add click handler
                 AddHandler productCard.Click, Sub(sender2, e2)
-                                                  ShowProductDetailsPanel(productData)
-                                                  FocusBarcodeInputIfAllowed() ' Ensure focus after product selection
+                                                  HandleProductInteraction(productData, False) ' False = manual click
                                               End Sub
 
-                CategoryPanel.Controls.Add(productCard)
+                ' ✅ ADD THESE MISSING LINES:
+                ' Add to tracking list
                 productCardControls.Add(productCard)
+
+                ' ADD TO CATEGORY PANEL - This was missing!
+                CategoryPanel.Controls.Add(productCard)
+
             End While
         End Using
     End Sub
+    ' UNIFIED: Handle both manual clicks and barcode scans
+    ' FIXED: Handle both manual clicks and barcode scans with better modifier detection
+    ' FIXED: Handle both manual clicks and barcode scans with only Shift key
+    Private Sub HandleProductInteraction(productData As Dictionary(Of String, Object), isFromBarcode As Boolean)
+        ' Prevent interactions when customer selection or payment panels are active
+        If pinPanelActive OrElse totalPanelActive Then
+            Return
+        End If
 
+        ' Check stock availability
+        If productData.ContainsKey("CurrentStock") AndAlso CInt(productData("CurrentStock")) = 0 Then
+            If isFromBarcode Then
+                ShowBarcodeNotFoundNotification("Out of Stock")
+            Else
+                MessageBox.Show("This product is out of stock and cannot be added to the order.", "Out of Stock", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            End If
+            Return
+        End If
+
+        ' FIXED: For barcode scans, the quantity selector decision is made in ProcessBarcodeWithModifiers
+        ' For manual clicks, check only Shift key (removed Ctrl)
+        If Not isFromBarcode Then
+            Dim shouldShowQuantitySelector As Boolean = (Control.ModifierKeys = Keys.Shift)
+
+            If shouldShowQuantitySelector Then
+                ShowQuantitySelector(productData)
+            Else
+                ShowProductDetailsPanel(productData)
+            End If
+        Else
+            ' For barcode scans, just add the item (modifier check already done)
+            ShowProductDetailsPanel(productData)
+            ShowBarcodeAddedNotification(productData("ProductName").ToString())
+        End If
+
+        ' No need to focus barcode input anymore since we handle keys directly
+    End Sub
+    ' Brief toast notification for barcode scans
+    ' FIXED: Brief toast notification for barcode scans - centered at top of screen
+    Private Sub ShowBarcodeAddedNotification(productName As String)
+        ' Create a temporary label for feedback
+        Dim notificationLabel As New Label()
+        notificationLabel.Text = $"✓ {productName} added!"
+        notificationLabel.Font = New Font("Poppins", 12, FontStyle.Bold)
+        notificationLabel.ForeColor = PureWhite
+        notificationLabel.BackColor = SuccessGreen
+        notificationLabel.AutoSize = True
+        notificationLabel.Padding = New Padding(15, 8, 15, 8)
+        notificationLabel.TextAlign = ContentAlignment.MiddleCenter
+
+        ' FIXED: Center at the top of the entire form (not just CategoryPanel)
+        ' Wait for the label to size itself
+        Me.Controls.Add(notificationLabel)
+        notificationLabel.BringToFront()
+
+        ' Now position it at the center top after it's been added
+        Application.DoEvents() ' Ensure label is sized
+
+        Dim centerX As Integer = (Me.ClientSize.Width - notificationLabel.Width) / 2
+        notificationLabel.Location = New Point(centerX, 20) ' 20px from top of form
+
+
+        ' Add rounded corners effect
+        notificationLabel.BackColor = Color.FromArgb(220, SuccessGreen.R, SuccessGreen.G, SuccessGreen.B)
+
+        ' Auto-remove after 2 seconds with fade out effect
+        Dim removeTimer As New Timer() With {.Interval = 1800} ' Start fade earlier
+        Dim fadeTimer As New Timer() With {.Interval = 50} ' Fade animation
+        Dim fadeSteps As Integer = 10
+        Dim currentStep As Integer = 0
+
+        AddHandler removeTimer.Tick, Sub()
+                                         removeTimer.Stop()
+                                         ' Start fade out animation
+                                         AddHandler fadeTimer.Tick, Sub()
+                                                                        currentStep += 1
+                                                                        Dim alpha As Integer = CInt(255 * (1 - (currentStep / fadeSteps)))
+                                                                        If alpha <= 0 OrElse currentStep >= fadeSteps Then
+                                                                            fadeTimer.Stop()
+                                                                            If Me.Controls.Contains(notificationLabel) Then
+                                                                                Me.Controls.Remove(notificationLabel)
+                                                                                notificationLabel.Dispose()
+                                                                            End If
+                                                                            fadeTimer.Dispose()
+                                                                        Else
+                                                                            notificationLabel.BackColor = Color.FromArgb(alpha, SuccessGreen.R, SuccessGreen.G, SuccessGreen.B)
+                                                                        End If
+                                                                    End Sub
+                                         fadeTimer.Start()
+                                         removeTimer.Dispose()
+                                     End Sub
+        removeTimer.Start()
+    End Sub
+    ' Add instruction label for users
+    Private Sub AddBarcodeInstructions()
+        Dim instructionLabel As New Label()
+        instructionLabel.Text = "💡 Tip: Hold Shift/Ctrl while scanning or clicking for quantity selection"
+        instructionLabel.Font = New Font("Poppins", 9, FontStyle.Italic)
+        instructionLabel.ForeColor = LightSilver
+        instructionLabel.Location = New Point(20, Me.Height - 80)
+        instructionLabel.AutoSize = True
+        Me.Controls.Add(instructionLabel)
+    End Sub
     Private Sub ShowProductDetailsPanel(productData As Dictionary(Of String, Object))
         ' Prevent product clicks when customer selection or payment panels are active
         If pinPanelActive OrElse totalPanelActive Then
@@ -631,7 +859,7 @@ Public Class Sales
         CategoryPanel.Controls.Clear()
 
         ' Restore the original designer controls
-        For Each control As Control In originalCategoryPanelControls
+        For Each control In originalCategoryPanelControls
             CategoryPanel.Controls.Add(control)
         Next
 
@@ -653,20 +881,25 @@ Public Class Sales
     End Sub
 
     Private Sub AttachClickHandlersToAllControls(parentControl As Control)
-        ' Add click handler to the parent control itself
-        AddHandler parentControl.Click, AddressOf Control_Click
+        ' No longer need to attach click handlers for barcode input focus
+        ' Since we handle keyboard input directly through the form
 
-        ' Recursively add handlers to all child controls
+        ' Just handle profile dropdown clicks
+        AddHandler parentControl.Click, Sub()
+                                            If isProfileDropdownVisible Then
+                                                HideProfileDropdown()
+                                            End If
+                                        End Sub
+
+        ' Recursively add handlers to child controls
         For Each ctrl As Control In parentControl.Controls
-            ' Skip specific panels that handle their own interactions
-            If ctrl IsNot txtBarcodeInput AndAlso
-           ctrl IsNot pinPanel AndAlso ' Now used for customer selection
-           ctrl IsNot totalReceivedPanel AndAlso
-           ctrl IsNot profileDropdownPanel Then
+            If ctrl IsNot profileDropdownPanel Then
+                AddHandler ctrl.Click, Sub()
+                                           If isProfileDropdownVisible Then
+                                               HideProfileDropdown()
+                                           End If
+                                       End Sub
 
-                AddHandler ctrl.Click, AddressOf Control_Click
-
-                ' If the control has children, recursively attach handlers
                 If ctrl.HasChildren Then
                     AttachClickHandlersToAllControls(ctrl)
                 End If
@@ -684,11 +917,15 @@ Public Class Sales
         If Not pinPanelActive AndAlso Not totalPanelActive AndAlso Not isProfileDropdownVisible Then
             Try
                 If txtBarcodeInput IsNot Nothing AndAlso Not txtBarcodeInput.IsDisposed Then
+                    Console.WriteLine("Focusing barcode input")
                     txtBarcodeInput.Focus()
+                    txtBarcodeInput.Select()
                 End If
             Catch ex As Exception
-                ' Handle any focus-related exceptions silently
+                Console.WriteLine($"Error focusing barcode input: {ex.Message}")
             End Try
+        Else
+            Console.WriteLine("Barcode input focus blocked - panels active")
         End If
     End Sub
 
@@ -707,48 +944,71 @@ Public Class Sales
     End Function
 
     ' Barcode scanning functionality
-    Private Sub txtBarcodeInput_KeyDown(sender As Object, e As KeyEventArgs) Handles txtBarcodeInput.KeyDown
-        If e.KeyCode = Keys.Enter Then
-            Dim scannedCode As String = txtBarcodeInput.Text.Trim()
-            If Not String.IsNullOrEmpty(scannedCode) Then
-                ' Process barcode - look up product by ProductCode
-                ProcessBarcodeScan(scannedCode)
-                txtBarcodeInput.Clear()
-            End If
-            e.Handled = True
-        End If
-    End Sub
-
-    Private Sub ProcessBarcodeScan(barcode As String)
-        Try
-            ' Look for product by ProductCode
-            Dim query As String = "SELECT ProductID, ProductName, SellingPrice, ProductCode, CurrentStock, Category FROM Products WHERE ProductCode = @ProductCode AND IsActive = 1"
-            Dim param As New SqlParameter("@ProductCode", barcode)
-
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, {param})
-                If reader.Read() Then
-                    Dim productData As New Dictionary(Of String, Object) From {
-                        {"ProductID", reader("ProductID")},
-                        {"ProductName", reader("ProductName")},
-                        {"Price", reader("SellingPrice")},
-                        {"ProductCode", reader("ProductCode")},
-                        {"Category", reader("Category")},
-                        {"CurrentStock", reader("CurrentStock")}
-                    }
-
-                    ShowProductDetailsPanel(productData)
-                    MessageBox.Show($"Product '{reader("ProductName")}' added to order!", "Scanned", MessageBoxButtons.OK, MessageBoxIcon.Information)
-                Else
-                    MessageBox.Show($"Product with code '{barcode}' not found.", "Not Found", MessageBoxButtons.OK, MessageBoxIcon.Warning)
-                End If
-            End Using
-        Catch ex As Exception
-            MessageBox.Show($"Error processing barcode: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-        End Try
-    End Sub
 
     ' Enhanced receipt printing
+    ' Helper method for "not found" notifications
+    Private Sub ShowBarcodeNotFoundNotification(barcode As String)
+        Dim notificationLabel As New Label()
+        notificationLabel.Text = $"⚠ Product '{barcode}' not found"
+        notificationLabel.Font = New Font("Poppins", 12, FontStyle.Bold)
+        notificationLabel.ForeColor = PureWhite
+        notificationLabel.BackColor = AlertRed
+        notificationLabel.AutoSize = True
+        notificationLabel.Padding = New Padding(15, 8, 15, 8)
+        notificationLabel.TextAlign = ContentAlignment.MiddleCenter
 
+        ' Position at center top
+        Me.Controls.Add(notificationLabel)
+        notificationLabel.BringToFront()
+        Application.DoEvents()
+
+        Dim centerX As Integer = (Me.ClientSize.Width - notificationLabel.Width) / 2
+        notificationLabel.Location = New Point(centerX, 20)
+
+        ' Auto-remove after 3 seconds (longer for error messages)
+        Dim removeTimer As New Timer() With {.Interval = 3000}
+        AddHandler removeTimer.Tick, Sub()
+                                         removeTimer.Stop()
+                                         If Me.Controls.Contains(notificationLabel) Then
+                                             Me.Controls.Remove(notificationLabel)
+                                             notificationLabel.Dispose()
+                                         End If
+                                         removeTimer.Dispose()
+                                     End Sub
+        removeTimer.Start()
+    End Sub
+
+    ' Helper method for error notifications
+    Private Sub ShowBarcodeErrorNotification(errorMessage As String)
+        Dim notificationLabel As New Label()
+        notificationLabel.Text = $"❌ Barcode Error: {errorMessage}"
+        notificationLabel.Font = New Font("Poppins", 11, FontStyle.Bold)
+        notificationLabel.ForeColor = PureWhite
+        notificationLabel.BackColor = AlertRed
+        notificationLabel.AutoSize = True
+        notificationLabel.Padding = New Padding(15, 8, 15, 8)
+        notificationLabel.TextAlign = ContentAlignment.MiddleCenter
+
+        ' Position at center top
+        Me.Controls.Add(notificationLabel)
+        notificationLabel.BringToFront()
+        Application.DoEvents()
+
+        Dim centerX As Integer = (Me.ClientSize.Width - notificationLabel.Width) / 2
+        notificationLabel.Location = New Point(centerX, 20)
+
+        ' Auto-remove after 4 seconds (longest for errors)
+        Dim removeTimer As New Timer() With {.Interval = 4000}
+        AddHandler removeTimer.Tick, Sub()
+                                         removeTimer.Stop()
+                                         If Me.Controls.Contains(notificationLabel) Then
+                                             Me.Controls.Remove(notificationLabel)
+                                             notificationLabel.Dispose()
+                                         End If
+                                         removeTimer.Dispose()
+                                     End Sub
+        removeTimer.Start()
+    End Sub
 
     Private Sub CreateNavigationMenu()
         Try
@@ -3591,14 +3851,310 @@ Public Class Sales
         End If
     End Sub
     ' Add this method to handle form-level key events
+    ' FIXED: Enhanced barcode scanning with proper key handling and Enter key priority
     Private Sub Sales_KeyDown(sender As Object, e As KeyEventArgs) Handles MyBase.KeyDown
-        ' Only handle keyboard input when the total amount panel is active
-        If totalPanelActive Then
-            HandleTotalAmountKeyboardInput(e)
+        ' FIXED: Handle barcode input FIRST, then check for payment Enter
+        If Not totalPanelActive AndAlso Not pinPanelActive AndAlso Not isProfileDropdownVisible Then
+            ' Check if this might be barcode input (we have characters in buffer or it's a barcode-related key)
+            Dim isBarcodeKey As Boolean = False
+
+            Select Case e.KeyCode
+                Case Keys.D0 To Keys.D9, Keys.NumPad0 To Keys.NumPad9,
+                 Keys.A To Keys.Z, Keys.OemMinus, Keys.Subtract,
+                 Keys.Back, Keys.Delete, Keys.Escape
+                    isBarcodeKey = True
+                Case Keys.Enter
+                    ' Enter key - check if we have barcode data to process
+                    If Not String.IsNullOrEmpty(barcodeBuffer) Then
+                        isBarcodeKey = True
+                    Else
+                        ' No barcode data, check if we should go to payment
+                        If currentOrderList.Count > 0 Then
+                            btnPayment.PerformClick()
+                            e.Handled = True
+                            Return
+                        End If
+                    End If
+            End Select
+
+            ' If it's a barcode key, handle it as barcode input
+            If isBarcodeKey Then
+                HandleBarcodeKeyInput(e)
+            End If
+        Else
+            ' Handle payment panel keyboard input
+            If totalPanelActive Then
+                HandleTotalAmountKeyboardInput(e)
+            End If
         End If
     End Sub
 
     Private Sub Guna2HtmlLabel17_Click(sender As Object, e As EventArgs) Handles Guna2HtmlLabel17.Click
 
     End Sub
+
+
+    ' ... existing code ...
+
+    ' ENHANCED: Wider quantity selector form for better usability
+    Private Sub ShowQuantitySelector(productData As Dictionary(Of String, Object))
+        ' Prevent product clicks when customer selection or payment panels are active
+        If pinPanelActive OrElse totalPanelActive Then
+            Return ' Exit without showing selector
+        End If
+
+        ' Check if the product stock is 0
+        If productData.ContainsKey("CurrentStock") AndAlso CInt(productData("CurrentStock")) = 0 Then
+            MessageBox.Show("This product is out of stock and cannot be added to the order.", "Out of Stock", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Return ' Exit without showing selector
+        End If
+
+        ' Create quantity selector modal form - WIDENED
+        Dim quantityForm As New Form()
+        quantityForm.Text = "Select Quantity"
+        quantityForm.Size = New Size(550, 450) ' INCREASED from 400x350 to 550x400
+        quantityForm.StartPosition = FormStartPosition.CenterParent
+        quantityForm.FormBorderStyle = FormBorderStyle.FixedDialog
+        quantityForm.MaximizeBox = False
+        quantityForm.MinimizeBox = False
+        quantityForm.BackColor = DarkSlate
+        quantityForm.ShowInTaskbar = False
+
+        ' Product name - WIDER
+        Dim lblProductName As New Label()
+        lblProductName.Text = productData("ProductName").ToString()
+        lblProductName.Font = New Font("Poppins", 16, FontStyle.Bold) ' Increased font size
+        lblProductName.ForeColor = PureWhite
+        lblProductName.Location = New Point(30, 25) ' Adjusted margins
+        lblProductName.Size = New Size(490, 35) ' WIDER
+        lblProductName.TextAlign = ContentAlignment.MiddleCenter
+        quantityForm.Controls.Add(lblProductName)
+
+        ' Product price - WIDER
+        Dim lblPrice As New Label()
+        lblPrice.Text = $"Price: ₱{Convert.ToDecimal(productData("Price")):N2}"
+        lblPrice.Font = New Font("Poppins", 14, FontStyle.Regular) ' Increased font size
+        lblPrice.ForeColor = GoldenYellow
+        lblPrice.Location = New Point(30, 70)
+        lblPrice.Size = New Size(490, 30) ' WIDER
+        lblPrice.TextAlign = ContentAlignment.MiddleCenter
+        quantityForm.Controls.Add(lblPrice)
+
+        ' Stock information - WIDER
+        Dim availableStock As Integer = CInt(productData("CurrentStock"))
+        Dim lblStock As New Label()
+        lblStock.Text = $"Available Stock: {availableStock}"
+        lblStock.Font = New Font("Poppins", 12, FontStyle.Regular) ' Increased font size
+        lblStock.ForeColor = If(availableStock > 0, SuccessGreen, AlertRed)
+        lblStock.Location = New Point(30, 110)
+        lblStock.Size = New Size(490, 25) ' WIDER
+        lblStock.TextAlign = ContentAlignment.MiddleCenter
+        quantityForm.Controls.Add(lblStock)
+
+        ' Quantity section - CENTERED with more space
+        Dim quantitySection As New Panel()
+        quantitySection.Size = New Size(490, 80)
+        quantitySection.Location = New Point(30, 150)
+        quantitySection.BackColor = Color.Transparent
+        quantityForm.Controls.Add(quantitySection)
+
+        ' Quantity label - CENTERED
+        Dim lblQuantity As New Label()
+        lblQuantity.Text = "Quantity:"
+        lblQuantity.Font = New Font("Poppins", 14, FontStyle.Bold) ' Increased font size
+        lblQuantity.ForeColor = PureWhite
+        lblQuantity.Location = New Point(180, 5) ' CENTERED
+        lblQuantity.Size = New Size(130, 30)
+        lblQuantity.TextAlign = ContentAlignment.MiddleCenter
+        quantitySection.Controls.Add(lblQuantity)
+
+        ' Quantity input - LARGER and CENTERED
+        Dim txtQuantity As New Guna.UI2.WinForms.Guna2TextBox()
+        txtQuantity.Text = "1"
+        txtQuantity.Font = New Font("Poppins", 16, FontStyle.Bold) ' Increased font size
+        txtQuantity.ForeColor = DeepCharcoal
+        txtQuantity.FillColor = PureWhite
+        txtQuantity.BorderColor = SteelGray
+        txtQuantity.BorderRadius = 10
+        txtQuantity.Size = New Size(100, 45) ' LARGER
+        txtQuantity.Location = New Point(195, 35) ' CENTERED
+        txtQuantity.TextAlign = HorizontalAlignment.Center
+        txtQuantity.MaxLength = 3
+        quantitySection.Controls.Add(txtQuantity)
+
+        ' Plus button - LARGER and repositioned
+        Dim btnPlus As New Guna.UI2.WinForms.Guna2Button()
+        btnPlus.Text = "+"
+        btnPlus.Size = New Size(60, 45) ' LARGER
+        btnPlus.Location = New Point(310, 35) ' Adjusted position
+        btnPlus.Font = New Font("Poppins", 18, FontStyle.Bold) ' Increased font size
+        btnPlus.ForeColor = DeepCharcoal
+        btnPlus.FillColor = SuccessGreen
+        btnPlus.BorderRadius = 10
+        AddHandler btnPlus.Click, Sub()
+                                      Dim currentQty As Integer
+                                      If Integer.TryParse(txtQuantity.Text, currentQty) Then
+                                          If currentQty < availableStock Then
+                                              txtQuantity.Text = (currentQty + 1).ToString()
+                                          End If
+                                      End If
+                                  End Sub
+        AddHandler btnPlus.MouseEnter, Sub() btnPlus.FillColor = GoldenYellow
+        AddHandler btnPlus.MouseLeave, Sub() btnPlus.FillColor = SuccessGreen
+        quantitySection.Controls.Add(btnPlus)
+
+        ' Minus button - LARGER and repositioned
+        Dim btnMinus As New Guna.UI2.WinForms.Guna2Button()
+        btnMinus.Text = "-"
+        btnMinus.Size = New Size(60, 45) ' LARGER
+        btnMinus.Location = New Point(120, 35) ' Adjusted position
+        btnMinus.Font = New Font("Poppins", 18, FontStyle.Bold) ' Increased font size
+        btnMinus.ForeColor = DeepCharcoal
+        btnMinus.FillColor = AlertRed
+        btnMinus.BorderRadius = 10
+        AddHandler btnMinus.Click, Sub()
+                                       Dim currentQty As Integer
+                                       If Integer.TryParse(txtQuantity.Text, currentQty) Then
+                                           If currentQty > 1 Then
+                                               txtQuantity.Text = (currentQty - 1).ToString()
+                                           End If
+                                       End If
+                                   End Sub
+        AddHandler btnMinus.MouseEnter, Sub() btnMinus.FillColor = Color.FromArgb(220, 60, 75)
+        AddHandler btnMinus.MouseLeave, Sub() btnMinus.FillColor = AlertRed
+        quantitySection.Controls.Add(btnMinus)
+
+        ' Total price display - WIDER and LARGER
+        Dim lblTotal As New Label()
+        lblTotal.Text = $"Total: ₱{Convert.ToDecimal(productData("Price")):N2}"
+        lblTotal.Font = New Font("Poppins", 16, FontStyle.Bold) ' Increased font size
+        lblTotal.ForeColor = GoldenYellow
+        lblTotal.Location = New Point(30, 250)
+        lblTotal.Size = New Size(490, 35) ' WIDER and TALLER
+        lblTotal.TextAlign = ContentAlignment.MiddleCenter
+        quantityForm.Controls.Add(lblTotal)
+
+        ' Update total when quantity changes
+        AddHandler txtQuantity.TextChanged, Sub()
+                                                Dim qty As Integer
+                                                If Integer.TryParse(txtQuantity.Text, qty) AndAlso qty > 0 Then
+                                                    Dim total As Decimal = Convert.ToDecimal(productData("Price")) * qty
+                                                    lblTotal.Text = $"Total: ₱{total:N2}"
+                                                Else
+                                                    lblTotal.Text = "Total: ₱0.00"
+                                                End If
+                                            End Sub
+
+        ' Action buttons section - WIDER spacing
+        Dim buttonSection As New Panel()
+        buttonSection.Size = New Size(490, 60)
+        buttonSection.Location = New Point(30, 300)
+        buttonSection.BackColor = Color.Transparent
+        quantityForm.Controls.Add(buttonSection)
+
+        ' Add to Cart button - LARGER
+        Dim btnAddToCart As New Guna.UI2.WinForms.Guna2Button()
+        btnAddToCart.Text = "Add to Cart"
+        btnAddToCart.Size = New Size(180, 55) ' LARGER
+        btnAddToCart.Location = New Point(250, 0) ' Adjusted position
+        btnAddToCart.Font = New Font("Poppins", 10, FontStyle.Bold) ' Increased font size
+        btnAddToCart.ForeColor = DeepCharcoal
+        btnAddToCart.FillColor = SuccessGreen
+        btnAddToCart.BorderRadius = 12
+        AddHandler btnAddToCart.Click, Sub()
+                                           Dim quantity As Integer
+                                           If Integer.TryParse(txtQuantity.Text, quantity) AndAlso quantity > 0 Then
+                                               If quantity > availableStock Then
+                                                   MessageBox.Show($"Cannot add {quantity} items. Only {availableStock} available in stock.", "Insufficient Stock", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                                                   Return
+                                               End If
+                                               ' Add the specified quantity to the order
+                                               AddProductToOrder(productData, quantity)
+                                               quantityForm.DialogResult = DialogResult.OK
+                                               quantityForm.Close()
+                                           Else
+                                               MessageBox.Show("Please enter a valid quantity.", "Invalid Quantity", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                                           End If
+                                       End Sub
+        AddHandler btnAddToCart.MouseEnter, Sub() btnAddToCart.FillColor = GoldenYellow
+        AddHandler btnAddToCart.MouseLeave, Sub() btnAddToCart.FillColor = SuccessGreen
+        buttonSection.Controls.Add(btnAddToCart)
+
+        ' Cancel button - LARGER
+        Dim btnCancel As New Guna.UI2.WinForms.Guna2Button()
+        btnCancel.Text = "Cancel"
+        btnCancel.Size = New Size(150, 55) ' LARGER
+        btnCancel.Location = New Point(80, 0) ' Adjusted position
+        btnCancel.Font = New Font("Poppins", 14, FontStyle.Bold) ' Increased font size
+        btnCancel.ForeColor = PureWhite
+        btnCancel.FillColor = AlertRed
+        btnCancel.BorderRadius = 12
+        AddHandler btnCancel.Click, Sub()
+                                        quantityForm.DialogResult = DialogResult.Cancel
+                                        quantityForm.Close()
+                                    End Sub
+        AddHandler btnCancel.MouseEnter, Sub() btnCancel.FillColor = Color.FromArgb(200, 50, 50)
+        AddHandler btnCancel.MouseLeave, Sub() btnCancel.FillColor = AlertRed
+        buttonSection.Controls.Add(btnCancel)
+
+        ' Show modal and handle result
+        quantityForm.ShowDialog()
+        quantityForm.Dispose()
+    End Sub
+
+    ' New method to add product with specified quantity
+    Private Sub AddProductToOrder(productData As Dictionary(Of String, Object), quantity As Integer)
+        ' Check if product already exists in the order list
+        Dim foundIndex As Integer = -1
+        For i = 0 To currentOrderList.Count - 1
+            If currentOrderList(i)("ProductID").ToString() = productData("ProductID").ToString() Then
+                foundIndex = i
+                Exit For
+            End If
+        Next
+
+        Dim priceToUse As Decimal = Convert.ToDecimal(productData("Price"))
+
+        If foundIndex <> -1 Then
+            ' Check if we have enough stock for the increase
+            Dim currentQuantity As Integer = CInt(currentOrderList(foundIndex)("Quantity"))
+            Dim availableStock As Integer = CInt(productData("CurrentStock"))
+
+            ' Get already reserved quantity in order
+            Dim reservedQuantity As Integer = 0
+            For Each item In currentOrderList
+                If item("ProductID").ToString() = productData("ProductID").ToString() Then
+                    reservedQuantity = CInt(item("Quantity"))
+                    Exit For
+                End If
+            Next
+
+            If reservedQuantity + quantity > availableStock Then
+                MessageBox.Show("Cannot add more items. Not enough stock available.", "Insufficient Stock", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                Return
+            End If
+
+            ' Increase quantity
+            currentOrderList(foundIndex)("Quantity") = currentQuantity + quantity
+        Else
+            ' Add product with specified quantity
+            productData("Quantity") = quantity
+            productData("Price") = priceToUse
+            currentOrderList.Add(productData)
+        End If
+
+        ' Update stock display (deduct the quantity added)
+        productData("CurrentStock") = CInt(productData("CurrentStock")) - quantity
+        UpdateStockLabel(productData("ProductID").ToString(), CInt(productData("CurrentStock")))
+
+        ' Refresh the order display
+        RefreshOrderDisplay()
+    End Sub
+
+    ' ... existing code ...
+
+    ' Update the product card click handler in ShowCategoryProducts
+
+
+    ' ... existing code ...
 End Class

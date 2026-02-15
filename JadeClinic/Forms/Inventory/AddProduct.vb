@@ -722,6 +722,12 @@ Public Class AddProduct
         IdleTimeoutManager.Instance.StopMonitoring(Me)
     End Sub
 
+    Private Sub Guna2Panel1_Paint(sender As Object, e As PaintEventArgs) Handles Guna2Panel1.Paint
+
+    End Sub
+    Private printDocument As Printing.PrintDocument
+    Private printPreviewDialog As PrintPreviewDialog
+
     Private Sub PrintBarcodeTextBox_Click(sender As Object, e As EventArgs) Handles PrintBarcodeTextBox.Click
         If String.IsNullOrWhiteSpace(currentBarcode) Then
             MessageBox.Show("No barcode to print. Please save the product first.", "Print Barcode", MessageBoxButtons.OK, MessageBoxIcon.Warning)
@@ -729,47 +735,172 @@ Public Class AddProduct
         End If
 
         Try
-            ' Create print dialog
+            ' Initialize print document
+            printDocument = New Printing.PrintDocument()
+
+            ' Calculate dynamic content dimensions
+            Dim margin As Integer = 12
+            Dim contentWidth As Integer = 210
+            Dim totalHeight As Integer = margin
+            totalHeight += 32 ' Product Name
+            totalHeight += 22 ' Price
+            totalHeight += 18 ' Category and Unit
+
+            Dim barcodeHeight As Integer = If(BarcodeImage.Image IsNot Nothing, 40, 0)
+            If barcodeHeight > 0 Then totalHeight += barcodeHeight + 4
+            totalHeight += 16 ' Barcode value
+            totalHeight += margin
+
+            Dim paperWidth As Integer = contentWidth + 2 * margin
+            Dim paperHeight As Integer = totalHeight
+
+            ' Set custom paper size for label printing (units: hundredths of an inch)
+            Dim tagSize As New Printing.PaperSize("ProductLabel", paperWidth, paperHeight)
+            printDocument.DefaultPageSettings.PaperSize = tagSize
+            printDocument.DefaultPageSettings.Margins = New Printing.Margins(0, 0, 0, 0) ' No extra margin
+
+            ' Set up print event handler
+            AddHandler printDocument.PrintPage, AddressOf OnPrintBarcodePage
+
+            ' Show print preview dialog
+            printPreviewDialog = New PrintPreviewDialog()
+            printPreviewDialog.Document = printDocument
+            printPreviewDialog.Text = "Product Barcode Print Preview"
+            printPreviewDialog.WindowState = FormWindowState.Maximized
+            printPreviewDialog.ShowDialog()
+
+        Catch ex As Exception
+            MessageBox.Show("Error setting up barcode print: " & ex.Message, "Print Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
+
+    Private Sub OnPrintBarcodePage(sender As Object, e As Printing.PrintPageEventArgs)
+        Try
+            ' Settings
+            Dim margin As Integer = 12
+            Dim contentWidth As Integer = 210 ' width inside margins
+            Dim y As Integer = margin
+            Dim g = e.Graphics
+            g.Clear(Color.White)
+
+            ' Font definitions
+            Dim fontName As New Font("Arial", 11, FontStyle.Bold)
+            Dim fontLabel As New Font("Arial", 8, FontStyle.Regular)
+            Dim fontPrice As New Font("Arial", 12, FontStyle.Bold)
+            Dim fontBarcode As New Font("Courier New", 8, FontStyle.Regular)
+
+            ' Calculate total height dynamically
+            Dim totalHeight As Integer = margin
+            totalHeight += 32 ' Product Name
+            totalHeight += 22 ' Price
+            totalHeight += 18 ' Category and Unit
+
+            Dim barcodeHeight As Integer = 0
+            If BarcodeImage.Image IsNot Nothing Then
+                barcodeHeight = 40
+                totalHeight += barcodeHeight + 4
+            End If
+            totalHeight += 16 ' Barcode value
+            totalHeight += margin
+
+            ' Set paper size dynamically
+            Dim paperWidth As Integer = contentWidth + 2 * margin
+            Dim paperHeight As Integer = totalHeight
+            e.PageSettings.PaperSize = New Printing.PaperSize("ProductLabel", paperWidth, paperHeight)
+
+            ' Start drawing content
+            y = margin
+
+            ' Product Name (centered, bold)
+            Dim nameRect As New RectangleF(margin, y, contentWidth, 32)
+            Dim productName As String = txtProductName.Text.Trim()
+            If productName.Length > 30 Then
+                productName = productName.Substring(0, 27) + "..."
+            End If
+            g.DrawString(productName, fontName, Brushes.Black, nameRect,
+                        New StringFormat With {.Alignment = StringAlignment.Center, .LineAlignment = StringAlignment.Near})
+            y += 32
+
+            ' Price (centered, bold)
+            Dim priceText As String = "₱" & SellingPriceTextBox.Text.Trim()
+            g.DrawString(priceText, fontPrice, Brushes.Black,
+                        New RectangleF(margin, y, contentWidth, 20),
+                        New StringFormat With {.Alignment = StringAlignment.Center})
+            y += 22
+
+            ' Category and Unit (centered, small)
+            Dim categoryUnit As String = $"Category: {cmbCategory.Text.Trim()}   Unit: {UnitCmbBox.Text.Trim()}"
+            g.DrawString(categoryUnit, fontLabel, Brushes.Black,
+                        New RectangleF(margin, y, contentWidth, 16),
+                        New StringFormat With {.Alignment = StringAlignment.Center})
+            y += 18
+
+            ' Barcode (centered, large)
+            If BarcodeImage.Image IsNot Nothing Then
+                Dim barcodeWidth As Integer = 140
+                barcodeHeight = 40
+                Dim barcodeX As Integer = margin + (contentWidth - barcodeWidth) \ 2
+                g.DrawImage(BarcodeImage.Image, barcodeX, y, barcodeWidth, barcodeHeight)
+                y += barcodeHeight + 4
+            End If
+
+            ' Barcode value (centered, small, under barcode)
+            g.DrawString(currentBarcode, fontBarcode, Brushes.Black,
+                        New RectangleF(margin, y, contentWidth, 14),
+                        New StringFormat With {.Alignment = StringAlignment.Center})
+            y += 16
+
+            ' Optional: Draw border for visual clarity (cut line)
+            g.DrawRectangle(New Pen(Color.LightGray, 1), margin \ 2, margin \ 2,
+                           contentWidth + margin, totalHeight - margin)
+
+            ' Dispose fonts
+            fontName.Dispose()
+            fontLabel.Dispose()
+            fontPrice.Dispose()
+            fontBarcode.Dispose()
+
+        Catch ex As Exception
+            MessageBox.Show("Error during barcode printing: " & ex.Message, "Print Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
+
+    ' Optional: Add a direct print method without preview
+    Private Sub PrintBarcodeDirectly()
+        If String.IsNullOrWhiteSpace(currentBarcode) Then
+            MessageBox.Show("No barcode to print. Please save the product first.", "Print Barcode", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Return
+        End If
+
+        Try
             Using printDialog As New PrintDialog()
+                printDocument = New Printing.PrintDocument()
+                printDialog.Document = printDocument
+
                 If printDialog.ShowDialog() = DialogResult.OK Then
-                    ' Create print document
-                    Dim printDoc As New Printing.PrintDocument()
-                    printDoc.PrinterSettings = printDialog.PrinterSettings
+                    ' Set up the same print configuration
+                    Dim margin As Integer = 12
+                    Dim contentWidth As Integer = 210
+                    Dim totalHeight As Integer = margin + 32 + 22 + 18 +
+                                               If(BarcodeImage.Image IsNot Nothing, 44, 0) + 16 + margin
 
-                    AddHandler printDoc.PrintPage, Sub(s, ev)
-                                                       ' Print the barcode image
-                                                       If BarcodeImage.Image IsNot Nothing Then
-                                                           ' Center the barcode on the page
-                                                           Dim x As Integer = (ev.PageBounds.Width - BarcodeImage.Image.Width) \ 2
-                                                           Dim y As Integer = 100
-                                                           ev.Graphics.DrawImage(BarcodeImage.Image, x, y)
+                    Dim paperWidth As Integer = contentWidth + 2 * margin
+                    Dim paperHeight As Integer = totalHeight
 
-                                                           ' Print barcode text below
-                                                           Dim font As New Font("Arial", 12, FontStyle.Bold)
-                                                           Dim textSize As SizeF = ev.Graphics.MeasureString(currentBarcode, font)
-                                                           Dim textX As Single = (ev.PageBounds.Width - textSize.Width) / 2
-                                                           Dim textY As Single = y + BarcodeImage.Image.Height + 20
-                                                           ev.Graphics.DrawString(currentBarcode, font, Brushes.Black, textX, textY)
+                    Dim tagSize As New Printing.PaperSize("ProductLabel", paperWidth, paperHeight)
+                    printDocument.DefaultPageSettings.PaperSize = tagSize
+                    printDocument.DefaultPageSettings.Margins = New Printing.Margins(0, 0, 0, 0)
+                    printDocument.PrinterSettings = printDialog.PrinterSettings
 
-                                                           ' Print product name
-                                                           Dim nameFont As New Font("Arial", 10, FontStyle.Regular)
-                                                           Dim nameSize As SizeF = ev.Graphics.MeasureString(txtProductName.Text, nameFont)
-                                                           Dim nameX As Single = (ev.PageBounds.Width - nameSize.Width) / 2
-                                                           Dim nameY As Single = textY + 30
-                                                           ev.Graphics.DrawString(txtProductName.Text, nameFont, Brushes.Black, nameX, nameY)
-                                                       End If
-                                                   End Sub
+                    AddHandler printDocument.PrintPage, AddressOf OnPrintBarcodePage
+                    printDocument.Print()
 
-                    printDoc.Print()
-                    MessageBox.Show("Barcode sent to printer successfully!", "Print Complete", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                    MessageBox.Show("Barcode label sent to printer successfully!", "Print Complete",
+                                  MessageBoxButtons.OK, MessageBoxIcon.Information)
                 End If
             End Using
         Catch ex As Exception
             MessageBox.Show("Error printing barcode: " & ex.Message, "Print Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
-    End Sub
-
-    Private Sub Guna2Panel1_Paint(sender As Object, e As PaintEventArgs) Handles Guna2Panel1.Paint
-
     End Sub
 End Class
