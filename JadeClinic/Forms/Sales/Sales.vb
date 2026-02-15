@@ -215,6 +215,7 @@ Public Class Sales
         End Try
     End Sub
     Private Sub Sales_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+
         Me.KeyPreview = True
         originalCategoryPanelControls = New List(Of Control)(CategoryPanel.Controls.Cast(Of Control)())
 
@@ -1798,15 +1799,31 @@ Public Class Sales
                                         customerForm.Close()
                                     End Sub
         buttonSection.Controls.Add(btnCancel)
+        ' Inside ShowCustomerInformationModal, after creating btnContinue and btnCancel
+
 
         ' Initial button state update
         UpdateCustomerTypeButtons()
+        ' Inside ShowCustomerInformationModal, after creating customerForm, btnContinue, and btnCancel
 
-        ' FIXED: Remove the fade-in animation to avoid the ShowDialog conflict
-        ' Set opacity to full immediately instead of using Show() + animation
+        customerForm.KeyPreview = True ' Enable keyboard input for the form
+
+        ' Add this KeyDown handler to customerForm BEFORE ShowDialog()
+        AddHandler customerForm.KeyDown, Sub(sender As Object, e As KeyEventArgs)
+                                             If e.KeyCode = Keys.Enter Then
+                                                 btnContinue.PerformClick()
+                                                 e.Handled = True
+                                             ElseIf e.KeyCode = Keys.Escape Then
+                                                 btnCancel.PerformClick()
+                                                 e.Handled = True
+                                             End If
+                                         End Sub
+        customerForm.ActiveControl = txtCustomerName ' Focus on the customer name input field when the modal opens
+
+        ' Then, show the dialog
         customerForm.Opacity = 1.0
 
-        ' Show modal and handle result - FIXED: No longer conflicts with Show()
+        ' Show modal and handle result
         Dim result As DialogResult = customerForm.ShowDialog()
 
         If result = DialogResult.OK Then
@@ -1818,6 +1835,8 @@ Public Class Sales
         customerForm.Dispose()
     End Sub
 
+    ' NEW: Payment Method Modal
+    ' NEW: Payment Method Modal
     ' NEW: Payment Method Modal
     Private Sub ShowPaymentMethodModal()
         ' Create payment method modal form
@@ -1840,9 +1859,9 @@ Public Class Sales
         ' Title
         Dim lblTitle As New Label()
         lblTitle.Text = "Select Payment Method"
-        lblTitle.Font = New Font("Poppins", 18, FontStyle.Bold)
+        lblTitle.Font = New Font("Poppins", 14, FontStyle.Bold)
         lblTitle.ForeColor = PureWhite
-        lblTitle.Location = New Point(20, 20)
+        lblTitle.Location = New Point(20, 10)
         lblTitle.Size = New Size(560, 30)
         lblTitle.TextAlign = ContentAlignment.MiddleCenter
         paymentForm.Controls.Add(lblTitle)
@@ -1850,7 +1869,7 @@ Public Class Sales
         ' Customer info display
         Dim lblCustomerInfo As New Label()
         lblCustomerInfo.Text = $"Customer: {selectedCustomerName} ({selectedCustomerType})"
-        lblCustomerInfo.Font = New Font("Poppins", 12, FontStyle.Regular)
+        lblCustomerInfo.Font = New Font("Poppins", 10, FontStyle.Regular)
         lblCustomerInfo.ForeColor = GoldenYellow
         lblCustomerInfo.Location = New Point(20, 60)
         lblCustomerInfo.Size = New Size(560, 25)
@@ -1860,7 +1879,7 @@ Public Class Sales
         ' Total amount display
         Dim lblTotal As New Label()
         lblTotal.Text = $"Total Amount: ₱{totalAmount:F2}"
-        lblTotal.Font = New Font("Poppins", 16, FontStyle.Bold)
+        lblTotal.Font = New Font("Poppins", 10, FontStyle.Bold)
         lblTotal.ForeColor = SuccessGreen
         lblTotal.Location = New Point(20, 100)
         lblTotal.Size = New Size(560, 30)
@@ -1887,7 +1906,7 @@ Public Class Sales
                                       paymentForm.Close()
                                   End Sub
         AddHandler btnCash.MouseEnter, Sub() btnCash.FillColor = GoldenYellow
-        AddHandler btnCash.MouseLeave, Sub() btnCash.FillColor = SuccessGreen
+        AddHandler btnCash.MouseLeave, Sub() If Not btnCash.Focused Then btnCash.FillColor = SuccessGreen
         paymentForm.Controls.Add(btnCash)
 
         ' GCash button
@@ -1906,7 +1925,7 @@ Public Class Sales
                                        paymentForm.Close()
                                    End Sub
         AddHandler btnGCash.MouseEnter, Sub() btnGCash.FillColor = GoldenYellow
-        AddHandler btnGCash.MouseLeave, Sub() btnGCash.FillColor = Color.FromArgb(0, 120, 212)
+        AddHandler btnGCash.MouseLeave, Sub() If Not btnGCash.Focused Then btnGCash.FillColor = Color.FromArgb(0, 120, 212)
         paymentForm.Controls.Add(btnGCash)
 
         ' Card button
@@ -1925,7 +1944,7 @@ Public Class Sales
                                       paymentForm.Close()
                                   End Sub
         AddHandler btnCard.MouseEnter, Sub() btnCard.FillColor = GoldenYellow
-        AddHandler btnCard.MouseLeave, Sub() btnCard.FillColor = Color.FromArgb(138, 43, 226)
+        AddHandler btnCard.MouseLeave, Sub() If Not btnCard.Focused Then btnCard.FillColor = Color.FromArgb(138, 43, 226)
         paymentForm.Controls.Add(btnCard)
 
         ' Action buttons
@@ -1942,7 +1961,7 @@ Public Class Sales
                                                 paymentForm.Close()
                                             End Sub
         AddHandler btnBackToCustomer.MouseEnter, Sub() btnBackToCustomer.FillColor = Graphite
-        AddHandler btnBackToCustomer.MouseLeave, Sub() btnBackToCustomer.FillColor = SteelGray
+        AddHandler btnBackToCustomer.MouseLeave, Sub() If Not btnBackToCustomer.Focused Then btnBackToCustomer.FillColor = SteelGray
         paymentForm.Controls.Add(btnBackToCustomer)
 
         Dim btnCancel As New Guna.UI2.WinForms.Guna2Button()
@@ -1958,8 +1977,69 @@ Public Class Sales
                                         paymentForm.Close()
                                     End Sub
         AddHandler btnCancel.MouseEnter, Sub() btnCancel.FillColor = Color.FromArgb(200, 50, 50)
-        AddHandler btnCancel.MouseLeave, Sub() btnCancel.FillColor = AlertRed
+        AddHandler btnCancel.MouseLeave, Sub() If Not btnCancel.Focused Then btnCancel.FillColor = AlertRed
         paymentForm.Controls.Add(btnCancel)
+
+        ' Create a list of buttons in navigation order (Cash -> GCash -> Card -> Back -> Cancel)
+        Dim paymentButtons As New List(Of Guna.UI2.WinForms.Guna2Button) From {btnCash, btnGCash, btnCard, btnBackToCustomer, btnCancel}
+
+        ' Add focus visual feedback for keyboard navigation
+        For Each btn In paymentButtons
+            AddHandler btn.GotFocus, Sub()
+                                         btn.FillColor = GoldenYellow
+                                         btn.BorderThickness = 2
+                                     End Sub
+            AddHandler btn.LostFocus, Sub()
+                                          ' Reset to original color based on button type
+                                          If btn Is btnCash Then
+                                              btn.FillColor = SuccessGreen
+                                          ElseIf btn Is btnGCash Then
+                                              btn.FillColor = Color.FromArgb(0, 120, 212)
+                                          ElseIf btn Is btnCard Then
+                                              btn.FillColor = Color.FromArgb(138, 43, 226)
+                                          ElseIf btn Is btnBackToCustomer Then
+                                              btn.FillColor = SteelGray
+                                          ElseIf btn Is btnCancel Then
+                                              btn.FillColor = AlertRed
+                                          End If
+                                          btn.BorderThickness = 1
+                                      End Sub
+        Next
+
+        ' Enable keyboard input for the form
+        paymentForm.KeyPreview = True
+
+        ' Add KeyDown handler for arrow key navigation and Escape
+        AddHandler paymentForm.KeyDown, Sub(sender As Object, e As KeyEventArgs)
+                                            If e.KeyCode = Keys.Up Or e.KeyCode = Keys.Left Then
+                                                ' Move to previous button
+                                                Dim currentIndex As Integer = paymentButtons.IndexOf(TryCast(paymentForm.ActiveControl, Guna.UI2.WinForms.Guna2Button))
+                                                If currentIndex >= 0 Then
+                                                    Dim prevIndex As Integer = If(currentIndex = 0, paymentButtons.Count - 1, currentIndex - 1)
+                                                    paymentButtons(prevIndex).Focus()
+                                                Else
+                                                    ' If no button is focused, focus the first one
+                                                    paymentButtons(0).Focus()
+                                                End If
+                                                e.Handled = True
+                                            ElseIf e.KeyCode = Keys.Down Or e.KeyCode = Keys.Right Then
+                                                ' Move to next button
+                                                Dim currentIndex As Integer = paymentButtons.IndexOf(TryCast(paymentForm.ActiveControl, Guna.UI2.WinForms.Guna2Button))
+                                                If currentIndex >= 0 Then
+                                                    Dim nextIndex As Integer = If(currentIndex = paymentButtons.Count - 1, 0, currentIndex + 1)
+                                                    paymentButtons(nextIndex).Focus()
+                                                Else
+                                                    ' If no button is focused, focus the first one
+                                                    paymentButtons(0).Focus()
+                                                End If
+                                                e.Handled = True
+                                            ElseIf e.KeyCode = Keys.Escape Then
+                                                ' Cancel the modal on Escape
+                                                paymentForm.DialogResult = DialogResult.Cancel
+                                                paymentForm.Close()
+                                                e.Handled = True
+                                            End If
+                                        End Sub
 
         ' Show modal and handle result
         Dim result As DialogResult = paymentForm.ShowDialog()
@@ -1988,17 +2068,19 @@ Public Class Sales
     End Sub
 
     ' NEW: Reference Input Modal for GCash/Card payments
+    ' NEW: Reference Input Modal for GCash/Card payments
     Private Function ShowReferenceInputModal() As Boolean
         ' Create reference input modal form
         Dim refForm As New Form()
         refForm.Text = $"{selectedPaymentMethod} Payment Reference"
-        refForm.Size = New Size(450, 300)
+        refForm.Size = New Size(480, 300)
         refForm.StartPosition = FormStartPosition.CenterParent
         refForm.FormBorderStyle = FormBorderStyle.FixedDialog
         refForm.MaximizeBox = False
         refForm.MinimizeBox = False
         refForm.BackColor = DarkSlate
         refForm.ShowInTaskbar = False
+        refForm.KeyPreview = True ' Enable keyboard input for the form
 
         ' Get total amount
         Dim totalAmount As Decimal = 0D
@@ -2006,38 +2088,40 @@ Public Class Sales
             Decimal.TryParse(totalLbl.Text, totalAmount)
         End If
 
-        ' Title
+        ' Title - CENTERED
         Dim lblTitle As New Label()
         lblTitle.Text = $"{selectedPaymentMethod} Payment"
-        lblTitle.Font = New Font("Poppins", 16, FontStyle.Bold)
+        lblTitle.Font = New Font("Poppins", 14, FontStyle.Bold)
         lblTitle.ForeColor = PureWhite
-        lblTitle.Location = New Point(20, 20)
         lblTitle.Size = New Size(410, 30)
+        lblTitle.Location = New Point((refForm.Width - lblTitle.Width) \ 2, 20) ' CENTERED
         lblTitle.TextAlign = ContentAlignment.MiddleCenter
         refForm.Controls.Add(lblTitle)
 
-        ' Total amount display
+        ' Total amount display - CENTERED
         Dim lblTotal As New Label()
         lblTotal.Text = $"Total: ₱{totalAmount:F2}"
-        lblTotal.Font = New Font("Poppins", 14, FontStyle.Bold)
+        lblTotal.Font = New Font("Poppins", 12, FontStyle.Bold)
         lblTotal.ForeColor = GoldenYellow
-        lblTotal.Location = New Point(20, 60)
         lblTotal.Size = New Size(410, 25)
+        lblTotal.Location = New Point((refForm.Width - lblTotal.Width) \ 2, 60) ' CENTERED
         lblTotal.TextAlign = ContentAlignment.MiddleCenter
         refForm.Controls.Add(lblTotal)
 
-        ' Reference input
+        ' Reference input label - CENTERED
         Dim lblReference As New Label()
         lblReference.Text = "Enter Reference Number:"
         lblReference.Font = New Font("Poppins", 12, FontStyle.Regular)
         lblReference.ForeColor = PureWhite
-        lblReference.Location = New Point(30, 110)
         lblReference.Size = New Size(200, 25)
+        lblReference.Location = New Point((refForm.Width - lblReference.Width) \ 2, 110) ' CENTERED
+        lblReference.TextAlign = ContentAlignment.MiddleCenter
         refForm.Controls.Add(lblReference)
 
+        ' Reference input - CENTERED
         Dim txtReference As New Guna.UI2.WinForms.Guna2TextBox()
         txtReference.Size = New Size(390, 40)
-        txtReference.Location = New Point(30, 140)
+        txtReference.Location = New Point((refForm.Width - txtReference.Width) \ 2, 140) ' CENTERED
         txtReference.PlaceholderText = "Enter transaction reference number"
         txtReference.Font = New Font("Poppins", 12, FontStyle.Regular)
         txtReference.BorderRadius = 8
@@ -2045,12 +2129,17 @@ Public Class Sales
         txtReference.ForeColor = DeepCharcoal
         refForm.Controls.Add(txtReference)
 
-        ' Action buttons
+        ' Action buttons - CENTERED GROUP
+        ' Calculate center for the button group
+        Dim buttonSpacing As Integer = 20
+        Dim totalButtonWidth As Integer = 120 + 200 + buttonSpacing ' btnBack + btnComplete + spacing
+        Dim buttonGroupStartX As Integer = (refForm.Width - totalButtonWidth) \ 2
+
         Dim btnComplete As New Guna.UI2.WinForms.Guna2Button()
-        btnComplete.Text = "Complete Payment"
-        btnComplete.Size = New Size(180, 50)
-        btnComplete.Location = New Point(240, 200)
-        btnComplete.Font = New Font("Poppins", 12, FontStyle.Bold)
+        btnComplete.Text = "Confirm Payment"
+        btnComplete.Size = New Size(200, 50)
+        btnComplete.Location = New Point(buttonGroupStartX + 120 + buttonSpacing, 200) ' Position after btnBack
+        btnComplete.Font = New Font("Poppins", 10, FontStyle.Bold)
         btnComplete.ForeColor = DeepCharcoal
         btnComplete.FillColor = SuccessGreen
         btnComplete.BorderRadius = 12
@@ -2070,7 +2159,7 @@ Public Class Sales
         Dim btnBack As New Guna.UI2.WinForms.Guna2Button()
         btnBack.Text = "← Back"
         btnBack.Size = New Size(120, 50)
-        btnBack.Location = New Point(100, 200)
+        btnBack.Location = New Point(buttonGroupStartX, 200) ' Start of group
         btnBack.Font = New Font("Poppins", 12, FontStyle.Regular)
         btnBack.ForeColor = PureWhite
         btnBack.FillColor = SteelGray
@@ -2082,6 +2171,19 @@ Public Class Sales
         AddHandler btnBack.MouseEnter, Sub() btnBack.FillColor = Graphite
         AddHandler btnBack.MouseLeave, Sub() btnBack.FillColor = SteelGray
         refForm.Controls.Add(btnBack)
+
+        ' Add KeyDown handler for keyboard support
+        AddHandler refForm.KeyDown, Sub(sender As Object, e As KeyEventArgs)
+                                        If e.KeyCode = Keys.Enter Then
+                                            ' Confirm the reference on Enter
+                                            btnComplete.PerformClick()
+                                            e.Handled = True
+                                        ElseIf e.KeyCode = Keys.Escape Then
+                                            ' Go back on Escape
+                                            btnBack.PerformClick()
+                                            e.Handled = True
+                                        End If
+                                    End Sub
 
         ' Show modal and return result
         Dim result As Boolean = refForm.ShowDialog() = DialogResult.OK
@@ -3897,6 +3999,7 @@ Public Class Sales
     ' ... existing code ...
 
     ' ENHANCED: Wider quantity selector form for better usability
+    ' ENHANCED: Wider quantity selector form for better usability
     Private Sub ShowQuantitySelector(productData As Dictionary(Of String, Object))
         ' Prevent product clicks when customer selection or payment panels are active
         If pinPanelActive OrElse totalPanelActive Then
@@ -3919,6 +4022,7 @@ Public Class Sales
         quantityForm.MinimizeBox = False
         quantityForm.BackColor = DarkSlate
         quantityForm.ShowInTaskbar = False
+        quantityForm.KeyPreview = True ' Enable keyboard input for the form
 
         ' Product name - WIDER
         Dim lblProductName As New Label()
@@ -4079,7 +4183,45 @@ Public Class Sales
         AddHandler btnAddToCart.MouseEnter, Sub() btnAddToCart.FillColor = GoldenYellow
         AddHandler btnAddToCart.MouseLeave, Sub() btnAddToCart.FillColor = SuccessGreen
         buttonSection.Controls.Add(btnAddToCart)
+        ' Inside ShowQuantitySelector, after creating txtQuantity
+        ' Inside ShowQuantitySelector, after creating txtQuantity
 
+        ' Inside ShowQuantitySelector, after creating txtQuantity
+
+        ' Restrict input to only digits and prevent deletion
+        AddHandler txtQuantity.KeyPress, Sub(sender As Object, e As KeyPressEventArgs)
+                                             ' Allow only digits and control keys (but we'll block deletion separately)
+                                             If Not Char.IsDigit(e.KeyChar) AndAlso Not Char.IsControl(e.KeyChar) Then
+                                                 e.Handled = True
+                                             End If
+                                         End Sub
+
+        AddHandler txtQuantity.KeyDown, Sub(sender As Object, e As KeyEventArgs)
+                                            ' Prevent backspace and delete to stop number removal
+                                            If e.KeyCode = Keys.Back Or e.KeyCode = Keys.Delete Then
+                                                e.Handled = True
+                                            End If
+                                        End Sub
+
+        ' Ensure quantity cannot be less than 1 or empty, and position cursor at the end
+        AddHandler txtQuantity.TextChanged, Sub()
+                                                Dim qty As Integer
+                                                If String.IsNullOrWhiteSpace(txtQuantity.Text) OrElse Not Integer.TryParse(txtQuantity.Text, qty) OrElse qty < 1 Then
+                                                    txtQuantity.Text = "1"
+                                                    ' Move cursor to the end of the text
+                                                    txtQuantity.SelectionStart = txtQuantity.Text.Length
+                                                    txtQuantity.SelectionLength = 0
+                                                Else
+                                                    ' For valid input, ensure cursor is at the end for appending
+                                                    txtQuantity.SelectionStart = txtQuantity.Text.Length
+                                                    txtQuantity.SelectionLength = 0
+                                                End If
+                                            End Sub
+
+        ' Then, continue with the rest of the method...
+        ' Then, continue with the rest of the method...
+
+        ' Then, continue with the rest of the method...
         ' Cancel button - LARGER
         Dim btnCancel As New Guna.UI2.WinForms.Guna2Button()
         btnCancel.Text = "Cancel"
@@ -4097,6 +4239,36 @@ Public Class Sales
         AddHandler btnCancel.MouseLeave, Sub() btnCancel.FillColor = AlertRed
         buttonSection.Controls.Add(btnCancel)
 
+        ' Add KeyDown handler for keyboard support
+        AddHandler quantityForm.KeyDown, Sub(sender As Object, e As KeyEventArgs)
+                                             If e.KeyCode = Keys.Add Or e.KeyCode = Keys.Oemplus Or e.KeyCode = Keys.Up Then
+                                                 ' Increase quantity
+                                                 Dim currentQty As Integer
+                                                 If Integer.TryParse(txtQuantity.Text, currentQty) Then
+                                                     If currentQty < availableStock Then
+                                                         txtQuantity.Text = (currentQty + 1).ToString()
+                                                     End If
+                                                 End If
+                                                 e.Handled = True
+                                             ElseIf e.KeyCode = Keys.Subtract Or e.KeyCode = Keys.OemMinus Or e.KeyCode = Keys.Down Then
+                                                 ' Decrease quantity
+                                                 Dim currentQty As Integer
+                                                 If Integer.TryParse(txtQuantity.Text, currentQty) Then
+                                                     If currentQty > 1 Then
+                                                         txtQuantity.Text = (currentQty - 1).ToString()
+                                                     End If
+                                                 End If
+                                                 e.Handled = True
+                                             ElseIf e.KeyCode = Keys.Enter Then
+                                                 ' Confirm add to cart
+                                                 btnAddToCart.PerformClick()
+                                                 e.Handled = True
+                                             ElseIf e.KeyCode = Keys.Escape Then
+                                                 ' Cancel
+                                                 btnCancel.PerformClick()
+                                                 e.Handled = True
+                                             End If
+                                         End Sub
         ' Show modal and handle result
         quantityForm.ShowDialog()
         quantityForm.Dispose()
