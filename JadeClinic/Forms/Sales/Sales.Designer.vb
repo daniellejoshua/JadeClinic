@@ -47,7 +47,6 @@ Partial Class Sales
         Dim CustomizableEdges26 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges27 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges28 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges29 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         LabelTitle = New Label()
         CategoryPanel = New Guna.UI2.WinForms.Guna2Panel()
         Label7 = New Label()
@@ -97,7 +96,6 @@ Partial Class Sales
         backCategory = New Guna.UI2.WinForms.Guna2CircleButton()
         Guna2CirclePictureBox5 = New Guna.UI2.WinForms.Guna2CirclePictureBox()
         lblUsername = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        Guna2CircleButton1 = New Guna.UI2.WinForms.Guna2CircleButton()
         CategoryPanel.SuspendLayout()
         totalPanel.SuspendLayout()
         DashboardPanel.SuspendLayout()
@@ -490,7 +488,7 @@ Partial Class Sales
         lblOrderId.AutoSize = True
         lblOrderId.Font = New Font("Poppins Medium", 10.2F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
         lblOrderId.ForeColor = Color.WhiteSmoke
-        lblOrderId.Location = New Point(1178, 54)
+        lblOrderId.Location = New Point(1083, 63)
         lblOrderId.Name = "lblOrderId"
         lblOrderId.Size = New Size(95, 30)
         lblOrderId.TabIndex = 1
@@ -625,22 +623,22 @@ Partial Class Sales
         ' totalLbl
         ' 
         totalLbl.BackColor = Color.White
-        totalLbl.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        totalLbl.Font = New Font("Poppins Medium", 10.2F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
         totalLbl.ForeColor = Color.Black
         totalLbl.Location = New Point(367, 118)
         totalLbl.Name = "totalLbl"
-        totalLbl.Size = New Size(33, 28)
+        totalLbl.Size = New Size(43, 32)
         totalLbl.TabIndex = 55
         totalLbl.Text = "0.00"
         ' 
         ' lbl2
         ' 
         lbl2.BackColor = Color.White
-        lbl2.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        lbl2.Font = New Font("Poppins Medium", 9F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
         lbl2.ForeColor = Color.Black
         lbl2.Location = New Point(82, 118)
         lbl2.Name = "lbl2"
-        lbl2.Size = New Size(41, 28)
+        lbl2.Size = New Size(46, 28)
         lbl2.TabIndex = 56
         lbl2.Text = "Total"
         ' 
@@ -695,9 +693,9 @@ Partial Class Sales
         Guna2HtmlLabel26.ForeColor = Color.Black
         Guna2HtmlLabel26.Location = New Point(82, 25)
         Guna2HtmlLabel26.Name = "Guna2HtmlLabel26"
-        Guna2HtmlLabel26.Size = New Size(68, 28)
+        Guna2HtmlLabel26.Size = New Size(106, 28)
         Guna2HtmlLabel26.TabIndex = 52
-        Guna2HtmlLabel26.Text = "Subtotal"
+        Guna2HtmlLabel26.Text = "Vatable Sales"
         ' 
         ' DashboardPanel
         ' 
@@ -761,30 +759,12 @@ Partial Class Sales
         lblUsername.TabIndex = 41
         lblUsername.Text = "20 Items"
         ' 
-        ' Guna2CircleButton1
-        ' 
-        Guna2CircleButton1.DisabledState.BorderColor = Color.DarkGray
-        Guna2CircleButton1.DisabledState.CustomBorderColor = Color.DarkGray
-        Guna2CircleButton1.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
-        Guna2CircleButton1.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        Guna2CircleButton1.FillColor = Color.White
-        Guna2CircleButton1.Font = New Font("Poppins", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2CircleButton1.ForeColor = Color.Black
-        Guna2CircleButton1.Location = New Point(1024, 51)
-        Guna2CircleButton1.Name = "Guna2CircleButton1"
-        Guna2CircleButton1.ShadowDecoration.CustomizableEdges = CustomizableEdges29
-        Guna2CircleButton1.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
-        Guna2CircleButton1.Size = New Size(34, 33)
-        Guna2CircleButton1.TabIndex = 42
-        Guna2CircleButton1.Text = "<"
-        ' 
         ' Sales
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
         BackColor = Color.DarkGray
         ClientSize = New Size(1609, 875)
-        Controls.Add(Guna2CircleButton1)
         Controls.Add(lblUsername)
         Controls.Add(Guna2CirclePictureBox5)
         Controls.Add(lblOrderId)
@@ -859,5 +839,4 @@ Partial Class Sales
     Friend WithEvents Guna2HtmlLabel4 As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents RestoCatBtn As Guna.UI2.WinForms.Guna2Button
     Friend WithEvents Label7 As Label
-    Friend WithEvents Guna2CircleButton1 As Guna.UI2.WinForms.Guna2CircleButton
 End Class
