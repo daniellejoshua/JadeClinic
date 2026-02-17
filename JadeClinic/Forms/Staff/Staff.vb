@@ -5,6 +5,8 @@ Imports QuestPDF.Helpers
 Imports QuestPDF.Infrastructure
 Imports System.Drawing
 Imports System.Drawing.Imaging
+Imports SD = System.Drawing  ' <-- added alias for System.Drawing
+
 
 Public Class Staff
     ' Navigation flag to prevent exit confirmation on programmatic close
@@ -308,32 +310,48 @@ Public Class Staff
         End Try
     End Function
 
+
     Private Sub InitializeDataGridView()
         ' Clear existing columns
         Guna2DataGridView1.Columns.Clear()
 
-        ' Configure DataGridView appearance with consistent gray colors and white row separators
-        Guna2DataGridView1.BackgroundColor = System.Drawing.Color.FromArgb(41, 44, 45)
-        Guna2DataGridView1.GridColor = System.Drawing.Color.White ' Thin white line as row separator
-        Guna2DataGridView1.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(61, 65, 66) ' Consistent gray for all rows
-        Guna2DataGridView1.AlternatingRowsDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(61, 65, 66) ' Match odd and even rows
-        Guna2DataGridView1.DefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
-        Guna2DataGridView1.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(255, 204, 77)
-        Guna2DataGridView1.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
-        Guna2DataGridView1.DefaultCellStyle.Font = New System.Drawing.Font("Poppins", 9.0F, System.Drawing.FontStyle.Regular)
-        Guna2DataGridView1.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
+        ' Use the same color palette and styling as Inventory.vb
+        Dim RichOlive As SD.Color = SD.Color.FromArgb(190, 154, 48)
+        Dim GoldenYellow As SD.Color = SD.Color.FromArgb(254, 191, 16)
+        Dim LightGray As SD.Color = SD.Color.FromArgb(248, 248, 248)
+        Dim MediumGray As SD.Color = SD.Color.FromArgb(235, 235, 235)
+        Dim DarkGray As SD.Color = SD.Color.FromArgb(80, 80, 80)
+        Dim BorderGray As SD.Color = SD.Color.FromArgb(220, 220, 220)
+        Dim SelectionDark As SD.Color = SD.Color.FromArgb(120, 120, 120)
 
-        ' Configure header style with gray colors and remove blue selection color
-        Guna2DataGridView1.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(30, 30, 30)
-        Guna2DataGridView1.ColumnHeadersDefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
-        Guna2DataGridView1.ColumnHeadersDefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(30, 30, 30) ' Match header background to remove blue color
-        Guna2DataGridView1.ColumnHeadersDefaultCellStyle.Font = New System.Drawing.Font("Poppins SemiBold", 10.0F, System.Drawing.FontStyle.Regular)
+        ' Configure DataGridView appearance to match Inventory style
+        Guna2DataGridView1.BackgroundColor = LightGray
+        Guna2DataGridView1.GridColor = BorderGray
+        Guna2DataGridView1.BorderStyle = BorderStyle.None
+        Guna2DataGridView1.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal
+
+        Guna2DataGridView1.DefaultCellStyle.BackColor = LightGray
+        Guna2DataGridView1.AlternatingRowsDefaultCellStyle.BackColor = MediumGray
+        Guna2DataGridView1.DefaultCellStyle.ForeColor = DarkGray
+        Guna2DataGridView1.DefaultCellStyle.SelectionBackColor = SelectionDark
+        Guna2DataGridView1.DefaultCellStyle.SelectionForeColor = SD.Color.White
+        Guna2DataGridView1.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
+        Guna2DataGridView1.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
+        Guna2DataGridView1.DefaultCellStyle.Padding = New Padding(8, 6, 8, 6)
+
+        ' Header styling using RichOlive to match Inventory
+        Guna2DataGridView1.ColumnHeadersDefaultCellStyle.BackColor = RichOlive
+        Guna2DataGridView1.ColumnHeadersDefaultCellStyle.ForeColor = SD.Color.White
+        Guna2DataGridView1.ColumnHeadersDefaultCellStyle.SelectionBackColor = RichOlive
+        Guna2DataGridView1.ColumnHeadersDefaultCellStyle.Font = New Font("Poppins SemiBold", 10.0F, FontStyle.Bold)
         Guna2DataGridView1.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
         Guna2DataGridView1.ColumnHeadersHeight = 50
         Guna2DataGridView1.RowTemplate.Height = 60
+        Guna2DataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing
 
-        ' Ensure row borders are visible
+        ' Ensure row borders / selection behavior is consistent
         Guna2DataGridView1.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal
+        Guna2DataGridView1.EnableHeadersVisualStyles = False
 
         ' Add User ID column FIRST
         Dim colUserID As New DataGridViewTextBoxColumn()
@@ -342,9 +360,10 @@ Public Class Staff
         colUserID.Width = 80
         colUserID.ReadOnly = True
         colUserID.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
+        colUserID.DefaultCellStyle.Padding = New Padding(6, 0, 6, 0)
         Guna2DataGridView1.Columns.Add(colUserID)
 
-        ' Add Photo column for user photos
+        ' Add Photo column for user photos (image)
         Dim colPhoto As New DataGridViewImageColumn()
         colPhoto.Name = "Photo"
         colPhoto.HeaderText = "Photo"
@@ -363,9 +382,10 @@ Public Class Staff
         colUsername.ReadOnly = True
         colUsername.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft
         colUsername.DefaultCellStyle.Padding = New Padding(10, 0, 10, 0)
+        colUsername.DefaultCellStyle.ForeColor = DarkGray
         Guna2DataGridView1.Columns.Add(colUsername)
 
-        ' Add Full Name column (replacing Email for now)
+        ' Add Full Name column
         Dim colFullName As New DataGridViewTextBoxColumn()
         colFullName.Name = "FullName"
         colFullName.HeaderText = "Full Name"
@@ -373,6 +393,7 @@ Public Class Staff
         colFullName.ReadOnly = True
         colFullName.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft
         colFullName.DefaultCellStyle.Padding = New Padding(10, 0, 10, 0)
+        colFullName.DefaultCellStyle.ForeColor = DarkGray
         Guna2DataGridView1.Columns.Add(colFullName)
 
         ' Add Role column
@@ -382,11 +403,11 @@ Public Class Staff
         colRole.Width = 100
         colRole.ReadOnly = True
         colRole.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
-        colRole.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
-        colRole.DefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
-        colRole.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(255, 204, 77)
-        colRole.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
-        colRole.DefaultCellStyle.Font = New System.Drawing.Font("Poppins", 9.0F, System.Drawing.FontStyle.Regular)
+        colRole.DefaultCellStyle.BackColor = LightGray
+        colRole.DefaultCellStyle.ForeColor = DarkGray
+        colRole.DefaultCellStyle.SelectionBackColor = SelectionDark
+        colRole.DefaultCellStyle.SelectionForeColor = SD.Color.White
+        colRole.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
         Guna2DataGridView1.Columns.Add(colRole)
 
         ' Add Status column
@@ -396,17 +417,22 @@ Public Class Staff
         colStatus.Width = 100
         colStatus.ReadOnly = True
         colStatus.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
+        colStatus.DefaultCellStyle.ForeColor = DarkGray
         Guna2DataGridView1.Columns.Add(colStatus)
 
-        ' Actions column with separated icons and borders
+        ' Actions column as text column (styled)
         Dim colActions As New DataGridViewTextBoxColumn()
         colActions.Name = "Actions"
         colActions.HeaderText = "Actions"
         colActions.Width = 200
         colActions.ReadOnly = True
         colActions.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
-        colActions.DefaultCellStyle.Font = New System.Drawing.Font("Segoe UI Emoji", 11.0F, System.Drawing.FontStyle.Regular)
+        colActions.DefaultCellStyle.Font = New Font("Segoe UI Emoji", 11.0F, FontStyle.Regular)
         colActions.DefaultCellStyle.Padding = New Padding(10, 0, 10, 0)
+        colActions.DefaultCellStyle.BackColor = SD.Color.FromArgb(240, 240, 240)
+        colActions.DefaultCellStyle.ForeColor = SD.Color.FromArgb(50, 100, 200) ' clickable hint
+        colActions.DefaultCellStyle.SelectionBackColor = SD.Color.FromArgb(140, 140, 140)
+        colActions.DefaultCellStyle.SelectionForeColor = SD.Color.White
         Guna2DataGridView1.Columns.Add(colActions)
 
         ' Configure DataGridView properties

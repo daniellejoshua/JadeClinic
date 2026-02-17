@@ -54,7 +54,7 @@ Partial Class InventoryLog
         ' LabelTitle
         ' 
         LabelTitle.AutoSize = True
-        LabelTitle.Font = New Font("Poppins Medium", 16.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        LabelTitle.Font = New Font("Poppins Medium", 16.2F, FontStyle.Regular, GraphicsUnit.Point, 0)
         LabelTitle.ForeColor = Color.White
         LabelTitle.Location = New Point(262, 20)
         LabelTitle.Name = "LabelTitle"
@@ -67,7 +67,7 @@ Partial Class InventoryLog
         DashboardPanel.BorderRadius = 30
         DashboardPanel.Controls.Add(PictureBox9)
         DashboardPanel.CustomizableEdges = CustomizableEdges1
-        DashboardPanel.FillColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
+        DashboardPanel.FillColor = Color.FromArgb(41, 44, 45)
         DashboardPanel.Location = New Point(-33, 5)
         DashboardPanel.Name = "DashboardPanel"
         DashboardPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges2
@@ -76,7 +76,7 @@ Partial Class InventoryLog
         ' 
         ' PictureBox9
         ' 
-        PictureBox9.BackColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
+        PictureBox9.BackColor = Color.FromArgb(41, 44, 45)
         PictureBox9.Image = My.Resources.Resources.Jade_Dental_Logo
         PictureBox9.Location = New Point(63, 7)
         PictureBox9.Name = "PictureBox9"
@@ -104,9 +104,9 @@ Partial Class InventoryLog
         InventoryLogDataGrid.AllowUserToResizeRows = False
         DataGridViewCellStyle1.BackColor = Color.White
         InventoryLogDataGrid.AlternatingRowsDefaultCellStyle = DataGridViewCellStyle1
-        InventoryLogDataGrid.BackgroundColor = Color.FromArgb(CByte(61), CByte(65), CByte(65))
+        InventoryLogDataGrid.BackgroundColor = Color.FromArgb(61, 65, 65)
         DataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleLeft
-        DataGridViewCellStyle2.BackColor = Color.FromArgb(CByte(100), CByte(88), CByte(255))
+        DataGridViewCellStyle2.BackColor = Color.FromArgb(100, 88, 255)
         DataGridViewCellStyle2.Font = New Font("Segoe UI", 9F)
         DataGridViewCellStyle2.ForeColor = Color.White
         DataGridViewCellStyle2.SelectionBackColor = SystemColors.Highlight
@@ -118,12 +118,12 @@ Partial Class InventoryLog
         DataGridViewCellStyle3.Alignment = DataGridViewContentAlignment.MiddleLeft
         DataGridViewCellStyle3.BackColor = Color.White
         DataGridViewCellStyle3.Font = New Font("Segoe UI", 9F)
-        DataGridViewCellStyle3.ForeColor = Color.FromArgb(CByte(71), CByte(69), CByte(94))
-        DataGridViewCellStyle3.SelectionBackColor = Color.FromArgb(CByte(231), CByte(229), CByte(255))
-        DataGridViewCellStyle3.SelectionForeColor = Color.FromArgb(CByte(71), CByte(69), CByte(94))
+        DataGridViewCellStyle3.ForeColor = Color.FromArgb(71, 69, 94)
+        DataGridViewCellStyle3.SelectionBackColor = Color.FromArgb(231, 229, 255)
+        DataGridViewCellStyle3.SelectionForeColor = Color.FromArgb(71, 69, 94)
         DataGridViewCellStyle3.WrapMode = DataGridViewTriState.False
         InventoryLogDataGrid.DefaultCellStyle = DataGridViewCellStyle3
-        InventoryLogDataGrid.GridColor = Color.FromArgb(CByte(231), CByte(229), CByte(255))
+        InventoryLogDataGrid.GridColor = Color.FromArgb(231, 229, 255)
         InventoryLogDataGrid.Location = New Point(235, 160)
         InventoryLogDataGrid.Name = "InventoryLogDataGrid"
         InventoryLogDataGrid.RowHeadersVisible = False
@@ -135,9 +135,9 @@ Partial Class InventoryLog
         InventoryLogDataGrid.ThemeStyle.AlternatingRowsStyle.ForeColor = Color.Empty
         InventoryLogDataGrid.ThemeStyle.AlternatingRowsStyle.SelectionBackColor = Color.Empty
         InventoryLogDataGrid.ThemeStyle.AlternatingRowsStyle.SelectionForeColor = Color.Empty
-        InventoryLogDataGrid.ThemeStyle.BackColor = Color.FromArgb(CByte(61), CByte(65), CByte(65))
-        InventoryLogDataGrid.ThemeStyle.GridColor = Color.FromArgb(CByte(231), CByte(229), CByte(255))
-        InventoryLogDataGrid.ThemeStyle.HeaderStyle.BackColor = Color.FromArgb(CByte(100), CByte(88), CByte(255))
+        InventoryLogDataGrid.ThemeStyle.BackColor = Color.FromArgb(61, 65, 65)
+        InventoryLogDataGrid.ThemeStyle.GridColor = Color.FromArgb(231, 229, 255)
+        InventoryLogDataGrid.ThemeStyle.HeaderStyle.BackColor = Color.FromArgb(100, 88, 255)
         InventoryLogDataGrid.ThemeStyle.HeaderStyle.BorderStyle = DataGridViewHeaderBorderStyle.None
         InventoryLogDataGrid.ThemeStyle.HeaderStyle.Font = New Font("Segoe UI", 9F)
         InventoryLogDataGrid.ThemeStyle.HeaderStyle.ForeColor = Color.White
@@ -147,10 +147,10 @@ Partial Class InventoryLog
         InventoryLogDataGrid.ThemeStyle.RowsStyle.BackColor = Color.White
         InventoryLogDataGrid.ThemeStyle.RowsStyle.BorderStyle = DataGridViewCellBorderStyle.SingleHorizontal
         InventoryLogDataGrid.ThemeStyle.RowsStyle.Font = New Font("Segoe UI", 9F)
-        InventoryLogDataGrid.ThemeStyle.RowsStyle.ForeColor = Color.FromArgb(CByte(71), CByte(69), CByte(94))
+        InventoryLogDataGrid.ThemeStyle.RowsStyle.ForeColor = Color.FromArgb(71, 69, 94)
         InventoryLogDataGrid.ThemeStyle.RowsStyle.Height = 29
-        InventoryLogDataGrid.ThemeStyle.RowsStyle.SelectionBackColor = Color.FromArgb(CByte(231), CByte(229), CByte(255))
-        InventoryLogDataGrid.ThemeStyle.RowsStyle.SelectionForeColor = Color.FromArgb(CByte(71), CByte(69), CByte(94))
+        InventoryLogDataGrid.ThemeStyle.RowsStyle.SelectionBackColor = Color.FromArgb(231, 229, 255)
+        InventoryLogDataGrid.ThemeStyle.RowsStyle.SelectionForeColor = Color.FromArgb(71, 69, 94)
         ' 
         ' SortBy
         ' 
@@ -160,10 +160,10 @@ Partial Class InventoryLog
         SortBy.CustomizableEdges = CustomizableEdges4
         SortBy.DrawMode = DrawMode.OwnerDrawFixed
         SortBy.DropDownStyle = ComboBoxStyle.DropDownList
-        SortBy.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
-        SortBy.FocusedColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
-        SortBy.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
-        SortBy.Font = New Font("Poppins Light", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        SortBy.FillColor = Color.FromArgb(61, 65, 66)
+        SortBy.FocusedColor = Color.FromArgb(94, 148, 255)
+        SortBy.FocusedState.BorderColor = Color.FromArgb(94, 148, 255)
+        SortBy.Font = New Font("Poppins Light", 10.2F, FontStyle.Regular, GraphicsUnit.Point, 0)
         SortBy.ForeColor = Color.White
         SortBy.ItemHeight = 40
         SortBy.Location = New Point(622, 102)
@@ -178,10 +178,10 @@ Partial Class InventoryLog
         Exportbtn.CustomizableEdges = CustomizableEdges6
         Exportbtn.DisabledState.BorderColor = Color.DarkGray
         Exportbtn.DisabledState.CustomBorderColor = Color.DarkGray
-        Exportbtn.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
-        Exportbtn.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        Exportbtn.FillColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
-        Exportbtn.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Exportbtn.DisabledState.FillColor = Color.FromArgb(169, 169, 169)
+        Exportbtn.DisabledState.ForeColor = Color.FromArgb(141, 141, 141)
+        Exportbtn.FillColor = Color.FromArgb(255, 204, 77)
+        Exportbtn.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, 0)
         Exportbtn.ForeColor = Color.Black
         Exportbtn.Location = New Point(1463, 102)
         Exportbtn.Name = "Exportbtn"
@@ -193,7 +193,7 @@ Partial Class InventoryLog
         ' Guna2HtmlLabel3
         ' 
         Guna2HtmlLabel3.BackColor = Color.Transparent
-        Guna2HtmlLabel3.Font = New Font("Poppins", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Guna2HtmlLabel3.Font = New Font("Poppins", 10.2F, FontStyle.Regular, GraphicsUnit.Point, 0)
         Guna2HtmlLabel3.ForeColor = Color.White
         Guna2HtmlLabel3.Location = New Point(542, 110)
         Guna2HtmlLabel3.Name = "Guna2HtmlLabel3"
@@ -204,7 +204,7 @@ Partial Class InventoryLog
         ' lblUsername
         ' 
         lblUsername.BackColor = Color.Transparent
-        lblUsername.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        lblUsername.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, 0)
         lblUsername.ForeColor = Color.White
         lblUsername.Location = New Point(1477, 20)
         lblUsername.Name = "lblUsername"
@@ -217,8 +217,8 @@ Partial Class InventoryLog
         Guna2DateTimePicker1.BorderRadius = 10
         Guna2DateTimePicker1.Checked = True
         Guna2DateTimePicker1.CustomizableEdges = CustomizableEdges8
-        Guna2DateTimePicker1.FillColor = Color.FromArgb(CByte(30), CByte(30), CByte(30))
-        Guna2DateTimePicker1.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Guna2DateTimePicker1.FillColor = Color.FromArgb(30, 30, 30)
+        Guna2DateTimePicker1.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, 0)
         Guna2DateTimePicker1.ForeColor = Color.White
         Guna2DateTimePicker1.Format = DateTimePickerFormat.Short
         Guna2DateTimePicker1.Location = New Point(357, 108)
@@ -233,7 +233,7 @@ Partial Class InventoryLog
         ' Guna2HtmlLabel4
         ' 
         Guna2HtmlLabel4.BackColor = Color.Transparent
-        Guna2HtmlLabel4.Font = New Font("Poppins", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Guna2HtmlLabel4.Font = New Font("Poppins", 10.2F, FontStyle.Regular, GraphicsUnit.Point, 0)
         Guna2HtmlLabel4.ForeColor = Color.White
         Guna2HtmlLabel4.Location = New Point(235, 116)
         Guna2HtmlLabel4.Name = "Guna2HtmlLabel4"
@@ -247,10 +247,10 @@ Partial Class InventoryLog
         AddInventoryLog.CustomizableEdges = CustomizableEdges10
         AddInventoryLog.DisabledState.BorderColor = Color.DarkGray
         AddInventoryLog.DisabledState.CustomBorderColor = Color.DarkGray
-        AddInventoryLog.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
-        AddInventoryLog.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        AddInventoryLog.FillColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
-        AddInventoryLog.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        AddInventoryLog.DisabledState.FillColor = Color.FromArgb(169, 169, 169)
+        AddInventoryLog.DisabledState.ForeColor = Color.FromArgb(141, 141, 141)
+        AddInventoryLog.FillColor = Color.FromArgb(255, 204, 77)
+        AddInventoryLog.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, 0)
         AddInventoryLog.ForeColor = Color.Black
         AddInventoryLog.Location = New Point(1225, 102)
         AddInventoryLog.Name = "AddInventoryLog"

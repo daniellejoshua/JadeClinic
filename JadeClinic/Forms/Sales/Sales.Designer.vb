@@ -96,6 +96,7 @@ Partial Class Sales
         backCategory = New Guna.UI2.WinForms.Guna2CircleButton()
         Guna2CirclePictureBox5 = New Guna.UI2.WinForms.Guna2CirclePictureBox()
         lblUsername = New Guna.UI2.WinForms.Guna2HtmlLabel()
+        lblSearchProduct = New Label()
         CategoryPanel.SuspendLayout()
         totalPanel.SuspendLayout()
         DashboardPanel.SuspendLayout()
@@ -424,24 +425,24 @@ Partial Class Sales
         ' 
         Label1.AutoSize = True
         Label1.BackColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
-        Label1.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Label1.Font = New Font("Poppins Medium", 9F)
         Label1.ForeColor = Color.White
-        Label1.Location = New Point(476, 124)
+        Label1.Location = New Point(472, 104)
         Label1.Name = "Label1"
-        Label1.Size = New Size(65, 26)
+        Label1.Size = New Size(78, 26)
         Label1.TabIndex = 57
-        Label1.Text = "0 Items"
+        Label1.Text = "SURGERY"
         ' 
         ' Guna2HtmlLabel1
         ' 
         Guna2HtmlLabel1.BackColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
-        Guna2HtmlLabel1.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Guna2HtmlLabel1.Font = New Font("Poppins Light", 9F)
         Guna2HtmlLabel1.ForeColor = Color.White
-        Guna2HtmlLabel1.Location = New Point(476, 102)
+        Guna2HtmlLabel1.Location = New Point(476, 124)
         Guna2HtmlLabel1.Name = "Guna2HtmlLabel1"
-        Guna2HtmlLabel1.Size = New Size(69, 28)
+        Guna2HtmlLabel1.Size = New Size(56, 28)
         Guna2HtmlLabel1.TabIndex = 56
-        Guna2HtmlLabel1.Text = "SURGERY"
+        Guna2HtmlLabel1.Text = "0 Items"
         ' 
         ' Guna2HtmlLabel2
         ' 
@@ -592,7 +593,7 @@ Partial Class Sales
         btnDiscount.DisabledState.CustomBorderColor = Color.DarkGray
         btnDiscount.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         btnDiscount.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        btnDiscount.FillColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
+        btnDiscount.FillColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
         btnDiscount.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         btnDiscount.ForeColor = Color.Black
         btnDiscount.Location = New Point(312, 260)
@@ -759,12 +760,25 @@ Partial Class Sales
         lblUsername.TabIndex = 41
         lblUsername.Text = "20 Items"
         ' 
+        ' lblSearchProduct
+        ' 
+        lblSearchProduct.AutoSize = True
+        lblSearchProduct.BackColor = Color.Transparent
+        lblSearchProduct.Font = New Font("Poppins Medium", 9F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        lblSearchProduct.ForeColor = Color.White
+        lblSearchProduct.Location = New Point(894, 65)
+        lblSearchProduct.Name = "lblSearchProduct"
+        lblSearchProduct.Size = New Size(166, 26)
+        lblSearchProduct.TabIndex = 81
+        lblSearchProduct.Text = "🔍Search Product"
+        ' 
         ' Sales
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
         BackColor = Color.DarkGray
         ClientSize = New Size(1609, 875)
+        Controls.Add(lblSearchProduct)
         Controls.Add(lblUsername)
         Controls.Add(Guna2CirclePictureBox5)
         Controls.Add(lblOrderId)
@@ -776,7 +790,7 @@ Partial Class Sales
         Controls.Add(orderSummaryPanel)
         Name = "Sales"
         StartPosition = FormStartPosition.CenterScreen
-        Text = "Orders"
+        Text = "d"
         CategoryPanel.ResumeLayout(False)
         CategoryPanel.PerformLayout()
         totalPanel.ResumeLayout(False)
@@ -839,4 +853,5 @@ Partial Class Sales
     Friend WithEvents Guna2HtmlLabel4 As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents RestoCatBtn As Guna.UI2.WinForms.Guna2Button
     Friend WithEvents Label7 As Label
+    Friend WithEvents lblSearchProduct As Label
 End Class

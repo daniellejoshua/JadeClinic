@@ -50,7 +50,7 @@ Public Class NavigationHelper
         New NavigationItem("?? Inventory", "??", GetType(Inventory), UserRole.Manager),
         New NavigationItem("?? Sales Records", "??", GetType(Sales), UserRole.Manager),
         New NavigationItem("?? Staff Management", "??", GetType(Staff), UserRole.Manager),
-        New NavigationItem("?? Inventory Logs", "??", GetType(InventoryLog), UserRole.Manager),
+        New NavigationItem("?? Inventory Logs", "??", GetType(SalesRecord), UserRole.Manager),
         New NavigationItem("?? Audit Logs", "??", Nothing, UserRole.Admin),
         New NavigationItem("?? System Settings", "??", Nothing, UserRole.Admin, True)
     }

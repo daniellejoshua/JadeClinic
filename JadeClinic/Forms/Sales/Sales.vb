@@ -387,15 +387,12 @@ Public Class Sales
                 ' Add product image placeholder
                 Dim productImage As New Guna.UI2.WinForms.Guna2PictureBox()
                 Try
-                    productImage.Image = My.Resources.Jade_Dental_Logo ' Use your dental logo as placeholder
+                    ' Add product image (attempt DB load, fallback to resource)
+                    Dim productIdInt As Integer = Convert.ToInt32(reader("ProductID"))
+                    Dim img As Image = LoadProductImage(productIdInt, 90, 90)
+                    productImage.Image = img
                 Catch
-                    ' Create a simple placeholder rectangle
-                    Dim placeholderBitmap As New Bitmap(90, 90)
-                    Using g As Graphics = Graphics.FromImage(placeholderBitmap)
-                        g.FillRectangle(New SolidBrush(Graphite), 0, 0, 90, 90)
-                        g.DrawString("No Image", New Font("Arial", 8), New SolidBrush(PureWhite), 10, 35)
-                    End Using
-                    productImage.Image = placeholderBitmap
+                    productImage.Image = My.Resources.Jade_Dental_Logo ' Use your dental logo as placeholder
                 End Try
 
                 productImage.Size = New Size(90, 90)
@@ -4092,6 +4089,68 @@ Public Class Sales
 
         ' Refresh the order display
         RefreshOrderDisplay()
+    End Sub
+    ' Helper: fetch primary image bytes for a product
+    Private Function GetPrimaryImageBytes(productId As Integer) As Byte()
+        Try
+            Dim query As String = "SELECT TOP 1 pi.ImageData FROM ProductImageMapping pim " &
+                                  "JOIN ProductImages pi ON pim.ImageID = pi.ImageID " &
+                                  "WHERE pim.ProductID = @ProductID AND pi.ImageData IS NOT NULL"
+            Dim param As New SqlParameter("@ProductID", productId)
+            Using reader As SqlDataReader = Utilities.ExecuteReader(query, {param})
+                If reader.Read() Then
+                    If Not IsDBNull(reader("ImageData")) Then
+                        Return CType(reader("ImageData"), Byte())
+                    End If
+                End If
+            End Using
+        Catch ex As Exception
+            ' Log or ignore; fallback handled by caller
+            Console.WriteLine($"GetPrimaryImageBytes error for ProductID {productId}: {ex.Message}")
+        End Try
+        Return Nothing
+    End Function
+
+    ' Helper: load and resize product image (returns fallback resource on failure)
+    Private Function LoadProductImage(productId As Integer, desiredWidth As Integer, desiredHeight As Integer) As Image
+        Try
+            Dim imgBytes As Byte() = GetPrimaryImageBytes(productId)
+            If imgBytes IsNot Nothing AndAlso imgBytes.Length > 0 Then
+                Using ms As New IO.MemoryStream(imgBytes)
+                    Using src As Image = Image.FromStream(ms)
+                        ' Resize with aspect-ratio preserved and return a bitmap of desired size
+                        Dim bmp As New Bitmap(desiredWidth, desiredHeight)
+                        Using g As Graphics = Graphics.FromImage(bmp)
+                            g.InterpolationMode = Drawing2D.InterpolationMode.HighQualityBicubic
+                            g.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias
+                            g.Clear(Color.Transparent)
+                            g.DrawImage(src, New Rectangle(0, 0, desiredWidth, desiredHeight))
+                        End Using
+                        Return bmp
+                    End Using
+                End Using
+            End If
+        Catch ex As Exception
+            Console.WriteLine($"LoadProductImage error for ProductID {productId}: {ex.Message}")
+        End Try
+
+        ' Fallback: use embedded resource or a simple placeholder
+        Try
+            Return My.Resources.Jade_Dental_Logo
+        Catch
+            ' As a last resort create a plain placeholder bitmap
+            Dim placeholder As New Bitmap(desiredWidth, desiredHeight)
+            Using g As Graphics = Graphics.FromImage(placeholder)
+                g.Clear(Graphite)
+                Using f As New Font("Segoe UI", 8)
+                    TextRenderer.DrawText(g, "No Image", f, New Rectangle(0, 0, desiredWidth, desiredHeight), Color.White, TextFormatFlags.HorizontalCenter Or TextFormatFlags.VerticalCenter)
+                End Using
+            End Using
+            Return placeholder
+        End Try
+    End Function
+    Private Sub lblSearchProduct_Click(sender As Object, e As EventArgs) Handles lblSearchProduct.Click
+
     End Sub
 
     ' ... existing code ...

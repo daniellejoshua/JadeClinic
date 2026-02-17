@@ -27,7 +27,8 @@ Public Class Inventory
     Private Async Sub Inventory_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         ' Enable double buffering for smooth scrolling
         SetDoubleBuffered(Guna2DataGridView1)
-
+        ' ... inside Inventory_Load, after CreateNavigationMenu() and InitializeProfileSection()
+        ' Apply the new visual palette (non-destructive — overrides colors at runtime)
         ' Initialize custom tooltip system
         InitializeCustomTooltip()
 
@@ -391,41 +392,25 @@ Public Class Inventory
             ' Disable DataGridView's built-in tooltips to prevent conflicts
             productDataGrid.ShowCellToolTips = False
 
-            ' Apply improved gray color scheme with better contrast
-            Dim RichOlive As Color = Color.FromArgb(190, 154, 48)
-            Dim GoldenYellow As Color = Color.FromArgb(254, 191, 16)
-            Dim LightGray As Color = Color.FromArgb(248, 248, 248)      ' Very light gray background
-            Dim MediumGray As Color = Color.FromArgb(235, 235, 235)     ' Subtle alternating rows
-            Dim DarkGray As Color = Color.FromArgb(80, 80, 80)          ' Dark gray text
-            Dim BorderGray As Color = Color.FromArgb(220, 220, 220)     ' Light gray borders
-
-            ' Background and grid styling with gray theme
-            productDataGrid.BackgroundColor = LightGray
-            productDataGrid.GridColor = BorderGray ' Light gray grid lines
+            ' --- DARK / BLACK STYLE PALETTE (as requested) ---
+            productDataGrid.BackgroundColor = System.Drawing.Color.FromArgb(41, 44, 45) ' overall background
+            productDataGrid.GridColor = System.Drawing.Color.White
             productDataGrid.BorderStyle = BorderStyle.None
             productDataGrid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal
 
-            ' Cell styling with enhanced gray scheme and improved selection colors
-            productDataGrid.DefaultCellStyle.BackColor = LightGray
-            productDataGrid.AlternatingRowsDefaultCellStyle.BackColor = MediumGray ' Subtle gray alternation
-            ' FIXED: Also set alternating row selection colors
-            productDataGrid.AlternatingRowsDefaultCellStyle.SelectionBackColor = Color.FromArgb(120, 120, 120) ' Dark gray selection
-            productDataGrid.AlternatingRowsDefaultCellStyle.SelectionForeColor = Color.White ' White text on dark gray selection
-
-            productDataGrid.DefaultCellStyle.ForeColor = DarkGray ' Dark gray text instead of black
-
-            ' FIXED: Better selection colors - dark grayish instead of black
-            productDataGrid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(120, 120, 120) ' Dark gray selection
-            productDataGrid.DefaultCellStyle.SelectionForeColor = Color.White ' White text on dark gray selection
-
-            productDataGrid.DefaultCellStyle.Font = New Font("Poppins", 9.5F, FontStyle.Regular)
+            productDataGrid.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(61, 65, 66) ' row background
+            productDataGrid.AlternatingRowsDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
+            productDataGrid.DefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
+            productDataGrid.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(255, 204, 77) ' gold selection
+            productDataGrid.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
+            productDataGrid.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
             productDataGrid.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             productDataGrid.DefaultCellStyle.Padding = New Padding(10, 6, 10, 6)
 
-            ' Header styling with Rich Olive theme
-            productDataGrid.ColumnHeadersDefaultCellStyle.BackColor = RichOlive
-            productDataGrid.ColumnHeadersDefaultCellStyle.ForeColor = Color.White
-            productDataGrid.ColumnHeadersDefaultCellStyle.SelectionBackColor = RichOlive
+            ' Header styling - darker header
+            productDataGrid.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(30, 30, 30)
+            productDataGrid.ColumnHeadersDefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
+            productDataGrid.ColumnHeadersDefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(30, 30, 30)
             productDataGrid.ColumnHeadersDefaultCellStyle.Font = New Font("Poppins SemiBold", 10.5F, FontStyle.Bold)
             productDataGrid.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             productDataGrid.ColumnHeadersHeight = 55
@@ -435,106 +420,101 @@ Public Class Inventory
             ' Clear existing columns
             productDataGrid.Columns.Clear()
 
-            ' Add Product Name column (with image and code) - Enhanced with better selection
+            ' Add Product Name column (with image and code) - keep existing layout but adopt dark palette
             Dim colProductName As New DataGridViewTextBoxColumn()
             colProductName.Name = "ProductName"
             colProductName.HeaderText = "Product Information"
             colProductName.FillWeight = 45
             colProductName.DefaultCellStyle.Font = New Font("Poppins SemiBold", 9.5F, FontStyle.Regular)
-            colProductName.DefaultCellStyle.ForeColor = RichOlive
+            colProductName.DefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(190, 154, 48) ' RichOlive accent on dark bg when not selected
             colProductName.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft
             colProductName.DefaultCellStyle.Padding = New Padding(5, 5, 5, 5)
-            ' Set selection colors for this column
-            colProductName.DefaultCellStyle.SelectionBackColor = Color.FromArgb(120, 120, 120)
-            colProductName.DefaultCellStyle.SelectionForeColor = Color.White
+            ' When a row is selected the grid uses gold selection background + black text for contrast
+            colProductName.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(255, 204, 77)
+            colProductName.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
             productDataGrid.Columns.Add(colProductName)
 
-            ' Add Category column - Enhanced with gray text and better selection
+            ' Category column
             Dim colCategory As New DataGridViewTextBoxColumn()
             colCategory.Name = "Category"
             colCategory.HeaderText = "Category"
             colCategory.FillWeight = 18
             colCategory.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             colCategory.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
-            colCategory.DefaultCellStyle.ForeColor = DarkGray
-            colCategory.DefaultCellStyle.SelectionBackColor = Color.FromArgb(120, 120, 120)
-            colCategory.DefaultCellStyle.SelectionForeColor = Color.White
+            colCategory.DefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
+            colCategory.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(255, 204, 77)
+            colCategory.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
             productDataGrid.Columns.Add(colCategory)
 
-            ' Add Unit column - Enhanced with gray text and better selection
+            ' Unit column
             Dim colUnit As New DataGridViewTextBoxColumn()
             colUnit.Name = "Unit"
             colUnit.HeaderText = "Unit"
             colUnit.FillWeight = 10
             colUnit.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             colUnit.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
-            colUnit.DefaultCellStyle.ForeColor = DarkGray
-            colUnit.DefaultCellStyle.SelectionBackColor = Color.FromArgb(120, 120, 120)
-            colUnit.DefaultCellStyle.SelectionForeColor = Color.White
+            colUnit.DefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
+            colUnit.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(255, 204, 77)
+            colUnit.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
             productDataGrid.Columns.Add(colUnit)
 
-            ' Add Stock column - Enhanced
+            ' Stock column
             Dim colStock As New DataGridViewTextBoxColumn()
             colStock.Name = "CurrentStock"
             colStock.HeaderText = "Stock"
             colStock.FillWeight = 10
             colStock.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             colStock.DefaultCellStyle.Font = New Font("Poppins SemiBold", 9.5F, FontStyle.Bold)
-            colStock.DefaultCellStyle.ForeColor = DarkGray
-            ' Ensure consistent selection colors for stock column
-            colStock.DefaultCellStyle.SelectionBackColor = Color.FromArgb(120, 120, 120) ' Same dark gray as other columns
-            colStock.DefaultCellStyle.SelectionForeColor = Color.White ' White text for visibility
+            colStock.DefaultCellStyle.ForeColor = System.Drawing.Color.LightGray ' neutral by default; per-row colors set at load
+            colStock.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(255, 204, 77)
+            colStock.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
             productDataGrid.Columns.Add(colStock)
 
-            ' Add Cost Price column - Enhanced with gray text and better selection
+            ' Cost Price column
             Dim colCostPrice As New DataGridViewTextBoxColumn()
             colCostPrice.Name = "CostPrice"
             colCostPrice.HeaderText = "Cost"
             colCostPrice.FillWeight = 12
             colCostPrice.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             colCostPrice.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
-            colCostPrice.DefaultCellStyle.ForeColor = DarkGray
-            colCostPrice.DefaultCellStyle.SelectionBackColor = Color.FromArgb(120, 120, 120)
-            colCostPrice.DefaultCellStyle.SelectionForeColor = Color.White
+            colCostPrice.DefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
+            colCostPrice.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(255, 204, 77)
+            colCostPrice.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
             productDataGrid.Columns.Add(colCostPrice)
 
-            ' Add Selling Price column - Enhanced with Golden Yellow and better selection
+            ' Selling Price column
             Dim colSellingPrice As New DataGridViewTextBoxColumn()
             colSellingPrice.Name = "SellingPrice"
             colSellingPrice.HeaderText = "Price"
             colSellingPrice.FillWeight = 15
             colSellingPrice.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             colSellingPrice.DefaultCellStyle.Font = New Font("PoppinsSemiBold", 9.5F, FontStyle.Bold)
-            colSellingPrice.DefaultCellStyle.ForeColor = Color.FromArgb(200, 140, 0) ' Darker golden color for better visibility on gray
-            colSellingPrice.DefaultCellStyle.SelectionBackColor = Color.FromArgb(120, 120, 120)
-            colSellingPrice.DefaultCellStyle.SelectionForeColor = Color.White
+            colSellingPrice.DefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(200, 140, 0) ' golden
+            colSellingPrice.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(255, 204, 77)
+            colSellingPrice.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
             productDataGrid.Columns.Add(colSellingPrice)
 
-            ' Add Actions column as text column instead of button - Enhanced with gray background
+            ' Actions column
             Dim colActions As New DataGridViewTextBoxColumn()
             colActions.Name = "Actions"
             colActions.HeaderText = ""
             colActions.ReadOnly = True
             colActions.FillWeight = 10
             colActions.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
-            colActions.DefaultCellStyle.BackColor = Color.FromArgb(240, 240, 240)
-            colActions.DefaultCellStyle.ForeColor = RichOlive
-            colActions.DefaultCellStyle.SelectionBackColor = Color.FromArgb(140, 140, 140) ' Slightly lighter gray for actions
-            colActions.DefaultCellStyle.SelectionForeColor = Color.White
+            colActions.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
+            colActions.DefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(190, 154, 48)
+            colActions.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(255, 204, 77)
+            colActions.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
             colActions.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
-            ' Make it look clickable
-            colActions.DefaultCellStyle.ForeColor = Color.FromArgb(50, 100, 200) ' Blue text to indicate it's clickable
             productDataGrid.Columns.Add(colActions)
 
-            ' Add event handler for button clicks
+            ' Wire up events and painting (preserve existing handlers)
             RemoveHandler productDataGrid.CellContentClick, AddressOf ProductDataGrid_CellContentClick
             AddHandler productDataGrid.CellContentClick, AddressOf ProductDataGrid_CellContentClick
 
-            ' Add custom cell painting for enhanced display
             RemoveHandler productDataGrid.CellPainting, AddressOf ProductDataGrid_CellPainting
             AddHandler productDataGrid.CellPainting, AddressOf ProductDataGrid_CellPainting
 
-            ' Add enhanced mouse events for custom tooltip functionality
             RemoveHandler productDataGrid.CellMouseEnter, AddressOf ProductDataGrid_CellMouseEnter
             AddHandler productDataGrid.CellMouseEnter, AddressOf ProductDataGrid_CellMouseEnter
 
@@ -544,7 +524,6 @@ Public Class Inventory
             RemoveHandler productDataGrid.MouseMove, AddressOf ProductDataGrid_MouseMove
             AddHandler productDataGrid.MouseMove, AddressOf ProductDataGrid_MouseMove
 
-            ' Add focus events to handle Alt+Tab better
             RemoveHandler productDataGrid.Enter, AddressOf ProductDataGrid_Enter
             AddHandler productDataGrid.Enter, AddressOf ProductDataGrid_Enter
 
@@ -1698,4 +1677,6 @@ Public Class Inventory
             ' Silent fail
         End Try
     End Sub
+
+
 End Class
