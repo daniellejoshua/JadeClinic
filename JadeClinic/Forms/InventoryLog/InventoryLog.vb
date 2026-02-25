@@ -158,14 +158,6 @@ Public Class InventoryLog
                 Throw New InvalidOperationException("InventoryLogDataGrid control is not initialized")
             End If
 
-            ' Palette (match Inventory.vb where appropriate)
-            Dim RichOlive As Color = Color.FromArgb(190, 154, 48)
-            Dim GoldenYellow As Color = Color.FromArgb(254, 191, 16)
-            Dim White As Color = Color.FromArgb(255, 255, 255)
-            Dim LightGray As Color = Color.FromArgb(235, 235, 235) ' selection color (light gray)
-            Dim DarkGray As Color = Color.FromArgb(80, 80, 80)
-            Dim BorderGray As Color = Color.FromArgb(220, 220, 220) ' thin borders
-
             ' Clear and configure grid
             InventoryLogDataGrid.Columns.Clear()
             InventoryLogDataGrid.AutoGenerateColumns = False
@@ -179,130 +171,132 @@ Public Class InventoryLog
             InventoryLogDataGrid.RowHeadersVisible = False
             InventoryLogDataGrid.EnableHeadersVisualStyles = False
 
-            ' Background & general styling
-            InventoryLogDataGrid.BackgroundColor = White
-            InventoryLogDataGrid.GridColor = BorderGray
-            InventoryLogDataGrid.BorderStyle = BorderStyle.None
+            ' Dark theme styling (matching SalesRecord style)
+            InventoryLogDataGrid.BackgroundColor = System.Drawing.Color.FromArgb(41, 44, 45)
+            InventoryLogDataGrid.GridColor = System.Drawing.Color.White
             InventoryLogDataGrid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal
 
-            ' Cell styling: default rows white, selection light gray
-            InventoryLogDataGrid.DefaultCellStyle.BackColor = White
-            InventoryLogDataGrid.AlternatingRowsDefaultCellStyle.BackColor = White
-            InventoryLogDataGrid.DefaultCellStyle.ForeColor = DarkGray
-            InventoryLogDataGrid.DefaultCellStyle.SelectionBackColor = LightGray
-            InventoryLogDataGrid.DefaultCellStyle.SelectionForeColor = Color.Black
-            InventoryLogDataGrid.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
-            InventoryLogDataGrid.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
-            InventoryLogDataGrid.DefaultCellStyle.Padding = New Padding(8, 6, 8, 6)
+            InventoryLogDataGrid.DefaultCellStyle = New DataGridViewCellStyle() With {
+            .BackColor = System.Drawing.Color.FromArgb(61, 65, 66),
+            .ForeColor = System.Drawing.Color.LightGray,
+            .SelectionBackColor = System.Drawing.Color.FromArgb(255, 204, 77),
+            .SelectionForeColor = System.Drawing.Color.Black,
+            .Font = New Font("Poppins", 9.0F, FontStyle.Regular),
+            .Alignment = DataGridViewContentAlignment.MiddleCenter,
+            .Padding = New Padding(8, 6, 8, 6)
+        }
 
-            ' Header styling (keep RichOlive header)
-            InventoryLogDataGrid.ColumnHeadersDefaultCellStyle.BackColor = RichOlive
-            InventoryLogDataGrid.ColumnHeadersDefaultCellStyle.ForeColor = Color.White
-            InventoryLogDataGrid.ColumnHeadersDefaultCellStyle.SelectionBackColor = RichOlive
-            InventoryLogDataGrid.ColumnHeadersDefaultCellStyle.Font = New Font("Poppins SemiBold", 10.0F, FontStyle.Regular)
-            InventoryLogDataGrid.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
-            InventoryLogDataGrid.ColumnHeadersHeight = 48
+            InventoryLogDataGrid.AlternatingRowsDefaultCellStyle = New DataGridViewCellStyle() With {
+            .BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
+        }
+
+            ' Header style
+            InventoryLogDataGrid.ColumnHeadersDefaultCellStyle = New DataGridViewCellStyle() With {
+            .BackColor = System.Drawing.Color.FromArgb(30, 30, 30),
+            .ForeColor = System.Drawing.Color.LightGray,
+            .SelectionBackColor = System.Drawing.Color.FromArgb(30, 30, 30),
+            .Font = New Font("Poppins SemiBold", 10.0F, FontStyle.Regular),
+            .Alignment = DataGridViewContentAlignment.MiddleCenter
+        }
+            InventoryLogDataGrid.ColumnHeadersHeight = 50
             InventoryLogDataGrid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing
-            InventoryLogDataGrid.RowTemplate.Height = 60
+            InventoryLogDataGrid.RowTemplate.Height = 50
 
             ' Prevent resizing
             InventoryLogDataGrid.AllowUserToResizeColumns = False
             InventoryLogDataGrid.AllowUserToResizeRows = False
             InventoryLogDataGrid.RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing
 
-            ' Add columns (keeps previous column definitions but with new styles)
-            Dim colLogID As New DataGridViewTextBoxColumn()
-            colLogID.Name = "LogID"
-            colLogID.HeaderText = "ID"
-            colLogID.ReadOnly = True
-            colLogID.DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
-            InventoryLogDataGrid.Columns.Add(colLogID)
+            ' Add columns dynamically (center-aligned by default)
+            InventoryLogDataGrid.Columns.Add(New DataGridViewTextBoxColumn() With {
+            .Name = "LogID",
+            .HeaderText = "ID",
+            .ReadOnly = True,
+            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
+        })
 
-            Dim colProductName As New DataGridViewTextBoxColumn()
-            colProductName.Name = "ProductName"
-            colProductName.HeaderText = "Product"
-            colProductName.ReadOnly = True
-            colProductName.DefaultCellStyle = New DataGridViewCellStyle() With {
-            .Alignment = DataGridViewContentAlignment.MiddleLeft,
-            .Padding = New Padding(10, 6, 10, 6),
-            .Font = New Font("Poppins SemiBold", 9.0F, FontStyle.Regular),
-            .ForeColor = DarkGray,
-            .SelectionBackColor = LightGray,
-            .SelectionForeColor = Color.Black
-        }
-            InventoryLogDataGrid.Columns.Add(colProductName)
+            InventoryLogDataGrid.Columns.Add(New DataGridViewTextBoxColumn() With {
+            .Name = "ProductName",
+            .HeaderText = "Product",
+            .ReadOnly = True,
+            .DefaultCellStyle = New DataGridViewCellStyle() With {
+                .Alignment = DataGridViewContentAlignment.MiddleLeft,
+                .Padding = New Padding(10, 6, 10, 6),
+                .Font = New Font("Poppins SemiBold", 9.0F, FontStyle.Regular),
+                .ForeColor = System.Drawing.Color.LightGray
+            }
+        })
 
-            Dim colTransactionType As New DataGridViewTextBoxColumn()
-            colTransactionType.Name = "TransactionType"
-            colTransactionType.HeaderText = "Type"
-            colTransactionType.ReadOnly = True
-            colTransactionType.DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
-            InventoryLogDataGrid.Columns.Add(colTransactionType)
+            InventoryLogDataGrid.Columns.Add(New DataGridViewTextBoxColumn() With {
+            .Name = "TransactionType",
+            .HeaderText = "Type",
+            .ReadOnly = True,
+            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
+        })
 
-            Dim colQuantity As New DataGridViewTextBoxColumn()
-            colQuantity.Name = "Quantity"
-            colQuantity.HeaderText = "Quantity"
-            colQuantity.ReadOnly = True
-            colQuantity.DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
-            InventoryLogDataGrid.Columns.Add(colQuantity)
+            InventoryLogDataGrid.Columns.Add(New DataGridViewTextBoxColumn() With {
+            .Name = "Quantity",
+            .HeaderText = "Quantity",
+            .ReadOnly = True,
+            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
+        })
 
-            Dim colPreviousStock As New DataGridViewTextBoxColumn()
-            colPreviousStock.Name = "PreviousStock"
-            colPreviousStock.HeaderText = "Previous Stock"
-            colPreviousStock.ReadOnly = True
-            colPreviousStock.DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
-            InventoryLogDataGrid.Columns.Add(colPreviousStock)
+            InventoryLogDataGrid.Columns.Add(New DataGridViewTextBoxColumn() With {
+            .Name = "PreviousStock",
+            .HeaderText = "Previous Stock",
+            .ReadOnly = True,
+            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
+        })
 
-            Dim colNewStock As New DataGridViewTextBoxColumn()
-            colNewStock.Name = "NewStock"
-            colNewStock.HeaderText = "New Stock"
-            colNewStock.ReadOnly = True
-            colNewStock.DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
-            InventoryLogDataGrid.Columns.Add(colNewStock)
+            InventoryLogDataGrid.Columns.Add(New DataGridViewTextBoxColumn() With {
+            .Name = "NewStock",
+            .HeaderText = "New Stock",
+            .ReadOnly = True,
+            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
+        })
 
-            Dim colSupplierName As New DataGridViewTextBoxColumn()
-            colSupplierName.Name = "SupplierName"
-            colSupplierName.HeaderText = "Supplier"
-            colSupplierName.ReadOnly = True
-            colSupplierName.DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
-            InventoryLogDataGrid.Columns.Add(colSupplierName)
+            InventoryLogDataGrid.Columns.Add(New DataGridViewTextBoxColumn() With {
+            .Name = "SupplierName",
+            .HeaderText = "Supplier",
+            .ReadOnly = True,
+            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
+        })
 
-            Dim colReference As New DataGridViewTextBoxColumn()
-            colReference.Name = "Reference"
-            colReference.HeaderText = "Reference"
-            colReference.ReadOnly = True
-            colReference.DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
-            InventoryLogDataGrid.Columns.Add(colReference)
+            InventoryLogDataGrid.Columns.Add(New DataGridViewTextBoxColumn() With {
+            .Name = "Reference",
+            .HeaderText = "Reference",
+            .ReadOnly = True,
+            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
+        })
 
-            Dim colNotes As New DataGridViewTextBoxColumn()
-            colNotes.Name = "Notes"
-            colNotes.HeaderText = "Notes"
-            colNotes.ReadOnly = True
-            colNotes.DefaultCellStyle = New DataGridViewCellStyle() With {
-            .Alignment = DataGridViewContentAlignment.MiddleCenter,
-            .WrapMode = DataGridViewTriState.True
-        }
-            InventoryLogDataGrid.Columns.Add(colNotes)
+            InventoryLogDataGrid.Columns.Add(New DataGridViewTextBoxColumn() With {
+            .Name = "Notes",
+            .HeaderText = "Notes",
+            .ReadOnly = True,
+            .DefaultCellStyle = New DataGridViewCellStyle() With {
+                .Alignment = DataGridViewContentAlignment.MiddleCenter,
+                .WrapMode = DataGridViewTriState.True
+            }
+        })
 
-            Dim colCreatedAt As New DataGridViewTextBoxColumn()
-            colCreatedAt.Name = "CreatedAt"
-            colCreatedAt.HeaderText = "Date & Time"
-            colCreatedAt.ReadOnly = True
-            colCreatedAt.DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
-            InventoryLogDataGrid.Columns.Add(colCreatedAt)
+            InventoryLogDataGrid.Columns.Add(New DataGridViewTextBoxColumn() With {
+            .Name = "CreatedAt",
+            .HeaderText = "Date & Time",
+            .ReadOnly = True,
+            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
+        })
 
-            Dim colTransactionIndicator As New DataGridViewTextBoxColumn()
-            colTransactionIndicator.Name = "TransactionIndicator"
-            colTransactionIndicator.HeaderText = "Status"
-            colTransactionIndicator.ReadOnly = True
-            colTransactionIndicator.DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
-            InventoryLogDataGrid.Columns.Add(colTransactionIndicator)
+            InventoryLogDataGrid.Columns.Add(New DataGridViewTextBoxColumn() With {
+            .Name = "TransactionIndicator",
+            .HeaderText = "Status",
+            .ReadOnly = True,
+            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
+        })
 
         Catch ex As Exception
             MessageBox.Show($"Error setting up DataGrid: {ex.Message}", "DataGrid Setup Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
-
     Private Async Function LoadInventoryLogsAsync() As Task
         Try
             ' Show loading panel first with minimum display time

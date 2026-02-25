@@ -86,6 +86,7 @@ Public Class Sales
     Private ReadOnly LightSilver As Color = Color.FromArgb(225, 229, 233)      ' #E1E5E9 - Secondary text
     Private ReadOnly SuccessGreen As Color = Color.FromArgb(16, 216, 98)       ' #10D862 - Success states
     Private ReadOnly AlertRed As Color = Color.FromArgb(255, 71, 87)           ' #FF4757 - Error/Alert states
+    Private selectedCustomerTIN As String = ""
 
     Private pinPanel As Guna.UI2.WinForms.Guna2Panel = Nothing ' Repurposed for customer selection
     Private totalReceivedPanel As Guna.UI2.WinForms.Guna2Panel = Nothing
@@ -1514,12 +1515,12 @@ Public Class Sales
         ' Create customer information modal form
         Dim customerForm As New Form()
         customerForm.Text = "Customer Information"
-        customerForm.Size = New Size(535, 600) ' Increased size for better spacing
+        customerForm.Size = New Size(535, 720) ' Increased height to accommodate TIN and spacing
         customerForm.StartPosition = FormStartPosition.CenterParent
         customerForm.FormBorderStyle = FormBorderStyle.FixedDialog
         customerForm.MaximizeBox = False
         customerForm.MinimizeBox = False
-        customerForm.BackColor = DarkSlate ' Use existing color palette
+        customerForm.BackColor = DarkSlate
         customerForm.ShowInTaskbar = False
 
         ' Get total amount for display
@@ -1528,56 +1529,59 @@ Public Class Sales
             Decimal.TryParse(totalLbl.Text, totalAmount)
         End If
 
-        ' Header section with improved spacing
-        Dim headerPanel As New Panel()
-        headerPanel.Size = New Size(480, 90)
-        headerPanel.Location = New Point(20, 20)
-        headerPanel.BackColor = Color.Transparent
+        ' Header section
+        Dim headerPanel As New Panel() With {
+        .Size = New Size(480, 70),
+        .Location = New Point(20, 20),
+        .BackColor = Color.Transparent
+    }
         customerForm.Controls.Add(headerPanel)
 
-        ' Title with better typography
-        Dim lblTitle As New Label()
-        lblTitle.Text = "CUSTOMER INFORMATION"
-        lblTitle.Font = New Font("Poppins", 18, FontStyle.Bold)
-        lblTitle.ForeColor = PureWhite
-        lblTitle.Location = New Point(0, 0)
-        lblTitle.Size = New Size(480, 35)
-        lblTitle.TextAlign = ContentAlignment.MiddleCenter
+        Dim lblTitle As New Label() With {
+        .Text = "CUSTOMER INFORMATION",
+        .Font = New Font("Poppins", 18, FontStyle.Bold),
+        .ForeColor = PureWhite,
+        .Location = New Point(0, 0),
+        .Size = New Size(480, 35),
+        .TextAlign = ContentAlignment.MiddleCenter
+    }
         headerPanel.Controls.Add(lblTitle)
 
-        ' Order total display with accent color
-        Dim lblOrderTotal As New Label()
-        lblOrderTotal.Text = $"Order Total: ₱{totalAmount:F2}"
-        lblOrderTotal.Font = New Font("Poppins", 14, FontStyle.Bold)
-        lblOrderTotal.ForeColor = GoldenYellow ' Use brand color
-        lblOrderTotal.Location = New Point(0, 45)
-        lblOrderTotal.Size = New Size(480, 30)
-        lblOrderTotal.TextAlign = ContentAlignment.MiddleCenter
+        Dim lblOrderTotal As New Label() With {
+        .Text = $"Order Total: ₱{totalAmount:F2}",
+        .Font = New Font("Poppins", 14, FontStyle.Bold),
+        .ForeColor = GoldenYellow,
+        .Location = New Point(0, 35),
+        .Size = New Size(480, 30),
+        .TextAlign = ContentAlignment.MiddleCenter
+    }
         headerPanel.Controls.Add(lblOrderTotal)
 
-        ' Separator line
-        Dim separator As New Panel()
-        separator.Size = New Size(440, 2)
-        separator.Location = New Point(40, 130)
-        separator.BackColor = RichOlive ' Use secondary accent color
+        ' Separator
+        Dim separator As New Panel() With {
+        .Size = New Size(440, 2),
+        .Location = New Point(40, 110),
+        .BackColor = RichOlive
+    }
         customerForm.Controls.Add(separator)
 
-        ' Customer Type Section with improved spacing
-        Dim customerTypeSection As New Panel()
-        customerTypeSection.Size = New Size(480, 80)
-        customerTypeSection.Location = New Point(20, 150)
-        customerTypeSection.BackColor = Color.Transparent
+        ' Customer Type Section
+        Dim customerTypeSection As New Panel() With {
+        .Size = New Size(480, 80),
+        .Location = New Point(20, 125),
+        .BackColor = Color.Transparent
+    }
         customerForm.Controls.Add(customerTypeSection)
 
-        Dim lblCustomerType As New Label()
-        lblCustomerType.Text = "Customer Type"
-        lblCustomerType.Font = New Font("Poppins", 12, FontStyle.Bold)
-        lblCustomerType.ForeColor = LightSilver ' Use secondary text color
-        lblCustomerType.Location = New Point(0, 0)
-        lblCustomerType.Size = New Size(150, 25)
+        Dim lblCustomerType As New Label() With {
+        .Text = "Customer Type",
+        .Font = New Font("Poppins", 12, FontStyle.Bold),
+        .ForeColor = LightSilver,
+        .Location = New Point(0, 0),
+        .Size = New Size(150, 25)
+    }
         customerTypeSection.Controls.Add(lblCustomerType)
 
-        ' Customer type buttons with improved spacing and styling
         Dim buttonWidth As Integer = 140
         Dim buttonHeight As Integer = 50
         Dim buttonSpacing As Integer = 20
@@ -1619,44 +1623,30 @@ Public Class Sales
         btnClinic.BorderColor = If(selectedCustomerType = "Clinic", GoldenYellow, SteelGray)
         customerTypeSection.Controls.Add(btnClinic)
 
-        ' Helper function to update button colors with proper styling
         Dim UpdateCustomerTypeButtons = Sub()
-                                            ' Update Walk-in button
                                             btnWalkIn.FillColor = If(selectedCustomerType = "Walk-in", GoldenYellow, Graphite)
                                             btnWalkIn.BorderColor = If(selectedCustomerType = "Walk-in", GoldenYellow, SteelGray)
                                             btnWalkIn.ForeColor = If(selectedCustomerType = "Walk-in", DeepCharcoal, PureWhite)
 
-                                            ' Update Dentist button
                                             btnDentist.FillColor = If(selectedCustomerType = "Dentist", GoldenYellow, Graphite)
                                             btnDentist.BorderColor = If(selectedCustomerType = "Dentist", GoldenYellow, SteelGray)
                                             btnDentist.ForeColor = If(selectedCustomerType = "Dentist", DeepCharcoal, PureWhite)
 
-                                            ' Update Clinic button
                                             btnClinic.FillColor = If(selectedCustomerType = "Clinic", GoldenYellow, Graphite)
                                             btnClinic.BorderColor = If(selectedCustomerType = "Clinic", GoldenYellow, SteelGray)
                                             btnClinic.ForeColor = If(selectedCustomerType = "Clinic", DeepCharcoal, PureWhite)
                                         End Sub
 
-        ' Button hover effects
-        AddHandler btnWalkIn.MouseEnter, Sub() If selectedCustomerType <> "Walk-in" Then btnWalkIn.FillColor = SteelGray
-        AddHandler btnWalkIn.MouseLeave, Sub() If selectedCustomerType <> "Walk-in" Then btnWalkIn.FillColor = Graphite
-        AddHandler btnDentist.MouseEnter, Sub() If selectedCustomerType <> "Dentist" Then btnDentist.FillColor = SteelGray
-        AddHandler btnDentist.MouseLeave, Sub() If selectedCustomerType <> "Dentist" Then btnDentist.FillColor = Graphite
-        AddHandler btnClinic.MouseEnter, Sub() If selectedCustomerType <> "Clinic" Then btnClinic.FillColor = SteelGray
-        AddHandler btnClinic.MouseLeave, Sub() If selectedCustomerType <> "Clinic" Then btnClinic.FillColor = Graphite
-
-        ' Button click events
         AddHandler btnWalkIn.Click, Sub()
                                         selectedCustomerType = "Walk-in"
-                                        ' Only reset details if switching TO walk-in, preserve if coming back
                                         If selectedCustomerType = "Walk-in" AndAlso selectedCustomerName <> "Walk-in Customer" Then
                                             selectedCustomerName = "Walk-in Customer"
                                             selectedCustomerPhone = ""
                                             selectedCustomerEmail = ""
+                                            selectedCustomerTIN = ""
                                         End If
                                         UpdateCustomerTypeButtons()
                                     End Sub
-
         AddHandler btnDentist.Click, Sub()
                                          selectedCustomerType = "Dentist"
                                          UpdateCustomerTypeButtons()
@@ -1667,164 +1657,183 @@ Public Class Sales
                                         UpdateCustomerTypeButtons()
                                     End Sub
 
-        ' Customer Details Section with improved spacing
-        Dim detailsSection As New Panel()
-        detailsSection.Size = New Size(480, 180)
-        detailsSection.Location = New Point(25, 250)
-        detailsSection.BackColor = Color.Transparent
+        ' Customer Details Section - increased height to fit TIN field
+        Dim detailsSection As New Panel() With {
+        .Size = New Size(480, 260),
+        .Location = New Point(25, 215),
+        .BackColor = Color.Transparent
+    }
         customerForm.Controls.Add(detailsSection)
 
-        ' Customer Name Input with enhanced styling
-        Dim lblName As New Label()
-        lblName.Text = "Customer Name"
-        lblName.Font = New Font("Poppins", 11, FontStyle.Regular)
-        lblName.ForeColor = LightSilver
-        lblName.Location = New Point(0, 0)
-        lblName.Size = New Size(150, 25)
+        ' Name
+        Dim lblName As New Label() With {
+        .Text = "Customer Name",
+        .Font = New Font("Poppins", 11, FontStyle.Regular),
+        .ForeColor = LightSilver,
+        .Location = New Point(0, 0),
+        .Size = New Size(150, 25)
+    }
         detailsSection.Controls.Add(lblName)
 
-        Dim txtCustomerName As New Guna.UI2.WinForms.Guna2TextBox()
-        txtCustomerName.Size = New Size(460, 40)
-        txtCustomerName.Location = New Point(0, 25)
-        txtCustomerName.PlaceholderText = "Enter customer name (optional for walk-in)"
-        txtCustomerName.PlaceholderForeColor = SteelGray
-        txtCustomerName.Font = New Font("Poppins", 11, FontStyle.Regular)
-        txtCustomerName.BorderRadius = 10
-        txtCustomerName.FillColor = PureWhite
-        txtCustomerName.ForeColor = DeepCharcoal
-        txtCustomerName.BorderColor = SteelGray
-        txtCustomerName.BorderThickness = 1
-        ' PRESERVE EXISTING CUSTOMER DATA: Set text to current values
-        txtCustomerName.Text = selectedCustomerName
+        Dim txtCustomerName As New Guna.UI2.WinForms.Guna2TextBox() With {
+        .Size = New Size(460, 40),
+        .Location = New Point(0, 25),
+        .PlaceholderText = "Enter customer name (optional for walk-in)",
+        .PlaceholderForeColor = SteelGray,
+        .Font = New Font("Poppins", 11, FontStyle.Regular),
+        .BorderRadius = 10,
+        .FillColor = PureWhite,
+        .ForeColor = DeepCharcoal,
+        .BorderColor = SteelGray,
+        .BorderThickness = 1,
+        .Text = If(selectedCustomerName, "")
+    }
         detailsSection.Controls.Add(txtCustomerName)
 
-        ' Phone and Email inputs (side by side with proper spacing)
-        Dim lblPhone As New Label()
-        lblPhone.Text = "Phone Number"
-        lblPhone.Font = New Font("Poppins", 11, FontStyle.Regular)
-        lblPhone.ForeColor = LightSilver
-        lblPhone.Location = New Point(0, 80)
-        lblPhone.Size = New Size(150, 25)
+        ' TIN - placed under name
+        Dim lblTIN As New Label() With {
+        .Text = "Customer TIN",
+        .Font = New Font("Poppins", 11, FontStyle.Regular),
+        .ForeColor = LightSilver,
+        .Location = New Point(0, 75),
+        .Size = New Size(150, 25)
+    }
+        detailsSection.Controls.Add(lblTIN)
+
+        Dim txtTIN As New Guna.UI2.WinForms.Guna2TextBox() With {
+        .Size = New Size(460, 40),
+        .Location = New Point(0, 100),
+        .PlaceholderText = "TIN (optional)",
+        .PlaceholderForeColor = SteelGray,
+        .Font = New Font("Poppins", 11, FontStyle.Regular),
+        .BorderRadius = 10,
+        .FillColor = PureWhite,
+        .ForeColor = DeepCharcoal,
+        .BorderColor = SteelGray,
+        .BorderThickness = 1,
+        .Text = selectedCustomerTIN
+    }
+        detailsSection.Controls.Add(txtTIN)
+
+        ' Phone and Email (side-by-side below TIN)
+        Dim lblPhone As New Label() With {
+        .Text = "Phone Number",
+        .Font = New Font("Poppins", 11, FontStyle.Regular),
+        .ForeColor = LightSilver,
+        .Location = New Point(0, 150),
+        .Size = New Size(150, 25)
+    }
         detailsSection.Controls.Add(lblPhone)
 
-        Dim txtPhone As New Guna.UI2.WinForms.Guna2TextBox()
-        txtPhone.Size = New Size(220, 45)
-        txtPhone.Location = New Point(0, 105)
-        txtPhone.PlaceholderText = "Phone (optional)"
-        txtPhone.PlaceholderForeColor = SteelGray
-        txtPhone.Font = New Font("Poppins", 11, FontStyle.Regular)
-        txtPhone.BorderRadius = 10
-        txtPhone.FillColor = PureWhite
-        txtPhone.ForeColor = DeepCharcoal
-        txtPhone.BorderColor = SteelGray
-        txtPhone.BorderThickness = 1
-
-        ' PRESERVE EXISTING CUSTOMER DATA: Set text to current values
-        txtPhone.Text = selectedCustomerPhone
+        Dim txtPhone As New Guna.UI2.WinForms.Guna2TextBox() With {
+        .Size = New Size(220, 45),
+        .Location = New Point(0, 175),
+        .PlaceholderText = "Phone (optional)",
+        .PlaceholderForeColor = SteelGray,
+        .Font = New Font("Poppins", 11, FontStyle.Regular),
+        .BorderRadius = 10,
+        .FillColor = PureWhite,
+        .ForeColor = DeepCharcoal,
+        .BorderColor = SteelGray,
+        .BorderThickness = 1,
+        .Text = selectedCustomerPhone
+    }
         detailsSection.Controls.Add(txtPhone)
 
-        Dim lblEmail As New Label()
-        lblEmail.Text = "Email Address"
-        lblEmail.Font = New Font("Poppins", 11, FontStyle.Regular)
-        lblEmail.ForeColor = LightSilver
-        lblEmail.Location = New Point(240, 80)
-        lblEmail.Size = New Size(150, 25)
+        Dim lblEmail As New Label() With {
+        .Text = "Email Address",
+        .Font = New Font("Poppins", 11, FontStyle.Regular),
+        .ForeColor = LightSilver,
+        .Location = New Point(240, 150),
+        .Size = New Size(150, 25)
+    }
         detailsSection.Controls.Add(lblEmail)
 
-        Dim txtEmail As New Guna.UI2.WinForms.Guna2TextBox()
-        txtEmail.Size = New Size(220, 45)
-        txtEmail.Location = New Point(240, 105)
-        txtEmail.PlaceholderText = "Email (optional)"
-        txtEmail.PlaceholderForeColor = SteelGray
-        txtEmail.Font = New Font("Poppins", 11, FontStyle.Regular)
-        txtEmail.BorderRadius = 10
-        txtEmail.FillColor = PureWhite
-        txtEmail.ForeColor = DeepCharcoal
-        txtEmail.BorderColor = SteelGray
-        txtEmail.BorderThickness = 1
-        txtEmail.BringToFront()
-        ' PRESERVE EXISTING CUSTOMER DATA: Set text to current values
-        txtEmail.Text = selectedCustomerEmail
+        Dim txtEmail As New Guna.UI2.WinForms.Guna2TextBox() With {
+        .Size = New Size(220, 45),
+        .Location = New Point(240, 175),
+        .PlaceholderText = "Email (optional)",
+        .PlaceholderForeColor = SteelGray,
+        .Font = New Font("Poppins", 11, FontStyle.Regular),
+        .BorderRadius = 10,
+        .FillColor = PureWhite,
+        .ForeColor = DeepCharcoal,
+        .BorderColor = SteelGray,
+        .BorderThickness = 1,
+        .Text = selectedCustomerEmail
+    }
         detailsSection.Controls.Add(txtEmail)
 
-        ' Action buttons section with improved spacing
-        Dim buttonSection As New Panel()
-        buttonSection.Size = New Size(500, 50)
-        buttonSection.Location = New Point(0, 450)
-        buttonSection.BackColor = Color.Transparent
+        ' Action buttons - moved lower to match new modal height
+        Dim buttonSection As New Panel() With {
+        .Size = New Size(500, 60),
+        .Location = New Point(17, 500),
+        .BackColor = Color.Transparent
+    }
         customerForm.Controls.Add(buttonSection)
 
-
-        Dim btnContinue As New Guna.UI2.WinForms.Guna2Button()
-        btnContinue.Text = "Continue"
-        btnContinue.Size = New Size(200, 50)
-        btnContinue.Location = New Point(260, 0)
-        btnContinue.Font = New Font("Poppins", 12, FontStyle.Bold)
-        btnContinue.ForeColor = DeepCharcoal
-        btnContinue.FillColor = SuccessGreen
-        btnContinue.BorderRadius = 12
-        btnContinue.BorderThickness = 0
-        ' Enhanced hover effects
-        AddHandler btnContinue.MouseEnter, Sub()
-                                               btnContinue.FillColor = GoldenYellow
-                                               btnContinue.ForeColor = DeepCharcoal
-                                           End Sub
-        AddHandler btnContinue.MouseLeave, Sub()
-                                               btnContinue.FillColor = SuccessGreen
-                                               btnContinue.ForeColor = DeepCharcoal
-                                           End Sub
+        Dim btnContinue As New Guna.UI2.WinForms.Guna2Button() With {
+        .Text = "Continue",
+        .Size = New Size(200, 50),
+        .Location = New Point(260, 0),
+        .Font = New Font("Poppins", 12, FontStyle.Bold),
+        .ForeColor = DeepCharcoal,
+        .FillColor = SuccessGreen,
+        .BorderRadius = 12,
+        .BorderThickness = 0
+    }
         AddHandler btnContinue.Click, Sub()
-                                          ' Save customer information (PRESERVE DATA)
-                                          selectedCustomerName = If(String.IsNullOrWhiteSpace(txtCustomerName.Text),
-                                                             If(selectedCustomerType = "Walk-in", "Walk-in Customer", $"{selectedCustomerType} Customer"),
-                                                             txtCustomerName.Text.Trim())
-                                          selectedCustomerPhone = txtPhone.Text.Trim()
-                                          selectedCustomerEmail = txtEmail.Text.Trim()
+                                          Dim nameVal As String = txtCustomerName.Text.Trim()
+                                          Dim phoneVal As String = txtPhone.Text.Trim()
+                                          Dim emailVal As String = txtEmail.Text.Trim()
+                                          Dim tinVal As String = txtTIN.Text.Trim()
 
-                                          ' Close customer form and show payment method modal
+                                          ' Preserve selectedCustomerName/email/phone immediately
+                                          selectedCustomerName = If(String.IsNullOrWhiteSpace(nameVal),
+                                                         If(selectedCustomerType = "Walk-in", "Walk-in Customer", $"{selectedCustomerType} Customer"),
+                                                         nameVal)
+                                          selectedCustomerPhone = phoneVal
+                                          selectedCustomerEmail = emailVal
+                                          selectedCustomerTIN = tinVal ' direct assignment
+
+                                          ' Find or create customer record
+                                          Dim customerId = FindOrCreateCustomer(selectedCustomerName, selectedCustomerPhone, selectedCustomerEmail, selectedCustomerTIN, selectedCustomerType)
+                                          If customerId.HasValue Then
+                                              selectedCustomerId = customerId
+                                          Else
+                                              selectedCustomerId = Nothing
+                                          End If
+
                                           customerForm.DialogResult = DialogResult.OK
                                           customerForm.Close()
                                       End Sub
         buttonSection.Controls.Add(btnContinue)
 
-        Dim btnCancel As New Guna.UI2.WinForms.Guna2Button()
-        btnCancel.Text = "Cancel"
-        btnCancel.Size = New Size(140, 50)
-        btnCancel.Location = New Point(100, 0)
-        btnCancel.Font = New Font("Poppins", 12, FontStyle.Regular)
-        btnCancel.ForeColor = PureWhite
-        btnCancel.FillColor = AlertRed
-        btnCancel.BorderRadius = 12
-        btnCancel.BorderThickness = 0
-        ' Enhanced hover effects
-        AddHandler btnCancel.MouseEnter, Sub()
-                                             btnCancel.FillColor = Color.FromArgb(220, 60, 75)
-                                         End Sub
-        AddHandler btnCancel.MouseLeave, Sub()
-                                             btnCancel.FillColor = AlertRed
-                                         End Sub
+        Dim btnCancel As New Guna.UI2.WinForms.Guna2Button() With {
+        .Text = "Cancel",
+        .Size = New Size(140, 50),
+        .Location = New Point(80, 0),
+        .Font = New Font("Poppins", 12, FontStyle.Regular),
+        .ForeColor = PureWhite,
+        .FillColor = AlertRed,
+        .BorderRadius = 12,
+        .BorderThickness = 0
+    }
         AddHandler btnCancel.Click, Sub()
-                                        ' PRESERVE DATA: Save current form values before closing
-                                        If Not String.IsNullOrWhiteSpace(txtCustomerName.Text) Then
-                                            selectedCustomerName = txtCustomerName.Text.Trim()
-                                        End If
+                                        If Not String.IsNullOrWhiteSpace(txtCustomerName.Text) Then selectedCustomerName = txtCustomerName.Text.Trim()
                                         selectedCustomerPhone = txtPhone.Text.Trim()
                                         selectedCustomerEmail = txtEmail.Text.Trim()
-
+                                        selectedCustomerTIN = txtTIN.Text.Trim()
                                         customerForm.DialogResult = DialogResult.Cancel
                                         customerForm.Close()
                                     End Sub
+        AddHandler btnCancel.MouseEnter, Sub() btnCancel.FillColor = Color.FromArgb(220, 60, 75)
+        AddHandler btnCancel.MouseLeave, Sub() btnCancel.FillColor = AlertRed
         buttonSection.Controls.Add(btnCancel)
-        ' Inside ShowCustomerInformationModal, after creating btnContinue and btnCancel
 
-
-        ' Initial button state update
+        ' Init and keyboard handlers
         UpdateCustomerTypeButtons()
-        ' Inside ShowCustomerInformationModal, after creating customerForm, btnContinue, and btnCancel
-
-        customerForm.KeyPreview = True ' Enable keyboard input for the form
-
-        ' Add this KeyDown handler to customerForm BEFORE ShowDialog()
+        customerForm.KeyPreview = True
         AddHandler customerForm.KeyDown, Sub(sender As Object, e As KeyEventArgs)
                                              If e.KeyCode = Keys.Enter Then
                                                  btnContinue.PerformClick()
@@ -1834,19 +1843,15 @@ Public Class Sales
                                                  e.Handled = True
                                              End If
                                          End Sub
-        customerForm.ActiveControl = txtCustomerName ' Focus on the customer name input field when the modal opens
 
-        ' Then, show the dialog
-        customerForm.Opacity = 1.0
+        customerForm.ActiveControl = txtCustomerName
 
-        ' Show modal and handle result
+        ' Show dialog
         Dim result As DialogResult = customerForm.ShowDialog()
 
         If result = DialogResult.OK Then
-            ' Continue to payment method selection
             ShowPaymentMethodModal()
         End If
-        ' Note: If result is DialogResult.Cancel, customer data is already preserved
 
         customerForm.Dispose()
     End Sub
@@ -2974,22 +2979,14 @@ Public Class Sales
     ' FIXED: Update the confirmBtn_Click method to set correct receipt values
     Private Sub confirmBtn_Click(sender As Object, e As EventArgs) Handles confirmBtn.Click
         Try
-            ' Validate user session
-            If Not ValidateUserSession() Then
-                Return
-            End If
+            If Not ValidateUserSession() Then Return
 
-            ' Payment confirmation logic
             Dim orderTotal As Decimal = 0D
             Dim receivedAmount As Decimal = 0D
-            If totalLbl IsNot Nothing Then
-                Decimal.TryParse(totalLbl.Text, orderTotal)
-            End If
+            If totalLbl IsNot Nothing Then Decimal.TryParse(totalLbl.Text, orderTotal)
 
-            ' For Cash payment, get received amount; for others, use exact amount
             If selectedPaymentMethod = "Cash" Then
                 If lblAmountDisplay IsNot Nothing Then
-                    ' FIXED: Remove currency symbol before parsing
                     Dim amountText As String = lblAmountDisplay.Text.Replace("₱", "").Trim()
                     If Not Decimal.TryParse(amountText, receivedAmount) Then
                         MessageBox.Show("Invalid amount entered.", "Payment Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
@@ -3001,141 +2998,153 @@ Public Class Sales
                     Return
                 End If
             Else
-                receivedAmount = orderTotal ' Exact amount for non-cash payments
+                receivedAmount = orderTotal
             End If
 
-            ' FIXED: Declare changeAmount variable
             Dim changeAmount As Decimal = receivedAmount - orderTotal
 
-            ' Get userId from logged-in username
             Dim userIdQuery As String = "SELECT UserID FROM Users WHERE Username = @Username"
-            Dim userIdParams As SqlParameter() = {
-                New SqlParameter("@Username", frmLoginvb.LoggedInUsername)
-            }
+            Dim userIdParams As SqlParameter() = {New SqlParameter("@Username", frmLoginvb.LoggedInUsername)}
             Dim userIdResult = Utilities.ExecuteScalar(userIdQuery, userIdParams)
-
             If userIdResult Is Nothing OrElse IsDBNull(userIdResult) Then
                 MessageBox.Show("Invalid user session. Please log in again.", "Authentication Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
                 Return
             End If
-
             Dim userId As Integer = Convert.ToInt32(userIdResult)
 
-            ' Create JSON data structure
-            ' Modified: include discounted item info in sale JSON and keep receiptSubtotal as original VATABLE sales
-            ' (replace the saleData creation area in confirmBtn_Click with this updated block)
-            ' ...
-            ' Create JSON data structure
+            ' Build sale JSON (include customer.tin)
             Dim saleData As New Dictionary(Of String, Object) From {
-    {"customer", New Dictionary(Of String, Object) From {
-        {"name", selectedCustomerName},
-        {"phone", selectedCustomerPhone},
-        {"email", selectedCustomerEmail}
-    }},
-    {"payment", New Dictionary(Of String, Object) From {
-        {"method", selectedPaymentMethod},
-        {"reference", If(String.IsNullOrEmpty(paymentReference), Nothing, paymentReference)},
-        {"subtotal", orderTotal / 1.12D},
-        {"discount", New Dictionary(Of String, Object) From {
-            {"type", discountType},
-            {"value", discountValue},
-            {"amount", discountAmount},
-            {"appliedTo", If(String.IsNullOrEmpty(discountedItemName), Nothing, discountedItemName)}
-        }},
-        {"tax", orderTotal - (orderTotal / 1.12D)},
-        {"total", orderTotal},
-        {"received", receivedAmount},
-        {"change", changeAmount}
-    }},
-    {"items", currentOrderList},
-    {"cashier", frmLoginvb.LoggedInUsername},
-    {"saleDate", DateTime.Now}
-}
-            ' ...
-            ' Convert to JSON
+            {"customer", New Dictionary(Of String, Object) From {
+                {"name", selectedCustomerName},
+                {"phone", selectedCustomerPhone},
+                {"email", selectedCustomerEmail},
+                {"tin", If(String.IsNullOrWhiteSpace(selectedCustomerTIN), Nothing, selectedCustomerTIN)}
+            }},
+            {"payment", New Dictionary(Of String, Object) From {
+                {"method", selectedPaymentMethod},
+                {"reference", If(String.IsNullOrEmpty(paymentReference), Nothing, paymentReference)},
+                {"subtotal", orderTotal / 1.12D},
+                {"discount", New Dictionary(Of String, Object) From {
+                    {"type", discountType},
+                    {"value", discountValue},
+                    {"amount", discountAmount},
+                    {"appliedTo", If(String.IsNullOrEmpty(discountedItemName), Nothing, discountedItemName)}
+                }},
+                {"tax", orderTotal - (orderTotal / 1.12D)},
+                {"total", orderTotal},
+                {"received", receivedAmount},
+                {"change", changeAmount}
+            }},
+            {"items", currentOrderList},
+            {"cashier", frmLoginvb.LoggedInUsername},
+            {"saleDate", DateTime.Now}
+        }
+
             Dim jsonData As String = Newtonsoft.Json.JsonConvert.SerializeObject(saleData, Newtonsoft.Json.Formatting.Indented)
 
-            ' Insert sale record with JSON data
-            Dim saleQuery As String = "INSERT INTO Sales (UserID, SaleDate, TotalAmount, AmountPaid, PaymentMethod, SalesData, Status, Reference) OUTPUT INSERTED.SaleID VALUES (@UserID, @SaleDate, @TotalAmount, @AmountPaid, @PaymentMethod, @SalesData, @Status, @Reference)"
+            ' Single insert that includes customer fields — execute once and get inserted SaleID
+            Dim saleQuery As String =
+            "INSERT INTO Sales (UserID, SaleDate, CustomerID, CustomerName, CustomerTIN, TotalAmount, AmountPaid, PaymentMethod, SalesData, Status, Reference) " &
+            "OUTPUT INSERTED.SaleID VALUES (@UserID, @SaleDate, @CustomerID, @CustomerName, @CustomerTIN, @TotalAmount, @AmountPaid, @PaymentMethod, @SalesData, @Status, @Reference)"
             Dim saleParams As SqlParameter() = {
-                New SqlParameter("@UserID", userId),
-                New SqlParameter("@SaleDate", DateTime.Now),
-                New SqlParameter("@TotalAmount", orderTotal),
-                New SqlParameter("@AmountPaid", receivedAmount),
-                New SqlParameter("@PaymentMethod", selectedPaymentMethod),
-                New SqlParameter("@SalesData", jsonData),
-                New SqlParameter("@Status", "Completed"),
-                New SqlParameter("@Reference", If(String.IsNullOrEmpty(paymentReference), DBNull.Value, paymentReference))
-            }
+            New SqlParameter("@UserID", userId),
+            New SqlParameter("@SaleDate", DateTime.Now),
+            New SqlParameter("@CustomerID", If(selectedCustomerId.HasValue, CType(selectedCustomerId, Object), DBNull.Value)),
+            New SqlParameter("@CustomerName", If(String.IsNullOrWhiteSpace(selectedCustomerName), "Walk-in Customer", selectedCustomerName)),
+            New SqlParameter("@CustomerTIN", If(String.IsNullOrWhiteSpace(selectedCustomerTIN), DBNull.Value, CType(selectedCustomerTIN, Object))),
+            New SqlParameter("@TotalAmount", orderTotal),
+            New SqlParameter("@AmountPaid", receivedAmount),
+            New SqlParameter("@PaymentMethod", selectedPaymentMethod),
+            New SqlParameter("@SalesData", jsonData),
+            New SqlParameter("@Status", "Completed"),
+            New SqlParameter("@Reference", If(String.IsNullOrEmpty(paymentReference), DBNull.Value, paymentReference))
+        }
 
             Dim saleId As Integer = Convert.ToInt32(Utilities.ExecuteScalar(saleQuery, saleParams))
 
-            ' Update product stock - FIXED: Use correct column names for SaleItems table
+            ' Insert sale items and update stock + write InventoryLog entries (OUT)
             For Each item In currentOrderList
                 Dim unitPrice As Decimal = Convert.ToDecimal(item("Price"))
                 Dim quantity As Integer = CInt(item("Quantity"))
+                Dim productIdObj = item("ProductID")
 
-                ' Insert sale item - using UnitPrice (price per unit)
+                ' Insert sale item
                 Dim itemQuery As String = "INSERT INTO SaleItems (SaleID, ProductID, Quantity, UnitPrice) VALUES (@SaleID, @ProductID, @Quantity, @UnitPrice)"
                 Dim itemParams As SqlParameter() = {
-                    New SqlParameter("@SaleID", saleId),
-                    New SqlParameter("@ProductID", item("ProductID")),
-                    New SqlParameter("@Quantity", quantity),
-                    New SqlParameter("@UnitPrice", unitPrice)
-                }
+                New SqlParameter("@SaleID", saleId),
+                New SqlParameter("@ProductID", productIdObj),
+                New SqlParameter("@Quantity", quantity),
+                New SqlParameter("@UnitPrice", unitPrice)
+            }
                 Utilities.ExecuteNonQuery(itemQuery, itemParams)
 
+                ' Read current stock before update
+                Dim stockSelectQuery As String = "SELECT ISNULL(CurrentStock,0) FROM Products WHERE ProductID = @ProductID"
+                Dim stockObj = Utilities.ExecuteScalar(stockSelectQuery, New SqlParameter() {New SqlParameter("@ProductID", productIdObj)})
+                Dim previousStock As Integer = 0
+                If stockObj IsNot Nothing AndAlso Not IsDBNull(stockObj) Then
+                    Integer.TryParse(stockObj.ToString(), previousStock)
+                End If
+
+                Dim newStock As Integer = Math.Max(0, previousStock - quantity)
+
                 ' Update product stock
-                Dim stockQuery As String = "UPDATE Products SET CurrentStock = CurrentStock - @Quantity WHERE ProductID = @ProductID"
+                Dim stockUpdateQuery As String = "UPDATE Products SET CurrentStock = @NewStock WHERE ProductID = @ProductID"
                 Dim stockParams As SqlParameter() = {
+                New SqlParameter("@NewStock", newStock),
+                New SqlParameter("@ProductID", productIdObj)
+            }
+                Utilities.ExecuteNonQuery(stockUpdateQuery, stockParams)
+
+                ' Insert inventory log entry for OUT transaction
+                Try
+                    Dim logQuery As String =
+                    "INSERT INTO InventoryLog (ProductID, TransactionType, Quantity, PreviousStock, NewStock, SupplierID, UserID, Reference, Notes, CreatedAt) " &
+                    "VALUES (@ProductID, @TransactionType, @Quantity, @PreviousStock, @NewStock, @SupplierID, @UserID, @Reference, @Notes, GETDATE())"
+                    Dim logParams As SqlParameter() = {
+                    New SqlParameter("@ProductID", productIdObj),
+                    New SqlParameter("@TransactionType", "OUT"),
                     New SqlParameter("@Quantity", quantity),
-                    New SqlParameter("@ProductID", item("ProductID"))
+                    New SqlParameter("@PreviousStock", previousStock),
+                    New SqlParameter("@NewStock", newStock),
+                    New SqlParameter("@SupplierID", DBNull.Value),
+                    New SqlParameter("@UserID", userId),
+                    New SqlParameter("@Reference", $"Sale:{saleId}"),
+                    New SqlParameter("@Notes", $"Sold via POS. SaleID={saleId}")
                 }
-                Utilities.ExecuteNonQuery(stockQuery, stockParams)
+                    Utilities.ExecuteNonQuery(logQuery, logParams)
+                Catch logEx As Exception
+                    ' Don't stop sale if logging fails, but write to console/audit
+                    Console.WriteLine($"Warning: Failed to write InventoryLog for ProductID {productIdObj}: {logEx.Message}")
+                    Utilities.LogAudit(frmLoginvb.LoggedInUsername, "InventoryLog Failed", $"ProductID={productIdObj}, SaleID={saleId}, Error={logEx.Message}")
+                End Try
             Next
 
-            ' Prepare receipt data with correct VAT calculations
+            ' Prepare receipt data
             receiptOrderId = saleId.ToString()
             receiptCustomerName = selectedCustomerName
             receiptTotalAmount = orderTotal
             receiptAmountReceived = receivedAmount
             receiptChange = changeAmount
 
-            ' FIXED: Calculate correct values for receipt VAT breakdown
-            Dim vatInclusiveAfterDiscount As Decimal = orderTotal
-            Dim vatableSales As Decimal = vatInclusiveAfterDiscount / 1.12D
+            Dim vatableSales As Decimal = orderTotal / 1.12D
             Dim vatAmount As Decimal = vatableSales * 0.12D
-
-            receiptSubtotal = vatableSales ' VATable sales (net of VAT)
-            receiptTax = vatAmount ' Actual VAT amount
+            receiptSubtotal = vatableSales
+            receiptTax = vatAmount
             receiptItems = New List(Of Dictionary(Of String, Object))(currentOrderList)
 
-            ' Print receipt
             PrintReceipt()
 
-            ' Log the transaction
             Dim auditDetails As String = $"Sale ID: {saleId}, Payment: {selectedPaymentMethod}"
-            If Not String.IsNullOrEmpty(paymentReference) Then
-                auditDetails += $", Ref: {paymentReference}"
-            End If
+            If Not String.IsNullOrEmpty(paymentReference) Then auditDetails += $", Ref: {paymentReference}"
             auditDetails += $", Total: ₱{orderTotal:F2}, Received: ₱{receivedAmount:F2}"
-
             Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Sale Completed", auditDetails)
 
-            ' Add this line after the successful sale completion message
-            ' In the confirmBtn_Click method, after the success message:
-
-            ' Show success message
             Dim successMessage As String = $"Sale completed successfully! Sale ID: {saleId}{Environment.NewLine}Payment Method: {selectedPaymentMethod}"
-            If Not String.IsNullOrEmpty(paymentReference) Then
-                successMessage += $"{Environment.NewLine}Reference: {paymentReference}"
-            End If
+            If Not String.IsNullOrEmpty(paymentReference) Then successMessage += $"{Environment.NewLine}Reference: {paymentReference}"
             MessageBox.Show(successMessage, "Sale Completed", MessageBoxButtons.OK, MessageBoxIcon.Information)
 
-            ' ENHANCED: Reset for next sale with proper refresh
             ResetSale()
-
-            ' ENHANCED: Additional refresh to ensure UI is clean
             Application.DoEvents()
 
         Catch ex As Exception
@@ -3143,7 +3152,6 @@ Public Class Sales
             Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Sale Failed", $"Error: {ex.Message}")
         End Try
     End Sub
-
     ' Confirm payment and process order
     ' Replace the confirmBtn_Click method's payment validation section with this
     ' Reset sale data for next transaction
@@ -3749,8 +3757,24 @@ Public Class Sales
     End Sub
 
     Private Sub NavSalesRecords_Click(sender As Object, e As EventArgs)
-        ' For now, stay on this form since this is the Sales page
-        MessageBox.Show("You are already on the Sales page!", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information)
+        Try
+            isNavigating = True
+
+            ' Log navigation
+            If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Navigation", "Navigated from Sales to Sales Records")
+            End If
+
+            ' Open SalesRecord form
+            Dim salesRecordForm As New SalesRecord()
+            salesRecordForm.Show()
+
+            ' Close current form
+            Me.Close()
+        Catch ex As Exception
+            isNavigating = False
+            MessageBox.Show($"Unable to open Sales Records: {ex.Message}", "Navigation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
     End Sub
 
     Private Sub NavStaff_Click(sender As Object, e As EventArgs)
@@ -4423,4 +4447,49 @@ Public Class Sales
         searchForm.ShowDialog()
         searchForm.Dispose()
     End Sub
+    Private Function FindOrCreateCustomer(name As String, phone As String, email As String, tin As String, customerType As String) As Integer?
+        Try
+            ' Try to find existing customer by phone, email, TIN or exact name (in that priority)
+            Dim findQuery As String = "SELECT TOP 1 CustomerID FROM Customers WHERE (Phone IS NOT NULL AND Phone = @Phone) OR (Email IS NOT NULL AND Email = @Email) OR (TIN IS NOT NULL AND TIN = @TIN) OR (CustomerName = @Name)"
+            Dim findParams As SqlParameter() = {
+                New SqlParameter("@Phone", If(String.IsNullOrWhiteSpace(phone), DBNull.Value, CType(phone, Object))),
+                New SqlParameter("@Email", If(String.IsNullOrWhiteSpace(email), DBNull.Value, CType(email, Object))),
+                New SqlParameter("@TIN", If(String.IsNullOrWhiteSpace(tin), DBNull.Value, CType(tin, Object))),
+                New SqlParameter("@Name", If(String.IsNullOrWhiteSpace(name), DBNull.Value, CType(name, Object)))
+            }
+
+            Dim existingIdObj = Utilities.ExecuteScalar(findQuery, findParams)
+            If existingIdObj IsNot Nothing AndAlso Not IsDBNull(existingIdObj) Then
+                Return Convert.ToInt32(existingIdObj)
+            End If
+
+            ' Compute next CustomerCode (safe simple generation)
+            Dim nextIdObj = Utilities.ExecuteScalar("SELECT ISNULL(MAX(CustomerID),0) + 1 FROM Customers", New SqlParameter() {})
+            Dim nextId As Integer = If(nextIdObj IsNot Nothing AndAlso Not IsDBNull(nextIdObj), Convert.ToInt32(nextIdObj), 1)
+            Dim generatedCode As String = $"CUST{nextId.ToString("D5")}"
+
+            ' Insert new customer and return new id
+            Dim insertQuery As String = "INSERT INTO Customers (CustomerCode, CustomerName, CustomerType, TIN, Phone, Email, IsActive, CreatedAt) " &
+                                        "VALUES (@Code, @Name, @Type, @TIN, @Phone, @Email, 1, GETDATE()); SELECT SCOPE_IDENTITY();"
+            Dim insertParams As SqlParameter() = {
+                New SqlParameter("@Code", generatedCode),
+                New SqlParameter("@Name", If(String.IsNullOrWhiteSpace(name), DBNull.Value, CType(name, Object))),
+                New SqlParameter("@Type", If(String.IsNullOrWhiteSpace(customerType), DBNull.Value, CType(customerType, Object))),
+                New SqlParameter("@TIN", If(String.IsNullOrWhiteSpace(tin), DBNull.Value, CType(tin, Object))),
+                New SqlParameter("@Phone", If(String.IsNullOrWhiteSpace(phone), DBNull.Value, CType(phone, Object))),
+                New SqlParameter("@Email", If(String.IsNullOrWhiteSpace(email), DBNull.Value, CType(email, Object)))
+            }
+
+            Dim newIdObj = Utilities.ExecuteScalar(insertQuery, insertParams)
+            If newIdObj IsNot Nothing AndAlso Not IsDBNull(newIdObj) Then
+                Return Convert.ToInt32(newIdObj)
+            End If
+
+        Catch ex As Exception
+            Console.WriteLine($"FindOrCreateCustomer error: {ex.Message}")
+        End Try
+
+        Return Nothing
+    End Function
+
 End Class

@@ -11,6 +11,9 @@ Public Class DatabaseInitializer
 
             ' Create tables in the right order (no foreign key dependencies first)
             CreateUsersTableActual() ' Match your real schema with passkeys in Users table
+
+            CreateCustomersTableActual()    ' <-- ADD THIS LINE
+
             CreateSuppliersTableActual()
             CreateProductsTableActual()
             CreateProductImagesTableActual()
@@ -209,59 +212,96 @@ Public Class DatabaseInitializer
             Console.WriteLine($"Note: Could not create ProductImageMapping index: {ex.Message}")
         End Try
     End Sub
-
-    Private Shared Sub CreateSalesTableActual()
-        Dim query As String = "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Sales' AND xtype='U') " &
-            "CREATE TABLE Sales(" &
-            "SaleID int IDENTITY(1,1) PRIMARY KEY, " &
-            "SaleNumber AS ('SALE'+right('00000'+CONVERT(nvarchar(10),SaleID),5)) PERSISTED, " &
-            "SaleDate datetime DEFAULT getdate(), " &
-            "CustomerName nvarchar(200) NULL, " &
-            "UserID int NULL, " &
-            "TotalAmount decimal(18,2) DEFAULT 0, " &
-            "AmountPaid decimal(18,2) DEFAULT 0, " &
-            "PaymentMethod nvarchar(20) DEFAULT 'Cash', " &
-            "IsVoid bit DEFAULT 0, " &
-            "Reference nvarchar(100) NULL, " &
-            "SalesData nvarchar(max) not null," &
-            "Status nvarchar(50) DEFAULT 'Completed', " &
-            "FOREIGN KEY (UserID) REFERENCES Users(UserID))"
+    Private Shared Sub CreateCustomersTableActual()
+        Dim query As String = "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Customers' AND xtype='U') " &
+        "CREATE TABLE Customers(" &
+        "CustomerID int IDENTITY(1,1) PRIMARY KEY, " &
+        "CustomerCode nvarchar(50) NOT NULL UNIQUE, " &
+        "CustomerName nvarchar(200) NOT NULL, " &
+        "CustomerType nvarchar(50) NULL, " &
+        "TIN nvarchar(50) NULL, " &              ' Tax Identification Number
+        "Phone nvarchar(30) NULL, " &
+        "Email nvarchar(200) NULL, " &
+        "IsActive bit DEFAULT 1, " &
+        "CreatedAt datetime DEFAULT getdate())"
 
         DatabaseHelper.ExecuteNonQuery(query, Nothing)
 
-        ' Add index for SaleDate (for date range queries and reporting)
-        Dim dateIndexQuery As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Sales_Date') " &
-            "CREATE NONCLUSTERED INDEX IX_Sales_Date ON Sales (SaleDate DESC)"
-
+        ' Index on CustomerCode and TIN for fast lookups
+        Dim idxCode As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Customers_Code') " &
+        "CREATE NONCLUSTERED INDEX IX_Customers_Code ON Customers (CustomerCode ASC)"
         Try
-            DatabaseHelper.ExecuteNonQuery(dateIndexQuery, Nothing)
+            DatabaseHelper.ExecuteNonQuery(idxCode, Nothing)
         Catch ex As Exception
-            Console.WriteLine($"Note: Could not create SaleDate index: {ex.Message}")
+            Console.WriteLine($"Note: Could not create Customers.Code index: {ex.Message}")
         End Try
 
-
-        ' Add index for UserID (to track sales by user)
-        Dim userIndexQuery As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Sales_User') " &
-            "CREATE NONCLUSTERED INDEX IX_Sales_User ON Sales (UserID ASC) WHERE UserID IS NOT NULL"
-
+        Dim idxTIN As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Customers_TIN') " &
+        "CREATE NONCLUSTERED INDEX IX_Customers_TIN ON Customers (TIN ASC) WHERE TIN IS NOT NULL"
         Try
-            DatabaseHelper.ExecuteNonQuery(userIndexQuery, Nothing)
+            DatabaseHelper.ExecuteNonQuery(idxTIN, Nothing)
         Catch ex As Exception
-            Console.WriteLine($"Note: Could not create User index: {ex.Message}")
-        End Try
-
-        ' Add index for SaleNumber (for quick sale lookups)
-        Dim saleNumberIndexQuery As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Sales_SaleNumber') " &
-            "CREATE NONCLUSTERED INDEX IX_Sales_SaleNumber ON Sales (SaleNumber ASC)"
-
-        Try
-            DatabaseHelper.ExecuteNonQuery(saleNumberIndexQuery, Nothing)
-        Catch ex As Exception
-            Console.WriteLine($"Note: Could not create SaleNumber index: {ex.Message}")
+            Console.WriteLine($"Note: Could not create Customers.TIN index: {ex.Message}")
         End Try
     End Sub
+    Private Shared Sub CreateSalesTableActual()
+        ' Sales table: keep SalesData JSON but add reportable explicit columns for scale.
+        Dim query As String = "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Sales' AND xtype='U') " &
+        "CREATE TABLE Sales(" &
+        "SaleID int IDENTITY(1,1) PRIMARY KEY, " &
+        "SaleNumber AS ('SALE'+right('00000'+CONVERT(nvarchar(10),SaleID),5)) PERSISTED, " &
+        "SaleDate datetime DEFAULT getdate(), " &
+        "CustomerName nvarchar(200) NULL, " &
+        "CustomerTIN nvarchar(50) NULL, " &            ' persisted TIN for quick reads
+        "CustomerID int NULL, " &                      ' optional FK to Customers
+        "UserID int NULL, " &
+        "TotalAmount decimal(18,2) DEFAULT 0, " &
+        "AmountPaid decimal(18,2) DEFAULT 0, " &
+        "PaymentMethod nvarchar(20) DEFAULT 'Cash', " &
+        "IsVoid bit DEFAULT 0, " &
+        "Reference nvarchar(100) NULL, " &
+        "SalesData nvarchar(max) not null, " &
+        "Status nvarchar(50) DEFAULT 'Completed', " &
+        "DiscountType nvarchar(50) NULL, " &
+        "DiscountAmount decimal(18,2) NOT NULL DEFAULT 0, " &
+        "FOREIGN KEY (UserID) REFERENCES Users(UserID))"
 
+        DatabaseHelper.ExecuteNonQuery(query, Nothing)
+
+        ' Backwards-compatible: add columns to existing Sales table if they don't exist
+        Try
+            Dim addCustomerTIN As String = "IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Sales' AND COLUMN_NAME = 'CustomerTIN') " &
+            "ALTER TABLE Sales ADD CustomerTIN nvarchar(50) NULL"
+            DatabaseHelper.ExecuteNonQuery(addCustomerTIN, Nothing)
+
+            Dim addCustomerID As String = "IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Sales' AND COLUMN_NAME = 'CustomerID') " &
+            "ALTER TABLE Sales ADD CustomerID int NULL"
+            DatabaseHelper.ExecuteNonQuery(addCustomerID, Nothing)
+
+            ' Add FK constraint if not exists (safe check)
+            Dim addFk As String = "IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Sales_Customers') " &
+            "BEGIN " &
+            " IF EXISTS (SELECT * FROM sysobjects WHERE name='Customers' AND xtype='U') " &
+            " ALTER TABLE Sales WITH NOCHECK ADD CONSTRAINT FK_Sales_Customers FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID) " &
+            "END"
+            DatabaseHelper.ExecuteNonQuery(addFk, Nothing)
+
+            ' Indexes for quick lookup
+            Dim idxCustomer As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Sales_Customer') " &
+            "CREATE NONCLUSTERED INDEX IX_Sales_Customer ON Sales (CustomerID ASC) WHERE CustomerID IS NOT NULL"
+            DatabaseHelper.ExecuteNonQuery(idxCustomer, Nothing)
+
+            Dim idxCustomerTIN As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Sales_CustomerTIN') " &
+            "CREATE NONCLUSTERED INDEX IX_Sales_CustomerTIN ON Sales (CustomerTIN ASC) WHERE CustomerTIN IS NOT NULL"
+            DatabaseHelper.ExecuteNonQuery(idxCustomerTIN, Nothing)
+        Catch ex As Exception
+            Console.WriteLine($"Note: Could not add customer columns/indexes to Sales: {ex.Message}")
+        End Try
+
+        ' ... existing index creation for SaleDate, DiscountAmount etc. ...
+    End Sub
     Private Shared Sub CreateSaleItemsTableActual()
+        ' SaleItems: store both the charged unit price and the original price + per-line discount for historical accuracy
         Dim query As String = "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='SaleItems' AND xtype='U') " &
             "CREATE TABLE SaleItems(" &
             "SaleItemID int IDENTITY(1,1) PRIMARY KEY, " &
@@ -269,11 +309,26 @@ Public Class DatabaseInitializer
             "ProductID int NOT NULL, " &
             "Quantity int NOT NULL, " &
             "UnitPrice decimal(18,2) NOT NULL, " &
+            "OriginalUnitPrice decimal(18,2) NULL, " &    ' original list price at time of sale
+            "LineDiscountAmount decimal(18,2) NOT NULL DEFAULT 0, " & ' amount discounted on this line
             "SubTotal AS (Quantity * UnitPrice), " &
             "FOREIGN KEY (SaleID) REFERENCES Sales(SaleID), " &
             "FOREIGN KEY (ProductID) REFERENCES Products(ProductID))"
 
         DatabaseHelper.ExecuteNonQuery(query, Nothing)
+
+        ' Backwards-compatible: add columns to existing SaleItems table if they don't exist
+        Try
+            Dim addOriginalPrice As String = "IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'SaleItems' AND COLUMN_NAME = 'OriginalUnitPrice') " &
+                "ALTER TABLE SaleItems ADD OriginalUnitPrice decimal(18,2) NULL"
+            DatabaseHelper.ExecuteNonQuery(addOriginalPrice, Nothing)
+
+            Dim addLineDiscount As String = "IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'SaleItems' AND COLUMN_NAME = 'LineDiscountAmount') " &
+                "ALTER TABLE SaleItems ADD LineDiscountAmount decimal(18,2) NOT NULL DEFAULT 0"
+            DatabaseHelper.ExecuteNonQuery(addLineDiscount, Nothing)
+        Catch ex As Exception
+            Console.WriteLine($"Note: Could not add SaleItems columns: {ex.Message}")
+        End Try
 
         ' Add index for SaleID (foreign key lookups for sale details)
         Dim saleIndexQuery As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_SaleItems_Sale') " &
@@ -622,7 +677,6 @@ Public Class DatabaseInitializer
             Console.WriteLine($"Warning: Could not create default company settings: {ex.Message}")
         End Try
     End Sub
-
 
     ' 🔥 ADD THIS NEW METHOD:
 End Class
