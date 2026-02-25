@@ -313,10 +313,8 @@ Public Class Inventory
             End Using
 
         Catch ex As Exception
-            Throw ex ' Re-throw to be handled by the calling async method
         End Try
     End Sub
-
     Private Sub SetupFilterEvents()
         ' Setup filter events
         AddHandler txtSearch.TextChanged, AddressOf ApplyFilters
@@ -420,17 +418,21 @@ Public Class Inventory
             ' Clear existing columns
             productDataGrid.Columns.Clear()
 
-            ' Add Product Name column (with image and code) - keep existing layout but adopt dark palette
+            ' Colour accents
+            Dim AccentGold As Color = System.Drawing.Color.FromArgb(255, 204, 77)       ' selection / bright gold
+            Dim AccentGoldDark As Color = System.Drawing.Color.FromArgb(200, 140, 0)   ' darker gold for idle text
+            Dim PriceGold As Color = System.Drawing.Color.FromArgb(200, 140, 0)        ' price/golden text (kept)
+
+            ' Add Product Name column (with image and code) - adopt golden accent instead of RichOlive
             Dim colProductName As New DataGridViewTextBoxColumn()
             colProductName.Name = "ProductName"
             colProductName.HeaderText = "Product Information"
             colProductName.FillWeight = 45
             colProductName.DefaultCellStyle.Font = New Font("Poppins SemiBold", 9.5F, FontStyle.Regular)
-            colProductName.DefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(190, 154, 48) ' RichOlive accent on dark bg when not selected
+            colProductName.DefaultCellStyle.ForeColor = AccentGoldDark ' golden accent for idle
             colProductName.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft
             colProductName.DefaultCellStyle.Padding = New Padding(5, 5, 5, 5)
-            ' When a row is selected the grid uses gold selection background + black text for contrast
-            colProductName.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(255, 204, 77)
+            colProductName.DefaultCellStyle.SelectionBackColor = AccentGold
             colProductName.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
             productDataGrid.Columns.Add(colProductName)
 
@@ -442,7 +444,7 @@ Public Class Inventory
             colCategory.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             colCategory.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
             colCategory.DefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
-            colCategory.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(255, 204, 77)
+            colCategory.DefaultCellStyle.SelectionBackColor = AccentGold
             colCategory.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
             productDataGrid.Columns.Add(colCategory)
 
@@ -454,7 +456,7 @@ Public Class Inventory
             colUnit.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             colUnit.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
             colUnit.DefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
-            colUnit.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(255, 204, 77)
+            colUnit.DefaultCellStyle.SelectionBackColor = AccentGold
             colUnit.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
             productDataGrid.Columns.Add(colUnit)
 
@@ -466,7 +468,7 @@ Public Class Inventory
             colStock.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             colStock.DefaultCellStyle.Font = New Font("Poppins SemiBold", 9.5F, FontStyle.Bold)
             colStock.DefaultCellStyle.ForeColor = System.Drawing.Color.LightGray ' neutral by default; per-row colors set at load
-            colStock.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(255, 204, 77)
+            colStock.DefaultCellStyle.SelectionBackColor = AccentGold
             colStock.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
             productDataGrid.Columns.Add(colStock)
 
@@ -478,7 +480,7 @@ Public Class Inventory
             colCostPrice.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             colCostPrice.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
             colCostPrice.DefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
-            colCostPrice.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(255, 204, 77)
+            colCostPrice.DefaultCellStyle.SelectionBackColor = AccentGold
             colCostPrice.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
             productDataGrid.Columns.Add(colCostPrice)
 
@@ -489,8 +491,8 @@ Public Class Inventory
             colSellingPrice.FillWeight = 15
             colSellingPrice.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             colSellingPrice.DefaultCellStyle.Font = New Font("PoppinsSemiBold", 9.5F, FontStyle.Bold)
-            colSellingPrice.DefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(200, 140, 0) ' golden
-            colSellingPrice.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(255, 204, 77)
+            colSellingPrice.DefaultCellStyle.ForeColor = PriceGold
+            colSellingPrice.DefaultCellStyle.SelectionBackColor = AccentGold
             colSellingPrice.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
             productDataGrid.Columns.Add(colSellingPrice)
 
@@ -502,8 +504,8 @@ Public Class Inventory
             colActions.FillWeight = 10
             colActions.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             colActions.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
-            colActions.DefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(190, 154, 48)
-            colActions.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(255, 204, 77)
+            colActions.DefaultCellStyle.ForeColor = AccentGoldDark
+            colActions.DefaultCellStyle.SelectionBackColor = AccentGold
             colActions.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
             colActions.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
             productDataGrid.Columns.Add(colActions)
@@ -684,19 +686,20 @@ Public Class Inventory
                         e.Handled = True
                         e.PaintBackground(e.ClipBounds, True)
 
-                        ' Define brand colors with improved gray scheme
-                        Dim RichOlive As Color = Color.FromArgb(190, 154, 48)
-                        Dim DarkGray As Color = Color.FromArgb(80, 80, 80)
+                        ' Define brand colors with golden accent
+                        Dim AccentGold As Color = Color.FromArgb(255, 204, 77)
+                        Dim AccentGoldDark As Color = Color.FromArgb(200, 140, 0)
                         Dim MediumGray As Color = Color.FromArgb(120, 120, 120)
                         Dim LightGray As Color = Color.FromArgb(200, 200, 200)
+                        Dim HeaderTextSelected As Color = Color.FromArgb(26, 29, 31) ' darker text on gold selection for better contrast
 
                         ' Calculate layout dimensions with better spacing
                         Dim imageSize As Integer = 50
                         Dim padding As Integer = 10
                         Dim imageRect As New Rectangle(
-                            e.CellBounds.Left + padding,
-                            e.CellBounds.Top + ((e.CellBounds.Height - imageSize) \ 2),
-                            imageSize, imageSize)
+                        e.CellBounds.Left + padding,
+                        e.CellBounds.Top + ((e.CellBounds.Height - imageSize) \ 2),
+                        imageSize, imageSize)
 
                         ' Draw product image with improved placeholder styling
                         Try
@@ -727,9 +730,9 @@ Public Class Inventory
                                 Using placeholderFont As New Font("Segoe UI", 8, FontStyle.Regular)
                                     Using placeholderBrush As New SolidBrush(MediumGray)
                                         Dim placeholderFormat As New StringFormat() With {
-                                            .Alignment = StringAlignment.Center,
-                                            .LineAlignment = StringAlignment.Center
-                                        }
+                                        .Alignment = StringAlignment.Center,
+                                        .LineAlignment = StringAlignment.Center
+                                    }
                                         e.Graphics.DrawString("📷", placeholderFont, placeholderBrush, imageRect, placeholderFormat)
                                     End Using
                                 End Using
@@ -739,7 +742,7 @@ Public Class Inventory
                             Using bgBrush As New SolidBrush(Color.FromArgb(245, 245, 245))
                                 e.Graphics.FillRectangle(bgBrush, imageRect)
                             End Using
-                            Using borderPen As New Pen(RichOlive, 1)
+                            Using borderPen As New Pen(AccentGoldDark, 1)
                                 e.Graphics.DrawRectangle(borderPen, imageRect)
                             End Using
 
@@ -747,9 +750,9 @@ Public Class Inventory
                             Using noImageFont As New Font("Poppins", 7, FontStyle.Regular)
                                 Using noImageBrush As New SolidBrush(MediumGray)
                                     Dim noImageFormat As New StringFormat() With {
-                                        .Alignment = StringAlignment.Center,
-                                        .LineAlignment = StringAlignment.Center
-                                    }
+                                    .Alignment = StringAlignment.Center,
+                                    .LineAlignment = StringAlignment.Center
+                                }
                                     e.Graphics.DrawString("No Image", noImageFont, noImageBrush, imageRect, noImageFormat)
                                 End Using
                             End Using
@@ -765,21 +768,23 @@ Public Class Inventory
                         Dim displayName As String = productName
 
                         ' Truncate if needed for layout
-                        Dim isNameTruncated As Boolean = False
                         If displayName.Length > 40 Then
                             displayName = displayName.Substring(0, 37) + "..."
-                            isNameTruncated = True
                         End If
 
-                        ' Draw main product name with enhanced Poppins typography
+                        ' Determine if row is selected
+                        Dim isRowSelected As Boolean = productDataGrid.Rows(e.RowIndex).Selected
+
+                        ' Choose main text color based on selection (dark golden idle, dark text on selection)
+                        Dim productNameColor As Color = If(isRowSelected, HeaderTextSelected, AccentGoldDark)
                         Using productNameFont As New Font("Poppins SemiBold", 10.5F, FontStyle.Bold)
-                            Using productNameBrush As New SolidBrush(RichOlive)
+                            Using productNameBrush As New SolidBrush(productNameColor)
                                 Dim nameFormat As New StringFormat() With {
-                                    .LineAlignment = StringAlignment.Near,
-                                    .Alignment = StringAlignment.Near,
-                                    .Trimming = StringTrimming.EllipsisCharacter,
-                                    .FormatFlags = StringFormatFlags.NoWrap
-                                }
+                                .LineAlignment = StringAlignment.Near,
+                                .Alignment = StringAlignment.Near,
+                                .Trimming = StringTrimming.EllipsisCharacter,
+                                .FormatFlags = StringFormatFlags.NoWrap
+                            }
 
                                 ' Calculate name area (upper portion)
                                 Dim nameRect As New Rectangle(textRect.X, textRect.Y + 2, textRect.Width, (textRect.Height * 60) \ 100)
@@ -790,16 +795,15 @@ Public Class Inventory
                         ' Draw product code as subtitle with consistent spacing
                         Dim productCode As String = productData("ProductCode").ToString()
 
-                        ' Check if row is selected to use appropriate text color
-                        Dim isRowSelected As Boolean = productDataGrid.Rows(e.RowIndex).Selected
-                        Dim codeTextColor As Color = If(isRowSelected, Color.White, MediumGray)
+                        ' Subtitle color: dark on gold selection, medium gray otherwise
+                        Dim codeTextColor As Color = If(isRowSelected, HeaderTextSelected, MediumGray)
 
                         Using codeFont As New Font("Poppins", 8.5F, FontStyle.Regular)
                             Using codeBrush As New SolidBrush(codeTextColor)
                                 Dim codeFormat As New StringFormat() With {
-                                    .LineAlignment = StringAlignment.Near,
-                                    .Alignment = StringAlignment.Near
-                                }
+                                .LineAlignment = StringAlignment.Near,
+                                .Alignment = StringAlignment.Near
+                            }
 
                                 ' Calculate code area (lower portion)
                                 Dim codeYStart As Integer = textRect.Y + (textRect.Height * 60) \ 100
@@ -815,34 +819,36 @@ Public Class Inventory
                     Dim stockStatus As String = If(productDataGrid.Rows(e.RowIndex).Cells("CurrentStock").Tag?.ToString(), "IN_STOCK")
                     Dim isRowSelected As Boolean = productDataGrid.Rows(e.RowIndex).Selected
 
-                    ' Only handle custom painting if row is selected (to maintain color coding)
+                    ' If row is selected, custom paint darker colored text for contrast on gold selection background
                     If isRowSelected Then
                         e.Handled = True
                         e.PaintBackground(e.ClipBounds, True)
 
-                        ' Determine text color based on stock status
+                        ' Determine darker text color based on stock status for readability on gold
                         Dim textColor As Color
                         Select Case stockStatus
                             Case "OUT_OF_STOCK"
-                                textColor = Color.FromArgb(255, 100, 100) ' Lighter red for dark background
+                                textColor = Color.FromArgb(150, 30, 40) ' darker red
                             Case "LOW_STOCK"
-                                textColor = Color.FromArgb(255, 200, 50) ' Lighter amber for dark background
+                                textColor = Color.FromArgb(150, 100, 0) ' darker amber
                             Case Else ' "IN_STOCK"
-                                textColor = Color.FromArgb(100, 255, 130) ' Lighter green for dark background
+                                textColor = Color.FromArgb(10, 90, 30) ' darker green
                         End Select
 
                         ' Draw the stock number with appropriate color
                         Using stockFont As New Font("Poppins", 9.5F, FontStyle.Bold)
                             Using stockBrush As New SolidBrush(textColor)
                                 Dim stockFormat As New StringFormat() With {
-                                    .Alignment = StringAlignment.Center,
-                                    .LineAlignment = StringAlignment.Center
-                                }
+                                .Alignment = StringAlignment.Center,
+                                .LineAlignment = StringAlignment.Center
+                            }
 
                                 Dim stockText As String = If(e.Value IsNot Nothing, e.Value.ToString(), "0")
                                 e.Graphics.DrawString(stockText, stockFont, stockBrush, e.CellBounds, stockFormat)
                             End Using
                         End Using
+                    Else
+                        ' Not selected: let default rendering (cell ForeColor was set at load) handle it
                     End If
                 End If
             End If

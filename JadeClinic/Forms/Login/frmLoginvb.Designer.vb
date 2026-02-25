@@ -30,6 +30,7 @@ Partial Class frmLoginvb
         Dim CustomizableEdges4 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges5 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges6 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(frmLoginvb))
         Guna2Panel1 = New Guna.UI2.WinForms.Guna2Panel()
         Guna2HtmlLabel5 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2CheckBox1 = New Guna.UI2.WinForms.Guna2CheckBox()
@@ -49,7 +50,7 @@ Partial Class frmLoginvb
         ' 
         ' Guna2Panel1
         ' 
-        Guna2Panel1.BackColor = Color.White
+        Guna2Panel1.BackColor = Color.Transparent
         Guna2Panel1.BorderColor = Color.Black
         Guna2Panel1.BorderRadius = 50
         Guna2Panel1.Controls.Add(Guna2HtmlLabel5)
@@ -63,7 +64,7 @@ Partial Class frmLoginvb
         Guna2Panel1.Controls.Add(Guna2HtmlLabel1)
         Guna2Panel1.Controls.Add(txtPassword)
         Guna2Panel1.CustomizableEdges = CustomizableEdges7
-        Guna2Panel1.FillColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
+        Guna2Panel1.FillColor = Color.FromArgb(CByte(41), CByte(40), CByte(45))
         Guna2Panel1.Location = New Point(436, 196)
         Guna2Panel1.Name = "Guna2Panel1"
         Guna2Panel1.ShadowDecoration.CustomizableEdges = CustomizableEdges8
@@ -84,7 +85,7 @@ Partial Class frmLoginvb
         ' Guna2CheckBox1
         ' 
         Guna2CheckBox1.AutoSize = True
-        Guna2CheckBox1.BackColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
+        Guna2CheckBox1.BackColor = Color.Transparent
         Guna2CheckBox1.CheckedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         Guna2CheckBox1.CheckedState.BorderRadius = 0
         Guna2CheckBox1.CheckedState.BorderThickness = 0
@@ -166,9 +167,10 @@ Partial Class frmLoginvb
         txtUserName.DisabledState.FillColor = Color.FromArgb(CByte(226), CByte(226), CByte(226))
         txtUserName.DisabledState.ForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtUserName.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
+        txtUserName.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
         txtUserName.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtUserName.Font = New Font("Segoe UI", 9F)
-        txtUserName.ForeColor = Color.Black
+        txtUserName.ForeColor = Color.White
         txtUserName.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtUserName.Location = New Point(135, 210)
         txtUserName.Margin = New Padding(3, 4, 3, 4)
@@ -213,9 +215,10 @@ Partial Class frmLoginvb
         txtPassword.DisabledState.FillColor = Color.FromArgb(CByte(226), CByte(226), CByte(226))
         txtPassword.DisabledState.ForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtPassword.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
+        txtPassword.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
         txtPassword.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtPassword.Font = New Font("Segoe UI", 9F)
-        txtPassword.ForeColor = Color.Black
+        txtPassword.ForeColor = Color.White
         txtPassword.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtPassword.Location = New Point(135, 331)
         txtPassword.Margin = New Padding(3, 4, 3, 4)
@@ -230,10 +233,10 @@ Partial Class frmLoginvb
         ' PictureBox1
         ' 
         PictureBox1.BackColor = Color.Transparent
-        PictureBox1.Image = My.Resources.Resources.Jade_Dental_Logo
+        PictureBox1.Image = CType(resources.GetObject("PictureBox1.Image"), Image)
         PictureBox1.Location = New Point(695, 10)
         PictureBox1.Name = "PictureBox1"
-        PictureBox1.Size = New Size(185, 180)
+        PictureBox1.Size = New Size(166, 160)
         PictureBox1.SizeMode = PictureBoxSizeMode.StretchImage
         PictureBox1.TabIndex = 1
         PictureBox1.TabStop = False
@@ -247,7 +250,7 @@ Partial Class frmLoginvb
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
-        BackColor = Color.White
+        BackColor = Color.FromArgb(CByte(30), CByte(30), CByte(30))
         ClientSize = New Size(1494, 875)
         Controls.Add(Guna2Panel1)
         Controls.Add(PictureBox1)

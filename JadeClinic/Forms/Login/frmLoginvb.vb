@@ -550,7 +550,7 @@ Public Class frmLoginvb
                         ' Legacy SHA256 hash - verify and upgrade to BCrypt
                         Dim enteredPasswordSHA256 As String = HashPasswordSHA256(enteredPassword)
                         isPasswordValid = (enteredPasswordSHA256 = storedPasswordHash)
-                        
+
                         If isPasswordValid Then
                             ' Upgrade to BCrypt hash
                             UpgradeUserPasswordToBCrypt(txtUserName.Text.Trim(), enteredPassword)
@@ -839,5 +839,9 @@ Public Class frmLoginvb
     Private Sub Guna2Button1_Click(sender As Object, e As EventArgs)
         ' This button appears to be duplicate - redirect to main login
         BtnLogin_Click(sender, e)
+    End Sub
+
+    Private Sub PictureBox1_Click(sender As Object, e As EventArgs) Handles PictureBox1.Click
+
     End Sub
 End Class

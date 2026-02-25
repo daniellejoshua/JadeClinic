@@ -10,7 +10,9 @@ Public Class Sales
     Private originalCategoryPanelControls As List(Of Control)
     Private originalOrderPanelControls As List(Of Control)
     Private originalTotalPanelControls As List(Of Control)
-
+    ' Add near the top of the Sales class with other private fields
+    Private discountedItemProductId As Integer? = Nothing
+    Private discountedItemName As String = ""
     ' Customer and payment flow variables
     Private isDiscountDialogOpen As Boolean = False
     Private pinPanelButtons As List(Of Guna.UI2.WinForms.Guna2Button) ' Repurposed for customer panel buttons
@@ -1030,8 +1032,8 @@ Public Class Sales
                 End If
             Next
 
-            ' Set Navigation Panel Background to White
-            DashboardPanel.FillColor = System.Drawing.Color.White
+            ' Set Navigation Panel Background to the new dark navigation color (61,65,66)
+            DashboardPanel.FillColor = System.Drawing.Color.FromArgb(61, 65, 66)
 
             ' Calculate available space (DashboardPanel is 236x885)
             Dim availableWidth As Integer = DashboardPanel.Width - 40 ' 20px margins on each side
@@ -1047,39 +1049,39 @@ Public Class Sales
             Dim titleLabel As New Label()
             titleLabel.Text = companyName
             titleLabel.Font = New Font("Poppins", 14, FontStyle.Bold)
-            titleLabel.ForeColor = System.Drawing.Color.FromArgb(254, 191, 16) ' Golden Yellow #FECF10
-            titleLabel.BackColor = System.Drawing.Color.Transparent
+            titleLabel.ForeColor = GoldenYellow
+            titleLabel.BackColor = Color.Transparent
             titleLabel.AutoSize = False
-            titleLabel.Size = New System.Drawing.Size(availableWidth, 30)
+            titleLabel.Size = New Size(availableWidth, 30)
             titleLabel.Location = New Point(20, 110)
             titleLabel.TextAlign = ContentAlignment.MiddleCenter
             DashboardPanel.Controls.Add(titleLabel)
 
-            ' Subtitle with Dark Gray color (visible on white background)
+            ' Subtitle with LightSilver (visible on dark nav background)
             Dim subtitleLabel As New Label()
             subtitleLabel.Text = "Dental Supply Management"
             subtitleLabel.Font = New Font("Poppins", 10, FontStyle.Regular)
-            subtitleLabel.ForeColor = System.Drawing.Color.FromArgb(100, 100, 100) ' Dark Gray for visibility on white
-            subtitleLabel.BackColor = System.Drawing.Color.Transparent
+            subtitleLabel.ForeColor = LightSilver
+            subtitleLabel.BackColor = Color.Transparent
             subtitleLabel.AutoSize = False
-            subtitleLabel.Size = New System.Drawing.Size(availableWidth, 25)
+            subtitleLabel.Size = New Size(availableWidth, 25)
             subtitleLabel.Location = New Point(20, 145)
             subtitleLabel.TextAlign = ContentAlignment.MiddleCenter
             DashboardPanel.Controls.Add(subtitleLabel)
 
-            ' Navigation section separator with Light Gray (visible on white background)
+            ' Navigation section separator with a subtle darker line
             Dim separator1 As New Panel()
-            separator1.BackColor = System.Drawing.Color.FromArgb(220, 220, 220) ' Light Gray for white background
+            separator1.BackColor = System.Drawing.Color.FromArgb(50, 50, 50)
             separator1.Size = New System.Drawing.Size(availableWidth - 20, 2)
             separator1.Location = New Point(30, 190)
             DashboardPanel.Controls.Add(separator1)
 
-            ' Navigation section label with Dark Gray (visible on white background)
+            ' Navigation section label with LightSilver (visible on dark background)
             Dim navLabel As New Label()
             navLabel.Text = "NAVIGATION"
             navLabel.Font = New Font("Poppins", 10, FontStyle.Bold)
-            navLabel.ForeColor = System.Drawing.Color.FromArgb(80, 80, 80) ' Dark Gray for visibility on white
-            navLabel.BackColor = System.Drawing.Color.Transparent
+            navLabel.ForeColor = LightSilver
+            navLabel.BackColor = Color.Transparent
             navLabel.AutoSize = False
             navLabel.Size = New System.Drawing.Size(availableWidth, 25)
             navLabel.Location = New Point(20, 205)
@@ -1142,12 +1144,58 @@ Public Class Sales
                 buttonIndex += 1
             End If
 
-            ' No more logout button in navigation - removed separator and logout button
-
         Catch ex As Exception
             Console.WriteLine($"Error creating navigation menu: {ex.Message}")
         End Try
     End Sub
+
+    Private Function CreateLargeNavButton(text As String, yPosition As Integer, isActive As Boolean, buttonWidth As Integer, buttonHeight As Integer) As Guna.UI2.WinForms.Guna2Button
+        Dim btn As New Guna.UI2.WinForms.Guna2Button()
+
+        ' Button properties with improved sizing and new color scheme for dark navigation
+        btn.Text = text
+        btn.Size = New System.Drawing.Size(buttonWidth, buttonHeight)
+        btn.Location = New Point(20, yPosition)
+        btn.BorderRadius = 12
+        btn.Font = New Font("Poppins", 10, FontStyle.Regular)
+        btn.TextAlign = HorizontalAlignment.Left
+
+        ' Apply color scheme for dark navigation panel (idle = transparent, text = white)
+        btn.FillColor = If(isActive, GoldenYellow, System.Drawing.Color.Transparent) ' Golden for active
+        btn.ForeColor = If(isActive, DeepCharcoal, PureWhite) ' Dark text on active gold, white on dark background when inactive
+        btn.BorderThickness = If(isActive, 0, 1)
+        btn.BorderColor = If(isActive, System.Drawing.Color.Transparent, System.Drawing.Color.FromArgb(80, 80, 80)) ' subtle border on dark bg
+        btn.BackColor = System.Drawing.Color.Transparent
+        btn.Cursor = Cursors.Hand
+
+        ' Add subtle shadow for depth (tuned for dark nav)
+        btn.ShadowDecoration.Enabled = True
+        btn.ShadowDecoration.Color = System.Drawing.Color.FromArgb(30, 30, 30)
+        btn.ShadowDecoration.Depth = 4
+        btn.ShadowDecoration.Shadow = New Padding(0, 1, 4, 4)
+
+        ' Improved hover effects for dark navigation
+        AddHandler btn.MouseEnter, Sub()
+                                       If Not isActive Then
+                                           btn.FillColor = System.Drawing.Color.FromArgb(48, 52, 54) ' slightly lighter than nav bg
+                                           btn.BorderColor = GoldenYellow
+                                           btn.Font = New Font("Poppins", 9, FontStyle.Bold)
+                                       End If
+                                   End Sub
+
+        AddHandler btn.MouseLeave, Sub()
+                                       If Not isActive Then
+                                           btn.FillColor = System.Drawing.Color.Transparent
+                                           btn.BorderColor = System.Drawing.Color.FromArgb(80, 80, 80)
+                                           btn.Font = New Font("Poppins", 10, FontStyle.Regular)
+                                       End If
+                                   End Sub
+
+        ' Add to panel
+        DashboardPanel.Controls.Add(btn)
+
+        Return btn
+    End Function
 
     ' Add the System Settings navigation handler
     Private Sub NavSystemSettings_Click(sender As Object, e As EventArgs)
@@ -1159,6 +1207,7 @@ Public Class Sales
     ' UPDATED: Enhanced receipt printing using company settings
     ' UPDATED: Enhanced receipt printing using company settings
     ' UPDATED: Enhanced receipt printing with cleaner formatting (no pipe separators)
+    ' Modified: OnPrintPage - remove duplicate VATABLE SALES and show which item received the discount
     Private Sub OnPrintPage(sender As Object, e As PrintPageEventArgs)
         Try
             Dim regularFont As New Font("Arial", 8)
@@ -1168,46 +1217,41 @@ Public Class Sales
             Dim yPosition As Integer = 10
             Dim centerX As Integer = e.MarginBounds.Width \ 2
 
-            ' UPDATED: Use CompanySettingsManager for receipt header
+            ' Header using company settings
             Dim companyName As String = CompanySettingsManager.Instance.GetSettingString("CompanyName", "JADE CLINIC")
             Dim companyPhone As String = CompanySettingsManager.Instance.GetSettingString("Phone", "(02) 8123-4567")
             Dim companyAddress As String = CompanySettingsManager.Instance.GetSettingString("Address", "")
             Dim companyWebsite As String = CompanySettingsManager.Instance.GetSettingString("Website", "")
             Dim companyTIN As String = CompanySettingsManager.Instance.GetSettingString("TIN", "123-456-789-000")
 
-            ' Store Header with company settings
-            e.Graphics.DrawString(companyName, headerFont, brush, CSng(centerX - (companyName.Length * 3.5)), CSng(yPosition))
+            e.Graphics.DrawString(companyName, headerFont, brush, CSng(centerX - (e.Graphics.MeasureString(companyName, headerFont).Width / 2)), CSng(yPosition))
             yPosition += 25
-            e.Graphics.DrawString("Dental Supply Management", regularFont, brush, CSng(centerX - 80), CSng(yPosition))
+            e.Graphics.DrawString("Dental Supply Management", regularFont, brush, CSng(centerX - (e.Graphics.MeasureString("Dental Supply Management", regularFont).Width / 2)), CSng(yPosition))
             yPosition += 15
 
-            ' Add TIN if available
             If Not String.IsNullOrEmpty(companyTIN) Then
-                e.Graphics.DrawString($"TIN: {companyTIN}", regularFont, brush, CSng(centerX - 50), CSng(yPosition))
+                e.Graphics.DrawString($"TIN: {companyTIN}", regularFont, brush, CSng(centerX - (e.Graphics.MeasureString($"TIN: {companyTIN}", regularFont).Width / 2)), CSng(yPosition))
                 yPosition += 15
             End If
 
-            ' Add phone
-            e.Graphics.DrawString($"Tel: {companyPhone}", regularFont, brush, CSng(centerX - 50), CSng(yPosition))
+            e.Graphics.DrawString($"Tel: {companyPhone}", regularFont, brush, CSng(centerX - (e.Graphics.MeasureString($"Tel: {companyPhone}", regularFont).Width / 2)), CSng(yPosition))
             yPosition += 15
 
-            ' Add address if available
             If Not String.IsNullOrEmpty(companyAddress) Then
-                e.Graphics.DrawString(companyAddress, regularFont, brush, CSng(centerX - (companyAddress.Length * 2)), CSng(yPosition))
+                e.Graphics.DrawString(companyAddress, regularFont, brush, CSng(centerX - (e.Graphics.MeasureString(companyAddress, regularFont).Width / 2)), CSng(yPosition))
                 yPosition += 15
             End If
 
-            ' Add website if available
             If Not String.IsNullOrEmpty(companyWebsite) Then
-                e.Graphics.DrawString(companyWebsite, regularFont, brush, CSng(centerX - (companyWebsite.Length * 2.5)), CSng(yPosition))
+                e.Graphics.DrawString(companyWebsite, regularFont, brush, CSng(centerX - (e.Graphics.MeasureString(companyWebsite, regularFont).Width / 2)), CSng(yPosition))
                 yPosition += 15
             End If
 
             e.Graphics.DrawString("=====================================", regularFont, brush, 10, yPosition)
             yPosition += 20
 
-            ' Receipt details
-            e.Graphics.DrawString("SALES RECEIPT", boldFont, brush, CSng(centerX - 45), CSng(yPosition))
+            ' Receipt header details
+            e.Graphics.DrawString("SALES RECEIPT", boldFont, brush, CSng(centerX - (e.Graphics.MeasureString("SALES RECEIPT", boldFont).Width / 2)), CSng(yPosition))
             yPosition += 25
             e.Graphics.DrawString($"Receipt #: {receiptOrderId}", regularFont, brush, 10, yPosition)
             yPosition += 15
@@ -1220,60 +1264,86 @@ Public Class Sales
             e.Graphics.DrawString("=====================================", regularFont, brush, 10, yPosition)
             yPosition += 15
 
-            ' IMPROVED: Items section with better spacing (no separators)
+            ' Items section - show original and discounted unit prices where applicable
             For Each item In receiptItems
                 Dim itemName As String = item("ProductName").ToString()
                 Dim quantity As Integer = CInt(item("Quantity"))
-                Dim price As Decimal = Convert.ToDecimal(item("Price"))
-                Dim total As Decimal = price * quantity
+                Dim displayedUnitPrice As Decimal = Convert.ToDecimal(item("Price"))
+                Dim originalUnitPrice As Decimal = displayedUnitPrice
+                If item.ContainsKey("OriginalUnitPrice") Then
+                    originalUnitPrice = Convert.ToDecimal(item("OriginalUnitPrice"))
+                End If
 
-                ' Truncate long product names
+                Dim isDiscountedLine As Boolean = displayedUnitPrice <> originalUnitPrice
+
                 If itemName.Length > 30 Then
                     itemName = itemName.Substring(0, 27) & "..."
                 End If
 
-                ' Item line with quantity and name
                 e.Graphics.DrawString($"{quantity}x {itemName}", regularFont, brush, 10, yPosition)
                 yPosition += 12
 
-                ' Price line with unit price and total (indented)
-                e.Graphics.DrawString($"@ ₱{price:F2}", regularFont, brush, 20, yPosition)
-                e.Graphics.DrawString($"₱{total:F2}", regularFont, brush, CSng(e.MarginBounds.Width - 60), CSng(yPosition))
-                yPosition += 15
+                If isDiscountedLine Then
+                    ' Draw original unit price with strike-through
+                    Dim origPriceText As String = $"@ ₱{originalUnitPrice:F2}"
+                    Dim origPoint As New PointF(20, yPosition)
+                    e.Graphics.DrawString(origPriceText, regularFont, brush, origPoint)
+                    Dim sz As SizeF = e.Graphics.MeasureString(origPriceText, regularFont)
+                    Dim lineY As Single = origPoint.Y + sz.Height / 2
+                    Using penStrike As New Pen(Color.Black, 1.2F)
+                        e.Graphics.DrawLine(penStrike, origPoint.X, lineY, origPoint.X + sz.Width, lineY)
+                    End Using
 
-                ' Add small spacing between items
+                    ' Draw discounted unit price underneath
+                    Dim newPriceText As String = $"@ ₱{displayedUnitPrice:F2}"
+                    e.Graphics.DrawString(newPriceText, regularFont, brush, New PointF(20, yPosition + sz.Height + 2))
+
+                    ' Draw discounted line total at right
+                    Dim discountedLineTotal As Decimal = Math.Round(displayedUnitPrice * quantity, 2)
+                    e.Graphics.DrawString($"₱{discountedLineTotal:F2}", regularFont, brush, CSng(e.MarginBounds.Width - 60), CSng(yPosition + sz.Height + 2))
+
+                    yPosition += CInt(sz.Height) + 16
+                Else
+                    Dim priceText As String = $"@ ₱{displayedUnitPrice:F2}"
+                    e.Graphics.DrawString(priceText, regularFont, brush, 20, yPosition)
+                    Dim lineTotal As Decimal = Math.Round(displayedUnitPrice * quantity, 2)
+                    e.Graphics.DrawString($"₱{lineTotal:F2}", regularFont, brush, CSng(e.MarginBounds.Width - 60), CSng(yPosition))
+                    yPosition += 15
+                End If
+
                 yPosition += 3
             Next
 
             e.Graphics.DrawString("=====================================", regularFont, brush, 10, yPosition)
             yPosition += 15
 
-            ' FIXED: Correct VAT breakdown calculation
+            ' Totals and VAT
             Dim vatInclusiveSubtotal As Decimal = receiptSubtotal * 1.12D
-            Dim discountedVatInclusive As Decimal = vatInclusiveSubtotal - discountAmount
+            Dim discountedVatInclusive As Decimal = Math.Max(0D, vatInclusiveSubtotal - discountAmount)
             Dim vatableSales As Decimal = discountedVatInclusive / 1.12D
             Dim vatAmount As Decimal = vatableSales * 0.12D
 
-            ' Show discount if applied
             If discountAmount > 0 Then
-                e.Graphics.DrawString($"VATABLE SALES:", regularFont, brush, 10, yPosition) ' CHANGED from SUB-TOTAL
+                e.Graphics.DrawString($"VATABLE SALES:", regularFont, brush, 10, yPosition)
                 e.Graphics.DrawString($"₱{vatableSales:F2}", regularFont, brush, CSng(e.MarginBounds.Width - 80), CSng(yPosition))
                 yPosition += 12
 
-                e.Graphics.DrawString($"Discount ({discountType}):", regularFont, brush, 10, yPosition)
+                Dim discountLabel As String = $"Discount ({discountType})"
+                If Not String.IsNullOrEmpty(discountedItemName) Then
+                    discountLabel = $"Discount ({discountType}) on {discountedItemName}"
+                End If
+                e.Graphics.DrawString(discountLabel & ":", regularFont, brush, 10, yPosition)
                 e.Graphics.DrawString($"-₱{discountAmount:F2}", regularFont, brush, CSng(e.MarginBounds.Width - 80), CSng(yPosition))
                 yPosition += 15
+            Else
+                e.Graphics.DrawString($"VATABLE SALES:", regularFont, brush, 10, yPosition)
+                e.Graphics.DrawString($"₱{vatableSales:F2}", regularFont, brush, CSng(e.MarginBounds.Width - 80), CSng(yPosition))
+                yPosition += 15
             End If
-
-            ' VATable sales (now the main subtotal display)
-            e.Graphics.DrawString($"VATABLE SALES:", regularFont, brush, 10, yPosition)
-            e.Graphics.DrawString($"₱{vatableSales:F2}", regularFont, brush, CSng(e.MarginBounds.Width - 80), CSng(yPosition))
-            yPosition += 15
 
             e.Graphics.DrawString("=====================================", regularFont, brush, 10, yPosition)
             yPosition += 15
 
-            ' VAT breakdown with better alignment
             e.Graphics.DrawString($"VAT (12%):", regularFont, brush, 10, yPosition)
             e.Graphics.DrawString($"₱{vatAmount:F2}", regularFont, brush, CSng(e.MarginBounds.Width - 80), CSng(yPosition))
             yPosition += 15
@@ -1287,27 +1357,21 @@ Public Class Sales
             e.Graphics.DrawString("=====================================", regularFont, brush, 10, yPosition)
             yPosition += 15
 
-            ' Payment Information with cleaner formatting
+            ' Payment information
             e.Graphics.DrawString("PAYMENT INFORMATION:", boldFont, brush, 10, yPosition)
             yPosition += 15
-
             e.Graphics.DrawString($"Payment Method: {selectedPaymentMethod}", regularFont, brush, 10, yPosition)
             yPosition += 12
-
             If Not String.IsNullOrEmpty(paymentReference) Then
                 e.Graphics.DrawString($"Reference: {paymentReference}", regularFont, brush, 10, yPosition)
                 yPosition += 12
             End If
-
-            e.Graphics.DrawString($"Amount Received:", regularFont, brush, 10, yPosition)
-            e.Graphics.DrawString($"₱{receiptAmountReceived:F2}", regularFont, brush, CSng(e.MarginBounds.Width - 80), CSng(yPosition))
+            e.Graphics.DrawString($"Amount Received: ₱{receiptAmountReceived:F2}", regularFont, brush, 10, yPosition)
             yPosition += 12
+            e.Graphics.DrawString($"Change: ₱{receiptChange:F2}", regularFont, brush, 10, yPosition)
+            yPosition += 18
 
-            e.Graphics.DrawString($"Change:", boldFont, brush, 10, yPosition)
-            e.Graphics.DrawString($"₱{receiptChange:F2}", boldFont, brush, CSng(e.MarginBounds.Width - 80), CSng(yPosition))
-            yPosition += 25
-
-            ' BIR Compliance footer
+            ' Footer (BIR info, custom message)
             Dim birAuthNumber As String = CompanySettingsManager.Instance.GetSettingString("BIRAuthNumber", "ATP-2024-000001")
             Dim ptuNumber As String = CompanySettingsManager.Instance.GetSettingString("PTUNumber", "PTU-2024-001")
             Dim validityYears As Integer = CInt(CompanySettingsManager.Instance.GetSetting("ValidityYears", 5))
@@ -1319,7 +1383,6 @@ Public Class Sales
             e.Graphics.DrawString($"""This Invoice is valid for {validityYears} years from ATP date.""", regularFont, brush, 10, yPosition)
             yPosition += 20
 
-            ' Custom footer message
             Dim footerMessage As String = CompanySettingsManager.Instance.GetSettingString("ReceiptFooter", "Thank you for your business!" & vbCrLf & "Have a great day!")
             Dim footerLines() As String = footerMessage.Split({vbCrLf, vbLf}, StringSplitOptions.RemoveEmptyEntries)
 
@@ -1327,16 +1390,13 @@ Public Class Sales
             yPosition += 15
 
             For Each line As String In footerLines
-                e.Graphics.DrawString(line, regularFont, brush, CSng(centerX - (line.Length * 2.5)), CSng(yPosition))
+                e.Graphics.DrawString(line, regularFont, brush, CSng(centerX - (e.Graphics.MeasureString(line, regularFont).Width / 2)), CSng(yPosition))
                 yPosition += 15
             Next
-
         Catch ex As Exception
             Console.WriteLine($"Print error: {ex.Message}")
         End Try
     End Sub
-
-    ' UPDATED: Print receipt method with dynamic title
     Private Sub PrintReceipt()
         Try
             Dim companyName As String = CompanySettingsManager.Instance.GetSettingString("CompanyName", "JADE CLINIC")
@@ -1356,54 +1416,6 @@ Public Class Sales
             MessageBox.Show($"Error printing receipt: {ex.Message}", "Print Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
-    Private Function CreateLargeNavButton(text As String, yPosition As Integer, isActive As Boolean, buttonWidth As Integer, buttonHeight As Integer) As Guna.UI2.WinForms.Guna2Button
-        Dim btn As New Guna.UI2.WinForms.Guna2Button()
-
-        ' Button properties with improved sizing and new color scheme
-        btn.Text = text
-        btn.Size = New System.Drawing.Size(buttonWidth, buttonHeight)
-        btn.Location = New Point(20, yPosition)
-        btn.BorderRadius = 12
-        btn.Font = New Font("Poppins", 10, FontStyle.Regular)
-        btn.TextAlign = HorizontalAlignment.Left
-
-        ' Apply new color scheme
-        btn.FillColor = If(isActive, System.Drawing.Color.FromArgb(254, 191, 16), System.Drawing.Color.Transparent) ' Golden Yellow if active #FECF10
-        btn.ForeColor = If(isActive, System.Drawing.Color.FromArgb(26, 29, 31), System.Drawing.Color.FromArgb(50, 50, 50)) ' Deep Charcoal text on active, Dark Gray text on inactive for white background
-        btn.BorderThickness = If(isActive, 0, 1)
-        btn.BorderColor = If(isActive, System.Drawing.Color.Transparent, System.Drawing.Color.FromArgb(200, 200, 200)) ' Light Gray border for white background
-        btn.BackColor = System.Drawing.Color.Transparent
-        btn.Cursor = Cursors.Hand
-
-        ' Add subtle shadow for depth
-        btn.ShadowDecoration.Enabled = True
-        btn.ShadowDecoration.Color = System.Drawing.Color.FromArgb(26, 29, 31) ' Deep Charcoal shadow
-        btn.ShadowDecoration.Depth = 5
-        btn.ShadowDecoration.Shadow = New Padding(0, 2, 5, 5)
-
-        ' Improved hover effects with new color scheme
-        AddHandler btn.MouseEnter, Sub()
-                                       If Not isActive Then
-                                           btn.FillColor = System.Drawing.Color.FromArgb(240, 240, 240) ' Light Gray hover for white background
-                                           btn.BorderColor = System.Drawing.Color.FromArgb(190, 154, 48) ' Rich Olive border #BE9A30
-                                           btn.Font = New Font("Poppins", 9, FontStyle.Bold)
-                                       End If
-                                   End Sub
-
-        AddHandler btn.MouseLeave, Sub()
-                                       If Not isActive Then
-                                           btn.FillColor = System.Drawing.Color.Transparent
-                                           btn.BorderColor = System.Drawing.Color.FromArgb(200, 200, 200) ' Light Gray border
-                                           btn.Font = New Font("Poppins", 10, FontStyle.Regular)
-                                       End If
-                                   End Sub
-
-        ' Add to panel
-        DashboardPanel.Controls.Add(btn)
-
-        Return btn
-    End Function
-
 
     Private Sub Sales_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
         ' Stop idle timeout monitoring
@@ -2611,6 +2623,7 @@ Public Class Sales
                                          ElseIf e.KeyCode = Keys.E Then
                                              btnExact.PerformClick()
                                              e.Handled = True
+
                                          End If
                                      End Sub
 
@@ -2776,8 +2789,6 @@ Public Class Sales
     ' FIXED: Refresh the order display with correct VAT calculations
     ' Refresh the order display in the order summary panel
     ' FIXED: Refresh the order display with correct VAT calculations
-    ' Refresh the order display in the order summary panel
-    ' FIXED: Refresh the order display with correct VAT calculations
     Private Sub RefreshOrderDisplay()
         ' Reset change label and totalRLbl when in normal order summary mode
         If Not pinPanelActive AndAlso Not totalPanelActive Then
@@ -2795,139 +2806,156 @@ Public Class Sales
             End If
         Next
 
+        ' Single tooltip instance for all price labels
+        Dim tt As New ToolTip()
+
         ' Add all products in the order list as rows
-        Dim panelHeight As Integer = 50
-        Dim marginY As Integer = 10
-        Dim currentY As Integer = 50 ' Start after Order ID/OrderName labels
+        Dim panelHeight As Integer = 48          ' COMPACT row height (was 60)
+        Dim marginY As Integer = 8               ' smaller vertical gap
+        Dim currentY As Integer = 40             ' Start after Order ID/OrderName labels
         Dim subtotalVatInclusiveLocal As Decimal = 0
 
         For i = 0 To currentOrderList.Count - 1
             Dim prod = currentOrderList(i)
+
+            ' Preserve original unit price if not already stored
+            Dim currentUnitPrice As Decimal = Convert.ToDecimal(prod("Price"))
+            If Not prod.ContainsKey("OriginalUnitPrice") Then
+                prod("OriginalUnitPrice") = currentUnitPrice
+            End If
+            Dim originalUnitPrice As Decimal = Convert.ToDecimal(prod("OriginalUnitPrice"))
+
+            ' Determine if this line is the discounted line
+            Dim isDiscountedLine As Boolean = False
+            If discountedItemProductId.HasValue AndAlso prod.ContainsKey("ProductID") Then
+                Try
+                    If Convert.ToInt32(prod("ProductID")) = discountedItemProductId.Value Then
+                        isDiscountedLine = (discountAmount > 0D)
+                    End If
+                Catch
+                    isDiscountedLine = False
+                End Try
+            End If
+
+            ' Compute discounted unit price if this is the discounted line
+            Dim discountedUnitPrice As Decimal = originalUnitPrice
+            If isDiscountedLine Then
+                If discountType = "Percentage" Then
+                    discountedUnitPrice = Math.Round(originalUnitPrice * (1D - (discountValue / 100D)), 2)
+                ElseIf discountType = "Fixed" Then
+                    Dim qty As Integer = CInt(prod("Quantity"))
+                    Dim unitDiscount As Decimal = Math.Round(discountAmount / Math.Max(1, qty), 2)
+                    discountedUnitPrice = Math.Max(0D, originalUnitPrice - unitDiscount)
+                End If
+                ' Update stored price so totals/receipt use discounted price
+                prod("Price") = discountedUnitPrice
+            Else
+                ' Restore original unit price if no discount applies to this line
+                prod("Price") = originalUnitPrice
+            End If
+
+            ' Build UI row
             Dim orderPanel As New Guna.UI2.WinForms.Guna2Panel()
-            orderPanel.Size = New Size(orderSummaryPanel.Width - 40, panelHeight) ' Made wider by reducing margin from 25 to 15
-            orderPanel.BorderRadius = 10
-            orderPanel.FillColor = RichOlive ' Changed to RichOlive (RGB 190, 154, 48)
+            orderPanel.Size = New Size(orderSummaryPanel.Width - 40, panelHeight)
+            orderPanel.BorderRadius = 8
+            orderPanel.FillColor = DeepCharcoal
+            orderPanel.BorderColor = Color.FromArgb(50, 50, 50)
+            orderPanel.BorderThickness = 1
             orderPanel.Location = New Point(20, currentY)
             currentY += panelHeight + marginY
-
-            ' Store the product index in the Tag property for easy access
             orderPanel.Tag = i
 
-            ' Add double-click event handler to reduce quantity
             AddHandler orderPanel.DoubleClick, Sub(sender As Object, e As EventArgs)
                                                    ReduceItemQuantity(CInt(orderPanel.Tag))
                                                End Sub
+
+            ' Vertical baseline for labels to center them in the smaller panel
+            Dim baseY As Integer = 10
 
             ' Order ID
             Dim lblOrderId As New Guna.UI2.WinForms.Guna2HtmlLabel()
             lblOrderId.Text = (i + 1).ToString("D2")
             lblOrderId.Font = New Font("Poppins Light", 9.0F, FontStyle.Regular)
-            lblOrderId.ForeColor = PureWhite ' Already white
-            lblOrderId.Location = New Point(12, 10)
+            lblOrderId.ForeColor = PureWhite
+            lblOrderId.Location = New Point(12, baseY)
             lblOrderId.AutoSize = True
 
-            ' Product Name with ellipsis and tooltip
+            ' Product name (compact)
             Dim fullProductName As String = prod("ProductName").ToString()
-            Dim maxNameLength As Integer = 30
+            Dim maxNameLength As Integer = 28
             Dim displayName As String = If(fullProductName.Length > maxNameLength, fullProductName.Substring(0, maxNameLength) & "...", fullProductName)
 
             Dim lblCustomer As New Guna.UI2.WinForms.Guna2HtmlLabel()
             lblCustomer.Text = displayName
             lblCustomer.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
-            lblCustomer.ForeColor = PureWhite ' Already white
-            lblCustomer.Location = New Point(lblOrderId.Right + 20, 10)
+            lblCustomer.ForeColor = PureWhite
+            lblCustomer.Location = New Point(lblOrderId.Right + 18, baseY)
             lblCustomer.AutoSize = True
 
-            ' Add tooltip for full product name if truncated
             If fullProductName.Length > maxNameLength Then
-                Dim toolTip As New ToolTip()
-                toolTip.SetToolTip(lblCustomer, fullProductName)
+                tt.SetToolTip(lblCustomer, fullProductName)
             End If
+
             orderPanel.Controls.Add(lblCustomer)
 
-            ' Check if this item has promotion
-            Dim hasPromotion As Boolean = If(prod.ContainsKey("HasPromotion"), CBool(prod("HasPromotion")), False)
-
-            ' Quantity
+            ' Quantity label
             Dim lblQuantity As New Guna.UI2.WinForms.Guna2HtmlLabel()
             lblQuantity.Text = prod("Quantity").ToString() & "x"
             lblQuantity.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
-            lblQuantity.ForeColor = Color.White ' Keep as is for contrast
-            lblQuantity.Location = New Point(340, 10)
+            lblQuantity.ForeColor = PureWhite
+            lblQuantity.Location = New Point(320, baseY)
             lblQuantity.AutoSize = True
 
-            ' FIXED: Price calculation - treat as VAT-inclusive
-            Dim priceVal As Decimal = Convert.ToDecimal(prod("Price")) * CInt(prod("Quantity"))
+            ' Price label: show line total (uses current prod("Price") which may be discounted)
+            Dim qtyInt As Integer = CInt(prod("Quantity"))
+            Dim lineTotal As Decimal = Convert.ToDecimal(prod("Price")) * qtyInt
+
             Dim lblTotal As New Guna.UI2.WinForms.Guna2HtmlLabel()
-            lblTotal.Text = priceVal.ToString("N2") ' Changed to N2 for comma formatting
+            lblTotal.Text = lineTotal.ToString("N2")
             lblTotal.Font = New Font("Poppins Regular", 9.0F)
-            lblTotal.ForeColor = If(hasPromotion, Color.FromArgb(255, 69, 0), PureWhite) ' White for normal, orange for promo
-            lblTotal.Location = New Point(orderPanel.Width - 85, 12)
+            lblTotal.ForeColor = PureWhite
+            ' align to right within panel (small offset to keep it inside)
+            lblTotal.Location = New Point(orderPanel.Width - 90, baseY)
             lblTotal.AutoSize = True
 
-            ' Add double-click handlers to all child controls so they trigger the panel's double-click
-            AddHandler lblOrderId.DoubleClick, Sub(sender As Object, e As EventArgs)
-                                                   ReduceItemQuantity(CInt(orderPanel.Tag))
-                                               End Sub
-            AddHandler lblCustomer.DoubleClick, Sub(sender As Object, e As EventArgs)
-                                                    ReduceItemQuantity(CInt(orderPanel.Tag))
-                                                End Sub
-            AddHandler lblQuantity.DoubleClick, Sub(sender As Object, e As EventArgs)
-                                                    ReduceItemQuantity(CInt(orderPanel.Tag))
-                                                End Sub
-            AddHandler lblTotal.DoubleClick, Sub(sender As Object, e As EventArgs)
-                                                 ReduceItemQuantity(CInt(orderPanel.Tag))
-                                             End Sub
+            ' If discounted, tooltip the original unit price (compact requirement)
+            If isDiscountedLine Then
+                Dim tooltipText As String = $"Original unit price: ₱{originalUnitPrice:F2}{Environment.NewLine}Discounted unit price: ₱{discountedUnitPrice:F2}"
+                tt.SetToolTip(lblTotal, tooltipText)
+            Else
+                tt.SetToolTip(lblTotal, $"Unit price: ₱{originalUnitPrice:F2}")
+            End If
 
-            ' Add hover effect to indicate interactivity
-            AddHandler orderPanel.MouseEnter, Sub(sender As Object, e As EventArgs)
-                                                  orderPanel.FillColor = Color.FromArgb(210, 174, 68) ' Lighter RichOlive for hover
-                                                  orderPanel.Cursor = Cursors.Hand
-                                              End Sub
-            AddHandler orderPanel.MouseLeave, Sub(sender As Object, e As EventArgs)
-                                                  orderPanel.FillColor = RichOlive ' Back to RichOlive
-                                                  orderPanel.Cursor = Cursors.Default
-                                              End Sub
+            ' Add double-click handlers to children
+            AddHandler lblOrderId.DoubleClick, Sub() ReduceItemQuantity(CInt(orderPanel.Tag))
+            AddHandler lblCustomer.DoubleClick, Sub() ReduceItemQuantity(CInt(orderPanel.Tag))
+            AddHandler lblQuantity.DoubleClick, Sub() ReduceItemQuantity(CInt(orderPanel.Tag))
 
             orderPanel.Controls.Add(lblOrderId)
-            orderPanel.Controls.Add(lblCustomer)
             orderPanel.Controls.Add(lblQuantity)
             orderPanel.Controls.Add(lblTotal)
 
             orderSummaryPanel.Controls.Add(orderPanel)
-            subtotalVatInclusiveLocal += priceVal
+
+            ' Use the (possibly discounted) price when summing subtotal
+            subtotalVatInclusiveLocal += Convert.ToDecimal(prod("Price")) * CInt(prod("Quantity"))
         Next
 
-        ' FIXED: Correct VAT calculations
-        ' Apply discount first to the VAT-inclusive subtotal
-        Dim discountedSubtotalVatInclusive As Decimal = subtotalVatInclusiveLocal - discountAmount
+        ' Apply discount to totals only once (discountAmount already represents nominal amount applied)
+        Dim discountedSubtotalVatInclusive As Decimal = Math.Max(0D, subtotalVatInclusiveLocal - discountAmount)
 
-        ' Calculate VATable sales (net of VAT) from the discounted VAT-inclusive amount
+        ' Calculate VATable sales (net of VAT)
         Dim vatableSales As Decimal = discountedSubtotalVatInclusive / 1.12D
-
-        ' Calculate VAT amount (12% of VATable sales)
         Dim vatAmount As Decimal = vatableSales * 0.12D
-
-        ' Total should equal VATable sales + VAT
         Dim totalAmount As Decimal = vatableSales + vatAmount
 
-        ' Update class variable for discount calculations
         Me.subtotalVatInclusive = subtotalVatInclusiveLocal
 
-        ' Update UI labels with comma formatting - CHANGED: lblSubTotal now shows VATable sales
-        If lblSubTotal IsNot Nothing Then
-            lblSubTotal.Text = vatableSales.ToString("N2") ' Now displays VATable sales
-        End If
-
-        If taxLbl IsNot Nothing Then
-            taxLbl.Text = vatAmount.ToString("N2") ' Changed to N2 for comma formatting
-        End If
-
-        If totalLbl IsNot Nothing Then
-            totalLbl.Text = totalAmount.ToString("N2") ' Changed to N2 for comma formatting
-        End If
+        ' Update UI labels
+        If lblSubTotal IsNot Nothing Then lblSubTotal.Text = vatableSales.ToString("N2")
+        If taxLbl IsNot Nothing Then taxLbl.Text = vatAmount.ToString("N2")
+        If totalLbl IsNot Nothing Then totalLbl.Text = totalAmount.ToString("N2")
     End Sub
-
     ' FIXED: Enhanced receipt printing with correct VAT breakdown
     ' FIXED: Update the confirmBtn_Click method to set correct receipt values
     Private Sub confirmBtn_Click(sender As Object, e As EventArgs) Handles confirmBtn.Click
@@ -2980,31 +3008,36 @@ Public Class Sales
             Dim userId As Integer = Convert.ToInt32(userIdResult)
 
             ' Create JSON data structure
+            ' Modified: include discounted item info in sale JSON and keep receiptSubtotal as original VATABLE sales
+            ' (replace the saleData creation area in confirmBtn_Click with this updated block)
+            ' ...
+            ' Create JSON data structure
             Dim saleData As New Dictionary(Of String, Object) From {
-                {"customer", New Dictionary(Of String, Object) From {
-                    {"name", selectedCustomerName},
-                    {"phone", selectedCustomerPhone},
-                    {"email", selectedCustomerEmail}
-                }},
-                {"payment", New Dictionary(Of String, Object) From {
-                    {"method", selectedPaymentMethod},
-                    {"reference", If(String.IsNullOrEmpty(paymentReference), Nothing, paymentReference)},
-                    {"subtotal", orderTotal / 1.12D},
-                    {"discount", New Dictionary(Of String, Object) From {
-                        {"type", discountType},
-                        {"value", discountValue},
-                        {"amount", discountAmount}
-                    }},
-                    {"tax", orderTotal - (orderTotal / 1.12D)},
-                    {"total", orderTotal},
-                    {"received", receivedAmount},
-                    {"change", changeAmount}
-                }},
-                {"items", currentOrderList},
-                {"cashier", frmLoginvb.LoggedInUsername},
-                {"saleDate", DateTime.Now}
-            }
-
+    {"customer", New Dictionary(Of String, Object) From {
+        {"name", selectedCustomerName},
+        {"phone", selectedCustomerPhone},
+        {"email", selectedCustomerEmail}
+    }},
+    {"payment", New Dictionary(Of String, Object) From {
+        {"method", selectedPaymentMethod},
+        {"reference", If(String.IsNullOrEmpty(paymentReference), Nothing, paymentReference)},
+        {"subtotal", orderTotal / 1.12D},
+        {"discount", New Dictionary(Of String, Object) From {
+            {"type", discountType},
+            {"value", discountValue},
+            {"amount", discountAmount},
+            {"appliedTo", If(String.IsNullOrEmpty(discountedItemName), Nothing, discountedItemName)}
+        }},
+        {"tax", orderTotal - (orderTotal / 1.12D)},
+        {"total", orderTotal},
+        {"received", receivedAmount},
+        {"change", changeAmount}
+    }},
+    {"items", currentOrderList},
+    {"cashier", frmLoginvb.LoggedInUsername},
+    {"saleDate", DateTime.Now}
+}
+            ' ...
             ' Convert to JSON
             Dim jsonData As String = Newtonsoft.Json.JsonConvert.SerializeObject(saleData, Newtonsoft.Json.Formatting.Indented)
 
@@ -3360,42 +3393,115 @@ Public Class Sales
     End Sub
 
     ' Apply percentage discount
+    ' Modified: ApplyPercentageDiscount - record which item was discounted
     Private Sub ApplyPercentageDiscount(percentage As Decimal)
+        If currentOrderList.Count = 0 Then
+            MessageBox.Show("No items in the order to apply a discount.", "No Items", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Return
+        End If
+
         If percentage < 0 Or percentage > 100 Then
             MessageBox.Show("Discount percentage must be between 0 and 100.", "Invalid Discount", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Return
+        End If
+
+        ' Find highest line total (price * quantity) and apply percentage only to that item
+        Dim highestLineTotal As Decimal = 0D
+        Dim highestItemName As String = ""
+        Dim highestProductId As Integer = -1
+        For Each item In currentOrderList
+            Dim price As Decimal = Convert.ToDecimal(item("Price"))
+            Dim qty As Integer = CInt(item("Quantity"))
+            Dim lineTotal As Decimal = price * qty
+            If lineTotal > highestLineTotal Then
+                highestLineTotal = lineTotal
+                highestItemName = item("ProductName").ToString()
+                If item.ContainsKey("ProductID") Then
+                    Integer.TryParse(item("ProductID").ToString(), highestProductId)
+                End If
+            End If
+        Next
+
+        If highestLineTotal <= 0D Then
+            MessageBox.Show("Highest item total is zero. Cannot apply discount.", "Invalid Discount", MessageBoxButtons.OK, MessageBoxIcon.Warning)
             Return
         End If
 
         discountType = "Percentage"
         discountValue = percentage
 
-        ' Use the VAT-inclusive subtotal for discount calculation
-        discountAmount = subtotalVatInclusive * (percentage / 100)
+        ' Discount is applied only to the highest item
+        discountAmount = Math.Round(highestLineTotal * (percentage / 100D), 2)
+
+        ' Record which item received the discount
+        discountedItemProductId = If(highestProductId > 0, CType(highestProductId, Integer?), Nothing)
+        discountedItemName = highestItemName
+
         RefreshOrderDisplay()
 
-        MessageBox.Show($"Applied {percentage}% discount (₱{discountAmount:F2})", "Discount Applied", MessageBoxButtons.OK, MessageBoxIcon.Information)
+        MessageBox.Show($"Applied {percentage}% discount on highest item: '{highestItemName}' (₱{discountAmount:F2})", "Discount Applied", MessageBoxButtons.OK, MessageBoxIcon.Information)
     End Sub
-    ' Apply fixed discount
+    ' Modified: ApplyFixedDiscount - record which item was discounted
     Private Sub ApplyFixedDiscount(amount As Decimal)
-        ' Use the VAT-inclusive subtotal for discount calculation
-        If amount < 0 Or amount > subtotalVatInclusive Then
-            MessageBox.Show($"Discount amount must be between ₱0 and ₱{subtotalVatInclusive:F2}.", "Invalid Discount", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+        If currentOrderList.Count = 0 Then
+            MessageBox.Show("No items in the order to apply a discount.", "No Items", MessageBoxButtons.OK, MessageBoxIcon.Warning)
             Return
         End If
 
+        If amount < 0 Then
+            MessageBox.Show("Discount amount must be a positive value.", "Invalid Discount", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Return
+        End If
+
+        ' Find highest line total (price * quantity) and apply fixed discount only to that item
+        Dim highestLineTotal As Decimal = 0D
+        Dim highestItemName As String = ""
+        Dim highestProductId As Integer = -1
+        For Each item In currentOrderList
+            Dim price As Decimal = Convert.ToDecimal(item("Price"))
+            Dim qty As Integer = CInt(item("Quantity"))
+            Dim lineTotal As Decimal = price * qty
+            If lineTotal > highestLineTotal Then
+                highestLineTotal = lineTotal
+                highestItemName = item("ProductName").ToString()
+                If item.ContainsKey("ProductID") Then
+                    Integer.TryParse(item("ProductID").ToString(), highestProductId)
+                End If
+            End If
+        Next
+
+        If highestLineTotal <= 0D Then
+            MessageBox.Show("Highest item total is zero. Cannot apply discount.", "Invalid Discount", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Return
+        End If
+
+        ' Cap fixed discount to highest line total
+        Dim appliedAmount As Decimal = Math.Min(amount, highestLineTotal)
+
         discountType = "Fixed"
-        discountValue = amount
-        discountAmount = amount
+        discountValue = appliedAmount
+        discountAmount = Math.Round(appliedAmount, 2)
+
+        ' Record which item received the discount
+        discountedItemProductId = If(highestProductId > 0, CType(highestProductId, Integer?), Nothing)
+        discountedItemName = highestItemName
+
         RefreshOrderDisplay()
 
-        MessageBox.Show($"Applied fixed discount of ₱{amount:F2}", "Discount Applied", MessageBoxButtons.OK, MessageBoxIcon.Information)
+        If appliedAmount < amount Then
+            MessageBox.Show($"Fixed discount exceeded highest item total and was capped to ₱{discountAmount:F2} on '{highestItemName}'.", "Discount Applied (Capped)", MessageBoxButtons.OK, MessageBoxIcon.Information)
+        Else
+            MessageBox.Show($"Applied fixed discount of ₱{discountAmount:F2} on highest item: '{highestItemName}'", "Discount Applied", MessageBoxButtons.OK, MessageBoxIcon.Information)
+        End If
     End Sub
-
     ' Remove discount
+    ' Modified: RemoveDiscount - clear recorded discounted item
     Private Sub RemoveDiscount()
         discountType = "None"
         discountValue = 0
         discountAmount = 0
+        discountedItemProductId = Nothing
+        discountedItemName = ""
         RefreshOrderDisplay()
 
         MessageBox.Show("Discount removed", "Discount Removed", MessageBoxButtons.OK, MessageBoxIcon.Information)
@@ -4150,13 +4256,157 @@ Public Class Sales
         End Try
     End Function
     Private Sub lblSearchProduct_Click(sender As Object, e As EventArgs) Handles lblSearchProduct.Click
-
+        ShowProductSearchModal()
     End Sub
 
-    ' ... existing code ...
+    ' Mini modal to search products by barcode or name and add to order (uses existing AddProductToOrder / ShowQuantitySelector)
+    Private Sub ShowProductSearchModal()
+        ' Simple input modal: search by barcode (exact) or product name (partial).
+        Dim searchForm As New Form() With {
+            .Text = "Search Product",
+            .Size = New Size(420, 180),
+            .StartPosition = FormStartPosition.CenterParent,
+            .FormBorderStyle = FormBorderStyle.FixedDialog,
+            .BackColor = DarkSlate,
+            .MaximizeBox = False,
+            .MinimizeBox = False,
+            .ShowInTaskbar = False
+        }
 
-    ' Update the product card click handler in ShowCategoryProducts
+        Dim lbl As New Label() With {
+            .Text = "Enter barcode or product name:",
+            .ForeColor = PureWhite,
+            .Font = New Font("Poppins", 10, FontStyle.Regular),
+            .Location = New Point(12, 12),
+            .AutoSize = True
+        }
+        searchForm.Controls.Add(lbl)
 
+        Dim txtSearch As New Guna.UI2.WinForms.Guna2TextBox() With {
+            .PlaceholderText = "e.g. PRD-001234 or partial product name...",
+            .Size = New Size(360, 36),
+            .Location = New Point(12, 50),
+            .BorderRadius = 8,
+            .FillColor = PureWhite,
+            .ForeColor = DeepCharcoal
+        }
+        searchForm.Controls.Add(txtSearch)
 
-    ' ... existing code ...
+        Dim btnClose As New Guna.UI2.WinForms.Guna2Button() With {
+            .Text = "Close",
+            .Size = New Size(88, 34),
+            .Location = New Point(284, 96),
+            .FillColor = AlertRed,
+            .ForeColor = PureWhite,
+            .BorderRadius = 8
+        }
+        searchForm.Controls.Add(btnClose)
+
+        Dim btnSearch As New Guna.UI2.WinForms.Guna2Button() With {
+            .Text = "Search",
+            .Size = New Size(88, 34),
+            .Location = New Point(190, 96),
+            .FillColor = GoldenYellow,
+            .ForeColor = DeepCharcoal,
+            .BorderRadius = 8
+        }
+        searchForm.Controls.Add(btnSearch)
+
+        ' Helper to run the lookup and show category if found
+        Dim DoLookup = Sub()
+                           Dim term As String = txtSearch.Text.Trim()
+                           If String.IsNullOrWhiteSpace(term) Then
+                               MessageBox.Show("Please enter a barcode or product name to search.", "Search", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                               Return
+                           End If
+
+                           Try
+                               ' Prefer exact product code match first, otherwise partial name match
+                               Dim query As String = "SELECT TOP 1 ProductID, ProductName, Category FROM Products WHERE IsActive = 1 AND (ProductCode = @term OR ProductName LIKE @like) ORDER BY CASE WHEN ProductCode = @term THEN 0 ELSE 1 END, ProductName"
+                               Dim parameters As SqlParameter() = {
+                                   New SqlParameter("@term", term),
+                                   New SqlParameter("@like", "%" & term & "%")
+                               }
+
+                               Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters)
+                                   If reader.Read() Then
+                                       Dim productId As Integer = Convert.ToInt32(reader("ProductID"))
+                                       Dim productName As String = reader("ProductName").ToString()
+                                       Dim category As String = If(reader("Category") IsNot DBNull.Value, reader("Category").ToString(), String.Empty)
+
+                                       ' Close/hide modal before navigating UI
+                                       searchForm.Hide()
+
+                                       ' Show the product's category so product cards are visible
+                                       If Not String.IsNullOrEmpty(category) Then
+                                           ShowCategoryProducts(category)
+                                       Else
+                                           ' If category missing, show all categories (fallback)
+                                           backCategory.Visible = False
+                                           CategoryPanel.AutoScrollPosition = New Point(0, 0)
+                                       End If
+
+                                       ' Allow UI to build product cards
+                                       Application.DoEvents()
+
+                                       ' Highlight the matching product card if present
+                                       For Each ctrl As Control In productCardControls
+                                           If TypeOf ctrl Is Guna.UI2.WinForms.Guna2Panel AndAlso ctrl.Tag IsNot Nothing Then
+                                               Try
+                                                   If Convert.ToInt32(ctrl.Tag) = productId Then
+                                                       Dim pnl = CType(ctrl, Guna.UI2.WinForms.Guna2Panel)
+                                                       ' Flash highlight
+                                                       Dim origBorder As Color = pnl.BorderColor
+                                                       Dim origThickness As Integer = pnl.BorderThickness
+                                                       pnl.BorderColor = GoldenYellow
+                                                       pnl.BorderThickness = 3
+                                                       pnl.BringToFront()
+
+                                                       ' Revert after short delay
+                                                       Dim t As New Timer() With {.Interval = 1400}
+                                                       AddHandler t.Tick, Sub()
+                                                                              t.Stop()
+                                                                              pnl.BorderColor = origBorder
+                                                                              pnl.BorderThickness = origThickness
+                                                                              t.Dispose()
+                                                                          End Sub
+                                                       t.Start()
+                                                       Exit For
+                                                   End If
+                                               Catch
+                                                   ' ignore conversion errors
+                                               End Try
+                                           End If
+                                       Next
+
+                                       Return
+                                   Else
+                                       MessageBox.Show($"No product match for '{term}'.", "Not Found", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                                   End If
+                               End Using
+                           Catch ex As Exception
+                               MessageBox.Show($"Search failed: {ex.Message}", "Search Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                           End Try
+                       End Sub
+
+        ' Event handlers
+        AddHandler btnSearch.Click, Sub() DoLookup()
+        AddHandler btnClose.Click, Sub() searchForm.Close()
+        AddHandler txtSearch.KeyDown, Sub(s, ke)
+                                          If ke.KeyCode = Keys.Enter Then
+                                              ke.Handled = True
+                                              DoLookup()
+                                              ' Close the modal if it was hidden by a match
+                                              If Not searchForm.IsDisposed Then
+                                                  searchForm.Close()
+                                              End If
+                                          ElseIf ke.KeyCode = Keys.Escape Then
+                                              searchForm.Close()
+                                          End If
+                                      End Sub
+
+        ' Show modal
+        searchForm.ShowDialog()
+        searchForm.Dispose()
+    End Sub
 End Class
