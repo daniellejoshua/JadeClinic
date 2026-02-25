@@ -2941,13 +2941,27 @@ Public Class Sales
             subtotalVatInclusiveLocal += Convert.ToDecimal(prod("Price")) * CInt(prod("Quantity"))
         Next
 
-        ' Apply discount to totals only once (discountAmount already represents nominal amount applied)
-        Dim discountedSubtotalVatInclusive As Decimal = Math.Max(0D, subtotalVatInclusiveLocal - discountAmount)
+        ' Decide discounted subtotal:
+        ' If per-line prices were already adjusted above (prod("Price") != OriginalUnitPrice) we must NOT subtract discountAmount again.
+        Dim discountedSubtotalVatInclusive As Decimal = subtotalVatInclusiveLocal
+        Dim perLineDiscountApplied As Boolean = False
+        For Each it In currentOrderList
+            If it.ContainsKey("OriginalUnitPrice") Then
+                If Convert.ToDecimal(it("Price")) <> Convert.ToDecimal(it("OriginalUnitPrice")) Then
+                    perLineDiscountApplied = True
+                    Exit For
+                End If
+            End If
+        Next
+
+        If Not perLineDiscountApplied AndAlso discountAmount > 0 Then
+            discountedSubtotalVatInclusive = Math.Max(0D, subtotalVatInclusiveLocal - discountAmount)
+        End If
 
         ' Calculate VATable sales (net of VAT)
         Dim vatableSales As Decimal = discountedSubtotalVatInclusive / 1.12D
-        Dim vatAmount As Decimal = vatableSales * 0.12D
-        Dim totalAmount As Decimal = vatableSales + vatAmount
+        Dim vatAmount As Decimal = discountedSubtotalVatInclusive - vatableSales
+        Dim totalAmount As Decimal = discountedSubtotalVatInclusive
 
         Me.subtotalVatInclusive = subtotalVatInclusiveLocal
 
