@@ -17,25 +17,35 @@ Public Class InventoryLog
     Public Sub New()
         InitializeComponent()
 
-        ' Initialize loadingPanel
-        loadingPanel = New Panel With {
-            .Dock = DockStyle.Fill,
-            .BackColor = System.Drawing.Color.DarkGray,
-            .Visible = False
-        }
-        loadingLabel = New Label With {
-            .Text = "Loading Inventory Logs...",
-            .ForeColor = System.Drawing.Color.White,
-            .Font = New Font("Poppins", 16),
-            .AutoSize = True,
-            .BackColor = System.Drawing.Color.Transparent
-        }
+        ' Initialize loadingPanel to match the form background and not shown by default
+        loadingPanel = New Panel() With {
+        .Dock = DockStyle.Fill,
+        .Visible = False,
+        .BackColor = Me.BackColor
+    }
+
+        ' Create centered loading label
+        loadingLabel = New Label() With {
+        .Text = "Loading Inventory Logs...",
+        .ForeColor = System.Drawing.Color.White,
+        .Font = New Font("Poppins", 16, FontStyle.Regular),
+        .AutoSize = True,
+        .BackColor = System.Drawing.Color.Transparent,
+        .TextAlign = ContentAlignment.MiddleCenter
+    }
+
         loadingPanel.Controls.Add(loadingLabel)
         Me.Controls.Add(loadingPanel)
 
-        AddHandler loadingPanel.SizeChanged, Sub()
-                                                 loadingLabel.Location = New Point((loadingPanel.Width - loadingLabel.Width) \ 2, (loadingPanel.Height - loadingLabel.Height) \ 2)
+        ' Re-center label whenever overlay size changes (handles initial layout and resizes)
+        AddHandler loadingPanel.SizeChanged, Sub(sender As Object, ev As EventArgs)
+                                                 loadingLabel.Location = New Point((loadingPanel.ClientSize.Width - loadingLabel.Width) \ 2,
+                                                                              (loadingPanel.ClientSize.Height - loadingLabel.Height) \ 2)
                                              End Sub
+
+        ' Attempt initial centering in case sizes are already available
+        loadingLabel.Location = New Point((loadingPanel.ClientSize.Width - loadingLabel.Width) \ 2,
+                                      (loadingPanel.ClientSize.Height - loadingLabel.Height) \ 2)
 
         loadingPanel.BringToFront()
     End Sub
@@ -44,6 +54,19 @@ Public Class InventoryLog
         Try
             ' Setup form
             SetupForm()
+
+            ' Ensure loading panel matches the form background color so it appears as an overlay
+            If loadingPanel IsNot Nothing Then
+                loadingPanel.BackColor = Me.BackColor
+            End If
+
+            ' Show loading panel early so it can render while we prepare the UI
+            If loadingPanel IsNot Nothing Then
+                loadingPanel.Visible = True
+                loadingPanel.BringToFront()
+                ' allow a short time for the overlay to render before doing heavier UI work
+                Await Task.Delay(150)
+            End If
 
             ' Validate user session
             If Not ValidateUserSession() Then
@@ -55,13 +78,6 @@ Public Class InventoryLog
 
             ' Initialize profile section
             InitializeProfileSection()
-
-            ' Show loading panel
-            If loadingPanel IsNot Nothing Then
-                loadingPanel.Visible = True
-                loadingPanel.BringToFront()
-                Await Task.Delay(200) ' Let UI render the overlay
-            End If
 
             ' Setup controls
             SetupControls()
