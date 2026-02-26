@@ -314,135 +314,105 @@ Public Class Staff
     Private Sub InitializeDataGridView()
         ' Clear existing columns
         Guna2DataGridView1.Columns.Clear()
-
-        ' Use the same color palette and styling as Inventory.vb
-        Dim RichOlive As SD.Color = SD.Color.FromArgb(190, 154, 48)
-        Dim GoldenYellow As SD.Color = SD.Color.FromArgb(254, 191, 16)
-        Dim LightGray As SD.Color = SD.Color.FromArgb(248, 248, 248)
-        Dim MediumGray As SD.Color = SD.Color.FromArgb(235, 235, 235)
-        Dim DarkGray As SD.Color = SD.Color.FromArgb(80, 80, 80)
-        Dim BorderGray As SD.Color = SD.Color.FromArgb(220, 220, 220)
-        Dim SelectionDark As SD.Color = SD.Color.FromArgb(120, 120, 120)
-
-        ' Configure DataGridView appearance to match Inventory style
-        Guna2DataGridView1.BackgroundColor = LightGray
-        Guna2DataGridView1.GridColor = BorderGray
-        Guna2DataGridView1.BorderStyle = BorderStyle.None
-        Guna2DataGridView1.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal
-
-        Guna2DataGridView1.DefaultCellStyle.BackColor = LightGray
-        Guna2DataGridView1.AlternatingRowsDefaultCellStyle.BackColor = MediumGray
-        Guna2DataGridView1.DefaultCellStyle.ForeColor = DarkGray
-        Guna2DataGridView1.DefaultCellStyle.SelectionBackColor = SelectionDark
-        Guna2DataGridView1.DefaultCellStyle.SelectionForeColor = SD.Color.White
-        Guna2DataGridView1.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
+        ' Center all cell text
         Guna2DataGridView1.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
-        Guna2DataGridView1.DefaultCellStyle.Padding = New Padding(8, 6, 8, 6)
 
-        ' Header styling using RichOlive to match Inventory
-        Guna2DataGridView1.ColumnHeadersDefaultCellStyle.BackColor = RichOlive
-        Guna2DataGridView1.ColumnHeadersDefaultCellStyle.ForeColor = SD.Color.White
-        Guna2DataGridView1.ColumnHeadersDefaultCellStyle.SelectionBackColor = RichOlive
-        Guna2DataGridView1.ColumnHeadersDefaultCellStyle.Font = New Font("Poppins SemiBold", 10.0F, FontStyle.Bold)
-        Guna2DataGridView1.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
+        ' (Optional) Center header text
+        ' Dark themed DataGridView (match SalesRecord / Inventory)
+        Guna2DataGridView1.BackgroundColor = System.Drawing.Color.FromArgb(41, 44, 45)
+        Guna2DataGridView1.GridColor = System.Drawing.Color.White
+        Guna2DataGridView1.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal
+        Guna2DataGridView1.EnableHeadersVisualStyles = False
+
+        Guna2DataGridView1.DefaultCellStyle = New DataGridViewCellStyle() With {
+        .BackColor = System.Drawing.Color.FromArgb(61, 65, 66),
+        .ForeColor = System.Drawing.Color.LightGray,
+        .SelectionBackColor = System.Drawing.Color.FromArgb(255, 204, 77),
+        .SelectionForeColor = System.Drawing.Color.Black,
+        .Font = New Font("Poppins", 9.0F, FontStyle.Regular),
+        .Alignment = DataGridViewContentAlignment.MiddleCenter,
+        .Padding = New Padding(8, 6, 8, 6)
+    }
+
+        Guna2DataGridView1.AlternatingRowsDefaultCellStyle = New DataGridViewCellStyle() With {
+        .BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
+    }
+
+        Guna2DataGridView1.ColumnHeadersDefaultCellStyle = New DataGridViewCellStyle() With {
+        .BackColor = System.Drawing.Color.FromArgb(30, 30, 30),
+        .ForeColor = System.Drawing.Color.LightGray,
+        .SelectionBackColor = System.Drawing.Color.FromArgb(30, 30, 30),
+        .Font = New Font("Poppins SemiBold", 10.0F, FontStyle.Regular),
+        .Alignment = DataGridViewContentAlignment.MiddleCenter
+    }
         Guna2DataGridView1.ColumnHeadersHeight = 50
         Guna2DataGridView1.RowTemplate.Height = 60
         Guna2DataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing
 
-        ' Ensure row borders / selection behavior is consistent
-        Guna2DataGridView1.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal
-        Guna2DataGridView1.EnableHeadersVisualStyles = False
+        ' Add columns (center aligned by default, except Username/FullName)
+        Guna2DataGridView1.Columns.Add(New DataGridViewTextBoxColumn() With {
+        .Name = "UserID",
+        .HeaderText = "ID",
+        .ReadOnly = True,
+        .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
+    })
 
-        ' Add User ID column FIRST
-        Dim colUserID As New DataGridViewTextBoxColumn()
-        colUserID.Name = "UserID"
-        colUserID.HeaderText = "ID"
-        colUserID.Width = 80
-        colUserID.ReadOnly = True
-        colUserID.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
-        colUserID.DefaultCellStyle.Padding = New Padding(6, 0, 6, 0)
-        Guna2DataGridView1.Columns.Add(colUserID)
+        Dim photoCol As New DataGridViewImageColumn() With {
+        .Name = "Photo",
+        .HeaderText = "Photo",
+        .ImageLayout = DataGridViewImageCellLayout.Zoom,
+        .ReadOnly = True,
+        .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
+    }
+        Guna2DataGridView1.Columns.Add(photoCol)
 
-        ' Add Photo column for user photos (image)
-        Dim colPhoto As New DataGridViewImageColumn()
-        colPhoto.Name = "Photo"
-        colPhoto.HeaderText = "Photo"
-        colPhoto.Width = 70
-        colPhoto.ReadOnly = True
-        colPhoto.ImageLayout = DataGridViewImageCellLayout.Zoom
-        colPhoto.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
-        colPhoto.DefaultCellStyle.Padding = New Padding(5, 5, 5, 5)
-        Guna2DataGridView1.Columns.Add(colPhoto)
+        Guna2DataGridView1.Columns.Add(New DataGridViewTextBoxColumn() With {
+        .Name = "Username",
+        .HeaderText = "Username",
+        .ReadOnly = True,
+        .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleLeft}
+    })
 
-        ' Add Username column
-        Dim colUsername As New DataGridViewTextBoxColumn()
-        colUsername.Name = "Username"
-        colUsername.HeaderText = "Username"
-        colUsername.Width = 180
-        colUsername.ReadOnly = True
-        colUsername.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft
-        colUsername.DefaultCellStyle.Padding = New Padding(10, 0, 10, 0)
-        colUsername.DefaultCellStyle.ForeColor = DarkGray
-        Guna2DataGridView1.Columns.Add(colUsername)
+        Guna2DataGridView1.Columns.Add(New DataGridViewTextBoxColumn() With {
+        .Name = "FullName",
+        .HeaderText = "Full Name",
+        .ReadOnly = True,
+        .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleLeft}
+    })
 
-        ' Add Full Name column
-        Dim colFullName As New DataGridViewTextBoxColumn()
-        colFullName.Name = "FullName"
-        colFullName.HeaderText = "Full Name"
-        colFullName.Width = 220
-        colFullName.ReadOnly = True
-        colFullName.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft
-        colFullName.DefaultCellStyle.Padding = New Padding(10, 0, 10, 0)
-        colFullName.DefaultCellStyle.ForeColor = DarkGray
-        Guna2DataGridView1.Columns.Add(colFullName)
+        Guna2DataGridView1.Columns.Add(New DataGridViewTextBoxColumn() With {
+        .Name = "UserRole",
+        .HeaderText = "Role",
+        .ReadOnly = True,
+        .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
+    })
 
-        ' Add Role column
-        Dim colRole As New DataGridViewTextBoxColumn()
-        colRole.Name = "UserRole"
-        colRole.HeaderText = "Role"
-        colRole.Width = 100
-        colRole.ReadOnly = True
-        colRole.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
-        colRole.DefaultCellStyle.BackColor = LightGray
-        colRole.DefaultCellStyle.ForeColor = DarkGray
-        colRole.DefaultCellStyle.SelectionBackColor = SelectionDark
-        colRole.DefaultCellStyle.SelectionForeColor = SD.Color.White
-        colRole.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
-        Guna2DataGridView1.Columns.Add(colRole)
+        Guna2DataGridView1.Columns.Add(New DataGridViewTextBoxColumn() With {
+        .Name = "IsActive",
+        .HeaderText = "Status",
+        .ReadOnly = True,
+        .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
+    })
 
-        ' Add Status column
-        Dim colStatus As New DataGridViewTextBoxColumn()
-        colStatus.Name = "IsActive"
-        colStatus.HeaderText = "Status"
-        colStatus.Width = 100
-        colStatus.ReadOnly = True
-        colStatus.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
-        colStatus.DefaultCellStyle.ForeColor = DarkGray
-        Guna2DataGridView1.Columns.Add(colStatus)
+        Dim actionsCol As New DataGridViewTextBoxColumn() With {
+        .Name = "Actions",
+        .HeaderText = "Actions",
+        .ReadOnly = True,
+        .DefaultCellStyle = New DataGridViewCellStyle() With {
+            .Alignment = DataGridViewContentAlignment.MiddleCenter,
+            .Font = New Font("Segoe UI Emoji", 12, FontStyle.Regular),
+            .ForeColor = System.Drawing.Color.LightGray
+        }
+    }
+        Guna2DataGridView1.Columns.Add(actionsCol)
 
-        ' Actions column as text column (styled)
-        Dim colActions As New DataGridViewTextBoxColumn()
-        colActions.Name = "Actions"
-        colActions.HeaderText = "Actions"
-        colActions.Width = 200
-        colActions.ReadOnly = True
-        colActions.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
-        colActions.DefaultCellStyle.Font = New Font("Segoe UI Emoji", 11.0F, FontStyle.Regular)
-        colActions.DefaultCellStyle.Padding = New Padding(10, 0, 10, 0)
-        colActions.DefaultCellStyle.BackColor = SD.Color.FromArgb(240, 240, 240)
-        colActions.DefaultCellStyle.ForeColor = SD.Color.FromArgb(50, 100, 200) ' clickable hint
-        colActions.DefaultCellStyle.SelectionBackColor = SD.Color.FromArgb(140, 140, 140)
-        colActions.DefaultCellStyle.SelectionForeColor = SD.Color.White
-        Guna2DataGridView1.Columns.Add(colActions)
-
-        ' Configure DataGridView properties
+        ' Grid behavior
         Guna2DataGridView1.AllowUserToAddRows = False
         Guna2DataGridView1.AllowUserToDeleteRows = False
         Guna2DataGridView1.SelectionMode = DataGridViewSelectionMode.FullRowSelect
         Guna2DataGridView1.MultiSelect = False
-        Guna2DataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None
+        Guna2DataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
     End Sub
-
     Private Sub InitializeSortComboBox()
         SortBy.Items.Clear()
         SortBy.Items.Add("All Users")
@@ -628,9 +598,7 @@ Public Class Staff
             ElseIf clickX < 130 Then
                 ' Edit action
                 EditUser(userData)
-            Else
-                ' Delete action
-                DeleteUser(userData)
+
             End If
         End If
     End Sub
@@ -756,58 +724,6 @@ Public Class Staff
         End Try
     End Sub
 
-    Private Sub DeleteUser(userData As Dictionary(Of String, Object))
-        Dim username As String = userData("Username").ToString()
-        Dim userId As Integer = CInt(userData("UserID"))
-
-        ' Prevent deletion of current user
-        If username = frmLoginvb.LoggedInUsername Then
-            MessageBox.Show("You cannot delete your own account while logged in.", "Action Not Allowed", MessageBoxButtons.OK, MessageBoxIcon.Warning)
-            Return
-        End If
-
-        ' Confirm deletion
-        Dim result As DialogResult = MessageBox.Show(
-            $"Are you sure you want to delete user '{username}'?" & vbCrLf & vbCrLf &
-            "This action cannot be undone.",
-            "Confirm Deletion",
-            MessageBoxButtons.YesNo,
-            MessageBoxIcon.Warning
-        )
-
-        If result = DialogResult.Yes Then
-            Try
-                Dim query As String = "DELETE FROM Users WHERE UserID = @UserID"
-                Dim parameters As SqlParameter() = {
-                    New SqlParameter("@UserID", userId)
-                }
-
-                Dim rowsAffected As Integer = Utilities.ExecuteNonQuery(query, parameters)
-
-                If rowsAffected > 0 Then
-                    MessageBox.Show("User deleted successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information)
-
-                    ' Log the deletion
-                    If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
-                        Utilities.LogAudit(frmLoginvb.LoggedInUsername, "User Deleted", $"Deleted user: {username} (UserID: {userId})")
-                    End If
-
-                    ' Refresh the data
-                    LoadUsersData(If(SortBy.SelectedItem IsNot Nothing, SortBy.SelectedItem.ToString(), ""))
-                Else
-                    MessageBox.Show("Failed to delete user.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-                End If
-
-            Catch ex As Exception
-                MessageBox.Show($"Error deleting user: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-
-                ' Log the error
-                If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
-                    Utilities.LogAudit(frmLoginvb.LoggedInUsername, "User Delete Failed", $"Error deleting {username}: {ex.Message}")
-                End If
-            End Try
-        End If
-    End Sub
 
     Private Sub btnDiscount_Click(sender As Object, e As EventArgs) Handles btnDiscount.Click
         ' Open AddStaff form for adding new staff members
@@ -866,7 +782,7 @@ Public Class Staff
 
     Private Sub CreateNavigationMenu()
         Try
-            ' Clear existing controls except PictureBox9 (logo)
+            ' Remove all controls except the logo
             For i = DashboardPanel.Controls.Count - 1 To 0 Step -1
                 Dim control As Control = DashboardPanel.Controls(i)
                 If TypeOf control IsNot PictureBox Then
@@ -875,152 +791,119 @@ Public Class Staff
                 End If
             Next
 
-            ' Set Navigation Panel Background to White
-            DashboardPanel.FillColor = System.Drawing.Color.White
+            DashboardPanel.FillColor = System.Drawing.Color.FromArgb(61, 65, 66)
 
-            ' Calculate available space (DashboardPanel is 236x999)
-            Dim availableWidth As Integer = DashboardPanel.Width - 40 ' 20px margins on each side
-            Dim availableHeight As Integer = DashboardPanel.Height - 160 ' Space for logo and title
+            ' Render company logo into existing PictureBox9 WITHOUT resizing or adding handlers
+            If PictureBox9 IsNot Nothing Then
+                Try
+                    Dim logoImg As System.Drawing.Image = CompanySettingsManager.Instance.GetCompanyLogo()
+                    If logoImg IsNot Nothing Then
+                        PictureBox9.Image = logoImg
+                        PictureBox9.Location = New Point(81, 15)
+                    End If
+                Catch ex As Exception
+                    Console.WriteLine($"Unable to set dashboard logo: {ex.Message}")
+                End Try
+                PictureBox9.BringToFront()
+            End If
 
-            ' Logo area (keep existing PictureBox9)
-            PictureBox9.BringToFront()
-
-            ' Add title label - positioned below logo with Golden Yellow
-            Dim titleLabel As New Label()
-            titleLabel.Text = "JADE CLINIC"
-            titleLabel.Font = New Font("Poppins", 14, FontStyle.Bold)
-            titleLabel.ForeColor = System.Drawing.Color.FromArgb(254, 191, 16) ' Golden Yellow #FECF10
-            titleLabel.BackColor = System.Drawing.Color.Transparent
-            titleLabel.AutoSize = False
-            titleLabel.Size = New System.Drawing.Size(availableWidth, 30)
-            titleLabel.Location = New Point(20, 110)
-            titleLabel.TextAlign = ContentAlignment.MiddleCenter
-            DashboardPanel.Controls.Add(titleLabel)
-
-            ' Subtitle with Dark Gray color (visible on white background)
-            Dim subtitleLabel As New Label()
-            subtitleLabel.Text = "Dental Supply Management"
-            subtitleLabel.Font = New Font("Poppins", 10, FontStyle.Regular)
-            subtitleLabel.ForeColor = System.Drawing.Color.FromArgb(100, 100, 100) ' Dark Gray for visibility on white
-            subtitleLabel.BackColor = System.Drawing.Color.Transparent
-            subtitleLabel.AutoSize = False
-            subtitleLabel.Size = New System.Drawing.Size(availableWidth, 25)
-            subtitleLabel.Location = New Point(20, 145)
-            subtitleLabel.TextAlign = ContentAlignment.MiddleCenter
-            DashboardPanel.Controls.Add(subtitleLabel)
-
-            ' Navigation section separator with Light Gray (visible on white background)
-            Dim separator1 As New Panel()
-            separator1.BackColor = System.Drawing.Color.FromArgb(220, 220, 220) ' Light Gray for white background
-            separator1.Size = New System.Drawing.Size(availableWidth - 20, 2)
-            separator1.Location = New Point(30, 190)
-            DashboardPanel.Controls.Add(separator1)
-
-            ' Navigation section label with Dark Gray (visible on white background)
-            Dim navLabel As New Label()
-            navLabel.Text = "NAVIGATION"
-            navLabel.Font = New Font("Poppins", 10, FontStyle.Bold)
-            navLabel.ForeColor = System.Drawing.Color.FromArgb(80, 80, 80) ' Dark Gray for visibility on white
-            navLabel.BackColor = System.Drawing.Color.Transparent
-            navLabel.AutoSize = False
-            navLabel.Size = New System.Drawing.Size(availableWidth, 25)
-            navLabel.Location = New Point(20, 205)
-            navLabel.TextAlign = ContentAlignment.MiddleCenter
-            DashboardPanel.Controls.Add(navLabel)
-
-            ' Calculate button positioning for role-based navigation
+            Dim availableWidth As Integer = DashboardPanel.Width - 40
             Dim startY As Integer = 250
             Dim buttonHeight As Integer = 50
             Dim buttonSpacing As Integer = 15
             Dim buttonWidth As Integer = availableWidth - 5
             Dim buttonIndex As Integer = 0
 
-            ' Get current user role for navigation filtering
+            ' Title and subtitle
+            Dim titleLabel As New Label()
+            titleLabel.Text = CompanySettingsManager.Instance.GetSettingString("CompanyName", "JADE CLINIC")
+            titleLabel.Font = New Font("Poppins", 14, FontStyle.Bold)
+            titleLabel.ForeColor = System.Drawing.Color.FromArgb(254, 191, 16)
+            titleLabel.BackColor = System.Drawing.Color.Transparent
+            titleLabel.AutoSize = False
+            titleLabel.Size = New System.Drawing.Size(availableWidth, 30)
+            titleLabel.Location = New System.Drawing.Point(20, 110)
+            titleLabel.TextAlign = ContentAlignment.MiddleCenter
+            DashboardPanel.Controls.Add(titleLabel)
+
+            Dim subtitleLabel As New Label()
+            subtitleLabel.Text = "Staff Management"
+            subtitleLabel.Font = New Font("Poppins", 10, FontStyle.Regular)
+            subtitleLabel.ForeColor = System.Drawing.Color.FromArgb(225, 229, 233)
+            subtitleLabel.BackColor = System.Drawing.Color.Transparent
+            subtitleLabel.AutoSize = False
+            subtitleLabel.Size = New System.Drawing.Size(availableWidth, 25)
+            subtitleLabel.Location = New System.Drawing.Point(20, 145)
+            subtitleLabel.TextAlign = ContentAlignment.MiddleCenter
+            DashboardPanel.Controls.Add(subtitleLabel)
+
+            Dim separator1 As New Panel()
+            separator1.BackColor = System.Drawing.Color.FromArgb(50, 50, 50)
+            separator1.Size = New System.Drawing.Size(availableWidth - 20, 2)
+            separator1.Location = New System.Drawing.Point(30, 190)
+            DashboardPanel.Controls.Add(separator1)
+
+            Dim navLabel As New Label()
+            navLabel.Text = "NAVIGATION"
+            navLabel.Font = New Font("Poppins", 10, FontStyle.Bold)
+            navLabel.ForeColor = System.Drawing.Color.FromArgb(225, 229, 233)
+            navLabel.BackColor = System.Drawing.Color.Transparent
+            navLabel.AutoSize = False
+            navLabel.Size = New System.Drawing.Size(availableWidth, 25)
+            navLabel.Location = New System.Drawing.Point(20, 205)
+            navLabel.TextAlign = ContentAlignment.MiddleCenter
+            DashboardPanel.Controls.Add(navLabel)
+
+            ' Role logic
             Dim currentRole As String = If(frmLoginvb.LoggedInRole, "Staff").ToUpper()
 
-            ' Create navigation buttons based on role
-            ' Dashboard Button (not active)
+            ' Dashboard
             Dim navDashboardBtn = CreateLargeNavButton("🏠 Dashboard", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
             AddHandler navDashboardBtn.Click, AddressOf NavDashboard_Click
             buttonIndex += 1
 
-            ' POS/Sales Button (all roles)
+            ' POS/Sales
             Dim navPOSBtn = CreateLargeNavButton("🛒 POS / Sales", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
             AddHandler navPOSBtn.Click, AddressOf NavPOS_Click
             buttonIndex += 1
 
-            ' Manager and Admin only buttons - Inventory moved here
-            If currentRole = "MANAGER" Or currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
-                ' Inventory Button (only for Manager and Admin)
-                Dim navInventoryBtn = CreateLargeNavButton("📦 Inventory", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-                AddHandler navInventoryBtn.Click, AddressOf NavInventory_Click
-                buttonIndex += 1
+            ' Inventory
+            Dim navInventoryBtn = CreateLargeNavButton("📦 Inventory", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
+            AddHandler navInventoryBtn.Click, AddressOf NavInventory_Click
+            buttonIndex += 1
 
-                ' Sales Records Button
-                Dim navSalesRecordsBtn = CreateLargeNavButton("📊 Sales Records", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-                AddHandler navSalesRecordsBtn.Click, AddressOf NavSalesRecords_Click
-                buttonIndex += 1
+            ' Sales Records
+            Dim navSalesRecordsBtn = CreateLargeNavButton("📊 Sales Records", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
+            AddHandler navSalesRecordsBtn.Click, AddressOf NavSalesRecords_Click
+            buttonIndex += 1
 
-                ' Staff Management Button (ACTIVE - we're on this page) - Only for Admin
-                If currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
-                    Dim navStaffBtn = CreateLargeNavButton("👥 Staff", startY + buttonIndex * (buttonHeight + buttonSpacing), True, buttonWidth, buttonHeight)
-                    buttonIndex += 1
-                End If
+            ' Inventory Logs
+            Dim navInventoryLogBtn = CreateLargeNavButton("📋 Inventory Logs", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
+            AddHandler navInventoryLogBtn.Click, AddressOf NavInventoryLog_Click
+            buttonIndex += 1
 
-                ' Inventory Logs Button
-                Dim navInventoryLogBtn = CreateLargeNavButton("📋 Inventory Logs", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-                AddHandler navInventoryLogBtn.Click, AddressOf NavInventoryLog_Click
-                buttonIndex += 1
-            End If
-
-            ' Admin only buttons
+            ' Audit Logs & System (admin only)
             If currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
-                ' Audit Logs Button
                 Dim navAuditLogBtn = CreateLargeNavButton("🔍 Audit Logs", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
                 AddHandler navAuditLogBtn.Click, AddressOf NavAuditLog_Click
                 buttonIndex += 1
 
-                ' System Settings Button
                 Dim systemSettingsBtn = CreateLargeNavButton("⚙️ System", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-                AddHandler systemSettingsBtn.Click, Sub() MessageBox.Show("System Settings feature coming soon!", "Coming Soon", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                AddHandler systemSettingsBtn.Click, AddressOf NavSystemSettings_Click
                 buttonIndex += 1
             End If
 
-            ' Add separator line before logout
-            Dim separator2 As New Panel()
-            separator2.BackColor = System.Drawing.Color.FromArgb(220, 220, 220) ' Light Gray for white background
-            separator2.Size = New System.Drawing.Size(availableWidth - 40, 2)
-            separator2.Location = New Point(40, startY + buttonIndex * (buttonHeight + buttonSpacing) + 10)
-            DashboardPanel.Controls.Add(separator2)
+            ' Staff (ACTIVE)
+            Dim navStaffBtn = CreateLargeNavButton("👥 Staff", startY + buttonIndex * (buttonHeight + buttonSpacing), True, buttonWidth, buttonHeight)
+            buttonIndex += 1
 
-            ' Logout Button (at bottom with Alert Red styling)
-            Dim navLogoutBtn = CreateLargeNavButton("🚪 Logout", startY + buttonIndex * (buttonHeight + buttonSpacing) + 30, False, buttonWidth, buttonHeight)
-            navLogoutBtn.FillColor = System.Drawing.Color.FromArgb(255, 71, 87) ' Alert Red #FF4757
-            navLogoutBtn.ForeColor = System.Drawing.Color.White
-
-            ' Override hover effects for logout button to maintain red background
-            RemoveHandler navLogoutBtn.MouseEnter, Nothing
-            RemoveHandler navLogoutBtn.MouseLeave, Nothing
-            AddHandler navLogoutBtn.MouseEnter, Sub()
-                                                    navLogoutBtn.FillColor = System.Drawing.Color.FromArgb(220, 50, 50) ' Slightly darker red on hover
-                                                    navLogoutBtn.Font = New Font("Poppins", 9, FontStyle.Bold)
-                                                End Sub
-            AddHandler navLogoutBtn.MouseLeave, Sub()
-                                                    navLogoutBtn.FillColor = System.Drawing.Color.FromArgb(255, 71, 87) ' Back to original red
-                                                    navLogoutBtn.Font = New Font("Poppins", 10, FontStyle.Regular)
-                                                End Sub
-
-            AddHandler navLogoutBtn.Click, AddressOf NavLogout_Click
 
         Catch ex As Exception
             Console.WriteLine($"Error creating navigation menu: {ex.Message}")
         End Try
     End Sub
-
     Private Function CreateLargeNavButton(text As String, yPosition As Integer, isActive As Boolean, buttonWidth As Integer, buttonHeight As Integer) As Guna.UI2.WinForms.Guna2Button
         Dim btn As New Guna.UI2.WinForms.Guna2Button()
-
-        ' Button properties with improved sizing and new color scheme
         btn.Text = text
         btn.Size = New System.Drawing.Size(buttonWidth, buttonHeight)
         btn.Location = New Point(20, yPosition)
@@ -1028,43 +911,35 @@ Public Class Staff
         btn.Font = New Font("Poppins", 10, FontStyle.Regular)
         btn.TextAlign = HorizontalAlignment.Left
 
-        ' Apply new color scheme
-        btn.FillColor = If(isActive, System.Drawing.Color.FromArgb(254, 191, 16), System.Drawing.Color.Transparent) ' Golden Yellow if active #FECF10
-        btn.ForeColor = If(isActive, System.Drawing.Color.FromArgb(26, 29, 31), System.Drawing.Color.FromArgb(50, 50, 50)) ' Deep Charcoal text on active, Dark Gray text on inactive for white background
+        btn.FillColor = If(isActive, System.Drawing.Color.FromArgb(254, 191, 16), System.Drawing.Color.Transparent)
+        btn.ForeColor = If(isActive, System.Drawing.Color.FromArgb(26, 29, 31), System.Drawing.Color.White)
         btn.BorderThickness = If(isActive, 0, 1)
-        btn.BorderColor = If(isActive, System.Drawing.Color.Transparent, System.Drawing.Color.FromArgb(200, 200, 200)) ' Light Gray border for white background
+        btn.BorderColor = If(isActive, System.Drawing.Color.Transparent, System.Drawing.Color.FromArgb(80, 80, 80))
         btn.BackColor = System.Drawing.Color.Transparent
         btn.Cursor = Cursors.Hand
 
-        ' Add subtle shadow for depth
         btn.ShadowDecoration.Enabled = True
-        btn.ShadowDecoration.Color = System.Drawing.Color.FromArgb(26, 29, 31) ' Deep Charcoal shadow
-        btn.ShadowDecoration.Depth = 5
-        btn.ShadowDecoration.Shadow = New Padding(0, 2, 5, 5)
+        btn.ShadowDecoration.Color = System.Drawing.Color.FromArgb(30, 30, 30)
+        btn.ShadowDecoration.Depth = 4
 
-        ' Improved hover effects with new color scheme
         AddHandler btn.MouseEnter, Sub()
                                        If Not isActive Then
-                                           btn.FillColor = System.Drawing.Color.FromArgb(240, 240, 240) ' Light Gray hover for white background
-                                           btn.BorderColor = System.Drawing.Color.FromArgb(190, 154, 48) ' Rich Olive border #BE9A30
+                                           btn.FillColor = System.Drawing.Color.FromArgb(48, 52, 54)
+                                           btn.BorderColor = System.Drawing.Color.FromArgb(254, 191, 16)
                                            btn.Font = New Font("Poppins", 9, FontStyle.Bold)
                                        End If
                                    End Sub
-
         AddHandler btn.MouseLeave, Sub()
                                        If Not isActive Then
                                            btn.FillColor = System.Drawing.Color.Transparent
-                                           btn.BorderColor = System.Drawing.Color.FromArgb(200, 200, 200) ' Light Gray border
+                                           btn.BorderColor = System.Drawing.Color.FromArgb(80, 80, 80)
                                            btn.Font = New Font("Poppins", 10, FontStyle.Regular)
                                        End If
                                    End Sub
 
-        ' Add to panel
         DashboardPanel.Controls.Add(btn)
-
         Return btn
     End Function
-
     ' Navigation event handlers
     Private Sub NavDashboard_Click(sender As Object, e As EventArgs)
         isNavigating = True
@@ -1095,7 +970,11 @@ Public Class Staff
         InventoryLog.Show()
         Me.Close()
     End Sub
-
+    Private Sub NavSystemSettings_Click(sender As Object, e As EventArgs)
+        isNavigating = True
+        Sys.Show()
+        Me.Close()
+    End Sub
     Private Sub NavAuditLog_Click(sender As Object, e As EventArgs)
         ' For now, show coming soon message
         MessageBox.Show("Audit Logs feature coming soon!", "Feature Coming Soon", MessageBoxButtons.OK, MessageBoxIcon.Information)

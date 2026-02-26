@@ -33,6 +33,7 @@ Partial Class Staff
         Dim CustomizableEdges9 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         LabelTitle = New Label()
         DashboardPanel = New Guna.UI2.WinForms.Guna2Panel()
+        PictureBox9 = New PictureBox()
         Guna2CirclePictureBox5 = New Guna.UI2.WinForms.Guna2CirclePictureBox()
         Guna2DataGridView1 = New Guna.UI2.WinForms.Guna2DataGridView()
         btnDiscount = New Guna.UI2.WinForms.Guna2Button()
@@ -40,11 +41,10 @@ Partial Class Staff
         Exportbtn = New Guna.UI2.WinForms.Guna2Button()
         lblUsername = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2HtmlLabel3 = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        PictureBox9 = New PictureBox()
         DashboardPanel.SuspendLayout()
+        CType(PictureBox9, ComponentModel.ISupportInitialize).BeginInit()
         CType(Guna2CirclePictureBox5, ComponentModel.ISupportInitialize).BeginInit()
         CType(Guna2DataGridView1, ComponentModel.ISupportInitialize).BeginInit()
-        CType(PictureBox9, ComponentModel.ISupportInitialize).BeginInit()
         SuspendLayout()
         ' 
         ' LabelTitle
@@ -70,6 +70,18 @@ Partial Class Staff
         DashboardPanel.Size = New Size(236, 885)
         DashboardPanel.TabIndex = 6
         ' 
+        ' PictureBox9
+        ' 
+        PictureBox9.BackColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
+        PictureBox9.ErrorImage = My.Resources.Resources.Jade_Dental_Logo
+        PictureBox9.Image = My.Resources.Resources.Jade_Dental_Logo
+        PictureBox9.Location = New Point(60, 3)
+        PictureBox9.Name = "PictureBox9"
+        PictureBox9.Size = New Size(103, 85)
+        PictureBox9.SizeMode = PictureBoxSizeMode.StretchImage
+        PictureBox9.TabIndex = 76
+        PictureBox9.TabStop = False
+        ' 
         ' Guna2CirclePictureBox5
         ' 
         Guna2CirclePictureBox5.ImageRotate = 0F
@@ -92,7 +104,7 @@ Partial Class Staff
         Guna2DataGridView1.BackgroundColor = Color.FromArgb(CByte(61), CByte(65), CByte(65))
         DataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleLeft
         DataGridViewCellStyle2.BackColor = Color.FromArgb(CByte(100), CByte(88), CByte(255))
-        DataGridViewCellStyle2.Font = New Font("Segoe UI", 9.0F)
+        DataGridViewCellStyle2.Font = New Font("Segoe UI", 9F)
         DataGridViewCellStyle2.ForeColor = Color.White
         DataGridViewCellStyle2.SelectionBackColor = SystemColors.Highlight
         DataGridViewCellStyle2.SelectionForeColor = SystemColors.HighlightText
@@ -102,7 +114,7 @@ Partial Class Staff
         Guna2DataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.EnableResizing
         DataGridViewCellStyle3.Alignment = DataGridViewContentAlignment.MiddleLeft
         DataGridViewCellStyle3.BackColor = Color.White
-        DataGridViewCellStyle3.Font = New Font("Segoe UI", 9.0F)
+        DataGridViewCellStyle3.Font = New Font("Segoe UI", 9F)
         DataGridViewCellStyle3.ForeColor = Color.FromArgb(CByte(71), CByte(69), CByte(94))
         DataGridViewCellStyle3.SelectionBackColor = Color.FromArgb(CByte(231), CByte(229), CByte(255))
         DataGridViewCellStyle3.SelectionForeColor = Color.FromArgb(CByte(71), CByte(69), CByte(94))
@@ -124,14 +136,14 @@ Partial Class Staff
         Guna2DataGridView1.ThemeStyle.GridColor = Color.FromArgb(CByte(231), CByte(229), CByte(255))
         Guna2DataGridView1.ThemeStyle.HeaderStyle.BackColor = Color.FromArgb(CByte(100), CByte(88), CByte(255))
         Guna2DataGridView1.ThemeStyle.HeaderStyle.BorderStyle = DataGridViewHeaderBorderStyle.None
-        Guna2DataGridView1.ThemeStyle.HeaderStyle.Font = New Font("Segoe UI", 9.0F)
+        Guna2DataGridView1.ThemeStyle.HeaderStyle.Font = New Font("Segoe UI", 9F)
         Guna2DataGridView1.ThemeStyle.HeaderStyle.ForeColor = Color.White
         Guna2DataGridView1.ThemeStyle.HeaderStyle.HeaightSizeMode = DataGridViewColumnHeadersHeightSizeMode.EnableResizing
         Guna2DataGridView1.ThemeStyle.HeaderStyle.Height = 4
         Guna2DataGridView1.ThemeStyle.ReadOnly = False
         Guna2DataGridView1.ThemeStyle.RowsStyle.BackColor = Color.White
         Guna2DataGridView1.ThemeStyle.RowsStyle.BorderStyle = DataGridViewCellBorderStyle.SingleHorizontal
-        Guna2DataGridView1.ThemeStyle.RowsStyle.Font = New Font("Segoe UI", 9.0F)
+        Guna2DataGridView1.ThemeStyle.RowsStyle.Font = New Font("Segoe UI", 9F)
         Guna2DataGridView1.ThemeStyle.RowsStyle.ForeColor = Color.FromArgb(CByte(71), CByte(69), CByte(94))
         Guna2DataGridView1.ThemeStyle.RowsStyle.Height = 29
         Guna2DataGridView1.ThemeStyle.RowsStyle.SelectionBackColor = Color.FromArgb(CByte(231), CByte(229), CByte(255))
@@ -146,7 +158,7 @@ Partial Class Staff
         btnDiscount.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         btnDiscount.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
         btnDiscount.FillColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
-        btnDiscount.Font = New Font("Poppins Medium", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        btnDiscount.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         btnDiscount.ForeColor = Color.Black
         btnDiscount.Location = New Point(1314, 100)
         btnDiscount.Name = "btnDiscount"
@@ -184,7 +196,7 @@ Partial Class Staff
         Exportbtn.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         Exportbtn.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
         Exportbtn.FillColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
-        Exportbtn.Font = New Font("Poppins Medium", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Exportbtn.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Exportbtn.ForeColor = Color.Black
         Exportbtn.Location = New Point(1501, 100)
         Exportbtn.Name = "Exportbtn"
@@ -196,7 +208,7 @@ Partial Class Staff
         ' lblUsername
         ' 
         lblUsername.BackColor = Color.Transparent
-        lblUsername.Font = New Font("Poppins Light", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        lblUsername.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         lblUsername.ForeColor = Color.White
         lblUsername.Location = New Point(1477, 20)
         lblUsername.Name = "lblUsername"
@@ -215,21 +227,9 @@ Partial Class Staff
         Guna2HtmlLabel3.TabIndex = 75
         Guna2HtmlLabel3.Text = "Filter by:"
         ' 
-        ' PictureBox9
-        ' 
-        PictureBox9.BackColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
-        PictureBox9.ErrorImage = My.Resources.Resources.Jade_Dental_Logo
-        PictureBox9.Image = My.Resources.Resources.Jade_Dental_Logo
-        PictureBox9.Location = New Point(60, 3)
-        PictureBox9.Name = "PictureBox9"
-        PictureBox9.Size = New Size(121, 100)
-        PictureBox9.SizeMode = PictureBoxSizeMode.StretchImage
-        PictureBox9.TabIndex = 76
-        PictureBox9.TabStop = False
-        ' 
         ' Staff
         ' 
-        AutoScaleDimensions = New SizeF(8.0F, 20.0F)
+        AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
         BackColor = Color.FromArgb(CByte(30), CByte(30), CByte(30))
         ClientSize = New Size(1609, 875)
@@ -246,9 +246,9 @@ Partial Class Staff
         StartPosition = FormStartPosition.CenterScreen
         Text = "Orders"
         DashboardPanel.ResumeLayout(False)
+        CType(PictureBox9, ComponentModel.ISupportInitialize).EndInit()
         CType(Guna2CirclePictureBox5, ComponentModel.ISupportInitialize).EndInit()
         CType(Guna2DataGridView1, ComponentModel.ISupportInitialize).EndInit()
-        CType(PictureBox9, ComponentModel.ISupportInitialize).EndInit()
         ResumeLayout(False)
         PerformLayout()
     End Sub
