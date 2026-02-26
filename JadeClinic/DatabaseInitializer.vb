@@ -1,4 +1,5 @@
-﻿Imports Microsoft.Data.SqlClient
+﻿' (entire file with edits)
+Imports Microsoft.Data.SqlClient
 Imports System.Configuration
 Imports System.IO
 
@@ -12,7 +13,7 @@ Public Class DatabaseInitializer
             ' Create tables in the right order (no foreign key dependencies first)
             CreateUsersTableActual() ' Match your real schema with passkeys in Users table
 
-            CreateCustomersTableActual()    ' <-- ADD THIS LINE
+            ' NOTE: Customers table creation intentionally skipped by design (no persistent customer records required)
 
             CreateSuppliersTableActual()
             CreateProductsTableActual()
@@ -102,8 +103,6 @@ Public Class DatabaseInitializer
 
         DatabaseHelper.ExecuteNonQuery(query, Nothing)
     End Sub
-
-
 
     Private Shared Sub CreateProductsTableActual()
         Dim query As String = "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Products' AND xtype='U') " &
@@ -212,40 +211,12 @@ Public Class DatabaseInitializer
             Console.WriteLine($"Note: Could not create ProductImageMapping index: {ex.Message}")
         End Try
     End Sub
-    Private Shared Sub CreateCustomersTableActual()
-        Dim query As String = "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Customers' AND xtype='U') " &
-        "CREATE TABLE Customers(" &
-        "CustomerID int IDENTITY(1,1) PRIMARY KEY, " &
-        "CustomerCode nvarchar(50) NOT NULL UNIQUE, " &
-        "CustomerName nvarchar(200) NOT NULL, " &
-        "CustomerType nvarchar(50) NULL, " &
-        "TIN nvarchar(50) NULL, " &              ' Tax Identification Number
-        "Phone nvarchar(30) NULL, " &
-        "Email nvarchar(200) NULL, " &
-        "IsActive bit DEFAULT 1, " &
-        "CreatedAt datetime DEFAULT getdate())"
 
-        DatabaseHelper.ExecuteNonQuery(query, Nothing)
+    ' Customers table intentionally not created (ephemeral customers only via sales snapshots)
 
-        ' Index on CustomerCode and TIN for fast lookups
-        Dim idxCode As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Customers_Code') " &
-        "CREATE NONCLUSTERED INDEX IX_Customers_Code ON Customers (CustomerCode ASC)"
-        Try
-            DatabaseHelper.ExecuteNonQuery(idxCode, Nothing)
-        Catch ex As Exception
-            Console.WriteLine($"Note: Could not create Customers.Code index: {ex.Message}")
-        End Try
-
-        Dim idxTIN As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Customers_TIN') " &
-        "CREATE NONCLUSTERED INDEX IX_Customers_TIN ON Customers (TIN ASC) WHERE TIN IS NOT NULL"
-        Try
-            DatabaseHelper.ExecuteNonQuery(idxTIN, Nothing)
-        Catch ex As Exception
-            Console.WriteLine($"Note: Could not create Customers.TIN index: {ex.Message}")
-        End Try
-    End Sub
     Private Shared Sub CreateSalesTableActual()
         ' Sales table: keep SalesData JSON but add reportable explicit columns for scale.
+        ' Note: CustomerID column and FK removed since we don't persist customer records.
         Dim query As String = "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Sales' AND xtype='U') " &
         "CREATE TABLE Sales(" &
         "SaleID int IDENTITY(1,1) PRIMARY KEY, " &
@@ -253,7 +224,6 @@ Public Class DatabaseInitializer
         "SaleDate datetime DEFAULT getdate(), " &
         "CustomerName nvarchar(200) NULL, " &
         "CustomerTIN nvarchar(50) NULL, " &            ' persisted TIN for quick reads
-        "CustomerID int NULL, " &                      ' optional FK to Customers
         "UserID int NULL, " &
         "TotalAmount decimal(18,2) DEFAULT 0, " &
         "AmountPaid decimal(18,2) DEFAULT 0, " &
@@ -268,38 +238,27 @@ Public Class DatabaseInitializer
 
         DatabaseHelper.ExecuteNonQuery(query, Nothing)
 
-        ' Backwards-compatible: add columns to existing Sales table if they don't exist
+        ' Backwards-compatible: ensure CustomerTIN exists (keep for snapshots)
         Try
             Dim addCustomerTIN As String = "IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Sales' AND COLUMN_NAME = 'CustomerTIN') " &
             "ALTER TABLE Sales ADD CustomerTIN nvarchar(50) NULL"
             DatabaseHelper.ExecuteNonQuery(addCustomerTIN, Nothing)
+        Catch ex As Exception
+            Console.WriteLine($"Note: Could not add CustomerTIN to Sales: {ex.Message}")
+        End Try
 
-            Dim addCustomerID As String = "IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Sales' AND COLUMN_NAME = 'CustomerID') " &
-            "ALTER TABLE Sales ADD CustomerID int NULL"
-            DatabaseHelper.ExecuteNonQuery(addCustomerID, Nothing)
-
-            ' Add FK constraint if not exists (safe check)
-            Dim addFk As String = "IF NOT EXISTS (SELECT * FROM sys.foreign_keys WHERE name = 'FK_Sales_Customers') " &
-            "BEGIN " &
-            " IF EXISTS (SELECT * FROM sysobjects WHERE name='Customers' AND xtype='U') " &
-            " ALTER TABLE Sales WITH NOCHECK ADD CONSTRAINT FK_Sales_Customers FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID) " &
-            "END"
-            DatabaseHelper.ExecuteNonQuery(addFk, Nothing)
-
-            ' Indexes for quick lookup
-            Dim idxCustomer As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Sales_Customer') " &
-            "CREATE NONCLUSTERED INDEX IX_Sales_Customer ON Sales (CustomerID ASC) WHERE CustomerID IS NOT NULL"
-            DatabaseHelper.ExecuteNonQuery(idxCustomer, Nothing)
-
+        ' Index for CustomerTIN (still useful for quick lookups by TIN)
+        Try
             Dim idxCustomerTIN As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Sales_CustomerTIN') " &
             "CREATE NONCLUSTERED INDEX IX_Sales_CustomerTIN ON Sales (CustomerTIN ASC) WHERE CustomerTIN IS NOT NULL"
             DatabaseHelper.ExecuteNonQuery(idxCustomerTIN, Nothing)
         Catch ex As Exception
-            Console.WriteLine($"Note: Could not add customer columns/indexes to Sales: {ex.Message}")
+            Console.WriteLine($"Note: Could not create CustomerTIN index on Sales: {ex.Message}")
         End Try
 
         ' ... existing index creation for SaleDate, DiscountAmount etc. ...
     End Sub
+
     Private Shared Sub CreateSaleItemsTableActual()
         ' SaleItems: store both the charged unit price and the original price + per-line discount for historical accuracy
         Dim query As String = "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='SaleItems' AND xtype='U') " &
@@ -309,8 +268,8 @@ Public Class DatabaseInitializer
             "ProductID int NOT NULL, " &
             "Quantity int NOT NULL, " &
             "UnitPrice decimal(18,2) NOT NULL, " &
-            "OriginalUnitPrice decimal(18,2) NULL, " &    ' original list price at time of sale
-            "LineDiscountAmount decimal(18,2) NOT NULL DEFAULT 0, " & ' amount discounted on this line
+            "OriginalUnitPrice decimal(18,2) NULL, " &
+            "LineDiscountAmount decimal(18,2) NOT NULL DEFAULT 0, " &
             "SubTotal AS (Quantity * UnitPrice), " &
             "FOREIGN KEY (SaleID) REFERENCES Sales(SaleID), " &
             "FOREIGN KEY (ProductID) REFERENCES Products(ProductID))"
@@ -487,7 +446,7 @@ Public Class DatabaseInitializer
     Private Shared Sub CreateInitialData()
         CreateDefaultAdminUser()
         CreateDefaultSuppliers()
-        CreateDefaultCustomers()
+        ' Default customers intentionally not created when customers are ephemeral
         CreateDefaultCompanySettings() ' Add default company settings
     End Sub
 
@@ -602,36 +561,6 @@ Public Class DatabaseInitializer
         End Try
     End Sub
 
-    Private Shared Sub CreateDefaultCustomers()
-        Try
-            Dim customers(,) As String = {
-                {"CUST001", "General Dentist"},
-                {"CUST002", "Orthodontist Office"},
-                {"CUST003", "Dental Clinic"}
-            }
-
-            For i As Integer = 0 To customers.GetUpperBound(0)
-                Dim customerCode As String = customers(i, 0)
-                Dim customerName As String = customers(i, 1)
-
-                Dim checkQuery As String = "SELECT COUNT(*) FROM Customers WHERE CustomerCode = @CustomerCode"
-                Dim parameters() As SqlParameter = {New SqlParameter("@CustomerCode", customerCode)}
-                Dim count As Integer = CInt(DatabaseHelper.ExecuteScalar(checkQuery, parameters))
-
-                If count = 0 Then
-                    Dim insertQuery As String = "INSERT INTO Customers (CustomerCode, CustomerName, CustomerType, IsActive) VALUES (@CustomerCode, @CustomerName, 'Dentist', 1)"
-                    Dim insertParams() As SqlParameter = {
-                        New SqlParameter("@CustomerCode", customerCode),
-                        New SqlParameter("@CustomerName", customerName)
-                    }
-                    DatabaseHelper.ExecuteNonQuery(insertQuery, insertParams)
-                End If
-            Next
-        Catch ex As Exception
-            Console.WriteLine($"Warning: Could not create default customers: {ex.Message}")
-        End Try
-    End Sub
-
     ' ENHANCED: Include actual Jade Dental Clinic logo from resources as default
     Private Shared Sub CreateDefaultCompanySettings()
         Try
@@ -643,7 +572,7 @@ Public Class DatabaseInitializer
                 Dim logoBytes As Byte() = Nothing
                 Try
                     ' Get the Jade Dental Logo from resources
-                    Using logoImage As System.Drawing.Image = My.Resources.Jade_Dental_Logo
+                    Using logoImage As System.Drawing.Image = My.Resources.FinalLogoOfJAde
                         If logoImage IsNot Nothing Then
                             Using ms As New MemoryStream()
                                 logoImage.Save(ms, System.Drawing.Imaging.ImageFormat.Png)

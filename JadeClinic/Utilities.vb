@@ -77,12 +77,12 @@ Module Utilities
         Try
             Dim saltBytes As Byte() = Convert.FromBase64String(salt)
             Dim passwordBytes As Byte() = Encoding.UTF8.GetBytes(password)
-            
+
             ' Combine password and salt
             Dim combined(passwordBytes.Length + saltBytes.Length - 1) As Byte
             Array.Copy(passwordBytes, 0, combined, 0, passwordBytes.Length)
             Array.Copy(saltBytes, 0, combined, passwordBytes.Length, saltBytes.Length)
-            
+
             ' Hash the combined bytes
             Using sha256 As SHA256 = SHA256.Create()
                 Dim hashBytes As Byte() = sha256.ComputeHash(combined)

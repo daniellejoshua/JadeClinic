@@ -1283,10 +1283,7 @@ Public Class Inventory
         Me.Close()
     End Sub
 
-    Private Sub NavAuditLog_Click(sender As Object, e As EventArgs)
-        ' For now, show coming soon message
-        MessageBox.Show("Audit Logs feature coming soon!", "Feature Coming Soon", MessageBoxButtons.OK, MessageBoxIcon.Information)
-    End Sub
+
 
     Private Sub NavLogout_Click(sender As Object, e As EventArgs)
         ' Confirm logout
@@ -1668,7 +1665,11 @@ Public Class Inventory
             ' Silent fail
         End Try
     End Sub
-
+    Private Sub NavAuditLog_Click(sender As Object, e As EventArgs)
+        isNavigating = True
+        AuditLog.Show()
+        Me.Close()
+    End Sub
     Private Sub ProductDataGrid_Leave(sender As Object, e As EventArgs)
         Try
             ' DataGridView lost focus - hide tooltips with null checks

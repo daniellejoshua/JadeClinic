@@ -482,6 +482,22 @@ Public Class SalesRecord
             Next
 
             DashboardPanel.FillColor = System.Drawing.Color.FromArgb(61, 65, 66)
+            ' Render company logo into existing PictureBox9 WITHOUT resizing or adding handlers
+            ' Logo area (keep existing PictureBox9)
+            If PictureBox9 IsNot Nothing Then
+                Try
+                    ' Fully-qualify to avoid type ambiguity with QuestPDF.Image
+                    Dim logoImg As System.Drawing.Image = CompanySettingsManager.Instance.GetCompanyLogo()
+                    If logoImg IsNot Nothing Then
+                        PictureBox9.Image = logoImg
+                        PictureBox9.Location = New Point(81, 15)
+
+                    End If
+                Catch ex As Exception
+                    Console.WriteLine($"Unable to set dashboard logo: {ex.Message}")
+                End Try
+                PictureBox9.BringToFront()
+            End If
             PictureBox9.BringToFront()
 
             Dim availableWidth As Integer = DashboardPanel.Width - 40
@@ -648,6 +664,11 @@ Public Class SalesRecord
         Dashboard.Show()
         Me.Close()
     End Sub
+    Private Sub NavAuditLog_Click(sender As Object, e As EventArgs)
+        isNavigating = True
+        AuditLog.Show()
+        Me.Close()
+    End Sub
 
     Private Sub NavInventory_Click(sender As Object, e As EventArgs)
         isNavigating = True
@@ -664,11 +685,6 @@ Public Class SalesRecord
     Private Sub NavInventoryLog_Click(sender As Object, e As EventArgs)
         isNavigating = True
         InventoryLog.Show()
-        Me.Close()
-    End Sub
-
-    Private Sub NavAuditLog_Click(sender As Object, e As EventArgs)
-        isNavigating = True
         Me.Close()
     End Sub
 

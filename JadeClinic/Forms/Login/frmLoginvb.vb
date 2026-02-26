@@ -628,16 +628,16 @@ Public Class frmLoginvb
         pinPanel = New Guna.UI2.WinForms.Guna2Panel()
         pinPanel.Size = Guna2Panel1.Size
         pinPanel.BorderRadius = 10
-        pinPanel.FillColor = Color.FromArgb(190, 154, 48) ' Light gray background for visibility
+        pinPanel.FillColor = Color.FromArgb(41, 44, 45)
         pinPanel.Location = Guna2Panel1.Location
         pinPanel.TabStop = True
 
         Dim lblTitle As New Guna.UI2.WinForms.Guna2HtmlLabel()
         lblTitle.Text = "Enter your PIN"
         lblTitle.Font = New Font("Poppins SemiBold", 18.0F, FontStyle.Regular)
-        lblTitle.ForeColor = Color.FromArgb(30, 30, 30) ' Darker gray for better contrast on light gray
-        lblTitle.Location = New Point((pinPanel.Width - 200) \ 2, 30) ' Estimate width for centering
+        lblTitle.ForeColor = Color.White
         lblTitle.AutoSize = True
+        lblTitle.Location = New Point((pinPanel.Width - lblTitle.Width) \ 2, 30)
         pinPanel.Controls.Add(lblTitle)
 
         Dim pinIndicators As New List(Of Guna.UI2.WinForms.Guna2CircleButton)()
@@ -647,10 +647,9 @@ Public Class frmLoginvb
         For i = 0 To 3
             Dim indicator As New Guna.UI2.WinForms.Guna2CircleButton()
             indicator.Size = New Size(indicatorSize, indicatorSize)
-            indicator.FillColor = Color.FromArgb(240, 240, 240) ' Light gray for empty indicators
-            indicator.BackColor = Color.FromArgb(190, 154, 48)
-            indicator.BorderColor = Color.FromArgb(200, 200, 200)
-            indicator.BorderThickness = 2
+            indicator.FillColor = Color.FromArgb(61, 65, 66)   ' empty indicator color
+            indicator.BackColor = Color.FromArgb(41, 44, 45)
+            indicator.BorderColor = Color.Transparent
             indicator.Location = New Point(indicatorStartX + i * (indicatorSize + indicatorSpacing), 90)
             pinIndicators.Add(indicator)
             pinPanel.Controls.Add(indicator)
@@ -661,11 +660,9 @@ Public Class frmLoginvb
         btnBack.Font = New Font("Poppins SemiBold", 16.0F, FontStyle.Regular)
         btnBack.Size = New Size(50, 50)
         btnBack.BorderRadius = 10
-        btnBack.FillColor = Color.FromArgb(220, 220, 220) ' Slightly darker gray for back button
-        btnBack.ForeColor = Color.FromArgb(30, 30, 30) ' Dark gray text
-        btnBack.BackColor = Color.FromArgb(245, 245, 245) ' Match panel background
-        btnBack.BorderColor = Color.FromArgb(200, 200, 200)
-        btnBack.BorderThickness = 1
+        btnBack.FillColor = Color.FromArgb(61, 66, 66)
+        btnBack.ForeColor = Color.White
+        btnBack.BackColor = Color.FromArgb(41, 44, 45)
         btnBack.Location = New Point(20, 20)
         AddHandler btnBack.Click, Sub()
                                       Me.Controls.Remove(pinPanel)
@@ -686,52 +683,56 @@ Public Class frmLoginvb
             Dim button As New Guna.UI2.WinForms.Guna2Button()
             button.Size = New Size(buttonSize, buttonSize)
             button.BorderRadius = 16
-            button.FillColor = Color.White ' Keep white button background for contrast
-            button.BackColor = Color.FromArgb(190, 154, 48) ' Match panel background
-            button.ForeColor = Color.FromArgb(190, 154, 48) ' Rich Olive color for numbers #BE9A30
+            button.FillColor = Color.FromArgb(61, 66, 66)
+            button.BackColor = Color.FromArgb(41, 44, 45)
+            button.ForeColor = Color.White
             button.Font = New Font("Poppins SemiBold", 18.0F, FontStyle.Regular)
             button.Text = buttonTexts(i)
-            button.BorderColor = Color.FromArgb(200, 200, 200) ' Light gray border
-            button.BorderThickness = 2
 
             ' Special styling for X (delete) button
-            If buttonTexts(i) = "X" Then
-                button.ForeColor = Color.FromArgb(255, 71, 87) ' Red for delete button
+            If button.Text = "X" Then
+                button.ForeColor = Color.FromArgb(255, 71, 87)
             End If
 
             Dim row = i \ 3
             Dim col = i Mod 3
             button.Location = New Point(buttonStartX + col * (buttonSize + buttonSpacing), buttonStartY + row * (buttonSize + buttonSpacing))
 
-            ' Add hover effects
+            ' Hover effects
             AddHandler button.MouseEnter, Sub()
-                                              If buttonTexts(Array.IndexOf(buttonTexts, button.Text)) = "X" Then
-                                                  button.FillColor = Color.FromArgb(255, 71, 87) ' Red background on hover for X
-                                                  button.ForeColor = Color.White ' White text on red background
-                                              Else
-                                                  button.FillColor = Color.Yellow ' Golden yellow on hover
-                                                  button.ForeColor = Color.FromArgb(26, 29, 31) ' Dark text on golden background
-                                              End If
+                                              Try
+                                                  If button.Text = "X" Then
+                                                      button.FillColor = Color.FromArgb(255, 71, 87)
+                                                      button.ForeColor = Color.White
+                                                  Else
+                                                      button.FillColor = Color.FromArgb(255, 204, 77) ' hover gold
+                                                      button.ForeColor = Color.FromArgb(26, 29, 31)
+                                                  End If
+                                              Catch
+                                              End Try
                                           End Sub
-
             AddHandler button.MouseLeave, Sub()
-                                              button.FillColor = Color.White ' Back to white
-                                              If buttonTexts(Array.IndexOf(buttonTexts, button.Text)) = "X" Then
-                                                  button.ForeColor = Color.FromArgb(255, 71, 87) ' Red for delete button
-                                              Else
-                                                  button.ForeColor = Color.FromArgb(190, 154, 48) ' Rich Olive for numbers
-                                              End If
+                                              Try
+                                                  button.FillColor = Color.FromArgb(61, 66, 66)
+                                                  If button.Text = "X" Then
+                                                      button.ForeColor = Color.FromArgb(255, 71, 87)
+                                                  Else
+                                                      button.ForeColor = Color.White
+                                                  End If
+                                              Catch
+                                              End Try
                                           End Sub
 
             AddHandler button.Click, Sub(senderBtn, eBtn)
                                          HandlePinInput(CType(senderBtn, Guna.UI2.WinForms.Guna2Button).Text, expectedPin, pinIndicators, pinPanel)
-                                         pinPanel.Focus() ' Always return focus to panel after click
+                                         pinPanel.Focus()
                                      End Sub
+
             pinPanel.Controls.Add(button)
             pinPanelButtons.Add(button)
         Next
 
-        ' Add key event handler for PIN entry (including Enter)
+        ' Key handler for PIN entry (including Enter)
         AddHandler pinPanel.KeyDown, Sub(senderObj, eArgs)
                                          Dim key As Keys = eArgs.KeyCode
                                          If key >= Keys.D0 And key <= Keys.D9 Then
@@ -750,7 +751,6 @@ Public Class frmLoginvb
         Me.ActiveControl = pinPanel
         pinPanel.Focus()
     End Sub
-
     ' Improved PIN input logic with Enter key support and consistent state
     Private Sub HandlePinInput(input As String, expectedPin As String, pinIndicators As List(Of Guna.UI2.WinForms.Guna2CircleButton), pinPanel As Control)
         If input = "X" Then

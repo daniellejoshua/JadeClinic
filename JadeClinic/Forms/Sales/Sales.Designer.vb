@@ -715,7 +715,7 @@ Partial Class Sales
         ' PictureBox9
         ' 
         PictureBox9.BackColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
-        PictureBox9.Image = My.Resources.Resources.JadeLogo
+        PictureBox9.Image = My.Resources.Resources.FinalLogoOfJAde
         PictureBox9.Location = New Point(81, 15)
         PictureBox9.Name = "PictureBox9"
         PictureBox9.Size = New Size(103, 85)
