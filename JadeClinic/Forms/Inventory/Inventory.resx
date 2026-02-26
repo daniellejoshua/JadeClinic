@@ -122,7 +122,7 @@
     <value>62, 3</value>
   </data>
   <data name="PictureBox9.Size" type="System.Drawing.Size, System.Drawing">
-    <value>121, 100</value>
+    <value>103, 85</value>
   </data>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="PictureBox9.SizeMode" type="System.Windows.Forms.PictureBoxSizeMode, System.Windows.Forms">
@@ -869,7 +869,7 @@
     <value>CenterScreen</value>
   </data>
   <data name="$this.Text" xml:space="preserve">
-    <value>Inventory</value>
+    <value>dm</value>
   </data>
   <data name="&gt;&gt;$this.Name" xml:space="preserve">
     <value>Inventory</value>

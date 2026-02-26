@@ -64,7 +64,7 @@ Public Class Inventory
         IdleTimeoutManager.Instance.StartMonitoring(Me)
 
         ' Load products asynchronously (ShowLoadingOverlay is now called inside LoadProductsAsync)
-        LoadProductsAsync()
+        Await LoadProductsAsync()
     End Sub
 
     Private Sub InitializeCustomTooltip()
@@ -174,7 +174,7 @@ Public Class Inventory
     Private Sub ShowLoadingOverlay()
         ' Create loading overlay with DarkGray background
         loadingOverlay = New Panel()
-        loadingOverlay.BackColor = Color.DarkGray ' Changed to DarkGray
+        loadingOverlay.BackColor = Color.Transparent ' Changed to DarkGray
         loadingOverlay.Dock = DockStyle.Fill
         loadingOverlay.Location = New Point(0, 0)
         loadingOverlay.Size = Me.ClientSize
@@ -230,7 +230,7 @@ Public Class Inventory
         End If
     End Sub
 
-    Private Async Sub LoadProductsAsync()
+    Private Async Function LoadProductsAsync() As Task
         Try
             ' Show loading panel first with minimum display time
             ShowLoadingOverlay()
@@ -272,8 +272,7 @@ Public Class Inventory
                           MessageBox.Show("Error loading products: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
                       End Sub)
         End Try
-    End Sub
-
+    End Function
     Private Sub LoadProductsFromDatabase()
         Try
             Dim connStr As String = Connection.GetConnectionString()
@@ -1081,7 +1080,7 @@ Public Class Inventory
 
     Private Sub CreateNavigationMenu()
         Try
-            ' Clear existing controls except PictureBox9 (logo)
+            ' Remove all controls except the logo
             For i = DashboardPanel.Controls.Count - 1 To 0 Step -1
                 Dim control As Control = DashboardPanel.Controls(i)
                 If TypeOf control IsNot PictureBox Then
@@ -1090,118 +1089,127 @@ Public Class Inventory
                 End If
             Next
 
-            ' Set Navigation Panel Background to White
-            DashboardPanel.FillColor = Color.White
+            ' Match SalesRecord palette (dark sidebar)
+            DashboardPanel.FillColor = System.Drawing.Color.FromArgb(61, 65, 66)
 
-            ' Calculate available space (DashboardPanel is 236x999)
-            Dim availableWidth As Integer = DashboardPanel.Width - 40 ' 20px margins on each side
-            Dim availableHeight As Integer = DashboardPanel.Height - 160 ' Space for logo and title
+            ' Render company logo into existing PictureBox9 WITHOUT resizing or adding handlers
+            If PictureBox9 IsNot Nothing Then
+                Try
+                    Dim logoImg As System.Drawing.Image = CompanySettingsManager.Instance.GetCompanyLogo()
+                    If logoImg IsNot Nothing Then
+                        PictureBox9.Image = logoImg
+                        PictureBox9.Location = New Point(81, 15)
+                    End If
+                Catch ex As Exception
+                    Console.WriteLine($"Unable to set dashboard logo: {ex.Message}")
+                End Try
+                PictureBox9.BringToFront()
+            End If
 
-            ' Logo area (keep existing PictureBox9)
-            PictureBox9.BringToFront()
-
-            ' Add title label - positioned below logo with Golden Yellow
-            Dim titleLabel As New Label()
-            titleLabel.Text = "JADE CLINIC"
-            titleLabel.Font = New Font("Poppins", 14, FontStyle.Bold)
-            titleLabel.ForeColor = Color.FromArgb(254, 191, 16) ' Golden Yellow #FECF10
-            titleLabel.BackColor = Color.Transparent
-            titleLabel.AutoSize = False
-            titleLabel.Size = New Size(availableWidth, 30)
-            titleLabel.Location = New Point(20, 110)
-            titleLabel.TextAlign = ContentAlignment.MiddleCenter
-            DashboardPanel.Controls.Add(titleLabel)
-
-            ' Subtitle with Dark Gray color (visible on white background)
-            Dim subtitleLabel As New Label()
-            subtitleLabel.Text = "Dental Supply Management"
-            subtitleLabel.Font = New Font("Poppins", 10, FontStyle.Regular)
-            subtitleLabel.ForeColor = Color.FromArgb(100, 100, 100) ' Dark Gray for visibility on white
-            subtitleLabel.BackColor = Color.Transparent
-            subtitleLabel.AutoSize = False
-            subtitleLabel.Size = New Size(availableWidth, 25)
-            subtitleLabel.Location = New Point(20, 145)
-            subtitleLabel.TextAlign = ContentAlignment.MiddleCenter
-            DashboardPanel.Controls.Add(subtitleLabel)
-
-            ' Navigation section separator with Light Gray (visible on white background)
-            Dim separator1 As New Panel()
-            separator1.BackColor = Color.FromArgb(220, 220, 220) ' Light Gray for white background
-            separator1.Size = New Size(availableWidth - 20, 2)
-            separator1.Location = New Point(30, 190)
-            DashboardPanel.Controls.Add(separator1)
-
-            ' Navigation section label with Dark Gray (visible on white background)
-            Dim navLabel As New Label()
-            navLabel.Text = "NAVIGATION"
-            navLabel.Font = New Font("Poppins", 10, FontStyle.Bold)
-            navLabel.ForeColor = Color.FromArgb(80, 80, 80) ' Dark Gray for visibility on white
-            navLabel.BackColor = Color.Transparent
-            navLabel.AutoSize = False
-            navLabel.Size = New Size(availableWidth, 25)
-            navLabel.Location = New Point(20, 205)
-            navLabel.TextAlign = ContentAlignment.MiddleCenter
-            DashboardPanel.Controls.Add(navLabel)
-
-            ' Calculate button positioning for role-based navigation
+            Dim availableWidth As Integer = DashboardPanel.Width - 40
             Dim startY As Integer = 250
             Dim buttonHeight As Integer = 50
             Dim buttonSpacing As Integer = 15
             Dim buttonWidth As Integer = availableWidth - 5
             Dim buttonIndex As Integer = 0
 
-            ' Get current user role for navigation filtering
+            ' Title and subtitle (use company palette)
+            Dim titleLabel As New Label()
+            titleLabel.Text = CompanySettingsManager.Instance.GetSettingString("CompanyName", "JADE CLINIC")
+            titleLabel.Font = New Font("Poppins", 14, FontStyle.Bold)
+            titleLabel.ForeColor = System.Drawing.Color.FromArgb(254, 191, 16) ' golden accent
+            titleLabel.BackColor = System.Drawing.Color.Transparent
+            titleLabel.AutoSize = False
+            titleLabel.Size = New System.Drawing.Size(availableWidth, 30)
+            titleLabel.Location = New System.Drawing.Point(20, 110)
+            titleLabel.TextAlign = ContentAlignment.MiddleCenter
+            DashboardPanel.Controls.Add(titleLabel)
+
+            Dim subtitleLabel As New Label()
+            subtitleLabel.Text = "Dental Supply Management"
+            subtitleLabel.Font = New Font("Poppins", 10, FontStyle.Regular)
+            subtitleLabel.ForeColor = System.Drawing.Color.FromArgb(225, 229, 233)
+            subtitleLabel.BackColor = System.Drawing.Color.Transparent
+            subtitleLabel.AutoSize = False
+            subtitleLabel.Size = New System.Drawing.Size(availableWidth, 25)
+            subtitleLabel.Location = New System.Drawing.Point(20, 145)
+            subtitleLabel.TextAlign = ContentAlignment.MiddleCenter
+            DashboardPanel.Controls.Add(subtitleLabel)
+
+            Dim separator1 As New Panel()
+            separator1.BackColor = System.Drawing.Color.FromArgb(50, 50, 50)
+            separator1.Size = New System.Drawing.Size(availableWidth - 20, 2)
+            separator1.Location = New System.Drawing.Point(30, 190)
+            DashboardPanel.Controls.Add(separator1)
+
+            Dim navLabel As New Label()
+            navLabel.Text = "NAVIGATION"
+            navLabel.Font = New Font("Poppins", 10, FontStyle.Bold)
+            navLabel.ForeColor = System.Drawing.Color.FromArgb(225, 229, 233)
+            navLabel.BackColor = System.Drawing.Color.Transparent
+            navLabel.AutoSize = False
+            navLabel.Size = New System.Drawing.Size(availableWidth, 25)
+            navLabel.Location = New System.Drawing.Point(20, 205)
+            navLabel.TextAlign = ContentAlignment.MiddleCenter
+            DashboardPanel.Controls.Add(navLabel)
+
+            ' Role logic
             Dim currentRole As String = If(frmLoginvb.LoggedInRole, "Staff").ToUpper()
 
-            ' Create navigation buttons based on role
-            ' Dashboard Button (not active - we're on Inventory)
+            ' Dashboard
             Dim navDashboardBtn = CreateLargeNavButton("🏠 Dashboard", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
             AddHandler navDashboardBtn.Click, AddressOf NavDashboard_Click
             buttonIndex += 1
 
-            ' POS/Sales Button (all roles)
+            ' POS/Sales
             Dim navPOSBtn = CreateLargeNavButton("🛒 POS / Sales", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
             AddHandler navPOSBtn.Click, AddressOf NavPOS_Click
             buttonIndex += 1
 
-            ' Inventory Button (ACTIVE - we're on this page)
+            ' Inventory (active on this form)
             Dim navInventoryBtn = CreateLargeNavButton("📦 Inventory", startY + buttonIndex * (buttonHeight + buttonSpacing), True, buttonWidth, buttonHeight)
             buttonIndex += 1
 
-            ' Manager and Admin only buttons
+            ' Sales Records (Manager/Admin)
             If currentRole = "MANAGER" Or currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
-                ' Sales Records Button
                 Dim navSalesRecordsBtn = CreateLargeNavButton("📊 Sales Records", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
                 AddHandler navSalesRecordsBtn.Click, AddressOf NavSalesRecords_Click
                 buttonIndex += 1
+            End If
 
-                ' Staff Management Button
-                Dim navStaffBtn = CreateLargeNavButton("👥 Staff", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-                AddHandler navStaffBtn.Click, AddressOf NavStaff_Click
-                buttonIndex += 1
-
-                ' Inventory Logs Button
+            ' Inventory Log (Manager/Admin)
+            If currentRole = "MANAGER" Or currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
                 Dim navInventoryLogBtn = CreateLargeNavButton("📋 Inventory Logs", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
                 AddHandler navInventoryLogBtn.Click, AddressOf NavInventoryLog_Click
                 buttonIndex += 1
             End If
 
-            ' Admin only buttons
+            ' Staff (Manager/Admin)
+            If currentRole = "MANAGER" Or currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
+                Dim navStaffBtn = CreateLargeNavButton("👥 Staff", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
+                AddHandler navStaffBtn.Click, AddressOf NavStaff_Click
+                buttonIndex += 1
+            End If
+
+            ' Admin only
             If currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
-                ' Audit Logs Button
                 Dim navAuditLogBtn = CreateLargeNavButton("🔍 Audit Logs", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
                 AddHandler navAuditLogBtn.Click, AddressOf NavAuditLog_Click
                 buttonIndex += 1
 
-                ' System Settings Button
                 Dim systemSettingsBtn = CreateLargeNavButton("⚙️ System", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-                AddHandler systemSettingsBtn.Click, Sub() MessageBox.Show("System Settings feature coming soon!", "Coming Soon", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                AddHandler systemSettingsBtn.Click, AddressOf NavSystemSettings_Click
                 buttonIndex += 1
             End If
 
         Catch ex As Exception
             Console.WriteLine($"Error creating navigation menu: {ex.Message}")
         End Try
+    End Sub
+    Private Sub NavSystemSettings_Click(sender As Object, e As EventArgs)
+        isNavigating = True
+        Sys.Show()
+        Me.Close()
     End Sub
 
     Private Function CreateLargeNavButton(text As String, yPosition As Integer, isActive As Boolean, buttonWidth As Integer, buttonHeight As Integer) As Guna.UI2.WinForms.Guna2Button

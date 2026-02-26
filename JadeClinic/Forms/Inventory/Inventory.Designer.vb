@@ -100,7 +100,7 @@ Partial Class Inventory
         ' 
         ' PictureBox9
         ' 
-        PictureBox9.BackColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
+        PictureBox9.BackColor = Color.FromArgb(CByte(61), CByte(65), CByte(65))
         PictureBox9.ErrorImage = My.Resources.Resources.Jade_Dental_Logo
         PictureBox9.Image = My.Resources.Resources.Jade_Dental_Logo
         resources.ApplyResources(PictureBox9, "PictureBox9")
