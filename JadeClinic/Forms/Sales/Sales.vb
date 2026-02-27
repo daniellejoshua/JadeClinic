@@ -1248,6 +1248,10 @@ Public Class Sales
             Dim marginLeft As Integer = 10
             Dim contentWidth As Integer = e.MarginBounds.Width - (marginLeft * 2)
             Dim centerX As Integer = e.MarginBounds.Width \ 2
+            Dim colGap As Integer = 20
+            Dim colWidth As Integer = (contentWidth - colGap) \ 2
+            Dim leftColX As Integer = marginLeft
+            Dim rightColX As Integer = marginLeft + colWidth + colGap
 
             ' Company header
             Dim companyName As String = CompanySettingsManager.Instance.GetSettingString("CompanyName", "JADE CLINIC")
@@ -1287,10 +1291,9 @@ Public Class Sales
             e.Graphics.DrawString(New String("="c, Math.Min(36, CInt(contentWidth / 6))), regularFont, brush, marginLeft, yPosition)
             yPosition += 16
 
-            ' Document title - use "SALES INVOICE" for compliance
+            ' Document title and metadata
             e.Graphics.DrawString("SALES INVOICE", boldFont, brush, CSng(centerX - (e.Graphics.MeasureString("SALES INVOICE", boldFont).Width / 2)), CSng(yPosition))
             yPosition += 22
-
             e.Graphics.DrawString($"Receipt #: {receiptOrderId}", regularFont, brush, marginLeft, yPosition)
             yPosition += 12
             e.Graphics.DrawString($"Date: {DateTime.Now:MM/dd/yyyy HH:mm:ss}", regularFont, brush, marginLeft, yPosition)
@@ -1298,8 +1301,8 @@ Public Class Sales
             e.Graphics.DrawString($"Cashier: {frmLoginvb.LoggedInUsername}", regularFont, brush, marginLeft, yPosition)
             yPosition += 14
 
-            ' Customer compact block - always print Name / TIN / Phone / Email (show underscores if empty)
-            e.Graphics.DrawString("CUSTOMER", sectionHeaderFont, brush, marginLeft, yPosition)
+            ' --- CUSTOMER BLOCK (2x2 layout) ---
+            e.Graphics.DrawString("Customer Details:", regularFont, brush, marginLeft, yPosition)
             yPosition += 12
 
             Dim printedName As String = If(Not String.IsNullOrWhiteSpace(receiptCustomerName), receiptCustomerName, If(Not String.IsNullOrWhiteSpace(selectedCustomerName), selectedCustomerName, "________________"))
@@ -1307,28 +1310,52 @@ Public Class Sales
             Dim printedPhone As String = If(Not String.IsNullOrWhiteSpace(selectedCustomerPhone), selectedCustomerPhone, "________________")
             Dim printedEmail As String = If(Not String.IsNullOrWhiteSpace(selectedCustomerEmail), selectedCustomerEmail, "________________")
 
-            e.Graphics.DrawString($"Name: {printedName}", regularFont, brush, marginLeft, yPosition)
+            ' Row 1: Name (left) | TIN (right)
+            e.Graphics.DrawString($"Name: {printedName}", regularFont, brush, leftColX, yPosition)
+            e.Graphics.DrawString($"TIN: {printedTIN}", regularFont, brush, rightColX, yPosition)
             yPosition += 12
-            e.Graphics.DrawString($"TIN: {printedTIN}", regularFont, brush, marginLeft, yPosition)
-            yPosition += 12
-            e.Graphics.DrawString($"Phone: {printedPhone}", regularFont, brush, marginLeft, yPosition)
-            yPosition += 12
-            e.Graphics.DrawString($"Email: {printedEmail}", regularFont, brush, marginLeft, yPosition)
-            yPosition += 8
+
+            ' Row 2: Phone (left) | Email (right)
+            e.Graphics.DrawString($"Phone: {printedPhone}", regularFont, brush, leftColX, yPosition)
+            e.Graphics.DrawString($"Email: {printedEmail}", regularFont, brush, rightColX, yPosition)
+            yPosition += 14
 
             e.Graphics.DrawString(New String("="c, Math.Min(36, CInt(contentWidth / 6))), regularFont, brush, marginLeft, yPosition)
             yPosition += 14
 
-            ' Items (VAT-inclusive display)
+            ' --- ITEMS (VAT-INCLUSIVE unit prices, discount applied per logic) ---
             If receiptItems IsNot Nothing Then
                 For Each item In receiptItems
                     Dim itemName As String = item("ProductName").ToString()
                     Dim quantity As Integer = CInt(item("Quantity"))
+
+                    ' Determine unit VAT-inclusive price
                     Dim unitVatInc As Decimal = Convert.ToDecimal(If(item.ContainsKey("OriginalUnitPrice"), item("OriginalUnitPrice"), item("Price")))
+
+                    ' If this item was discounted, compute discounted unit price
+                    If discountType <> "None" AndAlso discountedItemProductId IsNot Nothing AndAlso item.ContainsKey("ProductID") Then
+                        Try
+                            Dim itemPid As Integer = Convert.ToInt32(item("ProductID"))
+                            If itemPid = discountedItemProductId Then
+                                If discountType = "Percentage" Then
+                                    Dim pct As Decimal = discountValue
+                                    unitVatInc = Math.Round((unitVatInc / 1.12D) * (1 - (pct / 100D)) * 1.12D, 2)
+                                ElseIf discountType = "Fixed" Then
+                                    Dim perUnitDiscountVatInc As Decimal = 0D
+                                    If quantity > 0 Then perUnitDiscountVatInc = discountAmount / quantity
+                                    Dim perUnitDiscountNet As Decimal = perUnitDiscountVatInc / 1.12D
+                                    unitVatInc = Math.Round(((unitVatInc / 1.12D) - perUnitDiscountNet) * 1.12D, 2)
+                                    If unitVatInc < 0D Then unitVatInc = 0D
+                                End If
+                            End If
+                        Catch
+                            ' ignore conversion issues
+                        End Try
+                    End If
+
                     Dim lineTotal As Decimal = Math.Round(unitVatInc * quantity, 2)
 
-                    Dim itemLine As String = $"{quantity}x {itemName}"
-                    e.Graphics.DrawString(itemLine, regularFont, brush, marginLeft, yPosition)
+                    e.Graphics.DrawString($"{quantity}x {itemName}", regularFont, brush, marginLeft, yPosition)
                     yPosition += 12
                     e.Graphics.DrawString($"@ ₱{unitVatInc:F2}", regularFont, brush, marginLeft + 8, yPosition)
                     e.Graphics.DrawString($"₱{lineTotal:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"₱{lineTotal:F2}", regularFont).Width), CSng(yPosition))
@@ -1339,10 +1366,9 @@ Public Class Sales
             e.Graphics.DrawString(New String("="c, Math.Min(36, CInt(contentWidth / 6))), regularFont, brush, marginLeft, yPosition)
             yPosition += 14
 
-            ' --- CORRECT DISCOUNT-FIRST VAT MATH ---
+            ' --- VAT / TOTAL CALCULATION (consistent with RefreshOrderDisplay) ---
             Dim preDiscountVatInclusive As Decimal = Me.subtotalVatInclusive
             If preDiscountVatInclusive = 0D Then
-                ' fallback: sum item VAT-inclusive totals
                 preDiscountVatInclusive = 0D
                 If receiptItems IsNot Nothing Then
                     For Each it In receiptItems
@@ -1353,43 +1379,39 @@ Public Class Sales
                 preDiscountVatInclusive = Math.Round(preDiscountVatInclusive, 2)
             End If
 
-            Dim discountVatInclusive As Decimal = discountAmount ' discount stored as VAT-inclusive
-            Dim vatableSales As Decimal = Math.Max(0D, preDiscountVatInclusive - discountVatInclusive) ' discount-first: remaining amount is VATable
-            Dim vatAmt As Decimal = Math.Round(vatableSales * 0.12D, 2)
-            Dim totalDue As Decimal = Math.Round(vatableSales + vatAmt, 2)
+            Dim discountVatInclusive As Decimal = discountAmount
+            Dim remainingVatInclusive As Decimal = Math.Max(0D, preDiscountVatInclusive - discountVatInclusive)
+            Dim vatAmt As Decimal = Math.Round(remainingVatInclusive * (0.12D / 1.12D), 2) ' VAT portion extracted from VAT-inclusive remainder
+            Dim vatableNet As Decimal = Math.Round(remainingVatInclusive - vatAmt, 2)
+            Dim totalDue As Decimal = Math.Round(remainingVatInclusive, 2)
 
-            ' Print breakdown: Subtotal (VAT-inclusive), Less Discount, VATable sales, VAT, Total
-            e.Graphics.DrawString("SUBTOTAL (VAT-EXC):", regularFont, brush, marginLeft, yPosition)
+            ' Print breakdown using clear labels
+            e.Graphics.DrawString("SUBTOTAL (VAT-INC):", regularFont, brush, marginLeft, yPosition)
             e.Graphics.DrawString($"₱{preDiscountVatInclusive:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"₱{preDiscountVatInclusive:F2}", regularFont).Width), CSng(yPosition))
             yPosition += 12
 
             If discountVatInclusive > 0D Then
                 Dim discountLabel As String = $"Less: Discount ({discountType})"
-                If Not String.IsNullOrEmpty(discountedItemName) Then
-                    discountLabel &= $" on {discountedItemName}"
-                End If
+                If Not String.IsNullOrEmpty(discountedItemName) Then discountLabel &= $" on {discountedItemName}"
                 e.Graphics.DrawString(discountLabel & ":", regularFont, brush, marginLeft, yPosition)
                 e.Graphics.DrawString($"-₱{discountVatInclusive:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"-₱{discountVatInclusive:F2}", regularFont).Width), CSng(yPosition))
                 yPosition += 12
             End If
 
-            e.Graphics.DrawString("VATABLE SALES:", regularFont, brush, marginLeft, yPosition)
-            e.Graphics.DrawString($"₱{vatableSales:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"₱{vatableSales:F2}", regularFont).Width), CSng(yPosition))
+            e.Graphics.DrawString("VATABLE SALES (NET):", regularFont, brush, marginLeft, yPosition)
+            e.Graphics.DrawString($"₱{vatableNet:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"₱{vatableNet:F2}", regularFont).Width), CSng(yPosition))
             yPosition += 12
 
-            e.Graphics.DrawString($"VAT (12%):", regularFont, brush, marginLeft, yPosition)
+            e.Graphics.DrawString("VAT (12%):", regularFont, brush, marginLeft, yPosition)
             e.Graphics.DrawString($"₱{vatAmt:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"₱{vatAmt:F2}", regularFont).Width), CSng(yPosition))
             yPosition += 12
 
-            e.Graphics.DrawString("=====================================", regularFont, brush, marginLeft, yPosition)
+            e.Graphics.DrawString(New String("="c, Math.Min(36, CInt(contentWidth / 6))), regularFont, brush, marginLeft, yPosition)
             yPosition += 12
 
             e.Graphics.DrawString("TOTAL AMOUNT DUE:", boldFont, brush, marginLeft, yPosition)
             e.Graphics.DrawString($"₱{totalDue:F2}", boldFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"₱{totalDue:F2}", boldFont).Width), CSng(yPosition))
             yPosition += 18
-
-            e.Graphics.DrawString("=====================================", regularFont, brush, marginLeft, yPosition)
-            yPosition += 12
 
             ' Payment info
             e.Graphics.DrawString("PAYMENT INFORMATION", sectionHeaderFont, brush, marginLeft, yPosition)
@@ -1408,13 +1430,12 @@ Public Class Sales
             e.Graphics.DrawString(New String("="c, Math.Min(36, CInt(contentWidth / 6))), regularFont, brush, marginLeft, yPosition)
             yPosition += 12
 
-            ' BIR lines (Date Issued and 5-year validity removed per request)
+            ' BIR and footer
             e.Graphics.DrawString($"BIR Authority to Print No.: {birAuthNumber}", regularFont, brush, marginLeft, yPosition)
             yPosition += 12
             e.Graphics.DrawString($"PTU No.: {ptuNumber}", regularFont, brush, marginLeft, yPosition)
             yPosition += 12
 
-            ' Footer
             e.Graphics.DrawString(New String("="c, Math.Min(36, CInt(contentWidth / 6))), regularFont, brush, marginLeft, yPosition)
             yPosition += 12
             Dim footerLines() As String = footerMessage.Split({vbCrLf, vbLf}, StringSplitOptions.RemoveEmptyEntries)
@@ -2745,7 +2766,43 @@ Public Class Sales
             ' Accumulate subtotal (VAT-INCLUSIVE)
             subtotalVatInclusiveLocal += unitPriceVatInclusive * qtyInt
 
-            ' Build UI row (display uses VAT-INCLUSIVE prices)
+            ' Prepare display values
+            Dim displayUnitVatInc As Decimal = unitPriceVatInclusive
+            Dim lineTotalVatInclusive As Decimal = unitPriceVatInclusive * qtyInt
+
+            ' If this product received the discount, compute discounted unit price using inclusive math
+            If discountType <> "None" AndAlso discountedItemProductId IsNot Nothing Then
+                Try
+                    Dim prodIdInt As Integer = Convert.ToInt32(prod("ProductID"))
+                    If prodIdInt = discountedItemProductId Then
+                        If discountType = "Percentage" Then
+                            ' discountedUnitVatInc = (unitVatInc / 1.12) * (1 - pct) * 1.12
+                            Dim pct As Decimal = discountValue
+                            displayUnitVatInc = Math.Round((unitPriceVatInclusive / 1.12D) * (1 - (pct / 100D)) * 1.12D, 2)
+                        ElseIf discountType = "Fixed" Then
+                            ' distribute fixed VAT-inclusive discount across quantity of discounted item
+                            Dim perUnitDiscountVatInc As Decimal = 0D
+                            If qtyInt > 0 Then
+                                perUnitDiscountVatInc = discountAmount / qtyInt
+                            End If
+                            ' Use net-based formula to remain consistent: subtract net per unit then reapply VAT
+                            Dim perUnitDiscountNet As Decimal = perUnitDiscountVatInc / 1.12D
+                            displayUnitVatInc = Math.Round(((unitPriceVatInclusive / 1.12D) - perUnitDiscountNet) * 1.12D, 2)
+                        End If
+
+                        ' Ensure not negative
+                        If displayUnitVatInc < 0D Then
+                            displayUnitVatInc = 0D
+                        End If
+
+                        lineTotalVatInclusive = displayUnitVatInc * qtyInt
+                    End If
+                Catch
+                    ' ignore conversion issues and fall back to original price display
+                End Try
+            End If
+
+            ' Build UI row (display uses VAT-INCLUSIVE prices, possibly discounted for the discounted item)
             Dim orderPanel As New Guna.UI2.WinForms.Guna2Panel()
             orderPanel.Size = New Size(orderSummaryPanel.Width - 40, panelHeight)
             orderPanel.BorderRadius = 8
@@ -2793,9 +2850,7 @@ Public Class Sales
             lblQuantity.Location = New Point(320, baseY)
             lblQuantity.AutoSize = True
 
-            ' Show line total using VAT-INCLUSIVE unit price for display
-            Dim lineTotalVatInclusive As Decimal = unitPriceVatInclusive * qtyInt
-
+            ' Show line total using VAT-INCLUSIVE unit price for display (may be discounted for the selected item)
             Dim lblTotal As New Guna.UI2.WinForms.Guna2HtmlLabel()
             lblTotal.Text = lineTotalVatInclusive.ToString("N2")
             lblTotal.Font = New Font("Poppins Regular", 9.0F)
@@ -2803,7 +2858,12 @@ Public Class Sales
             lblTotal.Location = New Point(orderPanel.Width - 90, baseY)
             lblTotal.AutoSize = True
 
-            tt.SetToolTip(lblTotal, $"Unit price (VAT inc): ₱{unitPriceVatInclusive:F2}")
+            ' Tooltip: show original unit price and if discounted, the discounted unit price
+            Dim tooltipText As String = $"Unit price (VAT inc): ₱{unitPriceVatInclusive:F2}"
+            If displayUnitVatInc <> unitPriceVatInclusive Then
+                tooltipText &= $" → Discounted: ₱{displayUnitVatInc:F2}"
+            End If
+            tt.SetToolTip(lblTotal, tooltipText)
 
             AddHandler lblOrderId.DoubleClick, Sub() ReduceItemQuantity(CInt(orderPanel.Tag))
             AddHandler lblCustomer.DoubleClick, Sub() ReduceItemQuantity(CInt(orderPanel.Tag))
@@ -2816,26 +2876,26 @@ Public Class Sales
             orderSummaryPanel.Controls.Add(orderPanel)
         Next
 
-        ' --- DISCOUNT-FIRST CALCULATION (intentional) ---
-        ' Rule: Apply discount to subtotal (VAT-INCLUSIVE), the remaining amount is treated as VATable base,
-        ' then compute VAT as base * 12% and total = base + VAT.
+        ' --- DISCOUNT-FIRST CALCULATION (VAT-INCLUSIVE) ---
+        ' subtotalVatInclusiveLocal = sum(unit VAT-inclusive * qty)
         Dim discountVatInclusive As Decimal = discountAmount ' discountAmount stored as VAT-inclusive fixed amount
-        Dim vatableSales As Decimal = Math.Max(0D, subtotalVatInclusiveLocal - discountVatInclusive) ' discount-first
-        Dim vatAmount As Decimal = Math.Round(vatableSales * 0.12D, 2)
-        Dim totalAmount As Decimal = Math.Round(vatableSales + vatAmount, 2)
+        Dim remainingVatInclusive As Decimal = Math.Max(0D, subtotalVatInclusiveLocal - discountVatInclusive) ' remainder (VAT-INCLUSIVE)
+        ' Extract VAT portion from VAT-inclusive remainder (VAT = remainder * 12/112)
+        Dim vatAmount As Decimal = Math.Round(remainingVatInclusive * (0.12D / 1.12D), 2)
+        Dim vatableNet As Decimal = Math.Round(remainingVatInclusive - vatAmount, 2)
+        Dim totalAmountVatInc As Decimal = Math.Round(remainingVatInclusive, 2)
 
         ' Persist values for receipt printing and confirm flow:
-        ' receiptVatableBeforeDiscount will hold the subtotal (VAT-inclusive) before discount for printing
         Me.receiptVatableBeforeDiscount = subtotalVatInclusiveLocal
-        Me.receiptSubtotal = vatableSales ' treated as VATable base per "discount first" rule
+        Me.receiptSubtotal = vatableNet ' NET (VATable) amount after discount
         Me.receiptTax = vatAmount
-        Me.receiptTotalAmount = totalAmount
+        Me.receiptTotalAmount = totalAmountVatInc
         Me.subtotalVatInclusive = subtotalVatInclusiveLocal
 
-        ' Update UI labels:
-        If lblSubTotal IsNot Nothing Then lblSubTotal.Text = subtotalVatInclusiveLocal.ToString("N2") ' shows VAT-inclusive subtotal (e.g. ₱200.00)
+        ' Update UI labels: show NET (vatable) in lblSubTotal per request
+        If lblSubTotal IsNot Nothing Then lblSubTotal.Text = vatableNet.ToString("N2")
         If taxLbl IsNot Nothing Then taxLbl.Text = vatAmount.ToString("N2")
-        If totalLbl IsNot Nothing Then totalLbl.Text = totalAmount.ToString("N2")
+        If totalLbl IsNot Nothing Then totalLbl.Text = totalAmountVatInc.ToString("N2")
     End Sub
     ' FIXED: Enhanced receipt printing with correct VAT breakdown
     ' FIXED: Update the confirmBtn_Click method to set correct receipt values
@@ -2969,7 +3029,7 @@ Public Class Sales
 
         ' Reset customer info
         selectedCustomerId = Nothing
-        selectedCustomerName = "Walk-in Customer"
+        selectedCustomerName = ""
         selectedCustomerPhone = ""
         selectedCustomerEmail = ""
         selectedCustomerType = "Walk-in"
@@ -3231,10 +3291,13 @@ Public Class Sales
             Return
         End If
 
-        ' Find highest line total (price * quantity) and apply percentage only to that item
+        ' Find highest line total (VAT-inclusive) and apply percentage only to that item
         Dim highestLineTotal As Decimal = 0D
         Dim highestItemName As String = ""
         Dim highestProductId As Integer = -1
+        Dim highestQty As Integer = 1
+        Dim highestUnitVatInc As Decimal = 0D
+
         For Each item In currentOrderList
             Dim price As Decimal = Convert.ToDecimal(item("Price"))
             Dim qty As Integer = CInt(item("Quantity"))
@@ -3242,6 +3305,8 @@ Public Class Sales
             If lineTotal > highestLineTotal Then
                 highestLineTotal = lineTotal
                 highestItemName = item("ProductName").ToString()
+                highestQty = qty
+                highestUnitVatInc = price
                 If item.ContainsKey("ProductID") Then
                     Integer.TryParse(item("ProductID").ToString(), highestProductId)
                 End If
@@ -3256,8 +3321,12 @@ Public Class Sales
         discountType = "Percentage"
         discountValue = percentage
 
-        ' Discount is applied only to the highest item
-        discountAmount = Math.Round(highestLineTotal * (percentage / 100D), 2)
+        ' Compute discounted unit price using VAT-inclusive -> net -> discount -> VAT re-apply formula:
+        ' discountedUnitVatInc = Round((unitVatInc / 1.12) * (1 - p) * 1.12, 2)
+        Dim discountedUnitVatInc As Decimal = Math.Round((highestUnitVatInc / 1.12D) * (1 - (percentage / 100D)) * 1.12D, 2)
+
+        ' discount amount (VAT-inclusive) applied to this line
+        discountAmount = Math.Round((highestUnitVatInc - discountedUnitVatInc) * highestQty, 2)
 
         ' Record which item received the discount
         discountedItemProductId = If(highestProductId > 0, CType(highestProductId, Integer?), Nothing)
@@ -3279,10 +3348,13 @@ Public Class Sales
             Return
         End If
 
-        ' Find highest line total (price * quantity) and apply fixed discount only to that item
+        ' Find highest line total (VAT-inclusive) and apply fixed discount only to that item
         Dim highestLineTotal As Decimal = 0D
         Dim highestItemName As String = ""
         Dim highestProductId As Integer = -1
+        Dim highestQty As Integer = 1
+        Dim highestUnitVatInc As Decimal = 0D
+
         For Each item In currentOrderList
             Dim price As Decimal = Convert.ToDecimal(item("Price"))
             Dim qty As Integer = CInt(item("Quantity"))
@@ -3290,6 +3362,8 @@ Public Class Sales
             If lineTotal > highestLineTotal Then
                 highestLineTotal = lineTotal
                 highestItemName = item("ProductName").ToString()
+                highestQty = qty
+                highestUnitVatInc = price
                 If item.ContainsKey("ProductID") Then
                     Integer.TryParse(item("ProductID").ToString(), highestProductId)
                 End If
@@ -3307,6 +3381,15 @@ Public Class Sales
         discountType = "Fixed"
         discountValue = appliedAmount
         discountAmount = Math.Round(appliedAmount, 2)
+
+        ' Compute discounted unit VAT-inclusive price by converting discount to net then reapplying VAT per unit:
+        ' perUnitDiscountNet = (discountAmount / 1.12) / qty
+        ' discountedUnitVatInc = Round((unitVatInc / 1.12 - perUnitDiscountNet) * 1.12, 2)
+        Dim perUnitDiscountNet As Decimal = (discountAmount / 1.12D) / Math.Max(1, highestQty)
+        Dim discountedUnitVatIncCalc As Decimal = Math.Round(((highestUnitVatInc / 1.12D) - perUnitDiscountNet) * 1.12D, 2)
+        If discountedUnitVatIncCalc < 0D Then
+            discountedUnitVatIncCalc = 0D
+        End If
 
         ' Record which item received the discount
         discountedItemProductId = If(highestProductId > 0, CType(highestProductId, Integer?), Nothing)

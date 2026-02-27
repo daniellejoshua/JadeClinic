@@ -682,7 +682,7 @@ Partial Class Sales
         lblSubTotal.BackColor = Color.Transparent
         lblSubTotal.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         lblSubTotal.ForeColor = SystemColors.ButtonFace
-        lblSubTotal.Location = New Point(367, 25)
+        lblSubTotal.Location = New Point(374, 25)
         lblSubTotal.Name = "lblSubTotal"
         lblSubTotal.Size = New Size(33, 28)
         lblSubTotal.TabIndex = 38
@@ -695,9 +695,9 @@ Partial Class Sales
         Guna2HtmlLabel26.ForeColor = SystemColors.ButtonFace
         Guna2HtmlLabel26.Location = New Point(82, 25)
         Guna2HtmlLabel26.Name = "Guna2HtmlLabel26"
-        Guna2HtmlLabel26.Size = New Size(74, 28)
+        Guna2HtmlLabel26.Size = New Size(149, 28)
         Guna2HtmlLabel26.TabIndex = 52
-        Guna2HtmlLabel26.Text = "Sub Total"
+        Guna2HtmlLabel26.Text = "VATable Sales (Net)"
         ' 
         ' DashboardPanel
         ' 
