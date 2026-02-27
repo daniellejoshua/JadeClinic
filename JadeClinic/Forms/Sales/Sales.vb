@@ -70,7 +70,8 @@ Public Class Sales
     ' Profile dropdown panel
     Private profileDropdownPanel As Panel = Nothing
     Private isProfileDropdownVisible As Boolean = False
-
+    ' Add this new field near the other receipt fields (top of class)
+    Private receiptVatableBeforeDiscount As Decimal = 0D
     Private WithEvents txtBarcodeInput As New TextBox With {.Visible = True, .TabIndex = 0}
 
     ' Dental Clinic Color Palette Constants
@@ -1234,191 +1235,195 @@ Public Class Sales
     ' UPDATED: Enhanced receipt printing using company settings
     ' UPDATED: Enhanced receipt printing with cleaner formatting (no pipe separators)
     ' Modified: OnPrintPage - remove duplicate VATABLE SALES and show which item received the discount
+    ' Replace OnPrintPage with this updated version that displays subtotal, discount, VATable sales, VAT and Total consistently
     Private Sub OnPrintPage(sender As Object, e As PrintPageEventArgs)
         Try
             Dim regularFont As New Font("Arial", 8)
             Dim boldFont As New Font("Arial", 10, FontStyle.Bold)
             Dim headerFont As New Font("Arial", 12, FontStyle.Bold)
+            Dim sectionHeaderFont As New Font("Arial", 9, FontStyle.Bold)
             Dim brush As New SolidBrush(Color.Black)
+            Dim pen As New Pen(Color.Black, 1.0F)
             Dim yPosition As Integer = 10
+            Dim marginLeft As Integer = 10
+            Dim contentWidth As Integer = e.MarginBounds.Width - (marginLeft * 2)
             Dim centerX As Integer = e.MarginBounds.Width \ 2
 
-            ' Header using company settings
+            ' Company header
             Dim companyName As String = CompanySettingsManager.Instance.GetSettingString("CompanyName", "JADE CLINIC")
             Dim companyPhone As String = CompanySettingsManager.Instance.GetSettingString("Phone", "(02) 8123-4567")
             Dim companyAddress As String = CompanySettingsManager.Instance.GetSettingString("Address", "")
             Dim companyWebsite As String = CompanySettingsManager.Instance.GetSettingString("Website", "")
             Dim companyTIN As String = CompanySettingsManager.Instance.GetSettingString("TIN", "123-456-789-000")
+            Dim birAuthNumber As String = CompanySettingsManager.Instance.GetSettingString("BIRAuthNumber", "ATP-2024-000001")
+            Dim ptuNumber As String = CompanySettingsManager.Instance.GetSettingString("PTUNumber", "PTU-2024-001")
+            Dim footerMessage As String = CompanySettingsManager.Instance.GetSettingString("ReceiptFooter", "Thank you for your business!" & vbCrLf & "Have a great day!")
 
             e.Graphics.DrawString(companyName, headerFont, brush, CSng(centerX - (e.Graphics.MeasureString(companyName, headerFont).Width / 2)), CSng(yPosition))
-            yPosition += 25
+            yPosition += 24
             e.Graphics.DrawString("Dental Supply Management", regularFont, brush, CSng(centerX - (e.Graphics.MeasureString("Dental Supply Management", regularFont).Width / 2)), CSng(yPosition))
-            yPosition += 15
+            yPosition += 14
 
             If Not String.IsNullOrEmpty(companyTIN) Then
-                e.Graphics.DrawString($"TIN: {companyTIN}", regularFont, brush, CSng(centerX - (e.Graphics.MeasureString($"TIN: {companyTIN}", regularFont).Width / 2)), CSng(yPosition))
-                yPosition += 15
+                e.Graphics.DrawString($"TIN: {companyTIN} (VAT Registered)", regularFont, brush, CSng(centerX - (e.Graphics.MeasureString($"TIN: {companyTIN} (VAT Registered)", regularFont).Width / 2)), CSng(yPosition))
+                yPosition += 14
             End If
 
-            e.Graphics.DrawString($"Tel: {companyPhone}", regularFont, brush, CSng(centerX - (e.Graphics.MeasureString($"Tel: {companyPhone}", regularFont).Width / 2)), CSng(yPosition))
-            yPosition += 15
+            If Not String.IsNullOrEmpty(companyPhone) Then
+                e.Graphics.DrawString($"Tel: {companyPhone}", regularFont, brush, CSng(centerX - (e.Graphics.MeasureString($"Tel: {companyPhone}", regularFont).Width / 2)), CSng(yPosition))
+                yPosition += 14
+            End If
 
             If Not String.IsNullOrEmpty(companyAddress) Then
                 e.Graphics.DrawString(companyAddress, regularFont, brush, CSng(centerX - (e.Graphics.MeasureString(companyAddress, regularFont).Width / 2)), CSng(yPosition))
-                yPosition += 15
+                yPosition += 14
             End If
 
             If Not String.IsNullOrEmpty(companyWebsite) Then
                 e.Graphics.DrawString(companyWebsite, regularFont, brush, CSng(centerX - (e.Graphics.MeasureString(companyWebsite, regularFont).Width / 2)), CSng(yPosition))
-                yPosition += 15
+                yPosition += 14
             End If
 
-            e.Graphics.DrawString("=====================================", regularFont, brush, 10, yPosition)
-            yPosition += 20
+            e.Graphics.DrawString(New String("="c, Math.Min(36, CInt(contentWidth / 6))), regularFont, brush, marginLeft, yPosition)
+            yPosition += 16
 
-            ' Receipt header details
-            e.Graphics.DrawString("SALES RECEIPT", boldFont, brush, CSng(centerX - (e.Graphics.MeasureString("SALES RECEIPT", boldFont).Width / 2)), CSng(yPosition))
-            yPosition += 25
-            e.Graphics.DrawString($"Receipt #: {receiptOrderId}", regularFont, brush, 10, yPosition)
-            yPosition += 15
-            e.Graphics.DrawString($"Date: {DateTime.Now:MM/dd/yyyy HH:mm:ss}", regularFont, brush, 10, yPosition)
-            yPosition += 15
-            e.Graphics.DrawString($"Cashier: {frmLoginvb.LoggedInUsername}", regularFont, brush, 10, yPosition)
-            yPosition += 15
-            e.Graphics.DrawString($"Customer: {receiptCustomerName}", regularFont, brush, 10, yPosition)
-            yPosition += 20
-            e.Graphics.DrawString("=====================================", regularFont, brush, 10, yPosition)
-            yPosition += 15
+            ' Document title - use "SALES INVOICE" for compliance
+            e.Graphics.DrawString("SALES INVOICE", boldFont, brush, CSng(centerX - (e.Graphics.MeasureString("SALES INVOICE", boldFont).Width / 2)), CSng(yPosition))
+            yPosition += 22
 
-            ' Items section - show original and discounted unit prices where applicable
-            For Each item In receiptItems
-                Dim itemName As String = item("ProductName").ToString()
-                Dim quantity As Integer = CInt(item("Quantity"))
-                Dim displayedUnitPrice As Decimal = Convert.ToDecimal(item("Price"))
-                Dim originalUnitPrice As Decimal = displayedUnitPrice
-                If item.ContainsKey("OriginalUnitPrice") Then
-                    originalUnitPrice = Convert.ToDecimal(item("OriginalUnitPrice"))
-                End If
+            e.Graphics.DrawString($"Receipt #: {receiptOrderId}", regularFont, brush, marginLeft, yPosition)
+            yPosition += 12
+            e.Graphics.DrawString($"Date: {DateTime.Now:MM/dd/yyyy HH:mm:ss}", regularFont, brush, marginLeft, yPosition)
+            yPosition += 12
+            e.Graphics.DrawString($"Cashier: {frmLoginvb.LoggedInUsername}", regularFont, brush, marginLeft, yPosition)
+            yPosition += 14
 
-                Dim isDiscountedLine As Boolean = displayedUnitPrice <> originalUnitPrice
+            ' Customer compact block - always print Name / TIN / Phone / Email (show underscores if empty)
+            e.Graphics.DrawString("CUSTOMER", sectionHeaderFont, brush, marginLeft, yPosition)
+            yPosition += 12
 
-                If itemName.Length > 30 Then
-                    itemName = itemName.Substring(0, 27) & "..."
-                End If
+            Dim printedName As String = If(Not String.IsNullOrWhiteSpace(receiptCustomerName), receiptCustomerName, If(Not String.IsNullOrWhiteSpace(selectedCustomerName), selectedCustomerName, "________________"))
+            Dim printedTIN As String = If(Not String.IsNullOrWhiteSpace(selectedCustomerTIN), selectedCustomerTIN, "________________")
+            Dim printedPhone As String = If(Not String.IsNullOrWhiteSpace(selectedCustomerPhone), selectedCustomerPhone, "________________")
+            Dim printedEmail As String = If(Not String.IsNullOrWhiteSpace(selectedCustomerEmail), selectedCustomerEmail, "________________")
 
-                e.Graphics.DrawString($"{quantity}x {itemName}", regularFont, brush, 10, yPosition)
-                yPosition += 12
+            e.Graphics.DrawString($"Name: {printedName}", regularFont, brush, marginLeft, yPosition)
+            yPosition += 12
+            e.Graphics.DrawString($"TIN: {printedTIN}", regularFont, brush, marginLeft, yPosition)
+            yPosition += 12
+            e.Graphics.DrawString($"Phone: {printedPhone}", regularFont, brush, marginLeft, yPosition)
+            yPosition += 12
+            e.Graphics.DrawString($"Email: {printedEmail}", regularFont, brush, marginLeft, yPosition)
+            yPosition += 8
 
-                If isDiscountedLine Then
-                    ' Draw original unit price with strike-through
-                    Dim origPriceText As String = $"@ ₱{originalUnitPrice:F2}"
-                    Dim origPoint As New PointF(20, yPosition)
-                    e.Graphics.DrawString(origPriceText, regularFont, brush, origPoint)
-                    Dim sz As SizeF = e.Graphics.MeasureString(origPriceText, regularFont)
-                    Dim lineY As Single = origPoint.Y + sz.Height / 2
-                    Using penStrike As New Pen(Color.Black, 1.2F)
-                        e.Graphics.DrawLine(penStrike, origPoint.X, lineY, origPoint.X + sz.Width, lineY)
-                    End Using
+            e.Graphics.DrawString(New String("="c, Math.Min(36, CInt(contentWidth / 6))), regularFont, brush, marginLeft, yPosition)
+            yPosition += 14
 
-                    ' Draw discounted unit price underneath
-                    Dim newPriceText As String = $"@ ₱{displayedUnitPrice:F2}"
-                    e.Graphics.DrawString(newPriceText, regularFont, brush, New PointF(20, yPosition + sz.Height + 2))
+            ' Items (VAT-inclusive display)
+            If receiptItems IsNot Nothing Then
+                For Each item In receiptItems
+                    Dim itemName As String = item("ProductName").ToString()
+                    Dim quantity As Integer = CInt(item("Quantity"))
+                    Dim unitVatInc As Decimal = Convert.ToDecimal(If(item.ContainsKey("OriginalUnitPrice"), item("OriginalUnitPrice"), item("Price")))
+                    Dim lineTotal As Decimal = Math.Round(unitVatInc * quantity, 2)
 
-                    ' Draw discounted line total at right
-                    Dim discountedLineTotal As Decimal = Math.Round(displayedUnitPrice * quantity, 2)
-                    e.Graphics.DrawString($"₱{discountedLineTotal:F2}", regularFont, brush, CSng(e.MarginBounds.Width - 60), CSng(yPosition + sz.Height + 2))
-
-                    yPosition += CInt(sz.Height) + 16
-                Else
-                    Dim priceText As String = $"@ ₱{displayedUnitPrice:F2}"
-                    e.Graphics.DrawString(priceText, regularFont, brush, 20, yPosition)
-                    Dim lineTotal As Decimal = Math.Round(displayedUnitPrice * quantity, 2)
-                    e.Graphics.DrawString($"₱{lineTotal:F2}", regularFont, brush, CSng(e.MarginBounds.Width - 60), CSng(yPosition))
+                    Dim itemLine As String = $"{quantity}x {itemName}"
+                    e.Graphics.DrawString(itemLine, regularFont, brush, marginLeft, yPosition)
+                    yPosition += 12
+                    e.Graphics.DrawString($"@ ₱{unitVatInc:F2}", regularFont, brush, marginLeft + 8, yPosition)
+                    e.Graphics.DrawString($"₱{lineTotal:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"₱{lineTotal:F2}", regularFont).Width), CSng(yPosition))
                     yPosition += 15
+                Next
+            End If
+
+            e.Graphics.DrawString(New String("="c, Math.Min(36, CInt(contentWidth / 6))), regularFont, brush, marginLeft, yPosition)
+            yPosition += 14
+
+            ' --- CORRECT DISCOUNT-FIRST VAT MATH ---
+            Dim preDiscountVatInclusive As Decimal = Me.subtotalVatInclusive
+            If preDiscountVatInclusive = 0D Then
+                ' fallback: sum item VAT-inclusive totals
+                preDiscountVatInclusive = 0D
+                If receiptItems IsNot Nothing Then
+                    For Each it In receiptItems
+                        Dim unitVatInc As Decimal = Convert.ToDecimal(If(it.ContainsKey("OriginalUnitPrice"), it("OriginalUnitPrice"), it("Price")))
+                        preDiscountVatInclusive += unitVatInc * CInt(it("Quantity"))
+                    Next
                 End If
+                preDiscountVatInclusive = Math.Round(preDiscountVatInclusive, 2)
+            End If
 
-                yPosition += 3
-            Next
+            Dim discountVatInclusive As Decimal = discountAmount ' discount stored as VAT-inclusive
+            Dim vatableSales As Decimal = Math.Max(0D, preDiscountVatInclusive - discountVatInclusive) ' discount-first: remaining amount is VATable
+            Dim vatAmt As Decimal = Math.Round(vatableSales * 0.12D, 2)
+            Dim totalDue As Decimal = Math.Round(vatableSales + vatAmt, 2)
 
-            e.Graphics.DrawString("=====================================", regularFont, brush, 10, yPosition)
-            yPosition += 15
+            ' Print breakdown: Subtotal (VAT-inclusive), Less Discount, VATable sales, VAT, Total
+            e.Graphics.DrawString("SUBTOTAL (VAT-EXC):", regularFont, brush, marginLeft, yPosition)
+            e.Graphics.DrawString($"₱{preDiscountVatInclusive:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"₱{preDiscountVatInclusive:F2}", regularFont).Width), CSng(yPosition))
+            yPosition += 12
 
-            ' Totals and VAT
-            Dim vatInclusiveSubtotal As Decimal = receiptSubtotal * 1.12D
-            Dim discountedVatInclusive As Decimal = Math.Max(0D, vatInclusiveSubtotal - discountAmount)
-            Dim vatableSales As Decimal = discountedVatInclusive / 1.12D
-            Dim vatAmount As Decimal = vatableSales * 0.12D
-
-            If discountAmount > 0 Then
-                e.Graphics.DrawString($"VATABLE SALES:", regularFont, brush, 10, yPosition)
-                e.Graphics.DrawString($"₱{vatableSales:F2}", regularFont, brush, CSng(e.MarginBounds.Width - 80), CSng(yPosition))
-                yPosition += 12
-
-                Dim discountLabel As String = $"Discount ({discountType})"
+            If discountVatInclusive > 0D Then
+                Dim discountLabel As String = $"Less: Discount ({discountType})"
                 If Not String.IsNullOrEmpty(discountedItemName) Then
-                    discountLabel = $"Discount ({discountType}) on {discountedItemName}"
+                    discountLabel &= $" on {discountedItemName}"
                 End If
-                e.Graphics.DrawString(discountLabel & ":", regularFont, brush, 10, yPosition)
-                e.Graphics.DrawString($"-₱{discountAmount:F2}", regularFont, brush, CSng(e.MarginBounds.Width - 80), CSng(yPosition))
-                yPosition += 15
-            Else
-                e.Graphics.DrawString($"VATABLE SALES:", regularFont, brush, 10, yPosition)
-                e.Graphics.DrawString($"₱{vatableSales:F2}", regularFont, brush, CSng(e.MarginBounds.Width - 80), CSng(yPosition))
-                yPosition += 15
-            End If
-
-            e.Graphics.DrawString("=====================================", regularFont, brush, 10, yPosition)
-            yPosition += 15
-
-            e.Graphics.DrawString($"VAT (12%):", regularFont, brush, 10, yPosition)
-            e.Graphics.DrawString($"₱{vatAmount:F2}", regularFont, brush, CSng(e.MarginBounds.Width - 80), CSng(yPosition))
-            yPosition += 15
-
-            e.Graphics.DrawString("=====================================", regularFont, brush, 10, yPosition)
-            yPosition += 15
-
-            e.Graphics.DrawString($"TOTAL AMOUNT DUE:", boldFont, brush, 10, yPosition)
-            e.Graphics.DrawString($"₱{receiptTotalAmount:F2}", boldFont, brush, CSng(e.MarginBounds.Width - 80), CSng(yPosition))
-            yPosition += 25
-            e.Graphics.DrawString("=====================================", regularFont, brush, 10, yPosition)
-            yPosition += 15
-
-            ' Payment information
-            e.Graphics.DrawString("PAYMENT INFORMATION:", boldFont, brush, 10, yPosition)
-            yPosition += 15
-            e.Graphics.DrawString($"Payment Method: {selectedPaymentMethod}", regularFont, brush, 10, yPosition)
-            yPosition += 12
-            If Not String.IsNullOrEmpty(paymentReference) Then
-                e.Graphics.DrawString($"Reference: {paymentReference}", regularFont, brush, 10, yPosition)
+                e.Graphics.DrawString(discountLabel & ":", regularFont, brush, marginLeft, yPosition)
+                e.Graphics.DrawString($"-₱{discountVatInclusive:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"-₱{discountVatInclusive:F2}", regularFont).Width), CSng(yPosition))
                 yPosition += 12
             End If
-            e.Graphics.DrawString($"Amount Received: ₱{receiptAmountReceived:F2}", regularFont, brush, 10, yPosition)
+
+            e.Graphics.DrawString("VATABLE SALES:", regularFont, brush, marginLeft, yPosition)
+            e.Graphics.DrawString($"₱{vatableSales:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"₱{vatableSales:F2}", regularFont).Width), CSng(yPosition))
             yPosition += 12
-            e.Graphics.DrawString($"Change: ₱{receiptChange:F2}", regularFont, brush, 10, yPosition)
+
+            e.Graphics.DrawString($"VAT (12%):", regularFont, brush, marginLeft, yPosition)
+            e.Graphics.DrawString($"₱{vatAmt:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"₱{vatAmt:F2}", regularFont).Width), CSng(yPosition))
+            yPosition += 12
+
+            e.Graphics.DrawString("=====================================", regularFont, brush, marginLeft, yPosition)
+            yPosition += 12
+
+            e.Graphics.DrawString("TOTAL AMOUNT DUE:", boldFont, brush, marginLeft, yPosition)
+            e.Graphics.DrawString($"₱{totalDue:F2}", boldFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"₱{totalDue:F2}", boldFont).Width), CSng(yPosition))
             yPosition += 18
 
-            ' Footer (BIR info, custom message)
-            Dim birAuthNumber As String = CompanySettingsManager.Instance.GetSettingString("BIRAuthNumber", "ATP-2024-000001")
-            Dim ptuNumber As String = CompanySettingsManager.Instance.GetSettingString("PTUNumber", "PTU-2024-001")
-            Dim validityYears As Integer = CInt(CompanySettingsManager.Instance.GetSetting("ValidityYears", 5))
-
-            e.Graphics.DrawString($"BIR Authority to Print No.: {birAuthNumber}", regularFont, brush, 10, yPosition)
+            e.Graphics.DrawString("=====================================", regularFont, brush, marginLeft, yPosition)
             yPosition += 12
-            e.Graphics.DrawString($"PTU No.: {ptuNumber}", regularFont, brush, 10, yPosition)
-            yPosition += 12
-            e.Graphics.DrawString($"""This Invoice is valid for {validityYears} years from ATP date.""", regularFont, brush, 10, yPosition)
-            yPosition += 20
 
-            Dim footerMessage As String = CompanySettingsManager.Instance.GetSettingString("ReceiptFooter", "Thank you for your business!" & vbCrLf & "Have a great day!")
+            ' Payment info
+            e.Graphics.DrawString("PAYMENT INFORMATION", sectionHeaderFont, brush, marginLeft, yPosition)
+            yPosition += 14
+            e.Graphics.DrawString($"Payment Method: {selectedPaymentMethod}", regularFont, brush, marginLeft, yPosition)
+            yPosition += 12
+            If Not String.IsNullOrEmpty(paymentReference) Then
+                e.Graphics.DrawString($"Reference: {paymentReference}", regularFont, brush, marginLeft, yPosition)
+                yPosition += 12
+            End If
+            e.Graphics.DrawString($"Amount Received: ₱{receiptAmountReceived:F2}", regularFont, brush, marginLeft, yPosition)
+            yPosition += 12
+            e.Graphics.DrawString($"Change: ₱{receiptChange:F2}", regularFont, brush, marginLeft, yPosition)
+            yPosition += 14
+
+            e.Graphics.DrawString(New String("="c, Math.Min(36, CInt(contentWidth / 6))), regularFont, brush, marginLeft, yPosition)
+            yPosition += 12
+
+            ' BIR lines (Date Issued and 5-year validity removed per request)
+            e.Graphics.DrawString($"BIR Authority to Print No.: {birAuthNumber}", regularFont, brush, marginLeft, yPosition)
+            yPosition += 12
+            e.Graphics.DrawString($"PTU No.: {ptuNumber}", regularFont, brush, marginLeft, yPosition)
+            yPosition += 12
+
+            ' Footer
+            e.Graphics.DrawString(New String("="c, Math.Min(36, CInt(contentWidth / 6))), regularFont, brush, marginLeft, yPosition)
+            yPosition += 12
             Dim footerLines() As String = footerMessage.Split({vbCrLf, vbLf}, StringSplitOptions.RemoveEmptyEntries)
-
-            e.Graphics.DrawString("=====================================", regularFont, brush, 10, yPosition)
-            yPosition += 15
-
             For Each line As String In footerLines
                 e.Graphics.DrawString(line, regularFont, brush, CSng(centerX - (e.Graphics.MeasureString(line, regularFont).Width / 2)), CSng(yPosition))
-                yPosition += 15
+                yPosition += 12
             Next
+
+            pen.Dispose()
         Catch ex As Exception
             Console.WriteLine($"Print error: {ex.Message}")
         End Try
@@ -1811,16 +1816,16 @@ Public Class Sales
         lblTitle.Size = New Size(560, 30)
         lblTitle.TextAlign = ContentAlignment.MiddleCenter
         paymentForm.Controls.Add(lblTitle)
-
-        ' Replace label in ShowPaymentMethodModal to show placeholder when no name supplied
+        ' Show customer name only if provided (show "Customer:" when empty)
         Dim lblCustomerInfo As New Label()
-        lblCustomerInfo.Text = $"Customer: {If(String.IsNullOrWhiteSpace(selectedCustomerName), "Customer Name", selectedCustomerName)} ({selectedCustomerType})"
+        lblCustomerInfo.Text = If(String.IsNullOrWhiteSpace(selectedCustomerName), "Customer:", $"Customer: {selectedCustomerName} ({selectedCustomerType})")
         lblCustomerInfo.Font = New Font("Poppins", 10, FontStyle.Regular)
         lblCustomerInfo.ForeColor = GoldenYellow
         lblCustomerInfo.Location = New Point(20, 60)
         lblCustomerInfo.Size = New Size(560, 25)
         lblCustomerInfo.TextAlign = ContentAlignment.MiddleCenter
         paymentForm.Controls.Add(lblCustomerInfo)
+
 
         ' Total amount display
         Dim lblTotal As New Label()
@@ -1833,7 +1838,7 @@ Public Class Sales
         paymentForm.Controls.Add(lblTotal)
 
         ' Payment method buttons (centered)
-        Dim buttonStartX As Integer = (paymentForm.Width - (3 * 150 + 2 * 40)) / 2 ' 3 buttons with 40px spacing
+        Dim buttonStartX As Integer = (paymentForm.Width - (3 * 150 + 2 * 40)) / 2
 
         ' Cash button
         Dim btnCash As New Guna.UI2.WinForms.Guna2Button()
@@ -1862,12 +1867,12 @@ Public Class Sales
         btnGCash.Location = New Point(buttonStartX + 190, 160)
         btnGCash.Font = New Font("Poppins", 12, FontStyle.Bold)
         btnGCash.ForeColor = PureWhite
-        btnGCash.FillColor = Color.FromArgb(0, 120, 212) ' Blue for GCash
+        btnGCash.FillColor = Color.FromArgb(0, 120, 212)
         btnGCash.BorderRadius = 15
         btnGCash.TextAlign = HorizontalAlignment.Center
         AddHandler btnGCash.Click, Sub()
                                        selectedPaymentMethod = "GCash"
-                                       paymentForm.DialogResult = DialogResult.Yes ' Special result for reference input
+                                       paymentForm.DialogResult = DialogResult.Yes
                                        paymentForm.Close()
                                    End Sub
         AddHandler btnGCash.MouseEnter, Sub() btnGCash.FillColor = GoldenYellow
@@ -1881,12 +1886,12 @@ Public Class Sales
         btnCard.Location = New Point(buttonStartX + 380, 160)
         btnCard.Font = New Font("Poppins", 12, FontStyle.Bold)
         btnCard.ForeColor = PureWhite
-        btnCard.FillColor = Color.FromArgb(138, 43, 226) ' Purple for Card
+        btnCard.FillColor = Color.FromArgb(138, 43, 226)
         btnCard.BorderRadius = 15
         btnCard.TextAlign = HorizontalAlignment.Center
         AddHandler btnCard.Click, Sub()
                                       selectedPaymentMethod = "Card"
-                                      paymentForm.DialogResult = DialogResult.Yes ' Special result for reference input
+                                      paymentForm.DialogResult = DialogResult.Yes
                                       paymentForm.Close()
                                   End Sub
         AddHandler btnCard.MouseEnter, Sub() btnCard.FillColor = GoldenYellow
@@ -1903,7 +1908,7 @@ Public Class Sales
         btnBackToCustomer.FillColor = SteelGray
         btnBackToCustomer.BorderRadius = 12
         AddHandler btnBackToCustomer.Click, Sub()
-                                                paymentForm.DialogResult = DialogResult.Retry ' Special result to go back
+                                                paymentForm.DialogResult = DialogResult.Retry
                                                 paymentForm.Close()
                                             End Sub
         AddHandler btnBackToCustomer.MouseEnter, Sub() btnBackToCustomer.FillColor = Graphite
@@ -1926,17 +1931,14 @@ Public Class Sales
         AddHandler btnCancel.MouseLeave, Sub() If Not btnCancel.Focused Then btnCancel.FillColor = AlertRed
         paymentForm.Controls.Add(btnCancel)
 
-        ' Create a list of buttons in navigation order (Cash -> GCash -> Card -> Back -> Cancel)
+        ' Keyboard navigation support
         Dim paymentButtons As New List(Of Guna.UI2.WinForms.Guna2Button) From {btnCash, btnGCash, btnCard, btnBackToCustomer, btnCancel}
-
-        ' Add focus visual feedback for keyboard navigation
         For Each btn In paymentButtons
             AddHandler btn.GotFocus, Sub()
                                          btn.FillColor = GoldenYellow
                                          btn.BorderThickness = 2
                                      End Sub
             AddHandler btn.LostFocus, Sub()
-                                          ' Reset to original color based on button type
                                           If btn Is btnCash Then
                                               btn.FillColor = SuccessGreen
                                           ElseIf btn Is btnGCash Then
@@ -1952,35 +1954,27 @@ Public Class Sales
                                       End Sub
         Next
 
-        ' Enable keyboard input for the form
         paymentForm.KeyPreview = True
-
-        ' Add KeyDown handler for arrow key navigation and Escape
         AddHandler paymentForm.KeyDown, Sub(sender As Object, e As KeyEventArgs)
                                             If e.KeyCode = Keys.Up Or e.KeyCode = Keys.Left Then
-                                                ' Move to previous button
                                                 Dim currentIndex As Integer = paymentButtons.IndexOf(TryCast(paymentForm.ActiveControl, Guna.UI2.WinForms.Guna2Button))
                                                 If currentIndex >= 0 Then
                                                     Dim prevIndex As Integer = If(currentIndex = 0, paymentButtons.Count - 1, currentIndex - 1)
                                                     paymentButtons(prevIndex).Focus()
                                                 Else
-                                                    ' If no button is focused, focus the first one
                                                     paymentButtons(0).Focus()
                                                 End If
                                                 e.Handled = True
                                             ElseIf e.KeyCode = Keys.Down Or e.KeyCode = Keys.Right Then
-                                                ' Move to next button
                                                 Dim currentIndex As Integer = paymentButtons.IndexOf(TryCast(paymentForm.ActiveControl, Guna.UI2.WinForms.Guna2Button))
                                                 If currentIndex >= 0 Then
                                                     Dim nextIndex As Integer = If(currentIndex = paymentButtons.Count - 1, 0, currentIndex + 1)
                                                     paymentButtons(nextIndex).Focus()
                                                 Else
-                                                    ' If no button is focused, focus the first one
                                                     paymentButtons(0).Focus()
                                                 End If
                                                 e.Handled = True
                                             ElseIf e.KeyCode = Keys.Escape Then
-                                                ' Cancel the modal on Escape
                                                 paymentForm.DialogResult = DialogResult.Cancel
                                                 paymentForm.Close()
                                                 e.Handled = True
@@ -1993,22 +1987,14 @@ Public Class Sales
 
         Select Case result
             Case DialogResult.OK
-                ' Cash payment - proceed to cash amount input
                 ShowCashAmountInputModal()
-
             Case DialogResult.Yes
-                ' GCash/Card payment - show reference input first, then complete
                 If ShowReferenceInputModal() Then
-                    ' Reference entered successfully, complete the sale
                     confirmBtn.PerformClick()
                 End If
-
             Case DialogResult.Retry
-                ' Back to customer - show customer modal again
                 ShowCustomerInformationModal()
-
             Case DialogResult.Cancel
-                ' Cancel - do nothing, return to normal state
                 Return
         End Select
     End Sub
@@ -2182,15 +2168,16 @@ Public Class Sales
         lblTitle.TextAlign = ContentAlignment.MiddleCenter
         headerSection.Controls.Add(lblTitle)
 
-        ' Replace customer text in cash modal header to use placeholder
+        'Replace customer text in cash modal header to show "Customer:" when no name provided
         Dim lblCustomer As New Label()
-        lblCustomer.Text = $"Customer: {If(String.IsNullOrWhiteSpace(selectedCustomerName), "Customer Name", selectedCustomerName)}"
+        lblCustomer.Text = If(String.IsNullOrWhiteSpace(selectedCustomerName), "Customer:", $"Customer: {selectedCustomerName}")
         lblCustomer.Font = New Font("Poppins", 12, FontStyle.Regular)
         lblCustomer.ForeColor = GoldenYellow
         lblCustomer.Location = New Point(0, 40)
         lblCustomer.Size = New Size(480, 25)
         lblCustomer.TextAlign = ContentAlignment.MiddleCenter
         headerSection.Controls.Add(lblCustomer)
+
         ' Order total display
         Dim lblOrderTotal As New Label()
         lblOrderTotal.Text = $"Total Due: ₱{totalAmount:F2}"
@@ -2718,6 +2705,7 @@ Public Class Sales
     ' FIXED: Refresh the order display with correct VAT calculations
     ' Refresh the order display in the order summary panel
     ' FIXED: Refresh the order display with correct VAT calculations
+    ' Replace the existing RefreshOrderDisplay method with this updated implementation
     Private Sub RefreshOrderDisplay()
         ' Reset change label and totalRLbl when in normal order summary mode
         If Not pinPanelActive AndAlso Not totalPanelActive Then
@@ -2735,55 +2723,29 @@ Public Class Sales
             End If
         Next
 
-        ' Single tooltip instance for all price labels
         Dim tt As New ToolTip()
+        Dim panelHeight As Integer = 48
+        Dim marginY As Integer = 8
+        Dim currentY As Integer = 40
 
-        ' Add all products in the order list as rows
-        Dim panelHeight As Integer = 48          ' COMPACT row height (was 60)
-        Dim marginY As Integer = 8               ' smaller vertical gap
-        Dim currentY As Integer = 40             ' Start after Order ID/OrderName labels
-        Dim subtotalVatInclusiveLocal As Decimal = 0
+        ' Ensure every product has an OriginalUnitPrice stored (store VAT-INCLUSIVE unit prices)
+        For Each prod In currentOrderList
+            If Not prod.ContainsKey("OriginalUnitPrice") Then
+                prod("OriginalUnitPrice") = Convert.ToDecimal(prod("Price"))
+            End If
+        Next
 
+        ' Build UI rows and compute subtotal (VAT-INCLUSIVE) before discount
+        Dim subtotalVatInclusiveLocal As Decimal = 0D
         For i = 0 To currentOrderList.Count - 1
             Dim prod = currentOrderList(i)
+            Dim unitPriceVatInclusive As Decimal = Convert.ToDecimal(prod("OriginalUnitPrice"))
+            Dim qtyInt As Integer = CInt(prod("Quantity"))
 
-            ' Preserve original unit price if not already stored
-            Dim currentUnitPrice As Decimal = Convert.ToDecimal(prod("Price"))
-            If Not prod.ContainsKey("OriginalUnitPrice") Then
-                prod("OriginalUnitPrice") = currentUnitPrice
-            End If
-            Dim originalUnitPrice As Decimal = Convert.ToDecimal(prod("OriginalUnitPrice"))
+            ' Accumulate subtotal (VAT-INCLUSIVE)
+            subtotalVatInclusiveLocal += unitPriceVatInclusive * qtyInt
 
-            ' Determine if this line is the discounted line
-            Dim isDiscountedLine As Boolean = False
-            If discountedItemProductId.HasValue AndAlso prod.ContainsKey("ProductID") Then
-                Try
-                    If Convert.ToInt32(prod("ProductID")) = discountedItemProductId.Value Then
-                        isDiscountedLine = (discountAmount > 0D)
-                    End If
-                Catch
-                    isDiscountedLine = False
-                End Try
-            End If
-
-            ' Compute discounted unit price if this is the discounted line
-            Dim discountedUnitPrice As Decimal = originalUnitPrice
-            If isDiscountedLine Then
-                If discountType = "Percentage" Then
-                    discountedUnitPrice = Math.Round(originalUnitPrice * (1D - (discountValue / 100D)), 2)
-                ElseIf discountType = "Fixed" Then
-                    Dim qty As Integer = CInt(prod("Quantity"))
-                    Dim unitDiscount As Decimal = Math.Round(discountAmount / Math.Max(1, qty), 2)
-                    discountedUnitPrice = Math.Max(0D, originalUnitPrice - unitDiscount)
-                End If
-                ' Update stored price so totals/receipt use discounted price
-                prod("Price") = discountedUnitPrice
-            Else
-                ' Restore original unit price if no discount applies to this line
-                prod("Price") = originalUnitPrice
-            End If
-
-            ' Build UI row
+            ' Build UI row (display uses VAT-INCLUSIVE prices)
             Dim orderPanel As New Guna.UI2.WinForms.Guna2Panel()
             orderPanel.Size = New Size(orderSummaryPanel.Width - 40, panelHeight)
             orderPanel.BorderRadius = 8
@@ -2798,10 +2760,8 @@ Public Class Sales
                                                    ReduceItemQuantity(CInt(orderPanel.Tag))
                                                End Sub
 
-            ' Vertical baseline for labels to center them in the smaller panel
             Dim baseY As Integer = 10
 
-            ' Order ID
             Dim lblOrderId As New Guna.UI2.WinForms.Guna2HtmlLabel()
             lblOrderId.Text = (i + 1).ToString("D2")
             lblOrderId.Font = New Font("Poppins Light", 9.0F, FontStyle.Regular)
@@ -2809,7 +2769,6 @@ Public Class Sales
             lblOrderId.Location = New Point(12, baseY)
             lblOrderId.AutoSize = True
 
-            ' Product name (compact)
             Dim fullProductName As String = prod("ProductName").ToString()
             Dim maxNameLength As Integer = 28
             Dim displayName As String = If(fullProductName.Length > maxNameLength, fullProductName.Substring(0, maxNameLength) & "...", fullProductName)
@@ -2827,7 +2786,6 @@ Public Class Sales
 
             orderPanel.Controls.Add(lblCustomer)
 
-            ' Quantity label
             Dim lblQuantity As New Guna.UI2.WinForms.Guna2HtmlLabel()
             lblQuantity.Text = prod("Quantity").ToString() & "x"
             lblQuantity.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
@@ -2835,27 +2793,18 @@ Public Class Sales
             lblQuantity.Location = New Point(320, baseY)
             lblQuantity.AutoSize = True
 
-            ' Price label: show line total (uses current prod("Price") which may be discounted)
-            Dim qtyInt As Integer = CInt(prod("Quantity"))
-            Dim lineTotal As Decimal = Convert.ToDecimal(prod("Price")) * qtyInt
+            ' Show line total using VAT-INCLUSIVE unit price for display
+            Dim lineTotalVatInclusive As Decimal = unitPriceVatInclusive * qtyInt
 
             Dim lblTotal As New Guna.UI2.WinForms.Guna2HtmlLabel()
-            lblTotal.Text = lineTotal.ToString("N2")
+            lblTotal.Text = lineTotalVatInclusive.ToString("N2")
             lblTotal.Font = New Font("Poppins Regular", 9.0F)
             lblTotal.ForeColor = PureWhite
-            ' align to right within panel (small offset to keep it inside)
             lblTotal.Location = New Point(orderPanel.Width - 90, baseY)
             lblTotal.AutoSize = True
 
-            ' If discounted, tooltip the original unit price (compact requirement)
-            If isDiscountedLine Then
-                Dim tooltipText As String = $"Original unit price: ₱{originalUnitPrice:F2}{Environment.NewLine}Discounted unit price: ₱{discountedUnitPrice:F2}"
-                tt.SetToolTip(lblTotal, tooltipText)
-            Else
-                tt.SetToolTip(lblTotal, $"Unit price: ₱{originalUnitPrice:F2}")
-            End If
+            tt.SetToolTip(lblTotal, $"Unit price (VAT inc): ₱{unitPriceVatInclusive:F2}")
 
-            ' Add double-click handlers to children
             AddHandler lblOrderId.DoubleClick, Sub() ReduceItemQuantity(CInt(orderPanel.Tag))
             AddHandler lblCustomer.DoubleClick, Sub() ReduceItemQuantity(CInt(orderPanel.Tag))
             AddHandler lblQuantity.DoubleClick, Sub() ReduceItemQuantity(CInt(orderPanel.Tag))
@@ -2865,37 +2814,26 @@ Public Class Sales
             orderPanel.Controls.Add(lblTotal)
 
             orderSummaryPanel.Controls.Add(orderPanel)
-
-            ' Use the (possibly discounted) price when summing subtotal
-            subtotalVatInclusiveLocal += Convert.ToDecimal(prod("Price")) * CInt(prod("Quantity"))
         Next
 
-        ' Decide discounted subtotal:
-        ' If per-line prices were already adjusted above (prod("Price") != OriginalUnitPrice) we must NOT subtract discountAmount again.
-        Dim discountedSubtotalVatInclusive As Decimal = subtotalVatInclusiveLocal
-        Dim perLineDiscountApplied As Boolean = False
-        For Each it In currentOrderList
-            If it.ContainsKey("OriginalUnitPrice") Then
-                If Convert.ToDecimal(it("Price")) <> Convert.ToDecimal(it("OriginalUnitPrice")) Then
-                    perLineDiscountApplied = True
-                    Exit For
-                End If
-            End If
-        Next
+        ' --- DISCOUNT-FIRST CALCULATION (intentional) ---
+        ' Rule: Apply discount to subtotal (VAT-INCLUSIVE), the remaining amount is treated as VATable base,
+        ' then compute VAT as base * 12% and total = base + VAT.
+        Dim discountVatInclusive As Decimal = discountAmount ' discountAmount stored as VAT-inclusive fixed amount
+        Dim vatableSales As Decimal = Math.Max(0D, subtotalVatInclusiveLocal - discountVatInclusive) ' discount-first
+        Dim vatAmount As Decimal = Math.Round(vatableSales * 0.12D, 2)
+        Dim totalAmount As Decimal = Math.Round(vatableSales + vatAmount, 2)
 
-        If Not perLineDiscountApplied AndAlso discountAmount > 0 Then
-            discountedSubtotalVatInclusive = Math.Max(0D, subtotalVatInclusiveLocal - discountAmount)
-        End If
-
-        ' Calculate VATable sales (net of VAT)
-        Dim vatableSales As Decimal = discountedSubtotalVatInclusive / 1.12D
-        Dim vatAmount As Decimal = discountedSubtotalVatInclusive - vatableSales
-        Dim totalAmount As Decimal = discountedSubtotalVatInclusive
-
+        ' Persist values for receipt printing and confirm flow:
+        ' receiptVatableBeforeDiscount will hold the subtotal (VAT-inclusive) before discount for printing
+        Me.receiptVatableBeforeDiscount = subtotalVatInclusiveLocal
+        Me.receiptSubtotal = vatableSales ' treated as VATable base per "discount first" rule
+        Me.receiptTax = vatAmount
+        Me.receiptTotalAmount = totalAmount
         Me.subtotalVatInclusive = subtotalVatInclusiveLocal
 
-        ' Update UI labels
-        If lblSubTotal IsNot Nothing Then lblSubTotal.Text = vatableSales.ToString("N2")
+        ' Update UI labels:
+        If lblSubTotal IsNot Nothing Then lblSubTotal.Text = subtotalVatInclusiveLocal.ToString("N2") ' shows VAT-inclusive subtotal (e.g. ₱200.00)
         If taxLbl IsNot Nothing Then taxLbl.Text = vatAmount.ToString("N2")
         If totalLbl IsNot Nothing Then totalLbl.Text = totalAmount.ToString("N2")
     End Sub
@@ -2905,10 +2843,9 @@ Public Class Sales
         Try
             If Not ValidateUserSession() Then Return
 
-            Dim orderTotal As Decimal = 0D
+            ' Use the totals already computed and stored by RefreshOrderDisplay
+            Dim orderTotal As Decimal = Me.receiptTotalAmount
             Dim receivedAmount As Decimal = 0D
-            If totalLbl IsNot Nothing Then Decimal.TryParse(totalLbl.Text, orderTotal)
-
             If selectedPaymentMethod = "Cash" Then
                 If lblAmountDisplay IsNot Nothing Then
                     Dim amountText As String = lblAmountDisplay.Text.Replace("₱", "").Trim()
@@ -2927,164 +2864,103 @@ Public Class Sales
 
             Dim changeAmount As Decimal = receivedAmount - orderTotal
 
-            Dim userIdQuery As String = "SELECT UserID FROM Users WHERE Username = @Username"
-            Dim userIdParams As SqlParameter() = {New SqlParameter("@Username", frmLoginvb.LoggedInUsername)}
-            Dim userIdResult = Utilities.ExecuteScalar(userIdQuery, userIdParams)
-            If userIdResult Is Nothing OrElse IsDBNull(userIdResult) Then
-                MessageBox.Show("Invalid user session. Please log in again.", "Authentication Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-                Return
-            End If
-            Dim userId As Integer = Convert.ToInt32(userIdResult)
+            ' Build sales data snapshot (JSON) for Sales.SalesData column
+            Dim salesDataJson As String = ""
+            Try
+                salesDataJson = Newtonsoft.Json.JsonConvert.SerializeObject(New With {
+                .payment = New With {
+                    .method = selectedPaymentMethod,
+                    .reference = paymentReference,
+                    .received = receivedAmount,
+                    .change = changeAmount,
+                    .discount = New With {.type = discountType, .amount = discountAmount}
+                },
+                .items = currentOrderList
+            })
+            Catch
+                salesDataJson = "{}"
+            End Try
 
-            ' Build sale JSON (include customer.tin)
-            Dim saleData As New Dictionary(Of String, Object) From {
-            {"customer", New Dictionary(Of String, Object) From {
-                {"name", selectedCustomerName},
-                {"phone", selectedCustomerPhone},
-                {"email", selectedCustomerEmail},
-                {"tin", If(String.IsNullOrWhiteSpace(selectedCustomerTIN), Nothing, selectedCustomerTIN)}
-            }},
-            {"payment", New Dictionary(Of String, Object) From {
-                {"method", selectedPaymentMethod},
-                {"reference", If(String.IsNullOrEmpty(paymentReference), Nothing, paymentReference)},
-                {"subtotal", orderTotal / 1.12D},
-                {"discount", New Dictionary(Of String, Object) From {
-                    {"type", discountType},
-                    {"value", discountValue},
-                    {"amount", discountAmount},
-                    {"appliedTo", If(String.IsNullOrEmpty(discountedItemName), Nothing, discountedItemName)}
-                }},
-                {"tax", orderTotal - (orderTotal / 1.12D)},
-                {"total", orderTotal},
-                {"received", receivedAmount},
-                {"change", changeAmount}
-            }},
-            {"items", currentOrderList},
-            {"cashier", frmLoginvb.LoggedInUsername},
-            {"saleDate", DateTime.Now}
+            ' Insert Sale record and obtain the generated SaleID
+            Dim insertSaleQuery As String =
+            "INSERT INTO Sales (SaleDate, CustomerName, CustomerTIN, TotalAmount, AmountPaid, PaymentMethod, Reference, DiscountAmount, DiscountType, SalesData, UserID) " &
+            "VALUES (@SaleDate, @CustomerName, @CustomerTIN, @TotalAmount, @AmountPaid, @PaymentMethod, @Reference, @DiscountAmount, @DiscountType, @SalesData, @UserID); SELECT CAST(SCOPE_IDENTITY() AS int);"
+
+            ' Resolve UserID (optional) - try to look up the current user's ID, fallback to NULL
+            Dim userIdParamValue As Object = DBNull.Value
+            Try
+                Dim uidObj = Utilities.ExecuteScalar("SELECT UserID FROM Users WHERE Username = @Username", New SqlParameter("@Username", frmLoginvb.LoggedInUsername))
+                If uidObj IsNot Nothing AndAlso Not IsDBNull(uidObj) Then
+                    userIdParamValue = Convert.ToInt32(uidObj)
+                End If
+            Catch
+                userIdParamValue = DBNull.Value
+            End Try
+
+            Dim saleParams As SqlParameter() = {
+            New SqlParameter("@SaleDate", DateTime.Now),
+            New SqlParameter("@CustomerName", If(String.IsNullOrWhiteSpace(selectedCustomerName), DBNull.Value, CType(selectedCustomerName, Object))),
+            New SqlParameter("@CustomerTIN", If(String.IsNullOrWhiteSpace(selectedCustomerTIN), DBNull.Value, CType(selectedCustomerTIN, Object))),
+            New SqlParameter("@TotalAmount", orderTotal),
+            New SqlParameter("@AmountPaid", receivedAmount),
+            New SqlParameter("@PaymentMethod", selectedPaymentMethod),
+            New SqlParameter("@Reference", If(String.IsNullOrWhiteSpace(paymentReference), DBNull.Value, CType(paymentReference, Object))),
+            New SqlParameter("@DiscountAmount", discountAmount),
+            New SqlParameter("@DiscountType", discountType),
+            New SqlParameter("@SalesData", salesDataJson),
+            New SqlParameter("@UserID", userIdParamValue)
         }
 
-            Dim jsonData As String = Newtonsoft.Json.JsonConvert.SerializeObject(saleData, Newtonsoft.Json.Formatting.Indented)
+            Dim saleIdObj As Object = Utilities.ExecuteScalar(insertSaleQuery, saleParams)
+            Dim saleId As Integer = 0
+            If saleIdObj IsNot Nothing AndAlso Not IsDBNull(saleIdObj) Then
+                saleId = Convert.ToInt32(saleIdObj)
+            Else
+                Throw New Exception("Failed to create sale record.")
+            End If
 
-            ' Single insert that includes customer fields — execute once and get inserted SaleID
-            Dim saleQuery As String =
-            "INSERT INTO Sales (UserID, SaleDate, CustomerID, CustomerName, CustomerTIN, TotalAmount, AmountPaid, PaymentMethod, SalesData, Status, Reference) " &
-            "OUTPUT INSERTED.SaleID VALUES (@UserID, @SaleDate, @CustomerID, @CustomerName, @CustomerTIN, @TotalAmount, @AmountPaid, @PaymentMethod, @SalesData, @Status, @Reference)"
-            ' In confirmBtn_Click: send NULL to DB when CustomerName is empty, and set receipt display placeholder
-            ' (replace the saleParams definition and receiptCustomerName assignment)
-
-            ' build saleParams (customer name -> NULL when empty)
-            Dim saleParams As SqlParameter() = {
-    New SqlParameter("@UserID", userId),
-    New SqlParameter("@SaleDate", DateTime.Now),
-    New SqlParameter("@CustomerID", If(selectedCustomerId.HasValue, CType(selectedCustomerId, Object), DBNull.Value)),
-    New SqlParameter("@CustomerName", If(String.IsNullOrWhiteSpace(selectedCustomerName), CType(DBNull.Value, Object), CType(selectedCustomerName, Object))),
-    New SqlParameter("@CustomerTIN", If(String.IsNullOrWhiteSpace(selectedCustomerTIN), CType(DBNull.Value, Object), CType(selectedCustomerTIN, Object))),
-    New SqlParameter("@TotalAmount", orderTotal),
-    New SqlParameter("@AmountPaid", receivedAmount),
-    New SqlParameter("@PaymentMethod", selectedPaymentMethod),
-    New SqlParameter("@SalesData", jsonData),
-    New SqlParameter("@Status", "Completed"),
-    New SqlParameter("@Reference", If(String.IsNullOrEmpty(paymentReference), DBNull.Value, paymentReference))
-}
-
-            ' After sale created, prepare receipt display name (placeholder for UI only)
-            receiptCustomerName = If(String.IsNullOrWhiteSpace(selectedCustomerName), "Customer Name", selectedCustomerName)
-
-            Dim saleId As Integer = Convert.ToInt32(Utilities.ExecuteScalar(saleQuery, saleParams))
-
-            ' Insert sale items and update stock + write InventoryLog entries (OUT)
+            ' Insert SaleItems and update product stock
             For Each item In currentOrderList
+                Dim prodId As Integer = Convert.ToInt32(item("ProductID"))
+                Dim qty As Integer = CInt(item("Quantity"))
                 Dim unitPrice As Decimal = Convert.ToDecimal(item("Price"))
-                Dim quantity As Integer = CInt(item("Quantity"))
-                Dim productIdObj = item("ProductID")
 
-                ' Insert sale item
-                Dim itemQuery As String = "INSERT INTO SaleItems (SaleID, ProductID, Quantity, UnitPrice) VALUES (@SaleID, @ProductID, @Quantity, @UnitPrice)"
-                Dim itemParams As SqlParameter() = {
-                New SqlParameter("@SaleID", saleId),
-                New SqlParameter("@ProductID", productIdObj),
-                New SqlParameter("@Quantity", quantity),
-                New SqlParameter("@UnitPrice", unitPrice)
-            }
-                Utilities.ExecuteNonQuery(itemQuery, itemParams)
+                Dim insertItemQuery As String = "INSERT INTO SaleItems (SaleID, ProductID, Quantity, UnitPrice) VALUES (@SaleID, @ProductID, @Quantity, @UnitPrice)"
+                Utilities.ExecuteNonQuery(insertItemQuery,
+                                      New SqlParameter("@SaleID", saleId),
+                                      New SqlParameter("@ProductID", prodId),
+                                      New SqlParameter("@Quantity", qty),
+                                      New SqlParameter("@UnitPrice", unitPrice))
 
-                ' Read current stock before update
-                Dim stockSelectQuery As String = "SELECT ISNULL(CurrentStock,0) FROM Products WHERE ProductID = @ProductID"
-                Dim stockObj = Utilities.ExecuteScalar(stockSelectQuery, New SqlParameter() {New SqlParameter("@ProductID", productIdObj)})
-                Dim previousStock As Integer = 0
-                If stockObj IsNot Nothing AndAlso Not IsDBNull(stockObj) Then
-                    Integer.TryParse(stockObj.ToString(), previousStock)
-                End If
-
-                Dim newStock As Integer = Math.Max(0, previousStock - quantity)
-
-                ' Update product stock
-                Dim stockUpdateQuery As String = "UPDATE Products SET CurrentStock = @NewStock WHERE ProductID = @ProductID"
-                Dim stockParams As SqlParameter() = {
-                New SqlParameter("@NewStock", newStock),
-                New SqlParameter("@ProductID", productIdObj)
-            }
-                Utilities.ExecuteNonQuery(stockUpdateQuery, stockParams)
-
-                ' Insert inventory log entry for OUT transaction
-                Try
-                    Dim logQuery As String =
-                    "INSERT INTO InventoryLog (ProductID, TransactionType, Quantity, PreviousStock, NewStock, SupplierID, UserID, Reference, Notes, CreatedAt) " &
-                    "VALUES (@ProductID, @TransactionType, @Quantity, @PreviousStock, @NewStock, @SupplierID, @UserID, @Reference, @Notes, GETDATE())"
-                    Dim logParams As SqlParameter() = {
-                    New SqlParameter("@ProductID", productIdObj),
-                    New SqlParameter("@TransactionType", "OUT"),
-                    New SqlParameter("@Quantity", quantity),
-                    New SqlParameter("@PreviousStock", previousStock),
-                    New SqlParameter("@NewStock", newStock),
-                    New SqlParameter("@SupplierID", DBNull.Value),
-                    New SqlParameter("@UserID", userId),
-                    New SqlParameter("@Reference", $"Sale:{saleId}"),
-                    New SqlParameter("@Notes", $"Sold via POS. SaleID={saleId}")
-                }
-                    Utilities.ExecuteNonQuery(logQuery, logParams)
-                Catch logEx As Exception
-                    ' Don't stop sale if logging fails, but write to console/audit
-                    Console.WriteLine($"Warning: Failed to write InventoryLog for ProductID {productIdObj}: {logEx.Message}")
-                    Utilities.LogAudit(frmLoginvb.LoggedInUsername, "InventoryLog Failed", $"ProductID={productIdObj}, SaleID={saleId}, Error={logEx.Message}")
-                End Try
+                ' Decrease stock in Products table
+                Utilities.ExecuteNonQuery("UPDATE Products SET CurrentStock = CurrentStock - @Qty WHERE ProductID = @ProductID",
+                                      New SqlParameter("@Qty", qty),
+                                      New SqlParameter("@ProductID", prodId))
             Next
 
-            ' Prepare receipt data
+            ' Log audit
+            Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Sale Created", $"SaleID {saleId} created. Total ₱{orderTotal:F2}")
+
+            ' Prepare receipt data (use values computed by RefreshOrderDisplay)
             receiptOrderId = saleId.ToString()
-            receiptCustomerName = selectedCustomerName
-            receiptTotalAmount = orderTotal
+            ' If no customer entered, keep empty so modals and receipt show blanks/underscores
+            receiptCustomerName = If(String.IsNullOrWhiteSpace(selectedCustomerName), "", selectedCustomerName)
+            receiptTotalAmount = Me.receiptTotalAmount
             receiptAmountReceived = receivedAmount
             receiptChange = changeAmount
-
-            Dim vatableSales As Decimal = orderTotal / 1.12D
-            Dim vatAmount As Decimal = vatableSales * 0.12D
-            receiptSubtotal = vatableSales
-            receiptTax = vatAmount
             receiptItems = New List(Of Dictionary(Of String, Object))(currentOrderList)
 
+            ' Print and finalize
             PrintReceipt()
 
-            Dim auditDetails As String = $"Sale ID: {saleId}, Payment: {selectedPaymentMethod}"
-            If Not String.IsNullOrEmpty(paymentReference) Then auditDetails += $", Ref: {paymentReference}"
-            auditDetails += $", Total: ₱{orderTotal:F2}, Received: ₱{receivedAmount:F2}"
-            Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Sale Completed", auditDetails)
-
-            Dim successMessage As String = $"Sale completed successfully! Sale ID: {saleId}{Environment.NewLine}Payment Method: {selectedPaymentMethod}"
-            If Not String.IsNullOrEmpty(paymentReference) Then successMessage += $"{Environment.NewLine}Reference: {paymentReference}"
-            MessageBox.Show(successMessage, "Sale Completed", MessageBoxButtons.OK, MessageBoxIcon.Information)
-
+            ' Reset for next transaction
             ResetSale()
-            Application.DoEvents()
 
         Catch ex As Exception
             MessageBox.Show($"Error processing sale: {ex.Message}", "Processing Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
             Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Sale Failed", $"Error: {ex.Message}")
         End Try
     End Sub
-    ' Confirm payment and process order
-    ' Replace the confirmBtn_Click method's payment validation section with this
     ' Reset sale data for next transaction
     ' ENHANCED: Reset sale data for next transaction with proper order panel refresh
     Private Sub ResetSale()
@@ -3227,9 +3103,6 @@ Public Class Sales
             Console.WriteLine($"Error initializing Order ID: {ex.Message}")
         End Try
     End Sub
-
-    ' Initialize order ID display
-
 
     ' Discount button click handler
     Private Sub btnDiscount_Click(sender As Object, e As EventArgs) Handles btnDiscount.Click
@@ -3790,49 +3663,11 @@ Public Class Sales
     End Sub
     ' Add this method to handle form-level key events
     ' FIXED: Enhanced barcode scanning with proper key handling and Enter key priority
-    Private Sub Sales_KeyDown(sender As Object, e As KeyEventArgs) Handles MyBase.KeyDown
-        ' FIXED: Handle barcode input FIRST, then check for payment Enter
-        If Not totalPanelActive AndAlso Not pinPanelActive AndAlso Not isProfileDropdownVisible Then
-            ' Check if this might be barcode input (we have characters in buffer or it's a barcode-related key)
-            Dim isBarcodeKey As Boolean = False
-
-            Select Case e.KeyCode
-                Case Keys.D0 To Keys.D9, Keys.NumPad0 To Keys.NumPad9,
-                 Keys.A To Keys.Z, Keys.OemMinus, Keys.Subtract,
-                 Keys.Back, Keys.Delete, Keys.Escape
-                    isBarcodeKey = True
-                Case Keys.Enter
-                    ' Enter key - check if we have barcode data to process
-                    If Not String.IsNullOrEmpty(barcodeBuffer) Then
-                        isBarcodeKey = True
-                    Else
-                        ' No barcode data, check if we should go to payment
-                        If currentOrderList.Count > 0 Then
-                            btnPayment.PerformClick()
-                            e.Handled = True
-                            Return
-                        End If
-                    End If
-            End Select
-
-            ' If it's a barcode key, handle it as barcode input
-            If isBarcodeKey Then
-                HandleBarcodeKeyInput(e)
-            End If
-        Else
-            ' Handle payment panel keyboard input
-            If totalPanelActive Then
-                HandleTotalAmountKeyboardInput(e)
-            End If
-        End If
-    End Sub
 
     Private Sub Guna2HtmlLabel17_Click(sender As Object, e As EventArgs) Handles Guna2HtmlLabel17.Click
 
     End Sub
 
-
-    ' ... existing code ...
 
     ' ENHANCED: Wider quantity selector form for better usability
     ' ENHANCED: Wider quantity selector form for better usability
@@ -4005,7 +3840,7 @@ Public Class Sales
                                            Dim quantity As Integer
                                            If Integer.TryParse(txtQuantity.Text, quantity) AndAlso quantity > 0 Then
                                                If quantity > availableStock Then
-                                                   MessageBox.Show($"Cannot add {quantity} items. Only {availableStock} available in stock.", "Insufficient Stock", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                                                   MessageBox.Show($"Cannot add more items. Not enough stock available.", "Insufficient Stock", MessageBoxButtons.OK, MessageBoxIcon.Warning)
                                                    Return
                                                End If
                                                ' Add the specified quantity to the order
@@ -4055,9 +3890,6 @@ Public Class Sales
                                             End Sub
 
         ' Then, continue with the rest of the method...
-        ' Then, continue with the rest of the method...
-
-        ' Then, continue with the rest of the method...
         ' Cancel button - LARGER
         Dim btnCancel As New Guna.UI2.WinForms.Guna2Button()
         btnCancel.Text = "Cancel"
@@ -4105,6 +3937,7 @@ Public Class Sales
                                                  e.Handled = True
                                              End If
                                          End Sub
+
         ' Show modal and handle result
         quantityForm.ShowDialog()
         quantityForm.Dispose()
@@ -4386,4 +4219,62 @@ Public Class Sales
         End Try
         Return Nothing
     End Function
+
+    Private Sub Sales_KeyDown(sender As Object, e As KeyEventArgs) Handles MyBase.KeyDown
+        ' GLOBAL SHORTCUTS (only when no modal/customer/payment panels are active)
+        If Not totalPanelActive AndAlso Not pinPanelActive AndAlso Not isProfileDropdownVisible Then
+            ' Shift+Enter -> go to payment (explicit shortcut)
+            If e.KeyCode = Keys.Enter AndAlso e.Shift Then
+                If currentOrderList.Count > 0 Then
+                    btnPayment.PerformClick()
+                End If
+                e.Handled = True
+                Return
+            End If
+
+            ' D -> open discount modal
+            If e.KeyCode = Keys.D AndAlso Not e.Control AndAlso Not e.Alt Then
+                ' Reuse existing btnDiscount click handler (which validates order presence)
+                btnDiscount.PerformClick()
+                e.Handled = True
+                Return
+            End If
+        End If
+
+        ' Existing barcode / payment logic
+        ' FIXED: Handle barcode input FIRST, then check for payment Enter
+        If Not totalPanelActive AndAlso Not pinPanelActive AndAlso Not isProfileDropdownVisible Then
+            ' Check if this might be barcode input (we have characters in buffer or it's a barcode-related key)
+            Dim isBarcodeKey As Boolean = False
+
+            Select Case e.KeyCode
+                Case Keys.D0 To Keys.D9, Keys.NumPad0 To Keys.NumPad9,
+                     Keys.A To Keys.Z, Keys.OemMinus, Keys.Subtract,
+                     Keys.Back, Keys.Delete, Keys.Escape
+                    isBarcodeKey = True
+                Case Keys.Enter
+                    ' Enter key - check if we have barcode data to process
+                    If Not String.IsNullOrEmpty(barcodeBuffer) Then
+                        isBarcodeKey = True
+                    Else
+                        ' No barcode data, check if we should go to payment
+                        If currentOrderList.Count > 0 Then
+                            btnPayment.PerformClick()
+                            e.Handled = True
+                            Return
+                        End If
+                    End If
+            End Select
+
+            ' If it's a barcode key, handle it as barcode input
+            If isBarcodeKey Then
+                HandleBarcodeKeyInput(e)
+            End If
+        Else
+            ' Handle payment panel keyboard input
+            If totalPanelActive Then
+                HandleTotalAmountKeyboardInput(e)
+            End If
+        End If
+    End Sub
 End Class

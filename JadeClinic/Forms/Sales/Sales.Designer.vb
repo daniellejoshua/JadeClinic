@@ -695,9 +695,9 @@ Partial Class Sales
         Guna2HtmlLabel26.ForeColor = SystemColors.ButtonFace
         Guna2HtmlLabel26.Location = New Point(82, 25)
         Guna2HtmlLabel26.Name = "Guna2HtmlLabel26"
-        Guna2HtmlLabel26.Size = New Size(106, 28)
+        Guna2HtmlLabel26.Size = New Size(74, 28)
         Guna2HtmlLabel26.TabIndex = 52
-        Guna2HtmlLabel26.Text = "Vatable Sales"
+        Guna2HtmlLabel26.Text = "Sub Total"
         ' 
         ' DashboardPanel
         ' 
