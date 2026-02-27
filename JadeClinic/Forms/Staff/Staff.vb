@@ -857,51 +857,63 @@ Public Class Staff
             ' Role logic
             Dim currentRole As String = If(frmLoginvb.LoggedInRole, "Staff").ToUpper()
 
-            ' Dashboard
+            ' 1. Dashboard
             Dim navDashboardBtn = CreateLargeNavButton("🏠 Dashboard", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
             AddHandler navDashboardBtn.Click, AddressOf NavDashboard_Click
             buttonIndex += 1
 
-            ' POS/Sales
+            ' 2. POS / Sales
             Dim navPOSBtn = CreateLargeNavButton("🛒 POS / Sales", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
             AddHandler navPOSBtn.Click, AddressOf NavPOS_Click
             buttonIndex += 1
 
-            ' Inventory
-            Dim navInventoryBtn = CreateLargeNavButton("📦 Inventory", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-            AddHandler navInventoryBtn.Click, AddressOf NavInventory_Click
-            buttonIndex += 1
+            ' 3. Inventory (visible to Manager/Admin)
+            If currentRole = "MANAGER" Or currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
+                Dim navInventoryBtn = CreateLargeNavButton("📦 Inventory", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
+                AddHandler navInventoryBtn.Click, AddressOf NavInventory_Click
+                buttonIndex += 1
+            End If
 
-            ' Sales Records
+            ' 4. Sales Records
             Dim navSalesRecordsBtn = CreateLargeNavButton("📊 Sales Records", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
             AddHandler navSalesRecordsBtn.Click, AddressOf NavSalesRecords_Click
             buttonIndex += 1
 
-            ' Inventory Logs
+            ' 5. Staff (ACTIVE on this page)
+            Dim navStaffBtn = CreateLargeNavButton("👥 Staff", startY + buttonIndex * (buttonHeight + buttonSpacing), True, buttonWidth, buttonHeight)
+            ' Keep active but allow refresh if clicked
+            AddHandler navStaffBtn.Click, Sub()
+                                              ' refresh staff list when clicking active button
+                                              Try
+                                                  LoadUsersData(If(SortBy.SelectedItem IsNot Nothing, SortBy.SelectedItem.ToString(), ""))
+                                              Catch ex As Exception
+                                              End Try
+                                          End Sub
+            buttonIndex += 1
+
+            ' 6. Inventory Logs
             Dim navInventoryLogBtn = CreateLargeNavButton("📋 Inventory Logs", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
             AddHandler navInventoryLogBtn.Click, AddressOf NavInventoryLog_Click
             buttonIndex += 1
 
-            ' Suppliers (place above Audit Logs)
+            ' 7. Suppliers
             Dim navSuppliersBtn = CreateLargeNavButton("🏷️ Suppliers", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
             AddHandler navSuppliersBtn.Click, AddressOf NavSuppliers_Click
             buttonIndex += 1
 
-            ' Audit Logs & System (admin only)
+            ' 8. Audit Logs (admin only)
             If currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
                 Dim navAuditLogBtn = CreateLargeNavButton("🔍 Audit Logs", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
                 AddHandler navAuditLogBtn.Click, AddressOf NavAuditLog_Click
                 buttonIndex += 1
+            End If
 
+            ' 9. System (admin only)
+            If currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
                 Dim systemSettingsBtn = CreateLargeNavButton("⚙️ System", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
                 AddHandler systemSettingsBtn.Click, AddressOf NavSystemSettings_Click
                 buttonIndex += 1
             End If
-
-            ' Staff (ACTIVE)
-            Dim navStaffBtn = CreateLargeNavButton("👥 Staff", startY + buttonIndex * (buttonHeight + buttonSpacing), True, buttonWidth, buttonHeight)
-            buttonIndex += 1
-
 
         Catch ex As Exception
             Console.WriteLine($"Error creating navigation menu: {ex.Message}")
@@ -979,6 +991,7 @@ Public Class Staff
         Me.Close()
     End Sub
 
+    ' Helper: fetch primary image bytes for a product
     Private Sub NavInventoryLog_Click(sender As Object, e As EventArgs)
         isNavigating = True
         InventoryLog.Show()
@@ -990,8 +1003,9 @@ Public Class Staff
         Me.Close()
     End Sub
     Private Sub NavAuditLog_Click(sender As Object, e As EventArgs)
-        ' For now, show coming soon message
-        MessageBox.Show("Audit Logs feature coming soon!", "Feature Coming Soon", MessageBoxButtons.OK, MessageBoxIcon.Information)
+        isNavigating = True
+        AuditLog.Show()
+        Me.Close()
     End Sub
 
     Private Sub NavLogout_Click(sender As Object, e As EventArgs)

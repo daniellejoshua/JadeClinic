@@ -2941,80 +2941,150 @@ Public Class Sales
                 salesDataJson = "{}"
             End Try
 
-            ' Insert Sale record and obtain the generated SaleID
-            Dim insertSaleQuery As String =
-            "INSERT INTO Sales (SaleDate, CustomerName, CustomerTIN, TotalAmount, AmountPaid, PaymentMethod, Reference, DiscountAmount, DiscountType, SalesData, UserID) " &
-            "VALUES (@SaleDate, @CustomerName, @CustomerTIN, @TotalAmount, @AmountPaid, @PaymentMethod, @Reference, @DiscountAmount, @DiscountType, @SalesData, @UserID); SELECT CAST(SCOPE_IDENTITY() AS int);"
-
-            ' Resolve UserID (optional) - try to look up the current user's ID, fallback to NULL
-            Dim userIdParamValue As Object = DBNull.Value
-            Try
-                Dim uidObj = Utilities.ExecuteScalar("SELECT UserID FROM Users WHERE Username = @Username", New SqlParameter("@Username", frmLoginvb.LoggedInUsername))
-                If uidObj IsNot Nothing AndAlso Not IsDBNull(uidObj) Then
-                    userIdParamValue = Convert.ToInt32(uidObj)
-                End If
-            Catch
-                userIdParamValue = DBNull.Value
-            End Try
-
-            Dim saleParams As SqlParameter() = {
-            New SqlParameter("@SaleDate", DateTime.Now),
-            New SqlParameter("@CustomerName", If(String.IsNullOrWhiteSpace(selectedCustomerName), DBNull.Value, CType(selectedCustomerName, Object))),
-            New SqlParameter("@CustomerTIN", If(String.IsNullOrWhiteSpace(selectedCustomerTIN), DBNull.Value, CType(selectedCustomerTIN, Object))),
-            New SqlParameter("@TotalAmount", orderTotal),
-            New SqlParameter("@AmountPaid", receivedAmount),
-            New SqlParameter("@PaymentMethod", selectedPaymentMethod),
-            New SqlParameter("@Reference", If(String.IsNullOrWhiteSpace(paymentReference), DBNull.Value, CType(paymentReference, Object))),
-            New SqlParameter("@DiscountAmount", discountAmount),
-            New SqlParameter("@DiscountType", discountType),
-            New SqlParameter("@SalesData", salesDataJson),
-            New SqlParameter("@UserID", userIdParamValue)
-        }
-
-            Dim saleIdObj As Object = Utilities.ExecuteScalar(insertSaleQuery, saleParams)
-            Dim saleId As Integer = 0
-            If saleIdObj IsNot Nothing AndAlso Not IsDBNull(saleIdObj) Then
-                saleId = Convert.ToInt32(saleIdObj)
-            Else
-                Throw New Exception("Failed to create sale record.")
+            ' Use a DB transaction to ensure Sale + SaleItems + stock updates + InventoryLog entries are atomic
+            Dim connStr As String = Connection.GetConnectionString()
+            If String.IsNullOrEmpty(connStr) Then
+                Throw New Exception("Database connection string is not configured.")
             End If
 
-            ' Insert SaleItems and update product stock
-            For Each item In currentOrderList
-                Dim prodId As Integer = Convert.ToInt32(item("ProductID"))
-                Dim qty As Integer = CInt(item("Quantity"))
-                Dim unitPrice As Decimal = Convert.ToDecimal(item("Price"))
+            Using conn As New SqlConnection(connStr)
+                conn.Open()
+                Using tran = conn.BeginTransaction()
+                    Try
+                        ' Resolve UserID inside the transaction (ensure non-NULL value for InventoryLog.UserID)
+                        Dim userIdToUse As Object = DBNull.Value
+                        Using cmdUserCheck As New SqlCommand("SELECT UserID FROM Users WHERE Username = @Username", conn, tran)
+                            cmdUserCheck.Parameters.AddWithValue("@Username", frmLoginvb.LoggedInUsername)
+                            Dim uidObj = cmdUserCheck.ExecuteScalar()
+                            If uidObj IsNot Nothing AndAlso Not IsDBNull(uidObj) Then
+                                userIdToUse = Convert.ToInt32(uidObj)
+                            End If
+                        End Using
 
-                Dim insertItemQuery As String = "INSERT INTO SaleItems (SaleID, ProductID, Quantity, UnitPrice) VALUES (@SaleID, @ProductID, @Quantity, @UnitPrice)"
-                Utilities.ExecuteNonQuery(insertItemQuery,
-                                      New SqlParameter("@SaleID", saleId),
-                                      New SqlParameter("@ProductID", prodId),
-                                      New SqlParameter("@Quantity", qty),
-                                      New SqlParameter("@UnitPrice", unitPrice))
+                        ' If still not found, fallback to any existing user (first row)
+                        If userIdToUse Is DBNull.Value Then
+                            Using cmdFb As New SqlCommand("SELECT TOP 1 UserID FROM Users ORDER BY UserID", conn, tran)
+                                Dim fb = cmdFb.ExecuteScalar()
+                                If fb IsNot Nothing AndAlso Not IsDBNull(fb) Then
+                                    userIdToUse = Convert.ToInt32(fb)
+                                End If
+                            End Using
+                        End If
 
-                ' Decrease stock in Products table
-                Utilities.ExecuteNonQuery("UPDATE Products SET CurrentStock = CurrentStock - @Qty WHERE ProductID = @ProductID",
-                                      New SqlParameter("@Qty", qty),
-                                      New SqlParameter("@ProductID", prodId))
-            Next
+                        If userIdToUse Is DBNull.Value Then
+                            Throw New Exception("Current user not found in Users table. InventoryLog requires a valid UserID. Please ensure the logged in user exists in Users.")
+                        End If
 
-            ' Log audit
-            Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Sale Created", $"SaleID {saleId} created. Total ₱{orderTotal:F2}")
+                        ' Insert Sale and get SaleID
+                        Dim insertSaleQuery As String =
+                    "INSERT INTO Sales (SaleDate, CustomerName, CustomerTIN, TotalAmount, AmountPaid, PaymentMethod, Reference, DiscountAmount, DiscountType, SalesData, UserID) " &
+                    "VALUES (@SaleDate, @CustomerName, @CustomerTIN, @TotalAmount, @AmountPaid, @PaymentMethod, @Reference, @DiscountAmount, @DiscountType, @SalesData, @UserID); SELECT CAST(SCOPE_IDENTITY() AS int);"
 
-            ' Prepare receipt data (use values computed by RefreshOrderDisplay)
-            receiptOrderId = saleId.ToString()
-            ' If no customer entered, keep empty so modals and receipt show blanks/underscores
-            receiptCustomerName = If(String.IsNullOrWhiteSpace(selectedCustomerName), "", selectedCustomerName)
-            receiptTotalAmount = Me.receiptTotalAmount
-            receiptAmountReceived = receivedAmount
-            receiptChange = changeAmount
-            receiptItems = New List(Of Dictionary(Of String, Object))(currentOrderList)
+                        Using cmdSale As New SqlCommand(insertSaleQuery, conn, tran)
+                            cmdSale.Parameters.AddWithValue("@SaleDate", DateTime.Now)
+                            cmdSale.Parameters.AddWithValue("@CustomerName", If(String.IsNullOrWhiteSpace(selectedCustomerName), CType(DBNull.Value, Object), CType(selectedCustomerName, Object)))
+                            cmdSale.Parameters.AddWithValue("@CustomerTIN", If(String.IsNullOrWhiteSpace(selectedCustomerTIN), CType(DBNull.Value, Object), CType(selectedCustomerTIN, Object)))
+                            cmdSale.Parameters.AddWithValue("@TotalAmount", orderTotal)
+                            cmdSale.Parameters.AddWithValue("@AmountPaid", receivedAmount)
+                            cmdSale.Parameters.AddWithValue("@PaymentMethod", selectedPaymentMethod)
+                            cmdSale.Parameters.AddWithValue("@Reference", If(String.IsNullOrWhiteSpace(paymentReference), CType(DBNull.Value, Object), CType(paymentReference, Object)))
+                            cmdSale.Parameters.AddWithValue("@DiscountAmount", discountAmount)
+                            cmdSale.Parameters.AddWithValue("@DiscountType", discountType)
+                            cmdSale.Parameters.AddWithValue("@SalesData", salesDataJson)
+                            cmdSale.Parameters.AddWithValue("@UserID", userIdToUse)
 
-            ' Print and finalize
-            PrintReceipt()
+                            Dim saleIdObj As Object = cmdSale.ExecuteScalar()
+                            Dim saleId As Integer = 0
+                            If saleIdObj IsNot Nothing AndAlso Not IsDBNull(saleIdObj) Then
+                                saleId = Convert.ToInt32(saleIdObj)
+                            Else
+                                Throw New Exception("Failed to create sale record.")
+                            End If
 
-            ' Reset for next transaction
-            ResetSale()
+                            ' For each ordered item: insert SaleItems, update product stock, insert InventoryLog (OUT)
+                            For Each item In currentOrderList
+                                Dim prodId As Integer = Convert.ToInt32(item("ProductID"))
+                                Dim qty As Integer = CInt(item("Quantity"))
+                                Dim unitPrice As Decimal = Convert.ToDecimal(item("Price"))
+
+                                ' Insert SaleItem
+                                Using cmdItem As New SqlCommand("INSERT INTO SaleItems (SaleID, ProductID, Quantity, UnitPrice) VALUES (@SaleID, @ProductID, @Quantity, @UnitPrice)", conn, tran)
+                                    cmdItem.Parameters.AddWithValue("@SaleID", saleId)
+                                    cmdItem.Parameters.AddWithValue("@ProductID", prodId)
+                                    cmdItem.Parameters.AddWithValue("@Quantity", qty)
+                                    cmdItem.Parameters.AddWithValue("@UnitPrice", unitPrice)
+                                    cmdItem.ExecuteNonQuery()
+                                End Using
+
+                                ' Read previous stock (source of truth)
+                                Dim previousStock As Integer = 0
+                                Using cmdPrev As New SqlCommand("SELECT ISNULL(CurrentStock, 0) FROM Products WHERE ProductID = @ProductID", conn, tran)
+                                    cmdPrev.Parameters.AddWithValue("@ProductID", prodId)
+                                    Dim prevObj = cmdPrev.ExecuteScalar()
+                                    If prevObj IsNot Nothing AndAlso Not IsDBNull(prevObj) Then
+                                        previousStock = Convert.ToInt32(prevObj)
+                                    End If
+                                End Using
+
+                                ' Decrease stock (avoid negative values by enforcing calculation)
+                                Dim newStock As Integer = Math.Max(0, previousStock - qty)
+                                Using cmdUpdate As New SqlCommand("UPDATE Products SET CurrentStock = @NewStock WHERE ProductID = @ProductID", conn, tran)
+                                    cmdUpdate.Parameters.AddWithValue("@NewStock", newStock)
+                                    cmdUpdate.Parameters.AddWithValue("@ProductID", prodId)
+                                    cmdUpdate.ExecuteNonQuery()
+                                End Using
+
+                                ' Insert InventoryLog entry (OUT) — use 'OUT' to satisfy CHECK constraint
+                                Dim insertLogQuery As String =
+                            "INSERT INTO InventoryLog (ProductID, TransactionType, Quantity, PreviousStock, NewStock, SupplierID, Reference, Notes, UserID, CreatedAt) " &
+                            "VALUES (@ProductID, @TransactionType, @Quantity, @PreviousStock, @NewStock, @SupplierID, @Reference, @Notes, @UserID, @CreatedAt)"
+                                Using cmdLog As New SqlCommand(insertLogQuery, conn, tran)
+                                    cmdLog.Parameters.AddWithValue("@ProductID", prodId)
+                                    ' IMPORTANT: use 'OUT' (not 'Stock Out') to conform to InventoryLog CHECK constraint
+                                    cmdLog.Parameters.AddWithValue("@TransactionType", "OUT")
+                                    cmdLog.Parameters.AddWithValue("@Quantity", qty)
+                                    cmdLog.Parameters.AddWithValue("@PreviousStock", previousStock)
+                                    cmdLog.Parameters.AddWithValue("@NewStock", newStock)
+                                    cmdLog.Parameters.AddWithValue("@SupplierID", DBNull.Value)
+                                    cmdLog.Parameters.AddWithValue("@Reference", $"Sale ID:{saleId}")
+                                    cmdLog.Parameters.AddWithValue("@Notes", $"Sold via POS - SaleID {saleId}")
+                                    cmdLog.Parameters.AddWithValue("@UserID", userIdToUse)
+                                    cmdLog.Parameters.AddWithValue("@CreatedAt", DateTime.Now)
+                                    cmdLog.ExecuteNonQuery()
+                                End Using
+                            Next
+
+                            ' Commit transaction after all items processed
+                            tran.Commit()
+
+                            ' Log audit (outside transaction is fine)
+                            Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Sale Created", $"SaleID {saleId} created. Total ₱{orderTotal:F2}")
+
+                            ' Prepare receipt data (use values computed by RefreshOrderDisplay)
+                            receiptOrderId = saleId.ToString()
+                            receiptCustomerName = If(String.IsNullOrWhiteSpace(selectedCustomerName), "", selectedCustomerName)
+                            receiptTotalAmount = Me.receiptTotalAmount
+                            receiptAmountReceived = receivedAmount
+                            receiptChange = changeAmount
+                            receiptItems = New List(Of Dictionary(Of String, Object))(currentOrderList)
+
+                            ' Print and finalize
+                            PrintReceipt()
+
+                            ' Reset for next transaction
+                            ResetSale()
+                        End Using
+
+                    Catch exTran As Exception
+                        Try
+                            tran.Rollback()
+                        Catch
+                            ' ignore rollback errors
+                        End Try
+                        Throw ' rethrow to outer catch
+                    End Try
+                End Using
+            End Using
 
         Catch ex As Exception
             MessageBox.Show($"Error processing sale: {ex.Message}", "Processing Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
@@ -3022,7 +3092,7 @@ Public Class Sales
         End Try
     End Sub
     ' Reset sale data for next transaction
-    ' ENHANCED: Reset sale data for next transaction with proper order panel refresh
+    ' ENHANCED: Reset sale data for next transactio    n with proper order panel refresh
     Private Sub ResetSale()
         ' Clear order
         currentOrderList.Clear()

@@ -33,8 +33,6 @@ Partial Class InventoryLog
         Dim CustomizableEdges9 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges10 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges11 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges12 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges13 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         LabelTitle = New Label()
         DashboardPanel = New Guna.UI2.WinForms.Guna2Panel()
         PictureBox9 = New PictureBox()
@@ -47,7 +45,6 @@ Partial Class InventoryLog
         Guna2DateTimePicker1 = New Guna.UI2.WinForms.Guna2DateTimePicker()
         Guna2HtmlLabel4 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         AddInventoryLog = New Guna.UI2.WinForms.Guna2Button()
-        Guna2Button1 = New Guna.UI2.WinForms.Guna2Button()
         DashboardPanel.SuspendLayout()
         CType(PictureBox9, ComponentModel.ISupportInitialize).BeginInit()
         CType(Guna2CirclePictureBox5, ComponentModel.ISupportInitialize).BeginInit()
@@ -263,32 +260,12 @@ Partial Class InventoryLog
         AddInventoryLog.Text = "Add Inventory Log"
         AddInventoryLog.Visible = False
         ' 
-        ' Guna2Button1
-        ' 
-        Guna2Button1.BorderRadius = 10
-        Guna2Button1.CustomizableEdges = CustomizableEdges12
-        Guna2Button1.DisabledState.BorderColor = Color.DarkGray
-        Guna2Button1.DisabledState.CustomBorderColor = Color.DarkGray
-        Guna2Button1.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
-        Guna2Button1.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        Guna2Button1.FillColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
-        Guna2Button1.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2Button1.ForeColor = Color.Black
-        Guna2Button1.Location = New Point(1039, 102)
-        Guna2Button1.Name = "Guna2Button1"
-        Guna2Button1.ShadowDecoration.CustomizableEdges = CustomizableEdges13
-        Guna2Button1.Size = New Size(173, 40)
-        Guna2Button1.TabIndex = 79
-        Guna2Button1.Text = "Supplier Page"
-        Guna2Button1.Visible = False
-        ' 
         ' InventoryLog
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
         BackColor = Color.FromArgb(CByte(30), CByte(30), CByte(30))
         ClientSize = New Size(1609, 875)
-        Controls.Add(Guna2Button1)
         Controls.Add(AddInventoryLog)
         Controls.Add(Guna2HtmlLabel4)
         Controls.Add(Guna2DateTimePicker1)
@@ -326,5 +303,4 @@ Partial Class InventoryLog
     Friend WithEvents Guna2DateTimePicker1 As Guna.UI2.WinForms.Guna2DateTimePicker
     Friend WithEvents Guna2HtmlLabel4 As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents AddInventoryLog As Guna.UI2.WinForms.Guna2Button
-    Friend WithEvents Guna2Button1 As Guna.UI2.WinForms.Guna2Button
 End Class

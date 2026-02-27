@@ -177,14 +177,22 @@ Public Class InventoryLog
         End Try
     End Sub
 
+    ' --- Modifications: add Action column, show summarized Notes in grid, add modal viewer ---
+    ' Changes:
+    ' 1) In SetupDataGrid() - added an "Action" DataGridViewButtonColumn and wired CellContentClick handler.
+    ' 2) In LoadInventoryLogsDataOnUI(...) - Notes column is summarized (preview) rather than full text.
+    ' 3) New handler InventoryLogDataGrid_CellContentClick to open a modal on View click.
+    ' 4) New method ShowInventoryLogDetailsModal(...) to display all details of the selected log in a modal.
+
+    ' Insert these changes into the existing InventoryLog class (file already contains these methods).
+    ' Only the new/updated portions are shown below to be merged into the file.
+
     Private Sub SetupDataGrid()
         Try
-            ' Validate control
             If InventoryLogDataGrid Is Nothing Then
                 Throw New InvalidOperationException("InventoryLogDataGrid control is not initialized")
             End If
 
-            ' Clear and configure grid
             InventoryLogDataGrid.Columns.Clear()
             InventoryLogDataGrid.AutoGenerateColumns = False
             InventoryLogDataGrid.AllowUserToAddRows = False
@@ -197,7 +205,7 @@ Public Class InventoryLog
             InventoryLogDataGrid.RowHeadersVisible = False
             InventoryLogDataGrid.EnableHeadersVisualStyles = False
 
-            ' Dark theme styling (matching SalesRecord style)
+            ' Theme & general cell style
             InventoryLogDataGrid.BackgroundColor = System.Drawing.Color.FromArgb(41, 44, 45)
             InventoryLogDataGrid.GridColor = System.Drawing.Color.White
             InventoryLogDataGrid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal
@@ -216,7 +224,6 @@ Public Class InventoryLog
             .BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
         }
 
-            ' Header style
             InventoryLogDataGrid.ColumnHeadersDefaultCellStyle = New DataGridViewCellStyle() With {
             .BackColor = System.Drawing.Color.FromArgb(30, 30, 30),
             .ForeColor = System.Drawing.Color.LightGray,
@@ -228,102 +235,401 @@ Public Class InventoryLog
             InventoryLogDataGrid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing
             InventoryLogDataGrid.RowTemplate.Height = 50
 
-            ' Prevent resizing
             InventoryLogDataGrid.AllowUserToResizeColumns = False
             InventoryLogDataGrid.AllowUserToResizeRows = False
             InventoryLogDataGrid.RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing
 
-            ' Add columns dynamically (center-aligned by default)
+            ' Columns
             InventoryLogDataGrid.Columns.Add(New DataGridViewTextBoxColumn() With {
             .Name = "LogID",
             .HeaderText = "ID",
             .ReadOnly = True,
-            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
+            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter},
+            .FillWeight = 6
         })
 
+            ' Center product text as requested
             InventoryLogDataGrid.Columns.Add(New DataGridViewTextBoxColumn() With {
             .Name = "ProductName",
             .HeaderText = "Product",
             .ReadOnly = True,
             .DefaultCellStyle = New DataGridViewCellStyle() With {
-                .Alignment = DataGridViewContentAlignment.MiddleLeft,
+                .Alignment = DataGridViewContentAlignment.MiddleCenter,
                 .Padding = New Padding(10, 6, 10, 6),
                 .Font = New Font("Poppins SemiBold", 9.0F, FontStyle.Regular),
-                .ForeColor = System.Drawing.Color.LightGray
-            }
+                .ForeColor = System.Drawing.Color.LightGray,
+                .WrapMode = DataGridViewTriState.False
+            },
+            .FillWeight = 28
         })
 
             InventoryLogDataGrid.Columns.Add(New DataGridViewTextBoxColumn() With {
             .Name = "TransactionType",
             .HeaderText = "Type",
             .ReadOnly = True,
-            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
+            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter},
+            .FillWeight = 12
         })
 
             InventoryLogDataGrid.Columns.Add(New DataGridViewTextBoxColumn() With {
             .Name = "Quantity",
-            .HeaderText = "Quantity",
+            .HeaderText = "Qty",
             .ReadOnly = True,
-            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
+            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter},
+            .FillWeight = 8
         })
 
             InventoryLogDataGrid.Columns.Add(New DataGridViewTextBoxColumn() With {
             .Name = "PreviousStock",
-            .HeaderText = "Previous Stock",
+            .HeaderText = "Prev",
             .ReadOnly = True,
-            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
+            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter},
+            .FillWeight = 8
         })
 
             InventoryLogDataGrid.Columns.Add(New DataGridViewTextBoxColumn() With {
             .Name = "NewStock",
-            .HeaderText = "New Stock",
+            .HeaderText = "New",
             .ReadOnly = True,
-            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
+            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter},
+            .FillWeight = 8
         })
 
+            ' Supplier and Reference columns - show in grid and useful in modal fallback
             InventoryLogDataGrid.Columns.Add(New DataGridViewTextBoxColumn() With {
             .Name = "SupplierName",
             .HeaderText = "Supplier",
             .ReadOnly = True,
-            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
+            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter},
+            .FillWeight = 16
         })
 
             InventoryLogDataGrid.Columns.Add(New DataGridViewTextBoxColumn() With {
             .Name = "Reference",
             .HeaderText = "Reference",
             .ReadOnly = True,
-            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
+            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter, .WrapMode = DataGridViewTriState.False},
+            .FillWeight = 18
         })
 
             InventoryLogDataGrid.Columns.Add(New DataGridViewTextBoxColumn() With {
             .Name = "Notes",
-            .HeaderText = "Notes",
+            .HeaderText = "Notes (Preview)",
             .ReadOnly = True,
             .DefaultCellStyle = New DataGridViewCellStyle() With {
-                .Alignment = DataGridViewContentAlignment.MiddleCenter,
-                .WrapMode = DataGridViewTriState.True
-            }
+                .Alignment = DataGridViewContentAlignment.MiddleLeft,
+                .WrapMode = DataGridViewTriState.True,
+                .ForeColor = System.Drawing.Color.LightGray
+            },
+            .FillWeight = 20
         })
 
             InventoryLogDataGrid.Columns.Add(New DataGridViewTextBoxColumn() With {
             .Name = "CreatedAt",
             .HeaderText = "Date & Time",
             .ReadOnly = True,
-            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
+            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter},
+            .FillWeight = 18
         })
 
-            InventoryLogDataGrid.Columns.Add(New DataGridViewTextBoxColumn() With {
-            .Name = "TransactionIndicator",
-            .HeaderText = "Status",
-            .ReadOnly = True,
-            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
-        })
+            ' Action column - view button (eye)
+            Dim actionCol As New DataGridViewButtonColumn() With {
+            .Name = "Action",
+            .HeaderText = "",
+            .Text = "👁️",
+            .UseColumnTextForButtonValue = True,
+            .FlatStyle = FlatStyle.Flat,
+            .FillWeight = 6
+        }
+            InventoryLogDataGrid.Columns.Add(actionCol)
+
+            ' Wire up double-click handler
+            RemoveHandler InventoryLogDataGrid.CellDoubleClick, AddressOf InventoryLogDataGrid_CellDoubleClick
+            AddHandler InventoryLogDataGrid.CellDoubleClick, AddressOf InventoryLogDataGrid_CellDoubleClick
+
+            ' Wire up button clicks (Action column)
+            RemoveHandler InventoryLogDataGrid.CellContentClick, AddressOf InventoryLogDataGrid_CellContentClick
+            AddHandler InventoryLogDataGrid.CellContentClick, AddressOf InventoryLogDataGrid_CellContentClick
 
         Catch ex As Exception
             MessageBox.Show($"Error setting up DataGrid: {ex.Message}", "DataGrid Setup Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
 
+    Private Sub InventoryLogDataGrid_CellDoubleClick(sender As Object, e As DataGridViewCellEventArgs)
+        Try
+            If e.RowIndex < 0 OrElse InventoryLogDataGrid Is Nothing Then
+                Return
+            End If
+
+            Dim row = InventoryLogDataGrid.Rows(e.RowIndex)
+            Dim logRecord As Dictionary(Of String, Object) = Nothing
+
+            If row.Tag IsNot Nothing AndAlso TypeOf row.Tag Is Dictionary(Of String, Object) Then
+                logRecord = CType(row.Tag, Dictionary(Of String, Object))
+            Else
+                ' Fallback: build minimal record from visible cells
+                logRecord = New Dictionary(Of String, Object) From {
+                {"LogID", If(row.Cells("LogID").Value, 0)},
+                {"ProductName", If(row.Cells("ProductName").Value?.ToString(), "")},
+                {"TransactionType", If(row.Cells("TransactionType").Value?.ToString(), "")},
+                {"Quantity", If(row.Cells("Quantity").Value, 0)},
+                {"PreviousStock", If(row.Cells("PreviousStock").Value, 0)},
+                {"NewStock", If(row.Cells("NewStock").Value, 0)},
+                {"Notes", If(row.Cells("Notes").Value?.ToString(), "")},
+                {"CreatedAt", If(row.Cells("CreatedAt").Value?.ToString(), DateTime.Now.ToString())}
+            }
+            End If
+
+            ShowInventoryLogDetailsModal(logRecord)
+        Catch ex As Exception
+            MessageBox.Show($"Unable to open log details: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
+
+    ' Update SetRowColorCoding to color the TransactionType cell text appropriately
+
+    Private Sub InventoryLogDataGrid_CellContentClick(sender As Object, e As DataGridViewCellEventArgs)
+        Try
+            If e.RowIndex < 0 OrElse InventoryLogDataGrid Is Nothing Then
+                Return
+            End If
+
+            Dim colName As String = InventoryLogDataGrid.Columns(e.ColumnIndex).Name
+            If colName = "Action" Then
+                Dim row = InventoryLogDataGrid.Rows(e.RowIndex)
+                Dim logRecord As Dictionary(Of String, Object) = Nothing
+                If row.Tag IsNot Nothing AndAlso TypeOf row.Tag Is Dictionary(Of String, Object) Then
+                    logRecord = CType(row.Tag, Dictionary(Of String, Object))
+                End If
+
+                If logRecord Is Nothing Then
+                    ' Build a record from cell values as fallback
+                    logRecord = New Dictionary(Of String, Object) From {
+                        {"LogID", If(row.Cells("LogID").Value, 0)},
+                        {"ProductName", If(row.Cells("ProductName").Value?.ToString(), "")},
+                        {"TransactionType", If(row.Cells("TransactionType").Value?.ToString(), "")},
+                        {"Quantity", If(row.Cells("Quantity").Value, 0)},
+                        {"PreviousStock", If(row.Cells("PreviousStock").Value, 0)},
+                        {"NewStock", If(row.Cells("NewStock").Value, 0)},
+                        {"SupplierName", If(row.Cells("SupplierName").Value?.ToString(), "")},
+                        {"Reference", If(row.Cells("Reference").Value?.ToString(), "")},
+                        {"Notes", If(row.Cells("Notes").Value?.ToString(), "")},
+                        {"CreatedAt", If(row.Cells("CreatedAt").Value?.ToString(), DateTime.Now.ToString())}
+                    }
+                End If
+
+                ShowInventoryLogDetailsModal(logRecord)
+            End If
+        Catch ex As Exception
+            MessageBox.Show($"Unable to open log details: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
+
+    Private Sub ShowInventoryLogDetailsModal(logRecord As Dictionary(Of String, Object))
+        Try
+            ' Build a clean modal that uses a two-column grid (Field | Value) for spacing and readability
+            Dim detailForm As New Form() With {
+            .Text = "Inventory Log Details",
+            .Size = New Size(760, 520),
+            .StartPosition = FormStartPosition.CenterParent,
+            .FormBorderStyle = FormBorderStyle.FixedDialog,
+            .MaximizeBox = False,
+            .MinimizeBox = False,
+            .BackColor = DarkSlate,
+            .ShowInTaskbar = False
+        }
+
+            Dim pad As Integer = 16
+
+            ' DataGridView to show field/value pairs
+            Dim dgv As New DataGridView() With {
+            .Location = New Point(pad, pad),
+            .Size = New Size(detailForm.ClientSize.Width - pad * 2, detailForm.ClientSize.Height - 120),
+            .ReadOnly = True,
+            .AllowUserToAddRows = False,
+            .AllowUserToDeleteRows = False,
+            .RowHeadersVisible = False,
+            .AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+            .BackgroundColor = DarkSlate,
+            .BorderStyle = BorderStyle.None,
+            .SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+            .MultiSelect = False
+        }
+
+            ' Visual styling for the grid
+            dgv.ColumnHeadersDefaultCellStyle = New DataGridViewCellStyle() With {
+            .BackColor = Color.FromArgb(30, 30, 30),
+            .ForeColor = Color.LightGray,
+            .Font = New Font("Poppins SemiBold", 10),
+            .Alignment = DataGridViewContentAlignment.MiddleLeft
+        }
+            dgv.EnableHeadersVisualStyles = False
+
+            dgv.DefaultCellStyle = New DataGridViewCellStyle() With {
+            .BackColor = Color.FromArgb(61, 65, 66),
+            .ForeColor = Color.LightGray,
+            .SelectionBackColor = Color.FromArgb(61, 65, 66), ' make selection visually neutral
+            .SelectionForeColor = Color.LightGray,
+            .Font = New Font("Poppins", 10),
+            .WrapMode = DataGridViewTriState.True
+        }
+            dgv.RowTemplate.Height = 36
+            dgv.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells
+
+            ' Columns: Field, Value
+            dgv.Columns.Add(New DataGridViewTextBoxColumn() With {
+            .Name = "Field",
+            .HeaderText = "Field",
+            .ReadOnly = True,
+            .DefaultCellStyle = New DataGridViewCellStyle() With {.Font = New Font("Poppins SemiBold", 10), .Alignment = DataGridViewContentAlignment.MiddleLeft},
+            .FillWeight = 35
+        })
+            dgv.Columns.Add(New DataGridViewTextBoxColumn() With {
+            .Name = "Value",
+            .HeaderText = "Value",
+            .ReadOnly = True,
+            .DefaultCellStyle = New DataGridViewCellStyle() With {.Font = New Font("Poppins", 10), .Alignment = DataGridViewContentAlignment.MiddleLeft, .WrapMode = DataGridViewTriState.True},
+            .FillWeight = 65
+        })
+
+            detailForm.Controls.Add(dgv)
+
+            ' Extract values (safe)
+            Dim logId = If(logRecord.ContainsKey("LogID"), logRecord("LogID").ToString(), "")
+            Dim productName = If(logRecord.ContainsKey("ProductName"), logRecord("ProductName").ToString(), "")
+            Dim transactionType = If(logRecord.ContainsKey("TransactionType"), logRecord("TransactionType").ToString(), "")
+            Dim quantity = If(logRecord.ContainsKey("Quantity"), logRecord("Quantity").ToString(), "0")
+            Dim previousStock = If(logRecord.ContainsKey("PreviousStock"), logRecord("PreviousStock").ToString(), "0")
+            Dim newStock = If(logRecord.ContainsKey("NewStock"), logRecord("NewStock").ToString(), "0")
+            Dim supplierName = If(logRecord.ContainsKey("SupplierName"), logRecord("SupplierName").ToString(), "")
+            Dim reference = If(logRecord.ContainsKey("Reference"), logRecord("Reference").ToString(), "")
+            Dim notes = If(logRecord.ContainsKey("Notes"), logRecord("Notes").ToString(), "")
+            Dim createdAtStr = If(logRecord.ContainsKey("CreatedAt"), Convert.ToDateTime(logRecord("CreatedAt")).ToString("MM/dd/yyyy HH:mm:ss"), "")
+
+            ' Prefer Category/batch/expiry from supplied logRecord
+            Dim productCategory As String = If(logRecord.ContainsKey("Category"), logRecord("Category").ToString(), "")
+            Dim batchNumber As String = If(logRecord.ContainsKey("BatchNumber") AndAlso logRecord("BatchNumber") IsNot Nothing, logRecord("BatchNumber")?.ToString(), "")
+            Dim expiryStr As String = ""
+            If logRecord.ContainsKey("ExpiryDate") AndAlso logRecord("ExpiryDate") IsNot Nothing AndAlso Not TypeOf logRecord("ExpiryDate") Is DBNull Then
+                Try
+                    expiryStr = Convert.ToDateTime(logRecord("ExpiryDate")).ToString("MM/dd/yyyy")
+                Catch
+                    expiryStr = If(logRecord("ExpiryDate")?.ToString(), "")
+                End Try
+            End If
+
+            ' Fallback DB lookup only if key data missing
+            If (String.IsNullOrWhiteSpace(productCategory) OrElse String.IsNullOrWhiteSpace(batchNumber) OrElse String.IsNullOrWhiteSpace(expiryStr)) AndAlso Not String.IsNullOrWhiteSpace(logId) Then
+                Try
+                    Dim connStr = Connection.GetConnectionString()
+                    If Not String.IsNullOrEmpty(connStr) Then
+                        Using conn As New SqlConnection(connStr)
+                            conn.Open()
+                            Dim q As String = "SELECT TOP 1 p.Category, il.BatchNumber, il.ExpiryDate " &
+                                          "FROM InventoryLog il LEFT JOIN Products p ON il.ProductID = p.ProductID " &
+                                          "WHERE il.LogID = @LogID"
+                            Using cmd As New SqlCommand(q, conn)
+                                cmd.Parameters.AddWithValue("@LogID", Convert.ToInt32(logId))
+                                Using r As SqlDataReader = cmd.ExecuteReader()
+                                    If r.Read() Then
+                                        If String.IsNullOrWhiteSpace(productCategory) AndAlso Not IsDBNull(r("Category")) Then productCategory = r("Category").ToString()
+                                        If String.IsNullOrWhiteSpace(batchNumber) AndAlso r.GetSchemaTable().Rows.Cast(Of DataRow)().Any(Function(rr) rr("ColumnName").ToString() = "BatchNumber") Then
+                                            If Not IsDBNull(r("BatchNumber")) Then batchNumber = r("BatchNumber").ToString()
+                                        End If
+                                        If String.IsNullOrWhiteSpace(expiryStr) AndAlso r.GetSchemaTable().Rows.Cast(Of DataRow)().Any(Function(rr) rr("ColumnName").ToString() = "ExpiryDate") Then
+                                            If Not IsDBNull(r("ExpiryDate")) Then expiryStr = Convert.ToDateTime(r("ExpiryDate")).ToString("MM/dd/yyyy")
+                                        End If
+                                    End If
+                                End Using
+                            End Using
+                        End Using
+                    End If
+                Catch
+                    ' non-fatal
+                End Try
+            End If
+
+            ' Populate grid with field/value rows
+            Dim AddRow = Sub(f As String, v As String)
+                             Dim idx As Integer = dgv.Rows.Add()
+                             dgv.Rows(idx).Cells("Field").Value = f
+                             dgv.Rows(idx).Cells("Value").Value = v
+                         End Sub
+
+            AddRow("Log ID", logId)
+            AddRow("Product", productName)
+            If Not String.IsNullOrWhiteSpace(productCategory) Then AddRow("Category", productCategory) ' <-- show Category
+            AddRow("Transaction Type", transactionType)
+            AddRow("Quantity", quantity)
+            AddRow("Previous Stock", previousStock)
+            AddRow("New Stock", newStock)
+            AddRow("Supplier", supplierName)
+            AddRow("Reference", reference)
+            ' Show batch & expiry when present (especially for ENDO category)
+            If Not String.IsNullOrWhiteSpace(batchNumber) Then AddRow("Batch Number", batchNumber)
+            If Not String.IsNullOrWhiteSpace(expiryStr) Then AddRow("Expiry Date", expiryStr)
+            AddRow("Notes", notes)
+            AddRow("Created At", createdAtStr)
+
+            ' Remove visible selection/active highlight
+            dgv.ClearSelection()
+            dgv.CurrentCell = Nothing
+            dgv.ColumnHeadersDefaultCellStyle.SelectionBackColor = dgv.ColumnHeadersDefaultCellStyle.BackColor
+
+            ' Footer buttons
+            Dim btnClose As New Button() With {
+            .Text = "Close",
+            .Size = New Size(120, 38),
+            .Location = New Point(detailForm.ClientSize.Width - pad - 120, detailForm.ClientSize.Height - 70),
+            .BackColor = GoldenYellow,
+            .ForeColor = DeepCharcoal,
+            .Font = New Font("Poppins", 10, FontStyle.Bold),
+            .FlatStyle = FlatStyle.Flat
+        }
+            AddHandler btnClose.Click, Sub() detailForm.Close()
+            detailForm.Controls.Add(btnClose)
+
+            ' Export button
+            Dim btnExport As New Button() With {
+            .Text = "Export",
+            .Size = New Size(120, 38),
+            .Location = New Point(detailForm.ClientSize.Width - pad - 260, detailForm.ClientSize.Height - 70),
+            .BackColor = SteelGray,
+            .ForeColor = Color.White,
+            .Font = New Font("Poppins", 10, FontStyle.Regular),
+            .FlatStyle = FlatStyle.Flat
+        }
+            AddHandler btnExport.Click, Sub()
+                                            Try
+                                                Using sfd As New SaveFileDialog()
+                                                    sfd.Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*"
+                                                    sfd.FileName = $"InventoryLog_{logId}_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
+                                                    If sfd.ShowDialog() = DialogResult.OK Then
+                                                        Using sw As New IO.StreamWriter(sfd.FileName, False, System.Text.Encoding.UTF8)
+                                                            sw.WriteLine("Field,Value")
+                                                            For Each r As DataGridViewRow In dgv.Rows
+                                                                Dim f = r.Cells("Field").Value?.ToString().Replace(","c, " ")
+                                                                Dim v = r.Cells("Value").Value?.ToString().Replace(","c, " ")
+                                                                sw.WriteLine($"{f},{v}")
+                                                            Next
+                                                            sw.Flush()
+                                                        End Using
+                                                        MessageBox.Show("Export completed.", "Export", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                                                    End If
+                                                End Using
+                                            Catch ex As Exception
+                                                MessageBox.Show($"Export failed: {ex.Message}", "Export", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                                            End Try
+                                        End Sub
+            detailForm.Controls.Add(btnExport)
+
+            detailForm.ShowDialog()
+            detailForm.Dispose()
+        Catch ex As Exception
+            MessageBox.Show($"Error showing log details: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
     Private Async Function LoadInventoryLogsAsync() As Task
         Try
             ' Show loading panel first with minimum display time
@@ -368,11 +674,11 @@ Public Class InventoryLog
     Private Function GetInventoryLogsData(sortOrder As String, Optional filterDate As DateTime? = Nothing) As List(Of Dictionary(Of String, Object))
         Dim inventoryLogs As New List(Of Dictionary(Of String, Object))()
         Dim query As String = "SELECT il.LogID, il.ProductID, p.ProductName, il.TransactionType, " &
-                 "il.Quantity, il.PreviousStock, il.NewStock, s.SupplierName, " &
-                 "il.Reference, il.Notes, il.CreatedAt " &
-                 "FROM InventoryLog il " &
-                 "INNER JOIN Products p ON il.ProductID = p.ProductID " &
-                 "LEFT JOIN Suppliers s ON il.SupplierID = s.SupplierID"
+             "il.Quantity, il.PreviousStock, il.NewStock, s.SupplierName, " &
+             "il.Reference, il.Notes, il.BatchNumber, il.ExpiryDate, p.Category, il.CreatedAt " &  ' <- include Category (product category)
+             "FROM InventoryLog il " &
+             "INNER JOIN Products p ON il.ProductID = p.ProductID " &
+             "LEFT JOIN Suppliers s ON il.SupplierID = s.SupplierID"
 
         Dim whereClauses As New List(Of String)()
         Dim parameters As New List(Of SqlParameter)()
@@ -426,18 +732,21 @@ Public Class InventoryLog
                     Using reader As SqlDataReader = cmd.ExecuteReader()
                         While reader.Read()
                             Dim logData As New Dictionary(Of String, Object) From {
-                    {"LogID", If(IsDBNull(reader("LogID")), 0, reader("LogID"))},
-                    {"ProductID", If(IsDBNull(reader("ProductID")), 0, reader("ProductID"))},
-                    {"ProductName", If(IsDBNull(reader("ProductName")), "", reader("ProductName").ToString())},
-                    {"TransactionType", If(IsDBNull(reader("TransactionType")), "", reader("TransactionType").ToString())},
-                    {"Quantity", If(IsDBNull(reader("Quantity")), 0, Convert.ToInt32(reader("Quantity")))},
-                    {"PreviousStock", If(IsDBNull(reader("PreviousStock")), 0, Convert.ToInt32(reader("PreviousStock")))},
-                    {"NewStock", If(IsDBNull(reader("NewStock")), 0, Convert.ToInt32(reader("NewStock")))},
-                    {"SupplierName", If(IsDBNull(reader("SupplierName")), "", reader("SupplierName").ToString())},
-                    {"Reference", If(IsDBNull(reader("Reference")), "", reader("Reference").ToString())},
-                    {"Notes", If(IsDBNull(reader("Notes")), "", reader("Notes").ToString())},
-                    {"CreatedAt", If(IsDBNull(reader("CreatedAt")), DateTime.Now, Convert.ToDateTime(reader("CreatedAt")))}
-                }
+                {"LogID", If(IsDBNull(reader("LogID")), 0, reader("LogID"))},
+                {"ProductID", If(IsDBNull(reader("ProductID")), 0, reader("ProductID"))},
+                {"ProductName", If(IsDBNull(reader("ProductName")), "", reader("ProductName").ToString())},
+                {"TransactionType", If(IsDBNull(reader("TransactionType")), "", reader("TransactionType").ToString())},
+                {"Quantity", If(IsDBNull(reader("Quantity")), 0, Convert.ToInt32(reader("Quantity")))},
+                {"PreviousStock", If(IsDBNull(reader("PreviousStock")), 0, Convert.ToInt32(reader("PreviousStock")))},
+                {"NewStock", If(IsDBNull(reader("NewStock")), 0, Convert.ToInt32(reader("NewStock")))},
+                {"SupplierName", If(IsDBNull(reader("SupplierName")), "", reader("SupplierName").ToString())},
+                {"Reference", If(IsDBNull(reader("Reference")), "", reader("Reference").ToString())},
+                {"Notes", If(IsDBNull(reader("Notes")), "", reader("Notes").ToString())},
+                {"BatchNumber", If(reader.FieldCount > 0 AndAlso Not IsDBNull(reader("BatchNumber")), reader("BatchNumber").ToString(), "")},
+                {"ExpiryDate", If(reader.FieldCount > 0 AndAlso Not IsDBNull(reader("ExpiryDate")), Convert.ToDateTime(reader("ExpiryDate")), DBNull.Value)},
+                {"Category", If(reader.FieldCount > 0 AndAlso Not IsDBNull(reader("Category")), reader("Category").ToString(), "")}, ' <- use Category
+                {"CreatedAt", If(IsDBNull(reader("CreatedAt")), DateTime.Now, Convert.ToDateTime(reader("CreatedAt")))}
+            }
                             inventoryLogs.Add(logData)
                         End While
                     End Using
@@ -450,7 +759,6 @@ Public Class InventoryLog
 
         Return inventoryLogs
     End Function
-
     Private Sub LoadInventoryLogsDataOnUI(inventoryData As List(Of Dictionary(Of String, Object)))
         Try
             ' Check if DataGrid exists
@@ -556,12 +864,13 @@ Public Class InventoryLog
     End Sub
 
     Private Function GetTransactionIndicator(transactionType As String) As String
-        Select Case transactionType.ToLower()
-            Case "stock in"
+        If String.IsNullOrWhiteSpace(transactionType) Then Return "ℹ️ INFO"
+        Select Case transactionType.Trim().ToLowerInvariant()
+            Case "stock in", "in", "stock_in", "inbound"
                 Return "📈 IN"
-            Case "stock out"
+            Case "stock out", "out", "stock_out", "outbound", "sold"
                 Return "📉 OUT"
-            Case "adjustments"
+            Case "adjustments", "adjust", "adj"
                 Return "⚖️ ADJ"
             Case Else
                 Return "ℹ️ INFO"
@@ -570,7 +879,6 @@ Public Class InventoryLog
 
     Private Sub SetRowColorCoding(rowIndex As Integer, transactionType As String, transactionIndicator As String)
         Try
-            ' Check if the DataGrid and row exist
             If InventoryLogDataGrid Is Nothing OrElse rowIndex < 0 OrElse rowIndex >= InventoryLogDataGrid.Rows.Count Then
                 Return
             End If
@@ -578,35 +886,47 @@ Public Class InventoryLog
             Dim row = InventoryLogDataGrid.Rows(rowIndex)
             If row Is Nothing Then Return
 
-            ' Set background color based on transaction type
-            Select Case transactionType.ToLower()
-                Case "stock in"
-                    ' Stock In - Light green background
-                    row.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(45, 70, 45)
-                    If InventoryLogDataGrid.Columns.Contains("TransactionIndicator") AndAlso row.Cells("TransactionIndicator") IsNot Nothing Then
-                        row.Cells("TransactionIndicator").Style.ForeColor = System.Drawing.Color.FromArgb(100, 255, 100)
+            Dim txNorm As String = If(transactionType, "").Trim().ToLowerInvariant()
+
+            ' default styles
+            row.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
+            If InventoryLogDataGrid.Columns.Contains("TransactionType") Then
+                row.Cells("TransactionType").Style.ForeColor = System.Drawing.Color.LightGray
+                row.Cells("TransactionType").Style.Font = New Font(InventoryLogDataGrid.Font, FontStyle.Regular)
+                row.Cells("TransactionType").Style.Alignment = DataGridViewContentAlignment.MiddleCenter
+            End If
+
+            ' Ensure product is centered
+            If InventoryLogDataGrid.Columns.Contains("ProductName") Then
+                row.Cells("ProductName").Style.Alignment = DataGridViewContentAlignment.MiddleCenter
+                row.Cells("ProductName").Style.ForeColor = System.Drawing.Color.LightGray
+            End If
+
+            Select Case txNorm
+                Case "stock in", "in", "stock_in", "inbound"
+                    row.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(38, 77, 45) ' darker green row
+                    If InventoryLogDataGrid.Columns.Contains("TransactionType") Then
+                        row.Cells("TransactionType").Style.ForeColor = SuccessGreen
+                        row.Cells("TransactionType").Style.Font = New Font(InventoryLogDataGrid.Font, FontStyle.Bold)
                     End If
-                Case "stock out"
-                    ' Stock Out - Light red background
-                    row.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(70, 45, 45)
-                    If InventoryLogDataGrid.Columns.Contains("TransactionIndicator") AndAlso row.Cells("TransactionIndicator") IsNot Nothing Then
-                        row.Cells("TransactionIndicator").Style.ForeColor = System.Drawing.Color.FromArgb(255, 100, 100)
+                Case "stock out", "out", "stock_out", "outbound", "sold"
+                    row.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(90, 45, 45) ' darker red row
+                    If InventoryLogDataGrid.Columns.Contains("TransactionType") Then
+                        row.Cells("TransactionType").Style.ForeColor = AlertRed
+                        row.Cells("TransactionType").Style.Font = New Font(InventoryLogDataGrid.Font, FontStyle.Bold)
                     End If
-                Case "adjustments"
-                    ' Adjustments - Light orange background
+                Case "adjustments", "adjust", "adj"
                     row.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(70, 55, 40)
-                    If InventoryLogDataGrid.Columns.Contains("TransactionIndicator") AndAlso row.Cells("TransactionIndicator") IsNot Nothing Then
-                        row.Cells("TransactionIndicator").Style.ForeColor = System.Drawing.Color.FromArgb(255, 180, 100)
+                    If InventoryLogDataGrid.Columns.Contains("TransactionType") Then
+                        row.Cells("TransactionType").Style.ForeColor = System.Drawing.Color.FromArgb(255, 180, 100)
+                        row.Cells("TransactionType").Style.Font = New Font(InventoryLogDataGrid.Font, FontStyle.Bold)
                     End If
                 Case Else
-                    ' Default gray background
-                    row.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
-                    If InventoryLogDataGrid.Columns.Contains("TransactionIndicator") AndAlso row.Cells("TransactionIndicator") IsNot Nothing Then
-                        row.Cells("TransactionIndicator").Style.ForeColor = System.Drawing.Color.LightGray
-                    End If
+                    ' leave defaults
             End Select
+
         Catch ex As Exception
-            ' Silent fail for color coding errors to prevent disrupting the main process
+            ' Silent fail to avoid breaking UI rendering
         End Try
     End Sub
 
