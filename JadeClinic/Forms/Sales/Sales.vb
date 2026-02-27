@@ -263,8 +263,7 @@ Public Class Sales
         {RestoCatBtn, "RESTO"},
         {Me.EndoCatBtn, "ENDO"},
         {Me.CosmeticCatBtn, "COSMETIC"}
-    }
-
+        }
         For Each kvp In categoryButtons
             toolTip.SetToolTip(kvp.Key, $"Click to view {kvp.Value} products")
             AddHandler kvp.Key.Click, Sub(senderBtn, eBtn)
@@ -1143,6 +1142,11 @@ Public Class Sales
                 Dim navInventoryLogBtn = CreateLargeNavButton("📋 Inventory Logs", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
                 AddHandler navInventoryLogBtn.Click, AddressOf NavInventoryLog_Click
                 buttonIndex += 1
+
+                ' Suppliers (place above Audit Logs)
+                Dim navSuppliersBtn = CreateLargeNavButton("🏷️ Suppliers", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
+                AddHandler navSuppliersBtn.Click, AddressOf NavSuppliers_Click
+                buttonIndex += 1
             End If
 
             ' Admin only buttons
@@ -1162,7 +1166,15 @@ Public Class Sales
             Console.WriteLine($"Error creating navigation menu: {ex.Message}")
         End Try
     End Sub
-
+    Private Sub NavSuppliers_Click(sender As Object, e As EventArgs)
+        Try
+            isNavigating = True
+            Supplier.Show()
+            Me.Close()
+        Catch ex As Exception
+            MessageBox.Show($"Unable to open Suppliers: {ex.Message}", "Navigation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
     Private Function CreateLargeNavButton(text As String, yPosition As Integer, isActive As Boolean, buttonWidth As Integer, buttonHeight As Integer) As Guna.UI2.WinForms.Guna2Button
         Dim btn As New Guna.UI2.WinForms.Guna2Button()
 

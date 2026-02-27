@@ -571,6 +571,7 @@ Public Class SalesRecord
             Dim navSalesRecordsBtn = CreateLargeNavButton("📊 Sales Records", startY + buttonIndex * (buttonHeight + buttonSpacing), True, buttonWidth, buttonHeight)
             buttonIndex += 1
 
+
             ' Staff (Manager/Admin)
             If currentRole = "MANAGER" Or currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
                 Dim navStaffBtn = CreateLargeNavButton("👥 Staff", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
@@ -580,6 +581,13 @@ Public Class SalesRecord
                 Dim navInventoryLogBtn = CreateLargeNavButton("📋 Inventory Logs", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
                 AddHandler navInventoryLogBtn.Click, AddressOf NavInventoryLog_Click
                 buttonIndex += 1
+
+
+                ' Suppliers (place above Audit Logs)
+                Dim navSuppliersBtn = CreateLargeNavButton("🏷️ Suppliers", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
+                AddHandler navSuppliersBtn.Click, AddressOf NavSuppliers_Click
+                buttonIndex += 1
+
             End If
 
             ' Admin only
@@ -669,7 +677,16 @@ Public Class SalesRecord
         AuditLog.Show()
         Me.Close()
     End Sub
-
+    ' Navigation event handlers
+    Private Sub NavSuppliers_Click(sender As Object, e As EventArgs)
+        Try
+            isNavigating = True
+            Supplier.Show()
+            Me.Close()
+        Catch ex As Exception
+            MessageBox.Show($"Unable to open Suppliers: {ex.Message}", "Navigation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
     Private Sub NavInventory_Click(sender As Object, e As EventArgs)
         isNavigating = True
         Inventory.Show()

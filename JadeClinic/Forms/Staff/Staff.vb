@@ -882,6 +882,11 @@ Public Class Staff
             AddHandler navInventoryLogBtn.Click, AddressOf NavInventoryLog_Click
             buttonIndex += 1
 
+            ' Suppliers (place above Audit Logs)
+            Dim navSuppliersBtn = CreateLargeNavButton("🏷️ Suppliers", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
+            AddHandler navSuppliersBtn.Click, AddressOf NavSuppliers_Click
+            buttonIndex += 1
+
             ' Audit Logs & System (admin only)
             If currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
                 Dim navAuditLogBtn = CreateLargeNavButton("🔍 Audit Logs", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
@@ -941,6 +946,15 @@ Public Class Staff
         Return btn
     End Function
     ' Navigation event handlers
+    Private Sub NavSuppliers_Click(sender As Object, e As EventArgs)
+        Try
+            isNavigating = True
+            Supplier.Show()
+            Me.Close()
+        Catch ex As Exception
+            MessageBox.Show($"Unable to open Suppliers: {ex.Message}", "Navigation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
     Private Sub NavDashboard_Click(sender As Object, e As EventArgs)
         isNavigating = True
         Dashboard.Show()

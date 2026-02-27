@@ -76,11 +76,11 @@ Partial Class Supplier
         ' 
         ' PictureBox9
         ' 
-        PictureBox9.BackColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
+        PictureBox9.BackColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
         PictureBox9.Image = My.Resources.Resources.Jade_Dental_Logo
         PictureBox9.Location = New Point(63, 7)
         PictureBox9.Name = "PictureBox9"
-        PictureBox9.Size = New Size(121, 100)
+        PictureBox9.Size = New Size(103, 85)
         PictureBox9.SizeMode = PictureBoxSizeMode.StretchImage
         PictureBox9.TabIndex = 39
         PictureBox9.TabStop = False
@@ -107,7 +107,7 @@ Partial Class Supplier
         InventoryLogDataGrid.BackgroundColor = Color.FromArgb(CByte(61), CByte(65), CByte(65))
         DataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleLeft
         DataGridViewCellStyle2.BackColor = Color.FromArgb(CByte(100), CByte(88), CByte(255))
-        DataGridViewCellStyle2.Font = New Font("Segoe UI", 9.0F)
+        DataGridViewCellStyle2.Font = New Font("Segoe UI", 9F)
         DataGridViewCellStyle2.ForeColor = Color.White
         DataGridViewCellStyle2.SelectionBackColor = SystemColors.Highlight
         DataGridViewCellStyle2.SelectionForeColor = SystemColors.HighlightText
@@ -117,7 +117,7 @@ Partial Class Supplier
         InventoryLogDataGrid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.EnableResizing
         DataGridViewCellStyle3.Alignment = DataGridViewContentAlignment.MiddleLeft
         DataGridViewCellStyle3.BackColor = Color.White
-        DataGridViewCellStyle3.Font = New Font("Segoe UI", 9.0F)
+        DataGridViewCellStyle3.Font = New Font("Segoe UI", 9F)
         DataGridViewCellStyle3.ForeColor = Color.FromArgb(CByte(71), CByte(69), CByte(94))
         DataGridViewCellStyle3.SelectionBackColor = Color.FromArgb(CByte(231), CByte(229), CByte(255))
         DataGridViewCellStyle3.SelectionForeColor = Color.FromArgb(CByte(71), CByte(69), CByte(94))
@@ -139,14 +139,14 @@ Partial Class Supplier
         InventoryLogDataGrid.ThemeStyle.GridColor = Color.FromArgb(CByte(231), CByte(229), CByte(255))
         InventoryLogDataGrid.ThemeStyle.HeaderStyle.BackColor = Color.FromArgb(CByte(100), CByte(88), CByte(255))
         InventoryLogDataGrid.ThemeStyle.HeaderStyle.BorderStyle = DataGridViewHeaderBorderStyle.None
-        InventoryLogDataGrid.ThemeStyle.HeaderStyle.Font = New Font("Segoe UI", 9.0F)
+        InventoryLogDataGrid.ThemeStyle.HeaderStyle.Font = New Font("Segoe UI", 9F)
         InventoryLogDataGrid.ThemeStyle.HeaderStyle.ForeColor = Color.White
         InventoryLogDataGrid.ThemeStyle.HeaderStyle.HeaightSizeMode = DataGridViewColumnHeadersHeightSizeMode.EnableResizing
         InventoryLogDataGrid.ThemeStyle.HeaderStyle.Height = 4
         InventoryLogDataGrid.ThemeStyle.ReadOnly = False
         InventoryLogDataGrid.ThemeStyle.RowsStyle.BackColor = Color.White
         InventoryLogDataGrid.ThemeStyle.RowsStyle.BorderStyle = DataGridViewCellBorderStyle.SingleHorizontal
-        InventoryLogDataGrid.ThemeStyle.RowsStyle.Font = New Font("Segoe UI", 9.0F)
+        InventoryLogDataGrid.ThemeStyle.RowsStyle.Font = New Font("Segoe UI", 9F)
         InventoryLogDataGrid.ThemeStyle.RowsStyle.ForeColor = Color.FromArgb(CByte(71), CByte(69), CByte(94))
         InventoryLogDataGrid.ThemeStyle.RowsStyle.Height = 29
         InventoryLogDataGrid.ThemeStyle.RowsStyle.SelectionBackColor = Color.FromArgb(CByte(231), CByte(229), CByte(255))
@@ -181,7 +181,7 @@ Partial Class Supplier
         Exportbtn.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         Exportbtn.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
         Exportbtn.FillColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
-        Exportbtn.Font = New Font("Poppins Medium", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Exportbtn.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Exportbtn.ForeColor = Color.Black
         Exportbtn.Location = New Point(1463, 102)
         Exportbtn.Name = "Exportbtn"
@@ -204,7 +204,7 @@ Partial Class Supplier
         ' lblUsername
         ' 
         lblUsername.BackColor = Color.Transparent
-        lblUsername.Font = New Font("Poppins Light", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        lblUsername.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         lblUsername.ForeColor = Color.White
         lblUsername.Location = New Point(1477, 20)
         lblUsername.Name = "lblUsername"
@@ -218,7 +218,7 @@ Partial Class Supplier
         Guna2DateTimePicker1.Checked = True
         Guna2DateTimePicker1.CustomizableEdges = CustomizableEdges8
         Guna2DateTimePicker1.FillColor = Color.FromArgb(CByte(30), CByte(30), CByte(30))
-        Guna2DateTimePicker1.Font = New Font("Poppins", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Guna2DateTimePicker1.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2DateTimePicker1.ForeColor = Color.White
         Guna2DateTimePicker1.Format = DateTimePickerFormat.Short
         Guna2DateTimePicker1.Location = New Point(357, 108)
@@ -250,7 +250,7 @@ Partial Class Supplier
         AddInventoryLog.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         AddInventoryLog.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
         AddInventoryLog.FillColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
-        AddInventoryLog.Font = New Font("Poppins Medium", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        AddInventoryLog.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         AddInventoryLog.ForeColor = Color.Black
         AddInventoryLog.Location = New Point(1225, 102)
         AddInventoryLog.Name = "AddInventoryLog"
@@ -262,7 +262,7 @@ Partial Class Supplier
         ' 
         ' Supplier
         ' 
-        AutoScaleDimensions = New SizeF(8.0F, 20.0F)
+        AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
         BackColor = Color.FromArgb(CByte(30), CByte(30), CByte(30))
         ClientSize = New Size(1609, 875)

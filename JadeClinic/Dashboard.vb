@@ -1203,7 +1203,12 @@ Public Class Dashboard
                 AddHandler navInventoryLogBtn.Click, AddressOf NavInventoryLog_Click
                 buttonIndex += 1
             End If
-
+            If currentRole = "MANAGER" Or currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
+                ' Suppliers (place above Audit Logs)
+                Dim navSuppliersBtn = CreateLargeNavButton("🏷️ Suppliers", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
+                AddHandler navSuppliersBtn.Click, AddressOf NavSuppliers_Click
+                buttonIndex += 1
+            End If
             If currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
                 navAuditLogBtn = CreateLargeNavButton("🔍 Audit Logs", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
                 AddHandler navAuditLogBtn.Click, AddressOf NavAuditLog_Click
@@ -1249,47 +1254,144 @@ Public Class Dashboard
             Console.WriteLine($"Error creating navigation menu: {ex.Message}")
         End Try
     End Sub
+    Private Sub NavSuppliers_Click(sender As Object, e As EventArgs)
+        Try
+            isNavigating = True
+            Supplier.Show()
+            Me.Close()
+        Catch ex As Exception
+            MessageBox.Show($"Unable to open Suppliers: {ex.Message}", "Navigation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
     Private Sub CreateUserInfoSection()
         Try
-            ' User info panel at the bottom styled to match dark navigation background
-            Dim userInfoY As Integer = DashboardPanel.Height - 140 ' More space from bottom
+            ' Remove existing tiny panel to avoid duplicates
+            For Each c In DashboardPanel.Controls.OfType(Of Guna.UI2.WinForms.Guna2Panel)().ToArray()
+                If c.Name = "tinyUserInfoPanel" Then
+                    DashboardPanel.Controls.Remove(c)
+                    c.Dispose()
+                End If
+            Next
 
-            ' Match dashboard/navigation background (dark)
-            Dim userInfoPanel As New Guna2Panel()
-            userInfoPanel.FillColor = Color.FromArgb(61, 65, 69) ' Graphite / dark nav
-            userInfoPanel.BorderRadius = 12
-            userInfoPanel.Size = New Size(DashboardPanel.Width - 40, 100) ' Taller panel
-            userInfoPanel.Location = New Point(20, userInfoY)
-            userInfoPanel.ShadowDecoration.Enabled = True
-            userInfoPanel.ShadowDecoration.Color = Color.FromArgb(30, 30, 30) ' Subtle dark shadow
-            userInfoPanel.ShadowDecoration.Depth = 2
-            DashboardPanel.Controls.Add(userInfoPanel)
+            ' Determine placement under logout button (fallback to bottom-left)
+            Dim panelWidth As Integer = 140
+            Dim panelHeight As Integer = 55
+            Dim panelX As Integer = 20
+            Dim panelY As Integer = DashboardPanel.Height - panelHeight - 20
 
-            ' Welcome label with Light Silver color to be legible on dark background
-            Dim welcomeLabel As New Label()
-            welcomeLabel.Text = "Welcome back!"
-            welcomeLabel.Font = New Font("Poppins", 9, FontStyle.Regular)
-            welcomeLabel.ForeColor = Color.FromArgb(225, 229, 233) ' LightSilver for dark bg
-            welcomeLabel.BackColor = Color.Transparent
-            welcomeLabel.Location = New Point(40, 15) ' Next to profile picture
-            welcomeLabel.AutoSize = True
-            userInfoPanel.Controls.Add(welcomeLabel)
+            If navLogoutBtn IsNot Nothing Then
+                panelX = navLogoutBtn.Location.X + 10
+                panelY = navLogoutBtn.Location.Y + navLogoutBtn.Height + 8
+                If panelX + panelWidth > DashboardPanel.Width - 20 Then
+                    panelX = Math.Max(20, DashboardPanel.Width - 20 - panelWidth)
+                End If
+            End If
 
-            ' User name label with Golden Yellow (brand accent)
-            Dim userNameLabel As New Label()
-            userNameLabel.Text = If(String.IsNullOrEmpty(frmLoginvb.LoggedInUsername), "Guest User", frmLoginvb.LoggedInUsername)
-            userNameLabel.Font = New Font("Poppins", 11, FontStyle.Bold)
-            userNameLabel.ForeColor = Color.FromArgb(254, 191, 16) ' Golden Yellow
-            userNameLabel.BackColor = Color.Transparent
-            userNameLabel.Location = New Point(40, 35)
-            userNameLabel.AutoSize = True
-            userInfoPanel.Controls.Add(userNameLabel)
+            ' Tiny user info panel
+            Dim tinyPanel As New Guna.UI2.WinForms.Guna2Panel() With {
+            .Name = "tinyUserInfoPanel",
+            .Size = New Size(panelWidth, panelHeight),
+            .Location = New Point(panelX + 10, panelY),
+            .FillColor = Color.FromArgb(61, 65, 69),
+            .BorderRadius = 8,
+            .BackColor = Color.FromArgb(61, 65, 69)
+        }
 
-            ' Preserve remaining layout (profile picture, buttons) if already present in designer;
-            ' do not modify logout behavior or controls added elsewhere.
+            ' Small avatar picture box
+            Dim avatarSize As Integer = 30
+            Dim avatar As New PictureBox() With {
+            .Size = New Size(avatarSize, avatarSize),
+            .Location = New Point(6, (panelHeight - avatarSize) \ 2),
+            .SizeMode = PictureBoxSizeMode.Zoom,
+            .BackColor = Color.Transparent
+        }
+
+            ' Create default initials avatar (inline, avoids external helper)
+            Dim username As String = If(String.IsNullOrEmpty(frmLoginvb.LoggedInUsername), "U", frmLoginvb.LoggedInUsername)
+            Try
+                Dim bmp As New Bitmap(avatarSize, avatarSize)
+                Using g As Graphics = Graphics.FromImage(bmp)
+                    g.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias
+
+                    ' color palette (kept small)
+                    Dim colors() As Color = {
+                    Color.FromArgb(255, 107, 107),
+                    Color.FromArgb(78, 205, 196),
+                    Color.FromArgb(85, 98, 112),
+                    Color.FromArgb(129, 236, 236),
+                    Color.FromArgb(116, 185, 255)
+                }
+                    Dim idx As Integer = Math.Abs(username.GetHashCode()) Mod colors.Length
+                    Using br As New SolidBrush(colors(idx))
+                        g.FillEllipse(br, 0, 0, avatarSize - 1, avatarSize - 1)
+                    End Using
+
+                    ' build initials (1 or 2 letters)
+                    Dim initials As String = username.Substring(0, 1).ToUpper()
+                    For i As Integer = 1 To username.Length - 1
+                        If Char.IsUpper(username(i)) OrElse username(i) = " "c Then
+                            If username(i) <> " "c Then
+                                initials &= username(i).ToString().ToUpper()
+                                Exit For
+                            End If
+                        End If
+                    Next
+
+                    Using font As New Font("Poppins", 10, FontStyle.Bold, GraphicsUnit.Point)
+                        Dim sf As New StringFormat() With {.Alignment = StringAlignment.Center, .LineAlignment = StringAlignment.Center}
+                        Using brushWhite As New SolidBrush(Color.White)
+                            g.DrawString(initials, font, brushWhite, New RectangleF(0, 0, avatarSize, avatarSize), sf)
+                        End Using
+                    End Using
+                End Using
+                avatar.Image = bmp
+            Catch
+                ' fallback: plain background
+                avatar.BackColor = Color.FromArgb(80, 80, 80)
+            End Try
+
+            ' Username label (compact) - enable ellipsis when text is too long
+            Dim userLabel As New Label() With {
+            .AutoSize = False,
+            .Size = New Size(panelWidth - avatar.Width - 14, 18),
+            .Location = New Point(avatar.Right + 6, 6),
+            .Text = username,
+            .Font = New Font("Poppins", 9.0F, FontStyle.Bold),
+            .ForeColor = Color.FromArgb(254, 191, 16),
+            .BackColor = Color.Transparent,
+            .AutoEllipsis = True
+        }
+
+            ' Role / subtitle (very small)
+            Dim roleLabel As New Label() With {
+            .AutoSize = False,
+            .Size = New Size(panelWidth - avatar.Width - 14, 20),
+            .Location = New Point(avatar.Right + 6, userLabel.Bottom - 2),
+            .Text = If(String.IsNullOrEmpty(frmLoginvb.LoggedInRole), "", frmLoginvb.LoggedInRole),
+            .Font = New Font("Poppins", 8.0F, FontStyle.Regular),
+            .ForeColor = Color.FromArgb(225, 229, 233),
+            .BackColor = Color.Transparent
+        }
+
+            ' Add a tooltip when username is long (user examples: 10+ chars)
+            If Not String.IsNullOrEmpty(username) AndAlso username.Length > 10 Then
+                Dim tt As New ToolTip()
+                tt.AutoPopDelay = 5000
+                tt.InitialDelay = 300
+                tt.ReshowDelay = 100
+                tt.ShowAlways = True
+                tt.SetToolTip(userLabel, username)
+            End If
+
+            tinyPanel.Controls.Add(avatar)
+            tinyPanel.Controls.Add(userLabel)
+            tinyPanel.Controls.Add(roleLabel)
+
+            DashboardPanel.Controls.Add(tinyPanel)
+            tinyPanel.BringToFront()
 
         Catch ex As Exception
-            Console.WriteLine($"Error creating user info section: {ex.Message}")
+            Console.WriteLine($"Error creating tiny user info: {ex.Message}")
         End Try
     End Sub
     Private Sub NavSystemSettings_Click(sender As Object, e As EventArgs)

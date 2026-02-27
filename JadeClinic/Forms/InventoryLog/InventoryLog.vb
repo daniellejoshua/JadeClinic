@@ -14,6 +14,18 @@ Public Class InventoryLog
     ' Navigation flag for proper form closing
     Private isNavigating As Boolean = False
 
+    Private ReadOnly GoldenYellow As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 254, 191, 16)
+    Private ReadOnly RichOlive As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 190, 154, 48)
+    Private ReadOnly DeepCharcoal As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 26, 29, 31)
+    Private ReadOnly DarkSlate As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 43, 47, 50)
+    Private ReadOnly Graphite As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 61, 65, 69)
+    Private ReadOnly SteelGray As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 74, 79, 84)
+    Private ReadOnly PureWhite As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 255, 255, 255)
+    Private ReadOnly LightSilver As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 225, 229, 233)
+    Private ReadOnly SuccessGreen As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 16, 216, 98)
+    Private ReadOnly AlertRed As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 255, 71, 87)
+
+
     Public Sub New()
         InitializeComponent()
 
@@ -666,21 +678,21 @@ Public Class InventoryLog
                 End If
             Next
 
-            ' Use dark panel background like the reference
             DashboardPanel.FillColor = System.Drawing.Color.FromArgb(61, 65, 66)
 
-            ' Load company logo from CompanySettingsManager so it's consistent across forms
-            Try
-                Dim logoImg As Image = CompanySettingsManager.Instance.GetCompanyLogo()
-                If logoImg IsNot Nothing Then
-                    PictureBox9.Image = New Bitmap(logoImg)
-                    PictureBox9.SizeMode = PictureBoxSizeMode.Zoom
-                End If
-            Catch ex As Exception
-                ' Ignore logo errors to avoid breaking UI
-            End Try
-
-            PictureBox9.BringToFront()
+            ' Render company logo into existing PictureBox9 WITHOUT resizing or adding handlers
+            If PictureBox9 IsNot Nothing Then
+                Try
+                    Dim logoImg As System.Drawing.Image = CompanySettingsManager.Instance.GetCompanyLogo()
+                    If logoImg IsNot Nothing Then
+                        PictureBox9.Image = logoImg
+                        PictureBox9.Location = New Point(81, 15)
+                    End If
+                Catch ex As Exception
+                    Console.WriteLine($"Unable to set dashboard logo: {ex.Message}")
+                End Try
+                PictureBox9.BringToFront()
+            End If
 
             Dim availableWidth As Integer = DashboardPanel.Width - 40
             Dim startY As Integer = 250
@@ -689,44 +701,48 @@ Public Class InventoryLog
             Dim buttonWidth As Integer = availableWidth - 5
             Dim buttonIndex As Integer = 0
 
-            ' Title and subtitle (use company palette)
-            Dim titleLabel As New Label()
-            titleLabel.Text = CompanySettingsManager.Instance.GetSettingString("CompanyName", "JADE CLINIC")
-            titleLabel.Font = New Font("Poppins", 14, FontStyle.Bold)
-            titleLabel.ForeColor = CompanySettingsManager.Instance.GetColor("primarycolor")
-            titleLabel.BackColor = System.Drawing.Color.Transparent
-            titleLabel.AutoSize = False
-            titleLabel.Size = New System.Drawing.Size(availableWidth, 30)
-            titleLabel.Location = New System.Drawing.Point(20, 110)
-            titleLabel.TextAlign = ContentAlignment.MiddleCenter
+            ' Title and subtitle (SalesRecord style colors)
+            Dim titleLabel As New Label() With {
+            .Text = CompanySettingsManager.Instance.GetSettingString("CompanyName", "JADE CLINIC"),
+            .Font = New Font("Poppins", 14, FontStyle.Bold),
+            .ForeColor = GoldenYellow,
+            .BackColor = System.Drawing.Color.Transparent,
+            .AutoSize = False,
+            .Size = New System.Drawing.Size(availableWidth, 30),
+            .Location = New System.Drawing.Point(20, 110),
+            .TextAlign = ContentAlignment.MiddleCenter
+        }
             DashboardPanel.Controls.Add(titleLabel)
 
-            Dim subtitleLabel As New Label()
-            subtitleLabel.Text = "Dental Supply Management"
-            subtitleLabel.Font = New Font("Poppins", 10, FontStyle.Regular)
-            subtitleLabel.ForeColor = CompanySettingsManager.Instance.GetColor("textsecondary")
-            subtitleLabel.BackColor = System.Drawing.Color.Transparent
-            subtitleLabel.AutoSize = False
-            subtitleLabel.Size = New System.Drawing.Size(availableWidth, 25)
-            subtitleLabel.Location = New System.Drawing.Point(20, 145)
-            subtitleLabel.TextAlign = ContentAlignment.MiddleCenter
+            Dim subtitleLabel As New Label() With {
+            .Text = "Dental Supply Management",
+            .Font = New Font("Poppins", 10, FontStyle.Regular),
+            .ForeColor = LightSilver,
+            .BackColor = System.Drawing.Color.Transparent,
+            .AutoSize = False,
+            .Size = New System.Drawing.Size(availableWidth, 25),
+            .Location = New System.Drawing.Point(20, 145),
+            .TextAlign = ContentAlignment.MiddleCenter
+        }
             DashboardPanel.Controls.Add(subtitleLabel)
 
-            Dim separator1 As New Panel()
-            separator1.BackColor = System.Drawing.Color.FromArgb(50, 50, 50)
-            separator1.Size = New System.Drawing.Size(availableWidth - 20, 2)
-            separator1.Location = New System.Drawing.Point(30, 190)
+            Dim separator1 As New Panel() With {
+            .BackColor = System.Drawing.Color.FromArgb(50, 50, 50),
+            .Size = New System.Drawing.Size(availableWidth - 20, 2),
+            .Location = New System.Drawing.Point(30, 190)
+        }
             DashboardPanel.Controls.Add(separator1)
 
-            Dim navLabel As New Label()
-            navLabel.Text = "NAVIGATION"
-            navLabel.Font = New Font("Poppins", 10, FontStyle.Bold)
-            navLabel.ForeColor = CompanySettingsManager.Instance.GetColor("textsecondary")
-            navLabel.BackColor = System.Drawing.Color.Transparent
-            navLabel.AutoSize = False
-            navLabel.Size = New System.Drawing.Size(availableWidth, 25)
-            navLabel.Location = New System.Drawing.Point(20, 205)
-            navLabel.TextAlign = ContentAlignment.MiddleCenter
+            Dim navLabel As New Label() With {
+            .Text = "NAVIGATION",
+            .Font = New Font("Poppins", 10, FontStyle.Bold),
+            .ForeColor = LightSilver,
+            .BackColor = System.Drawing.Color.Transparent,
+            .AutoSize = False,
+            .Size = New System.Drawing.Size(availableWidth, 25),
+            .Location = New System.Drawing.Point(20, 205),
+            .TextAlign = ContentAlignment.MiddleCenter
+        }
             DashboardPanel.Controls.Add(navLabel)
 
             ' Role logic
@@ -754,18 +770,26 @@ Public Class InventoryLog
             AddHandler navSalesRecordsBtn.Click, AddressOf NavSalesRecords_Click
             buttonIndex += 1
 
-            ' Staff & Inventory Logs (Manager/Admin)
+            ' Staff (Manager/Admin)
             If currentRole = "MANAGER" Or currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
                 Dim navStaffBtn = CreateLargeNavButton("👥 Staff", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
                 AddHandler navStaffBtn.Click, AddressOf NavStaff_Click
                 buttonIndex += 1
+            End If
 
-                Dim navInventoryLogBtn = CreateLargeNavButton("📋 Inventory Logs", startY + buttonIndex * (buttonHeight + buttonSpacing), True, buttonWidth, buttonHeight)
-                ' Inventory Logs is the active view here; no navigation handler attached
+            ' Inventory Logs (ACTIVE)
+            Dim navInventoryLogBtn = CreateLargeNavButton("📋 Inventory Logs", startY + buttonIndex * (buttonHeight + buttonSpacing), True, buttonWidth, buttonHeight)
+            ' Active view — no navigation handler attached
+            buttonIndex += 1
+
+            If currentRole = "MANAGER" Or currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
+                ' Suppliers (place above Audit Logs)
+                Dim navSuppliersBtn = CreateLargeNavButton("🏷️ Suppliers", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
+                AddHandler navSuppliersBtn.Click, AddressOf NavSuppliers_Click
                 buttonIndex += 1
             End If
 
-            ' Admin only
+            ' Admin only: Audit Logs and System
             If currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
                 Dim navAuditLogBtn = CreateLargeNavButton("🔍 Audit Logs", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
                 AddHandler navAuditLogBtn.Click, AddressOf NavAuditLog_Click
@@ -778,6 +802,16 @@ Public Class InventoryLog
 
         Catch ex As Exception
             Console.WriteLine($"Error creating navigation menu: {ex.Message}")
+        End Try
+    End Sub
+
+    Private Sub NavSuppliers_Click(sender As Object, e As EventArgs)
+        Try
+            isNavigating = True
+            Supplier.Show()
+            Me.Close()
+        Catch ex As Exception
+            MessageBox.Show($"Unable to open Suppliers: {ex.Message}", "Navigation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
     Private Sub NavSystemSettings_Click(sender As Object, e As EventArgs)
@@ -798,7 +832,7 @@ Public Class InventoryLog
         ' Colors consistent with SalesRecord navigation using CompanySettingsManager palette
         Dim primary = CompanySettingsManager.Instance.GetColor("primarycolor")
         Dim textPrimary = CompanySettingsManager.Instance.GetColor("backgrounddark")
-        Dim borderColor = System.Drawing.Color.FromArgb(200, 200, 200)
+        Dim borderColor = System.Drawing.Color.FromArgb(80, 80, 80)
 
         btn.FillColor = If(isActive, primary, System.Drawing.Color.Transparent)
         btn.ForeColor = If(isActive, textPrimary, CompanySettingsManager.Instance.GetColor("textsecondary"))
