@@ -23,6 +23,8 @@ Public Class Inventory
     Private tooltipTimer As Timer
     Private currentTooltipCell As DataGridViewCell = Nothing
     Private lastMousePosition As Point = Point.Empty
+    ' Add this field near the other private fields at the top of the class
+    Private statusFilter As Nullable(Of Boolean) = Nothing ' Nothing = All, True = Active, False = Inactive
 
     Private Async Sub Inventory_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         ' Enable double buffering for smooth scrolling
@@ -54,8 +56,6 @@ Public Class Inventory
         ' Load categories for filter
         LoadCategoriesForFilter()
 
-        ' Set button text
-        btnManagePromotions.Text = "Manage Stock"
 
         ' Update form title to show logged-in user
         Me.Text = $"Inventory - {frmLoginvb.LoggedInUsername}"
@@ -66,7 +66,20 @@ Public Class Inventory
         ' Load products asynchronously (ShowLoadingOverlay is now called inside LoadProductsAsync)
         Await LoadProductsAsync()
     End Sub
+    ' Helper: find a control by name anywhere in the form (recursive)
+    Private Function FindControlRecursive(parent As Control, name As String) As Control
+        If parent Is Nothing Then Return Nothing
+        If String.Equals(parent.Name, name, StringComparison.OrdinalIgnoreCase) Then
+            Return parent
+        End If
 
+        For Each c As Control In parent.Controls
+            Dim found = FindControlRecursive(c, name)
+            If found IsNot Nothing Then Return found
+        Next
+
+        Return Nothing
+    End Function
     Private Sub InitializeCustomTooltip()
         Try
             ' Dispose any existing tooltip and timer first
@@ -281,12 +294,12 @@ Public Class Inventory
                 conn.Open()
 
                 Dim query As String = "SELECT p.ProductID, p.ProductCode, p.ProductName, p.Category, " &
-                                  "p.Unit, p.CurrentStock, p.ReorderLevel, p.CostPrice, p.SellingPrice, " &
-                                  "pi.ImageData AS ProductImage " &
-                                  "FROM Products p " &
-                                  "LEFT JOIN ProductImageMapping pim ON p.ProductID = pim.ProductID " &
-                                  "LEFT JOIN ProductImages pi ON pim.ImageID = pi.ImageID " &
-                                  "WHERE p.IsActive = 1 ORDER BY p.ProductName"
+                      "p.Unit, p.CurrentStock, p.ReorderLevel, p.CostPrice, p.SellingPrice, p.IsActive, " &
+                      "pi.ImageData AS ProductImage " &
+                      "FROM Products p " &
+                      "LEFT JOIN ProductImageMapping pim ON p.ProductID = pim.ProductID " &
+                      "LEFT JOIN ProductImages pi ON pim.ImageID = pi.ImageID " &
+                      "ORDER BY p.ProductName"
 
                 Using cmd As New SqlCommand(query, conn)
                     Using reader As SqlDataReader = cmd.ExecuteReader()
@@ -302,34 +315,38 @@ Public Class Inventory
                             Dim productNameVal As String = If(IsDBNull(reader("ProductName")), String.Empty, reader("ProductName").ToString())
                             Dim categoryVal As String = If(IsDBNull(reader("Category")), String.Empty, reader("Category").ToString())
                             Dim productImageObj As Object = If(IsDBNull(reader("ProductImage")), Nothing, reader("ProductImage"))
+                            Dim isActiveVal As Boolean = If(IsDBNull(reader("IsActive")), True, Convert.ToBoolean(reader("IsActive")))
 
+                            ' Set status: zero stock = Out of Stock, if stock > 0 AND reorder > 0 AND stock <= reorder -> Below Reorder Level (B.R.L).
+                            ' Otherwise treat as Above Reorder Level.
                             Dim statusStr As String
                             If currentStockVal = 0 Then
                                 statusStr = "Out of Stock"
-                            ElseIf reorderLevelVal > 0 AndAlso currentStockVal < reorderLevelVal Then
-                                statusStr = "Low on Stock"
+                            ElseIf reorderLevelVal > 0 AndAlso currentStockVal > 0 AndAlso currentStockVal <= reorderLevelVal Then
+                                statusStr = "Below Reorder Level"
                             Else
-                                statusStr = "InStock"
+                                statusStr = "Above Reorder Level"
                             End If
 
                             Dim productData As New Dictionary(Of String, Object) From {
-                            {"ProductID", reader("ProductID")},
-                            {"ProductCode", productCodeVal},
-                            {"ProductName", productNameVal},
-                            {"Category", categoryVal},
-                            {"Unit", unitVal},
-                            {"CurrentStock", currentStockVal},
-                            {"ReorderLevel", reorderLevelVal},
-                            {"CostPrice", costPriceVal},
-                            {"SellingPrice", sellingPriceVal},
-                            {"ProductImage", productImageObj},
-                            {"Sizing", unitVal},
-                            {"Description", String.Empty},
-                            {"Price", sellingPriceVal},
-                            {"StockQty", currentStockVal},
-                            {"Status", statusStr},
-                            {"Color", String.Empty}
-                        }
+                        {"ProductID", reader("ProductID")},
+                        {"ProductCode", productCodeVal},
+                        {"ProductName", productNameVal},
+                        {"Category", categoryVal},
+                        {"Unit", unitVal},
+                        {"CurrentStock", currentStockVal},
+                        {"ReorderLevel", reorderLevelVal},
+                        {"CostPrice", costPriceVal},
+                        {"SellingPrice", sellingPriceVal},
+                        {"ProductImage", productImageObj},
+                        {"Sizing", unitVal},
+                        {"Description", String.Empty},
+                        {"Price", sellingPriceVal},
+                        {"StockQty", currentStockVal},
+                        {"Status", statusStr},      ' stock-based status kept for other logic
+                        {"IsActive", isActiveVal}, ' new flag
+                        {"Color", String.Empty}
+                    }
 
                             allProducts.Add(productData)
                         End While
@@ -341,6 +358,7 @@ Public Class Inventory
             Console.WriteLine($"LoadProductsFromDatabase error: {ex.Message}")
         End Try
     End Sub
+    ' Replace SetupFilterEvents body with this version that finds and wires the status buttons reliably.
     Private Sub SetupFilterEvents()
         ' Setup filter events
         AddHandler txtSearch.TextChanged, AddressOf ApplyFilters
@@ -350,22 +368,67 @@ Public Class Inventory
         AddHandler txtFilterPrice.TextChanged, AddressOf ApplyFilters
         AddHandler btnResetFilter.Click, AddressOf ResetFilters_Click
 
-        ' Populate stock filter options (include the new "Below Reorder Level" label)
+        ' Wire status buttons (search recursively)
+        Try
+            Dim btnAll = TryCast(FindControlRecursive(Me, "btnAll"), Guna.UI2.WinForms.Guna2Button)
+            Dim btnActive = TryCast(FindControlRecursive(Me, "btnActive"), Guna.UI2.WinForms.Guna2Button)
+            Dim btnInactive = TryCast(FindControlRecursive(Me, "btnInactive"), Guna.UI2.WinForms.Guna2Button)
+
+            If btnAll IsNot Nothing Then
+                RemoveHandler btnAll.Click, AddressOf BtnAll_Click
+                AddHandler btnAll.Click, AddressOf BtnAll_Click
+            End If
+
+            If btnActive IsNot Nothing Then
+                RemoveHandler btnActive.Click, AddressOf BtnActive_Click
+                AddHandler btnActive.Click, AddressOf BtnActive_Click
+            End If
+
+            If btnInactive IsNot Nothing Then
+                RemoveHandler btnInactive.Click, AddressOf BtnInactive_Click
+                AddHandler btnInactive.Click, AddressOf BtnInactive_Click
+            End If
+        Catch
+            ' ignore wiring issues
+        End Try
+
+        ' Populate stock filter options (use "Above Reorder Level" instead of "Active")
         If StockCmbBox.Items.Count = 0 Then
             StockCmbBox.Items.Clear()
             StockCmbBox.Items.Add("All")
             StockCmbBox.Items.Add("Below Reorder Level")
             StockCmbBox.Items.Add("Out of Stock")
-            StockCmbBox.Items.Add("Active")
+            StockCmbBox.Items.Add("Above Reorder Level")
+            StockCmbBox.Items.Add("Inactive")
         End If
         StockCmbBox.SelectedIndex = 0 ' Select "All"
 
-        ' Set placeholder text for better UX - updated to remove barcode reference
+        ' Set placeholders
         txtSearch.PlaceholderText = "Search by name, code, or category..."
         txtFilterQuantity.PlaceholderText = "Minimum quantity (e.g., 10)"
         txtFilterPrice.PlaceholderText = "Minimum price (e.g., 100.00)"
+
+        ' Initialize visuals for status buttons
+        SetStatusButtonsVisualState()
+    End Sub    ' Replace existing BtnAll/BtnActive/BtnInactive handlers with these (they already set the filter).
+    ' Replace the three Btn handlers with these (they already set the filter).
+    Private Sub BtnAll_Click(sender As Object, e As EventArgs)
+        statusFilter = Nothing
+        SetStatusButtonsVisualState()
+        ApplyFilters(Nothing, Nothing)
     End Sub
 
+    Private Sub BtnActive_Click(sender As Object, e As EventArgs)
+        statusFilter = True
+        SetStatusButtonsVisualState()
+        ApplyFilters(Nothing, Nothing)
+    End Sub
+
+    Private Sub BtnInactive_Click(sender As Object, e As EventArgs)
+        statusFilter = False
+        SetStatusButtonsVisualState()
+        ApplyFilters(Nothing, Nothing)
+    End Sub
     Private Sub LoadCategoriesForFilter()
         Try
             Dim connStr As String = Connection.GetConnectionString()
@@ -423,22 +486,22 @@ Public Class Inventory
             ' Disable DataGridView's built-in tooltips to prevent conflicts
             productDataGrid.ShowCellToolTips = False
 
-            ' --- DARK / BLACK STYLE PALETTE (as requested) ---
-            productDataGrid.BackgroundColor = System.Drawing.Color.FromArgb(41, 44, 45) ' overall background
+            ' --- DARK / BLACK STYLE PALETTE ---
+            productDataGrid.BackgroundColor = System.Drawing.Color.FromArgb(41, 44, 45)
             productDataGrid.GridColor = System.Drawing.Color.White
             productDataGrid.BorderStyle = BorderStyle.None
             productDataGrid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal
 
-            productDataGrid.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(61, 65, 66) ' row background
+            productDataGrid.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
             productDataGrid.AlternatingRowsDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
             productDataGrid.DefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
-            productDataGrid.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(255, 204, 77) ' gold selection
+            productDataGrid.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(255, 204, 77)
             productDataGrid.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
             productDataGrid.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
             productDataGrid.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             productDataGrid.DefaultCellStyle.Padding = New Padding(10, 6, 10, 6)
 
-            ' Header styling - darker header
+            ' Header styling
             productDataGrid.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(30, 30, 30)
             productDataGrid.ColumnHeadersDefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
             productDataGrid.ColumnHeadersDefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(30, 30, 30)
@@ -452,28 +515,28 @@ Public Class Inventory
             productDataGrid.Columns.Clear()
 
             ' Colour accents
-            Dim AccentGold As Color = System.Drawing.Color.FromArgb(255, 204, 77)       ' selection / bright gold
-            Dim AccentGoldDark As Color = System.Drawing.Color.FromArgb(200, 140, 0)   ' darker gold for idle text
-            Dim PriceGold As Color = System.Drawing.Color.FromArgb(200, 140, 0)        ' price/golden text (kept)
+            Dim AccentGold As Color = System.Drawing.Color.FromArgb(255, 204, 77)
+            Dim AccentGoldDark As Color = System.Drawing.Color.FromArgb(200, 140, 0)
+            Dim PriceGold As Color = System.Drawing.Color.FromArgb(200, 140, 0)
 
-            ' Add Product Name column (with image and code) - adopt golden accent instead of RichOlive
+            ' Product Information column (slightly shorter to make room for Status)
             Dim colProductName As New DataGridViewTextBoxColumn()
             colProductName.Name = "ProductName"
             colProductName.HeaderText = "Product Information"
-            colProductName.FillWeight = 45
+            colProductName.FillWeight = 38 ' reduced from 45
             colProductName.DefaultCellStyle.Font = New Font("Poppins SemiBold", 9.5F, FontStyle.Regular)
-            colProductName.DefaultCellStyle.ForeColor = AccentGoldDark ' golden accent for idle
+            colProductName.DefaultCellStyle.ForeColor = AccentGoldDark
             colProductName.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft
             colProductName.DefaultCellStyle.Padding = New Padding(5, 5, 5, 5)
             colProductName.DefaultCellStyle.SelectionBackColor = AccentGold
             colProductName.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
             productDataGrid.Columns.Add(colProductName)
 
-            ' Category column
+            ' Category column (slightly narrowed)
             Dim colCategory As New DataGridViewTextBoxColumn()
             colCategory.Name = "Category"
             colCategory.HeaderText = "Category"
-            colCategory.FillWeight = 18
+            colCategory.FillWeight = 16 ' reduced from 18
             colCategory.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             colCategory.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
             colCategory.DefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
@@ -481,11 +544,11 @@ Public Class Inventory
             colCategory.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
             productDataGrid.Columns.Add(colCategory)
 
-            ' Unit column
+            ' Unit column (slightly narrowed)
             Dim colUnit As New DataGridViewTextBoxColumn()
             colUnit.Name = "Unit"
             colUnit.HeaderText = "Unit"
-            colUnit.FillWeight = 10
+            colUnit.FillWeight = 8 ' reduced from 10
             colUnit.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             colUnit.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
             colUnit.DefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
@@ -493,14 +556,14 @@ Public Class Inventory
             colUnit.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
             productDataGrid.Columns.Add(colUnit)
 
-            ' Stock column
+            ' Stock column (slightly narrowed)
             Dim colStock As New DataGridViewTextBoxColumn()
             colStock.Name = "CurrentStock"
             colStock.HeaderText = "Stock"
-            colStock.FillWeight = 10
+            colStock.FillWeight = 9 ' reduced from 10
             colStock.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             colStock.DefaultCellStyle.Font = New Font("Poppins SemiBold", 9.5F, FontStyle.Bold)
-            colStock.DefaultCellStyle.ForeColor = System.Drawing.Color.LightGray ' neutral by default; per-row colors set at load
+            colStock.DefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
             colStock.DefaultCellStyle.SelectionBackColor = AccentGold
             colStock.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
             productDataGrid.Columns.Add(colStock)
@@ -521,7 +584,7 @@ Public Class Inventory
             Dim colSellingPrice As New DataGridViewTextBoxColumn()
             colSellingPrice.Name = "SellingPrice"
             colSellingPrice.HeaderText = "Price"
-            colSellingPrice.FillWeight = 15
+            colSellingPrice.FillWeight = 14 ' slightly reduced to balance layout
             colSellingPrice.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             colSellingPrice.DefaultCellStyle.Font = New Font("PoppinsSemiBold", 9.5F, FontStyle.Bold)
             colSellingPrice.DefaultCellStyle.ForeColor = PriceGold
@@ -529,12 +592,24 @@ Public Class Inventory
             colSellingPrice.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
             productDataGrid.Columns.Add(colSellingPrice)
 
+            ' Status column (Active / Inactive) - made slightly wider to ensure fit
+            Dim colStatus As New DataGridViewTextBoxColumn()
+            colStatus.Name = "Status"
+            colStatus.HeaderText = "Status"
+            colStatus.FillWeight = 11 ' increased slightly to improve fit
+            colStatus.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
+            colStatus.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
+            colStatus.DefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
+            colStatus.DefaultCellStyle.SelectionBackColor = AccentGold
+            colStatus.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
+            productDataGrid.Columns.Add(colStatus)
+
             ' Actions column
             Dim colActions As New DataGridViewTextBoxColumn()
             colActions.Name = "Actions"
             colActions.HeaderText = ""
             colActions.ReadOnly = True
-            colActions.FillWeight = 10
+            colActions.FillWeight = 12
             colActions.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             colActions.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
             colActions.DefaultCellStyle.ForeColor = AccentGoldDark
@@ -578,6 +653,12 @@ Public Class Inventory
             ' Clear existing rows
             productDataGrid.Rows.Clear()
 
+            ' Define lighter palette colors
+            Dim LightRed As Color = Color.FromArgb(255, 153, 153)       ' light red for out of stock / inactive
+            Dim LightOrange As Color = Color.FromArgb(255, 179, 102)    ' light orange for below reorder (B.R.L)
+            Dim LightGreen As Color = Color.FromArgb(144, 238, 144)     ' light green for above reorder (A.R.L)
+            Dim AccentGoldDark As Color = Color.FromArgb(200, 140, 0)
+
             ' Load filtered products into DataGridView
             For Each productData As Dictionary(Of String, Object) In filteredProducts
                 Try
@@ -594,34 +675,49 @@ Public Class Inventory
                     Dim currentStock As Integer = Convert.ToInt32(productData("CurrentStock"))
                     Dim reorderLevel As Integer = Convert.ToInt32(productData("ReorderLevel"))
 
-                    ' Add row to DataGridView - with simple Edit text in Actions column
+                    ' Determine status text from IsActive flag for grid column
+                    Dim isActiveFlag As Boolean = If(productData.ContainsKey("IsActive"), Convert.ToBoolean(productData("IsActive")), True)
+                    Dim statusDisplay As String = If(isActiveFlag, "Active", "Inactive")
+
+                    ' Add row to DataGridView - include Status before Actions
                     Dim rowIndex As Integer = productDataGrid.Rows.Add(
-                    displayName,  ' ProductName (clean, with code shown in custom painting)
-                    productData("Category").ToString(),     ' Category
-                    productData("Unit").ToString(),         ' Unit
-                    currentStock.ToString(),                ' CurrentStock
-                    "₱" & Convert.ToDecimal(productData("CostPrice")).ToString("N2"),    ' CostPrice
-                    "₱" & Convert.ToDecimal(productData("SellingPrice")).ToString("N2"), ' SellingPrice
-                    "✏️"  ' Actions - simple text
-                )
+                displayName,  ' ProductName
+                productData("Category").ToString(),     ' Category
+                productData("Unit").ToString(),         ' Unit
+                currentStock.ToString(),                ' CurrentStock
+                "₱" & Convert.ToDecimal(productData("CostPrice")).ToString("N2"),    ' CostPrice
+                "₱" & Convert.ToDecimal(productData("SellingPrice")).ToString("N2"), ' SellingPrice
+                statusDisplay, ' Status
+                "✏️"  ' Actions - simple text
+            )
 
                     ' Store product data in row tag for edit functionality
                     productDataGrid.Rows(rowIndex).Tag = productData
 
-                    ' Apply stock level color coding with improved colors for gray background
-                    ' Mark "Below Reorder Level" only when currentStock < reorderLevel (strictly less)
+                    ' Apply stock level color coding with lighter colors
                     If currentStock = 0 Then
-                        productDataGrid.Rows(rowIndex).Cells("CurrentStock").Style.ForeColor = Color.FromArgb(200, 40, 50) ' Darker red for better contrast
+                        productDataGrid.Rows(rowIndex).Cells("CurrentStock").Style.ForeColor = LightRed
                         productDataGrid.Rows(rowIndex).Cells("CurrentStock").Style.Font = New Font("Poppins", 9.5F, FontStyle.Bold)
                         productDataGrid.Rows(rowIndex).Cells("CurrentStock").Tag = "OUT_OF_STOCK"
-                    ElseIf reorderLevel > 0 AndAlso currentStock < reorderLevel Then
-                        productDataGrid.Rows(rowIndex).Cells("CurrentStock").Style.ForeColor = Color.FromArgb(200, 140, 0) ' Darker amber/orange for better contrast
+                    ElseIf reorderLevel > 0 AndAlso currentStock <= reorderLevel Then
+                        ' B.R.L when stock is equal to or less than reorder (and > 0)
+                        productDataGrid.Rows(rowIndex).Cells("CurrentStock").Style.ForeColor = LightOrange
                         productDataGrid.Rows(rowIndex).Cells("CurrentStock").Style.Font = New Font("Poppins", 9.5F, FontStyle.Bold)
                         productDataGrid.Rows(rowIndex).Cells("CurrentStock").Tag = "LOW_STOCK"
                     Else
-                        productDataGrid.Rows(rowIndex).Cells("CurrentStock").Style.ForeColor = Color.FromArgb(20, 140, 50) ' Darker green for better contrast
+                        productDataGrid.Rows(rowIndex).Cells("CurrentStock").Style.ForeColor = LightGreen
                         productDataGrid.Rows(rowIndex).Cells("CurrentStock").Style.Font = New Font("Poppins", 9.5F, FontStyle.Bold)
                         productDataGrid.Rows(rowIndex).Cells("CurrentStock").Tag = "IN_STOCK"
+                    End If
+
+                    ' Apply status color: Active -> light green, Inactive -> light red (user requested)
+                    Dim statusCell = productDataGrid.Rows(rowIndex).Cells("Status")
+                    If isActiveFlag Then
+                        statusCell.Style.ForeColor = LightGreen
+                        statusCell.Style.Font = New Font("Poppins", 9.0F, FontStyle.Bold)
+                    Else
+                        statusCell.Style.ForeColor = LightRed
+                        statusCell.Style.Font = New Font("Poppins", 9.0F, FontStyle.Bold)
                     End If
 
                     ' Make row non-resizable
@@ -637,7 +733,6 @@ Public Class Inventory
             MessageBox.Show($"Error loading products into DataGrid: {ex.Message}", "Load Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
-
     Private Sub ProductDataGrid_CellContentClick(sender As Object, e As DataGridViewCellEventArgs)
         Try
             If e.RowIndex >= 0 AndAlso e.ColumnIndex >= 0 Then
@@ -927,7 +1022,7 @@ Public Class Inventory
 
     Private Function MatchesFilter(product As Dictionary(Of String, Object)) As Boolean
         Try
-            ' Search filter - ProductCode can be used for scanning now, so it covers barcode functionality
+            ' Search filter
             Dim searchText As String = txtSearch.Text.Trim().ToLower()
             If Not String.IsNullOrWhiteSpace(searchText) Then
                 Dim productName As String = product("ProductName").ToString().ToLower()
@@ -935,17 +1030,22 @@ Public Class Inventory
                 Dim category As String = product("Category").ToString().ToLower()
 
                 If Not (productName.Contains(searchText) Or productCode.Contains(searchText) Or
-                   category.Contains(searchText)) Then
+           category.Contains(searchText)) Then
                     Return False
                 End If
             End If
 
             ' Category filter
-            If Guna2ComboBox1.SelectedItem IsNot Nothing AndAlso
-           Guna2ComboBox1.SelectedItem.ToString() <> "All Categories" Then
+            If Guna2ComboBox1.SelectedItem IsNot Nothing AndAlso Guna2ComboBox1.SelectedItem.ToString() <> "All Categories" Then
                 If product("Category").ToString() <> Guna2ComboBox1.SelectedItem.ToString() Then
                     Return False
                 End If
+            End If
+
+            ' Status buttons filter (Active / Inactive / All)
+            If statusFilter.HasValue Then
+                Dim isActive As Boolean = If(product.ContainsKey("IsActive"), Convert.ToBoolean(product("IsActive")), True)
+                If isActive <> statusFilter.Value Then Return False
             End If
 
             ' Stock status filter
@@ -957,12 +1057,20 @@ Public Class Inventory
                 Select Case stockFilter
                     Case "Out of Stock"
                         If currentStock > 0 Then Return False
-                    Case "Below Reorder Level"
-                        ' Show items strictly below reorder level
-                        If Not (reorderLevel > 0 AndAlso currentStock < reorderLevel) Then Return False
-                    Case "Active"
-                        If currentStock = 0 Then Return False
-                        ' "All" doesn't filter anything
+
+                    Case "Below Re-order Level"
+                        ' Exclude zero-stock items; show items with stock > 0 and stock <= reorder level (equality counts as B.R.L)
+                        If Not (reorderLevel > 0 AndAlso currentStock > 0 AndAlso currentStock <= reorderLevel) Then Return False
+
+                    Case "Above Re-order Level"
+                        ' Show products that have a positive reorder level and stock strictly above it
+                        If Not (reorderLevel > 0 AndAlso currentStock > reorderLevel) Then Return False
+
+                    Case "Inactive"
+                        Dim isActiveInv As Boolean = If(product.ContainsKey("IsActive"), Convert.ToBoolean(product("IsActive")), True)
+                        If isActiveInv Then Return False
+
+                        ' "All" does nothing
                 End Select
             End If
 
@@ -1765,6 +1873,57 @@ Public Class Inventory
     Private currentFilterDescription As String = "All Products"
 
     ' Replace the existing ApplyFilters method with this version (updates currentFilterDescription)
+    ' Helper: update visual state of the three status buttons
+    ' Replace existing SetStatusButtonsVisualState with this resilient implementation.
+    Private Sub SetStatusButtonsVisualState()
+        Try
+            Dim btnAllCtrl = TryCast(FindControlRecursive(Me, "btnAll"), Guna.UI2.WinForms.Guna2Button)
+            Dim btnActiveCtrl = TryCast(FindControlRecursive(Me, "btnActive"), Guna.UI2.WinForms.Guna2Button)
+            Dim btnInactiveCtrl = TryCast(FindControlRecursive(Me, "btnInactive"), Guna.UI2.WinForms.Guna2Button)
+
+            ' default visuals
+            Dim defaultFill As Color = Color.Transparent
+            Dim defaultFore As Color = Color.White
+
+            ' Clear all to default first
+            If btnAllCtrl IsNot Nothing Then
+                btnAllCtrl.FillColor = defaultFill
+                btnAllCtrl.ForeColor = defaultFore
+            End If
+            If btnActiveCtrl IsNot Nothing Then
+                btnActiveCtrl.FillColor = defaultFill
+                btnActiveCtrl.ForeColor = defaultFore
+            End If
+            If btnInactiveCtrl IsNot Nothing Then
+                btnInactiveCtrl.FillColor = defaultFill
+                btnInactiveCtrl.ForeColor = defaultFore
+            End If
+
+            ' Apply active visuals
+            If btnAllCtrl IsNot Nothing AndAlso Not statusFilter.HasValue Then
+                btnAllCtrl.FillColor = Color.White
+                btnAllCtrl.ForeColor = Color.Black
+            End If
+
+            If btnActiveCtrl IsNot Nothing AndAlso statusFilter.HasValue AndAlso statusFilter.Value Then
+                btnActiveCtrl.FillColor = Color.FromArgb(20, 140, 50)
+                btnActiveCtrl.ForeColor = Color.White
+            End If
+
+            If btnInactiveCtrl IsNot Nothing AndAlso statusFilter.HasValue AndAlso statusFilter.Value = False Then
+                btnInactiveCtrl.FillColor = Color.FromArgb(200, 40, 50)
+                btnInactiveCtrl.ForeColor = Color.White
+            End If
+
+            ' Optional: give a subtle border when selected so contrast is clearer on dark background
+            If btnAllCtrl IsNot Nothing Then btnAllCtrl.BorderColor = If(Not statusFilter.HasValue, Color.FromArgb(200, 200, 200), Color.FromArgb(80, 80, 80))
+            If btnActiveCtrl IsNot Nothing Then btnActiveCtrl.BorderColor = If(statusFilter.HasValue AndAlso statusFilter.Value, Color.FromArgb(200, 200, 200), Color.FromArgb(80, 80, 80))
+            If btnInactiveCtrl IsNot Nothing Then btnInactiveCtrl.BorderColor = If(statusFilter.HasValue AndAlso statusFilter.Value = False, Color.FromArgb(200, 200, 200), Color.FromArgb(80, 80, 80))
+
+        Catch ex As Exception
+            ' Non-fatal: ignore visual update errors
+        End Try
+    End Sub
     Private Sub ApplyFilters(sender As Object, e As EventArgs)
         Try
             filteredProducts.Clear()
@@ -1791,6 +1950,10 @@ Public Class Inventory
                 parts.Add($"Stock: {StockCmbBox.SelectedItem}")
             End If
 
+            If statusFilter.HasValue Then
+                parts.Add($"Status: {(If(statusFilter.Value, "Active", "Inactive"))}")
+            End If
+
             If Not String.IsNullOrWhiteSpace(txtFilterQuantity.Text) Then
                 parts.Add($"Min Qty: {txtFilterQuantity.Text.Trim()}")
             End If
@@ -1812,7 +1975,6 @@ Public Class Inventory
             ' Silent fail for filter errors
         End Try
     End Sub
-
     ' Add helper to check role permissions (used by export)
     Private Function IsStaffUser() As Boolean
         Try

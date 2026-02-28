@@ -20,7 +20,7 @@ Public Class AddProduct
     Private Sub AddProduct_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         ' Start idle timeout monitoring for modal forms
         IdleTimeoutManager.Instance.StartMonitoring(Me)
-
+        ConfigureStatusControls(isEditMode)
         LoadCategories()
         ' Removed: LoadSuppliers() - no longer needed
         SetupFormDefaults()
@@ -60,7 +60,42 @@ Public Class AddProduct
             PrintBarcodeTextBox.Visible = False
         End If
     End Sub
+    ' Toggle visibility and initialize the status controls.
+    ' Call: ConfigureStatusControls(isEditMode) in `AddProduct_Load`.
+    ' After loading data call: ConfigureStatusControls(True, Convert.ToBoolean(reader("IsActive")))
+    Public Sub ConfigureStatusControls(show As Boolean, Optional isActive As Nullable(Of Boolean) = Nothing)
+        Try
+            ' Initialize and populate combo only when present
+            If cmbStatus IsNot Nothing Then
+                ' Ensure combobox is in DropDownList mode for consistent selection
+                cmbStatus.DropDownStyle = ComboBoxStyle.DropDownList
 
+                ' Populate items if empty or when showing
+                If cmbStatus.Items.Count = 0 Or show Then
+                    cmbStatus.Items.Clear()
+                    cmbStatus.Items.AddRange(New String() {"Active", "Inactive"})
+                End If
+
+                ' Set selected value when provided
+                If isActive.HasValue Then
+                    cmbStatus.SelectedItem = If(isActive.Value, "Active", "Inactive")
+                ElseIf cmbStatus.SelectedIndex = -1 Then
+                    cmbStatus.SelectedItem = "Active"
+                End If
+
+                cmbStatus.Visible = show
+            End If
+
+            ' Toggle label visibility if present
+            If lblStatus IsNot Nothing Then
+                lblStatus.Visible = show
+            End If
+
+        Catch ex As Exception
+            ' Non-fatal: log and continue
+            Console.WriteLine($"ConfigureStatusControls warning: {ex.Message}")
+        End Try
+    End Sub
     Private Sub SetupFormDefaults()
         ' Set default values
         cmbCategory.SelectedIndex = -1
@@ -144,6 +179,39 @@ Public Class AddProduct
             End If
         End Using
     End Sub
+    ' Updates the product's active status (IsActive) in the database.
+    ' Returns True on success, False on failure.
+    Public Function UpdateProductStatus(productId As Integer, isActive As Boolean) As Boolean
+        Try
+            Dim connStr As String = Connection.GetConnectionString()
+            Using conn As New SqlConnection(connStr)
+                conn.Open()
+
+                Dim updateQuery As String = "UPDATE Products SET IsActive = @IsActive, UpdatedAt = GETDATE() WHERE ProductID = @ProductID"
+                Using cmd As New SqlCommand(updateQuery, conn)
+                    cmd.Parameters.AddWithValue("@IsActive", If(isActive, 1, 0))
+                    cmd.Parameters.AddWithValue("@ProductID", productId)
+
+                    Dim affected As Integer = cmd.ExecuteNonQuery()
+                    If affected > 0 Then
+                        ' Audit log
+                        Try
+                            Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Product Status Updated", $"ProductID: {productId} IsActive: {isActive}")
+                        Catch
+                            ' Don't block on audit logging failure
+                        End Try
+
+                        Return True
+                    End If
+
+                    Return False
+                End Using
+            End Using
+        Catch ex As Exception
+            MessageBox.Show("Error updating product status: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            Return False
+        End Try
+    End Function
 
     Private Sub btnAddStock_Click(sender As Object, e As EventArgs) Handles btnAddStock.Click
         If ValidateForm() Then
@@ -313,13 +381,12 @@ Public Class AddProduct
                 conn.Open()
                 Using transaction As SqlTransaction = conn.BeginTransaction()
                     Try
-                        ' Prepare product data (removed expiry logic)
                         Dim selectedCategory As String = cmbCategory.SelectedItem.ToString()
 
-                        ' Update product WITHOUT changing ProductCode (keep original for barcode consistency) and removed expiry fields
+                        ' Update product including IsActive
                         Dim updateQuery As String = "UPDATE Products SET ProductName = @ProductName, Category = @Category, Unit = @Unit, " &
-                                                   "ReorderLevel = @ReorderLevel, CostPrice = @CostPrice, SellingPrice = @SellingPrice, " &
-                                                   "WholesalePrice = @WholesalePrice, UpdatedAt = GETDATE() WHERE ProductID = @ProductID"
+                                               "ReorderLevel = @ReorderLevel, CostPrice = @CostPrice, SellingPrice = @SellingPrice, " &
+                                               "WholesalePrice = @WholesalePrice, IsActive = @IsActive, UpdatedAt = GETDATE() WHERE ProductID = @ProductID"
 
                         Using cmd As New SqlCommand(updateQuery, conn, transaction)
                             cmd.Parameters.AddWithValue("@ProductName", txtProductName.Text.Trim())
@@ -329,42 +396,41 @@ Public Class AddProduct
                             cmd.Parameters.AddWithValue("@CostPrice", Convert.ToDecimal(CostPriceTextBox.Text.Trim()))
                             cmd.Parameters.AddWithValue("@SellingPrice", Convert.ToDecimal(SellingPriceTextBox.Text.Trim()))
                             cmd.Parameters.AddWithValue("@WholesalePrice", If(String.IsNullOrWhiteSpace(WholeSaleTextbox.Text), DBNull.Value, Convert.ToDecimal(WholeSaleTextbox.Text.Trim())))
+                            ' Read IsActive from cmbStatus if present; default to True
+                            Dim isActiveFlag As Boolean = True
+                            If cmbStatus IsNot Nothing AndAlso cmbStatus.SelectedItem IsNot Nothing Then
+                                isActiveFlag = (cmbStatus.SelectedItem.ToString() = "Active")
+                            End If
+                            cmd.Parameters.AddWithValue("@IsActive", If(isActiveFlag, 1, 0))
                             cmd.Parameters.AddWithValue("@ProductID", editProductId)
 
                             cmd.ExecuteNonQuery()
                         End Using
 
-                        ' Flag to track if we need cleanup (only when image is actually updated)
+                        ' ... rest of method unchanged (image handling, commit, etc.) ...
                         Dim imageWasUpdated As Boolean = False
 
-                        ' Update product image if new one selected
                         If Not String.IsNullOrWhiteSpace(selectedImagePath) AndAlso IO.File.Exists(selectedImagePath) Then
-                            ' Delete old image mapping (not the image itself, as it might be used by other products)
                             Dim deleteMappingQuery As String = "DELETE FROM ProductImageMapping WHERE ProductID = @ProductID"
                             Using cmdDelete As New SqlCommand(deleteMappingQuery, conn, transaction)
                                 cmdDelete.Parameters.AddWithValue("@ProductID", editProductId)
                                 cmdDelete.ExecuteNonQuery()
                             End Using
 
-                            ' Save new image using the corrected method
                             SaveProductImage(conn, transaction, editProductId, selectedImagePath)
                             imageWasUpdated = True
                         End If
 
                         transaction.Commit()
 
-                        ' Only cleanup orphaned images if an image was actually updated
                         If imageWasUpdated Then
                             CleanupOrphanedImages()
                         End If
 
-                        ' Get the existing ProductCode for barcode display (don't regenerate)
                         Dim getCodeQuery As String = "SELECT ProductCode FROM Products WHERE ProductID = @ProductID"
                         Using getCodeCmd As New SqlCommand(getCodeQuery, conn)
                             getCodeCmd.Parameters.AddWithValue("@ProductID", editProductId)
                             Dim existingProductCode As String = getCodeCmd.ExecuteScalar()?.ToString()
-
-                            ' Display barcode with existing ProductCode (no regeneration)
                             If Not String.IsNullOrEmpty(existingProductCode) Then
                                 GenerateAndDisplayBarcode(existingProductCode)
                             End If
@@ -383,7 +449,6 @@ Public Class AddProduct
             Return False
         End Try
     End Function
-
     Private Sub SaveProductImage(conn As SqlConnection, transaction As SqlTransaction, productId As Integer, imagePath As String)
         Try
             ' Read the image file and convert to byte array
@@ -483,69 +548,65 @@ Public Class AddProduct
             Using conn As New SqlConnection(connStr)
                 conn.Open()
 
-                ' Updated query to use the correct table structure
-                Dim query As String = "SELECT p.*, pi.ImageData AS ProductImage " +
-                                     "FROM Products p " +
-                                     "LEFT JOIN ProductImageMapping pim ON p.ProductID = pim.ProductID " +
-                                     "LEFT JOIN ProductImages pi ON pim.ImageID = pi.ImageID " +
-                                     "WHERE p.ProductID = @ProductID"
+                Dim query As String = "SELECT p.*, pi.ImageData AS ProductImage " &
+                                 "FROM Products p " &
+                                 "LEFT JOIN ProductImageMapping pim ON p.ProductID = pim.ProductID " &
+                                 "LEFT JOIN ProductImages pi ON pim.ImageID = pi.ImageID " &
+                                 "WHERE p.ProductID = @ProductID"
 
                 Using cmd As New SqlCommand(query, conn)
                     cmd.Parameters.AddWithValue("@ProductID", editProductId)
 
                     Using reader As SqlDataReader = cmd.ExecuteReader()
                         If reader.Read() Then
-                            ' Populate form fields
                             txtProductName.Text = reader("ProductName").ToString()
 
-                            ' Set category
                             Dim category As String = reader("Category").ToString()
                             If cmbCategory.Items.Contains(category) Then
                                 cmbCategory.SelectedItem = category
                             End If
 
-                            ' Set unit
                             Dim unit As String = reader("Unit").ToString()
                             If UnitCmbBox.Items.Contains(unit) Then
                                 UnitCmbBox.SelectedItem = unit
                             End If
 
-                            ' Set prices
                             If Not IsDBNull(reader("CostPrice")) Then
                                 CostPriceTextBox.Text = Convert.ToDecimal(reader("CostPrice")).ToString("0.00")
                             End If
-
                             If Not IsDBNull(reader("SellingPrice")) Then
                                 SellingPriceTextBox.Text = Convert.ToDecimal(reader("SellingPrice")).ToString("0.00")
                             End If
-
                             If Not IsDBNull(reader("WholesalePrice")) Then
                                 WholeSaleTextbox.Text = Convert.ToDecimal(reader("WholesalePrice")).ToString("0.00")
                             End If
-
-                            ' Set reorder level
                             If Not IsDBNull(reader("ReorderLevel")) Then
                                 ReOrderLevelTextBox.Text = reader("ReorderLevel").ToString()
                             End If
 
-                            ' Load product image with proper error handling
                             If Not IsDBNull(reader("ProductImage")) Then
                                 Try
                                     Dim imgBytes As Byte() = CType(reader("ProductImage"), Byte())
                                     Using ms As New MemoryStream(imgBytes)
                                         ProductImage.Image = Image.FromStream(ms)
                                     End Using
-                                Catch imgEx As Exception
-                                    ' If image loading fails, just skip it (don't break the form load)
-                                    Console.WriteLine($"Warning: Could not load product image: {imgEx.Message}")
+                                Catch
                                     ProductImage.Image = Nothing
                                 End Try
                             End If
 
-                            ' Load and display barcode using ProductCode
+                            ' Display barcode
                             If Not IsDBNull(reader("ProductCode")) Then
                                 Dim productCode As String = reader("ProductCode").ToString()
                                 GenerateAndDisplayBarcode(productCode)
+                            End If
+
+                            ' Ensure status controls reflect DB value AFTER data load
+                            If Not IsDBNull(reader("IsActive")) Then
+                                Dim isActiveVal As Boolean = Convert.ToBoolean(reader("IsActive"))
+                                ConfigureStatusControls(True, isActiveVal)
+                            Else
+                                ConfigureStatusControls(True, True)
                             End If
                         End If
                     End Using
@@ -631,15 +692,61 @@ Public Class AddProduct
     End Sub
 
     Private Sub NumericTextBox_KeyPress(sender As Object, e As KeyPressEventArgs)
-        ' Allow digits, decimal point, and backspace for decimal numbers
-        If Not Char.IsDigit(e.KeyChar) AndAlso Not e.KeyChar = "." AndAlso Not e.KeyChar = ChrW(Keys.Back) Then
-            e.Handled = True
-        End If
+        Try
+            ' Respect current culture decimal separator
+            Dim decimalSep As String = System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator
+            Dim decimalChar As Char = decimalSep(0)
 
-        ' Allow only one decimal point
-        If e.KeyChar = "." AndAlso DirectCast(sender, TextBox).Text.Contains(".") Then
+            ' Allow backspace
+            If e.KeyChar = ChrW(Keys.Back) Then
+                Return
+            End If
+
+            ' Allow digits
+            If Char.IsDigit(e.KeyChar) Then
+                Return
+            End If
+
+            ' Handle decimal separator: allow only one in resulting text (account for selected text)
+            If e.KeyChar = decimalChar Then
+                Dim tbText As String = String.Empty
+                Dim selStart As Integer = 0
+                Dim selLen As Integer = 0
+
+                Dim tbBase = TryCast(sender, TextBoxBase)
+                Dim gunaTb = TryCast(sender, Guna.UI2.WinForms.Guna2TextBox)
+
+                If tbBase IsNot Nothing Then
+                    tbText = tbBase.Text
+                    selStart = tbBase.SelectionStart
+                    selLen = tbBase.SelectionLength
+                ElseIf gunaTb IsNot Nothing Then
+                    tbText = gunaTb.Text
+                    selStart = gunaTb.SelectionStart
+                    selLen = gunaTb.SelectionLength
+                ElseIf TypeOf sender Is Control Then
+                    tbText = CType(sender, Control).Text
+                End If
+
+                Dim candidate As String = tbText
+                If selLen > 0 AndAlso selStart >= 0 Then
+                    candidate = tbText.Remove(selStart, selLen)
+                End If
+
+                If candidate.Contains(decimalChar) Then
+                    e.Handled = True
+                End If
+
+                Return
+            End If
+
+            ' Anything else: block
             e.Handled = True
-        End If
+
+        Catch ex As Exception
+            ' Safest fallback: block input that causes an error
+            e.Handled = True
+        End Try
     End Sub
 
     Private Sub IntegerTextBox_KeyPress(sender As Object, e As KeyPressEventArgs)

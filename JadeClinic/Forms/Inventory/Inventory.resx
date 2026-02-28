@@ -163,7 +163,7 @@
     <value>$this</value>
   </data>
   <data name="&gt;&gt;DashboardPanel.ZOrder" xml:space="preserve">
-    <value>8</value>
+    <value>7</value>
   </data>
   <data name="Guna2Button1.Font" type="System.Drawing.Font, System.Drawing">
     <value>Poppins Medium, 9pt</value>
@@ -191,30 +191,6 @@
   </data>
   <data name="&gt;&gt;Guna2Button1.ZOrder" xml:space="preserve">
     <value>4</value>
-  </data>
-  <data name="btnManagePromotions.Font" type="System.Drawing.Font, System.Drawing">
-    <value>Poppins Medium, 9pt</value>
-  </data>
-  <data name="btnManagePromotions.Location" type="System.Drawing.Point, System.Drawing">
-    <value>1011, 105</value>
-  </data>
-  <data name="btnManagePromotions.Size" type="System.Drawing.Size, System.Drawing">
-    <value>202, 41</value>
-  </data>
-  <data name="btnManagePromotions.TabIndex" type="System.Int32, mscorlib">
-    <value>61</value>
-  </data>
-  <data name="&gt;&gt;btnManagePromotions.Name" xml:space="preserve">
-    <value>btnManagePromotions</value>
-  </data>
-  <data name="&gt;&gt;btnManagePromotions.Type" xml:space="preserve">
-    <value>Guna.UI2.WinForms.Guna2Button, Guna.UI2, Culture=neutral, PublicKeyToken=8b9d14aa5142e261</value>
-  </data>
-  <data name="&gt;&gt;btnManagePromotions.Parent" xml:space="preserve">
-    <value>$this</value>
-  </data>
-  <data name="&gt;&gt;btnManagePromotions.ZOrder" xml:space="preserve">
-    <value>5</value>
   </data>
   <data name="Exportbtn.Font" type="System.Drawing.Font, System.Drawing">
     <value>Poppins Medium, 9pt</value>
@@ -316,7 +292,7 @@
     <value>$this</value>
   </data>
   <data name="&gt;&gt;Guna2HtmlLabel1.ZOrder" xml:space="preserve">
-    <value>6</value>
+    <value>5</value>
   </data>
   <data name="Guna2DataGridView1.ColumnHeadersHeight" type="System.Int32, mscorlib">
     <value>4</value>
@@ -345,81 +321,6 @@
   <data name="&gt;&gt;Guna2DataGridView1.ZOrder" xml:space="preserve">
     <value>0</value>
   </data>
-  <data name="Guna2HtmlLabel4.Font" type="System.Drawing.Font, System.Drawing">
-    <value>Poppins Light, 9pt</value>
-  </data>
-  <data name="Guna2HtmlLabel4.Location" type="System.Drawing.Point, System.Drawing">
-    <value>89, 13</value>
-  </data>
-  <data name="Guna2HtmlLabel4.Size" type="System.Drawing.Size, System.Drawing">
-    <value>19, 28</value>
-  </data>
-  <data name="Guna2HtmlLabel4.TabIndex" type="System.Int32, mscorlib">
-    <value>53</value>
-  </data>
-  <data name="Guna2HtmlLabel4.Text" xml:space="preserve">
-    <value>All</value>
-  </data>
-  <data name="&gt;&gt;Guna2HtmlLabel4.Name" xml:space="preserve">
-    <value>Guna2HtmlLabel4</value>
-  </data>
-  <data name="&gt;&gt;Guna2HtmlLabel4.Type" xml:space="preserve">
-    <value>Guna.UI2.WinForms.Guna2HtmlLabel, Guna.UI2, Culture=neutral, PublicKeyToken=8b9d14aa5142e261</value>
-  </data>
-  <data name="&gt;&gt;Guna2HtmlLabel4.Parent" xml:space="preserve">
-    <value>panelAllFilter</value>
-  </data>
-  <data name="&gt;&gt;Guna2HtmlLabel4.ZOrder" xml:space="preserve">
-    <value>0</value>
-  </data>
-  <data name="Guna2HtmlLabel21.Font" type="System.Drawing.Font, System.Drawing">
-    <value>Poppins, 9pt</value>
-  </data>
-  <data name="Guna2HtmlLabel21.Location" type="System.Drawing.Point, System.Drawing">
-    <value>323, 13</value>
-  </data>
-  <data name="Guna2HtmlLabel21.Size" type="System.Drawing.Size, System.Drawing">
-    <value>42, 28</value>
-  </data>
-  <data name="Guna2HtmlLabel21.TabIndex" type="System.Int32, mscorlib">
-    <value>37</value>
-  </data>
-  <data name="Guna2HtmlLabel21.Text" xml:space="preserve">
-    <value>55.00</value>
-  </data>
-  <data name="&gt;&gt;Guna2HtmlLabel21.Name" xml:space="preserve">
-    <value>Guna2HtmlLabel21</value>
-  </data>
-  <data name="&gt;&gt;Guna2HtmlLabel21.Type" xml:space="preserve">
-    <value>Guna.UI2.WinForms.Guna2HtmlLabel, Guna.UI2, Culture=neutral, PublicKeyToken=8b9d14aa5142e261</value>
-  </data>
-  <data name="&gt;&gt;Guna2HtmlLabel21.Parent" xml:space="preserve">
-    <value>panelAllFilter</value>
-  </data>
-  <data name="&gt;&gt;Guna2HtmlLabel21.ZOrder" xml:space="preserve">
-    <value>1</value>
-  </data>
-  <data name="panelAllFilter.Location" type="System.Drawing.Point, System.Drawing">
-    <value>23, 20</value>
-  </data>
-  <data name="panelAllFilter.Size" type="System.Drawing.Size, System.Drawing">
-    <value>195, 50</value>
-  </data>
-  <data name="panelAllFilter.TabIndex" type="System.Int32, mscorlib">
-    <value>36</value>
-  </data>
-  <data name="&gt;&gt;panelAllFilter.Name" xml:space="preserve">
-    <value>panelAllFilter</value>
-  </data>
-  <data name="&gt;&gt;panelAllFilter.Type" xml:space="preserve">
-    <value>Guna.UI2.WinForms.Guna2Panel, Guna.UI2, Culture=neutral, PublicKeyToken=8b9d14aa5142e261</value>
-  </data>
-  <data name="&gt;&gt;panelAllFilter.Parent" xml:space="preserve">
-    <value>FilterPanel</value>
-  </data>
-  <data name="&gt;&gt;panelAllFilter.ZOrder" xml:space="preserve">
-    <value>11</value>
-  </data>
   <data name="Guna2ComboBox1.Font" type="System.Drawing.Font, System.Drawing">
     <value>Poppins Light, 10.2pt</value>
   </data>
@@ -427,7 +328,7 @@
     <value>40</value>
   </data>
   <data name="Guna2ComboBox1.Location" type="System.Drawing.Point, System.Drawing">
-    <value>23, 206</value>
+    <value>9, 220</value>
   </data>
   <data name="Guna2ComboBox1.Size" type="System.Drawing.Size, System.Drawing">
     <value>396, 46</value>
@@ -445,7 +346,7 @@
     <value>FilterPanel</value>
   </data>
   <data name="&gt;&gt;Guna2ComboBox1.ZOrder" xml:space="preserve">
-    <value>10</value>
+    <value>13</value>
   </data>
   <data name="StockCmbBox.Font" type="System.Drawing.Font, System.Drawing">
     <value>Poppins Light, 10.2pt</value>
@@ -457,16 +358,16 @@
     <value>All</value>
   </data>
   <data name="StockCmbBox.Items1" xml:space="preserve">
-    <value>Active</value>
+    <value>Above Re-order Level</value>
   </data>
   <data name="StockCmbBox.Items2" xml:space="preserve">
     <value>Out of Stock</value>
   </data>
   <data name="StockCmbBox.Items3" xml:space="preserve">
-    <value>Low on Stock</value>
+    <value>Below Re-order Level</value>
   </data>
   <data name="StockCmbBox.Location" type="System.Drawing.Point, System.Drawing">
-    <value>23, 296</value>
+    <value>9, 310</value>
   </data>
   <data name="StockCmbBox.Size" type="System.Drawing.Size, System.Drawing">
     <value>396, 46</value>
@@ -484,7 +385,7 @@
     <value>FilterPanel</value>
   </data>
   <data name="&gt;&gt;StockCmbBox.ZOrder" xml:space="preserve">
-    <value>9</value>
+    <value>12</value>
   </data>
   <data name="btnResetFilter.Font" type="System.Drawing.Font, System.Drawing">
     <value>Poppins Medium, 9pt</value>
@@ -511,13 +412,13 @@
     <value>FilterPanel</value>
   </data>
   <data name="&gt;&gt;btnResetFilter.ZOrder" xml:space="preserve">
-    <value>8</value>
+    <value>11</value>
   </data>
   <data name="txtFilterQuantity.Font" type="System.Drawing.Font, System.Drawing">
     <value>Segoe UI, 9pt</value>
   </data>
   <data name="txtFilterQuantity.Location" type="System.Drawing.Point, System.Drawing">
-    <value>23, 387</value>
+    <value>9, 401</value>
   </data>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="txtFilterQuantity.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
@@ -539,13 +440,13 @@
     <value>FilterPanel</value>
   </data>
   <data name="&gt;&gt;txtFilterQuantity.ZOrder" xml:space="preserve">
-    <value>7</value>
+    <value>10</value>
   </data>
   <data name="txtFilterPrice.Font" type="System.Drawing.Font, System.Drawing">
     <value>Segoe UI, 9pt</value>
   </data>
   <data name="txtFilterPrice.Location" type="System.Drawing.Point, System.Drawing">
-    <value>23, 479</value>
+    <value>9, 493</value>
   </data>
   <data name="txtFilterPrice.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
@@ -566,13 +467,13 @@
     <value>FilterPanel</value>
   </data>
   <data name="&gt;&gt;txtFilterPrice.ZOrder" xml:space="preserve">
-    <value>6</value>
+    <value>9</value>
   </data>
   <data name="txtSearch.Font" type="System.Drawing.Font, System.Drawing">
     <value>Segoe UI, 9pt</value>
   </data>
   <data name="txtSearch.Location" type="System.Drawing.Point, System.Drawing">
-    <value>23, 114</value>
+    <value>9, 128</value>
   </data>
   <data name="txtSearch.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
@@ -593,13 +494,94 @@
     <value>FilterPanel</value>
   </data>
   <data name="&gt;&gt;txtSearch.ZOrder" xml:space="preserve">
-    <value>5</value>
+    <value>8</value>
+  </data>
+  <data name="btnInactive.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Poppins Medium, 9pt</value>
+  </data>
+  <data name="btnInactive.Location" type="System.Drawing.Point, System.Drawing">
+    <value>307, 27</value>
+  </data>
+  <data name="btnInactive.Size" type="System.Drawing.Size, System.Drawing">
+    <value>98, 37</value>
+  </data>
+  <data name="btnInactive.TabIndex" type="System.Int32, mscorlib">
+    <value>87</value>
+  </data>
+  <data name="btnInactive.Text" xml:space="preserve">
+    <value>Inactive</value>
+  </data>
+  <data name="&gt;&gt;btnInactive.Name" xml:space="preserve">
+    <value>btnInactive</value>
+  </data>
+  <data name="&gt;&gt;btnInactive.Type" xml:space="preserve">
+    <value>Guna.UI2.WinForms.Guna2Button, Guna.UI2, Culture=neutral, PublicKeyToken=8b9d14aa5142e261</value>
+  </data>
+  <data name="&gt;&gt;btnInactive.Parent" xml:space="preserve">
+    <value>FilterPanel</value>
+  </data>
+  <data name="&gt;&gt;btnInactive.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="btnActive.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Poppins Medium, 9pt</value>
+  </data>
+  <data name="btnActive.Location" type="System.Drawing.Point, System.Drawing">
+    <value>162, 27</value>
+  </data>
+  <data name="btnActive.Size" type="System.Drawing.Size, System.Drawing">
+    <value>98, 37</value>
+  </data>
+  <data name="btnActive.TabIndex" type="System.Int32, mscorlib">
+    <value>86</value>
+  </data>
+  <data name="btnActive.Text" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="&gt;&gt;btnActive.Name" xml:space="preserve">
+    <value>btnActive</value>
+  </data>
+  <data name="&gt;&gt;btnActive.Type" xml:space="preserve">
+    <value>Guna.UI2.WinForms.Guna2Button, Guna.UI2, Culture=neutral, PublicKeyToken=8b9d14aa5142e261</value>
+  </data>
+  <data name="&gt;&gt;btnActive.Parent" xml:space="preserve">
+    <value>FilterPanel</value>
+  </data>
+  <data name="&gt;&gt;btnActive.ZOrder" xml:space="preserve">
+    <value>1</value>
+  </data>
+  <data name="btnAll.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Poppins Medium, 9pt</value>
+  </data>
+  <data name="btnAll.Location" type="System.Drawing.Point, System.Drawing">
+    <value>19, 27</value>
+  </data>
+  <data name="btnAll.Size" type="System.Drawing.Size, System.Drawing">
+    <value>98, 37</value>
+  </data>
+  <data name="btnAll.TabIndex" type="System.Int32, mscorlib">
+    <value>85</value>
+  </data>
+  <data name="btnAll.Text" xml:space="preserve">
+    <value>All</value>
+  </data>
+  <data name="&gt;&gt;btnAll.Name" xml:space="preserve">
+    <value>btnAll</value>
+  </data>
+  <data name="&gt;&gt;btnAll.Type" xml:space="preserve">
+    <value>Guna.UI2.WinForms.Guna2Button, Guna.UI2, Culture=neutral, PublicKeyToken=8b9d14aa5142e261</value>
+  </data>
+  <data name="&gt;&gt;btnAll.Parent" xml:space="preserve">
+    <value>FilterPanel</value>
+  </data>
+  <data name="&gt;&gt;btnAll.ZOrder" xml:space="preserve">
+    <value>2</value>
   </data>
   <data name="Guna2HtmlLabel8.Font" type="System.Drawing.Font, System.Drawing">
     <value>Poppins Medium, 10.2pt</value>
   </data>
   <data name="Guna2HtmlLabel8.Location" type="System.Drawing.Point, System.Drawing">
-    <value>33, 76</value>
+    <value>19, 90</value>
   </data>
   <data name="Guna2HtmlLabel8.Size" type="System.Drawing.Size, System.Drawing">
     <value>64, 32</value>
@@ -620,13 +602,13 @@
     <value>FilterPanel</value>
   </data>
   <data name="&gt;&gt;Guna2HtmlLabel8.ZOrder" xml:space="preserve">
-    <value>0</value>
+    <value>3</value>
   </data>
   <data name="Guna2HtmlLabel13.Font" type="System.Drawing.Font, System.Drawing">
     <value>Poppins Medium, 10.2pt</value>
   </data>
   <data name="Guna2HtmlLabel13.Location" type="System.Drawing.Point, System.Drawing">
-    <value>33, 440</value>
+    <value>19, 454</value>
   </data>
   <data name="Guna2HtmlLabel13.Size" type="System.Drawing.Size, System.Drawing">
     <value>46, 32</value>
@@ -647,13 +629,13 @@
     <value>FilterPanel</value>
   </data>
   <data name="&gt;&gt;Guna2HtmlLabel13.ZOrder" xml:space="preserve">
-    <value>1</value>
+    <value>4</value>
   </data>
   <data name="Guna2HtmlLabel16.Font" type="System.Drawing.Font, System.Drawing">
     <value>Poppins Medium, 10.2pt</value>
   </data>
   <data name="Guna2HtmlLabel16.Location" type="System.Drawing.Point, System.Drawing">
-    <value>33, 348</value>
+    <value>19, 362</value>
   </data>
   <data name="Guna2HtmlLabel16.Size" type="System.Drawing.Size, System.Drawing">
     <value>176, 32</value>
@@ -674,13 +656,13 @@
     <value>FilterPanel</value>
   </data>
   <data name="&gt;&gt;Guna2HtmlLabel16.ZOrder" xml:space="preserve">
-    <value>2</value>
+    <value>5</value>
   </data>
   <data name="Guna2HtmlLabel17.Font" type="System.Drawing.Font, System.Drawing">
     <value>Poppins Medium, 10.2pt</value>
   </data>
   <data name="Guna2HtmlLabel17.Location" type="System.Drawing.Point, System.Drawing">
-    <value>33, 258</value>
+    <value>19, 272</value>
   </data>
   <data name="Guna2HtmlLabel17.Size" type="System.Drawing.Size, System.Drawing">
     <value>51, 32</value>
@@ -701,13 +683,13 @@
     <value>FilterPanel</value>
   </data>
   <data name="&gt;&gt;Guna2HtmlLabel17.ZOrder" xml:space="preserve">
-    <value>3</value>
+    <value>6</value>
   </data>
   <data name="Guna2HtmlLabel18.Font" type="System.Drawing.Font, System.Drawing">
     <value>Poppins Medium, 10.2pt</value>
   </data>
   <data name="Guna2HtmlLabel18.Location" type="System.Drawing.Point, System.Drawing">
-    <value>33, 167</value>
+    <value>19, 181</value>
   </data>
   <data name="Guna2HtmlLabel18.Size" type="System.Drawing.Size, System.Drawing">
     <value>84, 32</value>
@@ -728,7 +710,7 @@
     <value>FilterPanel</value>
   </data>
   <data name="&gt;&gt;Guna2HtmlLabel18.ZOrder" xml:space="preserve">
-    <value>4</value>
+    <value>7</value>
   </data>
   <data name="FilterPanel.Location" type="System.Drawing.Point, System.Drawing">
     <value>224, 167</value>
@@ -749,7 +731,7 @@
     <value>$this</value>
   </data>
   <data name="&gt;&gt;FilterPanel.ZOrder" xml:space="preserve">
-    <value>7</value>
+    <value>6</value>
   </data>
   <data name="Guna2HtmlLabel10.Font" type="System.Drawing.Font, System.Drawing">
     <value>Poppins Medium, 10.2pt</value>
