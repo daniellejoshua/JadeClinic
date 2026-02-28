@@ -496,6 +496,11 @@ Public Class Staff
                     Guna2DataGridView1.Rows(rowIndex).Cells("UserRole").Value = userRole
                     Guna2DataGridView1.Rows(rowIndex).Cells("IsActive").Value = If(isActive, "✅ Active", "❌ Inactive")
                     Guna2DataGridView1.Rows(rowIndex).Cells("Actions").Value = "👁️      |    ✏️  "
+                    Dim statusCell = Guna2DataGridView1.Rows(rowIndex).Cells("IsActive")
+                    statusCell.Value = If(isActive, "✅ Active", "❌ Inactive")
+
+                    statusCell.Style.ForeColor = If(isActive, SD.Color.FromArgb(16, 216, 98), SD.Color.FromArgb(255, 71, 87))
+                    statusCell.Style.Font = New Font(Guna2DataGridView1.Font, FontStyle.Bold)
 
                     ' Store actual data in row tag for editing purposes (REMOVED PASSWORD AND QR CODE FIELDS)
                     Guna2DataGridView1.Rows(rowIndex).Tag = New Dictionary(Of String, Object) From {
@@ -738,19 +743,44 @@ Public Class Staff
     End Function
 
     Private Sub EditUser(userData As Dictionary(Of String, Object))
-        ' Open AddStaff form in edit mode
         Try
-            Dim addStaffForm As New AddStaff()
+            If userData Is Nothing Then
+                Return
+            End If
 
-            ' Set the form to edit mode and pass the user data
-            addStaffForm.SetEditMode(userData)
+            ' Resolve UserID safely
+            Dim targetUserId As Integer = 0
+            If userData.ContainsKey("UserID") Then
+                Integer.TryParse(userData("UserID").ToString(), targetUserId)
+            End If
 
-            ' Show the form as a modal dialog
-            Dim result = addStaffForm.ShowDialog()
+            ' If user tried to open their own account, show info and do NOT open AddStaff
+            If targetUserId = frmLoginvb.LoggedInUserID Then
+                MessageBox.Show("You cannot edit your own account here. Please use Profile Settings to update your account.", "Action Restricted", MessageBoxButtons.OK, MessageBoxIcon.Information)
 
-            ' Refresh the staff list after editing
+                ' Offer to go to Profile Settings
+                If MessageBox.Show("Open Profile Settings now?", "Open Profile", MessageBoxButtons.YesNo, MessageBoxIcon.Question) = DialogResult.Yes Then
+                    NavigateToProfileSettings()
+                End If
+
+                Return
+            End If
+
+
+
+            ' Create and show AddStaff in edit mode for other users
+            Using addStaffForm As New AddStaff()
+                If Not addStaffForm.SetEditMode(userData) Then
+                    ' SetEditMode failed or refused (defensive)
+                    Return
+                End If
+
+                addStaffForm.StartPosition = FormStartPosition.CenterParent
+                addStaffForm.ShowDialog()
+            End Using
+
+            ' Refresh the staff list after possible edits
             LoadUsersData(If(SortBy.SelectedItem IsNot Nothing, SortBy.SelectedItem.ToString(), ""))
-
         Catch ex As Exception
             MessageBox.Show($"Error opening Edit Staff form: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try

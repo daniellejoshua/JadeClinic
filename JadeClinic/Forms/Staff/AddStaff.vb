@@ -52,38 +52,103 @@ Public Class AddStaff
         Me.MaximizeBox = False
         Me.MinimizeBox = False
 
-        ' Set default values
-        cmbRole.SelectedIndex = 0 ' Default to "Staff"
+        ' Role combo - populate if needed
+        Try
+            If cmbRole.Items.Count = 0 Then
+                cmbRole.Items.AddRange(New String() {"Staff", "Admin", "Manager"})
+            End If
+        Catch
+        End Try
+
+        ' Only set default role when not editing
+        If Not isEditMode Then
+            Try
+                If cmbRole.Items.Count > 0 Then cmbRole.SelectedIndex = 0 ' Default to "Staff"
+            Catch
+            End Try
+        End If
 
         ' Configure PIN field to only accept 4 numbers
         txtPin.MaxLength = 4
-        txtPin.PlaceholderText = "Enter 4-digit PIN"
-        AddHandler txtPin.KeyPress, AddressOf txtPin_KeyPress ' Only allow numbers
+        Try
+            If Not isEditMode Then
+                txtPin.PlaceholderText = "Enter 4-digit PIN"
+                AddHandler txtPin.KeyPress, AddressOf txtPin_KeyPress ' Only allow numbers
+            Else
+                ' In edit mode keep PIN masked / non-editable (SetEditMode will enforce)
+                txtPin.PlaceholderText = "****"
+            End If
+        Catch
+        End Try
 
         ' Configure phone field
         txtPhone.MaxLength = 11
-        txtPhone.PlaceholderText = "09xxxxxxxxx"
+        Try
+            If Not isEditMode Then txtPhone.PlaceholderText = "09xxxxxxxxx"
+        Catch
+        End Try
 
         ' Configure email field
-        txtEmail.PlaceholderText = "example@gmail.com"
+        Try
+            If Not isEditMode Then txtEmail.PlaceholderText = "example@gmail.com"
+        Catch
+        End Try
 
-        ' Configure image click event
-        AddHandler ProductImage.Click, AddressOf ProductImage_Click
-        AddHandler lblStaffPicture.Click, AddressOf ProductImage_Click
+        ' Configure image click event only for add mode (edit mode disables upload)
+        Try
+            If Not isEditMode Then
+                ' ProductImage: attach handler (ensure not attached multiple times)
+                Try
+                    RemoveHandler ProductImage.Click, AddressOf ProductImage_Click
+                Catch
+                End Try
+                AddHandler ProductImage.Click, AddressOf ProductImage_Click
 
-        ' Add validation events
-        AddHandler txtUsername.TextChanged, AddressOf ValidateForm
-        AddHandler txtPassword.TextChanged, AddressOf ValidateForm
-        AddHandler txtEmail.TextChanged, AddressOf ValidateForm
-        AddHandler txtPhone.TextChanged, AddressOf ValidateForm
-        AddHandler txtPin.TextChanged, AddressOf ValidateForm
+                ' Do NOT add a second handler for lblStaffPicture here:
+                ' the Designer method `lblStaffPicture_Click(... ) Handles lblStaffPicture.Click`
+                ' already handles the label click. Adding another handler caused the dialog to open twice.
+            Else
+                ' Ensure upload handlers are not attached in edit mode
+                Try
+                    RemoveHandler ProductImage.Click, AddressOf ProductImage_Click
+                Catch
+                End Try
+            End If
+        Catch
+        End Try
 
-        ' Initially disable save button
-        btnAddStock.Enabled = False
-        btnAddStock.Text = "Add Staff"
+        ' Add validation events (safe to attach once during form load)
+        Try
+            AddHandler txtUsername.TextChanged, AddressOf ValidateForm
+            AddHandler txtPassword.TextChanged, AddressOf ValidateForm
+            AddHandler txtEmail.TextChanged, AddressOf ValidateForm
+            AddHandler txtPhone.TextChanged, AddressOf ValidateForm
+            AddHandler txtPin.TextChanged, AddressOf ValidateForm
+        Catch
+        End Try
+
+        ' Button and title - reflect current mode
+        If isEditMode Then
+            btnAddStock.Enabled = True
+            btnAddStock.Text = "Update Staff"
+            Try
+                Guna2HtmlLabel6.Text = "Edit Staff Member"
+            Catch
+            End Try
+        Else
+            btnAddStock.Enabled = False
+            btnAddStock.Text = "Add Staff"
+            Try
+                Guna2HtmlLabel6.Text = "Add Staff"
+            Catch
+            End Try
+        End If
 
         ' Set up cancel functionality
-        AddHandler Guna2HtmlLabel1.Click, AddressOf CancelAddStaff
+        Try
+            AddHandler Guna2HtmlLabel1.Click, AddressOf CancelAddStaff
+        Catch
+        End Try
 
         ' Position the validation/message label to top-right as requested
         Try
@@ -93,16 +158,18 @@ Public Class AddStaff
             ' Ignore if control not present or designer-managed
         End Try
 
-        ' Hide status controls by default (only visible in edit mode)
+        ' Show or hide status controls depending on mode
         Try
-            lblStatus.Visible = False
-            Guna2ComboBox1.Visible = False
+            If isEditMode Then
+                lblStatus.Visible = True
+                Guna2ComboBox1.Visible = True
+            Else
+                lblStatus.Visible = False
+                Guna2ComboBox1.Visible = False
+            End If
         Catch
-            ' Designer may name them differently; ignore if missing
         End Try
-    End Sub
-
-    ' Event handler to only allow numeric input for PIN
+    End Sub    ' Event handler to only allow numeric input for PIN
     Private Sub txtPin_KeyPress(sender As Object, e As KeyPressEventArgs)
         ' Only allow numbers and control characters (backspace, etc.)
         If Not Char.IsDigit(e.KeyChar) AndAlso Not Char.IsControl(e.KeyChar) Then
@@ -132,9 +199,9 @@ Public Class AddStaff
                     Dim text As String = "Click to" & vbCrLf & "Upload Photo"
                     Dim brush As New SolidBrush(Color.Gray)
                     Dim format As New StringFormat With {
-                        .Alignment = StringAlignment.Center,
-                        .LineAlignment = StringAlignment.Center
-                    }
+                    .Alignment = StringAlignment.Center,
+                    .LineAlignment = StringAlignment.Center
+                }
                     g.DrawString(text, font, brush, New Rectangle(0, 0, 196, 140), format)
                 End Using
             End Using
@@ -142,9 +209,24 @@ Public Class AddStaff
             ProductImage.Image = placeholder
             ProductImage.SizeMode = PictureBoxSizeMode.CenterImage
 
-            ' Reset photo bytes if this is called during edit mode reset
+            ' Reset photo bytes if this is called during add-mode reset
             If Not isEditMode Then
                 staffPhotoBytes = Nothing
+                ' label instructs user in add mode
+                Try
+                    lblStaffPicture.Text = "Click to Upload"
+                Catch
+                End Try
+            Else
+                ' In edit mode, if there is no photo show a neutral label (but SetEditMode may override)
+                Try
+                    If staffPhotoBytes Is Nothing OrElse staffPhotoBytes.Length = 0 Then
+                        lblStaffPicture.Text = "No Photo"
+                    Else
+                        lblStaffPicture.Text = "Photo Loaded"
+                    End If
+                Catch
+                End Try
             End If
 
             Console.WriteLine("Default image set successfully")
@@ -153,7 +235,6 @@ Public Class AddStaff
             Console.WriteLine($"Error setting default image: {ex.Message}")
         End Try
     End Sub
-
     Private Sub InitializeRoleComboBox()
         cmbRole.Items.Clear()
         ' Limit roles to only Staff, Admin, and Manager as requested
@@ -171,6 +252,39 @@ Public Class AddStaff
 
     Private Sub UploadStaffPhoto()
         Try
+            ' Prevent any image selection when the form is in edit mode.
+            If isEditMode Then
+                ' If the currently opened account is the logged-in user, show a specific restriction message.
+                If editingStaffId = frmLoginvb.LoggedInUserID Then
+                    Try
+                        Guna2HtmlLabel15.Text = "You cannot edit your own account here."
+                    Catch
+                    End Try
+
+                    MessageBox.Show("You cannot edit your own account information from this dialog.", "Action Restricted", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                Else
+                    ' For other users in edit mode still disallow changing the image from this dialog.
+                    Try
+                        Guna2HtmlLabel15.Text = "Image cannot be changed in edit mode."
+                    Catch
+                    End Try
+
+                    MessageBox.Show("You cannot change the staff photo while viewing/editing an existing account here.", "Read‑Only", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                End If
+
+                ' Ensure placeholder shows "No Photo" when no photo exists (match add-mode messaging style).
+                If staffPhotoBytes Is Nothing OrElse staffPhotoBytes.Length = 0 Then
+                    Try
+                        SetDefaultImage()
+                        lblStaffPicture.Text = "No Photo"
+                    Catch
+                    End Try
+                End If
+
+                Return
+            End If
+
+            ' Normal add-mode behaviour: allow selecting an image.
             Using openFileDialog As New OpenFileDialog()
                 openFileDialog.Filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp;*.gif;*.tiff|All Files|*.*"
                 openFileDialog.FilterIndex = 1
@@ -183,7 +297,7 @@ Public Class AddStaff
                     ' Validate image file
                     If Not ImageCompression.IsValidImageFile(selectedFile) Then
                         MessageBox.Show("Please select a valid image file.", "Invalid File",
-                                      MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                                  MessageBoxButtons.OK, MessageBoxIcon.Warning)
                         Return
                     End If
 
@@ -191,7 +305,7 @@ Public Class AddStaff
                     Dim fileInfo As New FileInfo(selectedFile)
                     If fileInfo.Length > 10 * 1024 * 1024 Then ' 10MB
                         MessageBox.Show("Image file is too large. Please select an image smaller than 10MB.",
-                                      "File Too Large", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                                  "File Too Large", MessageBoxButtons.OK, MessageBoxIcon.Warning)
                         Return
                     End If
 
@@ -200,10 +314,9 @@ Public Class AddStaff
             End Using
         Catch ex As Exception
             MessageBox.Show($"Error uploading image: {ex.Message}", "Upload Error",
-                          MessageBoxButtons.OK, MessageBoxIcon.Error)
+                      MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
-
     ' Replace the existing ProcessAndCompressImage method with this version.
     ' - Creates a scaled display bitmap that fills the PictureBox (prevents Zoom-like cropping).
     ' - Stores a compressed bytes copy for DB (quality + max size).
@@ -510,9 +623,25 @@ Public Class AddStaff
         ' Prepare staff data
         Dim email As String = txtEmail.Text.Trim()
         Dim phone As String = txtPhone.Text.Trim()
-        Dim pin As String = txtPin.Text.Trim()
         Dim role As String = cmbRole.SelectedItem.ToString()
         Dim username As String = txtUsername.Text.Trim()
+
+        ' Resolve PIN: prefer numeric textbox value; otherwise fall back to original value from editingUserData.
+        Dim resolvedPin As Integer
+        Dim pinText As String = txtPin.Text.Trim()
+
+        If Integer.TryParse(pinText, resolvedPin) = False Then
+            ' try fallback from editingUserData
+            resolvedPin = 0 ' default
+            If editingUserData IsNot Nothing AndAlso editingUserData.ContainsKey("PIN") Then
+                Try
+                    resolvedPin = Convert.ToInt32(editingUserData("PIN"))
+                Catch ex As Exception
+                    Console.WriteLine($"Unable to parse original PIN fallback: {ex.Message}")
+                    ' resolvedPin remains 0 (or choose another safe default)
+                End Try
+            End If
+        End If
 
         ' Build update query - only update password if provided
         Dim updateQuery As String
@@ -522,7 +651,12 @@ Public Class AddStaff
         Dim isActiveValue As Boolean = originalIsActive
         Try
             If Guna2ComboBox1 IsNot Nothing AndAlso Guna2ComboBox1.SelectedItem IsNot Nothing Then
-                isActiveValue = (Guna2ComboBox1.SelectedItem.ToString().Equals("Active", StringComparison.OrdinalIgnoreCase))
+                ' Prevent activating or changing status of your own account here
+                If editingStaffId = frmLoginvb.LoggedInUserID Then
+                    isActiveValue = originalIsActive
+                Else
+                    isActiveValue = (Guna2ComboBox1.SelectedItem.ToString().Equals("Active", StringComparison.OrdinalIgnoreCase))
+                End If
             End If
         Catch
             isActiveValue = originalIsActive
@@ -533,27 +667,27 @@ Public Class AddStaff
             Dim hashedPassword As String = frmLoginvb.HashPassword(txtPassword.Text.Trim())
             updateQuery = "UPDATE Users SET Email = @Email, Phone = @Phone, UserRole = @UserRole, pin = @Pin, PasswordHash = @PasswordHash, IsActive = @IsActive, UpdatedAt = @UpdatedAt WHERE UserID = @UserID"
             parameters.AddRange({
-                New SqlParameter("@Email", email),
-                New SqlParameter("@Phone", phone),
-                New SqlParameter("@UserRole", role),
-                New SqlParameter("@Pin", Convert.ToInt32(pin)),
-                New SqlParameter("@PasswordHash", hashedPassword),
-                New SqlParameter("@IsActive", isActiveValue),
-                New SqlParameter("@UpdatedAt", DateTime.Now),
-                New SqlParameter("@UserID", editingStaffId)
-            })
+            New SqlParameter("@Email", email),
+            New SqlParameter("@Phone", phone),
+            New SqlParameter("@UserRole", role),
+            New SqlParameter("@Pin", resolvedPin),
+            New SqlParameter("@PasswordHash", hashedPassword),
+            New SqlParameter("@IsActive", isActiveValue),
+            New SqlParameter("@UpdatedAt", DateTime.Now),
+            New SqlParameter("@UserID", editingStaffId)
+        })
         Else
             ' Update without changing password
             updateQuery = "UPDATE Users SET Email = @Email, Phone = @Phone, UserRole = @UserRole, pin = @Pin, IsActive = @IsActive, UpdatedAt = @UpdatedAt WHERE UserID = @UserID"
             parameters.AddRange({
-                New SqlParameter("@Email", email),
-                New SqlParameter("@Phone", phone),
-                New SqlParameter("@UserRole", role),
-                New SqlParameter("@Pin", Convert.ToInt32(pin)),
-                New SqlParameter("@IsActive", isActiveValue),
-                New SqlParameter("@UpdatedAt", DateTime.Now),
-                New SqlParameter("@UserID", editingStaffId)
-            })
+            New SqlParameter("@Email", email),
+            New SqlParameter("@Phone", phone),
+            New SqlParameter("@UserRole", role),
+            New SqlParameter("@Pin", resolvedPin),
+            New SqlParameter("@IsActive", isActiveValue),
+            New SqlParameter("@UpdatedAt", DateTime.Now),
+            New SqlParameter("@UserID", editingStaffId)
+        })
         End If
 
         ' Execute update
@@ -576,7 +710,6 @@ Public Class AddStaff
             MessageBox.Show("Failed to update staff member.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End If
     End Sub
-
     ' Replace the existing passkey helpers with these safer, more diagnostic implementations.
 
     ' Returns True when DB check shows passkey is unused; if the DB call fails we return True
@@ -765,59 +898,98 @@ Public Class AddStaff
 
     ' Public method to set edit mode
     ' Replace the existing SetEditMode method with this updated edit-mode behavior.
-    Public Sub SetEditMode(userData As Dictionary(Of String, Object))
+    ' Add near the other private fields
+    Private statusLocked As Boolean = False
+
+    ' Updated SetEditMode to preserve visual styling for disabled controls and to use statusLocked.
+    Public Function SetEditMode(userData As Dictionary(Of String, Object)) As Boolean
         Try
-            Console.WriteLine("SetEditMode called - entering edit view (validation disabled)")
-
-            ' Enable edit mode flag so other code can adapt.
-            isEditMode = True
+            ' Determine target user id first (do NOT enter edit mode yet)
             editingUserData = userData
-            editingStaffId = CInt(userData("UserID"))
+            Dim targetUserId As Integer = 0
+            If userData IsNot Nothing AndAlso userData.ContainsKey("UserID") Then
+                targetUserId = Convert.ToInt32(userData("UserID"))
+            End If
 
-            ' Update form title and button text for editing
+            ' Enter edit mode for other users
+            isEditMode = True
+            editingStaffId = targetUserId
+
+            ' UI text
             Me.Text = "Edit Staff Member"
             btnAddStock.Text = "Update Staff"
+            btnAddStock.Refresh()
 
-            ' Populate visible fields with existing data
+            ' Populate visible fields
             PopulateFormWithUserData(userData)
 
-            ' In edit mode we only allow viewing/updating a subset:
-            ' - Everything read-only except status (status editable only to set to Inactive)
-            txtUsername.ReadOnly = True
-            txtPassword.ReadOnly = True
-            txtPassword.Text = String.Empty
-            txtPin.ReadOnly = True
-            txtPin.Text = String.Empty
-            txtPin.PasswordChar = "*"c
-            txtPin.Enabled = False ' ensure no editing
-            txtEmail.ReadOnly = True
-            txtPhone.ReadOnly = True
-            cmbRole.Enabled = False
-
-            ' Mask password and pin fields (do not show real values)
+            ' Ensure image placeholder reflects edit-mode semantics:
+            ' if no photo is present, show "No Photo" instead of "Click to Upload".
             Try
-                txtPassword.PlaceholderText = "******"
-                txtPin.PlaceholderText = "****"
-            Catch
-                ' Older WinForms targets may not support PlaceholderText; ignore.
-            End Try
-
-            ' Disable image upload in edit view (view-only photo)
-            Try
-                RemoveHandler ProductImage.Click, AddressOf ProductImage_Click
-                RemoveHandler lblStaffPicture.Click, AddressOf ProductImage_Click
-                lblStaffPicture.Text = "View Only"
+                If isEditMode Then
+                    If staffPhotoBytes Is Nothing OrElse staffPhotoBytes.Length = 0 Then
+                        lblStaffPicture.Text = "No Photo"
+                    Else
+                        lblStaffPicture.Text = "Photo Loaded"
+                    End If
+                End If
             Catch
             End Try
 
-            ' Show status controls and configure them
+            ' Make all inputs read-only except status. Keep controls Enabled where possible so styling doesn't change.
+            Try
+                txtUsername.ReadOnly = True
+
+                txtPassword.Text = String.Empty
+                txtPassword.ReadOnly = True
+                Try
+                    txtPassword.PlaceholderText = "******"
+                Catch
+                End Try
+
+                ' PIN: keep blank and read-only but enabled so background color stays the same
+                txtPin.Text = String.Empty
+                txtPin.ReadOnly = True
+                Try
+                    txtPin.PasswordChar = "*"c
+                    txtPin.PlaceholderText = "****"
+                Catch
+                End Try
+
+                txtEmail.ReadOnly = True
+                txtPhone.ReadOnly = True
+
+                ' Prevent role changes but preserve appearance
+                Try
+                    cmbRole.Enabled = False
+                    cmbRole.DisabledState.FillColor = cmbRole.FillColor
+                    cmbRole.DisabledState.ForeColor = cmbRole.ForeColor
+                    cmbRole.DisabledState.BorderColor = cmbRole.FocusedState.BorderColor
+                Catch
+                End Try
+
+                ' Disable image upload interactions (view-only)
+                Try
+                    RemoveHandler ProductImage.Click, AddressOf ProductImage_Click
+                    RemoveHandler lblStaffPicture.Click, AddressOf ProductImage_Click
+                    lblStaffPicture.Text = If(lblStaffPicture.Text = String.Empty, "View Only", lblStaffPicture.Text)
+                Catch
+                End Try
+            Catch ex As Exception
+                Console.WriteLine($"Error setting fields readonly in SetEditMode: {ex.Message}")
+            End Try
+
+            ' Configure and show status controls (always enabled for other users)
             Try
                 lblStatus.Visible = True
                 Guna2ComboBox1.Visible = True
 
-                ' Build status list and set original status
+                Guna2ComboBox1.Items.Clear()
+                Guna2ComboBox1.Items.AddRange(New String() {"Active", "Inactive"})
+                Guna2ComboBox1.DropDownStyle = ComboBoxStyle.DropDownList
+
                 Dim currentIsActive As Boolean = True
-                If userData.ContainsKey("IsActive") Then
+                If userData IsNot Nothing AndAlso userData.ContainsKey("IsActive") Then
                     Try
                         currentIsActive = Convert.ToBoolean(userData("IsActive"))
                     Catch
@@ -826,59 +998,43 @@ Public Class AddStaff
                 End If
                 originalIsActive = currentIsActive
 
-                Guna2ComboBox1.Items.Clear()
-                Guna2ComboBox1.Items.AddRange(New String() {"Active", "Inactive"})
-                Guna2ComboBox1.DropDownStyle = ComboBoxStyle.DropDownList
-                Guna2ComboBox1.SelectedItem = If(currentIsActive, "Active", "Inactive")
-
-                ' If user is currently active: allow changing to Inactive (but prevent re-activating)
-                ' If user is currently inactive: do not allow editing status here.
-                Guna2ComboBox1.Enabled = currentIsActive
-
-                ' Attach handler to control allowed transitions
+                ' Set selection safely
                 RemoveHandler Guna2ComboBox1.SelectedIndexChanged, AddressOf Guna2ComboBox1_SelectedIndexChanged
+                If currentIsActive Then
+                    Guna2ComboBox1.SelectedItem = "Active"
+                Else
+                    Guna2ComboBox1.SelectedItem = "Inactive"
+                End If
                 AddHandler Guna2ComboBox1.SelectedIndexChanged, AddressOf Guna2ComboBox1_SelectedIndexChanged
-            Catch ex As Exception
-                Console.WriteLine($"Error configuring status control: {ex.Message}")
-            End Try
 
-            ' Enable update button (validation is relaxed in edit mode)
-            btnAddStock.Enabled = True
-
-            ' Clear any validation message shown on top-right label
-            Try
+                ' Always allow status editing here
+                Guna2ComboBox1.Enabled = True
+                btnAddStock.Enabled = True
                 Guna2HtmlLabel15.Text = String.Empty
-            Catch
+            Catch ex As Exception
+                Console.WriteLine($"Error configuring status control in SetEditMode: {ex.Message}")
             End Try
 
-            Console.WriteLine("Form set to edit view successfully")
+            Me.Refresh()
+            Application.DoEvents()
 
+            Return True
         Catch ex As Exception
-            Console.WriteLine($"Error in SetEditMode: {ex.Message}")
+            Console.WriteLine($"SetEditMode failed: {ex.Message}")
             MessageBox.Show($"Unable to open staff in edit mode: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            Return False
         End Try
-    End Sub
-
+    End Function
+    'pdated status handler — Do Not disable combobox; enforce one-way change With statusLocked.
     Private Sub Guna2ComboBox1_SelectedIndexChanged(sender As Object, e As EventArgs)
         Try
             If Not isEditMode Then Return
-
             If Guna2ComboBox1.SelectedItem Is Nothing Then Return
 
+            ' Update originalIsActive to reflect current selection (status always editable for other users).
             Dim selected As String = Guna2ComboBox1.SelectedItem.ToString()
-            ' If original was active and user selected Inactive -> allow change then lock control to prevent re-activation
-            If originalIsActive AndAlso selected.Equals("Inactive", StringComparison.OrdinalIgnoreCase) Then
-                ' allowed: user changed to Inactive; prevent further edits to avoid re-activation here
-                Guna2ComboBox1.Enabled = False
-                originalIsActive = False
-            ElseIf Not originalIsActive AndAlso selected.Equals("Active", StringComparison.OrdinalIgnoreCase) Then
-                ' Not allowed to reactivate in this edit view; revert and inform user
-                Try
-                    Guna2ComboBox1.SelectedItem = "Inactive"
-                Catch
-                End Try
-                MessageBox.Show("This edit view only allows changing status to Inactive. Reactivation must be done via the System or Admin panel.", "Status Edit Restricted", MessageBoxButtons.OK, MessageBoxIcon.Information)
-            End If
+            originalIsActive = selected.Equals("Active", StringComparison.OrdinalIgnoreCase)
+
         Catch ex As Exception
             Console.WriteLine($"Status change handler error: {ex.Message}")
         End Try

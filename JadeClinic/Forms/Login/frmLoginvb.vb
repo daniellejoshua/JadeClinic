@@ -23,6 +23,7 @@ Public Class frmLoginvb
         Guna2Panel1.BorderRadius = 50
         Me.MaximizeBox = False
 
+
         ' Center Guna2Panel1
         Guna2Panel1.Left = (Me.ClientSize.Width - Guna2Panel1.Width) \ 2
 
@@ -443,24 +444,39 @@ Public Class frmLoginvb
 
             Console.WriteLine($"Looking up user ID: {userId}")
 
-            ' Get user details from database using UserID
-            Dim query As String = "SELECT Username, pin FROM Users WHERE UserID = @UserID"
+            ' Get user details from database using UserID (include IsActive)
+            Dim query As String = "SELECT Username, pin, IsActive FROM Users WHERE UserID = @UserID"
             Dim parameters As SqlParameter() = {
-                New SqlParameter("@UserID", userId)
-            }
+            New SqlParameter("@UserID", userId)
+        }
 
             Dim username As String = Nothing
             Dim pinValue As String = Nothing
+            Dim isActive As Boolean = True
 
             Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters)
                 If reader.Read() Then
                     username = reader("Username").ToString()
                     pinValue = reader("pin").ToString()
-                    Console.WriteLine($"Found user: {username}")
+                    Try
+                        If Not IsDBNull(reader("IsActive")) Then
+                            isActive = Convert.ToBoolean(reader("IsActive"))
+                        End If
+                    Catch
+                        isActive = True
+                    End Try
+                    Console.WriteLine($"Found user: {username}, IsActive: {isActive}")
                 End If
             End Using
 
             If username IsNot Nothing AndAlso pinValue IsNot Nothing Then
+                ' If account inactive, show error and audit log, then return false
+                If Not isActive Then
+                    MessageBox.Show("This account is inactive. Please contact your administrator.", "Account Inactive", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                    Utilities.LogAudit(username, "QR Login Attempt (Inactive)", $"Inactive account attempted QR login: {username}")
+                    Return False
+                End If
+
                 ' Store username for later use
                 LoggedInUsername = username
 
@@ -487,7 +503,6 @@ Public Class frmLoginvb
             Return False
         End Try
     End Function
-
     ' Allow pressing Enter in password box to trigger login
     Private Sub txtPassword_KeyDown(sender As Object, e As KeyEventArgs)
         If e.KeyCode = Keys.Enter Then
@@ -525,19 +540,37 @@ Public Class frmLoginvb
                 Return
             End If
 
-            ' Query to get user credentials and check password
+            ' Query to get user credentials (do not filter by IsActive here so we can detect inactive attempts)
             Dim query As String = "
                 SELECT UserID, Username, FullName, UserRole, pin, PasswordHash, IsActive 
                 FROM Users 
-                WHERE Username = @Username 
-                AND IsActive = 1"
+                WHERE Username = @Username"
 
             Dim parameters As SqlParameter() = {
-                New SqlParameter("@Username", txtUserName.Text.Trim())
-            }
+            New SqlParameter("@Username", txtUserName.Text.Trim())
+        }
 
             Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters)
                 If reader.Read() Then
+                    Dim isActiveObj = reader("IsActive")
+                    Dim isActive As Boolean = True
+                    Try
+                        If Not IsDBNull(isActiveObj) Then
+                            isActive = Convert.ToBoolean(isActiveObj)
+                        End If
+                    Catch
+                        isActive = True
+                    End Try
+
+                    Dim usernameDb As String = reader("Username").ToString()
+
+                    ' If account inactive, show error and audit log, then return
+                    If Not isActive Then
+                        MessageBox.Show("This account is inactive. Please contact your administrator.", "Account Inactive", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                        Utilities.LogAudit(usernameDb, "Login Attempt (Inactive)", $"Inactive account attempted to login: {usernameDb}")
+                        Return
+                    End If
+
                     Dim storedPasswordHash As String = reader("PasswordHash").ToString()
                     Dim enteredPassword As String = txtPassword.Text.Trim()
                     Dim isPasswordValid As Boolean = False
@@ -586,7 +619,6 @@ Public Class frmLoginvb
             MessageBox.Show($"Login error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
-
     ' BCrypt password hashing function (PRODUCTION READY!)
     Public Shared Function HashPassword(password As String) As String
         ' BCrypt with salt rounds = 12 (very secure)
