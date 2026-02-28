@@ -832,7 +832,8 @@ Public Class frmLoginvb
     End Sub
 
     Private Sub lblForgotPass_Click(sender As Object, e As EventArgs) Handles lblForgotPass.Click
-        MessageBox.Show("Forgot Password functionality will be implemented.", "Coming Soon", MessageBoxButtons.OK, MessageBoxIcon.Information)
+        Dim forgotForm As New ForgotPasswordForm()
+        forgotForm.ShowDialog(Me)
     End Sub
 
     ' Remove the old Guna2Button1_Click method and keep only the new login system

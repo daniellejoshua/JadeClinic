@@ -110,7 +110,7 @@ Public Class AddStaff
                 End Using
 
                 Using font As New Font("Segoe UI", 12, FontStyle.Regular)
-                    Dim text As String = "Click to" & vbNewLine & "Upload Photo"
+                    Dim text As String = "Click to" & vbCrLf & "Upload Photo"
                     Dim brush As New SolidBrush(Color.Gray)
                     Dim format As New StringFormat With {
                         .Alignment = StringAlignment.Center,
@@ -376,7 +376,7 @@ Public Class AddStaff
             btnAddStock.Enabled = True
             btnAddStock.Text = If(isEditMode, "Update Staff", "Add Staff")
             MessageBox.Show($"Error saving staff member: {ex.Message}", "Save Error",
-                          MessageBoxButtons.OK, MessageBoxIcon.Error)
+                      MessageBoxButtons.OK, MessageBoxIcon.Error)
             Console.WriteLine($"Staff save error: {ex.Message}")
         End Try
     End Sub
@@ -430,14 +430,16 @@ Public Class AddStaff
         ' Log the action
         Utilities.LogAudit(username, "Staff Added", $"New staff member added: {fullName} ({role})", newUserId)
 
-        ' Show success message with passkeys
-        Dim successMessage As String = $"Staff member '{fullName}' has been successfully added!" & vbNewLine & vbNewLine &
-                      $"Username: {username}" & vbNewLine &
-                      $"Role: {role}" & vbNewLine &
-                      $"QR Code: {userCode}" & vbNewLine & vbNewLine &
-                      $"🔑 Recovery Passkeys (for forgot password):" & vbNewLine &
-                      String.Join(vbNewLine, passkeys) & vbNewLine & vbNewLine &
-                      $"⚠️ Please save these passkeys securely! They can be used for password recovery."
+        ' Use Environment.NewLine instead of vbNewLine
+        Dim nl As String = System.Environment.NewLine
+        Dim successMessage As String =
+            "Staff member '" & fullName & "' has been successfully added!" & nl & nl &
+            "Username: " & username & nl &
+            "Role: " & role & nl &
+            "QR Code: " & userCode & nl & nl &
+            "🔑 Recovery Passkeys (for forgot password):" & nl &
+            String.Join(nl, passkeys) & nl & nl &
+            "⚠️ Please save these passkeys securely! They can be used for password recovery."
 
         MessageBox.Show(successMessage, "Success", MessageBoxButtons.OK, MessageBoxIcon.Information)
 
@@ -630,40 +632,56 @@ Public Class AddStaff
     ' Public method to set edit mode
     Public Sub SetEditMode(userData As Dictionary(Of String, Object))
         Try
-            Console.WriteLine("SetEditMode called - entering edit mode")
+            Console.WriteLine("SetEditMode called - entering read-only view (editing disabled)")
 
-            isEditMode = True
+            ' Do NOT flip isEditMode to true — editing is intentionally disabled.
             editingUserData = userData
             editingStaffId = CInt(userData("UserID"))
 
-            Console.WriteLine($"Edit mode set for UserID: {editingStaffId}")
+            ' Update form title to reflect view-only mode
+            Me.Text = "View Staff Member (Edit Disabled)"
+            btnAddStock.Text = "Edit Disabled"
+            btnAddStock.Enabled = False
 
-            ' Update form title and button text
-            Me.Text = "Edit Staff Member"
-            btnAddStock.Text = "Update Staff"
-
-            ' Pre-fill the form with existing data
+            ' Pre-fill the form with existing data and then make controls read-only/disabled
             PopulateFormWithUserData(userData)
 
-            Console.WriteLine("Edit mode setup completed")
+            ' Make fields read-only / controls inactive
+            txtUsername.ReadOnly = True
+            txtPassword.ReadOnly = True
+            txtPassword.PlaceholderText = "Password editing is disabled"
+            txtEmail.ReadOnly = True
+            txtPhone.ReadOnly = True
+            txtPin.ReadOnly = True
+            cmbRole.Enabled = False
+
+            ' Disable image upload
+            RemoveHandler ProductImage.Click, AddressOf ProductImage_Click
+            RemoveHandler lblStaffPicture.Click, AddressOf ProductImage_Click
+            lblStaffPicture.Text = "View Only"
+
+            ' Prevent accidental save
+            btnAddStock.Enabled = False
+
+            Console.WriteLine("Form set to read-only view successfully")
 
         Catch ex As Exception
-            Console.WriteLine($"Error in SetEditMode: {ex.Message}")
-            MessageBox.Show($"Error setting edit mode: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            Console.WriteLine($"Error in SetEditMode (read-only): {ex.Message}")
+            MessageBox.Show($"Unable to open staff in read-only mode: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
 
     Private Sub PopulateFormWithUserData(userData As Dictionary(Of String, Object))
         Try
-            ' Fill the form fields with existing data
+            ' Fill the form fields with existing data for viewing
             txtUsername.Text = userData("Username").ToString()
-            txtUsername.ReadOnly = True ' Don't allow username changes
+            txtUsername.ReadOnly = True ' Always readonly when viewing existing user
 
-            ' Don't populate password field for security
+            ' Keep password empty for security
             txtPassword.Text = ""
-            txtPassword.PlaceholderText = "Leave blank to keep current password"
+            txtPassword.PlaceholderText = "Password cannot be viewed"
 
-            ' Get additional user data from database
+            ' Fetch remaining user details from DB and display
             Dim query As String = "SELECT Email, Phone, FullName, UserRole, PIN, Photo FROM Users WHERE UserID = @UserID"
             Dim parameters() As SqlParameter = {
                 New SqlParameter("@UserID", editingStaffId)
@@ -675,7 +693,7 @@ Public Class AddStaff
                     txtPhone.Text = If(IsDBNull(reader("Phone")), "", reader("Phone").ToString())
                     txtPin.Text = If(IsDBNull(reader("PIN")), "", reader("PIN").ToString())
 
-                    ' Set role
+                    ' Set role display (combo disabled in view mode)
                     Dim userRole As String = If(IsDBNull(reader("UserRole")), "Staff", reader("UserRole").ToString())
                     For i As Integer = 0 To cmbRole.Items.Count - 1
                         If cmbRole.Items(i).ToString().Equals(userRole, StringComparison.OrdinalIgnoreCase) Then
@@ -684,14 +702,19 @@ Public Class AddStaff
                         End If
                     Next
 
-                    ' Load existing photo if available - ENHANCED VERSION
+                    ' Load existing photo for viewing
                     LoadExistingPhoto(reader)
                 End If
             End Using
 
-            ' Re-validate form after populating data
-            ValidateForm()
+            ' After populating, ensure controls are not editable
+            txtEmail.ReadOnly = True
+            txtPhone.ReadOnly = True
+            txtPin.ReadOnly = True
+            cmbRole.Enabled = False
 
+            ' Re-validate form (keeps save disabled)
+            ValidateForm()
         Catch ex As Exception
             MessageBox.Show($"Error populating form data: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
