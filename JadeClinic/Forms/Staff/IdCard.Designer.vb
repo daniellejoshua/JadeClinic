@@ -22,7 +22,6 @@ Partial Class IdCard
     'Do not modify it using the code editor.
     <System.Diagnostics.DebuggerStepThrough()>
     Private Sub InitializeComponent()
-        Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(IdCard))
         Dim CustomizableEdges6 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges7 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges1 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
@@ -65,7 +64,6 @@ Partial Class IdCard
         ' pnlIDCard
         ' 
         pnlIDCard.BackColor = Color.Black
-        pnlIDCard.BackgroundImage = CType(resources.GetObject("pnlIDCard.BackgroundImage"), Image)
         pnlIDCard.BackgroundImageLayout = ImageLayout.Stretch
         pnlIDCard.BorderColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
         pnlIDCard.BorderRadius = 15
@@ -247,7 +245,6 @@ Partial Class IdCard
         ' txtUsername
         ' 
         txtUsername.BackColor = Color.Transparent
-        txtUsername.BackgroundImage = CType(resources.GetObject("txtUsername.BackgroundImage"), Image)
         txtUsername.BackgroundImageLayout = ImageLayout.Stretch
         txtUsername.BorderRadius = 10
         txtUsername.BorderThickness = 0
@@ -292,7 +289,7 @@ Partial Class IdCard
         lblCompanyName.BackColor = Color.Transparent
         lblCompanyName.Font = New Font("Poppins", 18.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         lblCompanyName.ForeColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
-        lblCompanyName.Location = New Point(110, 12)
+        lblCompanyName.Location = New Point(80, 12)
         lblCompanyName.Name = "lblCompanyName"
         lblCompanyName.Size = New Size(232, 55)
         lblCompanyName.TabIndex = 0
@@ -344,12 +341,11 @@ Partial Class IdCard
         btnPrint.TabIndex = 2
         btnPrint.Text = "Print"
         ' 
-        ' StaffIDCard
+        ' IdCard
         ' 
         AutoScaleDimensions = New SizeF(8.0F, 20.0F)
         AutoScaleMode = AutoScaleMode.Font
         BackColor = Color.FromArgb(CByte(30), CByte(30), CByte(30))
-        BackgroundImage = CType(resources.GetObject("$this.BackgroundImage"), Image)
         BackgroundImageLayout = ImageLayout.Stretch
         ClientSize = New Size(460, 650)
         Controls.Add(Guna2GradientPanel1)
@@ -359,7 +355,7 @@ Partial Class IdCard
         FormBorderStyle = FormBorderStyle.FixedDialog
         MaximizeBox = False
         MinimizeBox = False
-        Name = "StaffIDCard"
+        Name = "IdCard"
         StartPosition = FormStartPosition.CenterParent
         Text = "Staff ID Card"
         pnlIDCard.ResumeLayout(False)

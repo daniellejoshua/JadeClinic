@@ -620,17 +620,49 @@ Public Class Staff
         End If
     End Sub
 
+    ' Replace the existing ViewUser method with this one to open the IdCard modal.
     Private Sub ViewUser(userData As Dictionary(Of String, Object))
-        ' For now, just show user details in a message box
-        ' Later you can create a proper view form
-        Dim userInfo As String = $"User Details:{vbCrLf}{vbCrLf}" &
-                                $"ID: {userData("UserID")}{vbCrLf}" &
-                                $"Username: {userData("Username")}{vbCrLf}" &
-                                $"Full Name: {userData("FullName")}{vbCrLf}" &
-                                $"Role: {userData("UserRole")}{vbCrLf}" &
-                                $"Status: {If(CBool(userData("IsActive")), "Active", "Inactive")}"
+        Try
+            If userData Is Nothing Then
+                Return
+            End If
 
-        MessageBox.Show(userInfo, "Staff Details", MessageBoxButtons.OK, MessageBoxIcon.Information)
+            ' Ensure we have a UserID key
+            If Not userData.ContainsKey("UserID") AndAlso userData.ContainsKey("ID") Then
+                userData("UserID") = userData("ID")
+            End If
+
+            ' If Photo or QRCode missing, fetch from DB using UserID
+            Dim needsPhoto As Boolean = Not userData.ContainsKey("Photo") OrElse userData("Photo") Is Nothing
+            Dim needsQr As Boolean = Not userData.ContainsKey("QRCode") OrElse String.IsNullOrWhiteSpace(If(userData("QRCode"), String.Empty).ToString())
+
+            If (needsPhoto OrElse needsQr) AndAlso userData.ContainsKey("UserID") Then
+                Try
+                    Dim userId As Integer = Convert.ToInt32(userData("UserID"))
+                    Using reader As SqlDataReader = Utilities.ExecuteReader("SELECT Photo, QRCode FROM Users WHERE UserID = @UserID", New SqlParameter("@UserID", userId))
+                        If reader.Read() Then
+                            If needsPhoto AndAlso Not IsDBNull(reader("Photo")) Then
+                                userData("Photo") = CType(reader("Photo"), Byte())
+                            End If
+                            If needsQr AndAlso Not IsDBNull(reader("QRCode")) Then
+                                userData("QRCode") = reader("QRCode").ToString()
+                            End If
+                        End If
+                    End Using
+                Catch ex As Exception
+                    ' Non-fatal: if DB fetch fails we'll still show the card with whatever we have
+                    Console.WriteLine($"Error fetching Photo/QRCode from DB: {ex.Message}")
+                End Try
+            End If
+
+            ' Open IdCard form and populate it
+            Dim idForm As New IdCard()
+            idForm.StartPosition = FormStartPosition.CenterParent
+            idForm.LoadFromUserData(userData)
+            idForm.ShowDialog()
+        Catch ex As Exception
+            MessageBox.Show($"Unable to show ID Card: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
     End Sub
 
     ' PIN confirmation dialog for editing staff
@@ -1028,6 +1060,49 @@ Public Class Staff
         isNavigating = True
         AuditLog.Show()
         Me.Close()
+    End Sub
+
+    ' Show ID Card form for given user data. If Photo/QRCode missing, fetch from DB using UserID
+    Private Sub ShowIdCardForRow(rowTag As Dictionary(Of String, Object))
+        Try
+            If rowTag Is Nothing Then Return
+
+            ' Ensure we have UserID if possible
+            If Not rowTag.ContainsKey("UserID") AndAlso rowTag.ContainsKey("ID") Then
+                rowTag("UserID") = rowTag("ID")
+            End If
+
+            ' If Photo or QRCode not provided, attempt DB fetch
+            If (Not rowTag.ContainsKey("Photo") OrElse rowTag("Photo") Is Nothing) OrElse (Not rowTag.ContainsKey("QRCode") OrElse String.IsNullOrWhiteSpace(If(rowTag("QRCode"), String.Empty).ToString())) Then
+                If rowTag.ContainsKey("UserID") Then
+                    Try
+                        Dim userId As Integer = Convert.ToInt32(rowTag("UserID"))
+                        Using reader As SqlDataReader = Utilities.ExecuteReader("SELECT Photo, QRCode FROM Users WHERE UserID = @UserID", New SqlParameter("@UserID", userId))
+                            If reader.Read() Then
+                                If Not IsDBNull(reader("Photo")) Then
+                                    rowTag("Photo") = CType(reader("Photo"), Byte())
+                                End If
+                                If Not IsDBNull(reader("QRCode")) Then
+                                    rowTag("QRCode") = reader("QRCode").ToString()
+                                End If
+                            End If
+                        End Using
+                    Catch ex As Exception
+                        ' ignore DB errors, proceed with whatever we have
+                        Console.WriteLine($"Error fetching photo/qr from DB: {ex.Message}")
+                    End Try
+                End If
+            End If
+
+            ' Show IdCard form
+            Dim idForm As New IdCard()
+            idForm.StartPosition = FormStartPosition.CenterParent
+            idForm.LoadFromUserData(rowTag)
+            idForm.ShowDialog()
+
+        Catch ex As Exception
+            MessageBox.Show($"Unable to display ID Card: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
     End Sub
 
     Private Sub NavLogout_Click(sender As Object, e As EventArgs)

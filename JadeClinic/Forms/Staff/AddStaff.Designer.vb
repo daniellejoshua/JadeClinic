@@ -40,6 +40,8 @@ Partial Class AddStaff
         Dim CustomizableEdges16 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges17 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges18 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges19 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges20 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Guna2HtmlLabel15 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         btnAddStock = New Guna.UI2.WinForms.Guna2Button()
         Guna2HtmlLabel1 = New Guna.UI2.WinForms.Guna2HtmlLabel()
@@ -58,6 +60,8 @@ Partial Class AddStaff
         Guna2HtmlLabel8 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         txtPhone = New Guna.UI2.WinForms.Guna2TextBox()
         Guna2HtmlLabel3 = New Guna.UI2.WinForms.Guna2HtmlLabel()
+        lblStatus = New Guna.UI2.WinForms.Guna2HtmlLabel()
+        Guna2ComboBox1 = New Guna.UI2.WinForms.Guna2ComboBox()
         CType(ProductImage, ComponentModel.ISupportInitialize).BeginInit()
         SuspendLayout()
         ' 
@@ -81,7 +85,7 @@ Partial Class AddStaff
         btnAddStock.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         btnAddStock.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
         btnAddStock.FillColor = Color.White
-        btnAddStock.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        btnAddStock.Font = New Font("Poppins Medium", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         btnAddStock.ForeColor = Color.Black
         btnAddStock.Location = New Point(418, 659)
         btnAddStock.Name = "btnAddStock"
@@ -93,7 +97,7 @@ Partial Class AddStaff
         ' Guna2HtmlLabel1
         ' 
         Guna2HtmlLabel1.BackColor = Color.Transparent
-        Guna2HtmlLabel1.Font = New Font("Poppins", 9F, FontStyle.Underline, GraphicsUnit.Point, CByte(0))
+        Guna2HtmlLabel1.Font = New Font("Poppins", 9.0F, FontStyle.Underline, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel1.ForeColor = Color.White
         Guna2HtmlLabel1.Location = New Point(338, 677)
         Guna2HtmlLabel1.Name = "Guna2HtmlLabel1"
@@ -113,7 +117,7 @@ Partial Class AddStaff
         txtUsername.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtUsername.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
         txtUsername.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
-        txtUsername.Font = New Font("Segoe UI", 9F)
+        txtUsername.Font = New Font("Segoe UI", 9.0F)
         txtUsername.ForeColor = Color.White
         txtUsername.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtUsername.Location = New Point(21, 372)
@@ -148,7 +152,7 @@ Partial Class AddStaff
         txtPassword.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtPassword.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
         txtPassword.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
-        txtPassword.Font = New Font("Segoe UI", 9F)
+        txtPassword.Font = New Font("Segoe UI", 9.0F)
         txtPassword.ForeColor = Color.White
         txtPassword.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtPassword.Location = New Point(287, 372)
@@ -172,7 +176,7 @@ Partial Class AddStaff
         txtEmail.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtEmail.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
         txtEmail.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
-        txtEmail.Font = New Font("Segoe UI", 9F)
+        txtEmail.Font = New Font("Segoe UI", 9.0F)
         txtEmail.ForeColor = Color.White
         txtEmail.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtEmail.Location = New Point(21, 477)
@@ -213,7 +217,7 @@ Partial Class AddStaff
         Guna2HtmlLabel6.BackColor = Color.Transparent
         Guna2HtmlLabel6.Font = New Font("Poppins Medium", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel6.ForeColor = Color.White
-        Guna2HtmlLabel6.Location = New Point(12, 21)
+        Guna2HtmlLabel6.Location = New Point(21, 21)
         Guna2HtmlLabel6.Name = "Guna2HtmlLabel6"
         Guna2HtmlLabel6.Size = New Size(81, 32)
         Guna2HtmlLabel6.TabIndex = 77
@@ -232,7 +236,7 @@ Partial Class AddStaff
         ' lblStaffPicture
         ' 
         lblStaffPicture.BackColor = Color.Transparent
-        lblStaffPicture.Font = New Font("Poppins", 9F, FontStyle.Underline, GraphicsUnit.Point, CByte(0))
+        lblStaffPicture.Font = New Font("Poppins", 9.0F, FontStyle.Underline, GraphicsUnit.Point, CByte(0))
         lblStaffPicture.ForeColor = Color.White
         lblStaffPicture.Location = New Point(81, 267)
         lblStaffPicture.Name = "lblStaffPicture"
@@ -284,7 +288,7 @@ Partial Class AddStaff
         txtPin.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtPin.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
         txtPin.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
-        txtPin.Font = New Font("Segoe UI", 9F)
+        txtPin.Font = New Font("Segoe UI", 9.0F)
         txtPin.ForeColor = Color.White
         txtPin.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtPin.Location = New Point(302, 576)
@@ -319,7 +323,7 @@ Partial Class AddStaff
         txtPhone.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtPhone.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
         txtPhone.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
-        txtPhone.Font = New Font("Segoe UI", 9F)
+        txtPhone.Font = New Font("Segoe UI", 9.0F)
         txtPhone.ForeColor = Color.White
         txtPhone.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtPhone.Location = New Point(289, 477)
@@ -342,12 +346,46 @@ Partial Class AddStaff
         Guna2HtmlLabel3.TabIndex = 84
         Guna2HtmlLabel3.Text = "PhoneNo."
         ' 
+        ' lblStatus
+        ' 
+        lblStatus.BackColor = Color.Transparent
+        lblStatus.Font = New Font("Poppins Medium", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        lblStatus.ForeColor = Color.White
+        lblStatus.Location = New Point(30, 635)
+        lblStatus.Name = "lblStatus"
+        lblStatus.Size = New Size(58, 32)
+        lblStatus.TabIndex = 87
+        lblStatus.Text = "Status"
+        ' 
+        ' Guna2ComboBox1
+        ' 
+        Guna2ComboBox1.BackColor = Color.Transparent
+        Guna2ComboBox1.BorderRadius = 10
+        Guna2ComboBox1.BorderThickness = 0
+        Guna2ComboBox1.CustomizableEdges = CustomizableEdges19
+        Guna2ComboBox1.DrawMode = DrawMode.OwnerDrawFixed
+        Guna2ComboBox1.DropDownStyle = ComboBoxStyle.DropDownList
+        Guna2ComboBox1.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
+        Guna2ComboBox1.FocusedColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
+        Guna2ComboBox1.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
+        Guna2ComboBox1.Font = New Font("Poppins Light", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Guna2ComboBox1.ForeColor = Color.White
+        Guna2ComboBox1.ItemHeight = 40
+        Guna2ComboBox1.Items.AddRange(New Object() {"Staff", "Admin"})
+        Guna2ComboBox1.Location = New Point(21, 670)
+        Guna2ComboBox1.Name = "Guna2ComboBox1"
+        Guna2ComboBox1.ShadowDecoration.CustomizableEdges = CustomizableEdges20
+        Guna2ComboBox1.Size = New Size(250, 46)
+        Guna2ComboBox1.TabIndex = 88
+        ' 
         ' AddStaff
         ' 
-        AutoScaleDimensions = New SizeF(8F, 20F)
+        AutoScaleDimensions = New SizeF(8.0F, 20.0F)
         AutoScaleMode = AutoScaleMode.Font
         BackColor = Color.FromArgb(CByte(30), CByte(30), CByte(30))
         ClientSize = New Size(560, 752)
+        Controls.Add(Guna2ComboBox1)
+        Controls.Add(lblStatus)
         Controls.Add(txtPhone)
         Controls.Add(Guna2HtmlLabel3)
         Controls.Add(txtPin)
@@ -394,4 +432,6 @@ Partial Class AddStaff
     Friend WithEvents Guna2HtmlLabel8 As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents txtPhone As Guna.UI2.WinForms.Guna2TextBox
     Friend WithEvents Guna2HtmlLabel3 As Guna.UI2.WinForms.Guna2HtmlLabel
+    Friend WithEvents lblStatus As Guna.UI2.WinForms.Guna2HtmlLabel
+    Friend WithEvents Guna2ComboBox1 As Guna.UI2.WinForms.Guna2ComboBox
 End Class
