@@ -280,32 +280,57 @@ Public Class Inventory
             Using conn As New SqlConnection(connStr)
                 conn.Open()
 
-                ' Query to get ALL products but store in memory - updated for new image mapping system
                 Dim query As String = "SELECT p.ProductID, p.ProductCode, p.ProductName, p.Category, " &
-                                     "p.Unit, p.CurrentStock, p.ReorderLevel, p.CostPrice, p.SellingPrice, " &
-                                     "pi.ImageData AS ProductImage " &
-                                     "FROM Products p " &
-                                     "LEFT JOIN ProductImageMapping pim ON p.ProductID = pim.ProductID " &
-                                     "LEFT JOIN ProductImages pi ON pim.ImageID = pi.ImageID " &
-                                     "WHERE p.IsActive = 1 ORDER BY p.ProductName"
+                                  "p.Unit, p.CurrentStock, p.ReorderLevel, p.CostPrice, p.SellingPrice, " &
+                                  "pi.ImageData AS ProductImage " &
+                                  "FROM Products p " &
+                                  "LEFT JOIN ProductImageMapping pim ON p.ProductID = pim.ProductID " &
+                                  "LEFT JOIN ProductImages pi ON pim.ImageID = pi.ImageID " &
+                                  "WHERE p.IsActive = 1 ORDER BY p.ProductName"
 
                 Using cmd As New SqlCommand(query, conn)
                     Using reader As SqlDataReader = cmd.ExecuteReader()
                         allProducts.Clear()
 
                         While reader.Read()
+                            Dim currentStockVal As Integer = If(IsDBNull(reader("CurrentStock")), 0, Convert.ToInt32(reader("CurrentStock")))
+                            Dim reorderLevelVal As Integer = If(IsDBNull(reader("ReorderLevel")), 0, Convert.ToInt32(reader("ReorderLevel")))
+                            Dim sellingPriceVal As Decimal = If(IsDBNull(reader("SellingPrice")), 0D, Convert.ToDecimal(reader("SellingPrice")))
+                            Dim costPriceVal As Decimal = If(IsDBNull(reader("CostPrice")), 0D, Convert.ToDecimal(reader("CostPrice")))
+                            Dim unitVal As String = If(IsDBNull(reader("Unit")), String.Empty, reader("Unit").ToString())
+                            Dim productCodeVal As String = If(IsDBNull(reader("ProductCode")), String.Empty, reader("ProductCode").ToString())
+                            Dim productNameVal As String = If(IsDBNull(reader("ProductName")), String.Empty, reader("ProductName").ToString())
+                            Dim categoryVal As String = If(IsDBNull(reader("Category")), String.Empty, reader("Category").ToString())
+                            Dim productImageObj As Object = If(IsDBNull(reader("ProductImage")), Nothing, reader("ProductImage"))
+
+                            Dim statusStr As String
+                            If currentStockVal = 0 Then
+                                statusStr = "Out of Stock"
+                            ElseIf reorderLevelVal > 0 AndAlso currentStockVal < reorderLevelVal Then
+                                statusStr = "Low on Stock"
+                            Else
+                                statusStr = "InStock"
+                            End If
+
                             Dim productData As New Dictionary(Of String, Object) From {
-                                {"ProductID", reader("ProductID")},
-                                {"ProductCode", reader("ProductCode")},
-                                {"ProductName", reader("ProductName")},
-                                {"Category", reader("Category")},
-                                {"Unit", reader("Unit")},
-                                {"CurrentStock", If(IsDBNull(reader("CurrentStock")), 0, Convert.ToInt32(reader("CurrentStock")))},
-                                {"ReorderLevel", If(IsDBNull(reader("ReorderLevel")), 0, Convert.ToInt32(reader("ReorderLevel")))},
-                                {"CostPrice", If(IsDBNull(reader("CostPrice")), 0D, Convert.ToDecimal(reader("CostPrice")))},
-                                {"SellingPrice", If(IsDBNull(reader("SellingPrice")), 0D, Convert.ToDecimal(reader("SellingPrice")))},
-                                {"ProductImage", If(Not IsDBNull(reader("ProductImage")), reader("ProductImage"), Nothing)}
-                            }
+                            {"ProductID", reader("ProductID")},
+                            {"ProductCode", productCodeVal},
+                            {"ProductName", productNameVal},
+                            {"Category", categoryVal},
+                            {"Unit", unitVal},
+                            {"CurrentStock", currentStockVal},
+                            {"ReorderLevel", reorderLevelVal},
+                            {"CostPrice", costPriceVal},
+                            {"SellingPrice", sellingPriceVal},
+                            {"ProductImage", productImageObj},
+                            {"Sizing", unitVal},
+                            {"Description", String.Empty},
+                            {"Price", sellingPriceVal},
+                            {"StockQty", currentStockVal},
+                            {"Status", statusStr},
+                            {"Color", String.Empty}
+                        }
+
                             allProducts.Add(productData)
                         End While
                     End Using
@@ -313,6 +338,7 @@ Public Class Inventory
             End Using
 
         Catch ex As Exception
+            Console.WriteLine($"LoadProductsFromDatabase error: {ex.Message}")
         End Try
     End Sub
     Private Sub SetupFilterEvents()
@@ -324,7 +350,14 @@ Public Class Inventory
         AddHandler txtFilterPrice.TextChanged, AddressOf ApplyFilters
         AddHandler btnResetFilter.Click, AddressOf ResetFilters_Click
 
-        ' Set default values
+        ' Populate stock filter options (include the new "Below Reorder Level" label)
+        If StockCmbBox.Items.Count = 0 Then
+            StockCmbBox.Items.Clear()
+            StockCmbBox.Items.Add("All")
+            StockCmbBox.Items.Add("Below Reorder Level")
+            StockCmbBox.Items.Add("Out of Stock")
+            StockCmbBox.Items.Add("Active")
+        End If
         StockCmbBox.SelectedIndex = 0 ' Select "All"
 
         ' Set placeholder text for better UX - updated to remove barcode reference
@@ -563,34 +596,31 @@ Public Class Inventory
 
                     ' Add row to DataGridView - with simple Edit text in Actions column
                     Dim rowIndex As Integer = productDataGrid.Rows.Add(
-                        displayName,  ' ProductName (clean, with code shown in custom painting)
-                        productData("Category").ToString(),     ' Category
-                        productData("Unit").ToString(),         ' Unit
-                        currentStock.ToString(),                ' CurrentStock
-                        "₱" & Convert.ToDecimal(productData("CostPrice")).ToString("N2"),    ' CostPrice
-                        "₱" & Convert.ToDecimal(productData("SellingPrice")).ToString("N2"), ' SellingPrice
-                        "✏️"  ' Actions - simple text
-                    )
+                    displayName,  ' ProductName (clean, with code shown in custom painting)
+                    productData("Category").ToString(),     ' Category
+                    productData("Unit").ToString(),         ' Unit
+                    currentStock.ToString(),                ' CurrentStock
+                    "₱" & Convert.ToDecimal(productData("CostPrice")).ToString("N2"),    ' CostPrice
+                    "₱" & Convert.ToDecimal(productData("SellingPrice")).ToString("N2"), ' SellingPrice
+                    "✏️"  ' Actions - simple text
+                )
 
                     ' Store product data in row tag for edit functionality
                     productDataGrid.Rows(rowIndex).Tag = productData
 
                     ' Apply stock level color coding with improved colors for gray background
-                    ' FIXED: Maintain stock colors even when row is selected by using custom painting
+                    ' Mark "Below Reorder Level" only when currentStock < reorderLevel (strictly less)
                     If currentStock = 0 Then
                         productDataGrid.Rows(rowIndex).Cells("CurrentStock").Style.ForeColor = Color.FromArgb(200, 40, 50) ' Darker red for better contrast
                         productDataGrid.Rows(rowIndex).Cells("CurrentStock").Style.Font = New Font("Poppins", 9.5F, FontStyle.Bold)
-                        ' Store stock level in cell tag for custom painting
                         productDataGrid.Rows(rowIndex).Cells("CurrentStock").Tag = "OUT_OF_STOCK"
-                    ElseIf currentStock <= reorderLevel Then
+                    ElseIf reorderLevel > 0 AndAlso currentStock < reorderLevel Then
                         productDataGrid.Rows(rowIndex).Cells("CurrentStock").Style.ForeColor = Color.FromArgb(200, 140, 0) ' Darker amber/orange for better contrast
                         productDataGrid.Rows(rowIndex).Cells("CurrentStock").Style.Font = New Font("Poppins", 9.5F, FontStyle.Bold)
-                        ' Store stock level in cell tag for custom painting
                         productDataGrid.Rows(rowIndex).Cells("CurrentStock").Tag = "LOW_STOCK"
                     Else
                         productDataGrid.Rows(rowIndex).Cells("CurrentStock").Style.ForeColor = Color.FromArgb(20, 140, 50) ' Darker green for better contrast
                         productDataGrid.Rows(rowIndex).Cells("CurrentStock").Style.Font = New Font("Poppins", 9.5F, FontStyle.Bold)
-                        ' Store stock level in cell tag for custom painting
                         productDataGrid.Rows(rowIndex).Cells("CurrentStock").Tag = "IN_STOCK"
                     End If
 
@@ -893,25 +923,7 @@ Public Class Inventory
         End If
     End Sub
 
-    Private Sub ApplyFilters(sender As Object, e As EventArgs)
-        Try
-            filteredProducts.Clear()
 
-            For Each product In allProducts
-                If MatchesFilter(product) Then
-                    filteredProducts.Add(product)
-                End If
-            Next
-
-
-
-            ' Refresh display
-            RefreshProductDisplay()
-
-        Catch ex As Exception
-            ' Silent fail for filter errors
-        End Try
-    End Sub
 
     Private Function MatchesFilter(product As Dictionary(Of String, Object)) As Boolean
         Try
@@ -923,14 +935,14 @@ Public Class Inventory
                 Dim category As String = product("Category").ToString().ToLower()
 
                 If Not (productName.Contains(searchText) Or productCode.Contains(searchText) Or
-                       category.Contains(searchText)) Then
+                   category.Contains(searchText)) Then
                     Return False
                 End If
             End If
 
             ' Category filter
             If Guna2ComboBox1.SelectedItem IsNot Nothing AndAlso
-               Guna2ComboBox1.SelectedItem.ToString() <> "All Categories" Then
+           Guna2ComboBox1.SelectedItem.ToString() <> "All Categories" Then
                 If product("Category").ToString() <> Guna2ComboBox1.SelectedItem.ToString() Then
                     Return False
                 End If
@@ -945,8 +957,9 @@ Public Class Inventory
                 Select Case stockFilter
                     Case "Out of Stock"
                         If currentStock > 0 Then Return False
-                    Case "Low on Stock"
-                        If currentStock = 0 Or currentStock > reorderLevel Then Return False
+                    Case "Below Reorder Level"
+                        ' Show items strictly below reorder level
+                        If Not (reorderLevel > 0 AndAlso currentStock < reorderLevel) Then Return False
                     Case "Active"
                         If currentStock = 0 Then Return False
                         ' "All" doesn't filter anything
@@ -977,7 +990,6 @@ Public Class Inventory
             Return True ' Include item if filter check fails
         End Try
     End Function
-
     Private Sub ResetFilters_Click(sender As Object, e As EventArgs)
         ' Clear all filter inputs
         txtSearch.Text = ""
@@ -1749,4 +1761,85 @@ Public Class Inventory
             MessageBox.Show($"Unable to open Profile Settings: {ex.Message}", "Navigation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
+    ' Add this field near the other private fields at the top of the class
+    Private currentFilterDescription As String = "All Products"
+
+    ' Replace the existing ApplyFilters method with this version (updates currentFilterDescription)
+    Private Sub ApplyFilters(sender As Object, e As EventArgs)
+        Try
+            filteredProducts.Clear()
+
+            For Each product In allProducts
+                If MatchesFilter(product) Then
+                    filteredProducts.Add(product)
+                End If
+            Next
+
+            ' Build a human-readable filter description to pass to the exporter
+            Dim parts As New List(Of String)()
+
+            Dim searchText As String = txtSearch.Text.Trim()
+            If Not String.IsNullOrWhiteSpace(searchText) Then
+                parts.Add($"Search: '{searchText}'")
+            End If
+
+            If Guna2ComboBox1.SelectedItem IsNot Nothing AndAlso Guna2ComboBox1.SelectedItem.ToString() <> "All Categories" Then
+                parts.Add($"Category: {Guna2ComboBox1.SelectedItem}")
+            End If
+
+            If StockCmbBox.SelectedItem IsNot Nothing AndAlso StockCmbBox.SelectedItem.ToString() <> "All" Then
+                parts.Add($"Stock: {StockCmbBox.SelectedItem}")
+            End If
+
+            If Not String.IsNullOrWhiteSpace(txtFilterQuantity.Text) Then
+                parts.Add($"Min Qty: {txtFilterQuantity.Text.Trim()}")
+            End If
+
+            If Not String.IsNullOrWhiteSpace(txtFilterPrice.Text) Then
+                parts.Add($"Min Price: {txtFilterPrice.Text.Trim()}")
+            End If
+
+            If parts.Count = 0 Then
+                currentFilterDescription = "All Products"
+            Else
+                currentFilterDescription = String.Join(" | ", parts)
+            End If
+
+            ' Refresh display
+            RefreshProductDisplay()
+
+        Catch ex As Exception
+            ' Silent fail for filter errors
+        End Try
+    End Sub
+
+    ' Add helper to check role permissions (used by export)
+    Private Function IsStaffUser() As Boolean
+        Try
+            Dim role As String = If(frmLoginvb.LoggedInRole, "").ToString().ToUpperInvariant()
+            Return role = "STAFF"
+        Catch
+            ' If role cannot be determined, deny access to be safe
+            Return True
+        End Try
+    End Function
+
+    ' Implement Export button to respect permissions and pass current filters
+    Private Sub Exportbtn_Click(sender As Object, e As EventArgs) Handles Exportbtn.Click
+        Try
+            If IsStaffUser() Then
+                MessageBox.Show("You do not have permission to use this function.", "Access Restricted", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                Return
+            End If
+
+            If filteredProducts IsNot Nothing AndAlso filteredProducts.Count > 0 Then
+                InventoryExporter.ExportInventoryReport(filteredProducts, currentFilterDescription)
+            Else
+                MessageBox.Show("No products to export.", "Export", MessageBoxButtons.OK, MessageBoxIcon.Information)
+            End If
+        Catch ex As Exception
+            MessageBox.Show($"Export failed: {ex.Message}", "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
+
 End Class
