@@ -891,28 +891,34 @@ Public Class Sales
     End Sub
 
     Private Sub AttachClickHandlersToAllControls(parentControl As Control)
-        ' No longer need to attach click handlers for barcode input focus
-        ' Since we handle keyboard input directly through the form
+        ' Attach click handlers to close the profile dropdown when clicking outside it.
+        ' Skip the profile picture and username controls so their clicks won't immediately hide the dropdown.
+        If parentControl Is profileDropdownPanel Then
+            Return
+        End If
 
-        ' Just handle profile dropdown clicks
-        AddHandler parentControl.Click, Sub()
-                                            If isProfileDropdownVisible Then
-                                                HideProfileDropdown()
-                                            End If
-                                        End Sub
-
-        ' Recursively add handlers to child controls
         For Each ctrl As Control In parentControl.Controls
-            If ctrl IsNot profileDropdownPanel Then
-                AddHandler ctrl.Click, Sub()
-                                           If isProfileDropdownVisible Then
-                                               HideProfileDropdown()
-                                           End If
-                                       End Sub
-
+            ' Skip the dropdown itself and the profile controls to avoid immediate hide after toggle
+            If ctrl Is profileDropdownPanel OrElse ctrl Is Guna2CirclePictureBox5 OrElse ctrl Is lblUsername Then
+                ' Still recurse into children of these controls in case there are nested controls that should hide the dropdown
                 If ctrl.HasChildren Then
                     AttachClickHandlersToAllControls(ctrl)
                 End If
+                Continue For
+            End If
+
+            ' Add a click handler that will hide the dropdown if visible and also keep barcode focus behavior
+            AddHandler ctrl.Click, Sub()
+                                       If isProfileDropdownVisible Then
+                                           HideProfileDropdown()
+                                       End If
+
+                                       ' Keep original focus behaviour for barcode input
+                                       FocusBarcodeInputIfAllowed()
+                                   End Sub
+
+            If ctrl.HasChildren Then
+                AttachClickHandlersToAllControls(ctrl)
             End If
         Next
     End Sub
@@ -3617,9 +3623,14 @@ Public Class Sales
         profileDropdownPanel.BackColor = DarkSlate ' Updated color
         profileDropdownPanel.BorderStyle = BorderStyle.FixedSingle
 
-        ' Position below the profile picture
-        Dim profileLocation = Guna2CirclePictureBox5.Location
-        profileDropdownPanel.Location = New Point(profileLocation.X - 90, profileLocation.Y + Guna2CirclePictureBox5.Height + 5)
+        ' Determine the container that holds the profile picture (keep same parent so coordinates align)
+        Dim container As Control = If(Guna2CirclePictureBox5.Parent, CType(Me, Control))
+
+        ' Calculate location relative to that container so the dropdown positions correctly
+        Dim picLocation As Point = Guna2CirclePictureBox5.Location
+        Dim dropdownX As Integer = picLocation.X - ((profileDropdownPanel.Width - Guna2CirclePictureBox5.Width) \ 2)
+        Dim dropdownY As Integer = picLocation.Y + Guna2CirclePictureBox5.Height + 5
+        profileDropdownPanel.Location = New Point(Math.Max(0, dropdownX), Math.Max(0, dropdownY))
 
         ' Create Profile Settings button
         Dim btnProfileSettings As New Label()
@@ -3632,15 +3643,8 @@ Public Class Sales
         btnProfileSettings.TextAlign = ContentAlignment.MiddleLeft
         btnProfileSettings.Cursor = Cursors.Hand
 
-        ' Add hover effect to Profile Settings
-        AddHandler btnProfileSettings.MouseEnter, Sub()
-                                                      btnProfileSettings.BackColor = Graphite
-                                                  End Sub
-        AddHandler btnProfileSettings.MouseLeave, Sub()
-                                                      btnProfileSettings.BackColor = System.Drawing.Color.Transparent
-                                                  End Sub
-
-        ' Add click event to Profile Settings
+        AddHandler btnProfileSettings.MouseEnter, Sub() btnProfileSettings.BackColor = Graphite
+        AddHandler btnProfileSettings.MouseLeave, Sub() btnProfileSettings.BackColor = System.Drawing.Color.Transparent
         AddHandler btnProfileSettings.Click, Sub()
                                                  HideProfileDropdown()
                                                  NavigateToProfileSettings()
@@ -3657,29 +3661,15 @@ Public Class Sales
         btnLogOut.TextAlign = ContentAlignment.MiddleLeft
         btnLogOut.Cursor = Cursors.Hand
 
-        ' Add hover effect to Log Out
-        AddHandler btnLogOut.MouseEnter, Sub()
-                                             btnLogOut.BackColor = Graphite
-                                         End Sub
-        AddHandler btnLogOut.MouseLeave, Sub()
-                                             btnLogOut.BackColor = System.Drawing.Color.Transparent
-                                         End Sub
-
-        ' Add click event to Log Out
+        AddHandler btnLogOut.MouseEnter, Sub() btnLogOut.BackColor = Graphite
+        AddHandler btnLogOut.MouseLeave, Sub() btnLogOut.BackColor = System.Drawing.Color.Transparent
         AddHandler btnLogOut.Click, Sub()
-                                        ' Confirm logout before proceeding
                                         Dim result As DialogResult = MessageBox.Show("Are you sure you want to logout?", "Confirm Logout", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
-
                                         If result = DialogResult.Yes Then
-                                            ' Log the logout action
                                             If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
                                                 Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Log Out", "User logged out of the application.")
                                             End If
-
-                                            ' Clear user session and return to login
                                             frmLoginvb.LogoutUser()
-
-                                            ' Navigate to login form without closing the application
                                             isNavigating = True
                                             Me.Hide()
                                             Dim loginForm As New frmLoginvb()
@@ -3687,18 +3677,29 @@ Public Class Sales
                                         End If
                                     End Sub
 
-        ' Add buttons to panel
         profileDropdownPanel.Controls.Add(btnProfileSettings)
         profileDropdownPanel.Controls.Add(btnLogOut)
 
-        ' Add panel to form
-        Me.Controls.Add(profileDropdownPanel)
+        ' Add panel to the same container as the profile picture so coordinates are consistent
+        container.Controls.Add(profileDropdownPanel)
         profileDropdownPanel.BringToFront()
 
-        ' Add click event to form to hide dropdown when clicked elsewhere
-        AddHandler Me.Click, AddressOf Form_Click
-
+        ' The application already attaches click handlers recursively (AttachClickHandlersToAllControls)
+        ' which will call HideProfileDropdown() when the user clicks outside the dropdown.
         isProfileDropdownVisible = True
+    End Sub
+
+    Private Sub HideProfileDropdown()
+        If profileDropdownPanel IsNot Nothing Then
+            Dim parentCtrl As Control = profileDropdownPanel.Parent
+            If parentCtrl IsNot Nothing AndAlso parentCtrl.Controls.Contains(profileDropdownPanel) Then
+                parentCtrl.Controls.Remove(profileDropdownPanel)
+            End If
+            profileDropdownPanel.Dispose()
+            profileDropdownPanel = Nothing
+        End If
+
+        isProfileDropdownVisible = False
     End Sub
     ' Navigation event handlers
     Private Sub NavDashboard_Click(sender As Object, e As EventArgs)
@@ -3743,17 +3744,7 @@ Public Class Sales
         Me.Close()
     End Sub
 
-    Private Sub HideProfileDropdown()
-        If profileDropdownPanel IsNot Nothing Then
-            Me.Controls.Remove(profileDropdownPanel)
-            profileDropdownPanel.Dispose()
-            profileDropdownPanel = Nothing
-        End If
-        isProfileDropdownVisible = False
 
-        ' Remove form click event
-        RemoveHandler Me.Click, AddressOf Form_Click
-    End Sub
 
     Private Sub Form_Click(sender As Object, e As EventArgs)
         ' Hide dropdown when clicking elsewhere on the form
@@ -3761,12 +3752,25 @@ Public Class Sales
     End Sub
 
     Private Sub NavigateToProfileSettings()
-        If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
-            Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Navigation", "Navigated from Sales to ProfileSettings")
-        End If
-        isNavigating = True
-        ' Implement ProfileSettings form later
-        MessageBox.Show("Profile Settings will be implemented.", "Coming Soon", MessageBoxButtons.OK, MessageBoxIcon.Information)
+        Try
+            If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Navigation", "Navigated from Sales to ProfileSettings")
+            End If
+
+            ' Navigate to ProfileSettings form
+            isNavigating = True
+
+            ' If the ProfileSettings form exists in the project, open it.
+            ' Use Show() so the user can return; close Sales to mimic existing navigation behavior.
+            Dim profileForm As New ProfileSettings()
+            profileForm.Show()
+
+            ' Close or hide the Sales form to match other navigation handlers
+            Me.Close()
+        Catch ex As Exception
+            isNavigating = False
+            MessageBox.Show($"Unable to open Profile Settings: {ex.Message}", "Navigation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
     End Sub
 
     Private Sub HandleTotalAmountKeyboardInput(e As KeyEventArgs)

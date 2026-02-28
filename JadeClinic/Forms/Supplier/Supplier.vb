@@ -310,7 +310,8 @@ Public Class Supplier
                     count += 1
                 End While
 
-                lblUsername.Text = $"{count} Items"
+                ' DO NOT modify lblUsername here — keep it showing the logged-in username.
+                ' (Removed previous lblUsername = "{count} Items" update.)
             End Using
 
             InventoryLogDataGrid.ClearSelection()
@@ -478,7 +479,7 @@ Public Class Supplier
         AddHandler btnProfileSettings.MouseLeave, Sub() btnProfileSettings.BackColor = System.Drawing.Color.Transparent
         AddHandler btnProfileSettings.Click, Sub()
                                                  HideProfileDropdown()
-                                                 MessageBox.Show("Profile Settings not implemented.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                                                 NavigateToProfileSettings()
                                              End Sub
 
         Dim btnLogOut As New Label()
@@ -509,7 +510,29 @@ Public Class Supplier
 
         isProfileDropdownVisible = True
     End Sub
+    Private Sub NavigateToProfileSettings()
+        ' Navigate to ProfileSettings form (preserve audit and dropdown state).
+        Try
+            If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Navigation", "Navigated from Inventory to ProfileSettings")
+            End If
 
+            ' Prevent the form-closing confirmation and hide the dropdown first
+            isNavigating = True
+            HideProfileDropdown()
+
+            ' Open ProfileSettings and close Inventory
+            Dim profileForm As New ProfileSettings()
+            profileForm.StartPosition = FormStartPosition.CenterScreen
+            profileForm.Show()
+
+            Me.Close()
+        Catch ex As Exception
+            ' Restore navigating flag on failure and show error
+            isNavigating = False
+            MessageBox.Show($"Unable to open Profile Settings: {ex.Message}", "Navigation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
     Private Sub HideProfileDropdown()
         If profileDropdownPanel IsNot Nothing Then
             Me.Controls.Remove(profileDropdownPanel)

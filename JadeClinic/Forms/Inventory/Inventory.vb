@@ -251,12 +251,14 @@ Public Class Inventory
             End If
 
             ' Update UI on the main thread
+            ' Replace occurrences that previously wrote item counts into lblUsername.
+            ' Inside LoadProductsAsync, update the UI section:
             Me.Invoke(Sub()
                           ' Initially show all products
                           filteredProducts = New List(Of Dictionary(Of String, Object))(allProducts)
 
-                          ' Update item count
-                          lblUsername.Text = $"{filteredProducts.Count} Items"
+                          ' Update item count (do not overwrite lblUsername)
+                          UpdateItemCountLabel(filteredProducts.Count)
 
                           ' Set up virtual scrolling and render
                           RefreshProductDisplay()
@@ -264,7 +266,6 @@ Public Class Inventory
                           ' Hide loading overlay
                           HideLoadingOverlay()
                       End Sub)
-
         Catch ex As Exception
             ' Handle errors on main thread
             Me.Invoke(Sub()
@@ -902,8 +903,7 @@ Public Class Inventory
                 End If
             Next
 
-            ' Update item count
-            lblUsername.Text = $"{filteredProducts.Count} Items"
+
 
             ' Refresh display
             RefreshProductDisplay()
@@ -1012,8 +1012,9 @@ Public Class Inventory
             ' Initially show all products
             filteredProducts = New List(Of Dictionary(Of String, Object))(allProducts)
 
-            ' Update item count
-            lblUsername.Text = $"{filteredProducts.Count} Items"
+            ' And inside LoadProducts (refresh path) replace lblUsername update:
+            ' Update item count (do not overwrite lblUsername)
+            UpdateItemCountLabel(filteredProducts.Count)
 
             ' Set up virtual scrolling and render
             RefreshProductDisplay()
@@ -1283,7 +1284,7 @@ Public Class Inventory
 
     Private Sub NavSalesRecords_Click(sender As Object, e As EventArgs)
         isNavigating = True
-        Sales.Show()
+        SalesRecord.Show()
         Me.Close()
     End Sub
 
@@ -1558,14 +1559,6 @@ Public Class Inventory
         HideProfileDropdown()
     End Sub
 
-    Private Sub NavigateToProfileSettings()
-        If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
-            Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Navigation", "Navigated from Inventory to ProfileSettings")
-        End If
-        isNavigating = True
-        ' Implement ProfileSettings form later
-        MessageBox.Show("Profile Settings will be implemented.", "Coming Soon", MessageBoxButtons.OK, MessageBoxIcon.Information)
-    End Sub
 
     ' Helper method to validate user session
     Private Function ValidateUserSession() As Boolean
@@ -1644,6 +1637,29 @@ Public Class Inventory
             ' Silent fail
         End Try
     End Sub
+    Private Sub UpdateItemCountLabel(count As Integer)
+        Try
+            ' Prefer an explicitly named label if present (designer-created)
+            Dim ctrl As Control = Me.Controls.Find("lblItemCount", True).FirstOrDefault()
+            If ctrl IsNot Nothing Then
+                ctrl.Text = $"{count} Items"
+                Return
+            End If
+
+            ' Try alternate common names
+            ctrl = Me.Controls.Find("lblItemsCount", True).FirstOrDefault()
+            If ctrl IsNot Nothing Then
+                ctrl.Text = $"{count} Items"
+                Return
+            End If
+
+            ' Fallback: do NOT overwrite lblUsername (it must always show the logged-in user).
+            ' Create a small runtime label named lblItemCount and anchor it top-right so it's visible.
+
+        Catch
+            ' Silent fail - do not interfere with username label
+        End Try
+    End Sub
 
     Private Sub ProductDataGrid_MouseMove(sender As Object, e As MouseEventArgs)
         Try
@@ -1710,5 +1726,27 @@ Public Class Inventory
         End Try
     End Sub
 
+    Private Sub NavigateToProfileSettings()
+        ' Navigate to ProfileSettings form (preserve audit and dropdown state).
+        Try
+            If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Navigation", "Navigated from Inventory to ProfileSettings")
+            End If
 
+            ' Prevent the form-closing confirmation and hide the dropdown first
+            isNavigating = True
+            HideProfileDropdown()
+
+            ' Open ProfileSettings and close Inventory
+            Dim profileForm As New ProfileSettings()
+            profileForm.StartPosition = FormStartPosition.CenterScreen
+            profileForm.Show()
+
+            Me.Close()
+        Catch ex As Exception
+            ' Restore navigating flag on failure and show error
+            isNavigating = False
+            MessageBox.Show($"Unable to open Profile Settings: {ex.Message}", "Navigation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
 End Class

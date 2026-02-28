@@ -1,11 +1,13 @@
-﻿Imports Microsoft.Data.SqlClient
-
-Imports System.IO
+﻿Imports System.IO
+Imports Guna.UI2.WinForms
+Imports Microsoft.Data.SqlClient
 
 Public Class AuditLog
     Private overlayPanel As Panel
     Private isNavigating As Boolean = False
-
+    ' Add these near the other private fields at the top of the class
+    Private profileDropdownPanel As Panel = Nothing
+    Private isProfileDropdownVisible As Boolean = False
     Private Async Sub AuditLog_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         ' Ensure form background is set (designer has BackColor)
         Me.BackColor = Color.FromArgb(30, 30, 30)
@@ -27,6 +29,7 @@ Public Class AuditLog
         ' Create navigation menu (same style/behavior as SalesRecord)
         CreateNavigationMenu()
 
+        InitializeProfileSection()
         ' Wire events
         AddHandler SortBy.SelectedIndexChanged, AddressOf Filters_Changed
         AddHandler filtertype.SelectedIndexChanged, AddressOf Filters_Changed
@@ -608,6 +611,223 @@ Public Class AuditLog
         Catch ex As Exception
             isNavigating = False
             MessageBox.Show($"Unable to open Suppliers: {ex.Message}", "Navigation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
+    ' Insert these methods inside the AuditLog class
+
+    Private Sub InitializeProfileSection()
+        Try
+            If lblUsername IsNot Nothing Then
+                lblUsername.Text = frmLoginvb.LoggedInUsername
+                lblUsername.Font = New Font("Poppins", 10.0F, FontStyle.Regular)
+                lblUsername.ForeColor = Color.White
+
+                AddHandler lblUsername.Click, AddressOf ProfilePicture_Click
+                AddHandler lblUsername.MouseEnter, Sub() lblUsername.Cursor = Cursors.Hand
+            End If
+
+            If Guna2CirclePictureBox5 IsNot Nothing Then
+                AddHandler Guna2CirclePictureBox5.Click, AddressOf ProfilePicture_Click
+                AddHandler Guna2CirclePictureBox5.MouseEnter, Sub() Guna2CirclePictureBox5.Cursor = Cursors.Hand
+            End If
+
+            LoadUserProfilePicture()
+        Catch
+            If lblUsername IsNot Nothing Then lblUsername.Text = frmLoginvb.LoggedInUsername
+        End Try
+    End Sub
+
+    Private Sub LoadUserProfilePicture()
+        Try
+            If String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then Return
+            If Guna2CirclePictureBox5 Is Nothing Then Return
+
+            Dim query As String = "SELECT Photo FROM Users WHERE Username = @Username"
+            Dim parms As SqlParameter() = {New SqlParameter("@Username", frmLoginvb.LoggedInUsername)}
+
+            Using reader As SqlDataReader = Utilities.ExecuteReader(query, parms)
+                If reader.Read() Then
+                    Guna2CirclePictureBox5.SizeMode = PictureBoxSizeMode.Zoom
+                    Guna2CirclePictureBox5.BorderStyle = BorderStyle.None
+
+                    If Not IsDBNull(reader("Photo")) Then
+                        Dim photoBytes As Byte() = CType(reader("Photo"), Byte())
+                        Using ms As New IO.MemoryStream(photoBytes)
+                            Guna2CirclePictureBox5.Image = Image.FromStream(ms)
+                        End Using
+                    Else
+                        Guna2CirclePictureBox5.Image = CreateDefaultProfileAvatar(If(frmLoginvb.LoggedInUsername, "User"))
+                    End If
+                End If
+            End Using
+        Catch
+            If Guna2CirclePictureBox5 IsNot Nothing Then Guna2CirclePictureBox5.Image = CreateDefaultProfileAvatar(If(frmLoginvb.LoggedInUsername, "User"))
+        End Try
+    End Sub
+
+    Private Sub ProfilePicture_Click(sender As Object, e As EventArgs)
+        ToggleProfileDropdown()
+    End Sub
+
+    Private Sub ToggleProfileDropdown()
+        If isProfileDropdownVisible Then
+            HideProfileDropdown()
+        Else
+            ShowProfileDropdown()
+        End If
+    End Sub
+    Private Function CreateDefaultProfileAvatar(username As String) As System.Drawing.Image
+        Dim size As Integer = 50
+        Dim bitmap As New System.Drawing.Bitmap(size, size)
+        Using g As System.Drawing.Graphics = System.Drawing.Graphics.FromImage(bitmap)
+            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias
+
+            ' Color palette (matches other forms)
+            Dim colors() As System.Drawing.Color = {
+            System.Drawing.Color.FromArgb(255, 107, 107),
+            System.Drawing.Color.FromArgb(78, 205, 196),
+            System.Drawing.Color.FromArgb(85, 98, 112),
+            System.Drawing.Color.FromArgb(129, 236, 236),
+            System.Drawing.Color.FromArgb(116, 185, 255)
+        }
+
+            Dim key As Integer = If(String.IsNullOrEmpty(username), 0, Math.Abs(username.GetHashCode()))
+            Dim colorIndex As Integer = If(colors.Length > 0, key Mod colors.Length, 0)
+            Using bgBrush As New System.Drawing.SolidBrush(colors(colorIndex))
+                g.FillEllipse(bgBrush, 0, 0, size, size)
+            End Using
+
+            ' Build initials (prefer first letters of first two words)
+            Dim initials As String = ""
+            If Not String.IsNullOrWhiteSpace(username) Then
+                Dim parts = username.Trim().Split(New Char() {" "c}, StringSplitOptions.RemoveEmptyEntries)
+                If parts.Length >= 2 Then
+                    initials = parts(0).Substring(0, 1) & parts(1).Substring(0, 1)
+                Else
+                    initials = parts(0).Substring(0, Math.Min(2, parts(0).Length))
+                End If
+                initials = initials.ToUpperInvariant()
+            Else
+                initials = "U"
+            End If
+
+            ' Draw initials centered
+            Using font As New System.Drawing.Font("Poppins", 14, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Pixel)
+                Using brush As New System.Drawing.SolidBrush(System.Drawing.Color.White)
+                    Dim sf As New System.Drawing.StringFormat() With {
+                    .Alignment = System.Drawing.StringAlignment.Center,
+                    .LineAlignment = System.Drawing.StringAlignment.Center
+                }
+                    g.DrawString(initials, font, brush, New System.Drawing.RectangleF(0, 0, size, size), sf)
+                End Using
+            End Using
+        End Using
+
+        Return bitmap
+    End Function
+    Private Sub ShowProfileDropdown()
+        If profileDropdownPanel IsNot Nothing Then HideProfileDropdown()
+
+        profileDropdownPanel = New Panel() With {
+            .Size = New Size(200, 100),
+            .BackColor = Color.FromArgb(41, 44, 45),
+            .BorderStyle = BorderStyle.FixedSingle
+        }
+
+        ' Position under avatar if available, otherwise under username
+        Dim anchorPoint As Point = New Point(0, 0)
+        If Guna2CirclePictureBox5 IsNot Nothing Then
+            anchorPoint = Guna2CirclePictureBox5.Location
+        ElseIf lblUsername IsNot Nothing Then
+            anchorPoint = lblUsername.Location
+        End If
+        profileDropdownPanel.Location = New Point(anchorPoint.X - 90, anchorPoint.Y + If(Guna2CirclePictureBox5 IsNot Nothing, Guna2CirclePictureBox5.Height, 24) + 5)
+
+        Dim btnProfileSettings As New Label() With {
+            .Text = "⚙️ Profile Settings",
+            .Font = New Font("Poppins", 9.0F, FontStyle.Regular),
+            .ForeColor = Color.White,
+            .BackColor = Color.Transparent,
+            .Size = New Size(190, 40),
+            .Location = New Point(5, 5),
+            .TextAlign = ContentAlignment.MiddleLeft,
+            .Cursor = Cursors.Hand
+        }
+        AddHandler btnProfileSettings.MouseEnter, Sub() btnProfileSettings.BackColor = Color.FromArgb(61, 65, 66)
+        AddHandler btnProfileSettings.MouseLeave, Sub() btnProfileSettings.BackColor = Color.Transparent
+        AddHandler btnProfileSettings.Click, Sub()
+                                                 HideProfileDropdown()
+                                                 NavigateToProfileSettings()
+                                             End Sub
+
+        Dim btnLogOut As New Label() With {
+            .Text = "🚪 Log Out",
+            .Font = New Font("Poppins", 9.0F, FontStyle.Regular),
+            .ForeColor = Color.White,
+            .BackColor = Color.Transparent,
+            .Size = New Size(190, 40),
+            .Location = New Point(5, 50),
+            .TextAlign = ContentAlignment.MiddleLeft,
+            .Cursor = Cursors.Hand
+        }
+        AddHandler btnLogOut.MouseEnter, Sub() btnLogOut.BackColor = Color.FromArgb(61, 65, 66)
+        AddHandler btnLogOut.MouseLeave, Sub() btnLogOut.BackColor = Color.Transparent
+        AddHandler btnLogOut.Click, Sub()
+                                        Dim result As DialogResult = MessageBox.Show("Are you sure you want to logout?", "Confirm Logout", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
+                                        If result = DialogResult.Yes Then
+                                            If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+                                                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Log Out", "User logged out of the application.")
+                                            End If
+                                            frmLoginvb.LogoutUser()
+                                            isNavigating = True
+                                            Me.Hide()
+                                            Dim loginForm As New frmLoginvb()
+                                            loginForm.Show()
+                                        End If
+                                    End Sub
+
+        profileDropdownPanel.Controls.Add(btnProfileSettings)
+        profileDropdownPanel.Controls.Add(btnLogOut)
+
+        Me.Controls.Add(profileDropdownPanel)
+        profileDropdownPanel.BringToFront()
+
+        AddHandler Me.Click, AddressOf Form_Click
+
+        isProfileDropdownVisible = True
+    End Sub
+
+    Private Sub HideProfileDropdown()
+        If profileDropdownPanel IsNot Nothing Then
+            Me.Controls.Remove(profileDropdownPanel)
+            profileDropdownPanel.Dispose()
+            profileDropdownPanel = Nothing
+        End If
+        isProfileDropdownVisible = False
+        RemoveHandler Me.Click, AddressOf Form_Click
+    End Sub
+
+    Private Sub Form_Click(sender As Object, e As EventArgs)
+        HideProfileDropdown()
+    End Sub
+
+    Private Sub NavigateToProfileSettings()
+        Try
+            If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Navigation", "Navigated from AuditLog to ProfileSettings")
+            End If
+
+            isNavigating = True
+            HideProfileDropdown()
+
+            Dim profileForm As New ProfileSettings()
+            profileForm.StartPosition = FormStartPosition.CenterScreen
+            profileForm.Show()
+
+            Me.Close()
+        Catch ex As Exception
+            isNavigating = False
+            MessageBox.Show($"Unable to open Profile Settings: {ex.Message}", "Navigation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
 End Class

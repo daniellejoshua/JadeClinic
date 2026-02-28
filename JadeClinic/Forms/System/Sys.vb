@@ -485,11 +485,26 @@ Public Class Sys
     End Sub
 
     Private Sub NavigateToProfileSettings()
-        If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
-            Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Navigation", "Navigated from System to ProfileSettings")
-        End If
-        isNavigating = True
-        MessageBox.Show("Profile Settings will be implemented.", "Coming Soon", MessageBoxButtons.OK, MessageBoxIcon.Information)
+        Try
+            If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Navigation", "Navigated from System to ProfileSettings")
+            End If
+
+            ' Prevent the form-closing confirmation and hide dropdown first
+            isNavigating = True
+            HideProfileDropdown()
+
+            ' Open ProfileSettings form (centered) and close this form
+            Dim profileForm As New ProfileSettings()
+            profileForm.StartPosition = FormStartPosition.CenterScreen
+            profileForm.Show()
+
+            Me.Close()
+        Catch ex As Exception
+            ' Restore flag on failure and show error
+            isNavigating = False
+            MessageBox.Show($"Unable to open Profile Settings: {ex.Message}", "Navigation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
     End Sub
 
     ' Button click handlers

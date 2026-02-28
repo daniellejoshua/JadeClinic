@@ -783,10 +783,7 @@ Public Class InventoryLog
 
             ' Handle empty data
             If inventoryData Is Nothing OrElse inventoryData.Count = 0 Then
-                ' Update count for empty data
-                If lblUsername IsNot Nothing Then
-                    lblUsername.Text = "0 Records"
-                End If
+                ' Update record count without touching lblUsername
                 Return
             End If
 
@@ -853,16 +850,33 @@ Public Class InventoryLog
                 End If
             Next
 
-            ' Update count
-            If lblUsername IsNot Nothing Then
-                lblUsername.Text = $"{inventoryData.Count} Records"
-            End If
+            ' Update record count without overwriting lblUsername
 
         Catch ex As Exception
             MessageBox.Show($"Error displaying inventory logs: {ex.Message}", "Display Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
+    Private Sub NavigateToProfileSettings()
+        Try
+            If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Navigation", "Navigated from InventoryLog to ProfileSettings")
+            End If
 
+            ' Prevent the form-closing confirmation and hide the dropdown first
+            isNavigating = True
+            HideProfileDropdown()
+
+            ' Open ProfileSettings and close InventoryLog
+            Dim profileForm As New ProfileSettings()
+            profileForm.StartPosition = FormStartPosition.CenterScreen
+            profileForm.Show()
+
+            Me.Close()
+        Catch ex As Exception
+            isNavigating = False
+            MessageBox.Show($"Unable to open Profile Settings: {ex.Message}", "Navigation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
     Private Function GetTransactionIndicator(transactionType As String) As String
         If String.IsNullOrWhiteSpace(transactionType) Then Return "ℹ️ INFO"
         Select Case transactionType.Trim().ToLowerInvariant()
@@ -1205,7 +1219,7 @@ Public Class InventoryLog
 
     Private Sub NavSalesRecords_Click(sender As Object, e As EventArgs)
         isNavigating = True
-        Sales.Show()
+        SalesRecord.Show()
         Me.Close()
     End Sub
 
@@ -1530,14 +1544,7 @@ Public Class InventoryLog
         HideProfileDropdown()
     End Sub
 
-    Private Sub NavigateToProfileSettings()
-        If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
-            Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Navigation", "Navigated from InventoryLog to ProfileSettings")
-        End If
-        isNavigating = True
-        ' Implement ProfileSettings form later
-        MessageBox.Show("Profile Settings will be implemented.", "Coming Soon", MessageBoxButtons.OK, MessageBoxIcon.Information)
-    End Sub
+
 
     Private Async Sub SortBy_SelectedIndexChanged(sender As Object, e As EventArgs)
         Try

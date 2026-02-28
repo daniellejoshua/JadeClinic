@@ -984,10 +984,32 @@ Public Class Staff
         Inventory.Show()
         Me.Close()
     End Sub
+    Private Sub NavigateToProfileSettings()
+        ' Navigate to ProfileSettings form (preserve audit and dropdown state).
+        Try
+            If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Navigation", "Navigated from Inventory to ProfileSettings")
+            End If
 
+            ' Prevent the form-closing confirmation and hide the dropdown first
+            isNavigating = True
+            HideProfileDropdown()
+
+            ' Open ProfileSettings and close Inventory
+            Dim profileForm As New ProfileSettings()
+            profileForm.StartPosition = FormStartPosition.CenterScreen
+            profileForm.Show()
+
+            Me.Close()
+        Catch ex As Exception
+            ' Restore navigating flag on failure and show error
+            isNavigating = False
+            MessageBox.Show($"Unable to open Profile Settings: {ex.Message}", "Navigation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
     Private Sub NavSalesRecords_Click(sender As Object, e As EventArgs)
         isNavigating = True
-        Sales.Show()
+        SalesRecord.Show()
         Me.Close()
     End Sub
 
@@ -1024,14 +1046,7 @@ Public Class Staff
         End If
     End Sub
 
-    Private Sub NavigateToProfileSettings()
-        If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
-            Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Navigation", "Navigated from Staff to ProfileSettings")
-        End If
-        isNavigating = True
-        ' Implement ProfileSettings form later
-        MessageBox.Show("Profile Settings will be implemented.", "Coming Soon", MessageBoxButtons.OK, MessageBoxIcon.Information)
-    End Sub
+
 
     Private Sub PictureBox9_Click(sender As Object, e As EventArgs)
 
