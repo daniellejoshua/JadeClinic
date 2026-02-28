@@ -16,7 +16,9 @@ Public Class frmLoginvb
     Private pinPanel As Guna.UI2.WinForms.Guna2Panel
     Private pinPanelButtons As List(Of Guna.UI2.WinForms.Guna2Button)
     Private failedPinAttempts As Integer = 0
-
+    ' Add near other private fields
+    Private failedLoginAttempts As Integer = 0
+    Private Const MaxLoginAttempts As Integer = 3
     Private pinInput As String = "" ' Class-level for consistency
 
     Private Sub frmLoginvb_Load(sender As Object, e As EventArgs) Handles MyBase.Load
@@ -391,6 +393,22 @@ Public Class frmLoginvb
         txtQRInput.Focus()
         qrDialog.ShowDialog(Me)
         Console.WriteLine("QR Dialog closed")
+
+        ' Ensure the main form and PIN panel receive focus after the scanner dialog closes so the user can immediately type the PIN.
+        Try
+            If pinPanel IsNot Nothing Then
+                Me.Activate()
+                Me.Focus()
+                Me.ActiveControl = pinPanel
+                pinPanel.Focus()
+            Else
+                ' If PIN panel hasn't been created yet, just activate the main form so it gets focus.
+                Me.Activate()
+                Me.Focus()
+            End If
+        Catch ex As Exception
+            Console.WriteLine($"Error focusing PIN panel after QR dialog: {ex.Message}")
+        End Try
     End Sub
 
     ' Helper function to extract valid QR code from mixed input
@@ -438,14 +456,30 @@ Public Class frmLoginvb
 
             If Not Integer.TryParse(userIdStr, userId) Then
                 Console.WriteLine("Invalid user ID format")
-                MessageBox.Show("Invalid user ID format in QR code.", "QR Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)
+
+                ' Count as a failed login attempt; only audit on reaching max.
+                failedLoginAttempts += 1
+                If failedLoginAttempts >= MaxLoginAttempts Then
+                    Try
+                        Dim auditUser = If(String.IsNullOrEmpty(userCode), "Unknown", userCode)
+                        Utilities.LogAudit(auditUser, "Too Many Login Attempts", $"Exceeded maximum login attempts ({MaxLoginAttempts}) via QR. Application closing.")
+                    Catch ex As Exception
+                        Console.WriteLine($"Failed to write audit on max QR attempts: {ex.Message}")
+                    End Try
+
+                    MessageBox.Show("Too many incorrect login attempts. The application will now close.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                    Application.Exit()
+                Else
+                    MessageBox.Show("Invalid QR code format.", "QR Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                End If
+
                 Return False
             End If
 
             Console.WriteLine($"Looking up user ID: {userId}")
 
-            ' Get user details from database using UserID (include IsActive)
-            Dim query As String = "SELECT Username, pin, IsActive FROM Users WHERE UserID = @UserID"
+            ' Get user details from database using UserID (include IsActive and UserRole)
+            Dim query As String = "SELECT Username, pin, IsActive, UserRole, FullName FROM Users WHERE UserID = @UserID"
             Dim parameters As SqlParameter() = {
             New SqlParameter("@UserID", userId)
         }
@@ -453,11 +487,15 @@ Public Class frmLoginvb
             Dim username As String = Nothing
             Dim pinValue As String = Nothing
             Dim isActive As Boolean = True
+            Dim userRole As String = String.Empty
+            Dim fullName As String = String.Empty
 
             Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters)
                 If reader.Read() Then
-                    username = reader("Username").ToString()
-                    pinValue = reader("pin").ToString()
+                    username = If(IsDBNull(reader("Username")), Nothing, reader("Username").ToString())
+                    pinValue = If(IsDBNull(reader("pin")), Nothing, reader("pin").ToString())
+                    userRole = If(IsDBNull(reader("UserRole")), String.Empty, reader("UserRole").ToString())
+                    fullName = If(IsDBNull(reader("FullName")), String.Empty, reader("FullName").ToString())
                     Try
                         If Not IsDBNull(reader("IsActive")) Then
                             isActive = Convert.ToBoolean(reader("IsActive"))
@@ -465,41 +503,70 @@ Public Class frmLoginvb
                     Catch
                         isActive = True
                     End Try
-                    Console.WriteLine($"Found user: {username}, IsActive: {isActive}")
+                    Console.WriteLine($"Found user: {username}, Role: {userRole}, IsActive: {isActive}")
                 End If
             End Using
 
             If username IsNot Nothing AndAlso pinValue IsNot Nothing Then
-                ' If account inactive, show error and audit log, then return false
+                ' If account inactive, show error and audit log (keep this as a distinct security event)
                 If Not isActive Then
                     MessageBox.Show("This account is inactive. Please contact your administrator.", "Account Inactive", MessageBoxButtons.OK, MessageBoxIcon.Warning)
                     Utilities.LogAudit(username, "QR Login Attempt (Inactive)", $"Inactive account attempted QR login: {username}")
                     Return False
                 End If
 
-                ' Store username for later use
+                ' Store user context for subsequent flows
+                LoggedInUserID = userId
                 LoggedInUsername = username
+                LoggedInRole = userRole
+                If Not String.IsNullOrEmpty(fullName) Then
+                    LoggedInFullName = fullName
+                End If
 
                 ' Show success message and proceed to PIN entry
                 MessageBox.Show($"QR Code scanned successfully!{vbCrLf}User: {username}{vbCrLf}Please enter your PIN.", "QR Login", MessageBoxButtons.OK, MessageBoxIcon.Information)
 
-                ' Log the QR scan attempt
+                ' Log the QR scan attempt (successful detection)
                 Utilities.LogAudit(username, "QR Login Attempt", $"User {username} attempted login via QR code scan")
 
-                ' Show PIN entry panel
+                ' Reset failed login counter on successful identification
+                failedLoginAttempts = 0
+
+                ' Show PIN entry panel and ensure the main form will receive focus after the scanner closes so PIN keystrokes are captured.
                 ShowPinEntryPanel(pinValue)
                 Return True
             Else
                 Console.WriteLine("User not found in database")
-                MessageBox.Show("Invalid QR code or user not found.", "QR Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)
-                Utilities.LogAudit("Unknown", "QR Login Failed", $"Invalid QR code scanned: {userCode}")
+
+                ' Count as a failed attempt; only audit on reaching max.
+                failedLoginAttempts += 1
+                If failedLoginAttempts >= MaxLoginAttempts Then
+                    Try
+                        Dim auditUser = If(String.IsNullOrEmpty(userCode), "Unknown", userCode)
+                        Utilities.LogAudit(auditUser, "Too Many Login Attempts", $"Exceeded maximum login attempts ({MaxLoginAttempts}) via QR. Application closing.")
+                    Catch ex As Exception
+                        Console.WriteLine($"Failed to write audit on max QR attempts (user not found): {ex.Message}")
+                    End Try
+
+                    MessageBox.Show("Too many incorrect login attempts. The application will now close.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                    Application.Exit()
+                Else
+                    MessageBox.Show("Invalid QR code or user not found.", "QR Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                End If
+
                 Return False
             End If
 
         Catch ex As Exception
             Console.WriteLine($"ProcessQRLogin error: {ex.Message}")
             MessageBox.Show($"Error processing QR code: {ex.Message}", "QR Login Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-            Utilities.LogAudit("Unknown", "QR Login Error", $"Error processing QR code {userCode}: {ex.Message}")
+
+            ' Log unexpected errors (distinct from failed attempts)
+            Try
+                Utilities.LogAudit("Unknown", "QR Login Error", $"Error processing QR code {userCode}: {ex.Message}")
+            Catch
+            End Try
+
             Return False
         End Try
     End Function
@@ -534,7 +601,7 @@ Public Class frmLoginvb
 
     Private Sub BtnLogin_Click(sender As Object, e As EventArgs) Handles BtnLogin.Click
         Try
-            ' Validate input
+            ' Validate input (do not count these as failed attempts)
             If String.IsNullOrEmpty(txtUserName.Text.Trim()) OrElse String.IsNullOrEmpty(txtPassword.Text.Trim()) Then
                 MessageBox.Show("Please enter both username and password.", "Login Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
                 Return
@@ -542,9 +609,9 @@ Public Class frmLoginvb
 
             ' Query to get user credentials (do not filter by IsActive here so we can detect inactive attempts)
             Dim query As String = "
-                SELECT UserID, Username, FullName, UserRole, pin, PasswordHash, IsActive 
-                FROM Users 
-                WHERE Username = @Username"
+            SELECT UserID, Username, FullName, UserRole, pin, PasswordHash, IsActive 
+            FROM Users 
+            WHERE Username = @Username"
 
             Dim parameters As SqlParameter() = {
             New SqlParameter("@Username", txtUserName.Text.Trim())
@@ -564,7 +631,7 @@ Public Class frmLoginvb
 
                     Dim usernameDb As String = reader("Username").ToString()
 
-                    ' If account inactive, show error and audit log, then return
+                    ' If account inactive, show error and audit log immediately (keep this as a distinct security event)
                     If Not isActive Then
                         MessageBox.Show("This account is inactive. Please contact your administrator.", "Account Inactive", MessageBoxButtons.OK, MessageBoxIcon.Warning)
                         Utilities.LogAudit(usernameDb, "Login Attempt (Inactive)", $"Inactive account attempted to login: {usernameDb}")
@@ -591,6 +658,10 @@ Public Class frmLoginvb
                     End If
 
                     If isPasswordValid Then
+                        ' Reset failed login counters on success
+                        failedLoginAttempts = 0
+                        failedPinAttempts = 0
+
                         ' Login successful
                         LoggedInUserID = Convert.ToInt32(reader("UserID"))
                         LoggedInUsername = reader("Username").ToString()
@@ -604,14 +675,40 @@ Public Class frmLoginvb
                         ' Show PIN entry panel instead of going directly to Dashboard
                         ShowPinEntryPanel(pinValue)
                     Else
-                        ' Login failed
-                        MessageBox.Show("Invalid username or password.", "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)
-                        Utilities.LogAudit(txtUserName.Text.Trim(), "Login Failed", "Invalid username or password")
+                        ' Wrong password: increment counter and only audit on reaching max
+                        failedLoginAttempts += 1
+
+                        If failedLoginAttempts >= MaxLoginAttempts Then
+                            Try
+                                Dim auditUser = If(String.IsNullOrEmpty(txtUserName.Text.Trim()), "Unknown", txtUserName.Text.Trim())
+                                Utilities.LogAudit(auditUser, "Too Many Login Attempts", $"User exceeded maximum login attempts ({MaxLoginAttempts}). Application closing.")
+                            Catch ex As Exception
+                                Console.WriteLine($"Failed to write audit on max login attempts: {ex.Message}")
+                            End Try
+
+                            MessageBox.Show("Too many incorrect login attempts. The application will now close.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                            Application.Exit()
+                        Else
+                            MessageBox.Show("Invalid username or password.", "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                        End If
                     End If
                 Else
-                    ' User not found
-                    MessageBox.Show("Invalid username or password.", "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)
-                    Utilities.LogAudit(txtUserName.Text.Trim(), "Login Failed", "Username not found")
+                    ' Username not found: count toward the same max attempts policy
+                    failedLoginAttempts += 1
+
+                    If failedLoginAttempts >= MaxLoginAttempts Then
+                        Try
+                            Dim auditUser = If(String.IsNullOrEmpty(txtUserName.Text.Trim()), "Unknown", txtUserName.Text.Trim())
+                            Utilities.LogAudit(auditUser, "Too Many Login Attempts", $"User exceeded maximum login attempts ({MaxLoginAttempts}). Application closing.")
+                        Catch ex As Exception
+                            Console.WriteLine($"Failed to write audit on max login attempts (username not found): {ex.Message}")
+                        End Try
+
+                        MessageBox.Show("Too many incorrect login attempts. The application will now close.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                        Application.Exit()
+                    Else
+                        MessageBox.Show("Invalid username or password.", "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                    End If
                 End If
             End Using
 
@@ -806,7 +903,12 @@ Public Class frmLoginvb
     End Sub
 
     Private Sub ValidatePin(expectedPin As String, pinIndicators As List(Of Guna.UI2.WinForms.Guna2CircleButton), pinPanel As Control)
+        Const MaxPinAttempts As Integer = 3
+
         If pinInput = expectedPin Then
+            ' Reset failed attempts on success
+            failedPinAttempts = 0
+
             LoggedInPIN = pinInput
             Utilities.LogAudit(LoggedInUsername, "Logged In", $"User {LoggedInUsername} successfully logged in at {DateTime.Now:yyyy-MM-dd HH:mm:ss}")
             MessageBox.Show("Login successful!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information)
@@ -828,12 +930,20 @@ Public Class frmLoginvb
                 ' Show the login form again and display error
                 Me.Show()
                 MessageBox.Show($"Error opening dashboard: {ex.Message}{vbCrLf}{vbCrLf}Please try logging in again.",
-                              "Dashboard Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                          "Dashboard Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
             End Try
         Else
             failedPinAttempts += 1
-            Utilities.LogAudit(LoggedInUsername, "PIN Attempt Failed", $"Incorrect PIN attempt #{failedPinAttempts} for user {LoggedInUsername}")
-            If failedPinAttempts >= 3 Then
+
+            ' Do NOT audit log every failed attempt. Only log once when the maximum is reached.
+            If failedPinAttempts >= MaxPinAttempts Then
+                Try
+                    Dim auditUser As String = If(String.IsNullOrEmpty(LoggedInUsername), "Unknown", LoggedInUsername)
+                    Utilities.LogAudit(auditUser, "Too Many PIN Attempts", $"User exceeded maximum PIN attempts ({MaxPinAttempts}). Application closing.")
+                Catch ex As Exception
+                    Console.WriteLine($"Failed to write audit on max PIN attempts: {ex.Message}")
+                End Try
+
                 MessageBox.Show("Too many incorrect PIN attempts. The application will now close.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Error)
                 Application.Exit()
             Else
@@ -845,7 +955,6 @@ Public Class frmLoginvb
             End If
         End If
     End Sub
-
     ' Public method to handle logout from other forms
     Public Shared Sub LogoutUser()
         If Not String.IsNullOrEmpty(LoggedInUsername) Then
