@@ -22,26 +22,25 @@ Partial Class IdCard
     'Do not modify it using the code editor.
     <System.Diagnostics.DebuggerStepThrough()>
     Private Sub InitializeComponent()
-        Dim CustomizableEdges6 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges7 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges8 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges9 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges1 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges2 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges3 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges6 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges7 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges4 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges5 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges8 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges9 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges10 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges11 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges12 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges13 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges14 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges15 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         pnlIDCard = New Guna.UI2.WinForms.Guna2Panel()
-        QrCodePicturebox = New PictureBox()
         Guna2HtmlLabel1 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         picCompanyLogo = New Guna.UI2.WinForms.Guna2PictureBox()
         lblPasskeys = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        lblPasskeysTitle = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        lblPin = New Guna.UI2.WinForms.Guna2HtmlLabel()
         lblPinTitle = New Guna.UI2.WinForms.Guna2HtmlLabel()
         lblUserID = New Guna.UI2.WinForms.Guna2HtmlLabel()
         lblPhone = New Guna.UI2.WinForms.Guna2HtmlLabel()
@@ -49,31 +48,35 @@ Partial Class IdCard
         lblEmail = New Guna.UI2.WinForms.Guna2HtmlLabel()
         lblEmailTitle = New Guna.UI2.WinForms.Guna2HtmlLabel()
         lblRole = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        txtUsername = New Guna.UI2.WinForms.Guna2TextBox()
         picStaffPhoto = New Guna.UI2.WinForms.Guna2CirclePictureBox()
-        lblCompanyName = New Guna.UI2.WinForms.Guna2HtmlLabel()
+        Guna2Panel1 = New Guna.UI2.WinForms.Guna2Panel()
+        QrCodePicturebox = New PictureBox()
+        PictureBox1 = New PictureBox()
+        Guna2HtmlLabel5 = New Guna.UI2.WinForms.Guna2HtmlLabel()
+        Guna2HtmlLabel6 = New Guna.UI2.WinForms.Guna2HtmlLabel()
+        txtUsername = New Guna.UI2.WinForms.Guna2TextBox()
+        lblPin = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2GradientPanel1 = New Guna.UI2.WinForms.Guna2GradientPanel()
         btnClose = New Guna.UI2.WinForms.Guna2Button()
         btnPrint = New Guna.UI2.WinForms.Guna2Button()
         pnlIDCard.SuspendLayout()
-        CType(QrCodePicturebox, ComponentModel.ISupportInitialize).BeginInit()
         CType(picCompanyLogo, ComponentModel.ISupportInitialize).BeginInit()
         CType(picStaffPhoto, ComponentModel.ISupportInitialize).BeginInit()
+        Guna2Panel1.SuspendLayout()
+        CType(QrCodePicturebox, ComponentModel.ISupportInitialize).BeginInit()
+        CType(PictureBox1, ComponentModel.ISupportInitialize).BeginInit()
         SuspendLayout()
         ' 
         ' pnlIDCard
         ' 
         pnlIDCard.BackColor = Color.Black
         pnlIDCard.BackgroundImageLayout = ImageLayout.Stretch
-        pnlIDCard.BorderColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
+        pnlIDCard.BorderColor = Color.Black
         pnlIDCard.BorderRadius = 15
         pnlIDCard.BorderThickness = 2
-        pnlIDCard.Controls.Add(QrCodePicturebox)
         pnlIDCard.Controls.Add(Guna2HtmlLabel1)
         pnlIDCard.Controls.Add(picCompanyLogo)
         pnlIDCard.Controls.Add(lblPasskeys)
-        pnlIDCard.Controls.Add(lblPasskeysTitle)
-        pnlIDCard.Controls.Add(lblPin)
         pnlIDCard.Controls.Add(lblPinTitle)
         pnlIDCard.Controls.Add(lblUserID)
         pnlIDCard.Controls.Add(lblPhone)
@@ -81,34 +84,22 @@ Partial Class IdCard
         pnlIDCard.Controls.Add(lblEmail)
         pnlIDCard.Controls.Add(lblEmailTitle)
         pnlIDCard.Controls.Add(lblRole)
-        pnlIDCard.Controls.Add(txtUsername)
         pnlIDCard.Controls.Add(picStaffPhoto)
-        pnlIDCard.Controls.Add(lblCompanyName)
-        pnlIDCard.CustomizableEdges = CustomizableEdges6
+        pnlIDCard.Controls.Add(Guna2Panel1)
+        pnlIDCard.CustomizableEdges = CustomizableEdges8
         pnlIDCard.FillColor = Color.Transparent
         pnlIDCard.Location = New Point(30, 30)
         pnlIDCard.Name = "pnlIDCard"
-        pnlIDCard.ShadowDecoration.CustomizableEdges = CustomizableEdges7
+        pnlIDCard.ShadowDecoration.CustomizableEdges = CustomizableEdges9
         pnlIDCard.Size = New Size(400, 550)
         pnlIDCard.TabIndex = 0
         ' 
-        ' QrCodePicturebox
-        ' 
-        QrCodePicturebox.BackColor = Color.White
-        QrCodePicturebox.BorderStyle = BorderStyle.FixedSingle
-        QrCodePicturebox.Location = New Point(134, 414)
-        QrCodePicturebox.Name = "QrCodePicturebox"
-        QrCodePicturebox.Size = New Size(138, 115)
-        QrCodePicturebox.SizeMode = PictureBoxSizeMode.StretchImage
-        QrCodePicturebox.TabIndex = 17
-        QrCodePicturebox.TabStop = False
-        ' 
         ' Guna2HtmlLabel1
         ' 
-        Guna2HtmlLabel1.BackColor = Color.Transparent
+        Guna2HtmlLabel1.BackColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
         Guna2HtmlLabel1.Font = New Font("Poppins Medium", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel1.ForeColor = Color.White
-        Guna2HtmlLabel1.Location = New Point(80, 279)
+        Guna2HtmlLabel1.ForeColor = Color.Black
+        Guna2HtmlLabel1.Location = New Point(80, 305)
         Guna2HtmlLabel1.Name = "Guna2HtmlLabel1"
         Guna2HtmlLabel1.Size = New Size(46, 28)
         Guna2HtmlLabel1.TabIndex = 16
@@ -120,10 +111,10 @@ Partial Class IdCard
         picCompanyLogo.BorderRadius = 5
         picCompanyLogo.CustomizableEdges = CustomizableEdges1
         picCompanyLogo.ImageRotate = 0F
-        picCompanyLogo.Location = New Point(159, 12)
+        picCompanyLogo.Location = New Point(11, 12)
         picCompanyLogo.Name = "picCompanyLogo"
         picCompanyLogo.ShadowDecoration.CustomizableEdges = CustomizableEdges2
-        picCompanyLogo.Size = New Size(85, 66)
+        picCompanyLogo.Size = New Size(81, 69)
         picCompanyLogo.SizeMode = PictureBoxSizeMode.Zoom
         picCompanyLogo.TabIndex = 15
         picCompanyLogo.TabStop = False
@@ -140,30 +131,6 @@ Partial Class IdCard
         lblPasskeys.Text = "key1,key2,key3,key4,key5,key6"
         lblPasskeys.Visible = False
         ' 
-        ' lblPasskeysTitle
-        ' 
-        lblPasskeysTitle.BackColor = Color.Transparent
-        lblPasskeysTitle.Font = New Font("Poppins Medium", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblPasskeysTitle.ForeColor = Color.Black
-        lblPasskeysTitle.Location = New Point(196, 275)
-        lblPasskeysTitle.Name = "lblPasskeysTitle"
-        lblPasskeysTitle.Size = New Size(149, 28)
-        lblPasskeysTitle.TabIndex = 13
-        lblPasskeysTitle.Text = "Recovery Passkeys:"
-        lblPasskeysTitle.Visible = False
-        ' 
-        ' lblPin
-        ' 
-        lblPin.BackColor = Color.Transparent
-        lblPin.Font = New Font("Poppins", 12.0F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
-        lblPin.ForeColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
-        lblPin.Location = New Point(278, 76)
-        lblPin.Name = "lblPin"
-        lblPin.Size = New Size(48, 38)
-        lblPin.TabIndex = 12
-        lblPin.Text = "1234"
-        lblPin.Visible = False
-        ' 
         ' lblPinTitle
         ' 
         lblPinTitle.BackColor = Color.Transparent
@@ -178,10 +145,10 @@ Partial Class IdCard
         ' 
         ' lblUserID
         ' 
-        lblUserID.BackColor = Color.Transparent
+        lblUserID.BackColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
         lblUserID.Font = New Font("Poppins", 10.2F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
-        lblUserID.ForeColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
-        lblUserID.Location = New Point(148, 275)
+        lblUserID.ForeColor = Color.Black
+        lblUserID.Location = New Point(148, 301)
         lblUserID.Name = "lblUserID"
         lblUserID.Size = New Size(20, 32)
         lblUserID.TabIndex = 10
@@ -189,9 +156,9 @@ Partial Class IdCard
         ' 
         ' lblPhone
         ' 
-        lblPhone.BackColor = Color.Transparent
+        lblPhone.BackColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
         lblPhone.Font = New Font("Poppins", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblPhone.ForeColor = Color.FromArgb(CByte(224), CByte(224), CByte(224))
+        lblPhone.ForeColor = Color.Black
         lblPhone.Location = New Point(146, 369)
         lblPhone.Name = "lblPhone"
         lblPhone.Size = New Size(87, 28)
@@ -200,9 +167,9 @@ Partial Class IdCard
         ' 
         ' lblPhoneTitle
         ' 
-        lblPhoneTitle.BackColor = Color.Transparent
+        lblPhoneTitle.BackColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
         lblPhoneTitle.Font = New Font("Poppins Medium", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblPhoneTitle.ForeColor = Color.White
+        lblPhoneTitle.ForeColor = Color.Black
         lblPhoneTitle.Location = New Point(80, 369)
         lblPhoneTitle.Name = "lblPhoneTitle"
         lblPhoneTitle.Size = New Size(54, 28)
@@ -211,10 +178,10 @@ Partial Class IdCard
         ' 
         ' lblEmail
         ' 
-        lblEmail.BackColor = Color.Transparent
+        lblEmail.BackColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
         lblEmail.Font = New Font("Poppins", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblEmail.ForeColor = Color.FromArgb(CByte(224), CByte(224), CByte(224))
-        lblEmail.Location = New Point(146, 322)
+        lblEmail.ForeColor = Color.Black
+        lblEmail.Location = New Point(146, 337)
         lblEmail.Name = "lblEmail"
         lblEmail.Size = New Size(162, 28)
         lblEmail.TabIndex = 6
@@ -222,10 +189,10 @@ Partial Class IdCard
         ' 
         ' lblEmailTitle
         ' 
-        lblEmailTitle.BackColor = Color.Transparent
+        lblEmailTitle.BackColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
         lblEmailTitle.Font = New Font("Poppins", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblEmailTitle.ForeColor = Color.White
-        lblEmailTitle.Location = New Point(80, 322)
+        lblEmailTitle.ForeColor = Color.Black
+        lblEmailTitle.Location = New Point(80, 337)
         lblEmailTitle.Name = "lblEmailTitle"
         lblEmailTitle.Size = New Size(47, 28)
         lblEmailTitle.TabIndex = 5
@@ -233,22 +200,98 @@ Partial Class IdCard
         ' 
         ' lblRole
         ' 
-        lblRole.BackColor = Color.Transparent
+        lblRole.BackColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
         lblRole.Font = New Font("Poppins", 10.0F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
-        lblRole.ForeColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
-        lblRole.Location = New Point(171, 240)
+        lblRole.ForeColor = Color.Black
+        lblRole.Location = New Point(174, 266)
         lblRole.Name = "lblRole"
         lblRole.Size = New Size(47, 32)
         lblRole.TabIndex = 4
         lblRole.Text = "Staff"
         ' 
+        ' picStaffPhoto
+        ' 
+        picStaffPhoto.BackColor = Color.Transparent
+        picStaffPhoto.ImageRotate = 0F
+        picStaffPhoto.Location = New Point(128, 31)
+        picStaffPhoto.Name = "picStaffPhoto"
+        picStaffPhoto.ShadowDecoration.CustomizableEdges = CustomizableEdges3
+        picStaffPhoto.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
+        picStaffPhoto.Size = New Size(149, 143)
+        picStaffPhoto.SizeMode = PictureBoxSizeMode.Zoom
+        picStaffPhoto.TabIndex = 1
+        picStaffPhoto.TabStop = False
+        ' 
+        ' Guna2Panel1
+        ' 
+        Guna2Panel1.BackColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
+        Guna2Panel1.BackgroundImageLayout = ImageLayout.Stretch
+        Guna2Panel1.BorderColor = Color.Black
+        Guna2Panel1.Controls.Add(QrCodePicturebox)
+        Guna2Panel1.Controls.Add(PictureBox1)
+        Guna2Panel1.Controls.Add(Guna2HtmlLabel5)
+        Guna2Panel1.Controls.Add(Guna2HtmlLabel6)
+        Guna2Panel1.Controls.Add(txtUsername)
+        Guna2Panel1.CustomizableEdges = CustomizableEdges6
+        Guna2Panel1.FillColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
+        Guna2Panel1.ForeColor = Color.Black
+        Guna2Panel1.Location = New Point(3, 183)
+        Guna2Panel1.Name = "Guna2Panel1"
+        Guna2Panel1.ShadowDecoration.CustomizableEdges = CustomizableEdges7
+        Guna2Panel1.Size = New Size(394, 364)
+        Guna2Panel1.TabIndex = 19
+        ' 
+        ' QrCodePicturebox
+        ' 
+        QrCodePicturebox.BackColor = Color.White
+        QrCodePicturebox.BorderStyle = BorderStyle.FixedSingle
+        QrCodePicturebox.Location = New Point(135, 217)
+        QrCodePicturebox.Name = "QrCodePicturebox"
+        QrCodePicturebox.Size = New Size(138, 115)
+        QrCodePicturebox.SizeMode = PictureBoxSizeMode.StretchImage
+        QrCodePicturebox.TabIndex = 17
+        QrCodePicturebox.TabStop = False
+        ' 
+        ' PictureBox1
+        ' 
+        PictureBox1.BackColor = Color.White
+        PictureBox1.BorderStyle = BorderStyle.FixedSingle
+        PictureBox1.Location = New Point(134, 414)
+        PictureBox1.Name = "PictureBox1"
+        PictureBox1.Size = New Size(138, 115)
+        PictureBox1.SizeMode = PictureBoxSizeMode.StretchImage
+        PictureBox1.TabIndex = 17
+        PictureBox1.TabStop = False
+        ' 
+        ' Guna2HtmlLabel5
+        ' 
+        Guna2HtmlLabel5.BackColor = Color.Transparent
+        Guna2HtmlLabel5.Font = New Font("Poppins", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Guna2HtmlLabel5.ForeColor = Color.FromArgb(CByte(224), CByte(224), CByte(224))
+        Guna2HtmlLabel5.Location = New Point(146, 369)
+        Guna2HtmlLabel5.Name = "Guna2HtmlLabel5"
+        Guna2HtmlLabel5.Size = New Size(87, 28)
+        Guna2HtmlLabel5.TabIndex = 8
+        Guna2HtmlLabel5.Text = "+123456789"
+        ' 
+        ' Guna2HtmlLabel6
+        ' 
+        Guna2HtmlLabel6.BackColor = Color.Transparent
+        Guna2HtmlLabel6.Font = New Font("Poppins Medium", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Guna2HtmlLabel6.ForeColor = Color.White
+        Guna2HtmlLabel6.Location = New Point(80, 369)
+        Guna2HtmlLabel6.Name = "Guna2HtmlLabel6"
+        Guna2HtmlLabel6.Size = New Size(54, 28)
+        Guna2HtmlLabel6.TabIndex = 7
+        Guna2HtmlLabel6.Text = "Phone:"
+        ' 
         ' txtUsername
         ' 
         txtUsername.BackColor = Color.Transparent
         txtUsername.BackgroundImageLayout = ImageLayout.Stretch
-        txtUsername.BorderRadius = 10
+        txtUsername.BorderColor = Color.Black
         txtUsername.BorderThickness = 0
-        txtUsername.CustomizableEdges = CustomizableEdges3
+        txtUsername.CustomizableEdges = CustomizableEdges4
         txtUsername.DefaultText = ""
         txtUsername.DisabledState.BorderColor = Color.Transparent
         txtUsername.DisabledState.FillColor = Color.Transparent
@@ -257,58 +300,45 @@ Partial Class IdCard
         txtUsername.FillColor = Color.Transparent
         txtUsername.FocusedState.BorderColor = Color.Transparent
         txtUsername.Font = New Font("Microsoft Sans Serif", 18.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        txtUsername.ForeColor = Color.White
+        txtUsername.ForeColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
         txtUsername.HoverState.BorderColor = Color.Transparent
-        txtUsername.Location = New Point(14, 182)
+        txtUsername.Location = New Point(0, 0)
         txtUsername.Margin = New Padding(3, 4, 3, 4)
         txtUsername.Name = "txtUsername"
         txtUsername.PlaceholderText = ""
         txtUsername.ReadOnly = True
         txtUsername.SelectedText = ""
-        txtUsername.ShadowDecoration.CustomizableEdges = CustomizableEdges4
-        txtUsername.Size = New Size(371, 38)
+        txtUsername.ShadowDecoration.CustomizableEdges = CustomizableEdges5
+        txtUsername.Size = New Size(394, 38)
         txtUsername.TabIndex = 2
         txtUsername.TabStop = False
         txtUsername.TextAlign = HorizontalAlignment.Center
         ' 
-        ' picStaffPhoto
+        ' lblPin
         ' 
-        picStaffPhoto.BackColor = Color.Transparent
-        picStaffPhoto.ImageRotate = 0F
-        picStaffPhoto.Location = New Point(148, 76)
-        picStaffPhoto.Name = "picStaffPhoto"
-        picStaffPhoto.ShadowDecoration.CustomizableEdges = CustomizableEdges5
-        picStaffPhoto.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
-        picStaffPhoto.Size = New Size(100, 100)
-        picStaffPhoto.SizeMode = PictureBoxSizeMode.Zoom
-        picStaffPhoto.TabIndex = 1
-        picStaffPhoto.TabStop = False
-        ' 
-        ' lblCompanyName
-        ' 
-        lblCompanyName.BackColor = Color.Transparent
-        lblCompanyName.Font = New Font("Poppins", 18.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblCompanyName.ForeColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
-        lblCompanyName.Location = New Point(80, 12)
-        lblCompanyName.Name = "lblCompanyName"
-        lblCompanyName.Size = New Size(232, 55)
-        lblCompanyName.TabIndex = 0
-        lblCompanyName.Text = "Employee Card"
-        lblCompanyName.Visible = False
+        lblPin.BackColor = Color.Transparent
+        lblPin.Font = New Font("Poppins", 12.0F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        lblPin.ForeColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
+        lblPin.Location = New Point(425, 42)
+        lblPin.Name = "lblPin"
+        lblPin.Size = New Size(48, 38)
+        lblPin.TabIndex = 12
+        lblPin.Text = "1234"
+        lblPin.Visible = False
         ' 
         ' Guna2GradientPanel1
         ' 
-        Guna2GradientPanel1.CustomizableEdges = CustomizableEdges8
+        Guna2GradientPanel1.CustomizableEdges = CustomizableEdges10
         Guna2GradientPanel1.Location = New Point(12, 651)
         Guna2GradientPanel1.Name = "Guna2GradientPanel1"
-        Guna2GradientPanel1.ShadowDecoration.CustomizableEdges = CustomizableEdges9
+        Guna2GradientPanel1.ShadowDecoration.CustomizableEdges = CustomizableEdges11
         Guna2GradientPanel1.Size = New Size(193, 42)
         Guna2GradientPanel1.TabIndex = 17
         ' 
         ' btnClose
         ' 
         btnClose.BorderRadius = 10
-        btnClose.CustomizableEdges = CustomizableEdges10
+        btnClose.CustomizableEdges = CustomizableEdges12
         btnClose.DisabledState.BorderColor = Color.DarkGray
         btnClose.DisabledState.CustomBorderColor = Color.DarkGray
         btnClose.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
@@ -318,7 +348,7 @@ Partial Class IdCard
         btnClose.ForeColor = Color.Black
         btnClose.Location = New Point(350, 600)
         btnClose.Name = "btnClose"
-        btnClose.ShadowDecoration.CustomizableEdges = CustomizableEdges11
+        btnClose.ShadowDecoration.CustomizableEdges = CustomizableEdges13
         btnClose.Size = New Size(80, 35)
         btnClose.TabIndex = 1
         btnClose.Text = "Close"
@@ -326,7 +356,7 @@ Partial Class IdCard
         ' btnPrint
         ' 
         btnPrint.BorderRadius = 10
-        btnPrint.CustomizableEdges = CustomizableEdges12
+        btnPrint.CustomizableEdges = CustomizableEdges14
         btnPrint.DisabledState.BorderColor = Color.DarkGray
         btnPrint.DisabledState.CustomBorderColor = Color.DarkGray
         btnPrint.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
@@ -336,7 +366,7 @@ Partial Class IdCard
         btnPrint.ForeColor = Color.Black
         btnPrint.Location = New Point(260, 600)
         btnPrint.Name = "btnPrint"
-        btnPrint.ShadowDecoration.CustomizableEdges = CustomizableEdges13
+        btnPrint.ShadowDecoration.CustomizableEdges = CustomizableEdges15
         btnPrint.Size = New Size(80, 35)
         btnPrint.TabIndex = 2
         btnPrint.Text = "Print"
@@ -352,6 +382,7 @@ Partial Class IdCard
         Controls.Add(btnPrint)
         Controls.Add(btnClose)
         Controls.Add(pnlIDCard)
+        Controls.Add(lblPin)
         FormBorderStyle = FormBorderStyle.FixedDialog
         MaximizeBox = False
         MinimizeBox = False
@@ -360,10 +391,14 @@ Partial Class IdCard
         Text = "Staff ID Card"
         pnlIDCard.ResumeLayout(False)
         pnlIDCard.PerformLayout()
-        CType(QrCodePicturebox, ComponentModel.ISupportInitialize).EndInit()
         CType(picCompanyLogo, ComponentModel.ISupportInitialize).EndInit()
         CType(picStaffPhoto, ComponentModel.ISupportInitialize).EndInit()
+        Guna2Panel1.ResumeLayout(False)
+        Guna2Panel1.PerformLayout()
+        CType(QrCodePicturebox, ComponentModel.ISupportInitialize).EndInit()
+        CType(PictureBox1, ComponentModel.ISupportInitialize).EndInit()
         ResumeLayout(False)
+        PerformLayout()
     End Sub
 
     Friend WithEvents pnlIDCard As Guna.UI2.WinForms.Guna2Panel
@@ -378,13 +413,15 @@ Partial Class IdCard
     Friend WithEvents lblUserID As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents lblPinTitle As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents lblPin As Guna.UI2.WinForms.Guna2HtmlLabel
-    Friend WithEvents lblPasskeysTitle As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents btnClose As Guna.UI2.WinForms.Guna2Button
     Friend WithEvents btnPrint As Guna.UI2.WinForms.Guna2Button
     Friend WithEvents Guna2HtmlLabel1 As Guna.UI2.WinForms.Guna2HtmlLabel
-    Friend WithEvents lblCompanyName As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents Guna2GradientPanel1 As Guna.UI2.WinForms.Guna2GradientPanel
     Friend WithEvents lblPasskeys As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents QrCodePicturebox As PictureBox
     Friend WithEvents txtUsername As Guna.UI2.WinForms.Guna2TextBox
+    Friend WithEvents Guna2Panel1 As Guna.UI2.WinForms.Guna2Panel
+    Friend WithEvents PictureBox1 As PictureBox
+    Friend WithEvents Guna2HtmlLabel5 As Guna.UI2.WinForms.Guna2HtmlLabel
+    Friend WithEvents Guna2HtmlLabel6 As Guna.UI2.WinForms.Guna2HtmlLabel
 End Class

@@ -106,7 +106,7 @@ Partial Class Dashboard
         ' lbl2
         ' 
         lbl2.AutoSize = True
-        lbl2.BackColor = Color.White
+        lbl2.BackColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
         lbl2.Location = New Point(259, 20)
         lbl2.Name = "lbl2"
         lbl2.Size = New Size(18, 20)
@@ -207,7 +207,7 @@ Partial Class Dashboard
         ' Label2
         ' 
         Label2.AutoSize = True
-        Label2.BackColor = Color.White
+        Label2.BackColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
         Label2.Location = New Point(249, 16)
         Label2.Name = "Label2"
         Label2.Size = New Size(18, 20)
@@ -218,11 +218,11 @@ Partial Class Dashboard
         ' 
         Guna2HtmlLabel12.AutoSize = True
         Guna2HtmlLabel12.BackColor = Color.FromArgb(CByte(61), CByte(65), CByte(69))
-        Guna2HtmlLabel12.Font = New Font("Poppins Medium", 13.8F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        Guna2HtmlLabel12.Font = New Font("Segoe UI", 13.8F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel12.ForeColor = Color.FromArgb(CByte(255), CByte(255), CByte(255))
         Guna2HtmlLabel12.Location = New Point(12, 51)
         Guna2HtmlLabel12.Name = "Guna2HtmlLabel12"
-        Guna2HtmlLabel12.Size = New Size(92, 40)
+        Guna2HtmlLabel12.Size = New Size(81, 31)
         Guna2HtmlLabel12.TabIndex = 56
         Guna2HtmlLabel12.Text = "Label1"
         ' 
@@ -285,7 +285,7 @@ Partial Class Dashboard
         ' Label1
         ' 
         Label1.AutoSize = True
-        Label1.BackColor = Color.White
+        Label1.BackColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
         Label1.Location = New Point(249, 16)
         Label1.Name = "Label1"
         Label1.Size = New Size(18, 20)
@@ -339,9 +339,9 @@ Partial Class Dashboard
         Guna2HtmlLabel18.ForeColor = Color.FromArgb(CByte(255), CByte(255), CByte(255))
         Guna2HtmlLabel18.Location = New Point(12, 13)
         Guna2HtmlLabel18.Name = "Guna2HtmlLabel18"
-        Guna2HtmlLabel18.Size = New Size(126, 32)
+        Guna2HtmlLabel18.Size = New Size(109, 32)
         Guna2HtmlLabel18.TabIndex = 52
-        Guna2HtmlLabel18.Text = "Total Inventory"
+        Guna2HtmlLabel18.Text = "Overall Sales"
         ' 
         ' DashboardPanel
         ' 

@@ -53,14 +53,11 @@ Public Class IdCard
                     DisposePictureBoxImage(picCompanyLogo)
                     picCompanyLogo.Image = New Bitmap(logoImg)
                     picCompanyLogo.SizeMode = PictureBoxSizeMode.Zoom
-                    lblCompanyName.Visible = False
                 Else
                     ' If no logo, show company name label (designer had it hidden)
-                    lblCompanyName.Visible = True
                 End If
             Catch ex As Exception
                 Console.WriteLine($"Company logo rendering failed: {ex.Message}")
-                lblCompanyName.Visible = True
             End Try
 
             ' Photo handling - prefer supplied byte[] in dictionary
@@ -195,5 +192,25 @@ Public Class IdCard
         Catch ex As Exception
             MessageBox.Show($"Print failed: {ex.Message}", "Print Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
+    End Sub
+
+    Private Sub picStaffPhoto_Click(sender As Object, e As EventArgs) Handles picStaffPhoto.Click
+
+    End Sub
+
+    Private Sub picCompanyLogo_Click(sender As Object, e As EventArgs) Handles picCompanyLogo.Click
+
+    End Sub
+
+    Private Sub lblPin_Click(sender As Object, e As EventArgs) Handles lblPin.Click
+
+    End Sub
+
+    Private Sub Guna2Panel1_Paint(sender As Object, e As PaintEventArgs) Handles Guna2Panel1.Paint
+
+    End Sub
+
+    Private Sub QrCodePicturebox_Click(sender As Object, e As EventArgs) Handles QrCodePicturebox.Click
+
     End Sub
 End Class

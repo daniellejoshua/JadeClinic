@@ -1,7 +1,10 @@
 ﻿Imports Guna.UI2.WinForms
 Imports Microsoft.Data.SqlClient
 Imports System.IO
-
+Imports LiveChartsCore
+Imports LiveChartsCore.SkiaSharpView
+Imports LiveChartsCore.SkiaSharpView.WinForms
+Imports SkiaSharp
 ' Extension method for creating rounded rectangles
 Public Module GraphicsExtensions
     <System.Runtime.CompilerServices.Extension()>
@@ -42,7 +45,11 @@ Public Class Dashboard
     Private btnAll As Guna2Button
     ' Navigation flag to prevent exit confirmation on programmatic close
     Private isNavigating As Boolean = False
-
+    Private salesChart As CartesianChart
+    Private btnYearly As Guna2Button
+    Private btnToday As Guna2Button
+    Private btnAllTime As Guna2Button
+    Private currentChartMode As String = "Today"
     ' Loading panel fields
     Private loadingPanel As Panel
     Private loadingLabel As Label
@@ -142,7 +149,7 @@ Public Class Dashboard
             UpdateMonthlyStockTrend()
             Console.WriteLine("Monthly stock trend updated")
 
-            LoadChartData("Weekly")
+            LoadChartData("Today")
             Console.WriteLine("Chart data loaded")
 
             ' Initialize chart filter buttons if they exist
@@ -162,6 +169,7 @@ Public Class Dashboard
                 btnDaily.FillColor = Color.FromArgb(61, 65, 69) ' Graphite #3D4145
                 btnDaily.ForeColor = Color.FromArgb(255, 255, 255) ' Pure White
             End If
+            SetActiveChartButton(currentChartMode)
             Console.WriteLine("Filter buttons initialized")
 
             ' Make DataGridView columns non-sortable
@@ -182,8 +190,6 @@ Public Class Dashboard
             End If
             Console.WriteLine("Loading panel hidden")
 
-            ' Show welcome message with new styling
-            MessageBox.Show($"Welcome to JadeClinic Dashboard, {frmLoginvb.LoggedInUsername}!", "Welcome", MessageBoxButtons.OK, MessageBoxIcon.Information)
             Console.WriteLine("Dashboard_Load completed successfully")
 
             ' Update form title to show logged-in user
@@ -210,7 +216,47 @@ Public Class Dashboard
                           "Dashboard Load Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
         End Try
     End Sub
+    Private Sub SetActiveChartButton(mode As String)
+        Dim buttons = New Dictionary(Of String, Guna2Button) From {
+        {"All Time", btnAllTime},
+        {"Yearly", btnYearly},
+        {"Monthly", btnMonthly},
+        {"Weekly", btnWeekly},
+        {"Today", btnToday}
+    }
 
+        For Each kv In buttons
+            If kv.Value Is Nothing Then Continue For
+
+            Dim active = kv.Key.Equals(mode, StringComparison.OrdinalIgnoreCase)
+            kv.Value.FillColor = If(active, Color.White, Color.FromArgb(61, 65, 69))
+            kv.Value.ForeColor = If(active, Color.FromArgb(26, 29, 31), Color.White)
+        Next
+    End Sub
+
+    Private Sub ApplyRoundedCorners(target As Control, radius As Integer)
+        Try
+            If target Is Nothing Then Return
+
+            Dim updateRegion As Action = Sub()
+                                             If target.Width <= 1 OrElse target.Height <= 1 Then Return
+
+                                             Using path As New Drawing2D.GraphicsPath()
+                                                 path.AddRoundedRectangle(New Rectangle(0, 0, target.Width - 1, target.Height - 1), radius)
+                                                 Dim oldRegion = target.Region
+                                                 target.Region = New Region(path)
+                                                 If oldRegion IsNot Nothing Then oldRegion.Dispose()
+                                             End Using
+                                         End Sub
+
+            updateRegion()
+            AddHandler target.SizeChanged, Sub(sender, e)
+                                               updateRegion()
+                                           End Sub
+        Catch ex As Exception
+            Console.WriteLine($"Error applying rounded corners: {ex.Message}")
+        End Try
+    End Sub
     Private Sub ApplyNewColorScheme()
         Try
             Console.WriteLine("ApplyNewColorScheme starting...")
@@ -424,100 +470,70 @@ Public Class Dashboard
 
     Private Sub LoadDailySalesData()
         Try
-            ' For dental supply system, we'll show product-related metrics instead of orders
             Dim query As String = "
-            SELECT 
-                COUNT(ProductID) as ProductCount,
-                ISNULL(SUM(CostPrice * CurrentStock), 0) as TotalInventoryValue
-            FROM Products 
-            WHERE IsActive = 1"
+            SELECT
+                ISNULL((SELECT COUNT(*) FROM Sales), 0) AS TotalOrders,
+                ISNULL((SELECT SUM(CostPrice * CurrentStock) FROM Products WHERE IsActive = 1), 0) AS ActiveStockValue"
 
             Using reader As SqlDataReader = Utilities.ExecuteReader(query, Nothing)
                 If reader.Read() Then
-                    Dim productCount As Integer = Convert.ToInt32(reader("ProductCount"))
-                    Dim inventoryValue As Decimal = Convert.ToDecimal(reader("TotalInventoryValue"))
+                    Dim totalOrders As Integer = Convert.ToInt32(reader("TotalOrders"))
+                    Dim activeStockValue As Decimal = Convert.ToDecimal(reader("ActiveStockValue"))
 
-                    ' Update Daily Sales Panel - show total active products
-                    Guna2HtmlLabel3.Text = productCount.ToString()
-                    lblDateDailySales.Text = DateTime.Now.ToString("MMM d, yyyy")
-                    Guna2HtmlLabel1.Text = "Active Products"
+                    ' Card 1: Total Orders
+                    Guna2HtmlLabel3.Text = totalOrders.ToString("N0")
+                    Guna2HtmlLabel1.Text = "Total Orders"
+                    lblDateDailySales.Text = "All Time"
 
-                    ' Update third panel (Guna2Panel7) - show total inventory value
-                    Guna2HtmlLabel16.Text = inventoryValue.ToString("N0")
-                    Guna2HtmlLabel15.Text = "Inventory Value"
-                    Guna2HtmlLabel15.ForeColor = Color.LightGray
-                    lastProductCount = productCount
+                    ' Card 2: Stock Value (active products only)
+                    Guna2HtmlLabel12.Text = "₱" & activeStockValue.ToString("N0")
+                    Guna2HtmlLabel14.Text = "Stock Value"
+                    Guna2HtmlLabel11.Text = "Active products only"
+                    Guna2HtmlLabel11.ForeColor = Color.LightGray
 
-                    Guna2HtmlLabel18.Text = "Total Value"
+                    lastProductCount = totalOrders
                 Else
                     Guna2HtmlLabel3.Text = "0"
-                    Guna2HtmlLabel16.Text = "0"
+                    Guna2HtmlLabel12.Text = "₱0"
                 End If
             End Using
         Catch ex As Exception
             Guna2HtmlLabel3.Text = "0"
-            Guna2HtmlLabel16.Text = "0"
-            Console.WriteLine($"Error loading dashboard data: {ex.Message}")
+            Guna2HtmlLabel12.Text = "₱0"
+            Guna2HtmlLabel11.Text = "Active products only"
+            Guna2HtmlLabel11.ForeColor = Color.Gray
+            Console.WriteLine($"Error loading dashboard card #1/#2 data: {ex.Message}")
         End Try
     End Sub
 
     Private Sub LoadMonthlySalesData()
         Try
-            ' Get current vs last month's new products added
-            Dim thisMonthProducts As Integer = 0
-            Dim lastMonthProducts As Integer = 0
+            Dim query As String = "
+        SELECT ISNULL(SUM(TotalAmount), 0) AS TotalRevenue
+        FROM Sales"
 
-            ' Query for this month's new products
-            Dim queryThisMonth As String = "
-            SELECT COUNT(*) as ProductCount
-            FROM Products
-            WHERE YEAR(Created) = YEAR(GETDATE()) AND MONTH(Created) = MONTH(GETDATE())"
-            Using reader As SqlDataReader = Utilities.ExecuteReader(queryThisMonth, Nothing)
+            Using reader As SqlDataReader = Utilities.ExecuteReader(query, Nothing)
                 If reader.Read() Then
-                    thisMonthProducts = Convert.ToInt32(reader("ProductCount"))
+                    Dim totalRevenue As Decimal = Convert.ToDecimal(reader("TotalRevenue"))
+                    Dim pesoSign As String = ChrW(&H20B1)
+
+                    ' Ensure font supports peso symbol
+                    Guna2HtmlLabel16.Font = New Font("Segoe UI", Guna2HtmlLabel16.Font.Size, Guna2HtmlLabel16.Font.Style)
+
+                    ' Card 3: Total Revenue
+                    Guna2HtmlLabel16.Text = String.Format(Globalization.CultureInfo.GetCultureInfo("en-PH"), "{0}{1:N0}", pesoSign, totalRevenue)
+                    Guna2HtmlLabel15.Text = "Total Revenue"
+                    Guna2HtmlLabel15.ForeColor = Color.LightGray
+                    Guna2HtmlLabel18.Text = "All recorded sales"
+                Else
+                    Guna2HtmlLabel16.Font = New Font("Segoe UI", Guna2HtmlLabel16.Font.Size, Guna2HtmlLabel16.Font.Style)
+                    Guna2HtmlLabel16.Text = ChrW(&H20B1) & "0"
                 End If
             End Using
-
-            ' Query for last month's products
-            Dim queryLastMonth As String = "
-            SELECT COUNT(*) as ProductCount
-            FROM Products
-            WHERE 
-                (YEAR(Created) = YEAR(DATEADD(month, -1, GETDATE())) AND 
-                 MONTH(Created) = MONTH(DATEADD(month, -1, GETDATE())))"
-            Using reader As SqlDataReader = Utilities.ExecuteReader(queryLastMonth, Nothing)
-                If reader.Read() Then
-                    lastMonthProducts = Convert.ToInt32(reader("ProductCount"))
-                End If
-            End Using
-
-            ' Calculate percent change
-            Dim percentChange As Decimal = 0
-            If lastMonthProducts > 0 Then
-                percentChange = ((thisMonthProducts - lastMonthProducts) / lastMonthProducts) * 100D
-            ElseIf thisMonthProducts > 0 Then
-                percentChange = 100
-            Else
-                percentChange = 0
-            End If
-
-            ' Set label text and color
-            If percentChange >= 0 Then
-                Guna2HtmlLabel11.Text = $"↗ {percentChange:N1}% from last month"
-                Guna2HtmlLabel11.ForeColor = Color.LightGreen
-            Else
-                Guna2HtmlLabel11.Text = $"↘ {Math.Abs(percentChange):N1}% from last month"
-                Guna2HtmlLabel11.ForeColor = Color.FromArgb(255, 128, 128) ' Red
-            End If
-
-            ' Set monthly new products count
-            Guna2HtmlLabel12.Text = thisMonthProducts.ToString()
-            Guna2HtmlLabel14.Text = "New Products This Month"
         Catch ex As Exception
-            Guna2HtmlLabel12.Text = "0"
-            Guna2HtmlLabel11.Text = "0% from last month"
-            Guna2HtmlLabel11.ForeColor = Color.Gray
-            Console.WriteLine($"Error loading monthly data: {ex.Message}")
+            Guna2HtmlLabel16.Font = New Font("Segoe UI", Guna2HtmlLabel16.Font.Size, Guna2HtmlLabel16.Font.Style)
+            Guna2HtmlLabel16.Text = ChrW(&H20B1) & "0"
+            Console.WriteLine($"Error loading dashboard card #3 data: {ex.Message}")
         End Try
     End Sub
 
@@ -536,7 +552,7 @@ Public Class Dashboard
 
             ' Add title label for Popular Products
             Dim titleLabel As New Label()
-            titleLabel.Text = "Popular Products"
+            titleLabel.Text = "Popular Product"
             titleLabel.Font = New Font("Poppins Medium", 13.8F, FontStyle.Regular)
             titleLabel.ForeColor = Color.FromArgb(255, 255, 255) ' Pure White
             titleLabel.Location = New Point(30, 15)
@@ -545,10 +561,11 @@ Public Class Dashboard
             PopularPanel.Controls.Add(titleLabel)
 
             ' Move search textbox to specified position with new styling
-            txtProductSearch.Location = New Point(550, 15)
+            txtProductSearch.Location = New Point(420, 10)
             txtProductSearch.Size = New Size(200, 20)
             txtProductSearch.BorderRadius = 10
             txtProductSearch.BackColor = Color.Transparent
+            txtProductSearch.BorderThickness = 1
 
             ' Configure the existing DataGridView with new color scheme
             Guna2DataGridView1.Columns.Clear()
@@ -574,8 +591,8 @@ Public Class Dashboard
             Guna2DataGridView1.DefaultCellStyle.BackColor = Color.FromArgb(43, 47, 50) ' Dark Slate #2B2F32
             Guna2DataGridView1.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(43, 47, 50) ' Dark Slate #2B2F32
             Guna2DataGridView1.DefaultCellStyle.ForeColor = Color.FromArgb(225, 229, 233) ' Light Silver #E1E5E9
-            Guna2DataGridView1.DefaultCellStyle.SelectionBackColor = Color.FromArgb(254, 191, 16) ' Golden Yellow #FECF10
-            Guna2DataGridView1.DefaultCellStyle.SelectionForeColor = Color.FromArgb(26, 29, 31) ' Deep Charcoal
+            Guna2DataGridView1.DefaultCellStyle.SelectionBackColor = Color.FromArgb(43, 47, 50) ' Match row background
+            Guna2DataGridView1.DefaultCellStyle.SelectionForeColor = Color.FromArgb(225, 229, 233) ' Match normal text
             Guna2DataGridView1.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
             Guna2DataGridView1.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             Guna2DataGridView1.DefaultCellStyle.Padding = New Padding(5, 4, 5, 4)
@@ -673,31 +690,38 @@ Public Class Dashboard
                     row.Cells(4).Value = reader("CurrentStock").ToString() ' Stock
                     row.Cells(5).Value = "₱" & Convert.ToDecimal(reader("SellingPrice")).ToString("F2") ' Price
 
-                    ' Color coding for stock levels with new color scheme
-                    Dim currentStock As Integer = Convert.ToInt32(reader("CurrentStock"))
-                    If currentStock <= 10 Then
-                        row.DefaultCellStyle.BackColor = Color.FromArgb(255, 71, 87) ' Alert Red #FF4757
-                        row.Cells(4).Style.ForeColor = Color.FromArgb(255, 255, 255) ' White text
-                    ElseIf currentStock <= 50 Then
-                        row.DefaultCellStyle.BackColor = Color.FromArgb(255, 159, 67) ' Warning Orange #FF9F43
-                        row.Cells(4).Style.ForeColor = Color.FromArgb(26, 29, 31) ' Deep Charcoal text
-                    End If
-
                     Guna2DataGridView1.Rows.Add(row)
                     rowIndex += 1
                 End While
             End Using
+
+            ' Top 3 medal colors (1st soft gold, 2nd silver, 3rd bronze)
+            If Guna2DataGridView1.Rows.Count > 0 Then
+                Guna2DataGridView1.Rows(0).DefaultCellStyle.BackColor = Color.FromArgb(225, 196, 120) ' Soft gold
+                Guna2DataGridView1.Rows(0).DefaultCellStyle.ForeColor = Color.FromArgb(40, 40, 40)
+            End If
+            If Guna2DataGridView1.Rows.Count > 1 Then
+                Guna2DataGridView1.Rows(1).DefaultCellStyle.BackColor = Color.FromArgb(192, 192, 192) ' Silver
+                Guna2DataGridView1.Rows(1).DefaultCellStyle.ForeColor = Color.FromArgb(26, 29, 31)
+            End If
+            If Guna2DataGridView1.Rows.Count > 2 Then
+                Guna2DataGridView1.Rows(2).DefaultCellStyle.BackColor = Color.FromArgb(205, 127, 50) ' Bronze
+                Guna2DataGridView1.Rows(2).DefaultCellStyle.ForeColor = Color.White
+            End If
 
             ' Prevent row resizing for all rows
             For Each row As DataGridViewRow In Guna2DataGridView1.Rows
                 row.Resizable = DataGridViewTriState.False
             Next
 
+            ' Remove initial selected row visual
+            Guna2DataGridView1.ClearSelection()
+
             ' Configure the search textbox styling with new colors
             txtProductSearch.PlaceholderText = "🔍 Search products..."
             txtProductSearch.Font = New Font("Poppins", 10.0F)
             txtProductSearch.ForeColor = Color.FromArgb(225, 229, 233) ' Light Silver #E1E5E9
-            txtProductSearch.BackColor = Color.FromArgb(43, 47, 50) ' Dark Slate #2B2F32
+            txtProductSearch.BackColor = Color.FromArgb(61, 65, 65) ' Dark Slate #2B2F32
             txtProductSearch.BorderRadius = 10
 
         Catch ex As Exception
@@ -717,83 +741,122 @@ Public Class Dashboard
             ' Clear existing controls in LowStockPanel
             LowStockPanel.Controls.Clear()
 
-            ' Add title for the inventory status chart
+            ' Add title for the inventory status chart with better margins
             Dim titleLabel As New Label()
             titleLabel.Text = "Inventory Status Overview"
             titleLabel.Font = New Font("Poppins Medium", 13.8F, FontStyle.Regular)
             titleLabel.ForeColor = Color.White
+            titleLabel.BackColor = Color.FromArgb(61, 65, 69)
             titleLabel.Location = New Point(25, 20)
             titleLabel.AutoSize = True
             LowStockPanel.Controls.Add(titleLabel)
 
-            ' Query to get inventory status counts
+            ' Query to get inventory status counts for requested categories:
+            ' B.R.L, A.R.L, Inactive, No Stock
             Dim query As String = "
-        SELECT 
-            SUM(CASE WHEN CurrentStock = 0 THEN 1 ELSE 0 END) as OutOfStock,
-            SUM(CASE WHEN CurrentStock > 0 AND CurrentStock <= 10 THEN 1 ELSE 0 END) as LowStock,
-            SUM(CASE WHEN CurrentStock > 10 THEN 1 ELSE 0 END) as Active
-        FROM Products 
-        WHERE IsActive = 1"
+                SELECT 
+                    SUM(CASE WHEN IsActive = 0 THEN 1 ELSE 0 END) AS InactiveCount,
+                    SUM(CASE WHEN IsActive = 1 AND CurrentStock = 0 THEN 1 ELSE 0 END) AS NoStockCount,
+                    SUM(CASE WHEN IsActive = 1 AND CurrentStock > 0 AND ReorderLevel > 0 AND CurrentStock <= ReorderLevel THEN 1 ELSE 0 END) AS BRLCount,
+                    SUM(CASE WHEN IsActive = 1 AND CurrentStock > 0 AND (ReorderLevel <= 0 OR CurrentStock > ReorderLevel) THEN 1 ELSE 0 END) AS ARLCount
+                FROM Products"
 
-            Dim outOfStockCount As Integer = 0
-            Dim lowStockCount As Integer = 0
-            Dim activeCount As Integer = 0
+            Dim inactiveCount As Integer = 0
+            Dim noStockCount As Integer = 0
+            Dim brlCount As Integer = 0
+            Dim arlCount As Integer = 0
 
             Using reader As SqlDataReader = Utilities.ExecuteReader(query, Nothing)
                 If reader.Read() Then
-                    outOfStockCount = Convert.ToInt32(reader("OutOfStock"))
-                    lowStockCount = Convert.ToInt32(reader("LowStock"))
-                    activeCount = Convert.ToInt32(reader("Active"))
+                    inactiveCount = Convert.ToInt32(reader("InactiveCount"))
+                    noStockCount = Convert.ToInt32(reader("NoStockCount"))
+                    brlCount = Convert.ToInt32(reader("BRLCount"))
+                    arlCount = Convert.ToInt32(reader("ARLCount"))
                 End If
             End Using
 
-            ' Create simple status display since LiveCharts might not be available
-            Dim yPosition As Integer = 80
+            ' Create main container that centers everything
+            Dim mainContainer As New Panel()
+            mainContainer.Size = New Size(410, 310)
+            mainContainer.Location = New Point(10, 58)
+            mainContainer.BackColor = Color.FromArgb(61, 65, 69)
+            LowStockPanel.Controls.Add(mainContainer)
+            ApplyRoundedCorners(mainContainer, 18)
 
-            ' Active products
-            Dim activeLabel As New Label()
-            activeLabel.Text = $"✅ Active Stock: {activeCount} products"
-            activeLabel.Font = New Font("Poppins", 11, FontStyle.Regular)
-            activeLabel.ForeColor = Color.FromArgb(76, 175, 80) ' Green
-            activeLabel.Location = New Point(25, yPosition)
-            activeLabel.AutoSize = True
-            LowStockPanel.Controls.Add(activeLabel)
-            yPosition += 40
+            ' Create pie chart for status overview
+            Dim pieChart As New PieChart()
+            pieChart.Size = New Size(390, 280)
+            pieChart.Location = New Point(10, 14)
+            pieChart.BackColor = Color.FromArgb(61, 65, 69)
+            ApplyRoundedCorners(pieChart, 14)
 
-            ' Low stock
-            Dim lowStockLabel As New Label()
-            lowStockLabel.Text = $"⚠ Low Stock: {lowStockCount} products"
-            lowStockLabel.Font = New Font("Poppins", 11, FontStyle.Regular)
-            lowStockLabel.ForeColor = Color.FromArgb(255, 152, 0) ' Orange
-            lowStockLabel.Location = New Point(25, yPosition)
-            lowStockLabel.AutoSize = True
-            LowStockPanel.Controls.Add(lowStockLabel)
-            yPosition += 40
+            ' Create pie series data (B.R.L, A.R.L, Inactive, No Stock)
+            Dim series As New List(Of ISeries)()
 
-            ' Out of stock
-            Dim outOfStockLabel As New Label()
-            outOfStockLabel.Text = $"❌ Out of Stock: {outOfStockCount} products"
-            outOfStockLabel.Font = New Font("Poppins", 11, FontStyle.Regular)
-            outOfStockLabel.ForeColor = Color.FromArgb(244, 67, 54) ' Red
-            outOfStockLabel.Location = New Point(25, yPosition)
-            outOfStockLabel.AutoSize = True
-            LowStockPanel.Controls.Add(outOfStockLabel)
+            If brlCount > 0 Then
+                series.Add(New PieSeries(Of Integer) With {
+                    .Values = {brlCount},
+                    .Name = "B.R.L",
+                    .Fill = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#FFB547")),
+                    .Stroke = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#FFFFFF")) With {.StrokeThickness = 2}
+                })
+            End If
+
+            If arlCount > 0 Then
+                series.Add(New PieSeries(Of Integer) With {
+                    .Values = {arlCount},
+                    .Name = "A.R.L",
+                    .Fill = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#10D862")),
+                    .Stroke = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#FFFFFF")) With {.StrokeThickness = 2}
+                })
+            End If
+
+            If inactiveCount > 0 Then
+                series.Add(New PieSeries(Of Integer) With {
+                    .Values = {inactiveCount},
+                    .Name = "Inactive",
+                    .Fill = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#7F8C8D")),
+                    .Stroke = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#FFFFFF")) With {.StrokeThickness = 2}
+                })
+            End If
+
+            If noStockCount > 0 Then
+                series.Add(New PieSeries(Of Integer) With {
+                    .Values = {noStockCount},
+                    .Name = "No Stock",
+                    .Fill = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#FF4757")),
+                    .Stroke = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#FFFFFF")) With {.StrokeThickness = 2}
+                })
+            End If
+
+            pieChart.Series = series
+
+            ' Configure chart animation and interactivity
+            pieChart.AnimationsSpeed = TimeSpan.FromMilliseconds(1200)
+            pieChart.LegendPosition = LiveChartsCore.Measure.LegendPosition.Right
+            pieChart.LegendTextPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColors.White)
+            pieChart.LegendBackgroundPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#3D4145"))
+
+            ' Enhanced tooltip with numbers
+            pieChart.TooltipPosition = LiveChartsCore.Measure.TooltipPosition.Top
+            pieChart.TooltipBackgroundPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#3D4145"))
+            pieChart.TooltipTextPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColors.White)
+
+            mainContainer.Controls.Add(pieChart)
 
         Catch ex As Exception
-            ' Handle error silently
-            Console.WriteLine($"Error loading inventory status: {ex.Message}")
+            ' Handle error silently or show messagea
+            Console.WriteLine($"Error loading inventory status chart: {ex.Message}")
         End Try
     End Sub
 
     Private Sub LoadChartInterface()
         Try
-            ' Basic chart interface setup for the AreaChart panel
-            ' Clear any existing controls
             AreaChart.Controls.Clear()
 
             ' Title label
             titleLabel = New Label()
-            titleLabel.Text = "Inventory Overview"
+            titleLabel.Text = "Sales Overview"
             titleLabel.Font = New Font("Poppins Medium", 16, FontStyle.Bold)
             titleLabel.ForeColor = Color.White
             titleLabel.Dock = DockStyle.Top
@@ -801,300 +864,405 @@ Public Class Dashboard
             titleLabel.TextAlign = ContentAlignment.MiddleLeft
             titleLabel.Padding = New Padding(15, 0, 0, 0)
 
-            ' Simple chart placeholder
-            Dim chartPlaceholder As New Label()
-            chartPlaceholder.Text = "📊 Product inventory trends will be displayed here"
-            chartPlaceholder.Font = New Font("Poppins", 12, FontStyle.Regular)
-            chartPlaceholder.ForeColor = Color.LightGray
-            chartPlaceholder.Dock = DockStyle.Fill
-            chartPlaceholder.TextAlign = ContentAlignment.MiddleCenter
+            ' Legend and Filter panel combined for better layout
+            Dim topPanel As New Panel()
+            topPanel.Height = 50
+            topPanel.Dock = DockStyle.Top
+            topPanel.BackColor = Color.FromArgb(61, 65, 69)
 
-            AreaChart.Controls.Add(chartPlaceholder)
+            ' Sales legend on the left
+            Dim salesLegend As New Label()
+            salesLegend.Text = "● Sales Tracking"
+            salesLegend.Font = New Font("Poppins", 11, FontStyle.Bold)
+            salesLegend.ForeColor = Color.Orange
+            salesLegend.AutoSize = True
+            salesLegend.Location = New Point(15, 15)
+            topPanel.Controls.Add(salesLegend)
+
+            ' FlowLayoutPanel for filter buttons positioned cleanly on the right
+            Dim buttonFlow As New FlowLayoutPanel()
+            buttonFlow.AutoSize = True
+            buttonFlow.AutoSizeMode = AutoSizeMode.GrowAndShrink
+            buttonFlow.FlowDirection = FlowDirection.LeftToRight
+            buttonFlow.WrapContents = False
+            buttonFlow.BackColor = Color.Transparent
+            buttonFlow.Anchor = AnchorStyles.Top Or AnchorStyles.Right
+            topPanel.Controls.Add(buttonFlow)
+
+            ' Create filter buttons
+            btnAllTime = CreateChartFilterButton("All Time")
+            AddHandler btnAllTime.Click, Sub() LoadChartData("All Time")
+
+            btnYearly = CreateChartFilterButton("Yearly")
+            AddHandler btnYearly.Click, Sub() LoadChartData("Yearly")
+
+            btnMonthly = CreateChartFilterButton("Monthly")
+            AddHandler btnMonthly.Click, Sub() LoadChartData("Monthly")
+
+            btnWeekly = CreateChartFilterButton("Weekly")
+            AddHandler btnWeekly.Click, Sub() LoadChartData("Weekly")
+
+            btnToday = CreateChartFilterButton("Today")
+            AddHandler btnToday.Click, Sub() LoadChartData("Today")
+
+            buttonFlow.Controls.Add(btnAllTime)
+            buttonFlow.Controls.Add(btnYearly)
+            buttonFlow.Controls.Add(btnMonthly)
+            buttonFlow.Controls.Add(btnWeekly)
+            buttonFlow.Controls.Add(btnToday)
+
+            ' Position filter buttons professionally on the right side
+            Dim positionFilterButtons As Action = Sub()
+                                                      buttonFlow.Location = New Point(topPanel.ClientSize.Width - buttonFlow.Width - 15, 9)
+                                                  End Sub
+            positionFilterButtons()
+            AddHandler topPanel.SizeChanged, Sub(sender, e)
+                                                 positionFilterButtons()
+                                             End Sub
+
+            ' Chart panel with proper margins
+            chartPanel = New Panel()
+            chartPanel.Dock = DockStyle.Fill
+            chartPanel.Padding = New Padding(20)
+            chartPanel.BackColor = Color.FromArgb(61, 65, 69)
+            ApplyRoundedCorners(chartPanel, 18)
+
+            ' Try to create LiveCharts CartesianChart
+            Try
+                salesChart = New CartesianChart()
+                salesChart.Dock = DockStyle.Fill
+                salesChart.Margin = New Padding(5)
+                salesChart.LegendPosition = LiveChartsCore.Measure.LegendPosition.Hidden
+                salesChart.BackColor = Color.FromArgb(61, 65, 69)
+                chartPanel.Controls.Add(salesChart)
+                ApplyRoundedCorners(salesChart, 14)
+                Console.WriteLine("LiveCharts CartesianChart created successfully")
+            Catch chartEx As Exception
+                Console.WriteLine($"Failed to create LiveCharts: {chartEx.Message}")
+                salesChart = Nothing
+            End Try
+
+            ' Add panels in proper order
+            AreaChart.Controls.Add(chartPanel)
+            AreaChart.Controls.Add(topPanel)
             AreaChart.Controls.Add(titleLabel)
-            titleLabel.BringToFront()
 
+            ' Bring to front in proper order
+            titleLabel.BringToFront()
+            topPanel.BringToFront()
+            chartPanel.BringToFront()
+
+            LoadChartData(currentChartMode)
         Catch ex As Exception
             Console.WriteLine($"Error loading chart interface: {ex.Message}")
         End Try
     End Sub
+    Private Function CreateChartFilterButton(text As String) As Guna2Button
+        Dim btn As New Guna2Button()
+        btn.Text = text
+        btn.Font = New Font("Poppins", 10, FontStyle.Regular)
+        btn.FillColor = Color.FromArgb(61, 65, 69)
+        btn.ForeColor = Color.White
+        btn.BorderRadius = 10
+        btn.Size = New Size(120, 32)
+        btn.Margin = New Padding(0, 0, 8, 0)
+        btn.TabStop = False
+
+        ' Remove press flash: keep pressed/hover close to base fill
+        btn.PressedColor = btn.FillColor
+        btn.HoverState.FillColor = btn.FillColor
+        btn.HoverState.ForeColor = btn.ForeColor
+
+        Return btn
+    End Function
 
     Private Sub LoadChartData(mode As String)
-        ' Placeholder for chart data loading
-        ' This can be expanded later when LiveCharts is properly configured
-    End Sub
-
-    Private Sub txtProductSearch_TextChanged(sender As Object, e As EventArgs) Handles txtProductSearch.TextChanged
         Try
-            ' Get the search text
-            Dim searchText As String = txtProductSearch.Text.Trim().ToLower()
+            currentChartMode = mode
 
-            ' If search is empty, show all rows
-            If String.IsNullOrEmpty(searchText) Then
-                For Each row As DataGridViewRow In Guna2DataGridView1.Rows
-                    row.Visible = True
-                Next
-                Return
+            Dim salesData As New List(Of Double)()
+            Dim revenueData As New List(Of Double)()
+            Dim labels As New List(Of String)()
+
+            Select Case mode
+                Case "All Time"
+                    LoadAllTimeData(salesData, revenueData, labels)
+                Case "Today"
+                    LoadTodayData(salesData, revenueData, labels)
+                Case "Monthly"
+                    LoadMonthlyData(salesData, revenueData, labels)
+                Case "Weekly"
+                    LoadWeeklyData(salesData, revenueData, labels)
+                Case "Daily"
+                    LoadDailyData(salesData, revenueData, labels)
+                Case "Yearly"
+                    LoadYearlyData(salesData, revenueData, labels)
+            End Select
+
+            ' Check if salesChart is properly initialized before using it
+            If salesChart IsNot Nothing Then
+                Try
+                    ' Set the chart series with LiveCharts
+                    salesChart.Series = {
+                    New LineSeries(Of Double) With {
+                        .Values = salesData.ToArray(),
+                        .Name = "Sales",
+                        .GeometrySize = 8,
+                        .GeometryStroke = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColors.White, 2),
+                        .Fill = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#FF9800").WithAlpha(30)),
+                        .Stroke = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#FF9800"), 4),
+                        .LineSmoothness = 0.8,
+                        .AnimationsSpeed = TimeSpan.FromMilliseconds(1500)
+                    }
+                }
+
+                    Dim maxValue As Double = If(salesData.Count > 0, salesData.Max(), 0)
+                    Dim isZeroData As Boolean = maxValue <= 0
+                    Dim yAxisMin As Double = If(isZeroData, -2, 0)
+                    Dim yAxisMax As Double = If(isZeroData, 5, Math.Ceiling(maxValue * 1.2))
+
+                    ' Configure axes
+                    salesChart.XAxes = {
+                    New Axis With {
+                        .Labels = labels.ToArray(),
+                        .TextSize = 12,
+                        .LabelsPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColors.LightGray),
+                        .SeparatorsPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColors.Gray.WithAlpha(30)) With {
+                            .StrokeThickness = 1
+                        },
+                        .AnimationsSpeed = TimeSpan.FromMilliseconds(1000)
+                    }
+                }
+
+                    salesChart.YAxes = {
+                    New Axis With {
+                        .TextSize = 12,
+                        .LabelsPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColors.LightGray),
+                        .Position = LiveChartsCore.Measure.AxisPosition.Start,
+                        .MinLimit = yAxisMin,
+                        .MaxLimit = yAxisMax,
+                        .SeparatorsPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColors.Gray.WithAlpha(20)) With {
+                            .StrokeThickness = 1
+                        },
+                        .AnimationsSpeed = TimeSpan.FromMilliseconds(800),
+                        .Labeler = Function(value)
+                                       If isZeroData Then
+                                           If Math.Abs(value) < 0.001 Then Return "₱0"
+                                           Return ""
+                                       End If
+                                       Return $"₱{value:N0}"
+                                   End Function
+                    }
+                }
+                Catch chartEx As Exception
+                    Console.WriteLine($"Error setting up LiveCharts: {chartEx.Message}")
+                    ' Create fallback display
+                    CreateFallbackChartDisplay(mode, salesData, labels)
+                End Try
+            Else
+                Console.WriteLine("salesChart is null, creating fallback display")
+                ' Create fallback display
+                CreateFallbackChartDisplay(mode, salesData, labels)
             End If
 
-            ' Filter rows based on search text
-            For Each row As DataGridViewRow In Guna2DataGridView1.Rows
-                If row.Cells("ProductName").Value IsNot Nothing Then
-                    Dim productName As String = row.Cells("ProductName").Value.ToString().ToLower()
-                    Dim productCode As String = ""
-                    If row.Cells("ProductCode").Value IsNot Nothing Then
-                        productCode = row.Cells("ProductCode").Value.ToString().ToLower()
-                    End If
-
-                    ' Show row if product name or code contains search text
-                    row.Visible = productName.Contains(searchText) OrElse productCode.Contains(searchText)
-                Else
-                    ' Hide rows with no product name
-                    row.Visible = False
-                End If
-            Next
-
+            SetActiveChartButton(mode)
         Catch ex As Exception
-            ' Handle any errors silently to prevent crashes during typing
-            Console.WriteLine($"Search error: {ex.Message}")
+            Console.WriteLine($"Error loading chart data: {ex.Message}")
         End Try
     End Sub
 
-    ' Navigation event handlers
-    Private Sub NavDashboard_Click(sender As Object, e As EventArgs)
-        ' Already on dashboard - do nothing
-    End Sub
+    Private Sub CreateFallbackChartDisplay(mode As String, salesData As List(Of Double), labels As List(Of String))
+        Try
+            ' Clear the chart panel and add a simple text display
+            If chartPanel IsNot Nothing Then
+                chartPanel.Controls.Clear()
 
-    Private Sub NavInventory_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        Inventory.Show()
-        Me.Close()
-    End Sub
+                Dim fallbackLabel As New Label() With {
+                .Text = $"Chart Mode: {mode}" & vbCrLf &
+                       $"Data Points: {salesData.Count}" & vbCrLf &
+                       $"Total Sales: ₱{If(salesData.Count > 0, salesData.Sum(), 0):N2}" & vbCrLf &
+                       "LiveCharts not available - using fallback display",
+                .Font = New Font("Poppins", 12, FontStyle.Regular),
+                .ForeColor = Color.White,
+                .BackColor = Color.Transparent,
+                .AutoSize = False,
+                .Size = New Size(400, 200),
+                .Location = New Point(50, 50),
+                .TextAlign = ContentAlignment.MiddleCenter
+            }
 
-    Private Sub NavPOS_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        Sales.Show()
-        Me.Close()
-    End Sub
-
-    Private Sub NavSalesRecords_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        Sales.Show()
-        Me.Close()
-    End Sub
-
-    Private Sub NavStaff_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        Staff.Show()
-        Me.Close()
-    End Sub
-
-    Private Sub NavInventoryLog_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        InventoryLog.Show()
-        Me.Close()
-    End Sub
-
-    Private Sub NavAuditLog_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        AuditLog.Show()
-        Me.Close()
-    End Sub
-
-    Private Sub NavLogout_Click(sender As Object, e As EventArgs)
-        ' Confirm logout
-        Dim result As DialogResult = MessageBox.Show("Are you sure you want to logout?", "Confirm Logout", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
-
-        If result = DialogResult.Yes Then
-            ' Clear user session
-            frmLoginvb.LogoutUser()
-
-            ' Navigate to login
-            isNavigating = True
-            Me.Close()
-            Dim loginForm As New frmLoginvb()
-            loginForm.Show()
-        End If
-    End Sub
-
-    ' Helper method to update navigation button states
-    Private Sub UpdateNavButtonStates(activeButton As String)
-        ' Reset all buttons to inactive state
-        Dim navButtons As New Dictionary(Of String, Guna2Button) From {
-        {"Dashboard", navDashboardBtn},
-        {"Inventory", navInventoryBtn},
-        {"POS", navPOSBtn},
-        {"SalesRecords", navSalesRecordsBtn},
-        {"Staff", navStaffBtn},
-        {"InventoryLog", navInventoryLogBtn},
-        {"AuditLog", navAuditLogBtn}
-    }
-
-        For Each kvp In navButtons
-            If kvp.Value IsNot Nothing Then
-                If kvp.Key = activeButton Then
-                    ' Active button
-                    kvp.Value.FillColor = Color.FromArgb(255, 204, 77) ' Orange
-                    kvp.Value.ForeColor = Color.Black
-                Else
-                    ' Inactive button
-                    kvp.Value.FillColor = Color.Transparent
-                    kvp.Value.ForeColor = Color.White
-                End If
+                chartPanel.Controls.Add(fallbackLabel)
             End If
+        Catch ex As Exception
+            Console.WriteLine($"Error creating fallback display: {ex.Message}")
+        End Try
+    End Sub
+    Private Sub LoadMonthlyData(salesData As List(Of Double), revenueData As List(Of Double), labels As List(Of String))
+        Dim currentYear As Integer = DateTime.Now.Year
+
+        For month As Integer = 1 To 12
+            labels.Add(GetMonthAbbreviation(month))
+
+            Dim query As String = "
+                SELECT 
+                    COUNT(SaleID) as SalesCount,
+                    ISNULL(SUM(TotalAmount), 0) as Revenue
+                FROM Sales
+                WHERE YEAR(SaleDate) = @Year AND MONTH(SaleDate) = @Month"
+
+            Dim parameters As SqlParameter() = {
+                New SqlParameter("@Year", currentYear),
+                New SqlParameter("@Month", month)
+            }
+
+            Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters)
+                If reader.Read() Then
+                    salesData.Add(Convert.ToDouble(reader("Revenue")))
+                    revenueData.Add(Convert.ToDouble(reader("Revenue")))
+                Else
+                    salesData.Add(0)
+                    revenueData.Add(0)
+                End If
+            End Using
         Next
     End Sub
 
-    ' Navigation event handlers for Dashboard form (using original controls)
-    Private Sub btnToOrderForm_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        Sales.Show()
-        Close()
+    Private Sub LoadWeeklyData(salesData As List(Of Double), revenueData As List(Of Double), labels As List(Of String))
+        Dim dayNames As String() = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"}
+
+        For i As Integer = 6 To 0 Step -1
+            Dim targetDate As DateTime = DateTime.Now.AddDays(-i).Date
+            labels.Add(dayNames(CInt(targetDate.DayOfWeek)))
+
+            Dim query As String = "
+                SELECT 
+                    COUNT(SaleID) as SalesCount,
+                    ISNULL(SUM(TotalAmount), 0) as Revenue
+                FROM Sales
+                WHERE CAST(SaleDate AS DATE) = @Date"
+
+            Dim parameters As SqlParameter() = {
+                New SqlParameter("@Date", targetDate)
+            }
+
+            Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters)
+                If reader.Read() Then
+                    salesData.Add(Convert.ToDouble(reader("Revenue")))
+                    revenueData.Add(Convert.ToDouble(reader("Revenue")))
+                Else
+                    salesData.Add(0)
+                    revenueData.Add(0)
+                End If
+            End Using
+        Next
     End Sub
 
-    Private Sub toOrderFormIcon_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        Sales.Show()
-        Close()
+    Private Sub LoadDailyData(salesData As List(Of Double), revenueData As List(Of Double), labels As List(Of String))
+        Dim startDate = DateTime.Today.AddDays(-11)
+
+        For i As Integer = 0 To 11
+            Dim targetDate As DateTime = startDate.AddDays(i)
+            labels.Add(targetDate.ToString("dd MMM"))
+
+            Dim query As String = "
+                SELECT 
+                    COUNT(SaleID) as SalesCount,
+                    ISNULL(SUM(TotalAmount), 0) as Revenue
+                FROM Sales
+                WHERE CAST(SaleDate AS DATE) = @Date"
+
+            Dim parameters As SqlParameter() = {
+                New SqlParameter("@Date", targetDate)
+            }
+
+            Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters)
+                If reader.Read() Then
+                    salesData.Add(Convert.ToDouble(reader("Revenue")))
+                    revenueData.Add(Convert.ToDouble(reader("Revenue")))
+                Else
+                    salesData.Add(0)
+                    revenueData.Add(0)
+                End If
+            End Using
+        Next
     End Sub
 
-    Private Sub toOrderFormLbl_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        Sales.Show()
-        Close()
+    Private Sub LoadYearlyData(salesData As List(Of Double), revenueData As List(Of Double), labels As List(Of String))
+        Dim startYear As Integer = DateTime.Now.Year - 5
+
+        For year As Integer = startYear To DateTime.Now.Year
+            labels.Add(year.ToString())
+
+            Dim query As String = "
+                SELECT 
+                    COUNT(SaleID) as SalesCount,
+                    ISNULL(SUM(TotalAmount), 0) as Revenue
+                FROM Sales
+                WHERE YEAR(SaleDate) = @Year"
+
+            Dim parameters As SqlParameter() = {
+                New SqlParameter("@Year", year)
+            }
+
+            Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters)
+                If reader.Read() Then
+                    salesData.Add(Convert.ToDouble(reader("Revenue")))
+                    revenueData.Add(Convert.ToDouble(reader("Revenue")))
+                Else
+                    salesData.Add(0)
+                    revenueData.Add(0)
+                End If
+            End Using
+        Next
     End Sub
 
-    Private Sub Guna2CircleButton3_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        Inventory.Show()
-        Close()
+    Private Sub LoadAllTimeData(salesData As List(Of Double), revenueData As List(Of Double), labels As List(Of String))
+        Dim query As String = "
+            SELECT YEAR(SaleDate) AS SaleYear, ISNULL(SUM(TotalAmount), 0) AS Revenue
+            FROM Sales
+            GROUP BY YEAR(SaleDate)
+            ORDER BY YEAR(SaleDate)"
+
+        Using reader As SqlDataReader = Utilities.ExecuteReader(query, Nothing)
+            While reader.Read()
+                labels.Add(reader("SaleYear").ToString())
+                Dim revenue As Double = Convert.ToDouble(reader("Revenue"))
+                salesData.Add(revenue)
+                revenueData.Add(revenue)
+            End While
+        End Using
+
+        If labels.Count = 0 Then
+            labels.Add("All Time")
+            salesData.Add(0)
+            revenueData.Add(0)
+        End If
     End Sub
 
-    Private Sub Guna2CirclePictureBox3_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        Inventory.Show()
-        Close()
+    Private Sub LoadTodayData(salesData As List(Of Double), revenueData As List(Of Double), labels As List(Of String))
+        Dim query As String = "
+            SELECT ISNULL(SUM(TotalAmount), 0) AS Revenue
+            FROM Sales
+            WHERE CAST(SaleDate AS DATE) = CAST(GETDATE() AS DATE)"
+
+        labels.Add("Today")
+
+        Using reader As SqlDataReader = Utilities.ExecuteReader(query, Nothing)
+            If reader.Read() Then
+                Dim revenue As Double = Convert.ToDouble(reader("Revenue"))
+                salesData.Add(revenue)
+                revenueData.Add(revenue)
+            Else
+                salesData.Add(0)
+                revenueData.Add(0)
+            End If
+        End Using
     End Sub
 
-    Private Sub Guna2HtmlLabel24_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        Inventory.Show()
-        Close()
-    End Sub
-
-    ' Staff Management Navigation
-    Private Sub Guna2CircleButton4_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        Staff.Show()
-        Close()
-    End Sub
-
-    Private Sub Guna2CirclePictureBox4_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        Staff.Show()
-        Close()
-    End Sub
-
-    Private Sub Guna2HtmlLabel25_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        Staff.Show()
-        Close()
-    End Sub
-
-    ' InventoryLog Navigation
-    Private Sub Guna2CircleButton2_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        InventoryLog.Show()
-        Close()
-    End Sub
-
-    Private Sub Guna2CirclePictureBox2_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        InventoryLog.Show()
-        Close()
-    End Sub
-
-    Private Sub Guna2HtmlLabel23_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        InventoryLog.Show()
-        Close()
-    End Sub
-
-    ' Audit Logs Navigation (keeping the existing handlers)
-    Private Sub Guna2CircleButton1_Click(sender As Object, e As EventArgs)
-        MessageBox.Show("Audit logs feature will be available soon!", "Coming Soon", MessageBoxButtons.OK, MessageBoxIcon.Information)
-    End Sub
-
-    Private Sub Guna2CirclePictureBox6_Click(sender As Object, e As EventArgs)
-        MessageBox.Show("Audit logs feature will be available soon!", "Coming Soon", MessageBoxButtons.OK, MessageBoxIcon.Information)
-    End Sub
-
-    Private Sub Guna2HtmlLabel19_Click(sender As Object, e As EventArgs)
-        MessageBox.Show("Audit logs feature will be available soon!", "Coming Soon", MessageBoxButtons.OK, MessageBoxIcon.Information)
-    End Sub
-
-    ' Logout functionality
-    Private Sub Guna2CirclePictureBox21_Click(sender As Object, e As EventArgs)
-        ' Close this form and show login
-        Close()
-        frmLoginvb.Show()
-    End Sub
-
-    Private Sub Guna2HtmlLabel6_Click(sender As Object, e As EventArgs)
-        ' Close this form and show login
-        Close()
-        frmLoginvb.Show()
-    End Sub
-
-    Private Sub Guna2CircleButton9_Click(sender As Object, e As EventArgs)
-        ' Close this form and show login
-        Close()
-        frmLoginvb.Show()
-    End Sub
-
-    Private Sub PopularPanel_Paint(sender As Object, e As PaintEventArgs) Handles PopularPanel.Paint
-        ' Handle panel paint events if needed
-    End Sub
-
-    Private Sub Guna2HtmlLabel12_Click(sender As Object, e As EventArgs) Handles Guna2HtmlLabel12.Click
-        ' Handle label click if needed
-    End Sub
-
-    Private Sub Guna2HtmlLabel11_Click(sender As Object, e As EventArgs) Handles Guna2HtmlLabel11.Click
-        ' Handle label click if needed
-    End Sub
-
-    Private Sub DashboardPanel_Paint(sender As Object, e As PaintEventArgs) Handles DashboardPanel.Paint
-
-    End Sub
-
-    Private Sub Guna2CirclePictureBox6_Click_1(sender As Object, e As EventArgs)
-
-    End Sub
-
-    Private Sub Guna2HtmlLabel22_Click(sender As Object, e As EventArgs)
-
-    End Sub
-
-    Private Sub Guna2CirclePictureBox1_Click(sender As Object, e As EventArgs)
-
-    End Sub
-
-    Private Sub Label3_Click(sender As Object, e As EventArgs)
-
-    End Sub
-
-    Private Sub Guna2CircleButton5_Click(sender As Object, e As EventArgs) Handles Guna2CircleButton5.Click
-
-    End Sub
-
-    Private Sub Guna2DataGridView1_CellContentClick(sender As Object, e As DataGridViewCellEventArgs) Handles Guna2DataGridView1.CellContentClick
-
-    End Sub
-
-    Private Sub Label4_Click(sender As Object, e As EventArgs)
-
-    End Sub
-
+    Private Function GetMonthAbbreviation(month As Integer) As String
+        Dim monthNames As String() = {"JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"}
+        Return monthNames(month - 1)
+    End Function
     Private Sub CreateNavigationMenu()
         Try
             ' Clear existing controls except PictureBox9 (logo)
@@ -1254,15 +1422,7 @@ Public Class Dashboard
             Console.WriteLine($"Error creating navigation menu: {ex.Message}")
         End Try
     End Sub
-    Private Sub NavSuppliers_Click(sender As Object, e As EventArgs)
-        Try
-            isNavigating = True
-            Supplier.Show()
-            Me.Close()
-        Catch ex As Exception
-            MessageBox.Show($"Unable to open Suppliers: {ex.Message}", "Navigation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-        End Try
-    End Sub
+
     Private Sub CreateUserInfoSection()
         Try
             ' Remove existing tiny panel to avoid duplicates
@@ -1394,12 +1554,22 @@ Public Class Dashboard
             Console.WriteLine($"Error creating tiny user info: {ex.Message}")
         End Try
     End Sub
-    Private Sub NavSystemSettings_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        Sys.Show()
-        Me.Close()
-    End Sub
 
+    Private Sub NavLogout_Click(sender As Object, e As EventArgs)
+        ' Confirm logout
+        Dim result As DialogResult = MessageBox.Show("Are you sure you want to logout?", "Confirm Logout", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
+
+        If result = DialogResult.Yes Then
+            ' Clear user session
+            frmLoginvb.LogoutUser()
+
+            ' Navigate to login
+            isNavigating = True
+            Me.Close()
+            Dim loginForm As New frmLoginvb()
+            loginForm.Show()
+        End If
+    End Sub
     Private Function CreateLargeNavButton(text As String, yPosition As Integer, isActive As Boolean, buttonWidth As Integer, buttonHeight As Integer) As Guna.UI2.WinForms.Guna2Button
         Dim btn As New Guna.UI2.WinForms.Guna2Button()
         btn.Text = text
@@ -1438,4 +1608,54 @@ Public Class Dashboard
         DashboardPanel.Controls.Add(btn)
         Return btn
     End Function
+    Private Sub NavDashboard_Click(sender As Object, e As EventArgs)
+    End Sub
+
+    Private Sub NavInventory_Click(sender As Object, e As EventArgs)
+        isNavigating = True
+        Inventory.Show()
+        Me.Close()
+    End Sub
+
+    Private Sub NavPOS_Click(sender As Object, e As EventArgs)
+        isNavigating = True
+        Sales.Show()
+        Me.Close()
+    End Sub
+
+    Private Sub NavSalesRecords_Click(sender As Object, e As EventArgs)
+        isNavigating = True
+        SalesRecord.Show()
+        Me.Close()
+    End Sub
+
+    Private Sub NavStaff_Click(sender As Object, e As EventArgs)
+        isNavigating = True
+        Staff.Show()
+        Me.Close()
+    End Sub
+
+    Private Sub NavInventoryLog_Click(sender As Object, e As EventArgs)
+        isNavigating = True
+        InventoryLog.Show()
+        Me.Close()
+    End Sub
+
+    Private Sub NavAuditLog_Click(sender As Object, e As EventArgs)
+        isNavigating = True
+        AuditLog.Show()
+        Me.Close()
+    End Sub
+
+    Private Sub NavSuppliers_Click(sender As Object, e As EventArgs)
+        isNavigating = True
+        Supplier.Show()
+        Me.Close()
+    End Sub
+
+    Private Sub NavSystemSettings_Click(sender As Object, e As EventArgs)
+        isNavigating = True
+        Sys.Show()
+        Me.Close()
+    End Sub
 End Class
