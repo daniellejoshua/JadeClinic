@@ -1,5 +1,7 @@
-﻿Imports Microsoft.Data.SqlClient
+﻿Imports System.Globalization
 Imports System.IO
+Imports Guna.UI2.WinForms
+Imports Microsoft.Data.SqlClient
 Imports QuestPDF.Fluent
 Imports QuestPDF.Helpers
 Imports QuestPDF.Infrastructure
@@ -29,8 +31,8 @@ Public Class SalesRecord
         Me.MinimizeBox = False
         Me.MinimumSize = Me.Size
         Me.MaximumSize = Me.Size
-       
-    Me.Text = "Sales Records - Lokal Recipe POS"
+
+        Me.Text = "Sales Records - Lokal Recipe POS"
 
         ' Validate user session
         If Not ValidateUserSession() Then
@@ -124,6 +126,13 @@ Public Class SalesRecord
         })
 
         Guna2DataGridView1.Columns.Add(New DataGridViewTextBoxColumn() With {
+            .Name = "PaymentMethod",
+            .HeaderText = "Payment Method",
+            .ReadOnly = True,
+            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
+        })
+
+        Guna2DataGridView1.Columns.Add(New DataGridViewTextBoxColumn() With {
             .Name = "TotalAmount",
             .HeaderText = "Total Amount",
             .ReadOnly = True,
@@ -180,25 +189,50 @@ Public Class SalesRecord
     End Sub
 
     Private Sub InitializeSortComboBox()
+        ' Use existing designer controls only
         SortBy.Items.Clear()
-        SortBy.Items.Add("Sale Date (Newest First)")
-        SortBy.Items.Add("Sale Date (Oldest First)")
-        SortBy.Items.Add("Sale ID (Ascending)")
-        SortBy.Items.Add("Sale ID (Descending)")
-        SortBy.Items.Add("Total Amount (Highest First)")
-        SortBy.Items.Add("Total Amount (Lowest First)")
-        SortBy.SelectedIndex = 0
+        SortBy.Items.AddRange(New Object() {
+            "Sale Date (Newest First)",
+            "Sale Date (Oldest First)",
+            "Sale ID (Ascending)",
+            "Sale ID (Descending)",
+            "Total Amount (Highest First)",
+            "Total Amount (Lowest First)"
+        })
+        If SortBy.Items.Count > 0 Then
+            SortBy.SelectedIndex = 0
+        End If
+
+        Guna2DateTimePicker1.ShowCheckBox = True
+        Guna2DateTimePicker1.Checked = False
+        Guna2DateTimePicker1.Value = Date.Today
+
+        RemoveHandler SortBy.SelectedIndexChanged, AddressOf SortBy_SelectedIndexChanged
+        AddHandler SortBy.SelectedIndexChanged, AddressOf SortBy_SelectedIndexChanged
+
+        RemoveHandler Guna2DateTimePicker1.ValueChanged, AddressOf DtpSaleDate_ValueChanged
+        AddHandler Guna2DateTimePicker1.ValueChanged, AddressOf DtpSaleDate_ValueChanged
+
+        RemoveHandler Guna2DateTimePicker1.CheckedChanged, AddressOf DtpSaleDate_CheckedChanged
+        AddHandler Guna2DateTimePicker1.CheckedChanged, AddressOf DtpSaleDate_CheckedChanged
     End Sub
 
-    Private Sub LoadOrderRecordsData(Optional sortOrder As String = "")
+    Private Sub LoadOrderRecordsData(Optional sortOrder As String = "", Optional filterDate As DateTime? = Nothing)
         Try
             Guna2DataGridView1.Rows.Clear()
 
-            Dim query As String = "SELECT s.SaleID, u.Username, s.SaleDate, s.TotalAmount, s.AmountPaid, " &
+            Dim query As String = "SELECT s.SaleID, u.Username, s.SaleDate, s.PaymentMethod, s.TotalAmount, s.AmountPaid, " &
                           "(s.AmountPaid - s.TotalAmount) AS Change, " &
                           "ISNULL(JSON_VALUE(s.SalesData, '$.payment.discount.type'), '') AS DiscountType, " &
                           "ISNULL(TRY_CONVERT(decimal(18,2), JSON_VALUE(s.SalesData, '$.payment.discount.amount')), 0) AS DiscountAmount " &
                           "FROM Sales s LEFT JOIN Users u ON s.UserID = u.UserID"
+
+            Dim parameters As New List(Of SqlParameter)()
+
+            If filterDate.HasValue Then
+                query &= " WHERE CAST(s.SaleDate AS date) = @FilterDate"
+                parameters.Add(New SqlParameter("@FilterDate", filterDate.Value.Date))
+            End If
 
             Select Case sortOrder
                 Case "Sale Date (Newest First)"
@@ -217,11 +251,12 @@ Public Class SalesRecord
                     query += " ORDER BY s.SaleDate DESC"
             End Select
 
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
+            Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters.ToArray())
                 While reader.Read()
                     Dim saleId As Integer = If(IsDBNull(reader("SaleID")), 0, Convert.ToInt32(reader("SaleID")))
                     Dim username As String = If(IsDBNull(reader("Username")), "Unknown", reader("Username").ToString())
                     Dim saleDate As DateTime = If(IsDBNull(reader("SaleDate")), DateTime.MinValue, Convert.ToDateTime(reader("SaleDate")))
+                    Dim paymentMethod As String = If(IsDBNull(reader("PaymentMethod")), "N/A", reader("PaymentMethod").ToString())
                     Dim totalAmount As Decimal = If(IsDBNull(reader("TotalAmount")), 0D, Convert.ToDecimal(reader("TotalAmount")))
                     Dim amountPaid As Decimal = If(IsDBNull(reader("AmountPaid")), 0D, Convert.ToDecimal(reader("AmountPaid")))
                     Dim changeVal As Decimal = If(IsDBNull(reader("Change")), amountPaid - totalAmount, Convert.ToDecimal(reader("Change")))
@@ -233,6 +268,7 @@ Public Class SalesRecord
                     Guna2DataGridView1.Rows(rowIndex).Cells("OrderID").Value = saleId
                     Guna2DataGridView1.Rows(rowIndex).Cells("CreatedBy").Value = username
                     Guna2DataGridView1.Rows(rowIndex).Cells("OrderDate").Value = If(saleDate = DateTime.MinValue, "", saleDate.ToString("MM/dd/yyyy HH:mm"))
+                    Guna2DataGridView1.Rows(rowIndex).Cells("PaymentMethod").Value = paymentMethod
                     Guna2DataGridView1.Rows(rowIndex).Cells("TotalAmount").Value = "₱" & totalAmount.ToString("F2")
                     Guna2DataGridView1.Rows(rowIndex).Cells("TotalReceived").Value = "₱" & amountPaid.ToString("F2")
                     Guna2DataGridView1.Rows(rowIndex).Cells("Change").Value = "₱" & changeVal.ToString("F2")
@@ -245,6 +281,7 @@ Public Class SalesRecord
                     {"SaleID", saleId},
                     {"Username", username},
                     {"SaleDate", saleDate},
+                    {"PaymentMethod", paymentMethod},
                     {"TotalAmount", totalAmount},
                     {"AmountPaid", amountPaid},
                     {"Change", changeVal},
@@ -253,6 +290,23 @@ Public Class SalesRecord
                 }
                 End While
             End Using
+
+            If Guna2DataGridView1.Rows.Count = 0 Then
+                Dim noDataIndex As Integer = Guna2DataGridView1.Rows.Add()
+                Dim noDataRow = Guna2DataGridView1.Rows(noDataIndex)
+
+                For i As Integer = 0 To Guna2DataGridView1.Columns.Count - 1
+                    noDataRow.Cells(i).Value = String.Empty
+                Next
+
+                noDataRow.Cells("OrderDate").Value = "No Sales Record Found"
+                noDataRow.ReadOnly = True
+                noDataRow.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
+                noDataRow.DefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
+                noDataRow.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Italic)
+            End If
+
+            Guna2DataGridView1.ClearSelection()
 
         Catch ex As Exception
             MessageBox.Show($"Error loading sales records: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
@@ -265,14 +319,36 @@ Public Class SalesRecord
 
     Private Sub SortBy_SelectedIndexChanged(sender As Object, e As EventArgs)
         If isSyncingFilters Then Return
-        isSyncingFilters = True
-        If SortBy.SelectedItem IsNot Nothing Then
-            LoadOrderRecordsData(SortBy.SelectedItem.ToString)
-        End If
-        isSyncingFilters = False
+        ApplyFilters()
     End Sub
 
-    ' Removed filtertype and datepicker handlers because those controls are not present in the designer.
+    Private Sub DtpSaleDate_ValueChanged(sender As Object, e As EventArgs)
+        If isSyncingFilters Then Return
+        ApplyFilters()
+    End Sub
+
+    Private Sub DtpSaleDate_CheckedChanged(sender As Object, e As EventArgs)
+        If isSyncingFilters Then Return
+        ApplyFilters()
+    End Sub
+
+    Private Sub ApplyFilters()
+        isSyncingFilters = True
+
+        Dim sortOrder As String = If(SortBy IsNot Nothing AndAlso SortBy.SelectedItem IsNot Nothing,
+                                     SortBy.SelectedItem.ToString(),
+                                     "Sale Date (Newest First)")
+
+        If Guna2DateTimePicker1 IsNot Nothing AndAlso Guna2DateTimePicker1.Checked Then
+            selectedDate = Guna2DateTimePicker1.Value.Date
+        Else
+            selectedDate = Nothing
+        End If
+
+        LoadOrderRecordsData(sortOrder, selectedDate)
+
+        isSyncingFilters = False
+    End Sub
 
     ' Initialize profile section
     Private profileDropdownPanel As Panel = Nothing
@@ -474,14 +550,29 @@ Public Class SalesRecord
             MessageBox.Show($"Unable to open Profile Settings: {ex.Message}", "Navigation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
-
     Private Sub Exportbtn_Click(sender As Object, e As EventArgs) Handles Exportbtn.Click
-        MessageBox.Show("Export not implemented in this build.", "Export", MessageBoxButtons.OK, MessageBoxIcon.Information)
+        Try
+            Dim sortOrder As String = "Sale Date (Newest First)"
+            If SortBy IsNot Nothing AndAlso SortBy.SelectedItem IsNot Nothing Then
+                sortOrder = SortBy.SelectedItem.ToString()
+            End If
+
+            Dim filterDate As DateTime? = Nothing
+            If Guna2DateTimePicker1 IsNot Nothing Then
+                If Not Guna2DateTimePicker1.ShowCheckBox OrElse Guna2DateTimePicker1.Checked Then
+                    filterDate = Guna2DateTimePicker1.Value.Date
+                End If
+            End If
+
+            SalesRecordExporter.ExportOrderRecordsReport(sortOrder, "All Sales", filterDate)
+
+        Catch ex As Exception
+            MessageBox.Show($"Export failed: {ex.Message}", "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
     End Sub
 
     Public Sub ClearDateFilter()
         ' No date filter control in this form; just reload
-        LoadOrderRecordsData(If(SortBy.SelectedItem IsNot Nothing, SortBy.SelectedItem.ToString(), ""))
     End Sub
 
 

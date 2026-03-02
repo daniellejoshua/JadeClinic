@@ -87,77 +87,85 @@ Public Class SalesDetails
         Dim companyAddress As String = CompanySettingsManager.Instance.GetSettingString("Address", "")
         Dim companyPhone As String = CompanySettingsManager.Instance.GetSettingString("Phone", "")
         Dim companyTIN As String = CompanySettingsManager.Instance.GetSettingString("TIN", "")
+        Dim birAuthNumber As String = CompanySettingsManager.Instance.GetSettingString("BIRAuthNumber", "ATP-2024-000001")
+        Dim ptuNumber As String = CompanySettingsManager.Instance.GetSettingString("PTUNumber", "PTU-2024-001")
+        Dim footer As String = CompanySettingsManager.Instance.GetSettingString("ReceiptFooter", "Thank you for your business!")
 
         sb.AppendLine("========================================")
-        sb.AppendLine($"                {companyName}")
-        If Not String.IsNullOrEmpty(companyAddress) Then sb.AppendLine($"        {companyAddress}")
-        If Not String.IsNullOrEmpty(companyPhone) Then sb.AppendLine($"        Tel: {companyPhone}")
-        If Not String.IsNullOrEmpty(companyTIN) Then sb.AppendLine($"        TIN: {companyTIN}")
+        sb.AppendLine(companyName)
+        sb.AppendLine("Dental Supply Management")
+        If Not String.IsNullOrEmpty(companyTIN) Then sb.AppendLine($"TIN: {companyTIN} (VAT Registered)")
+        If Not String.IsNullOrEmpty(companyPhone) Then sb.AppendLine($"Tel: {companyPhone}")
+        If Not String.IsNullOrEmpty(companyAddress) Then sb.AppendLine(companyAddress)
         sb.AppendLine("========================================")
-        sb.AppendLine($"RECEIPT #: {saleRecord("SaleID")}")
-        sb.AppendLine($"Date: {Convert.ToDateTime(saleRecord("SaleDate")):MM/dd/yyyy HH:mm}")
+        sb.AppendLine("SALES INVOICE")
+        sb.AppendLine($"Receipt #: {saleRecord("SaleID")}")
+        sb.AppendLine($"Date: {Convert.ToDateTime(saleRecord("SaleDate")):MM/dd/yyyy HH:mm:ss}")
         sb.AppendLine($"Cashier: {saleRecord("Cashier")}")
-        sb.AppendLine($"Customer: {saleRecord("CustomerName")}")
-        If Not String.IsNullOrEmpty(Convert.ToString(saleRecord("CustomerTIN"))) Then
-            sb.AppendLine($"Customer TIN: {saleRecord("CustomerTIN")}")
-        End If
-        If Not String.IsNullOrEmpty(Convert.ToString(saleRecord("Reference"))) Then
-            sb.AppendLine($"Reference: {saleRecord("Reference")}")
-        End If
         sb.AppendLine("----------------------------------------")
-        sb.AppendLine("QTY  ITEM                          AMOUNT")
+        sb.AppendLine("Customer Details:")
+        sb.AppendLine($"Name: {If(String.IsNullOrWhiteSpace(Convert.ToString(saleRecord("CustomerName"))), "________________", Convert.ToString(saleRecord("CustomerName")))}")
+        sb.AppendLine($"TIN: {If(String.IsNullOrWhiteSpace(Convert.ToString(saleRecord("CustomerTIN"))), "________________", Convert.ToString(saleRecord("CustomerTIN")))}")
         sb.AppendLine("----------------------------------------")
 
-        Dim subtotal As Decimal = 0D
+        Dim subtotalVatInc As Decimal = 0D
         For Each it In saleItems
             Dim qty As Integer = Convert.ToInt32(it("Quantity"))
             Dim unit As Decimal = Convert.ToDecimal(it("UnitPrice"))
             Dim lineTotal As Decimal = Math.Round(qty * unit, 2)
-            subtotal += lineTotal
+            subtotalVatInc += lineTotal
 
-            Dim name As String = it("ProductName").ToString()
-            If name.Length > 26 Then name = name.Substring(0, 26) & "…"
-            sb.AppendFormat("{0,-4} {1,-26} {2,8}", qty.ToString(), name, $"₱{lineTotal:F2}")
-            sb.AppendLine()
+            sb.AppendLine($"{qty}x {it("ProductName")}")
+            sb.AppendLine($"  @ ₱{unit:F2}      ₱{lineTotal:F2}")
         Next
 
         sb.AppendLine("----------------------------------------")
-        sb.AppendFormat("{0,-32} {1,8}", "SUBTOTAL:", $"₱{subtotal:F2}")
-        sb.AppendLine()
-        ' Try to parse salesdata JSON for discount/tax/other info if present
+
+        Dim discountAmt As Decimal = 0D
+        Dim discountTypeText As String = ""
+        Dim vatAmt As Decimal = 0D
+        Dim vatableNet As Decimal = 0D
+
         Dim salesDataJson As String = Convert.ToString(saleRecord("SalesData"))
-        Dim discountLine As String = ""
-        Dim taxLine As String = ""
         If Not String.IsNullOrEmpty(salesDataJson) Then
             Try
                 Dim j = Newtonsoft.Json.Linq.JObject.Parse(salesDataJson)
                 If j.SelectToken("payment.discount.amount") IsNot Nothing Then
-                    Dim dAmt As Decimal = j.SelectToken("payment.discount.amount").ToObject(Of Decimal)()
-                    Dim dType As String = If(j.SelectToken("payment.discount.type") IsNot Nothing, j.SelectToken("payment.discount.type").ToString(), "")
-                    discountLine = $"{If(String.IsNullOrEmpty(dType), "Discount", $"Discount ({dType})")}: -₱{dAmt:F2}"
-                    sb.AppendFormat("{0,-32} {1,8}", If(String.IsNullOrEmpty(dType), "Discount:", $"Discount ({dType}):"), $"-₱{dAmt:F2}")
-                    sb.AppendLine()
-                    subtotal = Math.Max(0D, subtotal - dAmt)
+                    discountAmt = j.SelectToken("payment.discount.amount").ToObject(Of Decimal)()
                 End If
-                If j.SelectToken("payment.tax") IsNot Nothing Then
-                    Dim tax As Decimal = j.SelectToken("payment.tax").ToObject(Of Decimal)()
-                    sb.AppendFormat("{0,-32} {1,8}", "VAT (12%):", $"₱{tax:F2}")
-                    sb.AppendLine()
+                If j.SelectToken("payment.discount.type") IsNot Nothing Then
+                    discountTypeText = j.SelectToken("payment.discount.type").ToString()
                 End If
             Catch
-                ' ignore JSON parse errors
             End Try
         End If
 
-        sb.AppendFormat("{0,-32} {1,8}", "TOTAL:", $"₱{Convert.ToDecimal(saleRecord("TotalAmount")):F2}")
-        sb.AppendLine()
-        sb.AppendFormat("{0,-32} {1,8}", "Amount Paid:", $"₱{Convert.ToDecimal(saleRecord("AmountPaid")):F2}")
-        sb.AppendLine()
-        Dim changeVal = Convert.ToDecimal(saleRecord("AmountPaid")) - Convert.ToDecimal(saleRecord("TotalAmount"))
-        sb.AppendFormat("{0,-32} {1,8}", "Change:", $"₱{changeVal:F2}")
-        sb.AppendLine()
+        Dim remainingVatInc As Decimal = Math.Max(0D, subtotalVatInc - discountAmt)
+        vatAmt = Math.Round(remainingVatInc * (0.12D / 1.12D), 2)
+        vatableNet = Math.Round(remainingVatInc - vatAmt, 2)
+
+        sb.AppendLine($"SUBTOTAL (VAT-INC): ₱{subtotalVatInc:F2}")
+        If discountAmt > 0D Then
+            Dim dLabel As String = If(String.IsNullOrWhiteSpace(discountTypeText), "Discount", $"Discount ({discountTypeText})")
+            sb.AppendLine($"Less: {dLabel}: -₱{discountAmt:F2}")
+        End If
+        sb.AppendLine($"VATABLE SALES (NET): ₱{vatableNet:F2}")
+        sb.AppendLine($"VAT (12%): ₱{vatAmt:F2}")
         sb.AppendLine("========================================")
-        Dim footer As String = CompanySettingsManager.Instance.GetSettingString("ReceiptFooter", "Thank you for your business!")
+        sb.AppendLine($"TOTAL AMOUNT DUE: ₱{Convert.ToDecimal(saleRecord("TotalAmount")):F2}")
+
+        sb.AppendLine("PAYMENT INFORMATION")
+        sb.AppendLine($"Payment Method: {If(String.IsNullOrWhiteSpace(Convert.ToString(saleRecord("PaymentMethod"))), "N/A", Convert.ToString(saleRecord("PaymentMethod")))}")
+        If Not String.IsNullOrWhiteSpace(Convert.ToString(saleRecord("Reference"))) Then
+            sb.AppendLine($"Reference: {saleRecord("Reference")}")
+        End If
+        sb.AppendLine($"Amount Received: ₱{Convert.ToDecimal(saleRecord("AmountPaid")):F2}")
+        sb.AppendLine($"Change: ₱{(Convert.ToDecimal(saleRecord("AmountPaid")) - Convert.ToDecimal(saleRecord("TotalAmount"))):F2}")
+
+        sb.AppendLine("----------------------------------------")
+        sb.AppendLine($"BIR Authority to Print No.: {birAuthNumber}")
+        sb.AppendLine($"PTU No.: {ptuNumber}")
+        sb.AppendLine("========================================")
         sb.AppendLine(footer)
         sb.AppendLine("========================================")
 

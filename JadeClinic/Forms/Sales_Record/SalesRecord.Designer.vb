@@ -27,6 +27,10 @@ Partial Class SalesRecord
         Dim DataGridViewCellStyle3 As DataGridViewCellStyle = New DataGridViewCellStyle()
         Dim CustomizableEdges4 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges5 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges6 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges7 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges8 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges9 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         LabelTitle = New Label()
         DashboardPanel = New Guna.UI2.WinForms.Guna2Panel()
         PictureBox9 = New PictureBox()
@@ -34,6 +38,10 @@ Partial Class SalesRecord
         Guna2DataGridView1 = New Guna.UI2.WinForms.Guna2DataGridView()
         Exportbtn = New Guna.UI2.WinForms.Guna2Button()
         lblUsername = New Guna.UI2.WinForms.Guna2HtmlLabel()
+        Guna2HtmlLabel4 = New Guna.UI2.WinForms.Guna2HtmlLabel()
+        Guna2DateTimePicker1 = New Guna.UI2.WinForms.Guna2DateTimePicker()
+        Guna2HtmlLabel3 = New Guna.UI2.WinForms.Guna2HtmlLabel()
+        SortBy = New Guna.UI2.WinForms.Guna2ComboBox()
         DashboardPanel.SuspendLayout()
         CType(PictureBox9, ComponentModel.ISupportInitialize).BeginInit()
         CType(Guna2CirclePictureBox5, ComponentModel.ISupportInitialize).BeginInit()
@@ -171,12 +179,76 @@ Partial Class SalesRecord
         lblUsername.TabIndex = 74
         lblUsername.Text = "20 Items"
         ' 
+        ' Guna2HtmlLabel4
+        ' 
+        Guna2HtmlLabel4.BackColor = Color.Transparent
+        Guna2HtmlLabel4.Font = New Font("Poppins", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Guna2HtmlLabel4.ForeColor = Color.White
+        Guna2HtmlLabel4.Location = New Point(237, 108)
+        Guna2HtmlLabel4.Name = "Guna2HtmlLabel4"
+        Guna2HtmlLabel4.Size = New Size(116, 32)
+        Guna2HtmlLabel4.TabIndex = 87
+        Guna2HtmlLabel4.Text = "Filter by Date:"
+        ' 
+        ' Guna2DateTimePicker1
+        ' 
+        Guna2DateTimePicker1.BorderRadius = 10
+        Guna2DateTimePicker1.Checked = True
+        Guna2DateTimePicker1.CustomizableEdges = CustomizableEdges6
+        Guna2DateTimePicker1.FillColor = Color.FromArgb(CByte(30), CByte(30), CByte(30))
+        Guna2DateTimePicker1.Font = New Font("Poppins", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Guna2DateTimePicker1.ForeColor = Color.White
+        Guna2DateTimePicker1.Format = DateTimePickerFormat.Short
+        Guna2DateTimePicker1.Location = New Point(359, 100)
+        Guna2DateTimePicker1.MaxDate = New Date(9998, 12, 31, 0, 0, 0, 0)
+        Guna2DateTimePicker1.MinDate = New Date(1753, 1, 1, 0, 0, 0, 0)
+        Guna2DateTimePicker1.Name = "Guna2DateTimePicker1"
+        Guna2DateTimePicker1.ShadowDecoration.CustomizableEdges = CustomizableEdges7
+        Guna2DateTimePicker1.Size = New Size(148, 40)
+        Guna2DateTimePicker1.TabIndex = 86
+        Guna2DateTimePicker1.Value = New Date(2025, 9, 27, 23, 48, 46, 373)
+        ' 
+        ' Guna2HtmlLabel3
+        ' 
+        Guna2HtmlLabel3.BackColor = Color.Transparent
+        Guna2HtmlLabel3.Font = New Font("Poppins", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Guna2HtmlLabel3.ForeColor = Color.White
+        Guna2HtmlLabel3.Location = New Point(544, 102)
+        Guna2HtmlLabel3.Name = "Guna2HtmlLabel3"
+        Guna2HtmlLabel3.Size = New Size(65, 32)
+        Guna2HtmlLabel3.TabIndex = 85
+        Guna2HtmlLabel3.Text = "Sort by:"
+        ' 
+        ' SortBy
+        ' 
+        SortBy.BackColor = Color.Transparent
+        SortBy.BorderRadius = 10
+        SortBy.BorderThickness = 0
+        SortBy.CustomizableEdges = CustomizableEdges8
+        SortBy.DrawMode = DrawMode.OwnerDrawFixed
+        SortBy.DropDownStyle = ComboBoxStyle.DropDownList
+        SortBy.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
+        SortBy.FocusedColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
+        SortBy.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
+        SortBy.Font = New Font("Poppins Light", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        SortBy.ForeColor = Color.White
+        SortBy.ItemHeight = 40
+        SortBy.Location = New Point(624, 94)
+        SortBy.Name = "SortBy"
+        SortBy.ShadowDecoration.CustomizableEdges = CustomizableEdges9
+        SortBy.Size = New Size(309, 46)
+        SortBy.TabIndex = 84
+        ' 
         ' SalesRecord
         ' 
         AutoScaleDimensions = New SizeF(8.0F, 20.0F)
         AutoScaleMode = AutoScaleMode.Font
         BackColor = Color.FromArgb(CByte(30), CByte(30), CByte(30))
         ClientSize = New Size(1609, 875)
+        Controls.Add(Guna2HtmlLabel4)
+        Controls.Add(Guna2DateTimePicker1)
+        Controls.Add(Guna2HtmlLabel3)
+        Controls.Add(SortBy)
         Controls.Add(lblUsername)
         Controls.Add(Exportbtn)
         Controls.Add(Guna2DataGridView1)
@@ -201,4 +273,8 @@ Partial Class SalesRecord
     Friend WithEvents Exportbtn As Guna.UI2.WinForms.Guna2Button
     Friend WithEvents lblUsername As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents PictureBox9 As PictureBox
+    Friend WithEvents Guna2HtmlLabel4 As Guna.UI2.WinForms.Guna2HtmlLabel
+    Friend WithEvents Guna2DateTimePicker1 As Guna.UI2.WinForms.Guna2DateTimePicker
+    Friend WithEvents Guna2HtmlLabel3 As Guna.UI2.WinForms.Guna2HtmlLabel
+    Friend WithEvents SortBy As Guna.UI2.WinForms.Guna2ComboBox
 End Class
