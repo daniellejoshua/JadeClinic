@@ -66,7 +66,8 @@ Public Class Sales
     Private ReadOnly mainCategoryNames As New HashSet(Of String) From {
         "ortho", "consumables", "surgery", "resto", "endo", "cosmetic"
     }
-
+    ' Map overlay label -> the category button it visually sits on
+    Private overlayToButton As New Dictionary(Of Control, Guna.UI2.WinForms.Guna2Button)()
     ' Profile dropdown panel
     Private profileDropdownPanel As Panel = Nothing
     Private isProfileDropdownVisible As Boolean = False
@@ -94,9 +95,145 @@ Public Class Sales
     Private lastKeyTime As DateTime = DateTime.Now
     Private Const BARCODE_TIMEOUT As Integer = 100 ' milliseconds between barcode characters
 
+
+    ' POS lock color control caches
+    Private originalCategoryButtonFillColors As New Dictionary(Of Guna.UI2.WinForms.Guna2Button, Color)()
+    Private originalCategoryOverlayColors As New Dictionary(Of Control, Color)()
+    Private posLockCategoryFillColor As Color = Graphite
+    Private posLockLabelBackColor As Color = Color.Empty
+
+
+
+
+
+
+    ' === Daily Opening Capital (POS lock) ===
+    Private posLockedForCapital As Boolean = False
+    Private currentOpeningCapital As Decimal = 0D
+    Private lblCapitalInfo As Label
+    Private btnEditCapital As Guna2Button
+
     ' FIXED: Enhanced barcode scanning with proper key handling
+    Private Sub InitializeCategoryLockCaches()
+        Try
+            originalCategoryButtonFillColors.Clear()
+            originalCategoryOverlayColors.Clear()
+            overlayToButton.Clear()
 
+            ' Cache all category buttons currently in the panel
+            For Each ctrl As Control In CategoryPanel.Controls
+                If TypeOf ctrl Is Guna.UI2.WinForms.Guna2Button Then
+                    Dim btn = CType(ctrl, Guna.UI2.WinForms.Guna2Button)
+                    If Not originalCategoryButtonFillColors.ContainsKey(btn) Then
+                        originalCategoryButtonFillColors(btn) = btn.FillColor
+                    End If
+                End If
+            Next
 
+            ' Overlay candidates (designer labels and runtime overlays)
+            Dim overlayCandidates As Control() = {
+                Label1, Label2, Label3, Label4, Label5, Label6, Label7,
+                Guna2HtmlLabel1, Guna2HtmlLabel3, Guna2HtmlLabel5, Guna2HtmlLabel7,
+                Guna2HtmlLabel9, Guna2HtmlLabel11, Guna2HtmlLabel4, Guna2HtmlLabel6, Guna2HtmlLabel8, Guna2HtmlLabel10, Guna2HtmlLabel12
+            }
+
+            For Each c In overlayCandidates
+                If c IsNot Nothing Then
+                    originalCategoryOverlayColors(c) = c.BackColor
+                End If
+            Next
+
+            ' Include any children of category buttons (dynamic overlays)
+            For Each ctrl As Control In CategoryPanel.Controls
+                If TypeOf ctrl Is Guna.UI2.WinForms.Guna2Button Then
+                    Dim btn = CType(ctrl, Guna.UI2.WinForms.Guna2Button)
+                    For Each child As Control In btn.Controls
+                        If Not originalCategoryOverlayColors.ContainsKey(child) Then
+                            originalCategoryOverlayColors(child) = child.BackColor
+                        End If
+                    Next
+                End If
+            Next
+
+            ' Build visual mapping from overlay controls -> the button beneath them (by screen coordinates)
+            For Each kvp In originalCategoryOverlayColors.ToList()
+                Dim overlayCtrl As Control = kvp.Key
+                Try
+                    Dim screenRect As Rectangle = overlayCtrl.RectangleToScreen(overlayCtrl.ClientRectangle)
+                    Dim centerPoint As Point = New Point(screenRect.Left + screenRect.Width \ 2, screenRect.Top + screenRect.Height \ 2)
+
+                    For Each ctrl As Control In CategoryPanel.Controls
+                        If TypeOf ctrl Is Guna.UI2.WinForms.Guna2Button Then
+                            Dim btn = CType(ctrl, Guna.UI2.WinForms.Guna2Button)
+                            Dim btnRect As Rectangle = btn.RectangleToScreen(btn.ClientRectangle)
+                            If btnRect.Contains(centerPoint) Then
+                                overlayToButton(overlayCtrl) = btn
+                                Exit For
+                            End If
+                        End If
+                    Next
+                Catch
+                    ' ignore mapping errors for any specific control
+                End Try
+            Next
+
+        Catch ex As Exception
+            Console.WriteLine($"InitializeCategoryLockCaches error: {ex.Message}")
+        End Try
+    End Sub
+    ' Call this to set the colors you want applied when the POS is locked.
+    Public Sub SetPosLockColors(categoryFill As Color, Optional labelBack As Color = Nothing)
+        posLockCategoryFillColor = categoryFill
+        If labelBack <> Nothing Then posLockLabelBackColor = labelBack
+    End Sub
+
+    Private Sub ApplyPosLockColors(locked As Boolean)
+        Try
+            If originalCategoryButtonFillColors.Count = 0 OrElse originalCategoryOverlayColors.Count = 0 Then
+                InitializeCategoryLockCaches()
+            End If
+
+            ' Buttons: either apply configured lock color or restore original
+            For Each kvp In originalCategoryButtonFillColors.ToList()
+                Dim btn = kvp.Key
+                Dim originalFill = kvp.Value
+                If btn Is Nothing OrElse btn.IsDisposed Then Continue For
+                btn.FillColor = If(locked, posLockCategoryFillColor, originalFill)
+            Next
+
+            ' Overlays: if locked, prefer explicit label override, else prefer the mapped button FillColor,
+            ' else fallback to posLockCategoryFillColor. When unlocking, restore original background.
+            For Each kvp In originalCategoryOverlayColors.ToList()
+                Dim ctrl = kvp.Key
+                Dim originalBack = kvp.Value
+                If ctrl Is Nothing OrElse ctrl.IsDisposed Then Continue For
+
+                If locked Then
+                    If posLockLabelBackColor <> Color.Empty Then
+                        ctrl.BackColor = posLockLabelBackColor
+                        Continue For
+                    End If
+
+                    Dim mappedBtn As Guna.UI2.WinForms.Guna2Button = Nothing
+                    If overlayToButton.ContainsKey(ctrl) Then
+                        mappedBtn = overlayToButton(ctrl)
+                    End If
+
+                    If mappedBtn IsNot Nothing Then
+                        ctrl.BackColor = mappedBtn.FillColor
+                    Else
+                        ' Last fallback: use the manual posLockCategoryFillColor
+                        ctrl.BackColor = posLockCategoryFillColor
+                    End If
+                Else
+                    ' restore the original background
+                    ctrl.BackColor = originalBack
+                End If
+            Next
+        Catch ex As Exception
+            Console.WriteLine($"ApplyPosLockColors error: {ex.Message}")
+        End Try
+    End Sub
     ' FIXED: Proper barcode key input handling
     ' FIXED: Remove Ctrl key, only use Shift for quantity selection
     Private Sub HandleBarcodeKeyInput(e As KeyEventArgs)
@@ -227,6 +364,15 @@ Public Class Sales
         Me.MaximizeBox = False
         Me.MinimizeBox = False
 
+
+        ArrangeCategoryButtonsFlexWrap()
+        ' Cache original colors and mapping so overlays follow their buttons
+        InitializeCategoryLockCaches()
+        ' Apply current lock state (in case POS is locked)
+        ApplyPosLockColors(posLockedForCapital)
+
+
+
         ' Enhanced CategoryPanel (main focus area) - Updated colors
         CategoryPanel.BorderColor = GoldenYellow ' Golden Yellow
         CategoryPanel.ShadowDecoration.Depth = 8 ' Deep shadow
@@ -307,7 +453,8 @@ Public Class Sales
         AddNewCategoryButtonsFromDB()
         ' Arrange buttons in flex-wrap style
         ArrangeCategoryButtonsFlexWrap()
-
+        ' Enforce daily opening capital
+        EnsureCapitalBeforeUsingPOS()
         ' Show next possible Sale ID in lblOrderId
         Dim nextSaleId As Integer = 1
         Try
@@ -347,6 +494,36 @@ Public Class Sales
         ' ... rest of the method ...
         ' Add keyboard instructions for users
     End Sub
+
+    ' Returns true if there are any sales records for today.
+    ' Returns true if there are any sales records for today.
+    ' Returns true if there are any sales records for today.
+    Private Function HasSalesForToday() As Boolean
+        Try
+            Dim sql As String = "SELECT COUNT(1) FROM Sales WHERE CAST(SaleDate AS date) = @Today"
+            Dim result = Utilities.ExecuteScalar(sql, New SqlParameter() {
+                New SqlParameter("@Today", Date.Today)
+            })
+            If result Is Nothing OrElse result Is DBNull.Value Then
+                Return False
+            End If
+            Dim count As Integer = Convert.ToInt32(result)
+            Return count > 0
+        Catch ex As Exception
+            ' On error assume safe default (do not allow edit)
+            Console.WriteLine($"HasSalesForToday error: {ex.Message}")
+            Return True
+        End Try
+    End Function
+
+
+
+
+
+
+
+
+
     Public Sub ShowCategoryProducts(categoryName As String)
         ' Clear the CategoryPanel
         CategoryPanel.Controls.Clear()
@@ -501,6 +678,14 @@ Public Class Sales
     ' FIXED: Handle both manual clicks and barcode scans with only Shift key
     Private Sub HandleProductInteraction(productData As Dictionary(Of String, Object), isFromBarcode As Boolean)
         ' Prevent interactions when customer selection or payment panels are active
+
+        If posLockedForCapital Then
+            MessageBox.Show("POS is locked. Manager/Admin must set opening capital first.", "POS Locked", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Return
+        End If
+
+
+
         If pinPanelActive OrElse totalPanelActive Then
             Return
         End If
@@ -600,6 +785,12 @@ Public Class Sales
         Me.Controls.Add(instructionLabel)
     End Sub
     Private Sub ShowProductDetailsPanel(productData As Dictionary(Of String, Object))
+
+
+        If posLockedForCapital Then
+            MessageBox.Show("POS is locked. Manager/Admin must set opening capital first.", "POS Locked", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Return
+        End If
         ' Prevent product clicks when customer selection or payment panels are active
         If pinPanelActive OrElse totalPanelActive Then
             Return ' Exit without adding to order
@@ -958,6 +1149,228 @@ Public Class Sales
         End If
         Return True
     End Function
+    Private Function IsManagerOrAdmin() As Boolean
+        Dim role As String = If(frmLoginvb.LoggedInRole, "").ToUpperInvariant()
+        Return role = "MANAGER" OrElse role = "ADMIN" OrElse role = "ADMINISTRATOR"
+    End Function
+
+    Private Sub EnsureDailyOpeningCapitalTable()
+        Dim sql As String =
+        "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='DailyOpeningCapital' AND xtype='U') " &
+        "CREATE TABLE DailyOpeningCapital (" &
+        "CashDate date PRIMARY KEY, " &
+        "OpeningAmount decimal(18,2) NOT NULL, " &
+        "SetByUserID int NULL, " &
+        "SetAt datetime2 NOT NULL DEFAULT GETDATE())"
+        Utilities.ExecuteNonQuery(sql, New SqlParameter() {})
+    End Sub
+
+    Private Function TryGetTodayOpeningCapital(ByRef amount As Decimal) As Boolean
+        Dim sql As String = "SELECT OpeningAmount FROM DailyOpeningCapital WHERE CashDate = @CashDate"
+        Dim result = Utilities.ExecuteScalar(sql, New SqlParameter() {
+        New SqlParameter("@CashDate", Date.Today)
+    })
+
+        If result Is Nothing OrElse result Is DBNull.Value Then
+            amount = 0D
+            Return False
+        End If
+
+        amount = Convert.ToDecimal(result)
+        Return True
+    End Function
+
+    Private Sub UpsertTodayOpeningCapital(amount As Decimal)
+        Dim sql As String =
+        "IF EXISTS (SELECT 1 FROM DailyOpeningCapital WHERE CashDate = @CashDate) " &
+        "BEGIN " &
+        "   UPDATE DailyOpeningCapital SET OpeningAmount = @OpeningAmount, SetByUserID = @SetByUserID, SetAt = GETDATE() WHERE CashDate = @CashDate " &
+        "END " &
+        "ELSE " &
+        "BEGIN " &
+        "   INSERT INTO DailyOpeningCapital (CashDate, OpeningAmount, SetByUserID, SetAt) VALUES (@CashDate, @OpeningAmount, @SetByUserID, GETDATE()) " &
+        "END"
+
+        Utilities.ExecuteNonQuery(sql, New SqlParameter() {
+        New SqlParameter("@CashDate", Date.Today),
+        New SqlParameter("@OpeningAmount", amount),
+        New SqlParameter("@SetByUserID", If(frmLoginvb.LoggedInUserID > 0, CType(frmLoginvb.LoggedInUserID, Object), DBNull.Value))
+    })
+    End Sub
+
+    Private Sub InitializeCapitalHeaderUI()
+        If lblCapitalInfo Is Nothing Then
+            lblCapitalInfo = New Label() With {
+                .AutoSize = True,
+                .Font = New Font("Poppins", 9, FontStyle.Bold),
+                .ForeColor = GoldenYellow,
+                .BackColor = Color.Transparent,
+                .Location = New Point(Me.ClientSize.Width - 20, 12),
+                .Anchor = AnchorStyles.Top Or AnchorStyles.Right,
+                .Text = "Opening Capital: Not set"
+            }
+            Me.Controls.Add(lblCapitalInfo)
+            lblCapitalInfo.BringToFront()
+        End If
+
+        If btnEditCapital Is Nothing Then
+            btnEditCapital = New Guna2Button() With {
+                .Text = "Set Capital",
+                .Size = New Size(110, 30),
+                .Location = New Point(Me.ClientSize.Width - 120, 8),
+                .Anchor = AnchorStyles.Top Or AnchorStyles.Right,
+                .BorderRadius = 8,
+                .FillColor = RichOlive,
+                .ForeColor = PureWhite
+            }
+            AddHandler btnEditCapital.Click, AddressOf BtnEditCapital_Click
+            Me.Controls.Add(btnEditCapital)
+            btnEditCapital.BringToFront()
+        End If
+
+        ' Hide edit button if user is not manager/admin or if there are sales already today
+        btnEditCapital.Visible = IsManagerOrAdmin() AndAlso Not HasSalesForToday()
+    End Sub
+    Private Sub PositionCapitalHeaderCenterTop()
+        If lblCapitalInfo Is Nothing OrElse btnEditCapital Is Nothing Then
+            Return
+        End If
+
+        Dim spacing As Integer = 10
+        Dim totalWidth As Integer = lblCapitalInfo.Width + spacing + btnEditCapital.Width
+        Dim startX As Integer = (Me.ClientSize.Width - totalWidth) \ 2
+
+        lblCapitalInfo.Location = New Point(startX, 12)
+
+        Dim buttonX As Integer = lblCapitalInfo.Right + spacing
+        If posLockedForCapital Then
+            buttonX += 40 ' push further right so it partially clips while locked
+        End If
+
+        btnEditCapital.Location = New Point(buttonX, 8)
+    End Sub
+
+    Private Sub ApplyCapitalLockState(locked As Boolean)
+        posLockedForCapital = locked
+
+        CategoryPanel.Enabled = Not locked
+        btnPayment.Enabled = Not locked
+        confirmBtn.Enabled = Not locked
+        btnDiscount.Enabled = Not locked
+
+        If locked Then
+            lblCapitalInfo.Text = "Opening Capital: Not set (POS Locked)"
+            lblCapitalInfo.ForeColor = AlertRed
+        Else
+            lblCapitalInfo.ForeColor = GoldenYellow
+        End If
+
+        ' Update category/button/overlay colors according to lock state
+        ApplyPosLockColors(locked)
+
+        PositionCapitalHeaderCenterTop()
+    End Sub
+    Private Sub UpdateCapitalHeaderUI()
+        lblCapitalInfo.Text = $"Opening Capital ({Date.Today:MM/dd/yyyy}): ₱{currentOpeningCapital:N2}"
+        btnEditCapital.Text = If(currentOpeningCapital > 0D, "Edit Capital", "Set Capital")
+
+        ' Do not allow editing if there are sales records for today.
+        btnEditCapital.Visible = IsManagerOrAdmin() AndAlso Not HasSalesForToday()
+    End Sub
+
+
+    Private Function ShowSetCapitalDialog(isEdit As Boolean) As Boolean
+        If Not IsManagerOrAdmin() Then Return False
+
+        Dim dlg As New Form With {
+        .Text = If(isEdit, "Edit Opening Capital", "Set Opening Capital"),
+        .Size = New Size(360, 210),
+        .StartPosition = FormStartPosition.CenterParent,
+        .FormBorderStyle = FormBorderStyle.FixedDialog,
+        .MaximizeBox = False,
+        .MinimizeBox = False
+    }
+
+        Dim lbl As New Label With {
+        .Text = $"Enter opening capital for {Date.Today:MM/dd/yyyy}:",
+        .Location = New Point(20, 20),
+        .AutoSize = True
+    }
+
+        Dim nud As New NumericUpDown With {
+        .Location = New Point(20, 55),
+        .Size = New Size(200, 32),
+        .DecimalPlaces = 2,
+        .Maximum = 10000000D,
+        .Minimum = 0D,
+        .Value = If(currentOpeningCapital > 0D, currentOpeningCapital, 0D)
+    }
+
+        Dim btnOk As New Button With {.Text = "Save", .Location = New Point(20, 110), .Width = 100}
+        Dim btnCancel As New Button With {.Text = "Cancel", .Location = New Point(130, 110), .Width = 100}
+
+        AddHandler btnOk.Click,
+        Sub()
+            UpsertTodayOpeningCapital(nud.Value)
+            currentOpeningCapital = nud.Value
+            UpdateCapitalHeaderUI()
+            ApplyCapitalLockState(False)
+            Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Opening Capital Set", $"Date={Date.Today:yyyy-MM-dd}, Amount=₱{currentOpeningCapital:N2}")
+            dlg.DialogResult = DialogResult.OK
+            dlg.Close()
+        End Sub
+
+        AddHandler btnCancel.Click,
+        Sub()
+            dlg.DialogResult = DialogResult.Cancel
+            dlg.Close()
+        End Sub
+
+        dlg.Controls.Add(lbl)
+        dlg.Controls.Add(nud)
+        dlg.Controls.Add(btnOk)
+        dlg.Controls.Add(btnCancel)
+
+        Return dlg.ShowDialog(Me) = DialogResult.OK
+    End Function
+
+    Private Sub EnsureCapitalBeforeUsingPOS()
+        EnsureDailyOpeningCapitalTable()
+        InitializeCapitalHeaderUI()
+
+        Dim found As Boolean = TryGetTodayOpeningCapital(currentOpeningCapital)
+        If found Then
+            UpdateCapitalHeaderUI()
+            ApplyCapitalLockState(False)
+            Return
+        End If
+
+        If IsManagerOrAdmin() Then
+            Dim setOk As Boolean = ShowSetCapitalDialog(False)
+            If Not setOk Then
+                ApplyCapitalLockState(True)
+            End If
+        Else
+            ApplyCapitalLockState(True)
+            MessageBox.Show("POS is locked. Manager/Admin must set opening capital for today.", "Opening Capital Required", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+        End If
+    End Sub
+
+    Private Sub BtnEditCapital_Click(sender As Object, e As EventArgs)
+        If Not IsManagerOrAdmin() Then
+            MessageBox.Show("Only Manager/Admin can edit opening capital.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Return
+        End If
+
+        ' Prevent editing if sales for today exist — button should be hidden but double-check.
+        If HasSalesForToday() Then
+            MessageBox.Show("Opening capital cannot be edited after sales have been recorded for today.", "Action Not Allowed", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            btnEditCapital.Visible = False
+            Return
+        End If
+
+        ShowSetCapitalDialog(currentOpeningCapital > 0D)
+    End Sub
 
     ' Barcode scanning functionality
 
@@ -1550,6 +1963,10 @@ Public Class Sales
 
     ' Payment and discount methods - Updated to use modals
     Private Sub btnPayment_Click(sender As Object, e As EventArgs) Handles btnPayment.Click
+        If posLockedForCapital Then
+            MessageBox.Show("POS is locked. Manager/Admin must set opening capital first.", "POS Locked", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Return
+        End If
         ' Validate user session
         If Not ValidateUserSession() Then
             Return
@@ -2906,6 +3323,10 @@ Public Class Sales
     ' FIXED: Enhanced receipt printing with correct VAT breakdown
     ' FIXED: Update the confirmBtn_Click method to set correct receipt values
     Private Sub confirmBtn_Click(sender As Object, e As EventArgs) Handles confirmBtn.Click
+        If posLockedForCapital Then
+            MessageBox.Show("POS is locked. Manager/Admin must set opening capital first.", "POS Locked", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Return
+        End If
         Try
             If Not ValidateUserSession() Then Return
 
@@ -3833,7 +4254,10 @@ Public Class Sales
         If pinPanelActive OrElse totalPanelActive Then
             Return ' Exit without showing selector
         End If
-
+        If posLockedForCapital Then
+            MessageBox.Show("POS is locked. Manager/Admin must set opening capital first.", "POS Locked", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Return
+        End If
         ' Check if the product stock is 0
         If productData.ContainsKey("CurrentStock") AndAlso CInt(productData("CurrentStock")) = 0 Then
             MessageBox.Show("This product is out of stock and cannot be added to the order.", "Out of Stock", MessageBoxButtons.OK, MessageBoxIcon.Warning)
@@ -4102,6 +4526,11 @@ Public Class Sales
 
     ' New method to add product with specified quantity
     Private Sub AddProductToOrder(productData As Dictionary(Of String, Object), quantity As Integer)
+
+        If posLockedForCapital Then
+            MessageBox.Show("POS is locked. Manager/Admin must set opening capital first.", "POS Locked", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Return
+        End If
         ' Check if product already exists in the order list
         Dim foundIndex As Integer = -1
         For i = 0 To currentOrderList.Count - 1
@@ -4218,6 +4647,10 @@ Public Class Sales
 
     ' Mini modal to search products by barcode or name and add to order (uses existing AddProductToOrder / ShowQuantitySelector)
     Private Sub ShowProductSearchModal()
+        If posLockedForCapital Then
+            MessageBox.Show("POS is locked. Manager/Admin must set opening capital first.", "POS Locked", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Return
+        End If
         ' Simple input modal: search by barcode (exact) or product name (partial).
         Dim searchForm As New Form() With {
             .Text = "Search Product",
@@ -4378,6 +4811,10 @@ Public Class Sales
     End Function
 
     Private Sub Sales_KeyDown(sender As Object, e As KeyEventArgs) Handles MyBase.KeyDown
+        If posLockedForCapital Then
+            e.Handled = True
+            Return
+        End If
         ' GLOBAL SHORTCUTS (only when no modal/customer/payment panels are active)
         If Not totalPanelActive AndAlso Not pinPanelActive AndAlso Not isProfileDropdownVisible Then
             ' Shift+Enter -> go to payment (explicit shortcut)

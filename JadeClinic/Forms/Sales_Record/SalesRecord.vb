@@ -263,11 +263,11 @@ Public Class SalesRecord
     End Sub
     Private isSyncingFilters As Boolean = False
 
-    Private Sub SortBy_SelectedIndexChanged(sender As Object, e As EventArgs) Handles SortBy.SelectedIndexChanged
+    Private Sub SortBy_SelectedIndexChanged(sender As Object, e As EventArgs)
         If isSyncingFilters Then Return
         isSyncingFilters = True
         If SortBy.SelectedItem IsNot Nothing Then
-            LoadOrderRecordsData(SortBy.SelectedItem.ToString())
+            LoadOrderRecordsData(SortBy.SelectedItem.ToString)
         End If
         isSyncingFilters = False
     End Sub
