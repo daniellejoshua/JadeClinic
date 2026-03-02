@@ -422,26 +422,70 @@ Public Class DatabaseInitializer
     ' FIXED: Restore the proper function name and add the actual logo resource conversion
     Private Shared Sub CreateCompanySettingsTableActual()
         Dim query As String = "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='CompanySettings' AND xtype='U') " &
-            "CREATE TABLE CompanySettings(" &
-            "SettingID int IDENTITY(1,1) PRIMARY KEY, " &
-            "CompanyName nvarchar(200) NOT NULL, " &
-            "TIN nvarchar(50) NULL, " &
-            "Address nvarchar(500) NULL, " &
-            "Phone nvarchar(50) NULL, " &
-            "Email nvarchar(100) NULL, " &
-            "Website nvarchar(200) NULL, " &
-            "Logo varbinary(max) NULL, " &
-            "BIRAuthNumber nvarchar(100) NULL, " &
-            "PTUNumber nvarchar(100) NULL, " &
-            "ValidityYears int NOT NULL DEFAULT 5, " &
-            "ReceiptFooter nvarchar(300) NULL, " &
-            "IsActive bit NOT NULL DEFAULT 1, " &
-            "DateCreated datetime2 NOT NULL DEFAULT GETDATE()," &
-            "LastModified datetime2 NOT NULL DEFAULT GETDATE())"
+        "CREATE TABLE CompanySettings(" &
+        "SettingID int IDENTITY(1,1) PRIMARY KEY, " &
+        "CompanyName nvarchar(200) NOT NULL, " &
+        "TIN nvarchar(50) NULL, " &
+        "Address nvarchar(500) NULL, " &
+        "Phone nvarchar(50) NULL, " &
+        "Email nvarchar(100) NULL, " &
+        "Website nvarchar(200) NULL, " &
+        "Logo varbinary(max) NULL, " &
+        "BIRAuthNumber nvarchar(100) NULL, " &
+        "PTUNumber nvarchar(100) NULL, " &
+        "ValidityYears int NOT NULL DEFAULT 5, " &
+        "ReceiptFooter nvarchar(300) NULL, " &
+        "CompanyHours nvarchar(1000) NULL, " &          ' <-- new column
+        "IsActive bit NOT NULL DEFAULT 1, " &
+        "DateCreated datetime2 NOT NULL DEFAULT GETDATE()," &
+        "LastModified datetime2 NOT NULL DEFAULT GETDATE())"
 
         DatabaseHelper.ExecuteNonQuery(query, Nothing)
     End Sub
 
+    Private Shared Sub CreateDefaultCompanySettings()
+        Try
+            Dim checkSql As String = "SELECT COUNT(*) FROM CompanySettings WHERE IsActive = 1"
+            Dim settingsCount = Utilities.ExecuteScalar(checkSql, New SqlParameter() {})
+
+            If Convert.ToInt32(settingsCount) = 0 Then
+                ' Convert Jade Dental Logo resource to byte array
+                Dim logoBytes As Byte() = Nothing
+                Try
+                    Using logoImage As System.Drawing.Image = My.Resources.FinalLogoOfJAde
+                        If logoImage IsNot Nothing Then
+                            Using ms As New MemoryStream()
+                                logoImage.Save(ms, System.Drawing.Imaging.ImageFormat.Png)
+                                logoBytes = ms.ToArray()
+                            End Using
+                        End If
+                    End Using
+                Catch logoEx As Exception
+                    Console.WriteLine($"Note: Could not load Jade Dental Logo from resources: {logoEx.Message}")
+                End Try
+
+                Dim sql As String = "INSERT INTO CompanySettings (CompanyName, TIN, Address, Phone, Email, Website, Logo, BIRAuthNumber, PTUNumber, ReceiptFooter, CompanyHours) VALUES (@CompanyName, @TIN, @Address, @Phone, @Email, @Website, @Logo, @BIRAuthNumber, @PTUNumber, @ReceiptFooter, @CompanyHours)"
+                Dim params As SqlParameter() = {
+                New SqlParameter("@CompanyName", "JADE CLINIC"),
+                New SqlParameter("@TIN", "123-456-789-000"),
+                New SqlParameter("@Address", "123 Medical Plaza, Makati City, Philippines"),
+                New SqlParameter("@Phone", "(02) 8123-4567"),
+                New SqlParameter("@Email", "admin@jadeclinic.com"),
+                New SqlParameter("@Website", "www.jadeclinic.com"),
+                New SqlParameter("@Logo", If(logoBytes, DBNull.Value)),
+                New SqlParameter("@BIRAuthNumber", "ATP-2024-000001"),
+                New SqlParameter("@PTUNumber", "PTU-2024-001"),
+                New SqlParameter("@ReceiptFooter", "Thank you for your business!" & vbCrLf & "Have a great day!"),
+                New SqlParameter("@CompanyHours", "Mon-Fri: 9:00 AM - 5:00 PM" & vbCrLf & "Sat: 9:00 AM - 1:00 PM" & vbCrLf & "Sun: Closed")
+            }
+
+                Utilities.ExecuteNonQuery(sql, params)
+                Console.WriteLine("✅ Default company settings created with Jade Dental Clinic logo")
+            End If
+        Catch ex As Exception
+            Console.WriteLine($"Warning: Could not create default company settings: {ex.Message}")
+        End Try
+    End Sub
 
     Private Shared Sub CreateInitialData()
         CreateDefaultAdminUser()
@@ -562,50 +606,6 @@ Public Class DatabaseInitializer
     End Sub
 
     ' ENHANCED: Include actual Jade Dental Clinic logo from resources as default
-    Private Shared Sub CreateDefaultCompanySettings()
-        Try
-            Dim checkSql As String = "SELECT COUNT(*) FROM CompanySettings WHERE IsActive = 1"
-            Dim settingsCount = Utilities.ExecuteScalar(checkSql, New SqlParameter() {})
-
-            If Convert.ToInt32(settingsCount) = 0 Then
-                ' Convert Jade Dental Logo resource to byte array
-                Dim logoBytes As Byte() = Nothing
-                Try
-                    ' Get the Jade Dental Logo from resources
-                    Using logoImage As System.Drawing.Image = My.Resources.FinalLogoOfJAde
-                        If logoImage IsNot Nothing Then
-                            Using ms As New MemoryStream()
-                                logoImage.Save(ms, System.Drawing.Imaging.ImageFormat.Png)
-                                logoBytes = ms.ToArray()
-                            End Using
-                        End If
-                    End Using
-                Catch logoEx As Exception
-                    Console.WriteLine($"Note: Could not load Jade Dental Logo from resources: {logoEx.Message}")
-                    ' Continue without logo - will use default
-                End Try
-
-                Dim sql As String = "INSERT INTO CompanySettings (CompanyName, TIN, Address, Phone, Email, Website, Logo, BIRAuthNumber, PTUNumber, ReceiptFooter) VALUES (@CompanyName, @TIN, @Address, @Phone, @Email, @Website, @Logo, @BIRAuthNumber, @PTUNumber, @ReceiptFooter)"
-                Dim params As SqlParameter() = {
-                    New SqlParameter("@CompanyName", "JADE CLINIC"),
-                    New SqlParameter("@TIN", "123-456-789-000"),
-                    New SqlParameter("@Address", "123 Medical Plaza, Makati City, Philippines"),
-                    New SqlParameter("@Phone", "(02) 8123-4567"),
-                    New SqlParameter("@Email", "admin@jadeclinic.com"),
-                    New SqlParameter("@Website", "www.jadeclinic.com"),
-                    New SqlParameter("@Logo", If(logoBytes, DBNull.Value)),
-                    New SqlParameter("@BIRAuthNumber", "ATP-2024-000001"),
-                    New SqlParameter("@PTUNumber", "PTU-2024-001"),
-                    New SqlParameter("@ReceiptFooter", "Thank you for your business!" & vbCrLf & "Have a great day!")
-                }
-
-                Utilities.ExecuteNonQuery(sql, params)
-                Console.WriteLine("✅ Default company settings created with Jade Dental Clinic logo")
-            End If
-        Catch ex As Exception
-            Console.WriteLine($"Warning: Could not create default company settings: {ex.Message}")
-        End Try
-    End Sub
 
     ' 🔥 ADD THIS NEW METHOD:
 End Class

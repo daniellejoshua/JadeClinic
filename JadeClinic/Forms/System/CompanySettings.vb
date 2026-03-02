@@ -3,12 +3,17 @@ Imports System.IO
 Imports System.Windows.Forms
 Imports Guna.UI2.WinForms
 Imports Microsoft.Data.SqlClient
+Imports System.Linq
 
 Public Class CompanySettings
     Private currentCompanyData As Dictionary(Of String, Object) = Nothing
     Private logoChanged As Boolean = False
     Private logoData As Byte() = Nothing
     Private originalValues As Dictionary(Of String, String) = Nothing ' Track original values
+    Private txtCompanyHours As TextBox ' Summary/preview field for company hours
+    Private dtOpeningTime As DateTimePicker
+    Private dtClosingTime As DateTimePicker
+    Private clbClosedDays As CheckedListBox
 
     ' Dental Clinic Color Palette Constants
     Private ReadOnly GoldenYellow As Color = Color.FromArgb(254, 191, 16)      ' #FECF10 - Primary brand color
@@ -23,11 +28,11 @@ Public Class CompanySettings
     Private ReadOnly AlertRed As Color = Color.FromArgb(255, 71, 87)           ' #FF4757 - Error/Alert states
 
     Private Sub CompanySettings_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        ' Initialize UI first
+        InitializeUI()
+
         ' Load current company settings
         LoadCompanySettings()
-
-        ' Initialize UI
-        InitializeUI()
 
         ' Store original values for change detection
         StoreOriginalValues()
@@ -44,7 +49,8 @@ Public Class CompanySettings
             {"BIRAuthNumber", txtBIRAuth.Text},
             {"PTUNumber", txtPTUNumber.Text},
             {"ValidityYears", nudValidityYears.Value.ToString()},
-            {"ReceiptFooter", txtReceiptFooter.Text}
+            {"ReceiptFooter", txtReceiptFooter.Text},
+            {"CompanyHours", If(txtCompanyHours?.Text, "")} ' <-- added
         }
     End Sub
 
@@ -52,29 +58,89 @@ Public Class CompanySettings
         ' Set tab control style
         TabControl1.Appearance = TabAppearance.Buttons
 
+        ' Add new tab for Company Hours
+        Dim hoursTab As New TabPage("Company Hours")
+        hoursTab.BackColor = Color.White
+
+        Dim lblOpening As New Label()
+        lblOpening.Text = "Opening Time:"
+        lblOpening.Location = New Point(20, 20)
+        lblOpening.AutoSize = True
+        lblOpening.Font = New Font("Poppins", 10, FontStyle.Bold)
+
+        dtOpeningTime = New DateTimePicker()
+        dtOpeningTime.Format = DateTimePickerFormat.Custom
+        dtOpeningTime.CustomFormat = "hh:mm tt"
+        dtOpeningTime.ShowUpDown = True
+        dtOpeningTime.Location = New Point(20, 45)
+        dtOpeningTime.Width = 180
+
+        Dim lblClosing As New Label()
+        lblClosing.Text = "Closing Time:"
+        lblClosing.Location = New Point(220, 20)
+        lblClosing.AutoSize = True
+        lblClosing.Font = New Font("Poppins", 10, FontStyle.Bold)
+
+        dtClosingTime = New DateTimePicker()
+        dtClosingTime.Format = DateTimePickerFormat.Custom
+        dtClosingTime.CustomFormat = "hh:mm tt"
+        dtClosingTime.ShowUpDown = True
+        dtClosingTime.Location = New Point(220, 45)
+        dtClosingTime.Width = 180
+
+        Dim lblClosedDays As New Label()
+        lblClosedDays.Text = "Closed Days:"
+        lblClosedDays.Location = New Point(20, 85)
+        lblClosedDays.AutoSize = True
+        lblClosedDays.Font = New Font("Poppins", 10, FontStyle.Bold)
+
+        clbClosedDays = New CheckedListBox()
+        clbClosedDays.Location = New Point(20, 110)
+        clbClosedDays.Size = New Size(220, 230)
+        clbClosedDays.Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left
+        clbClosedDays.CheckOnClick = True
+        clbClosedDays.Items.AddRange(New Object() {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"})
+
+        Dim lblSummary As New Label()
+        lblSummary.Text = "Working Hours Summary:"
+        lblSummary.Location = New Point(280, 85)
+        lblSummary.AutoSize = True
+        lblSummary.Font = New Font("Poppins", 10, FontStyle.Bold)
+
+        txtCompanyHours = New TextBox()
+        txtCompanyHours.Location = New Point(280, 110)
+        txtCompanyHours.Size = New Size(340, 230)
+        txtCompanyHours.Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
+        txtCompanyHours.Multiline = True
+        txtCompanyHours.ScrollBars = ScrollBars.Vertical
+        txtCompanyHours.Font = New Font("Poppins", 9)
+        txtCompanyHours.ReadOnly = True
+
+        AddHandler dtOpeningTime.ValueChanged, Sub() RefreshCompanyHoursSummary()
+        AddHandler dtClosingTime.ValueChanged, Sub() RefreshCompanyHoursSummary()
+        AddHandler clbClosedDays.ItemCheck,
+            Sub(sender, e)
+                BeginInvoke(New Action(Sub() RefreshCompanyHoursSummary()))
+            End Sub
+
+        hoursTab.Controls.Add(lblOpening)
+        hoursTab.Controls.Add(dtOpeningTime)
+        hoursTab.Controls.Add(lblClosing)
+        hoursTab.Controls.Add(dtClosingTime)
+        hoursTab.Controls.Add(lblClosedDays)
+        hoursTab.Controls.Add(clbClosedDays)
+        hoursTab.Controls.Add(lblSummary)
+        hoursTab.Controls.Add(txtCompanyHours)
+
+        TabControl1.TabPages.Add(hoursTab)
+
+        RefreshCompanyHoursSummary()
+
         ' Add hover effects to buttons
         AddButtonHoverEffects()
     End Sub
 
     Private Sub AddButtonHoverEffects()
-        ' Save button hover effect
-        AddHandler btnSave.MouseEnter, Sub() btnSave.FillColor = Color.FromArgb(12, 190, 85)
-        AddHandler btnSave.MouseLeave, Sub() btnSave.FillColor = SuccessGreen
-
-        ' Cancel button hover effect
-        AddHandler btnCancel.MouseEnter, Sub() btnCancel.FillColor = Color.FromArgb(220, 60, 75)
-        AddHandler btnCancel.MouseLeave, Sub() btnCancel.FillColor = AlertRed
-
-        ' Preview button hover effect
-        AddHandler btnPreviewReceipt.MouseEnter, Sub() btnPreviewReceipt.FillColor = RichOlive
-        AddHandler btnPreviewReceipt.MouseLeave, Sub() btnPreviewReceipt.FillColor = GoldenYellow
-
-        ' Logo buttons hover effects
-        AddHandler btnChangeLogo.MouseEnter, Sub() btnChangeLogo.FillColor = Color.FromArgb(12, 190, 85)
-        AddHandler btnChangeLogo.MouseLeave, Sub() btnChangeLogo.FillColor = SuccessGreen
-
-        AddHandler btnRemoveLogo.MouseEnter, Sub() btnRemoveLogo.FillColor = Color.FromArgb(220, 60, 75)
-        AddHandler btnRemoveLogo.MouseLeave, Sub() btnRemoveLogo.FillColor = AlertRed
     End Sub
 
     Private Sub LoadCompanySettings()
@@ -118,6 +184,9 @@ Public Class CompanySettings
         nudValidityYears.Value = Convert.ToDecimal(GetSettingValue("ValidityYears", 5))
         txtReceiptFooter.Text = GetSettingValue("ReceiptFooter", "Thank you for your business!" & vbCrLf & "Have a great day!")
 
+        ' Company hours (structured)
+        ApplyCompanyHoursFromStoredValue(GetSettingValue("CompanyHours", ""))
+
         ' Load logo if available
         If currentCompanyData.ContainsKey("Logo") AndAlso currentCompanyData("Logo") IsNot Nothing Then
             Try
@@ -154,17 +223,80 @@ Public Class CompanySettings
         txtPTUNumber.Text = "PTU-2024-001"
         nudValidityYears.Value = 5
         txtReceiptFooter.Text = "Thank you for your business!" & vbCrLf & "Have a great day!"
+
+        If dtOpeningTime IsNot Nothing Then dtOpeningTime.Value = Date.Today.AddHours(9)
+        If dtClosingTime IsNot Nothing Then dtClosingTime.Value = Date.Today.AddHours(17)
+        If clbClosedDays IsNot Nothing Then
+            For i As Integer = 0 To clbClosedDays.Items.Count - 1
+                clbClosedDays.SetItemChecked(i, False)
+            Next
+            clbClosedDays.SetItemChecked(clbClosedDays.Items.IndexOf("Sunday"), True)
+        End If
+        RefreshCompanyHoursSummary()
+
         SetDefaultLogoPlaceholder()
     End Sub
 
     Private Sub SetDefaultLogoPlaceholder()
-        ' Create a simple placeholder image
         Dim placeholder As New Bitmap(200, 150)
         Using g As Graphics = Graphics.FromImage(placeholder)
+            g.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias
             g.FillRectangle(New SolidBrush(Color.LightGray), 0, 0, 200, 150)
-            g.DrawString("Company Logo", New Font("Poppins", 12), New SolidBrush(Color.Gray), 50, 65)
+            Using f As New Font("Poppins", 12, FontStyle.Bold)
+                g.DrawString("Company Logo", f, New SolidBrush(Color.Gray), 35, 60)
+            End Using
         End Using
         picLogo.Image = placeholder
+    End Sub
+
+    Private Sub RefreshCompanyHoursSummary()
+        If txtCompanyHours Is Nothing OrElse dtOpeningTime Is Nothing OrElse dtClosingTime Is Nothing OrElse clbClosedDays Is Nothing Then Return
+
+        Dim closedDays = clbClosedDays.CheckedItems.Cast(Of Object)().Select(Function(x) x.ToString()).ToList()
+        Dim closedText As String = If(closedDays.Count > 0, String.Join(", ", closedDays), "None")
+
+        txtCompanyHours.Text =
+            $"Opening: {dtOpeningTime.Value.ToString("hh:mm tt")}{vbCrLf}" &
+            $"Closing: {dtClosingTime.Value.ToString("hh:mm tt")}{vbCrLf}" &
+            $"Closed Days: {closedText}"
+    End Sub
+
+    Private Sub ApplyCompanyHoursFromStoredValue(value As String)
+        ' Defaults
+        dtOpeningTime.Value = Date.Today.AddHours(9)
+        dtClosingTime.Value = Date.Today.AddHours(17)
+        For i As Integer = 0 To clbClosedDays.Items.Count - 1
+            clbClosedDays.SetItemChecked(i, False)
+        Next
+        clbClosedDays.SetItemChecked(clbClosedDays.Items.IndexOf("Sunday"), True)
+
+        If Not String.IsNullOrWhiteSpace(value) Then
+            Dim lines = value.Split({vbCrLf, vbLf}, StringSplitOptions.RemoveEmptyEntries)
+
+            For Each line In lines
+                If line.StartsWith("Opening:", StringComparison.OrdinalIgnoreCase) Then
+                    Dim timePart = line.Substring(8).Trim()
+                    Dim parsed As DateTime
+                    If DateTime.TryParse(timePart, parsed) Then
+                        dtOpeningTime.Value = Date.Today.Add(parsed.TimeOfDay)
+                    End If
+                ElseIf line.StartsWith("Closing:", StringComparison.OrdinalIgnoreCase) Then
+                    Dim timePart = line.Substring(8).Trim()
+                    Dim parsed As DateTime
+                    If DateTime.TryParse(timePart, parsed) Then
+                        dtClosingTime.Value = Date.Today.Add(parsed.TimeOfDay)
+                    End If
+                ElseIf line.StartsWith("Closed Days:", StringComparison.OrdinalIgnoreCase) Then
+                    Dim daysPart = line.Substring(12).Trim()
+                    For i As Integer = 0 To clbClosedDays.Items.Count - 1
+                        Dim dayName = clbClosedDays.Items(i).ToString()
+                        clbClosedDays.SetItemChecked(i, daysPart.IndexOf(dayName, StringComparison.OrdinalIgnoreCase) >= 0)
+                    Next
+                End If
+            Next
+        End If
+
+        RefreshCompanyHoursSummary()
     End Sub
 
     Private Sub btnChangeLogo_Click(sender As Object, e As EventArgs) Handles btnChangeLogo.Click
@@ -325,7 +457,6 @@ Public Class CompanySettings
 
     Private Sub SaveCompanySettings()
         Try
-            ' ENHANCED: Check if we have existing settings more reliably
             Dim existingCount As Integer = 0
             Dim countQuery As String = "SELECT COUNT(*) FROM CompanySettings WHERE IsActive = 1"
             Dim countResult = Utilities.ExecuteScalar(countQuery, New SqlParameter() {})
@@ -351,6 +482,7 @@ Public Class CompanySettings
                       "PTUNumber = @PTUNumber, " &
                       "ValidityYears = @ValidityYears, " &
                       "ReceiptFooter = @ReceiptFooter, " &
+                      "CompanyHours = @CompanyHours, " &         ' <-- update column
                       "LastModified = @LastModified"
 
                 If logoChanged Then
@@ -362,11 +494,11 @@ Public Class CompanySettings
                 ' Insert new record
                 sql = "INSERT INTO CompanySettings " &
                       "(CompanyName, TIN, Address, Phone, Email, Website, Logo, " &
-                      "BIRAuthNumber, PTUNumber, ValidityYears, ReceiptFooter, " &
+                      "BIRAuthNumber, PTUNumber, ValidityYears, ReceiptFooter, CompanyHours, " &
                       "IsActive, DateCreated, LastModified) " &
                       "VALUES " &
                       "(@CompanyName, @TIN, @Address, @Phone, @Email, @Website, @Logo, " &
-                      "@BIRAuthNumber, @PTUNumber, @ValidityYears, @ReceiptFooter, " &
+                      "@BIRAuthNumber, @PTUNumber, @ValidityYears, @ReceiptFooter, @CompanyHours, " &
                       "1, @DateCreated, @LastModified)"
 
                 parameters.Add(New SqlParameter("@DateCreated", DateTime.Now))
@@ -383,6 +515,7 @@ Public Class CompanySettings
             parameters.Add(New SqlParameter("@PTUNumber", If(txtPTUNumber.Text, "PTU-2024-001").Trim()))
             parameters.Add(New SqlParameter("@ValidityYears", CInt(nudValidityYears.Value)))
             parameters.Add(New SqlParameter("@ReceiptFooter", If(txtReceiptFooter.Text, "Thank you for your business!").Trim()))
+            parameters.Add(New SqlParameter("@CompanyHours", If(txtCompanyHours.Text, "").Trim())) ' <-- new parameter
             parameters.Add(New SqlParameter("@LastModified", DateTime.Now))
 
             ' Handle logo data
@@ -447,6 +580,7 @@ Public Class CompanySettings
                txtPTUNumber.Text <> originalValues("PTUNumber") OrElse
                nudValidityYears.Value.ToString() <> originalValues("ValidityYears") OrElse
                txtReceiptFooter.Text <> originalValues("ReceiptFooter") OrElse
+               txtCompanyHours.Text <> originalValues("CompanyHours") OrElse
                logoChanged
     End Function
 End Class
