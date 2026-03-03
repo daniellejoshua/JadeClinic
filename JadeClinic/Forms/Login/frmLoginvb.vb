@@ -1289,11 +1289,6 @@ Public Class frmLoginvb
             Utilities.LogAudit(LoggedInUsername, "Logged Out", $"User {LoggedInUsername} logged out at {DateTime.Now:yyyy-MM-dd HH:mm:ss}")
             LoggedInUsername = Nothing
             LoggedInPIN = Nothing
-
-            Try
-                Sales.ClearPersistedCartState()
-            Catch
-            End Try
         End If
     End Sub
 

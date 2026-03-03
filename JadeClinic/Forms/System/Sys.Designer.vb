@@ -24,6 +24,7 @@ Partial Class Sys
     Private Sub InitializeComponent()
         Dim CustomizableEdges2 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges3 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges1 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges4 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges5 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges16 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
@@ -38,8 +39,9 @@ Partial Class Sys
         Dim CustomizableEdges11 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges14 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges15 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges1 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Guna2Panel1 = New Guna.UI2.WinForms.Guna2Panel()
+        lblUsername = New Guna.UI2.WinForms.Guna2HtmlLabel()
+        Guna2CirclePictureBox1 = New Guna.UI2.WinForms.Guna2CirclePictureBox()
         DashboardPanel = New Guna.UI2.WinForms.Guna2Panel()
         PictureBox9 = New PictureBox()
         MainContentPanel = New Guna.UI2.WinForms.Guna2Panel()
@@ -49,15 +51,13 @@ Partial Class Sys
         btnCompanySettings = New Guna.UI2.WinForms.Guna2Button()
         HeaderPanel = New Guna.UI2.WinForms.Guna2Panel()
         lblPageTitle = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        lblUsername = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        Guna2CirclePictureBox1 = New Guna.UI2.WinForms.Guna2CirclePictureBox()
         Guna2Panel1.SuspendLayout()
+        CType(Guna2CirclePictureBox1, ComponentModel.ISupportInitialize).BeginInit()
         DashboardPanel.SuspendLayout()
         CType(PictureBox9, ComponentModel.ISupportInitialize).BeginInit()
         MainContentPanel.SuspendLayout()
         ContentAreaPanel.SuspendLayout()
         HeaderPanel.SuspendLayout()
-        CType(Guna2CirclePictureBox1, ComponentModel.ISupportInitialize).BeginInit()
         SuspendLayout()
         ' 
         ' Guna2Panel1
@@ -72,6 +72,29 @@ Partial Class Sys
         Guna2Panel1.ShadowDecoration.CustomizableEdges = CustomizableEdges3
         Guna2Panel1.Size = New Size(1164, 80)
         Guna2Panel1.TabIndex = 0
+        ' 
+        ' lblUsername
+        ' 
+        lblUsername.BackColor = Color.Transparent
+        lblUsername.Font = New Font("Poppins", 10F)
+        lblUsername.ForeColor = Color.White
+        lblUsername.Location = New Point(1020, 30)
+        lblUsername.Name = "lblUsername"
+        lblUsername.Size = New Size(91, 32)
+        lblUsername.TabIndex = 1
+        lblUsername.Text = "Username"
+        ' 
+        ' Guna2CirclePictureBox1
+        ' 
+        Guna2CirclePictureBox1.ImageRotate = 0F
+        Guna2CirclePictureBox1.Location = New Point(1110, 20)
+        Guna2CirclePictureBox1.Name = "Guna2CirclePictureBox1"
+        Guna2CirclePictureBox1.ShadowDecoration.CustomizableEdges = CustomizableEdges1
+        Guna2CirclePictureBox1.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
+        Guna2CirclePictureBox1.Size = New Size(50, 50)
+        Guna2CirclePictureBox1.SizeMode = PictureBoxSizeMode.Zoom
+        Guna2CirclePictureBox1.TabIndex = 0
+        Guna2CirclePictureBox1.TabStop = False
         ' 
         ' DashboardPanel
         ' 
@@ -209,29 +232,6 @@ Partial Class Sys
         lblPageTitle.TabIndex = 0
         lblPageTitle.Text = "System Settings"
         ' 
-        ' lblUsername
-        ' 
-        lblUsername.BackColor = Color.Transparent
-        lblUsername.Font = New Font("Poppins", 10F)
-        lblUsername.ForeColor = Color.White
-        lblUsername.Location = New Point(1020, 30)
-        lblUsername.Name = "lblUsername"
-        lblUsername.Size = New Size(91, 32)
-        lblUsername.TabIndex = 1
-        lblUsername.Text = "Username"
-        ' 
-        ' Guna2CirclePictureBox1
-        ' 
-        Guna2CirclePictureBox1.ImageRotate = 0F
-        Guna2CirclePictureBox1.Location = New Point(1110, 20)
-        Guna2CirclePictureBox1.Name = "Guna2CirclePictureBox1"
-        Guna2CirclePictureBox1.ShadowDecoration.CustomizableEdges = CustomizableEdges1
-        Guna2CirclePictureBox1.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
-        Guna2CirclePictureBox1.Size = New Size(50, 50)
-        Guna2CirclePictureBox1.SizeMode = PictureBoxSizeMode.Zoom
-        Guna2CirclePictureBox1.TabIndex = 0
-        Guna2CirclePictureBox1.TabStop = False
-        ' 
         ' Sys
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
@@ -249,13 +249,13 @@ Partial Class Sys
         Text = "System Settings - Jade Clinic"
         Guna2Panel1.ResumeLayout(False)
         Guna2Panel1.PerformLayout()
+        CType(Guna2CirclePictureBox1, ComponentModel.ISupportInitialize).EndInit()
         DashboardPanel.ResumeLayout(False)
         CType(PictureBox9, ComponentModel.ISupportInitialize).EndInit()
         MainContentPanel.ResumeLayout(False)
         ContentAreaPanel.ResumeLayout(False)
         HeaderPanel.ResumeLayout(False)
         HeaderPanel.PerformLayout()
-        CType(Guna2CirclePictureBox1, ComponentModel.ISupportInitialize).EndInit()
         ResumeLayout(False)
 
     End Sub

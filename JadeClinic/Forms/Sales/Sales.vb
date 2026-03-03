@@ -1,12 +1,32 @@
 ﻿Imports System.Drawing
 Imports System.Drawing.Drawing2D
 Imports System.Drawing.Printing
+Imports System.IO
 Imports System.Text.RegularExpressions
 Imports System.Windows.Forms
 Imports Guna.UI2.WinForms
 Imports Microsoft.Data.SqlClient
+Imports Newtonsoft.Json
+
 
 Public Class Sales
+
+    Private Class CartStateSnapshot
+        Public Property CurrentOrderList As List(Of Dictionary(Of String, Object))
+        Public Property DiscountType As String
+        Public Property DiscountValue As Decimal
+        Public Property DiscountAmount As Decimal
+        Public Property DiscountedItemProductId As Integer?
+        Public Property DiscountedItemName As String
+        Public Property SelectedCustomerId As Integer?
+        Public Property SelectedCustomerName As String
+        Public Property SelectedCustomerPhone As String
+        Public Property SelectedCustomerEmail As String
+        Public Property SelectedCustomerTIN As String
+        Public Property SelectedCustomerType As String
+        Public Property SelectedPaymentMethod As String
+        Public Property PaymentReference As String
+    End Class
     Private originalCategoryPanelControls As List(Of Control)
     Private originalOrderPanelControls As List(Of Control)
     Private originalTotalPanelControls As List(Of Control)
@@ -118,6 +138,7 @@ Public Class Sales
     Private btnEditCapital As Guna2Button
 
     ' FIXED: Enhanced barcode scanning with proper key handling
+
     Private Sub InitializeCategoryLockCaches()
         Try
             originalCategoryButtonFillColors.Clear()
@@ -2097,46 +2118,38 @@ Public Class Sales
     End Sub
 
     Private Sub Sales_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
-        ' Stop idle timeout monitoring
+        ' Save draft cart on any close/navigation/app exit
+        PersistCartState()
+
         IdleTimeoutManager.Instance.StopMonitoring(Me)
 
-        ' If this is programmatic navigation, don't show confirmation
         If isNavigating Then
             Return
         End If
 
-        ' Prevent multiple confirmations by checking the close reason
         If e.CloseReason = CloseReason.ApplicationExitCall Then
-            ' If Application.Exit() was already called, don't show confirmation again
             Return
         End If
 
-        ' Show confirmation only for user-initiated close (X button)
         If e.CloseReason = CloseReason.UserClosing Then
             Dim result As DialogResult = MessageBox.Show("Are you sure you want to exit the application?", "Exit Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
-
             If result = DialogResult.Yes Then
-                ' Log the exit action
                 If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
                     Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Application Exit", "User exited the application via Sales form")
                 End If
 
-                ' Close all forms properly
                 For Each form As Form In Application.OpenForms.Cast(Of Form).ToArray()
                     If form IsNot Me Then
                         form.Close()
                     End If
                 Next
 
-                ' Now exit the application
                 Application.Exit()
             Else
-                ' Cancel the form closing
                 e.Cancel = True
             End If
         End If
     End Sub
-
     ' Event handlers for form events
     Private Sub CategoryPanel_Paint(sender As Object, e As PaintEventArgs) Handles CategoryPanel.Paint
     End Sub
@@ -4307,11 +4320,11 @@ Public Class Sales
         btnLogOut.TextAlign = ContentAlignment.MiddleLeft
         btnLogOut.Cursor = Cursors.Hand
 
-        AddHandler btnLogOut.MouseEnter, Sub() btnLogOut.BackColor = Graphite
-        AddHandler btnLogOut.MouseLeave, Sub() btnLogOut.BackColor = System.Drawing.Color.Transparent
         AddHandler btnLogOut.Click, Sub()
                                         Dim result As DialogResult = MessageBox.Show("Are you sure you want to logout?", "Confirm Logout", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
                                         If result = DialogResult.Yes Then
+                                            PersistCartState()
+
                                             If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
                                                 Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Log Out", "User logged out of the application.")
                                             End If
@@ -4322,7 +4335,6 @@ Public Class Sales
                                             loginForm.Show()
                                         End If
                                     End Sub
-
         profileDropdownPanel.Controls.Add(btnProfileSettings)
         profileDropdownPanel.Controls.Add(btnLogOut)
 
@@ -5480,6 +5492,8 @@ Public Class Sales
     Private Shared persistedSelectedCustomerType As String = "Walk-in"
     Private Shared persistedSelectedPaymentMethod As String = "Cash"
     Private Shared persistedPaymentReference As String = ""
+    ' Add near other class fields
+    Private Shared ReadOnly CartStateFolder As String = Path.Combine(Application.StartupPath, "cartstate")
 
     Private Function CloneOrderList(source As List(Of Dictionary(Of String, Object))) As List(Of Dictionary(Of String, Object))
         Dim cloned As New List(Of Dictionary(Of String, Object))()
@@ -5495,61 +5509,100 @@ Public Class Sales
         Return cloned
     End Function
 
-    Private Sub PersistCartState()
-        persistedOrderList = CloneOrderList(currentOrderList)
-        persistedDiscountType = discountType
-        persistedDiscountValue = discountValue
-        persistedDiscountAmount = discountAmount
-        persistedDiscountedItemProductId = discountedItemProductId
-        persistedDiscountedItemName = discountedItemName
+    Private Shared Function GetCartStateFilePath(username As String) As String
+        If String.IsNullOrWhiteSpace(username) Then
+            Return Nothing
+        End If
 
-        persistedSelectedCustomerId = selectedCustomerId
-        persistedSelectedCustomerName = selectedCustomerName
-        persistedSelectedCustomerPhone = selectedCustomerPhone
-        persistedSelectedCustomerEmail = selectedCustomerEmail
-        persistedSelectedCustomerTIN = selectedCustomerTIN
-        persistedSelectedCustomerType = selectedCustomerType
-        persistedSelectedPaymentMethod = selectedPaymentMethod
-        persistedPaymentReference = paymentReference
+        Dim safeUsername As String = Regex.Replace(username, "[^\w\-]", "_")
+        If String.IsNullOrWhiteSpace(safeUsername) Then
+            safeUsername = "unknown"
+        End If
+
+        If Not Directory.Exists(CartStateFolder) Then
+            Directory.CreateDirectory(CartStateFolder)
+        End If
+
+        Return Path.Combine(CartStateFolder, $"cart_{safeUsername}.json")
+    End Function
+
+    Private Sub PersistCartState()
+        Try
+            Dim filePath As String = GetCartStateFilePath(frmLoginvb.LoggedInUsername)
+            If String.IsNullOrWhiteSpace(filePath) Then
+                Return
+            End If
+
+            Dim snapshot As New CartStateSnapshot With {
+                .CurrentOrderList = CloneOrderList(currentOrderList),
+                .DiscountType = discountType,
+                .DiscountValue = discountValue,
+                .DiscountAmount = discountAmount,
+                .DiscountedItemProductId = discountedItemProductId,
+                .DiscountedItemName = discountedItemName,
+                .SelectedCustomerId = selectedCustomerId,
+                .SelectedCustomerName = selectedCustomerName,
+                .SelectedCustomerPhone = selectedCustomerPhone,
+                .SelectedCustomerEmail = selectedCustomerEmail,
+                .SelectedCustomerTIN = selectedCustomerTIN,
+                .SelectedCustomerType = selectedCustomerType,
+                .SelectedPaymentMethod = selectedPaymentMethod,
+                .PaymentReference = paymentReference
+            }
+
+            Dim json As String = JsonConvert.SerializeObject(snapshot, Formatting.Indented)
+            File.WriteAllText(filePath, json)
+        Catch ex As Exception
+            Console.WriteLine($"PersistCartState error: {ex.Message}")
+        End Try
     End Sub
 
     Private Sub RestoreCartState()
-        If persistedOrderList Is Nothing OrElse persistedOrderList.Count = 0 Then Return
+        Try
+            Dim filePath As String = GetCartStateFilePath(frmLoginvb.LoggedInUsername)
+            If String.IsNullOrWhiteSpace(filePath) OrElse Not File.Exists(filePath) Then
+                Return
+            End If
 
-        currentOrderList = CloneOrderList(persistedOrderList)
-        discountType = persistedDiscountType
-        discountValue = persistedDiscountValue
-        discountAmount = persistedDiscountAmount
-        discountedItemProductId = persistedDiscountedItemProductId
-        discountedItemName = persistedDiscountedItemName
+            Dim json As String = File.ReadAllText(filePath)
+            Dim snapshot As CartStateSnapshot = JsonConvert.DeserializeObject(Of CartStateSnapshot)(json)
+            If snapshot Is Nothing Then
+                Return
+            End If
 
-        selectedCustomerId = persistedSelectedCustomerId
-        selectedCustomerName = persistedSelectedCustomerName
-        selectedCustomerPhone = persistedSelectedCustomerPhone
-        selectedCustomerEmail = persistedSelectedCustomerEmail
-        selectedCustomerTIN = persistedSelectedCustomerTIN
-        selectedCustomerType = persistedSelectedCustomerType
-        selectedPaymentMethod = persistedSelectedPaymentMethod
-        paymentReference = persistedPaymentReference
+            currentOrderList = CloneOrderList(snapshot.CurrentOrderList)
+            discountType = If(snapshot.DiscountType, "None")
+            discountValue = snapshot.DiscountValue
+            discountAmount = snapshot.DiscountAmount
+            discountedItemProductId = snapshot.DiscountedItemProductId
+            discountedItemName = If(snapshot.DiscountedItemName, "")
 
-        RefreshOrderDisplay()
+            selectedCustomerId = snapshot.SelectedCustomerId
+            selectedCustomerName = snapshot.SelectedCustomerName
+            selectedCustomerPhone = snapshot.SelectedCustomerPhone
+            selectedCustomerEmail = snapshot.SelectedCustomerEmail
+            selectedCustomerTIN = snapshot.SelectedCustomerTIN
+            selectedCustomerType = If(snapshot.SelectedCustomerType, "Walk-in")
+            selectedPaymentMethod = If(snapshot.SelectedPaymentMethod, "Cash")
+            paymentReference = snapshot.PaymentReference
+
+            RefreshOrderDisplay()
+        Catch ex As Exception
+            Console.WriteLine($"RestoreCartState error: {ex.Message}")
+        End Try
     End Sub
 
-    Public Shared Sub ClearPersistedCartState()
-        persistedOrderList.Clear()
-        persistedDiscountType = "None"
-        persistedDiscountValue = 0D
-        persistedDiscountAmount = 0D
-        persistedDiscountedItemProductId = Nothing
-        persistedDiscountedItemName = ""
-
-        persistedSelectedCustomerId = Nothing
-        persistedSelectedCustomerName = Nothing
-        persistedSelectedCustomerPhone = ""
-        persistedSelectedCustomerEmail = ""
-        persistedSelectedCustomerTIN = ""
-        persistedSelectedCustomerType = "Walk-in"
-        persistedSelectedPaymentMethod = "Cash"
-        persistedPaymentReference = ""
+    Public Shared Sub ClearPersistedCartState(Optional username As String = Nothing)
+        Try
+            Dim userToClear As String = If(String.IsNullOrWhiteSpace(username), frmLoginvb.LoggedInUsername, username)
+            Dim filePath As String = GetCartStateFilePath(userToClear)
+            If Not String.IsNullOrWhiteSpace(filePath) AndAlso File.Exists(filePath) Then
+                File.Delete(filePath)
+            End If
+        Catch ex As Exception
+            Console.WriteLine($"ClearPersistedCartState error: {ex.Message}")
+        End Try
     End Sub
+
+
 End Class
