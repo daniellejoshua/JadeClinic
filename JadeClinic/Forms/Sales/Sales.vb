@@ -1284,56 +1284,205 @@ Public Class Sales
 
         Dim dlg As New Form With {
         .Text = If(isEdit, "Edit Opening Capital", "Set Opening Capital"),
-        .Size = New Size(360, 210),
+        .Size = New Size(440, 260),
         .StartPosition = FormStartPosition.CenterParent,
         .FormBorderStyle = FormBorderStyle.FixedDialog,
         .MaximizeBox = False,
-        .MinimizeBox = False
+        .MinimizeBox = False,
+        .KeyPreview = True
     }
 
         Dim lbl As New Label With {
         .Text = $"Enter opening capital for {Date.Today:MM/dd/yyyy}:",
-        .Location = New Point(20, 20),
-        .AutoSize = True
+        .Location = New Point(20, 16),
+        .AutoSize = True,
+        .Font = New Font("Poppins", 10, FontStyle.Regular),
+        .ForeColor = DeepCharcoal
     }
 
-        Dim nud As New NumericUpDown With {
-        .Location = New Point(20, 55),
-        .Size = New Size(200, 32),
-        .DecimalPlaces = 2,
-        .Maximum = 10000000D,
-        .Minimum = 0D,
-        .Value = If(currentOpeningCapital > 0D, currentOpeningCapital, 0D)
+        Dim txtCapital As New Guna.UI2.WinForms.Guna2TextBox() With {
+        .Location = New Point(20, 48),
+        .Size = New Size(380, 40),
+        .BorderRadius = 8,
+        .FillColor = PureWhite,
+        .ForeColor = DeepCharcoal,
+        .Font = New Font("Poppins", 12, FontStyle.Bold),
+        .TextAlign = HorizontalAlignment.Right
     }
 
-        Dim btnOk As New Button With {.Text = "Save", .Location = New Point(20, 110), .Width = 100}
-        Dim btnCancel As New Button With {.Text = "Cancel", .Location = New Point(130, 110), .Width = 100}
+        ' Initialize with formatted value (thousands separator, two decimals)
+        txtCapital.Text = currentOpeningCapital.ToString("N2", Globalization.CultureInfo.CurrentCulture)
 
-        AddHandler btnOk.Click,
-        Sub()
-            UpsertTodayOpeningCapital(nud.Value)
-            currentOpeningCapital = nud.Value
-            UpdateCapitalHeaderUI()
-            ApplyCapitalLockState(False)
-            Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Opening Capital Set", $"Date={Date.Today:yyyy-MM-dd}, Amount=₱{currentOpeningCapital:N2}")
-            dlg.DialogResult = DialogResult.OK
-            dlg.Close()
-        End Sub
+        Dim btnOk As New Guna.UI2.WinForms.Guna2Button() With {
+        .Text = "Save",
+        .Size = New Size(160, 44),
+        .Location = New Point(220, 150),
+        .Font = New Font("Poppins", 10, FontStyle.Bold),
+        .FillColor = RichOlive,
+        .ForeColor = PureWhite,
+        .BorderRadius = 10
+    }
 
-        AddHandler btnCancel.Click,
-        Sub()
-            dlg.DialogResult = DialogResult.Cancel
-            dlg.Close()
-        End Sub
+        Dim btnCancel As New Guna.UI2.WinForms.Guna2Button() With {
+        .Text = "Cancel",
+        .Size = New Size(140, 44),
+        .Location = New Point(40, 150),
+        .Font = New Font("Poppins", 10, FontStyle.Regular),
+        .FillColor = AlertRed,
+        .ForeColor = PureWhite,
+        .BorderRadius = 10
+    }
+
+        Dim previewLbl As New Label With {
+        .Text = $"Preview: {txtCapital.Text}",
+        .Location = New Point(20, 100),
+        .AutoSize = True,
+        .Font = New Font("Poppins", 10, FontStyle.Regular),
+        .ForeColor = DeepCharcoal
+    }
+
+        ' Helper to parse user input (accepts current-culture decimal separator)
+        Dim TryParseInput = Function(input As String, ByRef value As Decimal) As Boolean
+                                Dim cleaned As String = System.Text.RegularExpressions.Regex.Replace(input.Trim(), "[^0-9\.\-]", "")
+                                Dim decimalSep As String = Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator
+                                If decimalSep <> "."c Then cleaned = cleaned.Replace(".", decimalSep)
+                                Return Decimal.TryParse(cleaned, Globalization.NumberStyles.AllowDecimalPoint Or Globalization.NumberStyles.AllowLeadingSign, Globalization.CultureInfo.CurrentCulture, value)
+                            End Function
+
+        ' Allow digits, control keys and exactly one decimal separator while typing.
+        AddHandler txtCapital.KeyPress, Sub(s, e)
+                                            If Char.IsControl(e.KeyChar) Then Return
+
+                                            Dim decimalSep As Char = Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator.Chars(0)
+
+                                            ' If user types decimal separator: allow only if not already present
+                                            If e.KeyChar = decimalSep Then
+                                                If txtCapital.Text.IndexOf(decimalSep) >= 0 Then
+                                                    e.Handled = True
+                                                    Return
+                                                End If
+
+                                                ' If empty, prefix 0 before decimal for clarity
+                                                If txtCapital.Text.Length = 0 Then
+                                                    txtCapital.Text = "0" & decimalSep
+                                                    txtCapital.SelectionStart = txtCapital.Text.Length
+                                                    e.Handled = True
+                                                    previewLbl.Text = $"Preview: {txtCapital.Text}"
+                                                    Return
+                                                End If
+
+                                                ' allow the decimal
+                                                Return
+                                            End If
+
+                                            ' Allow digits only otherwise
+                                            If Not Char.IsDigit(e.KeyChar) Then
+                                                e.Handled = True
+                                                Return
+                                            End If
+
+                                            ' All other digits allowed — don't aggressively limit integer length here
+                                        End Sub
+
+        ' Update preview with thousands separator and two decimals while user types (non-intrusive)
+        Dim handling As Boolean = False
+        AddHandler txtCapital.TextChanged, Sub()
+                                               If handling Then Return
+                                               handling = True
+                                               Try
+                                                   Dim parsed As Decimal = 0D
+                                                   If TryParseInput(txtCapital.Text, parsed) Then
+                                                       ' Show formatted preview with thousands separator and two decimals
+                                                       previewLbl.Text = $"Preview: {parsed.ToString("N2", Globalization.CultureInfo.CurrentCulture)}"
+                                                   Else
+                                                       previewLbl.Text = $"Preview: {txtCapital.Text}"
+                                                   End If
+                                               Finally
+                                                   handling = False
+                                               End Try
+                                           End Sub
+
+        ' Enter = save, Escape = cancel (on textbox)
+        AddHandler txtCapital.KeyDown, Sub(s, e)
+                                           If e.KeyCode = Keys.Enter Then
+                                               e.Handled = True
+                                               btnOk.PerformClick()
+                                           ElseIf e.KeyCode = Keys.Escape Then
+                                               e.Handled = True
+                                               btnCancel.PerformClick()
+                                           End If
+                                       End Sub
+
+        ' Dialog-level Enter/Esc support
+        dlg.KeyPreview = True
+        AddHandler dlg.KeyDown, Sub(s, e)
+                                    If e.KeyCode = Keys.Enter Then
+                                        e.Handled = True
+                                        btnOk.PerformClick()
+                                    ElseIf e.KeyCode = Keys.Escape Then
+                                        e.Handled = True
+                                        btnCancel.PerformClick()
+                                    End If
+                                End Sub
+
+        ' Save logic: parse input, format with thousands separators and two decimals, persist
+        AddHandler btnOk.Click, Sub()
+                                    Dim cleaned As String = System.Text.RegularExpressions.Regex.Replace(txtCapital.Text, "[^0-9\.\-]", "")
+                                    Dim parsed As Decimal
+                                    If Not TryParseInput(cleaned, parsed) Then
+                                        MessageBox.Show("Invalid amount. Please enter a valid number.", "Invalid Input", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                                        Return
+                                    End If
+
+                                    ' Persist rounded to 2 decimals
+                                    parsed = Math.Round(parsed, 2, MidpointRounding.AwayFromZero)
+
+                                    UpsertTodayOpeningCapital(parsed)
+                                    currentOpeningCapital = parsed
+                                    UpdateCapitalHeaderUI()
+                                    ApplyCapitalLockState(False)
+                                    Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Opening Capital Set", $"Date={Date.Today:yyyy-MM-dd}, Amount=₱{currentOpeningCapital:N2}")
+                                    dlg.DialogResult = DialogResult.OK
+                                    dlg.Close()
+                                End Sub
+
+        AddHandler btnCancel.Click, Sub()
+                                        dlg.DialogResult = DialogResult.Cancel
+                                        dlg.Close()
+                                    End Sub
 
         dlg.Controls.Add(lbl)
-        dlg.Controls.Add(nud)
+        dlg.Controls.Add(txtCapital)
+        dlg.Controls.Add(previewLbl)
         dlg.Controls.Add(btnOk)
         dlg.Controls.Add(btnCancel)
 
+        ' Format final display on Leave (thousands separators + two decimals)
+        AddHandler txtCapital.Leave, Sub()
+                                         Dim p As Decimal = 0D
+                                         If TryParseInput(txtCapital.Text, p) Then
+                                             txtCapital.Text = p.ToString("N2", Globalization.CultureInfo.CurrentCulture)
+                                             previewLbl.Text = $"Preview: {txtCapital.Text}"
+                                         End If
+                                     End Sub
+
+        ' Place caret before decimal when dialog shown
+        AddHandler dlg.Shown, Sub()
+                                  txtCapital.Focus()
+                                  Try
+                                      Dim sep = Globalization.NumberFormatInfo.CurrentInfo.NumberDecimalSeparator
+                                      Dim idx As Integer = txtCapital.Text.IndexOf(sep)
+                                      If idx >= 0 Then
+                                          txtCapital.SelectionStart = idx
+                                      Else
+                                          txtCapital.SelectionStart = txtCapital.Text.Length
+                                      End If
+                                  Catch
+                                  End Try
+                              End Sub
+
         Return dlg.ShowDialog(Me) = DialogResult.OK
     End Function
-
     Private Sub EnsureCapitalBeforeUsingPOS()
         EnsureDailyOpeningCapitalTable()
         InitializeCapitalHeaderUI()
@@ -2700,39 +2849,39 @@ Public Class Sales
         changeSection.Controls.Add(lblChangeAmount)
 
         ' ENHANCED: Update amount display function with better decimal handling
+        ' Inside ShowCashAmountInputModal: replace the local UpdateCashAmountDisplay and the exact-button assignment to use 1 decimal place
+        ' (This is the local UpdateCashAmountDisplay defined inside ShowCashAmountInputModal)
         Dim UpdateCashAmountDisplay = Sub()
-                                          ' Format as decimal with two places
+                                          ' Format as decimal with 1 place
                                           Dim displayValue As Decimal = 0D
                                           Dim amountText As String = enteredAmount
 
-                                          ' IMPROVED: Better decimal handling
                                           If String.IsNullOrEmpty(amountText) Then
-                                              displayValue = 0
-                                              lblAmountDisplay.Text = "₱0.00"
+                                              displayValue = 0D
+                                              lblAmountDisplay.Text = "₱0.0"
                                           ElseIf amountText.Contains(".") Then
                                               ' User entered a decimal point - parse directly
                                               If Decimal.TryParse(amountText, displayValue) Then
-                                                  lblAmountDisplay.Text = $"₱{displayValue:F2}"
+                                                  lblAmountDisplay.Text = $"₱{displayValue:F1}"
                                               Else
                                                   ' Handle incomplete decimal input (like "123.")
                                                   If amountText.EndsWith(".") AndAlso amountText.Length > 1 Then
                                                       Dim wholePart As String = amountText.Substring(0, amountText.Length - 1)
                                                       If Decimal.TryParse(wholePart, displayValue) Then
-                                                          lblAmountDisplay.Text = $"₱{displayValue}.00"
+                                                          lblAmountDisplay.Text = $"₱{displayValue:F1}"
                                                       Else
-                                                          lblAmountDisplay.Text = "₱0.00"
+                                                          lblAmountDisplay.Text = "₱0.0"
                                                       End If
                                                   Else
-                                                      lblAmountDisplay.Text = "₱0.00"
+                                                      lblAmountDisplay.Text = "₱0.0"
                                                   End If
                                               End If
                                           Else
-                                              ' No decimal point, treat as whole currency units (NOT cents)
+                                              ' No decimal point, treat entered text as whole currency units
                                               If Decimal.TryParse(amountText, displayValue) Then
-                                                  ' FIXED: Don't divide by 100 - treat as direct currency amount
-                                                  lblAmountDisplay.Text = $"₱{displayValue:F2}"
+                                                  lblAmountDisplay.Text = $"₱{displayValue:F1}"
                                               Else
-                                                  lblAmountDisplay.Text = "₱0.00"
+                                                  lblAmountDisplay.Text = "₱0.0"
                                               End If
                                           End If
 
@@ -2740,15 +2889,18 @@ Public Class Sales
                                           lblAmountDisplay.Location = New Point((480 - lblAmountDisplay.Width) / 2, 30)
 
                                           ' Update change calculation
-                                          Dim changeVal As Decimal = displayValue - totalAmount
-                                          lblChangeAmount.Text = $"₱{changeVal:F2}"
-                                          lblChangeAmount.ForeColor = If(changeVal >= 0, SuccessGreen, AlertRed)
+                                          Dim changeVal As Decimal = 0D
+                                          If Decimal.TryParse(lblAmountDisplay.Text.Replace("₱", ""), changeVal) Then
+                                              changeVal = changeVal - totalAmount
+                                              lblChangeAmount.Text = $"₱{changeVal:F1}"
+                                              lblChangeAmount.ForeColor = If(changeVal >= 0, SuccessGreen, AlertRed)
+                                          End If
 
                                           ' Update input hint based on state
                                           If String.IsNullOrEmpty(amountText) Then
                                               lblInputHint.Text = "Type amount or use keypad below"
                                               lblInputHint.ForeColor = SteelGray
-                                          ElseIf changeVal >= 0 Then
+                                          ElseIf Decimal.TryParse(lblAmountDisplay.Text.Replace("₱", ""), displayValue) AndAlso (displayValue - totalAmount) >= 0D Then
                                               lblInputHint.Text = "✓ Sufficient amount entered"
                                               lblInputHint.ForeColor = SuccessGreen
                                           Else
@@ -2756,6 +2908,7 @@ Public Class Sales
                                               lblInputHint.ForeColor = AlertRed
                                           End If
                                       End Sub
+
 
         ' Keypad section with improved spacing - ADJUSTED Y position
         Dim keypadSection As New Panel()
@@ -2861,7 +3014,11 @@ Public Class Sales
                                        UpdateCashAmountDisplay()
                                    End Sub
         quickAmountSection.Controls.Add(btnExact)
-
+        ' Also update the Exact quick button to set 1 decimal place:
+        AddHandler btnExact.Click, Sub()
+                                       enteredAmount = totalAmount.ToString("F1")
+                                       UpdateCashAmountDisplay()
+                                   End Sub
         ' Clear button
         Dim btnClear As New Guna.UI2.WinForms.Guna2Button()
         btnClear.Text = "Clear"
@@ -3010,45 +3167,52 @@ Public Class Sales
     End Sub
 
     ' ENHANCED: Process keypad input with comprehensive decimal validation
+    ' Replace the existing ProcessKeypadInputEnhanced with this updated implementation
     Private Sub ProcessKeypadInputEnhanced(input As String, updateCallback As Action)
+        ' We enforce exactly 1 decimal place and make '.' put the next digit into the decimal slot
         Select Case input
             Case "⌫" ' Backspace
                 If enteredAmount.Length > 0 Then
                     enteredAmount = enteredAmount.Substring(0, enteredAmount.Length - 1)
                 End If
 
-            Case "." ' Decimal point
-                ' STRICT VALIDATION: Must have digits first AND no existing decimal point
-                If enteredAmount.Length > 0 AndAlso Not enteredAmount.Contains(".") Then
+            Case "." ' Decimal point -> ensure there is exactly one decimal separator and position next input after it
+                If enteredAmount.Length = 0 Then
+                    ' start with 0.
+                    enteredAmount = "0."
+                ElseIf Not enteredAmount.Contains(".") Then
                     enteredAmount &= "."
+                Else
+                    ' If decimal already exists, trim any digits after decimal so the next digit will replace them
+                    Dim idx As Integer = enteredAmount.IndexOf(".")
+                    If idx >= 0 Then
+                        enteredAmount = enteredAmount.Substring(0, idx + 1) ' keep trailing dot
+                    End If
                 End If
 
             Case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9" ' Digits
-                ' Enhanced length validation based on decimal presence
-                Dim maxLength As Integer
+                ' If decimal present, allow only 1 digit after it
                 If enteredAmount.Contains(".") Then
-                    ' Allow more total length when decimal is present (e.g., 999999.99)
-                    maxLength = 12
-                    ' Also limit decimal places to 2
                     Dim decimalIndex As Integer = enteredAmount.IndexOf(".")
                     Dim decimalPlaces As Integer = enteredAmount.Length - decimalIndex - 1
-                    If decimalPlaces >= 2 Then
-                        Return ' Don't add more digits after 2 decimal places
+                    If decimalPlaces >= 1 Then
+                        ' already have one decimal digit, ignore further input
+                        Return
                     End If
-                Else
-                    ' Limit whole number length
-                    maxLength = 8 ' Allows up to 99,999,999
-                End If
 
-                If enteredAmount.Length < maxLength Then
+                    ' Append digit after decimal (or if user previously trimmed decimals, this becomes the decimal digit)
                     enteredAmount &= input
+                Else
+                    ' No decimal yet — append digit to integer portion
+                    ' Keep sensible overall length (allows reasonably large amounts)
+                    If enteredAmount.Length < 12 Then
+                        enteredAmount &= input
+                    End If
                 End If
         End Select
 
-        ' Call the update callback
         updateCallback()
     End Sub
-
     ' HELPER: Process keypad input consistently
     Private Sub ProcessKeypadInput(input As String, updateCallback As Action)
         Select Case input
@@ -4815,9 +4979,19 @@ Public Class Sales
             e.Handled = True
             Return
         End If
+
         ' GLOBAL SHORTCUTS (only when no modal/customer/payment panels are active)
         If Not totalPanelActive AndAlso Not pinPanelActive AndAlso Not isProfileDropdownVisible Then
-            ' Shift+Enter -> go to payment (explicit shortcut)
+            ' Ctrl+Enter -> go to payment (explicit shortcut)
+            If e.KeyCode = Keys.Enter AndAlso e.Control Then
+                If currentOrderList.Count > 0 Then
+                    btnPayment.PerformClick()
+                End If
+                e.Handled = True
+                Return
+            End If
+
+            ' Keep Shift+Enter as an alternate shortcut (optional)
             If e.KeyCode = Keys.Enter AndAlso e.Shift Then
                 If currentOrderList.Count > 0 Then
                     btnPayment.PerformClick()
@@ -4836,23 +5010,21 @@ Public Class Sales
         End If
 
         ' Existing barcode / payment logic
-        ' FIXED: Handle barcode input FIRST, then check for payment Enter
         If Not totalPanelActive AndAlso Not pinPanelActive AndAlso Not isProfileDropdownVisible Then
             ' Check if this might be barcode input (we have characters in buffer or it's a barcode-related key)
             Dim isBarcodeKey As Boolean = False
 
             Select Case e.KeyCode
                 Case Keys.D0 To Keys.D9, Keys.NumPad0 To Keys.NumPad9,
-                     Keys.A To Keys.Z, Keys.OemMinus, Keys.Subtract,
-                     Keys.Back, Keys.Delete, Keys.Escape
+                 Keys.A To Keys.Z, Keys.OemMinus, Keys.Subtract,
+                 Keys.Back, Keys.Delete, Keys.Escape
                     isBarcodeKey = True
                 Case Keys.Enter
-                    ' Enter key - check if we have barcode data to process
                     If Not String.IsNullOrEmpty(barcodeBuffer) Then
                         isBarcodeKey = True
                     Else
-                        ' No barcode data, check if we should go to payment
-                        If currentOrderList.Count > 0 Then
+                        ' Require a modifier (Ctrl or Shift) to trigger payment on Enter to avoid accidental submits
+                        If (e.Control Or e.Shift) AndAlso currentOrderList.Count > 0 Then
                             btnPayment.PerformClick()
                             e.Handled = True
                             Return
