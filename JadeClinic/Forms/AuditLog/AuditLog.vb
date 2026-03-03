@@ -14,10 +14,10 @@ Public Class AuditLog
 
         ' Create and configure overlay panel (same color as form)
         overlayPanel = New Panel() With {
-            .Dock = DockStyle.Fill,
-            .BackColor = Me.BackColor,
-            .Visible = False
-        }
+        .Dock = DockStyle.Fill,
+        .BackColor = Me.BackColor,
+        .Visible = False
+    }
         Me.Controls.Add(overlayPanel)
         overlayPanel.BringToFront()
 
@@ -36,18 +36,18 @@ Public Class AuditLog
         AddHandler Guna2DateTimePicker1.ValueChanged, AddressOf Filters_Changed
         AddHandler Exportbtn.Click, AddressOf Exportbtn_Click
 
-        ' Prevent unintended default date filtering: start unchecked and default to today
+        ' Default date filter to Today and enable the checkbox so filter is active on start
         Try
-            Guna2DateTimePicker1.Checked = False
-            Guna2DateTimePicker1.Value = DateTime.Now
+            Guna2DateTimePicker1.ShowCheckBox = True
+            Guna2DateTimePicker1.Value = Date.Today
+            Guna2DateTimePicker1.Checked = True
         Catch ex As Exception
             ' Ignore if control not available or doesn't support Checked
         End Try
 
-        ' Load data
+        ' Load data (with today's date filter active by default)
         Await LoadAuditLogsAsync()
     End Sub
-
     Private Sub Exportbtn_Click(sender As Object, e As EventArgs)
         MessageBox.Show("Export not implemented.", "Export", MessageBoxButtons.OK, MessageBoxIcon.Information)
     End Sub
@@ -159,6 +159,14 @@ Public Class AuditLog
         SortBy.Items.Add("Audit ID (Ascending)")
         SortBy.Items.Add("Audit ID (Descending)")
         SortBy.SelectedIndex = 0
+
+        ' Ensure date picker default is today (unchanged by other code)
+        Try
+            Guna2DateTimePicker1.ShowCheckBox = True
+            Guna2DateTimePicker1.Value = Date.Today
+            ' Keep checked state controlled in Load; do not override here if caller set differently
+        Catch
+        End Try
     End Sub
 
     Private Sub InitializeFilterTypeComboBox()

@@ -33,8 +33,6 @@ Public Class Supplier
             ' Wire events
             AddHandler SortBy.SelectedIndexChanged, AddressOf SortBy_SelectedIndexChanged
             AddHandler Exportbtn.Click, AddressOf Exportbtn_Click
-            AddHandler Guna2DateTimePicker1.ValueChanged, AddressOf FilterDateChanged
-
             ' Load data on UI thread to avoid cross-thread control access
             LoadSuppliersData()
         Catch ex As Exception

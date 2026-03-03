@@ -56,13 +56,18 @@ Public Class SalesRecord
         ' Initialize Sort ComboBox
         InitializeSortComboBox()
 
-        ' Load sales records data (show all by default)
-        LoadOrderRecordsData()
+        ' Ensure date filter defaults to Today on form start and apply filters
+        Guna2DateTimePicker1.Value = Date.Today
+        If Guna2DateTimePicker1.ShowCheckBox Then
+            Guna2DateTimePicker1.Checked = True
+        End If
+
+        ' Load sales records data with today's date filter active by default
+        ApplyFilters()
 
         ' Update form title to show logged-in user
         Me.Text = $"Sales Records - {frmLoginvb.LoggedInUsername}"
     End Sub
-
     Private Function ValidateUserSession() As Boolean
         If String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
             MessageBox.Show("User session expired. Please log in again.", "Session Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
@@ -192,20 +197,21 @@ Public Class SalesRecord
         ' Use existing designer controls only
         SortBy.Items.Clear()
         SortBy.Items.AddRange(New Object() {
-            "Sale Date (Newest First)",
-            "Sale Date (Oldest First)",
-            "Sale ID (Ascending)",
-            "Sale ID (Descending)",
-            "Total Amount (Highest First)",
-            "Total Amount (Lowest First)"
-        })
+        "Sale Date (Newest First)",
+        "Sale Date (Oldest First)",
+        "Sale ID (Ascending)",
+        "Sale ID (Descending)",
+        "Total Amount (Highest First)",
+        "Total Amount (Lowest First)"
+    })
         If SortBy.Items.Count > 0 Then
             SortBy.SelectedIndex = 0
         End If
 
+        ' Default date picker to today's date and enable the checkbox so the filter is active on start
         Guna2DateTimePicker1.ShowCheckBox = True
-        Guna2DateTimePicker1.Checked = False
         Guna2DateTimePicker1.Value = Date.Today
+        Guna2DateTimePicker1.Checked = True
 
         RemoveHandler SortBy.SelectedIndexChanged, AddressOf SortBy_SelectedIndexChanged
         AddHandler SortBy.SelectedIndexChanged, AddressOf SortBy_SelectedIndexChanged
@@ -216,7 +222,6 @@ Public Class SalesRecord
         RemoveHandler Guna2DateTimePicker1.CheckedChanged, AddressOf DtpSaleDate_CheckedChanged
         AddHandler Guna2DateTimePicker1.CheckedChanged, AddressOf DtpSaleDate_CheckedChanged
     End Sub
-
     Private Sub LoadOrderRecordsData(Optional sortOrder As String = "", Optional filterDate As DateTime? = Nothing)
         Try
             Guna2DataGridView1.Rows.Clear()

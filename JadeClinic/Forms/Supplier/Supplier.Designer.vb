@@ -31,8 +31,6 @@ Partial Class Supplier
         Dim CustomizableEdges7 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges8 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges9 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges10 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges11 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         LabelTitle = New Label()
         DashboardPanel = New Guna.UI2.WinForms.Guna2Panel()
         PictureBox9 = New PictureBox()
@@ -42,8 +40,6 @@ Partial Class Supplier
         Exportbtn = New Guna.UI2.WinForms.Guna2Button()
         Guna2HtmlLabel3 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         lblUsername = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        Guna2DateTimePicker1 = New Guna.UI2.WinForms.Guna2DateTimePicker()
-        Guna2HtmlLabel4 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         AddInventoryLog = New Guna.UI2.WinForms.Guna2Button()
         DashboardPanel.SuspendLayout()
         CType(PictureBox9, ComponentModel.ISupportInitialize).BeginInit()
@@ -166,7 +162,7 @@ Partial Class Supplier
         SortBy.Font = New Font("Poppins Light", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         SortBy.ForeColor = Color.White
         SortBy.ItemHeight = 40
-        SortBy.Location = New Point(622, 102)
+        SortBy.Location = New Point(318, 96)
         SortBy.Name = "SortBy"
         SortBy.ShadowDecoration.CustomizableEdges = CustomizableEdges5
         SortBy.Size = New Size(309, 46)
@@ -195,7 +191,7 @@ Partial Class Supplier
         Guna2HtmlLabel3.BackColor = Color.Transparent
         Guna2HtmlLabel3.Font = New Font("Poppins", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel3.ForeColor = Color.White
-        Guna2HtmlLabel3.Location = New Point(542, 110)
+        Guna2HtmlLabel3.Location = New Point(238, 104)
         Guna2HtmlLabel3.Name = "Guna2HtmlLabel3"
         Guna2HtmlLabel3.Size = New Size(65, 32)
         Guna2HtmlLabel3.TabIndex = 68
@@ -212,39 +208,10 @@ Partial Class Supplier
         lblUsername.TabIndex = 75
         lblUsername.Text = "20 Items"
         ' 
-        ' Guna2DateTimePicker1
-        ' 
-        Guna2DateTimePicker1.BorderRadius = 10
-        Guna2DateTimePicker1.Checked = True
-        Guna2DateTimePicker1.CustomizableEdges = CustomizableEdges8
-        Guna2DateTimePicker1.FillColor = Color.FromArgb(CByte(30), CByte(30), CByte(30))
-        Guna2DateTimePicker1.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2DateTimePicker1.ForeColor = Color.White
-        Guna2DateTimePicker1.Format = DateTimePickerFormat.Short
-        Guna2DateTimePicker1.Location = New Point(357, 108)
-        Guna2DateTimePicker1.MaxDate = New Date(9998, 12, 31, 0, 0, 0, 0)
-        Guna2DateTimePicker1.MinDate = New Date(1753, 1, 1, 0, 0, 0, 0)
-        Guna2DateTimePicker1.Name = "Guna2DateTimePicker1"
-        Guna2DateTimePicker1.ShadowDecoration.CustomizableEdges = CustomizableEdges9
-        Guna2DateTimePicker1.Size = New Size(148, 40)
-        Guna2DateTimePicker1.TabIndex = 76
-        Guna2DateTimePicker1.Value = New Date(2025, 9, 27, 23, 48, 46, 373)
-        ' 
-        ' Guna2HtmlLabel4
-        ' 
-        Guna2HtmlLabel4.BackColor = Color.Transparent
-        Guna2HtmlLabel4.Font = New Font("Poppins", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel4.ForeColor = Color.White
-        Guna2HtmlLabel4.Location = New Point(235, 116)
-        Guna2HtmlLabel4.Name = "Guna2HtmlLabel4"
-        Guna2HtmlLabel4.Size = New Size(116, 32)
-        Guna2HtmlLabel4.TabIndex = 77
-        Guna2HtmlLabel4.Text = "Filter by Date:"
-        ' 
         ' AddInventoryLog
         ' 
         AddInventoryLog.BorderRadius = 10
-        AddInventoryLog.CustomizableEdges = CustomizableEdges10
+        AddInventoryLog.CustomizableEdges = CustomizableEdges8
         AddInventoryLog.DisabledState.BorderColor = Color.DarkGray
         AddInventoryLog.DisabledState.CustomBorderColor = Color.DarkGray
         AddInventoryLog.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
@@ -254,7 +221,7 @@ Partial Class Supplier
         AddInventoryLog.ForeColor = Color.Black
         AddInventoryLog.Location = New Point(1225, 102)
         AddInventoryLog.Name = "AddInventoryLog"
-        AddInventoryLog.ShadowDecoration.CustomizableEdges = CustomizableEdges11
+        AddInventoryLog.ShadowDecoration.CustomizableEdges = CustomizableEdges9
         AddInventoryLog.Size = New Size(173, 40)
         AddInventoryLog.TabIndex = 78
         AddInventoryLog.Text = "Add Inventory Log"
@@ -267,8 +234,6 @@ Partial Class Supplier
         BackColor = Color.FromArgb(CByte(30), CByte(30), CByte(30))
         ClientSize = New Size(1609, 875)
         Controls.Add(AddInventoryLog)
-        Controls.Add(Guna2HtmlLabel4)
-        Controls.Add(Guna2DateTimePicker1)
         Controls.Add(lblUsername)
         Controls.Add(Guna2HtmlLabel3)
         Controls.Add(Exportbtn)
@@ -300,7 +265,5 @@ Partial Class Supplier
     Friend WithEvents Guna2HtmlLabel2 As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents Guna2HtmlLabel3 As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents lblUsername As Guna.UI2.WinForms.Guna2HtmlLabel
-    Friend WithEvents Guna2DateTimePicker1 As Guna.UI2.WinForms.Guna2DateTimePicker
-    Friend WithEvents Guna2HtmlLabel4 As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents AddInventoryLog As Guna.UI2.WinForms.Guna2Button
 End Class
