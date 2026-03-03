@@ -885,39 +885,97 @@ Public Class Sales
 
         Dim currentQuantity As Integer = CInt(currentOrderList(itemIndex)("Quantity"))
         Dim productName As String = currentOrderList(itemIndex)("ProductName").ToString()
+        Dim productId As String = currentOrderList(itemIndex)("ProductID").ToString()
 
-        ' Only require manager/admin authorization when the item will be removed from cart
+        ' Detect Shift key to void the entire line
+        Dim shiftPressed As Boolean = (Control.ModifierKeys And Keys.Shift) = Keys.Shift
+
+        If shiftPressed Then
+            ' Directly show authorization modal (no extra MessageBox confirmation)
+            Try
+                ' Give UI a tick to settle focus/fires (improves responsiveness on first click)
+                Application.DoEvents()
+
+                ' Provide visual feedback that action is in progress
+                Me.Cursor = Cursors.WaitCursor
+                Dim approver As String = ""
+                Dim authorized As Boolean = ShowVoidAuthorizationModal(productName, currentQuantity, approver)
+                Me.Cursor = Cursors.Default
+
+                If Not authorized Then
+                    ' Authorization cancelled/failed — nothing to do
+                    Return
+                End If
+
+                ' Restore UI stock (add back the entire quantity) if CurrentStock exists
+                Try
+                    If currentOrderList(itemIndex).ContainsKey("CurrentStock") Then
+                        currentOrderList(itemIndex)("CurrentStock") = CInt(currentOrderList(itemIndex)("CurrentStock")) + currentQuantity
+                    End If
+                Catch
+                    ' ignore stock restoration errors
+                End Try
+
+                ' Remove the item line
+                Dim removedProductId As String = currentOrderList(itemIndex)("ProductID").ToString()
+                currentOrderList.RemoveAt(itemIndex)
+
+                ' Update UI and counts
+                RefreshOrderDisplay()
+                UpdateCategoryItemCounts()
+                UpdateStockLabel(removedProductId, 0) ' let UpdateStockLabel find the real display or show 0
+
+                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "POS Line Voided", $"Product: {productName}, Qty: {currentQuantity}, AuthorizedBy: {approver}")
+                ShowVoidSuccessNotification(productName & $" (x{currentQuantity})", approver)
+            Finally
+                Me.Cursor = Cursors.Default
+            End Try
+
+            Return
+        End If
+
+        ' Normal (single-step) reduction behavior
         If currentQuantity > 1 Then
             currentOrderList(itemIndex)("Quantity") = currentQuantity - 1
-            currentOrderList(itemIndex)("CurrentStock") = CInt(currentOrderList(itemIndex)("CurrentStock")) + 1
-            UpdateStockLabel(currentOrderList(itemIndex)("ProductID").ToString(), CInt(currentOrderList(itemIndex)("CurrentStock")))
+
+            ' Return stock to UI display
+            Try
+                If currentOrderList(itemIndex).ContainsKey("CurrentStock") Then
+                    currentOrderList(itemIndex)("CurrentStock") = CInt(currentOrderList(itemIndex)("CurrentStock")) + 1
+                    UpdateStockLabel(productId, CInt(currentOrderList(itemIndex)("CurrentStock")))
+                End If
+            Catch
+                ' ignore update errors
+            End Try
+
             RefreshOrderDisplay()
             UpdateCategoryItemCounts()
             Return
         End If
 
-        ' currentQuantity = 1 => this action removes product from cart, require authorization
-        Dim approver As String = ""
-        If Not ShowVoidAuthorizationModal(productName, 1, approver) Then
+        ' currentQuantity = 1 => removing the last unit -> require authorization
+        Dim approverLocal As String = ""
+        If Not ShowVoidAuthorizationModal(productName, 1, approverLocal) Then
             Return
         End If
 
-        currentOrderList(itemIndex)("CurrentStock") = CInt(currentOrderList(itemIndex)("CurrentStock")) + 1
-        UpdateStockLabel(currentOrderList(itemIndex)("ProductID").ToString(), CInt(currentOrderList(itemIndex)("CurrentStock")))
-        currentOrderList.RemoveAt(itemIndex)
+        ' Restore stock UI and remove line
+        Try
+            If currentOrderList(itemIndex).ContainsKey("CurrentStock") Then
+                currentOrderList(itemIndex)("CurrentStock") = CInt(currentOrderList(itemIndex)("CurrentStock")) + 1
+                UpdateStockLabel(productId, CInt(currentOrderList(itemIndex)("CurrentStock")))
+            End If
+        Catch
+            ' ignore errors
+        End Try
 
+        currentOrderList.RemoveAt(itemIndex)
         RefreshOrderDisplay()
         UpdateCategoryItemCounts()
 
-        Utilities.LogAudit(
-        frmLoginvb.LoggedInUsername,
-        "POS Item Voided",
-        $"Product: {productName}, Qty: 1, AuthorizedBy: {approver}")
-
-        ' Show confirmation toast to cashier
-        ShowVoidSuccessNotification(productName, approver)
+        Utilities.LogAudit(frmLoginvb.LoggedInUsername, "POS Item Voided", $"Product: {productName}, Qty: 1, AuthorizedBy: {approverLocal}")
+        ShowVoidSuccessNotification(productName, approverLocal)
     End Sub
-
     ' Non-blocking toast notification for void success
     Private Sub ShowVoidSuccessNotification(productName As String, approver As String)
         Dim notificationLabel As New Label()
@@ -3435,29 +3493,21 @@ Public Class Sales
                     Dim prodIdInt As Integer = Convert.ToInt32(prod("ProductID"))
                     If prodIdInt = discountedItemProductId Then
                         If discountType = "Percentage" Then
-                            ' discountedUnitVatInc = (unitVatInc / 1.12) * (1 - pct) * 1.12
                             Dim pct As Decimal = discountValue
                             displayUnitVatInc = Math.Round((unitPriceVatInclusive / 1.12D) * (1 - (pct / 100D)) * 1.12D, 2)
                         ElseIf discountType = "Fixed" Then
-                            ' distribute fixed VAT-inclusive discount across quantity of discounted item
                             Dim perUnitDiscountVatInc As Decimal = 0D
                             If qtyInt > 0 Then
                                 perUnitDiscountVatInc = discountAmount / qtyInt
                             End If
-                            ' Use net-based formula to remain consistent: subtract net per unit then reapply VAT
                             Dim perUnitDiscountNet As Decimal = perUnitDiscountVatInc / 1.12D
                             displayUnitVatInc = Math.Round(((unitPriceVatInclusive / 1.12D) - perUnitDiscountNet) * 1.12D, 2)
+                            If displayUnitVatInc < 0D Then displayUnitVatInc = 0D
                         End If
-
-                        ' Ensure not negative
-                        If displayUnitVatInc < 0D Then
-                            displayUnitVatInc = 0D
-                        End If
-
                         lineTotalVatInclusive = displayUnitVatInc * qtyInt
                     End If
                 Catch
-                    ' ignore conversion issues and fall back to original price display
+                    ' ignore conversion issues
                 End Try
             End If
 
@@ -3472,9 +3522,65 @@ Public Class Sales
             currentY += panelHeight + marginY
             orderPanel.Tag = i
 
+            ' Store original colors so hover can restore them
+            Dim origFill As Color = orderPanel.FillColor
+            Dim origBorderColor As Color = orderPanel.BorderColor
+            Dim origBorderThickness As Integer = orderPanel.BorderThickness
+
             AddHandler orderPanel.DoubleClick, Sub(sender As Object, e As EventArgs)
                                                    ReduceItemQuantity(CInt(orderPanel.Tag))
                                                End Sub
+
+            ' Hover behavior: subtle gray highlight and hand cursor to indicate clickability
+            AddHandler orderPanel.MouseEnter, Sub()
+                                                  Try
+                                                      orderPanel.FillColor = Color.FromArgb(70, Graphite.R, Graphite.G, Graphite.B) ' slightly lighter gray
+                                                      orderPanel.BorderColor = GoldenYellow
+                                                      orderPanel.BorderThickness = 2
+                                                      orderPanel.Cursor = Cursors.Hand
+
+                                                      ' also update child label colors for contrast
+                                                      For Each child As Control In orderPanel.Controls
+                                                          If TypeOf child Is Label OrElse TypeOf child Is Guna.UI2.WinForms.Guna2HtmlLabel Then
+                                                              child.ForeColor = LightSilver
+                                                          End If
+                                                      Next
+                                                  Catch
+                                                  End Try
+                                              End Sub
+
+            AddHandler orderPanel.MouseLeave, Sub()
+                                                  Try
+                                                      orderPanel.FillColor = origFill
+                                                      orderPanel.BorderColor = origBorderColor
+                                                      orderPanel.BorderThickness = origBorderThickness
+                                                      orderPanel.Cursor = Cursors.Default
+
+                                                      For Each child As Control In orderPanel.Controls
+                                                          If TypeOf child Is Label OrElse TypeOf child Is Guna.UI2.WinForms.Guna2HtmlLabel Then
+                                                              child.ForeColor = PureWhite
+                                                          End If
+                                                      Next
+                                                  Catch
+                                                  End Try
+                                              End Sub
+
+            ' Single-click gives a subtle feedback (does not remove item) — you can change to select on click
+            AddHandler orderPanel.MouseClick, Sub()
+                                                  Try
+                                                      ' Flash a darker shade briefly to acknowledge click
+                                                      Dim prev As Color = orderPanel.FillColor
+                                                      orderPanel.FillColor = Color.FromArgb(90, 90, 90)
+                                                      Dim t As New Timer() With {.Interval = 120}
+                                                      AddHandler t.Tick, Sub()
+                                                                             t.Stop()
+                                                                             orderPanel.FillColor = prev
+                                                                             t.Dispose()
+                                                                         End Sub
+                                                      t.Start()
+                                                  Catch
+                                                  End Try
+                                              End Sub
 
             Dim baseY As Integer = 10
 
@@ -3536,22 +3642,20 @@ Public Class Sales
         Next
 
         ' --- DISCOUNT-FIRST CALCULATION (VAT-INCLUSIVE) ---
-        ' subtotalVatInclusiveLocal = sum(unit VAT-inclusive * qty)
-        Dim discountVatInclusive As Decimal = discountAmount ' discountAmount stored as VAT-inclusive fixed amount
-        Dim remainingVatInclusive As Decimal = Math.Max(0D, subtotalVatInclusiveLocal - discountVatInclusive) ' remainder (VAT-INCLUSIVE)
-        ' Extract VAT portion from VAT-inclusive remainder (VAT = remainder * 12/112)
+        Dim discountVatInclusive As Decimal = discountAmount
+        Dim remainingVatInclusive As Decimal = Math.Max(0D, subtotalVatInclusiveLocal - discountVatInclusive)
         Dim vatAmount As Decimal = Math.Round(remainingVatInclusive * (0.12D / 1.12D), 2)
         Dim vatableNet As Decimal = Math.Round(remainingVatInclusive - vatAmount, 2)
         Dim totalAmountVatInc As Decimal = Math.Round(remainingVatInclusive, 2)
 
         ' Persist values for receipt printing and confirm flow:
         Me.receiptVatableBeforeDiscount = subtotalVatInclusiveLocal
-        Me.receiptSubtotal = vatableNet ' NET (VATable) amount after discount
+        Me.receiptSubtotal = vatableNet
         Me.receiptTax = vatAmount
         Me.receiptTotalAmount = totalAmountVatInc
         Me.subtotalVatInclusive = subtotalVatInclusiveLocal
 
-        ' Update UI labels: show NET (vatable) in lblSubTotal per request
+        ' Update UI labels
         If lblSubTotal IsNot Nothing Then lblSubTotal.Text = vatableNet.ToString("N2")
         If taxLbl IsNot Nothing Then taxLbl.Text = vatAmount.ToString("N2")
         If totalLbl IsNot Nothing Then totalLbl.Text = totalAmountVatInc.ToString("N2")
@@ -5076,14 +5180,7 @@ Public Class Sales
                 Return
             End If
 
-            ' Keep Shift+Enter as an alternate shortcut (optional)
-            If e.KeyCode = Keys.Enter AndAlso e.Shift Then
-                If currentOrderList.Count > 0 Then
-                    btnPayment.PerformClick()
-                End If
-                e.Handled = True
-                Return
-            End If
+
 
             ' D -> open discount modal
             If e.KeyCode = Keys.D AndAlso Not e.Control AndAlso Not e.Alt Then
@@ -5226,7 +5323,6 @@ Public Class Sales
         }
             dlg.Controls.Add(txtQr)
 
-            ' Improved spacing for username/password section
             Dim pnlPass As New Panel With {
             .Location = New Point(30, 178),
             .Size = New Size(500, 178),
@@ -5284,7 +5380,6 @@ Public Class Sales
         }
             dlg.Controls.Add(lblStatus)
 
-            ' Moved further down for taller modal
             Dim btnAuthorize As New Guna2Button With {
             .Text = "Authorize",
             .Size = New Size(180, 44),
@@ -5311,6 +5406,43 @@ Public Class Sales
             Dim authorized As Boolean = False
             Dim approverLocal As String = ""
             Dim qrMode As Boolean = True
+            Dim isAuthorizingQr As Boolean = False
+
+            Dim qrAutoAuthorizeTimer As New Timer With {.Interval = 150}
+
+            Dim TryAuthorizeQr As Action =
+            Sub()
+                If Not qrMode OrElse isAuthorizingQr OrElse authorized Then Return
+
+                Dim qrRaw As String = txtQr.Text.Trim()
+                If String.IsNullOrWhiteSpace(qrRaw) Then Return
+
+                Console.WriteLine($"[VOID AUTH DEBUG] QR scanned raw value: '{qrRaw}'")
+
+                Dim approvedBy As String = ""
+                isAuthorizingQr = True
+                Try
+                    lblStatus.Text = "Processing QR authorization..."
+                    lblStatus.ForeColor = LightSilver
+
+                    If TryAuthorizeVoidByQr(qrRaw, approvedBy) Then
+                        Console.WriteLine($"[VOID AUTH DEBUG] QR authorization SUCCESS. ApprovedBy='{approvedBy}'")
+                        approverLocal = approvedBy
+                        authorized = True
+                        dlg.DialogResult = DialogResult.OK
+                        dlg.Close()
+                    Else
+                        Console.WriteLine("[VOID AUTH DEBUG] QR authorization FAILED.")
+                        lblStatus.Text = "Authorization failed. Manager/Admin required."
+                        lblStatus.ForeColor = AlertRed
+                        MessageBox.Show("Invalid QR code or insufficient role. Manager/Admin authorization is required.", "Authorization Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                        txtQr.Clear()
+                        txtQr.Focus()
+                    End If
+                Finally
+                    isAuthorizingQr = False
+                End Try
+            End Sub
 
             AddHandler btnQrMode.Click, Sub()
                                             qrMode = True
@@ -5318,7 +5450,13 @@ Public Class Sales
                                             btnPassMode.FillColor = SteelGray
                                             pnlPass.Visible = False
                                             lblScanInstruction.Visible = True
+
+                                            ' Hide Authorize button in QR mode (auto authorize only)
+                                            btnAuthorize.Visible = False
+
                                             txtQr.Text = ""
+                                            lblStatus.Text = "Waiting for manager/admin authorization..."
+                                            lblStatus.ForeColor = LightSilver
                                             txtQr.Focus()
                                         End Sub
 
@@ -5328,6 +5466,10 @@ Public Class Sales
                                               btnQrMode.FillColor = SteelGray
                                               pnlPass.Visible = True
                                               lblScanInstruction.Visible = False
+
+                                              ' Show Authorize button in User/Pass mode
+                                              btnAuthorize.Visible = True
+
                                               txtUser.Focus()
                                           End Sub
 
@@ -5336,30 +5478,48 @@ Public Class Sales
                                             dlg.Close()
                                         End Sub
 
+            AddHandler qrAutoAuthorizeTimer.Tick, Sub()
+                                                      qrAutoAuthorizeTimer.Stop()
+                                                      TryAuthorizeQr()
+                                                  End Sub
+
+            AddHandler txtQr.TextChanged, Sub()
+                                              If Not qrMode Then Return
+                                              qrAutoAuthorizeTimer.Stop()
+                                              If txtQr.TextLength = 0 Then Return
+                                              qrAutoAuthorizeTimer.Start()
+                                          End Sub
+
             AddHandler btnAuthorize.Click, Sub()
                                                Dim ok As Boolean = False
                                                Dim approvedBy As String = ""
 
                                                If qrMode Then
-                                                   ok = TryAuthorizeVoidByQr(txtQr.Text.Trim(), approvedBy)
+                                                   TryAuthorizeQr()
+                                                   Return
                                                Else
+                                                   Console.WriteLine($"[VOID AUTH DEBUG] Password mode authorization attempt for user '{txtUser.Text.Trim()}'")
                                                    ok = TryAuthorizeVoidByPassword(txtUser.Text.Trim(), txtPass.Text, approvedBy)
                                                End If
 
                                                If ok Then
+                                                   Console.WriteLine($"[VOID AUTH DEBUG] Password authorization SUCCESS. ApprovedBy='{approvedBy}'")
                                                    approverLocal = approvedBy
                                                    authorized = True
                                                    dlg.DialogResult = DialogResult.OK
                                                    dlg.Close()
                                                Else
+                                                   Console.WriteLine("[VOID AUTH DEBUG] Password authorization FAILED.")
                                                    lblStatus.Text = "Authorization failed. Manager/Admin required."
                                                    lblStatus.ForeColor = AlertRed
+                                                   MessageBox.Show("Invalid credentials or insufficient role. Manager/Admin authorization is required.", "Authorization Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning)
                                                End If
                                            End Sub
 
             AddHandler txtQr.KeyDown, Sub(s, e)
                                           If e.KeyCode = Keys.Enter Then
-                                              btnAuthorize.PerformClick()
+                                              qrAutoAuthorizeTimer.Stop()
+                                              TryAuthorizeQr()
                                               e.Handled = True
                                           End If
                                       End Sub
@@ -5377,6 +5537,14 @@ Public Class Sales
                                             e.Handled = True
                                         End If
                                     End Sub
+
+            AddHandler dlg.FormClosed, Sub()
+                                           Try
+                                               qrAutoAuthorizeTimer.Stop()
+                                               qrAutoAuthorizeTimer.Dispose()
+                                           Catch
+                                           End Try
+                                       End Sub
 
             btnQrMode.PerformClick()
             dlg.ShowDialog(Me)
