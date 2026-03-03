@@ -1018,6 +1018,7 @@ Public Class AddStaff
     ' Generate three secure passkeys, attempt to persist them.
     ' Each passkey will be 12 hex characters (6 bytes -> 12 hex chars).
     ' If persistence fails we still return generated keys (and log the error) instead of returning ERROR-KEYs.
+    ' Replace your existing GenerateUserPasskeys method with this corrected version:
     Public Function GenerateUserPasskeys(userId As Integer) As String()
         Try
             Const byteLength As Integer = 6 ' 6 bytes -> 12 hex chars
@@ -1039,25 +1040,24 @@ Public Class AddStaff
                     Dim token = GenerateHexToken(byteLength) ' 12 chars
                     key = token.ToUpperInvariant()
 
-                    ' If DB check fails it returns True (see IsPasskeyUnique) so loop will still progress.
-                Loop While used.Contains(key) OrElse Not IsPasskeyUnique(key)
+                    ' Check uniqueness using the correct column name 'Passkeys'
+                Loop While used.Contains(key) OrElse Not IsPasskeyUniqueInPasskeysColumn(key)
 
                 used.Add(key)
                 passkeys(i) = key
             Next
 
-            ' Try to persist passkeys; don't fail creation if DB update fails — log and return keys.
+            ' Save to the correct single 'Passkeys' column as comma-separated values
             Try
-                Dim updateQuery As String = "UPDATE Users SET Passkey1 = @p1, Passkey2 = @p2, Passkey3 = @p3 WHERE UserID = @UserID"
+                Dim passkeysCombined As String = String.Join(",", passkeys)
+                Dim updateQuery As String = "UPDATE Users SET Passkeys = @Passkeys WHERE UserID = @UserID"
                 Dim sqlParams() As SqlParameter = {
-                    New SqlParameter("@p1", passkeys(0)),
-                    New SqlParameter("@p2", passkeys(1)),
-                    New SqlParameter("@p3", passkeys(2)),
-                    New SqlParameter("@UserID", userId)
-                }
+                New SqlParameter("@Passkeys", passkeysCombined),
+                New SqlParameter("@UserID", userId)
+            }
                 Utilities.ExecuteNonQuery(updateQuery, sqlParams)
+                Console.WriteLine($"Successfully saved passkeys for user {userId}: {passkeysCombined}")
             Catch ex As Exception
-                ' Persist failed: log but return the generated keys so caller can show them.
                 Console.WriteLine($"Unable to persist passkeys for user {userId}: {ex.Message}")
             End Try
 
@@ -1065,11 +1065,31 @@ Public Class AddStaff
             Return passkeys
         Catch ex As Exception
             Console.WriteLine($"Error generating passkeys: {ex.Message}")
-            ' Return clear fallback so caller can detect an unexpected failure easily.
             Return New String() {"ERROR-KEY1", "ERROR-KEY2", "ERROR-KEY3"}
         End Try
     End Function
+    Private Sub txtPhone_KeyPress(sender As Object, e As KeyPressEventArgs)
+        ' Only allow digits and control characters (backspace, delete, arrows, etc.)
+        If Not Char.IsDigit(e.KeyChar) AndAlso Not Char.IsControl(e.KeyChar) Then
+            e.Handled = True
+        End If
+    End Sub
 
+    ' Add this new method to check uniqueness in the Passkeys column
+    Private Function IsPasskeyUniqueInPasskeysColumn(passkey As String) As Boolean
+        Try
+            ' Check if the passkey exists in the comma-separated Passkeys column
+            Dim query As String = "SELECT COUNT(*) FROM Users WHERE (',' + ISNULL(Passkeys, '') + ',') LIKE '%,' + @p + ',%'"
+            Dim param As New SqlParameter("@p", passkey)
+            Dim count As Integer = CInt(Utilities.ExecuteScalar(query, New SqlParameter() {param}))
+            Return count = 0
+        Catch ex As Exception
+            Console.WriteLine($"Passkey uniqueness check failed (treating as unique): {ex.Message}")
+            Return True
+        End Try
+    End Function
+
+    ' Remove or comment out the old IsPasskeyUnique method since it references non-existent columns
     Public Function GenerateUserCode() As String
         ' Produces a longer, unique user code containing a zero-padded user number and timestamp.
         Try

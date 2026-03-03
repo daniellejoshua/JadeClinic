@@ -1197,27 +1197,37 @@ Public Class frmLoginvb
     End Function
     Private Function VerifyThreePasskeysForUser(targetUsername As String, p1 As String, p2 As String, p3 As String) As Boolean
         Try
-            Dim query As String = "SELECT Passkey1, Passkey2, Passkey3 FROM Users WHERE Username = @Username"
+            Dim query As String = "SELECT Passkeys FROM Users WHERE Username = @Username AND IsActive = 1"
             Dim stored As New List(Of String)()
-            Using rdr As SqlDataReader = Utilities.ExecuteReader(query, {New SqlParameter("@Username", targetUsername)})
-                If rdr.Read() Then
-                    If Not IsDBNull(rdr("Passkey1")) Then stored.Add(rdr("Passkey1").ToString().Trim().ToUpperInvariant())
-                    If Not IsDBNull(rdr("Passkey2")) Then stored.Add(rdr("Passkey2").ToString().Trim().ToUpperInvariant())
-                    If Not IsDBNull(rdr("Passkey3")) Then stored.Add(rdr("Passkey3").ToString().Trim().ToUpperInvariant())
+
+            Using reader As SqlDataReader = Utilities.ExecuteReader(query, {New SqlParameter("@Username", targetUsername)})
+                If reader.Read() Then
+                    If IsDBNull(reader("Passkeys")) Then Return False
+                    Dim raw As String = reader("Passkeys").ToString()
+                    stored = raw.Split(","c).
+                         Select(Function(s) s.Trim().ToUpperInvariant()).
+                         Where(Function(s) Not String.IsNullOrEmpty(s)).
+                         ToList()
                 End If
             End Using
 
             If stored.Count <> 3 Then Return False
 
-            Dim inputKeys As New List(Of String) From {p1, p2, p3}
+            Dim inputKeys As New List(Of String) From {
+            p1.Trim().ToUpperInvariant(),
+            p2.Trim().ToUpperInvariant(),
+            p3.Trim().ToUpperInvariant()
+        }
+
             inputKeys.Sort()
             stored.Sort()
+
             Return inputKeys.SequenceEqual(stored)
-        Catch
+        Catch ex As Exception
+            Console.WriteLine($"VerifyThreePasskeysForUser error: {ex.Message}")
             Return False
         End Try
     End Function
-
     Private Function UpdateUserPinByUsername(targetUsername As String, newPin As String) As Boolean
         Try
             Dim q As String = "UPDATE Users SET pin = @Pin WHERE Username = @Username"

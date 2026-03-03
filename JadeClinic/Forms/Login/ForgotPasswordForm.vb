@@ -30,6 +30,9 @@ Public Class ForgotPasswordForm
         Me.BackColor = Drawing.Color.FromArgb(41, 44, 45)
         InitializeStepControls()
         ShowStep(1)
+        Me.KeyPreview = True
+        AddHandler Me.KeyDown, AddressOf ForgotPasswordForm_KeyDown
+
     End Sub
 
     Private Sub InitializeStepControls()
@@ -249,28 +252,35 @@ Public Class ForgotPasswordForm
                 Return
             End If
 
-            Dim query = "SELECT Passkey1, Passkey2, Passkey3 FROM Users WHERE Username = @Username"
+            ' Read single comma-separated Passkey column
+            Dim query = "SELECT Passkeys FROM Users WHERE Username = @Username"
             Dim param = New SqlParameter("@Username", username)
 
-            Dim stored As New List(Of String)()
-            Using rdr As SqlDataReader = Utilities.ExecuteReader(query, {param})
-                If rdr.Read() Then
-                    If Not IsDBNull(rdr("Passkey1")) Then stored.Add(rdr("Passkey1").ToString().Trim().ToUpperInvariant())
-                    If Not IsDBNull(rdr("Passkey2")) Then stored.Add(rdr("Passkey2").ToString().Trim().ToUpperInvariant())
-                    If Not IsDBNull(rdr("Passkey3")) Then stored.Add(rdr("Passkey3").ToString().Trim().ToUpperInvariant())
+            Dim storedList As New List(Of String)()
+            Try
+                Dim result = Utilities.ExecuteScalar(query, {param})
+                If result IsNot Nothing AndAlso Not IsDBNull(result) Then
+                    Dim raw As String = result.ToString()
+                    storedList = raw.Split(","c).
+                              Select(Function(s) s.Trim().ToUpperInvariant()).
+                              Where(Function(s) Not String.IsNullOrEmpty(s)).
+                              ToList()
                 End If
-            End Using
+            Catch ex As Exception
+                MessageBox.Show($"Error reading passkeys: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                Return
+            End Try
 
-            If stored.Count <> 3 Then
+            If storedList.Count <> 3 Then
                 MessageBox.Show("This account does not have 3 configured passkeys.", "Passkey Setup Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
                 Return
             End If
 
             Dim inputKeys As New List(Of String) From {p1, p2, p3}
             inputKeys.Sort()
-            stored.Sort()
+            storedList.Sort()
 
-            If Not inputKeys.SequenceEqual(stored) Then
+            If Not inputKeys.SequenceEqual(storedList) Then
                 MessageBox.Show("Incorrect passkeys.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
                 Return
             End If
@@ -301,10 +311,10 @@ Public Class ForgotPasswordForm
             Try
                 Dim hashed As String = BCrypt.Net.BCrypt.HashPassword(newPass, workFactor:=12)
 
-                Dim query = "UPDATE Users SET PasswordHash = @PasswordHash WHERE Username = @Username"
+                Dim q = "UPDATE Users SET PasswordHash = @PasswordHash WHERE Username = @Username"
                 Dim param1 = New SqlParameter("@PasswordHash", hashed)
                 Dim param2 = New SqlParameter("@Username", username)
-                Utilities.ExecuteNonQuery(query, {param1, param2})
+                Utilities.ExecuteNonQuery(q, {param1, param2})
 
                 MessageBox.Show("Password updated successfully! You may now log in.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information)
                 Me.Close()
@@ -313,7 +323,6 @@ Public Class ForgotPasswordForm
             End Try
         End If
     End Sub
-
     Private Sub btnBack_Click(sender As Object, e As EventArgs)
         If currentStep = 2 Then
             ShowStep(1)
@@ -324,5 +333,29 @@ Public Class ForgotPasswordForm
 
     Private Sub ForgotPasswordForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
 
+    End Sub
+
+    ' KeyDown handler: Enter => Next, Esc => Cancel, B => Back
+    Private Sub ForgotPasswordForm_KeyDown(sender As Object, e As KeyEventArgs)
+        Try
+            If e.KeyCode = Keys.Enter Then
+                ' Prevent clicking when a multiline control would consume Enter
+                btnNext.PerformClick()
+                e.SuppressKeyPress = True
+                e.Handled = True
+            ElseIf e.KeyCode = Keys.Escape Then
+                btnCancel.PerformClick()
+                e.SuppressKeyPress = True
+                e.Handled = True
+            ElseIf e.KeyCode = Keys.B Then
+                If btnBack.Visible Then
+                    btnBack.PerformClick()
+                    e.SuppressKeyPress = True
+                    e.Handled = True
+                End If
+            End If
+        Catch ex As Exception
+            Console.WriteLine($"ForgotPasswordForm_KeyDown error: {ex.Message}")
+        End Try
     End Sub
 End Class
