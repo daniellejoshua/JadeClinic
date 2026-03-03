@@ -861,6 +861,35 @@ Public Class frmLoginvb
             pinPanelButtons.Add(button)
         Next
 
+        ' Inside ShowPinEntryPanel(expectedPin As String), update lblForgotPin setup:
+        Dim lblForgotPin As New Label()
+        lblForgotPin.Text = "Forgot PIN?"
+        lblForgotPin.Font = New Font("Poppins", 10.0F, FontStyle.Underline)
+        lblForgotPin.ForeColor = Color.FromArgb(255, 204, 77)
+        lblForgotPin.BackColor = pinPanel.FillColor
+        lblForgotPin.AutoSize = True
+        lblForgotPin.Cursor = Cursors.Hand
+        lblForgotPin.Location = New Point((pinPanel.Width - 90) \ 2, buttonStartY + 4 * (buttonSize + buttonSpacing) + 8)
+        AddHandler lblForgotPin.Click,
+            Sub()
+                If String.IsNullOrWhiteSpace(LoggedInUsername) Then
+                    MessageBox.Show("Session not found. Please login again.", "Forgot PIN", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                    Return
+                End If
+
+                Dim resetOk As Boolean = ShowForgotPinDialog(LoggedInUsername)
+                If resetOk Then
+                    Try
+                        Me.Controls.Remove(pinPanel)
+                    Catch
+                    End Try
+                    pinInput = ""
+                    failedPinAttempts = 0
+                    MessageBox.Show("PIN reset successful. Please login again.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                End If
+            End Sub
+        pinPanel.Controls.Add(lblForgotPin)
+
         ' Key handler for PIN entry (including Enter)
         AddHandler pinPanel.KeyDown, Sub(senderObj, eArgs)
                                          Dim key As Keys = eArgs.KeyCode
@@ -880,28 +909,327 @@ Public Class frmLoginvb
         Me.ActiveControl = pinPanel
         pinPanel.Focus()
     End Sub
-    ' Improved PIN input logic with Enter key support and consistent state
-    Private Sub HandlePinInput(input As String, expectedPin As String, pinIndicators As List(Of Guna.UI2.WinForms.Guna2CircleButton), pinPanel As Control)
-        If input = "X" Then
-            If pinInput.Length > 0 Then
-                pinInput = pinInput.Substring(0, pinInput.Length - 1)
-                pinIndicators(pinInput.Length).FillColor = Color.FromArgb(240, 240, 240) ' Light gray for empty
-            End If
-        ElseIf input = "ENTER" Then
-            If pinInput.Length = 4 Then
-                ValidatePin(expectedPin, pinIndicators, pinPanel)
-            End If
-        ElseIf input >= "0" And input <= "9" Then
-            If pinInput.Length < 4 Then
-                pinInput &= input
-                pinIndicators(pinInput.Length - 1).FillColor = Color.Yellow ' Rich Olive for filled indicators
-            End If
-            If pinInput.Length = 4 Then
-                ValidatePin(expectedPin, pinIndicators, pinPanel)
-            End If
-        End If
-    End Sub
 
+    Private Function ShowForgotPinDialog(targetUsername As String) As Boolean
+        If String.IsNullOrWhiteSpace(targetUsername) Then Return False
+
+        Dim dlg As New Form With {
+        .Text = "Forgot PIN",
+        .Size = New Size(560, 430),
+        .StartPosition = FormStartPosition.CenterParent,
+        .FormBorderStyle = FormBorderStyle.FixedDialog,
+        .MaximizeBox = False,
+        .MinimizeBox = False,
+        .BackColor = Color.FromArgb(41, 44, 45),
+        .KeyPreview = True
+    }
+
+        Dim currentStep As Integer = 1
+        Dim success As Boolean = False
+
+        Dim lblTitle As New Label With {
+        .Text = "RESET PIN",
+        .Font = New Font("Poppins", 16, FontStyle.Bold),
+        .ForeColor = Color.White,
+        .AutoSize = False,
+        .Size = New Size(520, 34),
+        .Location = New Point(20, 14),
+        .TextAlign = ContentAlignment.MiddleCenter,
+        .BackColor = Color.Transparent
+    }
+        dlg.Controls.Add(lblTitle)
+
+        Dim lblUser As New Label With {
+        .Text = $"User: {targetUsername}",
+        .Font = New Font("Poppins", 9, FontStyle.Regular),
+        .ForeColor = Color.Gainsboro,
+        .AutoSize = False,
+        .Size = New Size(520, 24),
+        .Location = New Point(20, 48),
+        .TextAlign = ContentAlignment.MiddleCenter,
+        .BackColor = Color.Transparent
+    }
+        dlg.Controls.Add(lblUser)
+
+        Dim lblStep1 As New Label With {
+        .Text = "1. Verify Passkeys",
+        .Font = New Font("Poppins", 9, FontStyle.Bold),
+        .ForeColor = Color.FromArgb(255, 204, 77),
+        .AutoSize = True,
+        .BackColor = Color.Transparent,
+        .Location = New Point(90, 84)
+    }
+        Dim lblStep2 As New Label With {
+        .Text = "2. Set New PIN",
+        .Font = New Font("Poppins", 9, FontStyle.Bold),
+        .ForeColor = Color.Gray,
+        .AutoSize = True,
+        .BackColor = Color.Transparent,
+        .Location = New Point(360, 84)
+    }
+        Dim stepLine As New Panel With {
+        .Size = New Size(120, 2),
+        .Location = New Point(220, 94),
+        .BackColor = Color.Gray
+    }
+        dlg.Controls.Add(lblStep1)
+        dlg.Controls.Add(stepLine)
+        dlg.Controls.Add(lblStep2)
+
+        Dim lblInstruction As New Label With {
+        .Text = "",
+        .Font = New Font("Poppins", 10, FontStyle.Regular),
+        .ForeColor = Color.White,
+        .AutoSize = False,
+        .Size = New Size(520, 28),
+        .Location = New Point(20, 112),
+        .TextAlign = ContentAlignment.MiddleCenter,
+        .BackColor = Color.Transparent
+    }
+        dlg.Controls.Add(lblInstruction)
+
+        ' Step 1 controls
+        Dim txtK1 As New TextBox With {.Location = New Point(50, 154), .Size = New Size(460, 30), .TextAlign = HorizontalAlignment.Center}
+        Dim txtK2 As New TextBox With {.Location = New Point(50, 194), .Size = New Size(460, 30), .TextAlign = HorizontalAlignment.Center}
+        Dim txtK3 As New TextBox With {.Location = New Point(50, 234), .Size = New Size(460, 30), .TextAlign = HorizontalAlignment.Center}
+        Try
+            txtK1.PlaceholderText = "Passkey 1"
+            txtK2.PlaceholderText = "Passkey 2"
+            txtK3.PlaceholderText = "Passkey 3"
+        Catch
+        End Try
+        dlg.Controls.Add(txtK1)
+        dlg.Controls.Add(txtK2)
+        dlg.Controls.Add(txtK3)
+
+        ' Step 2 controls
+        Dim txtNewPin As New TextBox With {
+        .Location = New Point(50, 174),
+        .Size = New Size(220, 30),
+        .TextAlign = HorizontalAlignment.Center,
+        .MaxLength = 4,
+        .UseSystemPasswordChar = True,
+        .Visible = False
+    }
+        Dim txtConfirmPin As New TextBox With {
+        .Location = New Point(290, 174),
+        .Size = New Size(220, 30),
+        .TextAlign = HorizontalAlignment.Center,
+        .MaxLength = 4,
+        .UseSystemPasswordChar = True,
+        .Visible = False
+    }
+        Try
+            txtNewPin.PlaceholderText = "New 4-digit PIN"
+            txtConfirmPin.PlaceholderText = "Confirm PIN"
+        Catch
+        End Try
+        AddHandler txtNewPin.KeyPress, Sub(s, e)
+                                           If Not Char.IsControl(e.KeyChar) AndAlso Not Char.IsDigit(e.KeyChar) Then
+                                               e.Handled = True
+                                           End If
+                                       End Sub
+        AddHandler txtConfirmPin.KeyPress, Sub(s, e)
+                                               If Not Char.IsControl(e.KeyChar) AndAlso Not Char.IsDigit(e.KeyChar) Then
+                                                   e.Handled = True
+                                               End If
+                                           End Sub
+        dlg.Controls.Add(txtNewPin)
+        dlg.Controls.Add(txtConfirmPin)
+
+        Dim lblStatus As New Label With {
+        .Text = "",
+        .ForeColor = Color.FromArgb(255, 120, 120),
+        .AutoSize = False,
+        .Size = New Size(520, 24),
+        .Location = New Point(20, 274),
+        .TextAlign = ContentAlignment.MiddleCenter,
+        .BackColor = Color.Transparent
+    }
+        dlg.Controls.Add(lblStatus)
+
+        Dim btnBack As New Button With {
+        .Text = "Back",
+        .Size = New Size(110, 38),
+        .Location = New Point(120, 318),
+        .BackColor = Color.FromArgb(61, 65, 66),
+        .ForeColor = Color.White,
+        .FlatStyle = FlatStyle.Flat,
+        .Visible = False
+    }
+        btnBack.FlatAppearance.BorderSize = 0
+
+        Dim btnNext As New Button With {
+        .Text = "Next",
+        .Size = New Size(110, 38),
+        .Location = New Point(240, 318),
+        .BackColor = Color.FromArgb(255, 204, 77),
+        .ForeColor = Color.Black,
+        .FlatStyle = FlatStyle.Flat
+    }
+        btnNext.FlatAppearance.BorderSize = 0
+
+        Dim btnCancel As New Button With {
+        .Text = "Cancel",
+        .Size = New Size(110, 38),
+        .Location = New Point(360, 318),
+        .BackColor = Color.FromArgb(255, 100, 100),
+        .ForeColor = Color.White,
+        .FlatStyle = FlatStyle.Flat
+    }
+        btnCancel.FlatAppearance.BorderSize = 0
+
+        dlg.Controls.Add(btnBack)
+        dlg.Controls.Add(btnNext)
+        dlg.Controls.Add(btnCancel)
+
+        Dim setStep As Action(Of Integer) =
+        Sub(stepNo As Integer)
+            currentStep = stepNo
+            lblStatus.Text = ""
+
+            If currentStep = 1 Then
+                lblInstruction.Text = "Enter your three recovery passkeys."
+                lblStep1.ForeColor = Color.FromArgb(255, 204, 77)
+                lblStep2.ForeColor = Color.Gray
+                stepLine.BackColor = Color.Gray
+
+                txtK1.Visible = True
+                txtK2.Visible = True
+                txtK3.Visible = True
+                txtNewPin.Visible = False
+                txtConfirmPin.Visible = False
+
+                btnBack.Visible = False
+                btnNext.Text = "Next"
+                txtK1.Focus()
+            Else
+                lblInstruction.Text = "Create and confirm your new 4-digit PIN."
+                lblStep1.ForeColor = Color.FromArgb(100, 180, 120)
+                lblStep2.ForeColor = Color.FromArgb(255, 204, 77)
+                stepLine.BackColor = Color.FromArgb(255, 204, 77)
+
+                txtK1.Visible = False
+                txtK2.Visible = False
+                txtK3.Visible = False
+                txtNewPin.Visible = True
+                txtConfirmPin.Visible = True
+
+                btnBack.Visible = True
+                btnNext.Text = "Reset PIN"
+                txtNewPin.Focus()
+            End If
+        End Sub
+
+        AddHandler btnCancel.Click, Sub()
+                                        dlg.DialogResult = DialogResult.Cancel
+                                        dlg.Close()
+                                    End Sub
+
+        AddHandler btnBack.Click, Sub()
+                                      setStep(1)
+                                  End Sub
+
+        AddHandler btnNext.Click,
+        Sub()
+            If currentStep = 1 Then
+                Dim k1 = txtK1.Text.Trim().ToUpperInvariant()
+                Dim k2 = txtK2.Text.Trim().ToUpperInvariant()
+                Dim k3 = txtK3.Text.Trim().ToUpperInvariant()
+
+                If String.IsNullOrWhiteSpace(k1) OrElse String.IsNullOrWhiteSpace(k2) OrElse String.IsNullOrWhiteSpace(k3) Then
+                    lblStatus.Text = "Please enter all 3 passkeys."
+                    Return
+                End If
+
+                If k1 = k2 OrElse k1 = k3 OrElse k2 = k3 Then
+                    lblStatus.Text = "Passkeys must be different."
+                    Return
+                End If
+
+                If Not VerifyThreePasskeysForUser(targetUsername, k1, k2, k3) Then
+                    lblStatus.Text = "Incorrect passkeys."
+                    Return
+                End If
+
+                setStep(2)
+            Else
+                Dim np = txtNewPin.Text.Trim()
+                Dim cp = txtConfirmPin.Text.Trim()
+
+                If np.Length <> 4 OrElse Not np.All(AddressOf Char.IsDigit) Then
+                    lblStatus.Text = "New PIN must be exactly 4 digits."
+                    Return
+                End If
+
+                If np <> cp Then
+                    lblStatus.Text = "PIN confirmation does not match."
+                    Return
+                End If
+
+                If UpdateUserPinByUsername(targetUsername, np) Then
+                    Try
+                        Utilities.LogAudit(targetUsername, "PIN Reset via Passkeys", "User reset PIN using 3 passkeys")
+                    Catch
+                    End Try
+
+                    success = True
+                    dlg.DialogResult = DialogResult.OK
+                    dlg.Close()
+                Else
+                    lblStatus.Text = "Failed to update PIN."
+                End If
+            End If
+        End Sub
+
+        AddHandler dlg.KeyDown,
+        Sub(s, e)
+            If e.KeyCode = Keys.Escape Then
+                btnCancel.PerformClick()
+            ElseIf e.KeyCode = Keys.Enter Then
+                btnNext.PerformClick()
+            End If
+        End Sub
+
+        setStep(1)
+        dlg.ShowDialog(Me)
+        Return success
+    End Function
+    Private Function VerifyThreePasskeysForUser(targetUsername As String, p1 As String, p2 As String, p3 As String) As Boolean
+        Try
+            Dim query As String = "SELECT Passkey1, Passkey2, Passkey3 FROM Users WHERE Username = @Username"
+            Dim stored As New List(Of String)()
+            Using rdr As SqlDataReader = Utilities.ExecuteReader(query, {New SqlParameter("@Username", targetUsername)})
+                If rdr.Read() Then
+                    If Not IsDBNull(rdr("Passkey1")) Then stored.Add(rdr("Passkey1").ToString().Trim().ToUpperInvariant())
+                    If Not IsDBNull(rdr("Passkey2")) Then stored.Add(rdr("Passkey2").ToString().Trim().ToUpperInvariant())
+                    If Not IsDBNull(rdr("Passkey3")) Then stored.Add(rdr("Passkey3").ToString().Trim().ToUpperInvariant())
+                End If
+            End Using
+
+            If stored.Count <> 3 Then Return False
+
+            Dim inputKeys As New List(Of String) From {p1, p2, p3}
+            inputKeys.Sort()
+            stored.Sort()
+            Return inputKeys.SequenceEqual(stored)
+        Catch
+            Return False
+        End Try
+    End Function
+
+    Private Function UpdateUserPinByUsername(targetUsername As String, newPin As String) As Boolean
+        Try
+            Dim q As String = "UPDATE Users SET pin = @Pin WHERE Username = @Username"
+            Dim rows = Utilities.ExecuteNonQuery(q, {
+                New SqlParameter("@Pin", Convert.ToInt32(newPin)),
+                New SqlParameter("@Username", targetUsername)
+            })
+            Return rows > 0
+        Catch
+            Return False
+        End Try
+    End Function
     Private Sub ValidatePin(expectedPin As String, pinIndicators As List(Of Guna.UI2.WinForms.Guna2CircleButton), pinPanel As Control)
         Const MaxPinAttempts As Integer = 3
 
@@ -964,26 +1292,24 @@ Public Class frmLoginvb
         End If
     End Sub
 
-    Private Sub Guna2CheckBox1_CheckedChanged(sender As Object, e As EventArgs) Handles Guna2CheckBox1.CheckedChanged
-        If Guna2CheckBox1.Checked Then
-            txtPassword.PasswordChar = ControlChars.NullChar ' Show password
-        Else
-            txtPassword.PasswordChar = "•"c ' Hide password
+    Private Sub HandlePinInput(input As String, expectedPin As String, pinIndicators As List(Of Guna.UI2.WinForms.Guna2CircleButton), pinPanel As Control)
+        If input = "X" Then
+            If pinInput.Length > 0 Then
+                pinInput = pinInput.Substring(0, pinInput.Length - 1)
+                pinIndicators(pinInput.Length).FillColor = Color.FromArgb(240, 240, 240) ' Light gray for empty
+            End If
+        ElseIf input = "ENTER" Then
+            If pinInput.Length = 4 Then
+                ValidatePin(expectedPin, pinIndicators, pinPanel)
+            End If
+        ElseIf input >= "0" And input <= "9" Then
+            If pinInput.Length < 4 Then
+                pinInput &= input
+                pinIndicators(pinInput.Length - 1).FillColor = Color.Yellow ' Rich Olive for filled indicators
+            End If
+            If pinInput.Length = 4 Then
+                ValidatePin(expectedPin, pinIndicators, pinPanel)
+            End If
         End If
-    End Sub
-
-    Private Sub lblForgotPass_Click(sender As Object, e As EventArgs) Handles lblForgotPass.Click
-        Dim forgotForm As New ForgotPasswordForm()
-        forgotForm.ShowDialog(Me)
-    End Sub
-
-    ' Remove the old Guna2Button1_Click method and keep only the new login system
-    Private Sub Guna2Button1_Click(sender As Object, e As EventArgs)
-        ' This button appears to be duplicate - redirect to main login
-        BtnLogin_Click(sender, e)
-    End Sub
-
-    Private Sub PictureBox1_Click(sender As Object, e As EventArgs) Handles PictureBox1.Click
-
     End Sub
 End Class

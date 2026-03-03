@@ -1,5 +1,6 @@
 ﻿Imports System.Windows.Forms
 Imports Microsoft.Data.SqlClient
+Imports System.Linq
 
 Public Class ForgotPasswordForm
     Inherits Form
@@ -15,10 +16,13 @@ Public Class ForgotPasswordForm
     Private btnCancel As Button
     Private txtNewPassword As TextBox
     Private txtConfirmPassword As TextBox
+    Private txtPasskey1 As TextBox
+    Private txtPasskey2 As TextBox
+    Private txtPasskey3 As TextBox
 
     Public Sub New()
         Me.Text = "Forgot Password"
-        Me.Size = New Drawing.Size(520, 340)
+        Me.Size = New Drawing.Size(520, 420)
         Me.FormBorderStyle = FormBorderStyle.FixedDialog
         Me.MaximizeBox = False
         Me.MinimizeBox = False
@@ -35,7 +39,7 @@ Public Class ForgotPasswordForm
         Dim buttonWidth As Integer = 110
         Dim buttonHeight As Integer = 40
         Dim buttonSpacing As Integer = 20
-        Dim buttonY As Integer = 230
+        Dim buttonY As Integer = 310
 
         lblStep = New Label() With {
             .Text = "Step 1",
@@ -62,6 +66,38 @@ Public Class ForgotPasswordForm
             .BorderStyle = BorderStyle.FixedSingle,
             .TextAlign = HorizontalAlignment.Center
         }
+
+        txtPasskey1 = New TextBox() With {
+            .Location = New Drawing.Point(marginX, marginY + 95),
+            .Width = controlWidth,
+            .Font = New Drawing.Font("Poppins", 12, Drawing.FontStyle.Regular),
+            .ForeColor = Drawing.Color.White,
+            .BackColor = Drawing.Color.FromArgb(61, 65, 66),
+            .BorderStyle = BorderStyle.FixedSingle,
+            .TextAlign = HorizontalAlignment.Center,
+            .Visible = False
+        }
+        txtPasskey2 = New TextBox() With {
+            .Location = New Drawing.Point(marginX, marginY + 140),
+            .Width = controlWidth,
+            .Font = New Drawing.Font("Poppins", 12, Drawing.FontStyle.Regular),
+            .ForeColor = Drawing.Color.White,
+            .BackColor = Drawing.Color.FromArgb(61, 65, 66),
+            .BorderStyle = BorderStyle.FixedSingle,
+            .TextAlign = HorizontalAlignment.Center,
+            .Visible = False
+        }
+        txtPasskey3 = New TextBox() With {
+            .Location = New Drawing.Point(marginX, marginY + 185),
+            .Width = controlWidth,
+            .Font = New Drawing.Font("Poppins", 12, Drawing.FontStyle.Regular),
+            .ForeColor = Drawing.Color.White,
+            .BackColor = Drawing.Color.FromArgb(61, 65, 66),
+            .BorderStyle = BorderStyle.FixedSingle,
+            .TextAlign = HorizontalAlignment.Center,
+            .Visible = False
+        }
+
         btnBack = New Button() With {
             .Text = "Back",
             .Location = New Drawing.Point(marginX, buttonY),
@@ -126,6 +162,9 @@ Public Class ForgotPasswordForm
         Me.Controls.Add(lblStep)
         Me.Controls.Add(lblInstruction)
         Me.Controls.Add(txtInput)
+        Me.Controls.Add(txtPasskey1)
+        Me.Controls.Add(txtPasskey2)
+        Me.Controls.Add(txtPasskey3)
         Me.Controls.Add(txtNewPassword)
         Me.Controls.Add(txtConfirmPassword)
         Me.Controls.Add(btnNext)
@@ -135,13 +174,21 @@ Public Class ForgotPasswordForm
 
     Private Sub ShowStep(stepNum As Integer)
         currentStep = stepNum
-        txtInput.Visible = (stepNum = 1 Or stepNum = 2)
+        txtInput.Visible = (stepNum = 1)
+        txtPasskey1.Visible = (stepNum = 2)
+        txtPasskey2.Visible = (stepNum = 2)
+        txtPasskey3.Visible = (stepNum = 2)
         txtNewPassword.Visible = (stepNum = 3)
         txtConfirmPassword.Visible = (stepNum = 3)
         btnBack.Visible = (stepNum > 1)
+
         txtInput.Text = ""
+        txtPasskey1.Text = ""
+        txtPasskey2.Text = ""
+        txtPasskey3.Text = ""
         txtNewPassword.Text = ""
         txtConfirmPassword.Text = ""
+
         Select Case stepNum
             Case 1
                 lblStep.Text = "Step 1: Enter Username"
@@ -149,16 +196,18 @@ Public Class ForgotPasswordForm
                 txtInput.PasswordChar = ControlChars.NullChar
                 txtInput.Focus()
             Case 2
-                lblStep.Text = "Step 2: Enter Passkey"
-                lblInstruction.Text = "Please enter your passkey (recovery code)."
-                txtInput.PasswordChar = "*"c
-                txtInput.Focus()
+                lblStep.Text = "Step 2: Enter 3 Passkeys"
+                lblInstruction.Text = "Enter all three recovery passkeys."
+                txtPasskey1.Focus()
             Case 3
                 lblStep.Text = "Step 3: New Password"
                 lblInstruction.Text = "Enter your new password and confirm it."
                 txtNewPassword.Visible = True
                 txtConfirmPassword.Visible = True
                 Try
+                    txtPasskey1.PlaceholderText = "Passkey 1"
+                    txtPasskey2.PlaceholderText = "Passkey 2"
+                    txtPasskey3.PlaceholderText = "Passkey 3"
                     txtNewPassword.PlaceholderText = "New Password"
                     txtConfirmPassword.PlaceholderText = "Confirm Password"
                 Catch
@@ -175,7 +224,7 @@ Public Class ForgotPasswordForm
                 MessageBox.Show("Please enter your username.", "Input Required", MessageBoxButtons.OK, MessageBoxIcon.Warning)
                 Return
             End If
-            ' Check if username exists
+
             Dim query = "SELECT COUNT(*) FROM Users WHERE Username = @Username"
             Dim param = New SqlParameter("@Username", username)
             Dim count = Convert.ToInt32(Utilities.ExecuteScalar(query, {param}))
@@ -184,22 +233,51 @@ Public Class ForgotPasswordForm
                 Return
             End If
             ShowStep(2)
+
         ElseIf currentStep = 2 Then
-            passkey = txtInput.Text.Trim()
-            If String.IsNullOrEmpty(passkey) Then
-                MessageBox.Show("Please enter your passkey.", "Input Required", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            Dim p1 As String = txtPasskey1.Text.Trim().ToUpperInvariant()
+            Dim p2 As String = txtPasskey2.Text.Trim().ToUpperInvariant()
+            Dim p3 As String = txtPasskey3.Text.Trim().ToUpperInvariant()
+
+            If String.IsNullOrEmpty(p1) OrElse String.IsNullOrEmpty(p2) OrElse String.IsNullOrEmpty(p3) Then
+                MessageBox.Show("Please enter all three passkeys.", "Input Required", MessageBoxButtons.OK, MessageBoxIcon.Warning)
                 Return
             End If
-            ' Validate passkey (check if passkey is in the comma-separated list)
-            Dim query = "SELECT COUNT(*) FROM Users WHERE Username = @Username AND (',' + ISNULL(Passkeys,'') + ',') LIKE '%,' + @Passkey + ',%'"
-            Dim param1 = New SqlParameter("@Username", username)
-            Dim param2 = New SqlParameter("@Passkey", passkey)
-            Dim count = Convert.ToInt32(Utilities.ExecuteScalar(query, {param1, param2}))
-            If count = 0 Then
-                MessageBox.Show("Incorrect passkey.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+
+            If p1 = p2 OrElse p1 = p3 OrElse p2 = p3 Then
+                MessageBox.Show("Passkeys must be three different values.", "Invalid Input", MessageBoxButtons.OK, MessageBoxIcon.Warning)
                 Return
             End If
+
+            Dim query = "SELECT Passkey1, Passkey2, Passkey3 FROM Users WHERE Username = @Username"
+            Dim param = New SqlParameter("@Username", username)
+
+            Dim stored As New List(Of String)()
+            Using rdr As SqlDataReader = Utilities.ExecuteReader(query, {param})
+                If rdr.Read() Then
+                    If Not IsDBNull(rdr("Passkey1")) Then stored.Add(rdr("Passkey1").ToString().Trim().ToUpperInvariant())
+                    If Not IsDBNull(rdr("Passkey2")) Then stored.Add(rdr("Passkey2").ToString().Trim().ToUpperInvariant())
+                    If Not IsDBNull(rdr("Passkey3")) Then stored.Add(rdr("Passkey3").ToString().Trim().ToUpperInvariant())
+                End If
+            End Using
+
+            If stored.Count <> 3 Then
+                MessageBox.Show("This account does not have 3 configured passkeys.", "Passkey Setup Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                Return
+            End If
+
+            Dim inputKeys As New List(Of String) From {p1, p2, p3}
+            inputKeys.Sort()
+            stored.Sort()
+
+            If Not inputKeys.SequenceEqual(stored) Then
+                MessageBox.Show("Incorrect passkeys.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                Return
+            End If
+
+            passkey = String.Join(",", inputKeys)
             ShowStep(3)
+
         ElseIf currentStep = 3 Then
             Dim newPass = txtNewPassword.Text.Trim()
             Dim confirmPass = txtConfirmPassword.Text.Trim()
@@ -209,7 +287,6 @@ Public Class ForgotPasswordForm
                 Return
             End If
 
-            ' Minimum length requirement
             If newPass.Length < 8 Then
                 MessageBox.Show("Password must be at least 8 characters long.", "Password Too Short", MessageBoxButtons.OK, MessageBoxIcon.Warning)
                 txtNewPassword.Focus()
@@ -222,10 +299,8 @@ Public Class ForgotPasswordForm
             End If
 
             Try
-                ' Hash the new password with BCrypt (work factor 12)
                 Dim hashed As String = BCrypt.Net.BCrypt.HashPassword(newPass, workFactor:=12)
 
-                ' Update DB: use your actual password-hash column name (PasswordHash used here)
                 Dim query = "UPDATE Users SET PasswordHash = @PasswordHash WHERE Username = @Username"
                 Dim param1 = New SqlParameter("@PasswordHash", hashed)
                 Dim param2 = New SqlParameter("@Username", username)
@@ -245,5 +320,9 @@ Public Class ForgotPasswordForm
         ElseIf currentStep = 3 Then
             ShowStep(2)
         End If
+    End Sub
+
+    Private Sub ForgotPasswordForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+
     End Sub
 End Class
