@@ -62,6 +62,10 @@ Public Class Sales
         Return name.Replace("-", "").Replace(" ", "").ToLower()
     End Function
 
+
+    Private isVoidDialogOpen As Boolean = False
+
+
     ' List of normalized main categories for dental supplies
     Private ReadOnly mainCategoryNames As New HashSet(Of String) From {
         "ortho", "consumables", "surgery", "resto", "endo", "cosmetic"
@@ -853,42 +857,94 @@ Public Class Sales
 
     ' New method to reduce item quantity or remove item
     Private Sub ReduceItemQuantity(itemIndex As Integer)
-        If itemIndex < 0 Or itemIndex >= currentOrderList.Count Then
+        If itemIndex < 0 OrElse itemIndex >= currentOrderList.Count Then
             Return
         End If
 
         Dim currentQuantity As Integer = CInt(currentOrderList(itemIndex)("Quantity"))
+        Dim productName As String = currentOrderList(itemIndex)("ProductName").ToString()
 
+        ' Only require manager/admin authorization when the item will be removed from cart
         If currentQuantity > 1 Then
-            ' Reduce quantity by 1
             currentOrderList(itemIndex)("Quantity") = currentQuantity - 1
-
-            ' Restore stock in UI display (since we haven't deducted from database yet)
             currentOrderList(itemIndex)("CurrentStock") = CInt(currentOrderList(itemIndex)("CurrentStock")) + 1
-
-            ' Update lblStock for the product
             UpdateStockLabel(currentOrderList(itemIndex)("ProductID").ToString(), CInt(currentOrderList(itemIndex)("CurrentStock")))
-        Else
-            ' Remove item from list
-            Dim productName As String = currentOrderList(itemIndex)("ProductName").ToString()
-            Dim result As DialogResult = MessageBox.Show($"Remove '{productName}' from order?", "Remove Item", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
-
-            If result = DialogResult.Yes Then
-                ' Restore ALL stock for this item in UI display (since we haven't deducted from database yet)
-                currentOrderList(itemIndex)("CurrentStock") = CInt(currentOrderList(itemIndex)("CurrentStock")) + currentQuantity
-
-                ' Update lblStock for the product
-                UpdateStockLabel(currentOrderList(itemIndex)("ProductID").ToString(), CInt(currentOrderList(itemIndex)("CurrentStock")))
-
-                currentOrderList.RemoveAt(itemIndex)
-            End If
+            RefreshOrderDisplay()
+            UpdateCategoryItemCounts()
+            Return
         End If
 
-        ' Refresh the display
+        ' currentQuantity = 1 => this action removes product from cart, require authorization
+        Dim approver As String = ""
+        If Not ShowVoidAuthorizationModal(productName, 1, approver) Then
+            Return
+        End If
+
+        currentOrderList(itemIndex)("CurrentStock") = CInt(currentOrderList(itemIndex)("CurrentStock")) + 1
+        UpdateStockLabel(currentOrderList(itemIndex)("ProductID").ToString(), CInt(currentOrderList(itemIndex)("CurrentStock")))
+        currentOrderList.RemoveAt(itemIndex)
+
         RefreshOrderDisplay()
         UpdateCategoryItemCounts()
+
+        Utilities.LogAudit(
+        frmLoginvb.LoggedInUsername,
+        "POS Item Voided",
+        $"Product: {productName}, Qty: 1, AuthorizedBy: {approver}")
+
+        ' Show confirmation toast to cashier
+        ShowVoidSuccessNotification(productName, approver)
     End Sub
 
+    ' Non-blocking toast notification for void success
+    Private Sub ShowVoidSuccessNotification(productName As String, approver As String)
+        Dim notificationLabel As New Label()
+        notificationLabel.Text = $"Item Voided: {productName}"
+        If Not String.IsNullOrWhiteSpace(approver) Then
+            notificationLabel.Text &= $"  •  By: {approver}"
+        End If
+        notificationLabel.Font = New Font("Poppins", 11, FontStyle.Bold)
+        notificationLabel.ForeColor = PureWhite
+        notificationLabel.BackColor = Color.FromArgb(220, SuccessGreen.R, SuccessGreen.G, SuccessGreen.B)
+        notificationLabel.AutoSize = True
+        notificationLabel.Padding = New Padding(12, 8, 12, 8)
+        notificationLabel.TextAlign = ContentAlignment.MiddleCenter
+
+        Me.Controls.Add(notificationLabel)
+        notificationLabel.BringToFront()
+
+        Application.DoEvents() ' ensure label measured/sized
+        Dim centerX As Integer = (Me.ClientSize.Width - notificationLabel.Width) / 2
+        notificationLabel.Location = New Point(centerX, 20) ' 20px from top
+
+        ' Auto-remove after 2 seconds with fade out
+        Dim removeTimer As New Timer() With {.Interval = 1800}
+        Dim fadeTimer As New Timer() With {.Interval = 50}
+        Dim fadeSteps As Integer = 10
+        Dim currentStep As Integer = 0
+
+        AddHandler removeTimer.Tick, Sub()
+                                         removeTimer.Stop()
+                                         AddHandler fadeTimer.Tick, Sub()
+                                                                        currentStep += 1
+                                                                        Dim alpha As Integer = CInt(255 * (1 - (currentStep / fadeSteps)))
+                                                                        If alpha <= 0 OrElse currentStep >= fadeSteps Then
+                                                                            fadeTimer.Stop()
+                                                                            If Me.Controls.Contains(notificationLabel) Then
+                                                                                Me.Controls.Remove(notificationLabel)
+                                                                                notificationLabel.Dispose()
+                                                                            End If
+                                                                            fadeTimer.Dispose()
+                                                                        Else
+                                                                            notificationLabel.BackColor = Color.FromArgb(alpha, SuccessGreen.R, SuccessGreen.G, SuccessGreen.B)
+                                                                        End If
+                                                                    End Sub
+                                         fadeTimer.Start()
+                                         removeTimer.Dispose()
+                                     End Sub
+
+        removeTimer.Start()
+    End Sub
     Private Sub UpdateStockLabel(productId As String, newStock As Integer)
         For Each productCard As Control In productCardControls
             If TypeOf productCard Is Guna.UI2.WinForms.Guna2Panel AndAlso productCard.Tag IsNot Nothing Then
@@ -5043,4 +5099,352 @@ Public Class Sales
             End If
         End If
     End Sub
+
+
+    Private Function ShowVoidAuthorizationModal(productName As String, quantityToVoid As Integer, ByRef approverUsername As String) As Boolean
+        If isVoidDialogOpen Then Return False
+        isVoidDialogOpen = True
+
+        Try
+            Dim dlg As New Form With {
+            .Text = "Void Authorization",
+            .Size = New Size(560, 500),
+            .StartPosition = FormStartPosition.CenterParent,
+            .FormBorderStyle = FormBorderStyle.FixedDialog,
+            .MaximizeBox = False,
+            .MinimizeBox = False,
+            .BackColor = DarkSlate,
+            .KeyPreview = True,
+            .ShowInTaskbar = False
+        }
+
+            Dim lblTitle As New Label With {
+            .Text = "VOID AUTHORIZATION",
+            .Font = New Font("Poppins", 16, FontStyle.Bold),
+            .ForeColor = PureWhite,
+            .AutoSize = False,
+            .Size = New Size(520, 34),
+            .Location = New Point(20, 16),
+            .TextAlign = ContentAlignment.MiddleCenter
+        }
+            dlg.Controls.Add(lblTitle)
+
+            Dim lblProduct As New Label With {
+            .Text = productName,
+            .Font = New Font("Poppins", 11, FontStyle.Bold),
+            .ForeColor = GoldenYellow,
+            .AutoSize = False,
+            .Size = New Size(520, 24),
+            .Location = New Point(20, 56),
+            .TextAlign = ContentAlignment.MiddleCenter
+        }
+            dlg.Controls.Add(lblProduct)
+
+            Dim lblQty As New Label With {
+            .Text = $"Quantity to remove: {quantityToVoid}",
+            .Font = New Font("Poppins", 9, FontStyle.Regular),
+            .ForeColor = LightSilver,
+            .AutoSize = False,
+            .Size = New Size(520, 20),
+            .Location = New Point(20, 82),
+            .TextAlign = ContentAlignment.MiddleCenter
+        }
+            dlg.Controls.Add(lblQty)
+
+            Dim btnQrMode As New Guna2Button With {
+            .Text = "QR",
+            .Size = New Size(240, 42),
+            .Location = New Point(30, 126),
+            .BorderRadius = 10,
+            .FillColor = RichOlive,
+            .ForeColor = PureWhite,
+            .Font = New Font("Poppins", 11, FontStyle.Bold)
+        }
+
+            Dim btnPassMode As New Guna2Button With {
+            .Text = "User/Pass",
+            .Size = New Size(240, 42),
+            .Location = New Point(290, 126),
+            .BorderRadius = 10,
+            .FillColor = SteelGray,
+            .ForeColor = PureWhite,
+            .Font = New Font("Poppins", 11, FontStyle.Bold)
+        }
+
+            dlg.Controls.Add(btnQrMode)
+            dlg.Controls.Add(btnPassMode)
+
+            Dim lblScanInstruction As New Label With {
+            .Text = "Scan manager/admin QR now",
+            .Font = New Font("Poppins", 10, FontStyle.Italic),
+            .ForeColor = LightSilver,
+            .AutoSize = False,
+            .Size = New Size(500, 24),
+            .Location = New Point(30, 212),
+            .TextAlign = ContentAlignment.MiddleCenter,
+            .Visible = True
+        }
+            dlg.Controls.Add(lblScanInstruction)
+
+            Dim txtQr As New Guna2TextBox With {
+            .Size = New Size(1, 1),
+            .Location = New Point(dlg.ClientSize.Width - 6, dlg.ClientSize.Height - 6),
+            .BorderThickness = 0,
+            .FillColor = DarkSlate,
+            .ForeColor = DarkSlate,
+            .PlaceholderText = "",
+            .Visible = True
+        }
+            dlg.Controls.Add(txtQr)
+
+            ' Improved spacing for username/password section
+            Dim pnlPass As New Panel With {
+            .Location = New Point(30, 178),
+            .Size = New Size(500, 178),
+            .BackColor = Color.Transparent,
+            .Visible = False
+        }
+
+            Dim lblUser As New Label With {
+            .Text = "Username",
+            .ForeColor = LightSilver,
+            .Font = New Font("Poppins", 8),
+            .AutoSize = True,
+            .Location = New Point(0, 0)
+        }
+
+            Dim txtUser As New Guna2TextBox With {
+            .Size = New Size(500, 40),
+            .Location = New Point(0, 26),
+            .BorderRadius = 8,
+            .FillColor = PureWhite,
+            .ForeColor = DeepCharcoal
+        }
+
+            Dim lblPass As New Label With {
+            .Text = "Password",
+            .ForeColor = LightSilver,
+            .Font = New Font("Poppins", 8),
+            .AutoSize = True,
+            .Location = New Point(0, 80)
+        }
+
+            Dim txtPass As New Guna2TextBox With {
+            .Size = New Size(500, 40),
+            .Location = New Point(0, 108),
+            .BorderRadius = 8,
+            .FillColor = PureWhite,
+            .ForeColor = DeepCharcoal,
+            .UseSystemPasswordChar = True
+        }
+
+            pnlPass.Controls.Add(lblUser)
+            pnlPass.Controls.Add(txtUser)
+            pnlPass.Controls.Add(lblPass)
+            pnlPass.Controls.Add(txtPass)
+            dlg.Controls.Add(pnlPass)
+
+            Dim lblStatus As New Label With {
+            .Text = "Waiting for manager/admin authorization...",
+            .ForeColor = LightSilver,
+            .Font = New Font("Poppins", 9, FontStyle.Italic),
+            .AutoSize = False,
+            .Size = New Size(500, 20),
+            .Location = New Point(30, 366),
+            .TextAlign = ContentAlignment.MiddleCenter
+        }
+            dlg.Controls.Add(lblStatus)
+
+            ' Moved further down for taller modal
+            Dim btnAuthorize As New Guna2Button With {
+            .Text = "Authorize",
+            .Size = New Size(180, 44),
+            .Location = New Point(290, 405),
+            .BorderRadius = 10,
+            .FillColor = SuccessGreen,
+            .ForeColor = DeepCharcoal,
+            .Font = New Font("Poppins", 10, FontStyle.Bold)
+        }
+
+            Dim btnCancel As New Guna2Button With {
+            .Text = "Cancel",
+            .Size = New Size(140, 44),
+            .Location = New Point(110, 405),
+            .BorderRadius = 10,
+            .FillColor = AlertRed,
+            .ForeColor = PureWhite,
+            .Font = New Font("Poppins", 10, FontStyle.Regular)
+        }
+
+            dlg.Controls.Add(btnAuthorize)
+            dlg.Controls.Add(btnCancel)
+
+            Dim authorized As Boolean = False
+            Dim approverLocal As String = ""
+            Dim qrMode As Boolean = True
+
+            AddHandler btnQrMode.Click, Sub()
+                                            qrMode = True
+                                            btnQrMode.FillColor = RichOlive
+                                            btnPassMode.FillColor = SteelGray
+                                            pnlPass.Visible = False
+                                            lblScanInstruction.Visible = True
+                                            txtQr.Text = ""
+                                            txtQr.Focus()
+                                        End Sub
+
+            AddHandler btnPassMode.Click, Sub()
+                                              qrMode = False
+                                              btnPassMode.FillColor = RichOlive
+                                              btnQrMode.FillColor = SteelGray
+                                              pnlPass.Visible = True
+                                              lblScanInstruction.Visible = False
+                                              txtUser.Focus()
+                                          End Sub
+
+            AddHandler btnCancel.Click, Sub()
+                                            dlg.DialogResult = DialogResult.Cancel
+                                            dlg.Close()
+                                        End Sub
+
+            AddHandler btnAuthorize.Click, Sub()
+                                               Dim ok As Boolean = False
+                                               Dim approvedBy As String = ""
+
+                                               If qrMode Then
+                                                   ok = TryAuthorizeVoidByQr(txtQr.Text.Trim(), approvedBy)
+                                               Else
+                                                   ok = TryAuthorizeVoidByPassword(txtUser.Text.Trim(), txtPass.Text, approvedBy)
+                                               End If
+
+                                               If ok Then
+                                                   approverLocal = approvedBy
+                                                   authorized = True
+                                                   dlg.DialogResult = DialogResult.OK
+                                                   dlg.Close()
+                                               Else
+                                                   lblStatus.Text = "Authorization failed. Manager/Admin required."
+                                                   lblStatus.ForeColor = AlertRed
+                                               End If
+                                           End Sub
+
+            AddHandler txtQr.KeyDown, Sub(s, e)
+                                          If e.KeyCode = Keys.Enter Then
+                                              btnAuthorize.PerformClick()
+                                              e.Handled = True
+                                          End If
+                                      End Sub
+
+            AddHandler txtPass.KeyDown, Sub(s, e)
+                                            If e.KeyCode = Keys.Enter Then
+                                                btnAuthorize.PerformClick()
+                                                e.Handled = True
+                                            End If
+                                        End Sub
+
+            AddHandler dlg.KeyDown, Sub(s, e)
+                                        If e.KeyCode = Keys.Escape Then
+                                            btnCancel.PerformClick()
+                                            e.Handled = True
+                                        End If
+                                    End Sub
+
+            btnQrMode.PerformClick()
+            dlg.ShowDialog(Me)
+
+            If authorized Then
+                approverUsername = approverLocal
+                Return True
+            End If
+
+            Return False
+
+        Finally
+            isVoidDialogOpen = False
+        End Try
+    End Function
+    Private Function TryAuthorizeVoidByQr(qrRaw As String, ByRef approverUsername As String) As Boolean
+        approverUsername = ""
+        If String.IsNullOrWhiteSpace(qrRaw) Then Return False
+
+        Dim token As String = ExtractManagerQrToken(qrRaw)
+        If String.IsNullOrWhiteSpace(token) Then Return False
+
+        Dim sql As String = "SELECT TOP 1 Username, UserRole, IsActive FROM Users WHERE QRCode = @QRCode"
+        Using reader As SqlDataReader = Utilities.ExecuteReader(sql, New SqlParameter("@QRCode", token))
+            If reader.Read() Then
+                Dim userName As String = If(IsDBNull(reader("Username")), "", reader("Username").ToString())
+                Dim role As String = If(IsDBNull(reader("UserRole")), "", reader("UserRole").ToString())
+                Dim active As Boolean = If(IsDBNull(reader("IsActive")), False, Convert.ToBoolean(reader("IsActive")))
+
+                If active AndAlso IsElevatedRole(role) Then
+                    approverUsername = userName
+                    Return True
+                End If
+            End If
+        End Using
+
+        Return False
+    End Function
+
+    Private Function TryAuthorizeVoidByPassword(managerUsername As String, managerPassword As String, ByRef approverUsername As String) As Boolean
+        approverUsername = ""
+        If String.IsNullOrWhiteSpace(managerUsername) OrElse String.IsNullOrWhiteSpace(managerPassword) Then Return False
+
+        Dim sql As String = "SELECT TOP 1 Username, UserRole, IsActive, PasswordHash FROM Users WHERE Username = @Username"
+        Using reader As SqlDataReader = Utilities.ExecuteReader(sql, New SqlParameter("@Username", managerUsername))
+            If reader.Read() Then
+                Dim role As String = If(IsDBNull(reader("UserRole")), "", reader("UserRole").ToString())
+                Dim active As Boolean = If(IsDBNull(reader("IsActive")), False, Convert.ToBoolean(reader("IsActive")))
+                Dim hash As String = If(IsDBNull(reader("PasswordHash")), "", reader("PasswordHash").ToString())
+
+                If Not active OrElse Not IsElevatedRole(role) Then Return False
+                If Not VerifyStoredPassword(managerPassword, hash) Then Return False
+
+                approverUsername = If(IsDBNull(reader("Username")), managerUsername, reader("Username").ToString())
+                Return True
+            End If
+        End Using
+
+        Return False
+    End Function
+
+    Private Function ExtractManagerQrToken(rawInput As String) As String
+        If String.IsNullOrWhiteSpace(rawInput) Then Return ""
+
+        Dim match = Regex.Match(rawInput, "User-\d{5}", RegexOptions.IgnoreCase)
+        If match.Success Then
+            Return match.Value
+        End If
+
+        If rawInput.StartsWith("User-", StringComparison.OrdinalIgnoreCase) Then
+            Return rawInput.Trim()
+        End If
+
+        Return ""
+    End Function
+
+    Private Function IsElevatedRole(role As String) As Boolean
+        Dim r As String = If(role, "").Trim().ToUpperInvariant()
+        Return r = "MANAGER" OrElse r = "ADMIN" OrElse r = "ADMINISTRATOR"
+    End Function
+
+    Private Function VerifyStoredPassword(inputPassword As String, storedPasswordHash As String) As Boolean
+        If String.IsNullOrWhiteSpace(storedPasswordHash) Then Return False
+
+        If storedPasswordHash.StartsWith("$2a$") OrElse storedPasswordHash.StartsWith("$2b$") OrElse storedPasswordHash.StartsWith("$2y$") Then
+            Return BCrypt.Net.BCrypt.Verify(inputPassword, storedPasswordHash)
+        End If
+
+        Dim legacy As String = ComputeSha256Base64(inputPassword)
+        Return String.Equals(legacy, storedPasswordHash, StringComparison.Ordinal)
+    End Function
+
+    Private Function ComputeSha256Base64(value As String) As String
+        Using sha As System.Security.Cryptography.SHA256 = System.Security.Cryptography.SHA256.Create()
+            Dim bytes = System.Text.Encoding.UTF8.GetBytes(value)
+            Dim hash = sha.ComputeHash(bytes)
+            Return Convert.ToBase64String(hash)
+        End Using
+    End Function
 End Class
