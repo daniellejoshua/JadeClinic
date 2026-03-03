@@ -1,8 +1,10 @@
-﻿Imports Microsoft.Data.SqlClient
-Imports System.Drawing
+﻿Imports System.Drawing
+Imports System.Drawing.Printing
 Imports System.IO
 Imports System.Security.Cryptography
 Imports System.Text
+Imports Guna.UI2.WinForms
+Imports Microsoft.Data.SqlClient
 
 Public Class AddStaff
     Private staffPhotoBytes As Byte() = Nothing
@@ -11,7 +13,17 @@ Public Class AddStaff
     Private originalImagePath As String = ""
     Private editingUserData As Dictionary(Of String, Object) = Nothing
     Private originalIsActive As Boolean = True ' track original status for edit-mode behavior
-
+    ' Dental Clinic Color Palette Constants
+    Private ReadOnly GoldenYellow As Color = Color.FromArgb(254, 191, 16)      ' #FECF10 - Primary brand color
+    Private ReadOnly RichOlive As Color = Color.FromArgb(190, 154, 48)         ' #BE9A30 - Secondary accent
+    Private ReadOnly DeepCharcoal As Color = Color.FromArgb(26, 29, 31)        ' #1A1D1F - Primary dark
+    Private ReadOnly DarkSlate As Color = Color.FromArgb(43, 47, 50)           ' #2B2F32 - Secondary dark
+    Private ReadOnly Graphite As Color = Color.FromArgb(61, 65, 69)            ' #3D4145 - Card background
+    Private ReadOnly SteelGray As Color = Color.FromArgb(74, 79, 84)           ' #4A4F54 - Interactive elements
+    Private ReadOnly PureWhite As Color = Color.FromArgb(255, 255, 255)        ' #FFFFFF - Text on dark
+    Private ReadOnly LightSilver As Color = Color.FromArgb(225, 229, 233)      ' #E1E5E9 - Secondary text
+    Private ReadOnly SuccessGreen As Color = Color.FromArgb(16, 216, 98)       ' #10D862 - Success states
+    Private ReadOnly AlertRed As Color = Color.FromArgb(255, 71, 87)
     Private Sub AddStaff_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         SetupForm()
         SetDefaultImage()
@@ -565,7 +577,7 @@ Public Class AddStaff
         Dim phone As String = txtPhone.Text.Trim()
         Dim pin As String = txtPin.Text.Trim()
         Dim role As String = cmbRole.SelectedItem.ToString()
-        Dim fullName As String = username ' You might want to add separate first/last name fields
+        Dim fullName As String = username ' Keep simple: username used as full name
 
         ' Insert staff member into Users table (matching your actual schema)
         Dim insertQuery As String = "
@@ -601,24 +613,291 @@ Public Class AddStaff
         ' Log the action
         Utilities.LogAudit(username, "Staff Added", $"New staff member added: {fullName} ({role})", newUserId)
 
-        ' Use Environment.NewLine instead of vbNewLine
-        Dim nl As String = System.Environment.NewLine
-        Dim successMessage As String =
-        "Staff member '" & fullName & "' has been successfully added!" & nl & nl &
-        "Username: " & username & nl &
-        "Role: " & role & nl &
-        "QR Code: " & userCode & nl & nl &
-        "🔑 Recovery Passkeys (for forgot password):" & nl &
-        String.Join(nl, passkeys) & nl & nl &
-        "⚠️ Please save these passkeys securely! They can be used for password recovery."
+        ' -- Build and show the "New Staff Created" modal that displays user info and passkeys and offers printing --
+        Dim dlg As New Form With {
+        .Text = "New Staff Created",
+        .Size = New Size(560, 520),
+        .StartPosition = FormStartPosition.CenterParent,
+        .FormBorderStyle = FormBorderStyle.FixedDialog,
+        .MaximizeBox = False,
+        .MinimizeBox = False,
+        .BackColor = DarkSlate,
+        .ShowInTaskbar = False,
+        .KeyPreview = True
+    }
 
-        MessageBox.Show(successMessage, "Success", MessageBoxButtons.OK, MessageBoxIcon.Information)
+        Dim titleLbl As New Label With {
+        .Text = "STAFF ACCOUNT CREATED",
+        .Font = New Font("Poppins", 14, FontStyle.Bold),
+        .ForeColor = PureWhite,
+        .AutoSize = False,
+        .Size = New Size(520, 30),
+        .Location = New Point(20, 12),
+        .TextAlign = ContentAlignment.MiddleCenter
+    }
+        dlg.Controls.Add(titleLbl)
 
-        ' Close the AddStaff modal after successful addition
+        Dim infoPanel As New Panel With {
+        .Location = New Point(20, 52),
+        .Size = New Size(520, 260),
+        .BackColor = Color.Transparent
+    }
+        dlg.Controls.Add(infoPanel)
+
+        Dim lblUser As New Label With {
+        .Text = $"Username: {username}",
+        .Font = New Font("Poppins", 10, FontStyle.Regular),
+        .ForeColor = LightSilver,
+        .AutoSize = False,
+        .Size = New Size(500, 22),
+        .Location = New Point(0, 0)
+    }
+        infoPanel.Controls.Add(lblUser)
+
+        Dim lblRoleLocal As New Label With {
+        .Text = $"Role: {role}",
+        .Font = New Font("Poppins", 10, FontStyle.Regular),
+        .ForeColor = LightSilver,
+        .AutoSize = False,
+        .Size = New Size(500, 22),
+        .Location = New Point(0, 28)
+    }
+        infoPanel.Controls.Add(lblRoleLocal)
+
+        Dim lblQr As New Label With {
+        .Text = $"QR Code Value: {userCode}",
+        .Font = New Font("Poppins", 10, FontStyle.Regular),
+        .ForeColor = LightSilver,
+        .AutoSize = False,
+        .Size = New Size(500, 22),
+        .Location = New Point(0, 56)
+    }
+        infoPanel.Controls.Add(lblQr)
+
+        Dim lblContact As New Label With {
+        .Text = $"Email: {email}    Phone: {phone}",
+        .Font = New Font("Poppins", 9, FontStyle.Regular),
+        .ForeColor = LightSilver,
+        .AutoSize = False,
+        .Size = New Size(500, 22),
+        .Location = New Point(0, 84)
+    }
+        infoPanel.Controls.Add(lblContact)
+
+        Dim sep As New Panel With {
+        .Size = New Size(500, 1),
+        .Location = New Point(0, 112),
+        .BackColor = Color.FromArgb(70, 70, 70)
+    }
+        infoPanel.Controls.Add(sep)
+
+        Dim passkeysLbl As New Label With {
+        .Text = "Recovery Passkeys (store securely):",
+        .Font = New Font("Poppins", 10, FontStyle.Bold),
+        .ForeColor = GoldenYellow,
+        .AutoSize = False,
+        .Size = New Size(500, 22),
+        .Location = New Point(0, 130)
+    }
+        infoPanel.Controls.Add(passkeysLbl)
+
+        Dim passkeysBox As New TextBox With {
+        .Multiline = True,
+        .ReadOnly = True,
+        .ScrollBars = ScrollBars.Vertical,
+        .Font = New Font("Consolas", 10, FontStyle.Regular),
+        .BackColor = Color.FromArgb(245, 245, 245),
+        .ForeColor = DeepCharcoal,
+        .Location = New Point(0, 158),
+        .Size = New Size(500, 90),
+        .Text = String.Join(Environment.NewLine, passkeys)
+    }
+        infoPanel.Controls.Add(passkeysBox)
+
+        ' Buttons: Print, Copy, Close
+        Dim btnPrint As New Guna2Button With {
+        .Text = "Print",
+        .Size = New Size(120, 40),
+        .Location = New Point(140, 330),
+        .FillColor = RichOlive,
+        .ForeColor = PureWhite,
+        .BorderRadius = 10
+    }
+        dlg.Controls.Add(btnPrint)
+
+        Dim btnCopy As New Guna2Button With {
+        .Text = "Copy Passkeys",
+        .Size = New Size(140, 40),
+        .Location = New Point(270, 330),
+        .FillColor = SteelGray,
+        .ForeColor = PureWhite,
+        .BorderRadius = 10
+    }
+        dlg.Controls.Add(btnCopy)
+
+        Dim btnClose As New Guna2Button With {
+        .Text = "Close",
+        .Size = New Size(120, 40),
+        .Location = New Point(410, 330),
+        .FillColor = AlertRed,
+        .ForeColor = PureWhite,
+        .BorderRadius = 10
+    }
+        dlg.Controls.Add(btnClose)
+
+        ' Prepare a PrintDocument that prints the displayed information
+        ' Prepare a PrintDocument with improved layout and A5 paper size
+        Dim pd As New PrintDocument()
+        pd.DefaultPageSettings.Margins = New Margins(40, 40, 40, 40) ' 0.4" margins
+        pd.DefaultPageSettings.PaperSize = New PaperSize("A5", 582, 827) ' A5 in hundredths of an inch (approx)
+
+        AddHandler pd.PrintPage, Sub(s, ev)
+                                     Try
+                                         ev.Graphics.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias
+
+                                         ' Layout helpers
+                                         Dim left As Single = ev.MarginBounds.Left
+                                         Dim top As Single = ev.MarginBounds.Top
+                                         Dim width As Single = ev.MarginBounds.Width
+                                         Dim y As Single = top
+
+                                         ' Header: colored bar with title centered
+                                         Using headerBrush As New SolidBrush(GoldenYellow)
+                                             ev.Graphics.FillRectangle(headerBrush, left, y, width, 56)
+                                         End Using
+                                         Using titleFont As New Font("Segoe UI", 14, FontStyle.Bold)
+                                             Using titleBrush As New SolidBrush(DeepCharcoal)
+                                                 Dim title As String = "New Staff Account"
+                                                 Dim titleSize = ev.Graphics.MeasureString(title, titleFont)
+                                                 ev.Graphics.DrawString(title, titleFont, titleBrush, left + (width - titleSize.Width) / 2, y + 12)
+                                             End Using
+                                         End Using
+                                         y += 72.0F
+
+                                         ' Sub-header / clinic label
+                                         Using subFont As New Font("Segoe UI", 9, FontStyle.Regular)
+                                             Using subBrush As New SolidBrush(LightSilver)
+                                                 ev.Graphics.DrawString($"Generated: {DateTime.Now:yyyy-MM-dd HH:mm}", subFont, subBrush, left, y)
+                                             End Using
+                                         End Using
+                                         y += 18.0F
+
+                                         ' Info block background
+                                         Dim infoHeight As Single = 110.0F
+                                         Using infoBg As New SolidBrush(Color.FromArgb(245, 245, 245))
+                                             ev.Graphics.FillRectangle(infoBg, left, y, width, infoHeight)
+                                         End Using
+                                         Using borderPen As New Pen(Color.FromArgb(200, 200, 200), 1)
+                                             ev.Graphics.DrawRectangle(borderPen, left, y, width, infoHeight)
+                                         End Using
+
+                                         ' Draw user details inside info block
+                                         Dim labelFont As New Font("Segoe UI", 9, FontStyle.Bold)
+                                         Dim valueFont As New Font("Segoe UI", 9, FontStyle.Regular)
+                                         Dim padding As Single = 8.0F
+                                         Dim col1X As Single = left + padding
+                                         Dim col2X As Single = left + width * 0.55F
+                                         Dim curY As Single = y + padding
+
+                                         ev.Graphics.DrawString("Username:", labelFont, Brushes.Black, col1X, curY)
+                                         ev.Graphics.DrawString(username, valueFont, Brushes.Black, col1X + 80, curY)
+                                         ev.Graphics.DrawString("Role:", labelFont, Brushes.Black, col2X, curY)
+                                         ev.Graphics.DrawString(role, valueFont, Brushes.Black, col2X + 40, curY)
+                                         curY += 20.0F
+
+                                         ev.Graphics.DrawString("Email:", labelFont, Brushes.Black, col1X, curY)
+                                         ev.Graphics.DrawString(email, valueFont, Brushes.Black, col1X + 50, curY)
+                                         ev.Graphics.DrawString("Phone:", labelFont, Brushes.Black, col2X, curY)
+                                         ev.Graphics.DrawString(phone, valueFont, Brushes.Black, col2X + 50, curY)
+                                         curY += 20.0F
+
+
+                                         curY += 20.0F
+
+                                         ev.Graphics.DrawString("Note:", labelFont, Brushes.Black, col1X, curY)
+                                         Using noteFont As New Font("Segoe UI", 8, FontStyle.Italic)
+                                             ev.Graphics.DrawString("Keep recovery passkeys private. Print/copy only when secure.", noteFont, Brushes.DarkSlateGray, col1X + 40, curY)
+                                         End Using
+
+                                         y += infoHeight + 18.0F
+
+                                         ' Passkeys block: light background with monospace font for clarity
+                                         Using pkBg As New SolidBrush(Color.FromArgb(250, 250, 250))
+                                             ev.Graphics.FillRectangle(pkBg, left, y, width, 22.0F + passkeys.Length * 18.0F)
+                                         End Using
+                                         Using pkBorder As New Pen(Color.FromArgb(200, 200, 200), 1)
+                                             ev.Graphics.DrawRectangle(pkBorder, left, y, width, 22.0F + passkeys.Length * 18.0F)
+                                         End Using
+
+                                         Dim pkTitleFont As New Font("Segoe UI", 10, FontStyle.Bold)
+                                         ev.Graphics.DrawString("Recovery Passkeys:", pkTitleFont, New SolidBrush(DeepCharcoal), left + padding, y + 6)
+                                         Dim pkFont As New Font("Consolas", 9, FontStyle.Regular)
+                                         Dim pkStartY As Single = y + 30.0F
+                                         For Each pk As String In passkeys
+                                             ev.Graphics.DrawString(pk, pkFont, Brushes.Black, left + padding + 4, pkStartY)
+                                             pkStartY += 18.0F
+                                         Next
+
+                                         y += 22.0F + passkeys.Length * 18.0F + 12.0F
+
+                                         ' Footer: instructions and clinic contact (small)
+                                         Using footerFont As New Font("Segoe UI", 8, FontStyle.Regular)
+                                             Using footerBrush As New SolidBrush(LightSilver)
+                                                 Dim footerText As String = "This printout contains sensitive recovery keys. Store securely and destroy paper copy if not needed."
+                                                 ev.Graphics.DrawString(footerText, footerFont, footerBrush, left, ev.MarginBounds.Bottom - 40)
+                                             End Using
+                                         End Using
+
+                                         ev.HasMorePages = False
+                                     Catch ex As Exception
+                                         Console.WriteLine($"PrintPage error: {ex.Message}")
+                                         ev.HasMorePages = False
+                                     End Try
+                                 End Sub
+
+        Dim printPreview As New PrintPreviewDialog() With {
+        .Document = pd,
+        .WindowState = FormWindowState.Maximized,
+        .Text = "Print - New Staff"
+    }
+
+        ' Button handlers
+        AddHandler btnPrint.Click, Sub()
+                                       Try
+                                           printPreview.ShowDialog(dlg)
+                                       Catch ex As Exception
+                                           MessageBox.Show($"Print failed: {ex.Message}", "Print Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                                       End Try
+                                   End Sub
+
+        AddHandler btnCopy.Click, Sub()
+                                      Try
+                                          Clipboard.SetText(passkeysBox.Text)
+                                          MessageBox.Show("Passkeys copied to clipboard. Keep them secure.", "Copied", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                                      Catch
+                                          MessageBox.Show("Unable to copy to clipboard on this system.", "Copy Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                                      End Try
+                                  End Sub
+
+        AddHandler btnClose.Click, Sub()
+                                       dlg.DialogResult = DialogResult.OK
+                                       dlg.Close()
+                                   End Sub
+
+        AddHandler dlg.KeyDown, Sub(s, ke)
+                                    If ke.KeyCode = Keys.Escape Then
+                                        btnClose.PerformClick()
+                                    End If
+                                End Sub
+
+        ' Show the dialog (modal) — do not auto-close the AddStaff form until user closes the print/passkey modal
+        dlg.ShowDialog(Me)
+        dlg.Dispose()
+
+        ' Close the AddStaff dialog with OK so calling code can refresh staff list
         Me.DialogResult = DialogResult.OK
         Me.Close()
     End Sub
-
     Private Sub UpdateExistingStaff()
         ' Prepare staff data
         Dim email As String = txtEmail.Text.Trim()
