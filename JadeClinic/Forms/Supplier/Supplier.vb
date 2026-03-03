@@ -1125,4 +1125,51 @@ Public Class Supplier
             MessageBox.Show($"Error opening edit modal: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
+
+    Private Sub Exportbtn_Click_1(sender As Object, e As EventArgs) Handles Exportbtn.Click
+        Try
+            ' Prevent double-clicks
+            Exportbtn.Enabled = False
+
+            ' Determine sort order from UI
+            Dim sortOrder As String = ""
+            If SortBy IsNot Nothing AndAlso SortBy.SelectedItem IsNot Nothing Then
+                sortOrder = SortBy.SelectedItem.ToString()
+            End If
+
+            ' Determine filter type if a filter control exists (fallback to All Suppliers)
+            Dim filterType As String = "All Suppliers"
+            If Me.Controls IsNot Nothing AndAlso Me.Controls.ContainsKey("FilterType") Then
+                Dim ctrl = Me.Controls("FilterType")
+                If TypeOf ctrl Is ComboBox Then
+                    Dim cb = DirectCast(ctrl, ComboBox)
+                    If cb.SelectedItem IsNot Nothing Then
+                        filterType = cb.SelectedItem.ToString()
+                    End If
+                End If
+            End If
+
+            ' Determine optional date filter if a date picker is present (keeps parity with other forms)
+            Dim filterDate As DateTime? = Nothing
+            If Me.Controls IsNot Nothing AndAlso Me.Controls.ContainsKey("Guna2DateTimePicker1") Then
+                Dim dtp = TryCast(Me.Controls("Guna2DateTimePicker1"), DateTimePicker)
+                If dtp IsNot Nothing Then
+                    If Not dtp.ShowCheckBox OrElse dtp.Checked Then
+                        filterDate = dtp.Value.Date
+                    End If
+                End If
+            End If
+
+            ' Call supplier exporter (keeps PDF layout from SalesRecord exporter but with supplier data)
+            SupplierExporter.ExportOrderRecordsReport(sortOrder, filterType, filterDate)
+
+        Catch ex As Exception
+            MessageBox.Show($"Export failed: {ex.Message}", "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Supplier Export Failed", $"Error: {ex.Message}")
+            End If
+        Finally
+            Exportbtn.Enabled = True
+        End Try
+    End Sub
 End Class

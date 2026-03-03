@@ -143,6 +143,9 @@ Public Class Dashboard
             LoadChartInterface()
             Console.WriteLine("Chart interface loaded")
 
+            InitializeProductSearch()
+            Console.WriteLine("Product search initialized")
+
             LoadDashboardData()
             Console.WriteLine("Dashboard data loaded")
 
@@ -216,9 +219,12 @@ Public Class Dashboard
                           "Dashboard Load Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
         End Try
     End Sub
+    Private Sub UpdateMonthlyStockTrend()
+        ' Placeholder for monthly trend updates
+        ' This can be expanded later when LiveCharts is properly configured
+    End Sub
     Private Sub SetActiveChartButton(mode As String)
         Dim buttons = New Dictionary(Of String, Guna2Button) From {
-        {"All Time", btnAllTime},
         {"Yearly", btnYearly},
         {"Monthly", btnMonthly},
         {"Weekly", btnWeekly},
@@ -567,6 +573,11 @@ Public Class Dashboard
             txtProductSearch.BackColor = Color.Transparent
             txtProductSearch.BorderThickness = 1
 
+            RemoveHandler txtProductSearch.TextChanged, AddressOf TxtProductSearch_TextChanged
+            AddHandler txtProductSearch.TextChanged, AddressOf TxtProductSearch_TextChanged
+
+            Dim searchText As String = If(txtProductSearch.Text, "").Trim()
+
             ' Configure the existing DataGridView with new color scheme
             Guna2DataGridView1.Columns.Clear()
             Guna2DataGridView1.Rows.Clear()
@@ -608,7 +619,6 @@ Public Class Dashboard
             Guna2DataGridView1.EnableHeadersVisualStyles = False
 
             ' Add columns
-            ' No column
             Dim noColumn As New DataGridViewTextBoxColumn()
             noColumn.Name = "No"
             noColumn.HeaderText = "No"
@@ -617,7 +627,6 @@ Public Class Dashboard
             noColumn.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Bold)
             Guna2DataGridView1.Columns.Add(noColumn)
 
-            ' Product Code column
             Dim codeColumn As New DataGridViewTextBoxColumn()
             codeColumn.Name = "ProductCode"
             codeColumn.HeaderText = "Code"
@@ -625,7 +634,6 @@ Public Class Dashboard
             codeColumn.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             Guna2DataGridView1.Columns.Add(codeColumn)
 
-            ' Product Name column
             Dim nameColumn As New DataGridViewTextBoxColumn()
             nameColumn.Name = "ProductName"
             nameColumn.HeaderText = "Product Name"
@@ -634,7 +642,6 @@ Public Class Dashboard
             nameColumn.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
             Guna2DataGridView1.Columns.Add(nameColumn)
 
-            ' Category column
             Dim categoryColumn As New DataGridViewTextBoxColumn()
             categoryColumn.Name = "Category"
             categoryColumn.HeaderText = "Category"
@@ -642,16 +649,14 @@ Public Class Dashboard
             categoryColumn.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             Guna2DataGridView1.Columns.Add(categoryColumn)
 
-            ' Current Stock column
-            Dim stockColumn As New DataGridViewTextBoxColumn()
-            stockColumn.Name = "CurrentStock"
-            stockColumn.HeaderText = "Stock"
-            stockColumn.FillWeight = 12
-            stockColumn.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
-            stockColumn.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Bold)
-            Guna2DataGridView1.Columns.Add(stockColumn)
+            Dim soldColumn As New DataGridViewTextBoxColumn()
+            soldColumn.Name = "TimesSold"
+            soldColumn.HeaderText = "Sold"
+            soldColumn.FillWeight = 12
+            soldColumn.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
+            soldColumn.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Bold)
+            Guna2DataGridView1.Columns.Add(soldColumn)
 
-            ' Price column with Success Green color
             Dim priceColumn As New DataGridViewTextBoxColumn()
             priceColumn.Name = "SellingPrice"
             priceColumn.HeaderText = "Price"
@@ -661,33 +666,43 @@ Public Class Dashboard
             priceColumn.DefaultCellStyle.ForeColor = Color.FromArgb(16, 216, 98) ' Success Green #10D862
             Guna2DataGridView1.Columns.Add(priceColumn)
 
-            ' Query to get ALL products
+            ' Query to get products ranked by sold quantity
             Dim query As String = "
             SELECT TOP 20
                 p.ProductID,
                 p.ProductCode,
                 p.ProductName,
                 p.Category,
-                p.CurrentStock,
                 p.SellingPrice,
-                p.IsActive
+                ISNULL(SUM(si.Quantity), 0) AS TimesSold
             FROM Products p
+            LEFT JOIN SaleItems si ON p.ProductID = si.ProductID
             WHERE p.IsActive = 1
-            ORDER BY p.CurrentStock DESC, p.ProductName"
+              AND (
+                    @Search = ''
+                    OR p.ProductCode LIKE @SearchLike
+                    OR p.ProductName LIKE @SearchLike
+                    OR p.Category LIKE @SearchLike
+                  )
+            GROUP BY p.ProductID, p.ProductCode, p.ProductName, p.Category, p.SellingPrice
+            ORDER BY ISNULL(SUM(si.Quantity), 0) DESC, p.ProductName"
 
             Dim rowIndex As Integer = 1
+            Dim parameters As SqlParameter() = {
+                New SqlParameter("@Search", searchText),
+                New SqlParameter("@SearchLike", "%" & searchText & "%")
+            }
 
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, Nothing)
+            Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters)
                 While reader.Read()
                     Dim row As DataGridViewRow = New DataGridViewRow()
                     row.CreateCells(Guna2DataGridView1)
 
-                    ' Set cell values
                     row.Cells(0).Value = rowIndex.ToString() ' No
                     row.Cells(1).Value = reader("ProductCode").ToString() ' Code
                     row.Cells(2).Value = reader("ProductName").ToString() ' Name
                     row.Cells(3).Value = reader("Category").ToString() ' Category
-                    row.Cells(4).Value = reader("CurrentStock").ToString() ' Stock
+                    row.Cells(4).Value = Convert.ToInt32(reader("TimesSold")).ToString() ' Sold
                     row.Cells(5).Value = "₱" & Convert.ToDecimal(reader("SellingPrice")).ToString("F2") ' Price
 
                     Guna2DataGridView1.Rows.Add(row)
@@ -695,45 +710,39 @@ Public Class Dashboard
                 End While
             End Using
 
-            ' Top 3 medal colors (1st soft gold, 2nd silver, 3rd bronze)
             If Guna2DataGridView1.Rows.Count > 0 Then
-                Guna2DataGridView1.Rows(0).DefaultCellStyle.BackColor = Color.FromArgb(225, 196, 120) ' Soft gold
+                Guna2DataGridView1.Rows(0).DefaultCellStyle.BackColor = Color.FromArgb(225, 196, 120)
                 Guna2DataGridView1.Rows(0).DefaultCellStyle.ForeColor = Color.FromArgb(40, 40, 40)
             End If
             If Guna2DataGridView1.Rows.Count > 1 Then
-                Guna2DataGridView1.Rows(1).DefaultCellStyle.BackColor = Color.FromArgb(192, 192, 192) ' Silver
+                Guna2DataGridView1.Rows(1).DefaultCellStyle.BackColor = Color.FromArgb(192, 192, 192)
                 Guna2DataGridView1.Rows(1).DefaultCellStyle.ForeColor = Color.FromArgb(26, 29, 31)
             End If
             If Guna2DataGridView1.Rows.Count > 2 Then
-                Guna2DataGridView1.Rows(2).DefaultCellStyle.BackColor = Color.FromArgb(205, 127, 50) ' Bronze
+                Guna2DataGridView1.Rows(2).DefaultCellStyle.BackColor = Color.FromArgb(205, 127, 50)
                 Guna2DataGridView1.Rows(2).DefaultCellStyle.ForeColor = Color.White
             End If
 
-            ' Prevent row resizing for all rows
             For Each row As DataGridViewRow In Guna2DataGridView1.Rows
                 row.Resizable = DataGridViewTriState.False
             Next
 
-            ' Remove initial selected row visual
             Guna2DataGridView1.ClearSelection()
 
-            ' Configure the search textbox styling with new colors
             txtProductSearch.PlaceholderText = "🔍 Search products..."
             txtProductSearch.Font = New Font("Poppins", 10.0F)
-            txtProductSearch.ForeColor = Color.FromArgb(225, 229, 233) ' Light Silver #E1E5E9
-            txtProductSearch.BackColor = Color.FromArgb(61, 65, 65) ' Dark Slate #2B2F32
+            txtProductSearch.ForeColor = Color.FromArgb(225, 229, 233)
+            txtProductSearch.BackColor = Color.FromArgb(61, 65, 65)
             txtProductSearch.BorderRadius = 10
 
         Catch ex As Exception
-            ' Handle error and show user-friendly message
             Console.WriteLine($"Error loading products: {ex.Message}")
             MessageBox.Show("Unable to load product data. Please try refreshing the dashboard.", "Data Load Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
         End Try
     End Sub
 
-    Private Sub UpdateMonthlyStockTrend()
-        ' Placeholder for monthly trend updates
-        ' This can be expanded later when LiveCharts is properly configured
+    Private Sub TxtProductSearch_TextChanged(sender As Object, e As EventArgs)
+        LoadAllPopularProducts()
     End Sub
 
     Private Sub LoadInventoryStatusChart()
@@ -890,9 +899,6 @@ Public Class Dashboard
             topPanel.Controls.Add(buttonFlow)
 
             ' Create filter buttons
-            btnAllTime = CreateChartFilterButton("All Time")
-            AddHandler btnAllTime.Click, Sub() LoadChartData("All Time")
-
             btnYearly = CreateChartFilterButton("Yearly")
             AddHandler btnYearly.Click, Sub() LoadChartData("Yearly")
 
@@ -905,7 +911,6 @@ Public Class Dashboard
             btnToday = CreateChartFilterButton("Today")
             AddHandler btnToday.Click, Sub() LoadChartData("Today")
 
-            buttonFlow.Controls.Add(btnAllTime)
             buttonFlow.Controls.Add(btnYearly)
             buttonFlow.Controls.Add(btnMonthly)
             buttonFlow.Controls.Add(btnWeekly)
@@ -985,8 +990,6 @@ Public Class Dashboard
             Dim labels As New List(Of String)()
 
             Select Case mode
-                Case "All Time"
-                    LoadAllTimeData(salesData, revenueData, labels)
                 Case "Today"
                     LoadTodayData(salesData, revenueData, labels)
                 Case "Monthly"
@@ -1097,6 +1100,10 @@ Public Class Dashboard
             Console.WriteLine($"Error creating fallback display: {ex.Message}")
         End Try
     End Sub
+    Private Function GetMonthAbbreviation(month As Integer) As String
+        Dim monthNames As String() = {"JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"}
+        Return monthNames(month - 1)
+    End Function
     Private Sub LoadMonthlyData(salesData As List(Of Double), revenueData As List(Of Double), labels As List(Of String))
         Dim currentYear As Integer = DateTime.Now.Year
 
@@ -1239,30 +1246,97 @@ Public Class Dashboard
         End If
     End Sub
 
-    Private Sub LoadTodayData(salesData As List(Of Double), revenueData As List(Of Double), labels As List(Of String))
-        Dim query As String = "
-            SELECT ISNULL(SUM(TotalAmount), 0) AS Revenue
-            FROM Sales
-            WHERE CAST(SaleDate AS DATE) = CAST(GETDATE() AS DATE)"
+    Private Function TryGetCompanyOperatingHours(ByRef opening As TimeSpan, ByRef closing As TimeSpan) As Boolean
+        opening = TimeSpan.FromHours(9)
+        closing = TimeSpan.FromHours(17)
 
-        labels.Add("Today")
-
-        Using reader As SqlDataReader = Utilities.ExecuteReader(query, Nothing)
-            If reader.Read() Then
-                Dim revenue As Double = Convert.ToDouble(reader("Revenue"))
-                salesData.Add(revenue)
-                revenueData.Add(revenue)
-            Else
-                salesData.Add(0)
-                revenueData.Add(0)
+        Try
+            Dim rawHours As String = CompanySettingsManager.Instance.GetSettingString("CompanyHours", "")
+            If String.IsNullOrWhiteSpace(rawHours) Then
+                Return False
             End If
-        End Using
+
+            Dim lines = rawHours.Split({vbCrLf, vbLf}, StringSplitOptions.RemoveEmptyEntries)
+            Dim hasOpening As Boolean = False
+            Dim hasClosing As Boolean = False
+
+            For Each line In lines
+                If line.StartsWith("Opening:", StringComparison.OrdinalIgnoreCase) Then
+                    Dim timePart = line.Substring(8).Trim()
+                    Dim parsed As DateTime
+                    If DateTime.TryParse(timePart, parsed) Then
+                        opening = parsed.TimeOfDay
+                        hasOpening = True
+                    End If
+                ElseIf line.StartsWith("Closing:", StringComparison.OrdinalIgnoreCase) Then
+                    Dim timePart = line.Substring(8).Trim()
+                    Dim parsed As DateTime
+                    If DateTime.TryParse(timePart, parsed) Then
+                        closing = parsed.TimeOfDay
+                        hasClosing = True
+                    End If
+                End If
+            Next
+
+            Return hasOpening AndAlso hasClosing
+        Catch
+            Return False
+        End Try
+    End Function
+
+    Private Sub LoadTodayData(salesData As List(Of Double), revenueData As List(Of Double), labels As List(Of String))
+        Dim opening As TimeSpan
+        Dim closing As TimeSpan
+        TryGetCompanyOperatingHours(opening, closing)
+
+        Dim startDateTime As DateTime = Date.Today.Add(opening)
+        Dim endDateTime As DateTime = Date.Today.Add(closing)
+
+        If endDateTime <= startDateTime Then
+            endDateTime = endDateTime.AddDays(1)
+        End If
+
+        Dim slotStart As DateTime = startDateTime
+
+        While slotStart < endDateTime
+            Dim slotEnd As DateTime = slotStart.AddHours(1)
+            If slotEnd > endDateTime Then
+                slotEnd = endDateTime
+            End If
+
+            labels.Add(slotStart.ToString("hh tt"))
+
+            Dim query As String = "
+                SELECT ISNULL(SUM(TotalAmount), 0) AS Revenue
+                FROM Sales
+                WHERE SaleDate >= @StartDateTime AND SaleDate < @EndDateTime"
+
+            Dim parameters As SqlParameter() = {
+                New SqlParameter("@StartDateTime", slotStart),
+                New SqlParameter("@EndDateTime", slotEnd)
+            }
+
+            Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters)
+                If reader.Read() Then
+                    Dim revenue As Double = Convert.ToDouble(reader("Revenue"))
+                    salesData.Add(revenue)
+                    revenueData.Add(revenue)
+                Else
+                    salesData.Add(0)
+                    revenueData.Add(0)
+                End If
+            End Using
+
+            slotStart = slotEnd
+        End While
+
+        If labels.Count = 0 Then
+            labels.Add("Today")
+            salesData.Add(0)
+            revenueData.Add(0)
+        End If
     End Sub
 
-    Private Function GetMonthAbbreviation(month As Integer) As String
-        Dim monthNames As String() = {"JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"}
-        Return monthNames(month - 1)
-    End Function
     Private Sub CreateNavigationMenu()
         Try
             ' Clear existing controls except PictureBox9 (logo)
@@ -1657,5 +1731,26 @@ Public Class Dashboard
         isNavigating = True
         Sys.Show()
         Me.Close()
+    End Sub
+
+    Private Sub InitializeProductSearch()
+        Try
+            ' Set search textbox position and styling once
+            txtProductSearch.Location = New Point(420, 10)
+            txtProductSearch.Size = New Size(200, 20)
+            txtProductSearch.BorderRadius = 10
+            txtProductSearch.BackColor = Color.Transparent
+            txtProductSearch.BorderThickness = 1
+            txtProductSearch.PlaceholderText = "🔍 Search products..."
+            txtProductSearch.Font = New Font("Poppins", 10.0F)
+            txtProductSearch.ForeColor = Color.FromArgb(225, 229, 233)
+            txtProductSearch.BackColor = Color.FromArgb(61, 65, 65)
+            txtProductSearch.BorderRadius = 10
+
+            ' Add event handler for search
+            AddHandler txtProductSearch.TextChanged, AddressOf TxtProductSearch_TextChanged
+        Catch ex As Exception
+            Console.WriteLine($"Error initializing product search: {ex.Message}")
+        End Try
     End Sub
 End Class

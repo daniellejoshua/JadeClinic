@@ -32,7 +32,7 @@ Public Class SalesRecord
         Me.MinimumSize = Me.Size
         Me.MaximumSize = Me.Size
 
-        Me.Text = "Sales Records - Lokal Recipe POS"
+        Me.Text = "Sales Records - Jade Dental"
 
         ' Validate user session
         If Not ValidateUserSession() Then
@@ -67,6 +67,9 @@ Public Class SalesRecord
 
         ' Update form title to show logged-in user
         Me.Text = $"Sales Records - {frmLoginvb.LoggedInUsername}"
+    End Sub
+    Private Sub NavProfileSettings_Click(sender As Object, e As EventArgs)
+
     End Sub
     Private Function ValidateUserSession() As Boolean
         If String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
@@ -256,6 +259,7 @@ Public Class SalesRecord
                     query += " ORDER BY s.SaleDate DESC"
             End Select
 
+            ' Replace the inner part of the reader loop in LoadOrderRecordsData with this (keeps behavior but sets PaymentMethod cell color)
             Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters.ToArray())
                 While reader.Read()
                     Dim saleId As Integer = If(IsDBNull(reader("SaleID")), 0, Convert.ToInt32(reader("SaleID")))
@@ -273,7 +277,12 @@ Public Class SalesRecord
                     Guna2DataGridView1.Rows(rowIndex).Cells("OrderID").Value = saleId
                     Guna2DataGridView1.Rows(rowIndex).Cells("CreatedBy").Value = username
                     Guna2DataGridView1.Rows(rowIndex).Cells("OrderDate").Value = If(saleDate = DateTime.MinValue, "", saleDate.ToString("MM/dd/yyyy HH:mm"))
+
+                    ' Set payment method value and color based on method
                     Guna2DataGridView1.Rows(rowIndex).Cells("PaymentMethod").Value = paymentMethod
+                    Dim pmColor As System.Drawing.Color = GetPaymentMethodColor(paymentMethod)
+                    Guna2DataGridView1.Rows(rowIndex).Cells("PaymentMethod").Style.ForeColor = pmColor
+
                     Guna2DataGridView1.Rows(rowIndex).Cells("TotalAmount").Value = "₱" & totalAmount.ToString("F2")
                     Guna2DataGridView1.Rows(rowIndex).Cells("TotalReceived").Value = "₱" & amountPaid.ToString("F2")
                     Guna2DataGridView1.Rows(rowIndex).Cells("Change").Value = "₱" & changeVal.ToString("F2")
@@ -283,16 +292,16 @@ Public Class SalesRecord
 
                     ' store raw values for later use
                     Guna2DataGridView1.Rows(rowIndex).Tag = New Dictionary(Of String, Object) From {
-                    {"SaleID", saleId},
-                    {"Username", username},
-                    {"SaleDate", saleDate},
-                    {"PaymentMethod", paymentMethod},
-                    {"TotalAmount", totalAmount},
-                    {"AmountPaid", amountPaid},
-                    {"Change", changeVal},
-                    {"DiscountType", discountType},
-                    {"DiscountAmount", discountAmount}
-                }
+            {"SaleID", saleId},
+            {"Username", username},
+            {"SaleDate", saleDate},
+            {"PaymentMethod", paymentMethod},
+            {"TotalAmount", totalAmount},
+            {"AmountPaid", amountPaid},
+            {"Change", changeVal},
+            {"DiscountType", discountType},
+            {"DiscountAmount", discountAmount}
+        }
                 End While
             End Using
 
@@ -483,7 +492,20 @@ Public Class SalesRecord
         AddHandler btnProfileSettings.MouseLeave, Sub() btnProfileSettings.BackColor = System.Drawing.Color.Transparent
         AddHandler btnProfileSettings.Click, Sub()
                                                  HideProfileDropdown()
-                                                 MessageBox.Show("Profile Settings not implemented.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                                                 Try
+                                                     isNavigating = True
+                                                     If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+                                                         Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Navigation", "Navigated from Sales Records to ProfileSettings")
+                                                     End If
+
+                                                     Dim profileForm As New ProfileSettings()
+                                                     profileForm.StartPosition = FormStartPosition.CenterScreen
+                                                     profileForm.Show()
+                                                     Me.Close()
+                                                 Catch ex As Exception
+                                                     isNavigating = False
+            MessageBox.Show($"Unable to open Profile Settings: {ex.Message}", "Navigation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
                                              End Sub
 
         Dim btnLogOut As New Label()
@@ -563,8 +585,36 @@ Public Class SalesRecord
             MessageBox.Show($"Unable to open Profile Settings: {ex.Message}", "Navigation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
+    ' Add this helper after the ReadOnly color declarations (near top of the class)
+    Private Function GetPaymentMethodColor(method As String) As System.Drawing.Color
+        If String.IsNullOrWhiteSpace(method) Then
+            Return LightSilver
+        End If
+
+        Dim m As String = method.ToLowerInvariant()
+
+        ' GCash -> Blue
+        If m.Contains("gcash") Then
+            Return System.Drawing.Color.FromArgb(255, 66, 133, 244) ' Blue
+        End If
+
+        ' Card / Credit / Debit -> Golden yellow (use existing GoldenYellow)
+        If m.Contains("card") OrElse m.Contains("credit") OrElse m.Contains("debit") Then
+            Return GoldenYellow
+        End If
+
+        ' Cash -> Green (use existing SuccessGreen)
+        If m.Contains("cash") Then
+            Return SuccessGreen
+        End If
+
+        ' Default
+        Return LightSilver
+    End Function
     Private Sub Exportbtn_Click(sender As Object, e As EventArgs) Handles Exportbtn.Click
         Try
+            MessageBox.Show($"Runtime EXE:{Environment.NewLine}{Application.ExecutablePath}", "Runtime Path")
+
             Dim sortOrder As String = "Sale Date (Newest First)"
             If SortBy IsNot Nothing AndAlso SortBy.SelectedItem IsNot Nothing Then
                 sortOrder = SortBy.SelectedItem.ToString()
@@ -583,7 +633,6 @@ Public Class SalesRecord
             MessageBox.Show($"Export failed: {ex.Message}", "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
-
     Public Sub ClearDateFilter()
         ' No date filter control in this form; just reload
     End Sub

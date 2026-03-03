@@ -520,10 +520,17 @@ Public Class Inventory
             Dim PriceGold As Color = System.Drawing.Color.FromArgb(200, 140, 0)
 
             ' Product Information column (slightly shorter to make room for Status)
+            ' In SetupProductDataGrid(), replace ProductName column config with this:
+
             Dim colProductName As New DataGridViewTextBoxColumn()
             colProductName.Name = "ProductName"
             colProductName.HeaderText = "Product Information"
-            colProductName.FillWeight = 38 ' reduced from 45
+
+            ' FIXED WIDTH
+            colProductName.AutoSizeMode = DataGridViewAutoSizeColumnMode.None
+            colProductName.Width = 280
+            colProductName.MinimumWidth = 280
+
             colProductName.DefaultCellStyle.Font = New Font("Poppins SemiBold", 9.5F, FontStyle.Regular)
             colProductName.DefaultCellStyle.ForeColor = AccentGoldDark
             colProductName.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft
@@ -531,7 +538,6 @@ Public Class Inventory
             colProductName.DefaultCellStyle.SelectionBackColor = AccentGold
             colProductName.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
             productDataGrid.Columns.Add(colProductName)
-
             ' Category column (slightly narrowed)
             Dim colCategory As New DataGridViewTextBoxColumn()
             colCategory.Name = "Category"
@@ -592,30 +598,49 @@ Public Class Inventory
             colSellingPrice.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
             productDataGrid.Columns.Add(colSellingPrice)
 
-            ' Status column (Active / Inactive) - made slightly wider to ensure fit
+            ' Status column (Active / Inactive) - fixed width for consistent layout
             Dim colStatus As New DataGridViewTextBoxColumn()
             colStatus.Name = "Status"
             colStatus.HeaderText = "Status"
-            colStatus.FillWeight = 11 ' increased slightly to improve fit
+
+            ' Make the column fixed-width (not participating in Fill autosizing)
+            colStatus.AutoSizeMode = DataGridViewAutoSizeColumnMode.None
+            colStatus.Width = 100              ' adjust to taste
+            colStatus.MinimumWidth = 70
+            colStatus.MaxInputLength = 50
+            colStatus.ReadOnly = True
+
             colStatus.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             colStatus.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
             colStatus.DefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
             colStatus.DefaultCellStyle.SelectionBackColor = AccentGold
             colStatus.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
-            productDataGrid.Columns.Add(colStatus)
 
+            productDataGrid.Columns.Add(colStatus)
             ' Actions column
+            ' Actions column — fixed width, non-resizable, shows edit icon/text and not participating in Fill autosizing
             Dim colActions As New DataGridViewTextBoxColumn()
             colActions.Name = "Actions"
             colActions.HeaderText = ""
             colActions.ReadOnly = True
-            colActions.FillWeight = 12
+
+            ' Make the column fixed-width so layout is stable
+            colActions.AutoSizeMode = DataGridViewAutoSizeColumnMode.None
+            colActions.Width = 20
+            colActions.MinimumWidth = 60
+            colActions.Resizable = DataGridViewTriState.False
+            colActions.SortMode = DataGridViewColumnSortMode.NotSortable
             colActions.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
+
+            ' Visuals
             colActions.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
             colActions.DefaultCellStyle.ForeColor = AccentGoldDark
             colActions.DefaultCellStyle.SelectionBackColor = AccentGold
             colActions.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
             colActions.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
+
+            ' Show a default edit marker when cell value is null/empty
+            colActions.DefaultCellStyle.NullValue = "✏️"
             productDataGrid.Columns.Add(colActions)
 
             ' Wire up events and painting (preserve existing handlers)

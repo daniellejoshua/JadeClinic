@@ -115,7 +115,7 @@ Public Class AddInventoryLogForm
 
         ' Close button
         Dim btnClose As New Label()
-        btnClose.Text = "?"
+        btnClose.Text = "X"
         btnClose.Font = New Font("Arial", 16, FontStyle.Bold)
         btnClose.ForeColor = Color.Gray
         btnClose.Cursor = Cursors.Hand
@@ -170,7 +170,7 @@ Public Class AddInventoryLogForm
         cmbTransactionType.DropDownStyle = ComboBoxStyle.DropDownList
         cmbTransactionType.BackColor = Color.FromArgb(61, 65, 66)
         cmbTransactionType.ForeColor = Color.White
-        cmbTransactionType.Items.AddRange(New String() {"IN", "OUT", "ADJUST"})
+        cmbTransactionType.Items.AddRange(New String() {"IN", "OUT"})
         ' Add event handler to show/hide batch fields based on transaction type
         AddHandler cmbTransactionType.SelectedIndexChanged, AddressOf cmbTransactionType_SelectedIndexChanged
         Me.Controls.Add(cmbTransactionType)

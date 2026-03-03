@@ -1283,8 +1283,17 @@ Public Class InventoryLog
     End Sub
 
     Private Sub Exportbtn_Click(sender As Object, e As EventArgs)
-        ' Export functionality can be implemented later
-        MessageBox.Show("Export functionality will be implemented soon.", "Export", MessageBoxButtons.OK, MessageBoxIcon.Information)
+        Try
+            ' Get current sort order and filter settings
+            Dim sortOrder As String = If(SortBy?.SelectedItem?.ToString(), "Date (Newest First)")
+            Dim filterType As String = "All Logs" ' You can expand this to match actual filter types
+            Dim filterDate As DateTime? = selectedDate
+
+            ' Call the inventory log exporter
+            InventoryLogExporter.ExportInventoryLogsReport(sortOrder, filterType, filterDate)
+        Catch ex As Exception
+            MessageBox.Show($"Export failed: {ex.Message}", "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
     End Sub
 
     ' Helper method to validate user session
@@ -1552,6 +1561,20 @@ Public Class InventoryLog
             Await LoadInventoryLogsAsync()
         Catch ex As Exception
             MessageBox.Show($"Error sorting inventory logs: {ex.Message}", "Sorting Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
+
+    Private Sub Exportbtn_Click_1(sender As Object, e As EventArgs) Handles Exportbtn.Click
+        Try
+            ' Get current sort order and filter settings
+            Dim sortOrder As String = If(SortBy?.SelectedItem?.ToString(), "Date (Newest First)")
+            Dim filterType As String = "All Logs" ' You can expand this to match actual filter types
+            Dim filterDate As DateTime? = selectedDate
+
+            ' Call the inventory log exporter
+            InventoryLogExporter.ExportInventoryLogsReport(sortOrder, filterType, filterDate)
+        Catch ex As Exception
+            MessageBox.Show($"Export failed: {ex.Message}", "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
 End Class

@@ -363,13 +363,13 @@ Public Class SalesRecordExporter
     End Sub
 End Class
 Public Class OrderReportData
-        Public Property OrderID As Integer
-        Public Property CreatedBy As String
-        Public Property OrderDate As DateTime
-        Public Property TotalAmount As Decimal
-        Public Property TotalReceived As Decimal
-        Public Property Change As Decimal
-        Public Property PaymentMethod As String
-        Public Property DiscountType As String
-        Public Property DiscountAmount As Decimal
-    End Class
+    Public Property OrderID As Integer
+    Public Property CreatedBy As String
+    Public Property OrderDate As DateTime
+    Public Property TotalAmount As Decimal
+    Public Property TotalReceived As Decimal
+    Public Property Change As Decimal
+    Public Property PaymentMethod As String
+    Public Property DiscountType As String
+    Public Property DiscountAmount As Decimal
+End Class

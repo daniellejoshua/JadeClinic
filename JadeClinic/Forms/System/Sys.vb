@@ -685,10 +685,7 @@ Public Class Sys
         Me.Close()
     End Sub
 
-    Private Sub NavSalesRecords_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        MessageBox.Show("Sales Records feature coming soon!", "Coming Soon", MessageBoxButtons.OK, MessageBoxIcon.Information)
-    End Sub
+
 
     Private Sub NavStaff_Click(sender As Object, e As EventArgs)
         isNavigating = True
@@ -702,10 +699,7 @@ Public Class Sys
         Me.Close()
     End Sub
 
-    Private Sub NavAuditLog_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        MessageBox.Show("Audit Logs feature coming soon!", "Coming Soon", MessageBoxButtons.OK, MessageBoxIcon.Information)
-    End Sub
+
 
     Private Sub Sys_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
         ' Stop idle timeout monitoring
@@ -744,7 +738,29 @@ Public Class Sys
             End If
         End If
     End Sub
+    Private Sub NavSalesRecords_Click(sender As Object, e As EventArgs)
+        Try
+            isNavigating = True
+            Dim salesRecordsForm As New SalesRecord()
+            salesRecordsForm.StartPosition = FormStartPosition.CenterScreen
+            salesRecordsForm.Show()
+            Me.Close()
+        Catch ex As Exception
+            MessageBox.Show($"Unable to open Sales Records: {ex.Message}", "Navigation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
 
+    Private Sub NavAuditLog_Click(sender As Object, e As EventArgs)
+        Try
+            isNavigating = True
+            Dim auditLogForm As New AuditLog()
+            auditLogForm.StartPosition = FormStartPosition.CenterScreen
+            auditLogForm.Show()
+            Me.Close()
+        Catch ex As Exception
+            MessageBox.Show($"Unable to open Audit Logs: {ex.Message}", "Navigation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
     Private Sub Guna2Panel1_Paint(sender As Object, e As PaintEventArgs) Handles Guna2Panel1.Paint
 
     End Sub

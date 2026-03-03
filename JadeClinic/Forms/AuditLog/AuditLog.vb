@@ -1,4 +1,5 @@
-﻿Imports System.IO
+﻿Imports System.Globalization
+Imports System.IO
 Imports Guna.UI2.WinForms
 Imports Microsoft.Data.SqlClient
 
@@ -23,15 +24,15 @@ Public Class AuditLog
 
         ' Initialize controls
         InitializeDataGridView()
-        InitializeSortComboBox()
         InitializeFilterTypeComboBox()
+        InitializeUserAccountsCombo()
 
         ' Create navigation menu (same style/behavior as SalesRecord)
         CreateNavigationMenu()
 
         InitializeProfileSection()
         ' Wire events
-        AddHandler SortBy.SelectedIndexChanged, AddressOf Filters_Changed
+        AddHandler cmbAccounts.SelectedIndexChanged, AddressOf Filters_Changed
         AddHandler filtertype.SelectedIndexChanged, AddressOf Filters_Changed
         AddHandler Guna2DateTimePicker1.ValueChanged, AddressOf Filters_Changed
         AddHandler Exportbtn.Click, AddressOf Exportbtn_Click
@@ -47,6 +48,32 @@ Public Class AuditLog
 
         ' Load data (with today's date filter active by default)
         Await LoadAuditLogsAsync()
+    End Sub
+    ' Call this from AuditLog_Load (after InitializeFilterTypeComboBox)
+    Private Sub InitializeUserAccountsCombo()
+        Try
+            ' Ensure a ComboBox named cmbAccounts exists on the form (designer)
+            cmbAccounts.Items.Clear()
+            cmbAccounts.Items.Add("All Accounts")
+
+            Dim query As String = "SELECT Username FROM Users WHERE Username IS NOT NULL AND Username <> '' ORDER BY Username"
+            Using rdr As SqlDataReader = Utilities.ExecuteReader(query)
+                While rdr.Read()
+                    If Not IsDBNull(rdr("Username")) Then
+                        cmbAccounts.Items.Add(rdr("Username").ToString())
+                    End If
+                End While
+            End Using
+
+            If cmbAccounts.Items.Count > 0 Then
+                cmbAccounts.SelectedIndex = 0
+            End If
+
+            RemoveHandler cmbAccounts.SelectedIndexChanged, AddressOf Filters_Changed
+            AddHandler cmbAccounts.SelectedIndexChanged, AddressOf Filters_Changed
+        Catch ex As Exception
+            Console.WriteLine($"InitializeUserAccountsCombo error: {ex.Message}")
+        End Try
     End Sub
     Private Sub Exportbtn_Click(sender As Object, e As EventArgs)
         MessageBox.Show("Export not implemented.", "Export", MessageBoxButtons.OK, MessageBoxIcon.Information)
@@ -117,9 +144,9 @@ Public Class AuditLog
         colDetails.HeaderText = "Details"
         colDetails.ReadOnly = True
         colDetails.DefaultCellStyle = New DataGridViewCellStyle() With {
-            .Alignment = DataGridViewContentAlignment.MiddleCenter,
-            .WrapMode = DataGridViewTriState.True
-        }
+        .Alignment = DataGridViewContentAlignment.MiddleCenter,
+        .WrapMode = DataGridViewTriState.True
+    }
         InventoryLogDataGrid.Columns.Add(colDetails)
 
         ' Add ActionTime column
@@ -148,27 +175,6 @@ Public Class AuditLog
         InventoryLogDataGrid.RowHeadersVisible = False
     End Sub
 
-    Private Sub InitializeSortComboBox()
-        SortBy.Items.Clear()
-        SortBy.Items.Add("Date (Newest First)")
-        SortBy.Items.Add("Date (Oldest First)")
-        SortBy.Items.Add("Username (A-Z)")
-        SortBy.Items.Add("Username (Z-A)")
-        SortBy.Items.Add("Action Type (A-Z)")
-        SortBy.Items.Add("Action Type (Z-A)")
-        SortBy.Items.Add("Audit ID (Ascending)")
-        SortBy.Items.Add("Audit ID (Descending)")
-        SortBy.SelectedIndex = 0
-
-        ' Ensure date picker default is today (unchanged by other code)
-        Try
-            Guna2DateTimePicker1.ShowCheckBox = True
-            Guna2DateTimePicker1.Value = Date.Today
-            ' Keep checked state controlled in Load; do not override here if caller set differently
-        Catch
-        End Try
-    End Sub
-
     Private Sub InitializeFilterTypeComboBox()
         filtertype.Items.Clear()
         filtertype.Items.Add("All Logs")
@@ -184,12 +190,12 @@ Public Class AuditLog
         filtertype.SelectedIndex = 0
     End Sub
 
-    Private Async Function GetAuditLogsDataAsync(sortOrder As String, filterType As String, Optional filterDate As DateTime? = Nothing) As Task(Of List(Of Dictionary(Of String, Object)))
+    ' Updated signature: added selectedUser filter parameter
+    Private Async Function GetAuditLogsDataAsync(filterType As String, Optional filterDate As DateTime? = Nothing, Optional selectedUser As String = "All Accounts") As Task(Of List(Of Dictionary(Of String, Object)))
         Return Await Task.Run(Function()
                                   Dim auditLogs As New List(Of Dictionary(Of String, Object))()
 
                                   Dim ft As String = If(filterType, "").Trim().ToLowerInvariant()
-                                  Dim so As String = If(sortOrder, "").Trim()
 
                                   Dim query As String = "SELECT a.AuditID, u.Username, a.Action, a.Details, a.ActionTime FROM AuditLog a LEFT JOIN Users u ON a.UserID = u.UserID"
                                   Dim whereClauses As New List(Of String)()
@@ -227,67 +233,54 @@ Public Class AuditLog
                                       parameters.Add(New SqlParameter("@FilterDate", System.Data.SqlDbType.Date) With {.Value = filterDate.Value.Date})
                                   End If
 
+                                  ' User filter
+                                  If Not String.IsNullOrWhiteSpace(selectedUser) AndAlso selectedUser <> "All Accounts" Then
+                                      whereClauses.Add("u.Username = @Username")
+                                      parameters.Add(New SqlParameter("@Username", selectedUser))
+                                  End If
+
                                   If whereClauses.Count > 0 Then
                                       query += " WHERE " & String.Join(" AND ", whereClauses)
                                   End If
 
-                                  ' Sorting
-                                  Select Case so
-                                      Case "Date (Newest First)"
-                                          query += " ORDER BY a.ActionTime DESC"
-                                      Case "Date (Oldest First)"
-                                          query += " ORDER BY a.ActionTime ASC"
-                                      Case "Username (A-Z)"
-                                          query += " ORDER BY u.Username ASC, a.ActionTime DESC"
-                                      Case "Username (Z-A)"
-                                          query += " ORDER BY u.Username DESC, a.ActionTime DESC"
-                                      Case "Action Type (A-Z)"
-                                          query += " ORDER BY a.Action ASC, a.ActionTime DESC"
-                                      Case "Action Type (Z-A)"
-                                          query += " ORDER BY a.Action DESC, a.ActionTime DESC"
-                                      Case "Audit ID (Ascending)"
-                                          query += " ORDER BY a.AuditID ASC"
-                                      Case "Audit ID (Descending)"
-                                          query += " ORDER BY a.AuditID DESC"
-                                      Case Else
-                                          query += " ORDER BY a.ActionTime DESC"
-                                  End Select
+                                  ' Fixed sort (newest first)
+                                  query += " ORDER BY a.ActionTime DESC"
 
-                                  ' Execute reader and build results (no modal debug here)
                                   Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters.ToArray())
                                       While reader.Read()
                                           Dim auditData As New Dictionary(Of String, Object) From {
-                                              {"AuditID", Convert.ToInt32(reader("AuditID"))},
-                                              {"Username", If(IsDBNull(reader("Username")), "", reader("Username").ToString())},
-                                              {"Action", If(IsDBNull(reader("Action")), "", reader("Action").ToString())},
-                                              {"Details", If(IsDBNull(reader("Details")), "", reader("Details").ToString())},
-                                              {"ActionTime", Convert.ToDateTime(reader("ActionTime"))}
-                                          }
+                                          {"AuditID", Convert.ToInt32(reader("AuditID"))},
+                                          {"Username", If(IsDBNull(reader("Username")), "", reader("Username").ToString())},
+                                          {"Action", If(IsDBNull(reader("Action")), "", reader("Action").ToString())},
+                                          {"Details", If(IsDBNull(reader("Details")), "", reader("Details").ToString())},
+                                          {"ActionTime", Convert.ToDateTime(reader("ActionTime"))}
+                                      }
                                           auditLogs.Add(auditData)
                                       End While
                                   End Using
 
-                                  Console.WriteLine($"GetAuditLogsDataAsync returned {auditLogs.Count} rows")
-
                                   Return auditLogs
                               End Function)
     End Function
-
     Private Async Function LoadAuditLogsAsync() As Task
         Try
             overlayPanel.Visible = True
             overlayPanel.BringToFront()
 
-            Dim sortOrder As String = If(SortBy.SelectedItem IsNot Nothing, SortBy.SelectedItem.ToString(), "Date (Newest First)")
             Dim selectedFilterType As String = If(filtertype.SelectedItem IsNot Nothing, filtertype.SelectedItem.ToString(), "All Logs")
             Dim filterDate As DateTime? = Nothing
-            If Guna2DateTimePicker1.Checked Then
+            If Guna2DateTimePicker1 IsNot Nothing AndAlso Guna2DateTimePicker1.ShowCheckBox AndAlso Guna2DateTimePicker1.Checked Then
                 filterDate = Guna2DateTimePicker1.Value.Date
             End If
 
-            Dim results = Await GetAuditLogsDataAsync(sortOrder, selectedFilterType, filterDate)
+            Dim selectedUser As String = "All Accounts"
+            If cmbAccounts IsNot Nothing AndAlso cmbAccounts.SelectedItem IsNot Nothing Then
+                selectedUser = cmbAccounts.SelectedItem.ToString()
+            End If
 
-            ' Remove any previous "no records" label
+            Dim results = Await GetAuditLogsDataAsync(selectedFilterType, filterDate, selectedUser)
+
+            ' Remove any existing no-records label
             Dim existingLbl = Me.Controls.OfType(Of Label)().FirstOrDefault(Function(l) l.Name = "lblNoAuditLogs")
             If existingLbl IsNot Nothing Then
                 Me.Controls.Remove(existingLbl)
@@ -297,22 +290,19 @@ Public Class AuditLog
             ' Clear grid before updating
             InventoryLogDataGrid.Rows.Clear()
 
-            ' If no results, show a single styled row inside the DataGridView
+            ' Handle no results
             If results Is Nothing OrElse results.Count = 0 Then
                 Dim rowIndex As Integer = InventoryLogDataGrid.Rows.Add()
-                ' Ensure all cells are empty first
                 For i As Integer = 0 To InventoryLogDataGrid.Columns.Count - 1
                     InventoryLogDataGrid.Rows(rowIndex).Cells(i).Value = String.Empty
                 Next
 
-                ' Put the message in the Details column if present, otherwise first column
                 If InventoryLogDataGrid.Columns.Contains("Details") Then
-                    InventoryLogDataGrid.Rows(rowIndex).Cells("Details").Value = "No audit logs found."
+                    InventoryLogDataGrid.Rows(rowIndex).Cells("Details").Value = "No audit logs found for the selected filters."
                 Else
-                    InventoryLogDataGrid.Rows(rowIndex).Cells(0).Value = "No audit logs found."
+                    InventoryLogDataGrid.Rows(rowIndex).Cells(0).Value = "No audit logs found for the selected filters."
                 End If
 
-                ' Style the no-records row to stand out and be centered
                 Dim noRow As DataGridViewRow = InventoryLogDataGrid.Rows(rowIndex)
                 noRow.ReadOnly = True
                 noRow.DefaultCellStyle.ForeColor = Color.LightGray
@@ -325,15 +315,24 @@ Public Class AuditLog
                 Return
             End If
 
-            ' Populate grid with results
+            ' Populate grid
             For Each rowData In results
                 Dim rowIndex As Integer = InventoryLogDataGrid.Rows.Add()
-                InventoryLogDataGrid.Rows(rowIndex).Cells("AuditID").Value = rowData("AuditID").ToString()
-                InventoryLogDataGrid.Rows(rowIndex).Cells("Username").Value = rowData("Username").ToString()
-                InventoryLogDataGrid.Rows(rowIndex).Cells("Action").Value = rowData("Action").ToString()
-                InventoryLogDataGrid.Rows(rowIndex).Cells("Details").Value = rowData("Details").ToString()
-                InventoryLogDataGrid.Rows(rowIndex).Cells("ActionTime").Value = CType(rowData("ActionTime"), DateTime).ToString("MM/dd/yyyy HH:mm")
-                InventoryLogDataGrid.Rows(rowIndex).Cells("ActionType").Value = GetActionType(rowData("Action").ToString())
+                InventoryLogDataGrid.Rows(rowIndex).Cells("AuditID").Value = If(rowData.ContainsKey("AuditID"), rowData("AuditID").ToString(), String.Empty)
+                InventoryLogDataGrid.Rows(rowIndex).Cells("Username").Value = If(rowData.ContainsKey("Username"), rowData("Username").ToString(), String.Empty)
+                InventoryLogDataGrid.Rows(rowIndex).Cells("Action").Value = If(rowData.ContainsKey("Action"), rowData("Action").ToString(), String.Empty)
+                InventoryLogDataGrid.Rows(rowIndex).Cells("Details").Value = If(rowData.ContainsKey("Details"), rowData("Details").ToString(), String.Empty)
+
+                If rowData.ContainsKey("ActionTime") AndAlso TypeOf rowData("ActionTime") Is DateTime Then
+                    InventoryLogDataGrid.Rows(rowIndex).Cells("ActionTime").Value = CType(rowData("ActionTime"), DateTime).ToString("MM/dd/yyyy HH:mm")
+                Else
+                    InventoryLogDataGrid.Rows(rowIndex).Cells("ActionTime").Value = String.Empty
+                End If
+
+                InventoryLogDataGrid.Rows(rowIndex).Cells("ActionType").Value = GetActionType(If(rowData.ContainsKey("Action"), rowData("Action").ToString(), String.Empty))
+
+                ' Optional: tag row with original data for later use
+                InventoryLogDataGrid.Rows(rowIndex).Tag = rowData
             Next
 
             InventoryLogDataGrid.ClearSelection()
@@ -556,6 +555,7 @@ Public Class AuditLog
                                            btn.FillColor = System.Drawing.Color.FromArgb(48, 52, 54)
                                            btn.BorderColor = System.Drawing.Color.FromArgb(254, 191, 16)
                                            btn.Font = New Font("Poppins", 9, FontStyle.Bold)
+
                                        End If
                                    End Sub
         AddHandler btn.MouseLeave, Sub()
