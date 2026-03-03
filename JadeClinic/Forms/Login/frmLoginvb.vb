@@ -1312,4 +1312,31 @@ Public Class frmLoginvb
             End If
         End If
     End Sub
+
+    Private Sub lblForgotPass_Click(sender As Object, e As EventArgs) Handles lblForgotPass.Click
+        Try
+            ' Open the dedicated ForgotPasswordForm so the user can recover/reset credentials.
+            ' If the login username field is populated, attempt to prefill it on the forgot form (best-effort).
+            Dim forgotForm As New ForgotPasswordForm()
+
+            Try
+                Dim initialUsername = txtUserName.Text.Trim()
+                If Not String.IsNullOrEmpty(initialUsername) Then
+                    ' Best-effort: if the ForgotPasswordForm exposes a public property named InitialUsername, set it.
+                    Dim prop = forgotForm.GetType().GetProperty("InitialUsername")
+                    If prop IsNot Nothing AndAlso prop.CanWrite Then
+                        prop.SetValue(forgotForm, initialUsername)
+                    End If
+                End If
+            Catch ex As Exception
+                ' Non-fatal: prefilling is optional
+                Console.WriteLine($"Prefill attempt failed: {ex.Message}")
+            End Try
+
+            forgotForm.ShowDialog(Me)
+        Catch ex As Exception
+            Console.WriteLine($"Error opening Forgot Password dialog: {ex.Message}")
+            MessageBox.Show("Unable to open the Forgot Password dialog. Please try again.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
 End Class

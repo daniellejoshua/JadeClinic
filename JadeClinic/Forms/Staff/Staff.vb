@@ -64,6 +64,7 @@ Public Class Staff
         IdleTimeoutManager.Instance.StartMonitoring(Me)
     End Sub
 
+
     ' Profile dropdown panel
     Private profileDropdownPanel As Panel = Nothing
     Private isProfileDropdownVisible As Boolean = False
@@ -311,14 +312,29 @@ Public Class Staff
     End Function
 
 
+
+    Private Sub InitializeSortComboBox()
+        SortBy.Items.Clear()
+        SortBy.Items.Add("All Users")
+        SortBy.Items.Add("Admins Only")
+        SortBy.Items.Add("Managers Only")
+        SortBy.Items.Add("Staff Only")
+        SortBy.Items.Add("Sort by Username (A-Z)")
+        SortBy.Items.Add("Sort by Username (Z-A)")
+        SortBy.Items.Add("Sort by User ID (Ascending)")
+        SortBy.Items.Add("Sort by User ID (Descending)")
+        SortBy.SelectedIndex = 0
+    End Sub
+
+    ' CLEANED VERSION - Removed all QR code references
+    ' Separate method for DataGridView avatars (different size)
     Private Sub InitializeDataGridView()
         ' Clear existing columns
         Guna2DataGridView1.Columns.Clear()
         ' Center all cell text
         Guna2DataGridView1.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
 
-        ' (Optional) Center header text
-        ' Dark themed DataGridView (match SalesRecord / Inventory)
+        ' Dark themed DataGridView
         Guna2DataGridView1.BackgroundColor = System.Drawing.Color.FromArgb(41, 44, 45)
         Guna2DataGridView1.GridColor = System.Drawing.Color.White
         Guna2DataGridView1.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal
@@ -349,7 +365,7 @@ Public Class Staff
         Guna2DataGridView1.RowTemplate.Height = 60
         Guna2DataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing
 
-        ' Add columns (center aligned by default, except Username/FullName)
+        ' Add columns (center aligned by default, except Username/Email/Phone)
         Guna2DataGridView1.Columns.Add(New DataGridViewTextBoxColumn() With {
         .Name = "UserID",
         .HeaderText = "ID",
@@ -373,9 +389,17 @@ Public Class Staff
         .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleLeft}
     })
 
+        ' Replace FullName column with Email and Phone columns
         Guna2DataGridView1.Columns.Add(New DataGridViewTextBoxColumn() With {
-        .Name = "FullName",
-        .HeaderText = "Full Name",
+        .Name = "Email",
+        .HeaderText = "Email",
+        .ReadOnly = True,
+        .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleLeft}
+    })
+
+        Guna2DataGridView1.Columns.Add(New DataGridViewTextBoxColumn() With {
+        .Name = "Phone",
+        .HeaderText = "Phone",
         .ReadOnly = True,
         .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleLeft}
     })
@@ -413,27 +437,14 @@ Public Class Staff
         Guna2DataGridView1.MultiSelect = False
         Guna2DataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
     End Sub
-    Private Sub InitializeSortComboBox()
-        SortBy.Items.Clear()
-        SortBy.Items.Add("All Users")
-        SortBy.Items.Add("Admins Only")
-        SortBy.Items.Add("Managers Only")
-        SortBy.Items.Add("Staff Only")
-        SortBy.Items.Add("Sort by Username (A-Z)")
-        SortBy.Items.Add("Sort by Username (Z-A)")
-        SortBy.Items.Add("Sort by User ID (Ascending)")
-        SortBy.Items.Add("Sort by User ID (Descending)")
-        SortBy.SelectedIndex = 0
-    End Sub
 
-    ' CLEANED VERSION - Removed all QR code references
     Private Sub LoadUsersData(Optional sortOrder As String = "")
         Try
             ' Clear existing rows
             Guna2DataGridView1.Rows.Clear()
 
-            ' Build query without QR code and password fields
-            Dim query As String = "SELECT UserID, Username, PIN, FullName, UserRole, Photo, IsActive FROM Users"
+            ' Build query including Email and Phone
+            Dim query As String = "SELECT UserID, Username, PIN, Email, Phone, UserRole, Photo, IsActive FROM Users"
             Dim whereClause As String = ""
 
             Select Case sortOrder
@@ -468,8 +479,9 @@ Public Class Staff
                 While reader.Read()
                     Dim userId As Integer = Convert.ToInt32(reader("UserID"))
                     Dim username As String = reader("Username").ToString()
-                    Dim pin As String = reader("PIN").ToString()
-                    Dim fullName As String = If(IsDBNull(reader("FullName")), "", reader("FullName").ToString())
+                    Dim pin As String = If(IsDBNull(reader("PIN")), "", reader("PIN").ToString())
+                    Dim email As String = If(IsDBNull(reader("Email")), "", reader("Email").ToString())
+                    Dim phone As String = If(IsDBNull(reader("Phone")), "", reader("Phone").ToString())
                     Dim userRole As String = If(IsDBNull(reader("UserRole")), "Staff", reader("UserRole").ToString())
                     Dim isActive As Boolean = If(IsDBNull(reader("IsActive")), True, Convert.ToBoolean(reader("IsActive")))
 
@@ -488,30 +500,32 @@ Public Class Staff
                     ' Add row to DataGridView
                     Dim rowIndex As Integer = Guna2DataGridView1.Rows.Add()
 
-                    ' Set individual column values
+                    ' Set individual column values (Email and Phone replace FullName)
                     Guna2DataGridView1.Rows(rowIndex).Cells("UserID").Value = userId
                     Guna2DataGridView1.Rows(rowIndex).Cells("Photo").Value = userPhoto
                     Guna2DataGridView1.Rows(rowIndex).Cells("Username").Value = username
-                    Guna2DataGridView1.Rows(rowIndex).Cells("FullName").Value = fullName
+                    Guna2DataGridView1.Rows(rowIndex).Cells("Email").Value = email
+                    Guna2DataGridView1.Rows(rowIndex).Cells("Phone").Value = phone
                     Guna2DataGridView1.Rows(rowIndex).Cells("UserRole").Value = userRole
                     Guna2DataGridView1.Rows(rowIndex).Cells("IsActive").Value = If(isActive, "✅ Active", "❌ Inactive")
                     Guna2DataGridView1.Rows(rowIndex).Cells("Actions").Value = "👁️      |    ✏️  "
+
                     Dim statusCell = Guna2DataGridView1.Rows(rowIndex).Cells("IsActive")
                     statusCell.Value = If(isActive, "✅ Active", "❌ Inactive")
-
                     statusCell.Style.ForeColor = If(isActive, SD.Color.FromArgb(16, 216, 98), SD.Color.FromArgb(255, 71, 87))
                     statusCell.Style.Font = New Font(Guna2DataGridView1.Font, FontStyle.Bold)
 
-                    ' Store actual data in row tag for editing purposes (REMOVED PASSWORD AND QR CODE FIELDS)
+                    ' Store actual data in row tag for editing purposes (include Email and Phone)
                     Guna2DataGridView1.Rows(rowIndex).Tag = New Dictionary(Of String, Object) From {
-                        {"UserID", userId},
-                        {"Username", username},
-                        {"PIN", pin},
-                        {"FullName", fullName},
-                        {"UserRole", userRole},
-                        {"Photo", If(Not IsDBNull(reader("Photo")), reader("Photo"), Nothing)},
-                        {"IsActive", isActive}
-                    }
+                    {"UserID", userId},
+                    {"Username", username},
+                    {"PIN", pin},
+                    {"Email", email},
+                    {"Phone", phone},
+                    {"UserRole", userRole},
+                    {"Photo", If(Not IsDBNull(reader("Photo")), reader("Photo"), Nothing)},
+                    {"IsActive", isActive}
+                }
                 End While
             End Using
 
@@ -524,8 +538,6 @@ Public Class Staff
             End If
         End Try
     End Sub
-
-    ' Separate method for DataGridView avatars (different size)
     Private Function CreateDefaultAvatar(username As String) As System.Drawing.Image
         Dim bitmap As New Bitmap(45, 45)  ' Slightly larger for photo column
         Using g As Graphics = Graphics.FromImage(bitmap)
@@ -637,14 +649,18 @@ Public Class Staff
                 userData("UserID") = userData("ID")
             End If
 
-            ' If Photo or QRCode missing, fetch from DB using UserID
+            ' If Photo/QRCode/Email/Phone missing, fetch from DB using UserID
             Dim needsPhoto As Boolean = Not userData.ContainsKey("Photo") OrElse userData("Photo") Is Nothing
             Dim needsQr As Boolean = Not userData.ContainsKey("QRCode") OrElse String.IsNullOrWhiteSpace(If(userData("QRCode"), String.Empty).ToString())
+            Dim needsEmail As Boolean = Not userData.ContainsKey("Email") OrElse String.IsNullOrWhiteSpace(If(userData("Email"), String.Empty).ToString())
+            Dim needsPhone As Boolean = Not userData.ContainsKey("Phone") OrElse String.IsNullOrWhiteSpace(If(userData("Phone"), String.Empty).ToString())
 
-            If (needsPhoto OrElse needsQr) AndAlso userData.ContainsKey("UserID") Then
+            If (needsPhoto OrElse needsQr OrElse needsEmail OrElse needsPhone) AndAlso userData.ContainsKey("UserID") Then
                 Try
                     Dim userId As Integer = Convert.ToInt32(userData("UserID"))
-                    Using reader As SqlDataReader = Utilities.ExecuteReader("SELECT Photo, QRCode FROM Users WHERE UserID = @UserID", New SqlParameter("@UserID", userId))
+                    Using reader As SqlDataReader = Utilities.ExecuteReader(
+                    "SELECT Photo, QRCode, Email, Phone FROM Users WHERE UserID = @UserID",
+                    New SqlParameter("@UserID", userId))
                         If reader.Read() Then
                             If needsPhoto AndAlso Not IsDBNull(reader("Photo")) Then
                                 userData("Photo") = CType(reader("Photo"), Byte())
@@ -652,11 +668,17 @@ Public Class Staff
                             If needsQr AndAlso Not IsDBNull(reader("QRCode")) Then
                                 userData("QRCode") = reader("QRCode").ToString()
                             End If
+                            If needsEmail AndAlso Not IsDBNull(reader("Email")) Then
+                                userData("Email") = reader("Email").ToString()
+                            End If
+                            If needsPhone AndAlso Not IsDBNull(reader("Phone")) Then
+                                userData("Phone") = reader("Phone").ToString()
+                            End If
                         End If
                     End Using
                 Catch ex As Exception
                     ' Non-fatal: if DB fetch fails we'll still show the card with whatever we have
-                    Console.WriteLine($"Error fetching Photo/QRCode from DB: {ex.Message}")
+                    Console.WriteLine($"Error fetching Photo/QRCode/Email/Phone from DB: {ex.Message}")
                 End Try
             End If
 
@@ -669,7 +691,6 @@ Public Class Staff
             MessageBox.Show($"Unable to show ID Card: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
-
     ' PIN confirmation dialog for editing staff
     Private Function ShowPinDialog(promptText As String) As Boolean
         Dim pinDialog As New Form()
