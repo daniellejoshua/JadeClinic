@@ -367,7 +367,8 @@ Public Class Sales
         Me.FormBorderStyle = FormBorderStyle.FixedDialog
         Me.MaximizeBox = False
         Me.MinimizeBox = False
-
+        ' Add near the end of Sales_Load, after labels are initialized:
+        RestoreCartState()
 
         ArrangeCategoryButtonsFlexWrap()
         ' Cache original colors and mapping so overlays follow their buttons
@@ -1792,6 +1793,8 @@ Public Class Sales
         End Try
     End Sub
     Private Sub NavSuppliers_Click(sender As Object, e As EventArgs)
+        PersistCartState()
+
         Try
             isNavigating = True
             Supplier.Show()
@@ -3741,6 +3744,8 @@ Public Class Sales
     ' Reset sale data for next transaction
     ' ENHANCED: Reset sale data for next transactio    n with proper order panel refresh
     Private Sub ResetSale()
+        ' Inside ResetSale(), add:
+        ClearPersistedCartState()
         ' Clear order
         currentOrderList.Clear()
 
@@ -4344,22 +4349,28 @@ Public Class Sales
     End Sub
     ' Navigation event handlers
     Private Sub NavDashboard_Click(sender As Object, e As EventArgs)
+        PersistCartState()
+
         isNavigating = True
         Dashboard.Show()
         Me.Close()
     End Sub
 
     Private Sub NavInventory_Click(sender As Object, e As EventArgs)
+        PersistCartState()
+
         isNavigating = True
         Inventory.Show()
         Me.Close()
     End Sub
 
     Private Sub NavSalesRecords_Click(sender As Object, e As EventArgs)
+
         Try
             isNavigating = True
 
 
+            PersistCartState()
 
             ' Open SalesRecord form
             Dim salesRecordForm As New SalesRecord()
@@ -4374,12 +4385,16 @@ Public Class Sales
     End Sub
 
     Private Sub NavStaff_Click(sender As Object, e As EventArgs)
+        PersistCartState()
+
         isNavigating = True
         Staff.Show()
         Me.Close()
     End Sub
 
     Private Sub NavInventoryLog_Click(sender As Object, e As EventArgs)
+        PersistCartState()
+
         isNavigating = True
         InventoryLog.Show()
         Me.Close()
@@ -4393,6 +4408,8 @@ Public Class Sales
     End Sub
 
     Private Sub NavigateToProfileSettings()
+        PersistCartState()
+
         Try
             If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
                 Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Navigation", "Navigated from Sales to ProfileSettings")
@@ -5447,4 +5464,92 @@ Public Class Sales
             Return Convert.ToBase64String(hash)
         End Using
     End Function
+
+    ' Add near other private fields in class Sales
+    Private Shared persistedOrderList As New List(Of Dictionary(Of String, Object))()
+    Private Shared persistedDiscountType As String = "None"
+    Private Shared persistedDiscountValue As Decimal = 0D
+    Private Shared persistedDiscountAmount As Decimal = 0D
+    Private Shared persistedDiscountedItemProductId As Integer? = Nothing
+    Private Shared persistedDiscountedItemName As String = ""
+    Private Shared persistedSelectedCustomerId As Integer? = Nothing
+    Private Shared persistedSelectedCustomerName As String = Nothing
+    Private Shared persistedSelectedCustomerPhone As String = ""
+    Private Shared persistedSelectedCustomerEmail As String = ""
+    Private Shared persistedSelectedCustomerTIN As String = ""
+    Private Shared persistedSelectedCustomerType As String = "Walk-in"
+    Private Shared persistedSelectedPaymentMethod As String = "Cash"
+    Private Shared persistedPaymentReference As String = ""
+
+    Private Function CloneOrderList(source As List(Of Dictionary(Of String, Object))) As List(Of Dictionary(Of String, Object))
+        Dim cloned As New List(Of Dictionary(Of String, Object))()
+        If source Is Nothing Then Return cloned
+
+        For Each item In source
+            Dim copy As New Dictionary(Of String, Object)()
+            For Each kv In item
+                copy(kv.Key) = kv.Value
+            Next
+            cloned.Add(copy)
+        Next
+        Return cloned
+    End Function
+
+    Private Sub PersistCartState()
+        persistedOrderList = CloneOrderList(currentOrderList)
+        persistedDiscountType = discountType
+        persistedDiscountValue = discountValue
+        persistedDiscountAmount = discountAmount
+        persistedDiscountedItemProductId = discountedItemProductId
+        persistedDiscountedItemName = discountedItemName
+
+        persistedSelectedCustomerId = selectedCustomerId
+        persistedSelectedCustomerName = selectedCustomerName
+        persistedSelectedCustomerPhone = selectedCustomerPhone
+        persistedSelectedCustomerEmail = selectedCustomerEmail
+        persistedSelectedCustomerTIN = selectedCustomerTIN
+        persistedSelectedCustomerType = selectedCustomerType
+        persistedSelectedPaymentMethod = selectedPaymentMethod
+        persistedPaymentReference = paymentReference
+    End Sub
+
+    Private Sub RestoreCartState()
+        If persistedOrderList Is Nothing OrElse persistedOrderList.Count = 0 Then Return
+
+        currentOrderList = CloneOrderList(persistedOrderList)
+        discountType = persistedDiscountType
+        discountValue = persistedDiscountValue
+        discountAmount = persistedDiscountAmount
+        discountedItemProductId = persistedDiscountedItemProductId
+        discountedItemName = persistedDiscountedItemName
+
+        selectedCustomerId = persistedSelectedCustomerId
+        selectedCustomerName = persistedSelectedCustomerName
+        selectedCustomerPhone = persistedSelectedCustomerPhone
+        selectedCustomerEmail = persistedSelectedCustomerEmail
+        selectedCustomerTIN = persistedSelectedCustomerTIN
+        selectedCustomerType = persistedSelectedCustomerType
+        selectedPaymentMethod = persistedSelectedPaymentMethod
+        paymentReference = persistedPaymentReference
+
+        RefreshOrderDisplay()
+    End Sub
+
+    Public Shared Sub ClearPersistedCartState()
+        persistedOrderList.Clear()
+        persistedDiscountType = "None"
+        persistedDiscountValue = 0D
+        persistedDiscountAmount = 0D
+        persistedDiscountedItemProductId = Nothing
+        persistedDiscountedItemName = ""
+
+        persistedSelectedCustomerId = Nothing
+        persistedSelectedCustomerName = Nothing
+        persistedSelectedCustomerPhone = ""
+        persistedSelectedCustomerEmail = ""
+        persistedSelectedCustomerTIN = ""
+        persistedSelectedCustomerType = "Walk-in"
+        persistedSelectedPaymentMethod = "Cash"
+        persistedPaymentReference = ""
+    End Sub
 End Class

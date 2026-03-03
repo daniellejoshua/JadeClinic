@@ -490,13 +490,21 @@ Public Class SalesRecord
         btnLogOut.TextAlign = ContentAlignment.MiddleLeft
         btnLogOut.Cursor = Cursors.Hand
 
-        AddHandler btnLogOut.MouseEnter, Sub() btnLogOut.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
+
+        AddHandler btnLogOut.MouseEnter, Sub() btnLogOut.BackColor = Graphite
         AddHandler btnLogOut.MouseLeave, Sub() btnLogOut.BackColor = System.Drawing.Color.Transparent
         AddHandler btnLogOut.Click, Sub()
-                                        If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
-                                            Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Log Out", "User logged out of the application.")
+                                        Dim result As DialogResult = MessageBox.Show("Are you sure you want to logout?", "Confirm Logout", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
+                                        If result = DialogResult.Yes Then
+                                            If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+                                                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Log Out", "User logged out of the application.")
+                                            End If
+                                            frmLoginvb.LogoutUser()
+                                            isNavigating = True
+                                            Me.Hide()
+                                            Dim loginForm As New frmLoginvb()
+                                            loginForm.Show()
                                         End If
-                                        Me.Close()
                                     End Sub
 
         profileDropdownPanel.Controls.Add(btnProfileSettings)

@@ -1404,4 +1404,19 @@ Public Class ProfileSettings
         End Try
     End Sub
 
+    Private Sub lblLogout_Click(sender As Object, e As EventArgs) Handles lblLogout.Click
+
+
+        Dim result As DialogResult = MessageBox.Show("Are you sure you want to logout?", "Confirm Logout", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
+        If result = DialogResult.Yes Then
+            If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Log Out", "User logged out of the application.")
+            End If
+            frmLoginvb.LogoutUser()
+            isNavigating = True
+            Me.Hide()
+            Dim loginForm As New frmLoginvb()
+            loginForm.Show()
+        End If
+    End Sub
 End Class
