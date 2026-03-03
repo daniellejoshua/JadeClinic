@@ -380,7 +380,9 @@ Public Class Sales
         End Try
     End Sub
     Private Sub Sales_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-
+        ' Stop idle timeout monitoring
+        ' Start idle timeout monitoring
+        IdleTimeoutManager.Instance.StartMonitoring(Me)
         Me.KeyPreview = True
         originalCategoryPanelControls = New List(Of Control)(CategoryPanel.Controls.Cast(Of Control)())
 
@@ -1818,10 +1820,11 @@ Public Class Sales
 
             ' Create navigation buttons based on role
             ' Dashboard Button (not active)
-            Dim navDashboardBtn = CreateLargeNavButton("🏠 Dashboard", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-            AddHandler navDashboardBtn.Click, AddressOf NavDashboard_Click
-            buttonIndex += 1
-
+            If currentRole = "MANAGER" Or currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
+                Dim navDashboardBtn = CreateLargeNavButton("🏠 Dashboard", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
+                AddHandler navDashboardBtn.Click, AddressOf NavDashboard_Click
+                buttonIndex += 1
+            End If
             ' POS/Sales Button (ACTIVE - we're on this page)
             Dim navPOSBtn = CreateLargeNavButton("🛒 POS / Sales", startY + buttonIndex * (buttonHeight + buttonSpacing), True, buttonWidth, buttonHeight)
             buttonIndex += 1

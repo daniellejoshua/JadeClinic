@@ -14,6 +14,8 @@ Public Class Staff
 
     Private Sub Staff_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         ' Initialize QuestPDF
+        ' Stop idle timeout monitoring
+        IdleTimeoutManager.Instance.StartMonitoring(Me)
         QuestPDF.Settings.License = LicenseType.Community
         Me.FormBorderStyle = FormBorderStyle.FixedDialog
         Me.MaximizeBox = False
@@ -29,6 +31,14 @@ Public Class Staff
             MessageBox.Show("Access denied. Only administrators can access Staff Management.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning)
             Me.Close()
             Return
+        End If
+
+        ' Hide Add Staff button for Manager role (only allow for Admin)
+        Dim currentRole As String = If(frmLoginvb.LoggedInRole, "").ToUpper()
+        If currentRole = "MANAGER" Then
+            btnDiscount.Visible = False
+        Else
+            btnDiscount.Visible = True
         End If
 
         ' Create navigation menu (hardcoded from Dashboard)
@@ -248,14 +258,21 @@ Public Class Staff
 
         ' Add click event to Log Out
         AddHandler btnLogOut.Click, Sub()
-                                        ' Log the logout action
-                                        If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
-                                            Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Log Out", "User logged out of the application.")
-                                        End If
+                                        AddHandler btnLogOut.Click, Sub()
+                                                                        Dim result As DialogResult = MessageBox.Show("Are you sure you want to logout?", "Confirm Logout", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
+                                                                        If result = DialogResult.Yes Then
 
-                                        ' Close the application and the main form (frmLoginvb)
-                                        frmLoginvb.Close()
-                                        Application.Exit()
+                                                                            If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+                                                                                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Log Out", "User logged out of the application.")
+                                                                            End If
+                                                                            frmLoginvb.LogoutUser()
+                                                                            isNavigating = True
+                                                                            Me.Hide()
+                                                                            Dim loginForm As New frmLoginvb()
+                                                                            loginForm.Show()
+                                                                        End If
+                                                                    End Sub
+
                                     End Sub
 
         ' Add buttons to panel
@@ -304,7 +321,8 @@ Public Class Staff
     Private Function IsUserAdmin() As Boolean
         Try
             Dim currentRole As String = If(frmLoginvb.LoggedInRole, "").ToUpper()
-            Return currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR"
+            ' Allow both Manager and Admin to access Staff Management page
+            Return currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Or currentRole = "MANAGER"
         Catch ex As Exception
             Console.WriteLine($"Error checking admin role: {ex.Message}")
             Return False
@@ -655,7 +673,7 @@ Public Class Staff
             Dim needsEmail As Boolean = Not userData.ContainsKey("Email") OrElse String.IsNullOrWhiteSpace(If(userData("Email"), String.Empty).ToString())
             Dim needsPhone As Boolean = Not userData.ContainsKey("Phone") OrElse String.IsNullOrWhiteSpace(If(userData("Phone"), String.Empty).ToString())
 
-            If (needsPhoto OrElse needsQr OrElse needsEmail OrElse needsPhone) AndAlso userData.ContainsKey("UserID") Then
+            If (needsPhoto Or needsQr Or needsEmail Or needsPhone) AndAlso userData.ContainsKey("UserID") Then
                 Try
                     Dim userId As Integer = Convert.ToInt32(userData("UserID"))
                     Using reader As SqlDataReader = Utilities.ExecuteReader(
@@ -769,6 +787,13 @@ Public Class Staff
                 Return
             End If
 
+            ' Check if current user is Manager - restrict editing for Managers
+            Dim currentRole As String = If(frmLoginvb.LoggedInRole, "").ToUpper()
+            If currentRole = "MANAGER" Then
+                MessageBox.Show("Access denied. Managers can only view staff information, not edit.", "Edit Restricted", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                Return
+            End If
+
             ' Resolve UserID safely
             Dim targetUserId As Integer = 0
             If userData.ContainsKey("UserID") Then
@@ -861,6 +886,25 @@ Public Class Staff
                 e.Cancel = True
             End If
         End If
+    End Sub
+
+    ' Export button functionality for Staff Management
+    Private Sub Exportbtn_Click(sender As Object, e As EventArgs) Handles Exportbtn.Click
+        Try
+            ' Get current sort order
+            Dim sortOrder As String = If(SortBy?.SelectedItem?.ToString(), "")
+
+            ' Call StaffExporter with current sort order
+            StaffExporter.ExportStaffReport(sortOrder)
+
+        Catch ex As Exception
+            MessageBox.Show($"Export failed: {ex.Message}", "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+
+            ' Log export failure
+            If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Staff Export Failed", $"Error: {ex.Message}")
+            End If
+        End Try
     End Sub
 
     Private Sub CreateNavigationMenu()
@@ -1027,6 +1071,7 @@ Public Class Staff
                                            btn.FillColor = System.Drawing.Color.FromArgb(48, 52, 54)
                                            btn.BorderColor = System.Drawing.Color.FromArgb(254, 191, 16)
                                            btn.Font = New Font("Poppins", 9, FontStyle.Bold)
+
                                        End If
                                    End Sub
         AddHandler btn.MouseLeave, Sub()

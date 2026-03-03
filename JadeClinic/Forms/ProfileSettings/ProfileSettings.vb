@@ -37,7 +37,9 @@ Public Class ProfileSettings
     Private ReadOnly AlertRed As Color = Color.FromArgb(255, 71, 87)
 
     Private Sub ProfileSettings_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        ' Initialize form
+
+        ' Stop idle timeout monitoring
+        IdleTimeoutManager.Instance.StartMonitoring(Me) ' Initialize form
         Me.MaximizeBox = False
         Me.Text = "Profile Settings - Personal Information"
 
@@ -385,18 +387,6 @@ Public Class ProfileSettings
 
         ' Set focus back to form for keyboard handling
         Me.Focus()
-    End Sub
-
-    Private Sub LogoutUser()
-        Try
-            ' Clear session and show login form
-            frmLoginvb.LogoutUser()
-            isNavigating = True
-            Me.Close()
-            frmLoginvb.Show()
-        Catch ex As Exception
-            MessageBox.Show($"Error during logout: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-        End Try
     End Sub
 
     Private Sub btnSave_Click(sender As Object, e As EventArgs) Handles btnSave.Click
@@ -995,7 +985,7 @@ Public Class ProfileSettings
         ' Add click events for side panel options
         AddHandler lblProfileSettings.Click, Sub() ShowProfileSettingsPanel()
         AddHandler lblChangePin.Click, AddressOf lblChangePin_Click
-        AddHandler lblLogout.Click, Sub() LogoutUser()
+        AddHandler lblLogout.Click, AddressOf lblLogout_Click ' Use the proper event handler instead of inline Sub
 
         ' Add hover effects
         AddHoverEffect(lblProfileSettings)
@@ -1179,10 +1169,12 @@ Public Class ProfileSettings
             Dim currentRole As String = If(frmLoginvb.LoggedInRole, "Staff").ToUpper()
 
             ' Dashboard Button (not active)
-            Dim navDashboardBtn = CreateLargeNavButton("🏠 Dashboard", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-            AddHandler navDashboardBtn.Click, AddressOf NavDashboard_Click
-            buttonIndex += 1
+            If currentRole = "MANAGER" Or currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
 
+                Dim navDashboardBtn = CreateLargeNavButton("🏠 Dashboard", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
+                AddHandler navDashboardBtn.Click, AddressOf NavDashboard_Click
+                buttonIndex += 1
+            End If
             ' POS/Sales Button (not active here — this form is ProfileSettings)
             Dim navPOSBtn = CreateLargeNavButton("🛒 POS / Sales", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
             AddHandler navPOSBtn.Click, AddressOf NavPOS_Click
@@ -1405,18 +1397,55 @@ Public Class ProfileSettings
     End Sub
 
     Private Sub lblLogout_Click(sender As Object, e As EventArgs) Handles lblLogout.Click
-
-
-        Dim result As DialogResult = MessageBox.Show("Are you sure you want to logout?", "Confirm Logout", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
-        If result = DialogResult.Yes Then
-            If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
-                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Log Out", "User logged out of the application.")
+        Try
+            Dim result As DialogResult = MessageBox.Show("Are you sure you want to logout?", "Confirm Logout", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
+            If result = DialogResult.Yes Then
+                If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+                    Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Log Out", "User logged out of the application.")
+                End If
+                frmLoginvb.LogoutUser()
+                isNavigating = True
+                Me.Close()
+                Dim loginForm As New frmLoginvb()
+                loginForm.Show()
             End If
-            frmLoginvb.LogoutUser()
-            isNavigating = True
-            Me.Hide()
-            Dim loginForm As New frmLoginvb()
-            loginForm.Show()
+        Catch ex As Exception
+            MessageBox.Show($"Error during logout: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
+
+    Private Sub ProfileSettings_FormClosing(sender As Object, e As FormClosingEventArgs) Handles Me.FormClosing
+        ' Stop idle timeout monitoring
+        IdleTimeoutManager.Instance.StopMonitoring(Me)
+
+        ' If this is programmatic navigation (like logout), don't show confirmation
+        If isNavigating Then
+            Return
+        End If
+
+        ' Only show confirmation for user-initiated close (X button)
+        If e.CloseReason = CloseReason.UserClosing Then
+            Dim result As DialogResult = MessageBox.Show("Are you sure you want to exit the application?", "Exit Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
+
+            If result = DialogResult.Yes Then
+                ' Log the exit action
+                If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+                    Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Application Exit", "User exited the application via Profile Settings form")
+                End If
+
+                ' Close all forms properly
+                For Each form As Form In Application.OpenForms.Cast(Of Form).ToArray()
+                    If form IsNot Me Then
+                        form.Close()
+                    End If
+                Next
+
+                ' Now exit the application
+                Application.Exit()
+            Else
+                ' Cancel the form closing
+                e.Cancel = True
+            End If
         End If
     End Sub
 End Class

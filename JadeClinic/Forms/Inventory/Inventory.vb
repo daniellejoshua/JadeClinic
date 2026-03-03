@@ -33,7 +33,8 @@ Public Class Inventory
         ' Apply the new visual palette (non-destructive — overrides colors at runtime)
         ' Initialize custom tooltip system
         InitializeCustomTooltip()
-
+        ' Stop idle timeout monitoring
+        IdleTimeoutManager.Instance.StartMonitoring(Me)
         ' Make form non-resizable
         Me.FormBorderStyle = FormBorderStyle.FixedDialog
         Me.MaximizeBox = False

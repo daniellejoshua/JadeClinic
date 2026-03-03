@@ -1254,21 +1254,37 @@ Public Class frmLoginvb
             Me.Hide()
             pinInput = ""
 
-            ' Add error handling for Dashboard instantiation
+            ' Route user to appropriate form based on their role
             Try
-                Console.WriteLine("Creating Dashboard from PIN validation...")
-                Dim dashboardForm As New Dashboard()
-                Console.WriteLine("Showing Dashboard from PIN...")
-                dashboardForm.Show()
-                Console.WriteLine("Dashboard shown successfully from PIN!")
+                Console.WriteLine($"Routing user {LoggedInUsername} with role: {LoggedInRole}")
+
+                ' Check user role and route accordingly
+                Dim userRole As String = If(LoggedInRole, "Staff").ToUpper()
+
+                If userRole = "STAFF" Then
+                    ' Staff users go directly to Sales (POS)
+                    Console.WriteLine("Creating Sales form for Staff user...")
+                    Dim salesForm As New Sales()
+                    Console.WriteLine("Showing Sales form for Staff...")
+                    salesForm.Show()
+                    Console.WriteLine("Sales form shown successfully for Staff user!")
+                Else
+                    ' Managers and Admins go to Dashboard
+                    Console.WriteLine("Creating Dashboard for Manager/Admin user...")
+                    Dim dashboardForm As New Dashboard()
+                    Console.WriteLine("Showing Dashboard for Manager/Admin...")
+                    dashboardForm.Show()
+                    Console.WriteLine("Dashboard shown successfully for Manager/Admin user!")
+                End If
+
             Catch ex As Exception
-                Console.WriteLine($"Error showing dashboard from PIN: {ex.Message}")
+                Console.WriteLine($"Error showing target form: {ex.Message}")
                 Console.WriteLine($"Stack trace: {ex.StackTrace}")
 
                 ' Show the login form again and display error
                 Me.Show()
-                MessageBox.Show($"Error opening dashboard: {ex.Message}{vbCrLf}{vbCrLf}Please try logging in again.",
-                          "Dashboard Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                MessageBox.Show($"Error opening application: {ex.Message}{vbCrLf}{vbCrLf}Please try logging in again.",
+                          "Application Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
             End Try
         Else
             failedPinAttempts += 1
@@ -1347,6 +1363,20 @@ Public Class frmLoginvb
         Catch ex As Exception
             Console.WriteLine($"Error opening Forgot Password dialog: {ex.Message}")
             MessageBox.Show("Unable to open the Forgot Password dialog. Please try again.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
+
+    Private Sub Guna2CheckBox1_CheckedChanged(sender As Object, e As EventArgs) Handles Guna2CheckBox1.CheckedChanged
+        Try
+            If Guna2CheckBox1.Checked Then
+                ' Reveal password (clear PasswordChar)
+                txtPassword.PasswordChar = ChrW(0)
+            Else
+                ' Hide password (use bullet as on form load)
+                txtPassword.PasswordChar = "•"c
+            End If
+        Catch ex As Exception
+            Console.WriteLine($"Show/hide password toggle failed: {ex.Message}")
         End Try
     End Sub
 End Class

@@ -28,7 +28,8 @@ Public Class AddStaff
         SetupForm()
         SetDefaultImage()
         InitializeRoleComboBox()
-
+        ' Stop idle timeout monitoring
+        IdleTimeoutManager.Instance.StartMonitoring(Me)
         ' If not in edit mode, perform initial validation
         If Not isEditMode Then
             ValidateForm()
@@ -1498,5 +1499,10 @@ Public Class AddStaff
         Catch ex As Exception
             Console.WriteLine($"Error refreshing image display: {ex.Message}")
         End Try
+    End Sub
+
+    Private Sub AddStaff_FormClosing(sender As Object, e As FormClosingEventArgs) Handles Me.FormClosing
+        ' Stop idle timeout monitoring
+        IdleTimeoutManager.Instance.StopMonitoring(Me)
     End Sub
 End Class

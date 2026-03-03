@@ -10,7 +10,8 @@ Public Class AuditLog
     Private profileDropdownPanel As Panel = Nothing
     Private isProfileDropdownVisible As Boolean = False
     Private Async Sub AuditLog_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        ' Ensure form background is set (designer has BackColor)
+        ' Stop idle timeout monitoring
+        IdleTimeoutManager.Instance.StartMonitoring(Me) ' Ensure form background is set (designer has BackColor)
         Me.BackColor = Color.FromArgb(30, 30, 30)
 
         ' Create and configure overlay panel (same color as form)
@@ -837,5 +838,32 @@ Public Class AuditLog
             isNavigating = False
             MessageBox.Show($"Unable to open Profile Settings: {ex.Message}", "Navigation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
+    End Sub
+
+    Private Sub AuditLog_FormClosing(sender As Object, e As FormClosingEventArgs) Handles Me.FormClosing
+        ' Stop idle timeout monitoring
+        IdleTimeoutManager.Instance.StopMonitoring(Me)
+        If isNavigating Then
+            Return
+        End If
+        ' Show confirmation only for user-initiated close (X button)
+        If e.CloseReason = CloseReason.UserClosing Then
+            Dim result As DialogResult = MessageBox.Show("Are you sure you want to exit the application?", "Exit Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
+
+            If result = DialogResult.Yes Then
+                ' Close all forms properly
+                For Each form As Form In Application.OpenForms.Cast(Of Form).ToArray()
+                    If form IsNot Me Then
+                        form.Close()
+                    End If
+                Next
+
+                ' Now exit the application
+                Application.Exit()
+            Else
+                ' Cancel the form closing
+                e.Cancel = True
+            End If
+        End If
     End Sub
 End Class

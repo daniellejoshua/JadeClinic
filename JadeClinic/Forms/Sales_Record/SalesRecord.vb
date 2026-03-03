@@ -26,6 +26,8 @@ Public Class SalesRecord
 
     Private Sub SalesRecord_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         ' Initialize QuestPDF
+        ' Start idle timeout monitoring
+        IdleTimeoutManager.Instance.StartMonitoring(Me)
         QuestPDF.Settings.License = LicenseType.Community
         Me.MaximizeBox = False
         Me.MinimizeBox = False
@@ -877,5 +879,32 @@ Public Class SalesRecord
         isNavigating = True
         Sys.Show()
         Me.Close()
+    End Sub
+
+    Private Sub SalesRecord_FormClosing(sender As Object, e As FormClosingEventArgs) Handles Me.FormClosing
+        ' Stop idle timeout monitoring
+        IdleTimeoutManager.Instance.StopMonitoring(Me)
+        If isNavigating Then
+            Return
+        End If
+        ' Show confirmation only for user-initiated close (X button)
+        If e.CloseReason = CloseReason.UserClosing Then
+            Dim result As DialogResult = MessageBox.Show("Are you sure you want to exit the application?", "Exit Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
+
+            If result = DialogResult.Yes Then
+                ' Close all forms properly
+                For Each form As Form In Application.OpenForms.Cast(Of Form).ToArray()
+                    If form IsNot Me Then
+                        form.Close()
+                    End If
+                Next
+
+                ' Now exit the application
+                Application.Exit()
+            Else
+                ' Cancel the form closing
+                e.Cancel = True
+            End If
+        End If
     End Sub
 End Class

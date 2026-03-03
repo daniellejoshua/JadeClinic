@@ -27,6 +27,8 @@ Public Class Sys
 
     Private Sub Sys_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         ' Make form non-resizable
+        ' Stop idle timeout monitoring
+        IdleTimeoutManager.Instance.StartMonitoring(Me)
         Me.FormBorderStyle = FormBorderStyle.FixedDialog
         Me.MaximizeBox = False
         Me.MinimizeBox = False

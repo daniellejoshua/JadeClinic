@@ -6,7 +6,8 @@ Imports System.Drawing.Printing
 
 Public Class IdCard
     Private Sub IdCard_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        ' Wire up buttons if not done in designer
+        ' Stop idle timeout monitoring
+        IdleTimeoutManager.Instance.StartMonitoring(Me) ' Wire up buttons if not done in designer
         AddHandler btnClose.Click, Sub() Me.Close()
         AddHandler btnPrint.Click, AddressOf OnPrintClicked
     End Sub
@@ -212,5 +213,10 @@ Public Class IdCard
 
     Private Sub QrCodePicturebox_Click(sender As Object, e As EventArgs) Handles QrCodePicturebox.Click
 
+    End Sub
+
+    Private Sub IdCard_FormClosing(sender As Object, e As FormClosingEventArgs) Handles Me.FormClosing
+        ' Stop idle timeout monitoring
+        IdleTimeoutManager.Instance.StopMonitoring(Me)
     End Sub
 End Class
