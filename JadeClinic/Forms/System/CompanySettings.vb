@@ -1,4 +1,5 @@
 ﻿Imports System.Drawing
+Imports System.Drawing.Printing
 Imports System.IO
 Imports System.Windows.Forms
 Imports Guna.UI2.WinForms
@@ -119,9 +120,9 @@ Public Class CompanySettings
         AddHandler dtOpeningTime.ValueChanged, Sub() RefreshCompanyHoursSummary()
         AddHandler dtClosingTime.ValueChanged, Sub() RefreshCompanyHoursSummary()
         AddHandler clbClosedDays.ItemCheck,
-            Sub(sender, e)
-                BeginInvoke(New Action(Sub() RefreshCompanyHoursSummary()))
-            End Sub
+        Sub(sender, e)
+            BeginInvoke(New Action(Sub() RefreshCompanyHoursSummary()))
+        End Sub
 
         hoursTab.Controls.Add(lblOpening)
         hoursTab.Controls.Add(dtOpeningTime)
@@ -344,79 +345,172 @@ Public Class CompanySettings
     End Sub
 
     Private Sub ShowReceiptPreview()
-        ' Create a preview form
-        Dim previewForm As New Form()
-        previewForm.Text = "Receipt Preview"
-        previewForm.Size = New Size(400, 600)
-        previewForm.StartPosition = FormStartPosition.CenterParent
-        previewForm.FormBorderStyle = FormBorderStyle.FixedDialog
-        previewForm.MaximizeBox = False
-        previewForm.MinimizeBox = False
-        previewForm.BackColor = Color.White
+        Try
+            Dim printDoc As New PrintDocument()
+            printDoc.DefaultPageSettings.PaperSize = New PaperSize("ReceiptPreview", 300, 900)
+            printDoc.DefaultPageSettings.Margins = New Margins(10, 10, 10, 10)
 
-        ' Create a text box to show the receipt
-        Dim txtPreview As New TextBox()
-        txtPreview.Multiline = True
-        txtPreview.ScrollBars = ScrollBars.Vertical
-        txtPreview.Font = New Font("Courier New", 9)
-        txtPreview.Dock = DockStyle.Fill
-        txtPreview.ReadOnly = True
+            AddHandler printDoc.PrintPage, AddressOf OnCompanySettingsPreviewPrintPage
 
-        ' Generate sample receipt content
-        Dim receiptContent As String = GenerateSampleReceipt()
-        txtPreview.Text = receiptContent
+            Dim printPreview As New PrintPreviewDialog()
+            printPreview.Document = printDoc
+            printPreview.Text = $"Receipt Preview - {If(String.IsNullOrWhiteSpace(txtCompanyName.Text), "JADE CLINIC", txtCompanyName.Text.Trim())}"
+            printPreview.WindowState = FormWindowState.Maximized
+            printPreview.ShowDialog()
+        Catch ex As Exception
+            MessageBox.Show($"Error showing print preview: {ex.Message}", "Preview Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
 
-        previewForm.Controls.Add(txtPreview)
-        previewForm.ShowDialog()
-        previewForm.Dispose()
+    Private Sub DrawCenteredLine(g As Graphics, text As String, f As Font, brush As Brush, y As Single, bounds As Rectangle)
+        Dim textWidth As Single = g.MeasureString(text, f).Width
+        Dim x As Single = bounds.Left + ((bounds.Width - textWidth) / 2.0F)
+        g.DrawString(text, f, brush, x, y)
+    End Sub
+
+    Private Sub DrawLeftRightLine(g As Graphics, leftText As String, rightText As String, f As Font, brush As Brush, leftX As Single, rightX As Single, y As Single)
+        g.DrawString(leftText, f, brush, leftX, y)
+        Dim rightWidth As Single = g.MeasureString(rightText, f).Width
+        g.DrawString(rightText, f, brush, rightX - rightWidth, y)
+    End Sub
+
+    Private Sub OnCompanySettingsPreviewPrintPage(sender As Object, e As PrintPageEventArgs)
+        Try
+            Dim g As Graphics = e.Graphics
+            Dim brush As New SolidBrush(Color.Black)
+
+            Dim headerFont As New Font("Arial", 14, FontStyle.Bold)
+            Dim titleFont As New Font("Arial", 12, FontStyle.Bold)
+            Dim sectionFont As New Font("Arial", 11, FontStyle.Bold)
+            Dim regularFont As New Font("Arial", 10, FontStyle.Regular)
+            Dim totalFont As New Font("Arial", 14, FontStyle.Bold)
+
+            Dim leftX As Single = e.MarginBounds.Left
+            Dim rightX As Single = e.MarginBounds.Right
+            Dim y As Single = e.MarginBounds.Top
+            Dim lineH As Single = 16.0F
+            Dim sep As String = "========================================"
+
+            DrawCenteredLine(g, If(String.IsNullOrWhiteSpace(txtCompanyName.Text), "JADE CLINIC", txtCompanyName.Text.Trim()), headerFont, brush, y, e.MarginBounds)
+            y += 28
+            DrawCenteredLine(g, "Dental Supply Management", regularFont, brush, y, e.MarginBounds)
+            y += lineH
+
+            If Not String.IsNullOrWhiteSpace(txtTIN.Text) Then
+                DrawCenteredLine(g, $"TIN: {txtTIN.Text} (VAT Registered)", regularFont, brush, y, e.MarginBounds)
+                y += lineH
+            End If
+            If Not String.IsNullOrWhiteSpace(txtPhone.Text) Then
+                DrawCenteredLine(g, $"Tel: {txtPhone.Text}", regularFont, brush, y, e.MarginBounds)
+                y += lineH
+            End If
+            If Not String.IsNullOrWhiteSpace(txtAddress.Text) Then
+                DrawCenteredLine(g, txtAddress.Text, regularFont, brush, y, e.MarginBounds)
+                y += lineH
+            End If
+            If Not String.IsNullOrWhiteSpace(txtWebsite.Text) Then
+                DrawCenteredLine(g, txtWebsite.Text, regularFont, brush, y, e.MarginBounds)
+                y += lineH
+            End If
+
+            If Not String.IsNullOrWhiteSpace(txtCompanyHours.Text) Then
+                y += 6
+                DrawCenteredLine(g, "Clinic Hours", sectionFont, brush, y, e.MarginBounds)
+                y += lineH
+                For Each line As String In txtCompanyHours.Text.Split({vbCrLf, vbLf}, StringSplitOptions.RemoveEmptyEntries)
+                    DrawCenteredLine(g, line.Trim(), regularFont, brush, y, e.MarginBounds)
+                    y += lineH
+                Next
+            End If
+
+            g.DrawString(sep, regularFont, brush, leftX, y)
+            y += lineH + 2
+
+            DrawCenteredLine(g, "SALES INVOICE", titleFont, brush, y, e.MarginBounds)
+            y += 24
+
+            g.DrawString("Receipt #: 9", regularFont, brush, leftX, y)
+            y += lineH
+            g.DrawString($"Date: {DateTime.Now:MM/dd/yyyy HH:mm:ss}", regularFont, brush, leftX, y)
+            y += lineH
+            g.DrawString($"Cashier: {frmLoginvb.LoggedInUsername}", regularFont, brush, leftX, y)
+            y += lineH
+
+            g.DrawString("Customer Details:", regularFont, brush, leftX, y)
+            y += lineH
+            DrawLeftRightLine(g, "Name: wawa", "TIN: ______________", regularFont, brush, leftX, rightX, y)
+            y += lineH
+            DrawLeftRightLine(g, "Phone: ______________", "Email: ______________", regularFont, brush, leftX, rightX, y)
+            y += lineH
+
+            g.DrawString(sep, regularFont, brush, leftX, y)
+            y += lineH
+            g.DrawString("1x Applicator tip", regularFont, brush, leftX, y)
+            y += lineH
+            DrawLeftRightLine(g, "@ ₱150.00", "₱150.00", regularFont, brush, leftX + 10, rightX, y)
+            y += lineH
+            g.DrawString("1x Alginate (hygedent)", regularFont, brush, leftX, y)
+            y += lineH
+            DrawLeftRightLine(g, "@ ₱280.00", "₱280.00", regularFont, brush, leftX + 10, rightX, y)
+            y += lineH
+
+            g.DrawString(sep, regularFont, brush, leftX, y)
+            y += lineH
+            DrawLeftRightLine(g, "SUBTOTAL (VAT-INC):", "₱430.00", regularFont, brush, leftX, rightX, y)
+            y += lineH
+            DrawLeftRightLine(g, "Less: Discount (Fixed):", "-₱100.00", regularFont, brush, leftX, rightX, y)
+            y += lineH
+            DrawLeftRightLine(g, "VATABLE SALES (NET):", "₱294.64", regularFont, brush, leftX, rightX, y)
+            y += lineH
+            DrawLeftRightLine(g, "VAT (12%):", "₱35.36", regularFont, brush, leftX, rightX, y)
+            y += lineH
+
+            g.DrawString(sep, regularFont, brush, leftX, y)
+            y += lineH
+            DrawLeftRightLine(g, "TOTAL AMOUNT DUE:", "₱330.00", totalFont, brush, leftX, rightX, y)
+            y += 28
+
+            g.DrawString("PAYMENT INFORMATION", sectionFont, brush, leftX, y)
+            y += lineH
+            g.DrawString("Payment Method: Cash", regularFont, brush, leftX, y)
+            y += lineH
+            g.DrawString("Amount Received: ₱330.00", regularFont, brush, leftX, y)
+            y += lineH
+            g.DrawString("Change: ₱0.00", regularFont, brush, leftX, y)
+            y += lineH
+
+            g.DrawString(sep, regularFont, brush, leftX, y)
+            y += lineH
+            g.DrawString($"BIR Authority to Print No.: {txtBIRAuth.Text}", regularFont, brush, leftX, y)
+            y += lineH
+            g.DrawString($"PTU No.: {txtPTUNumber.Text}", regularFont, brush, leftX, y)
+            y += lineH
+            g.DrawString(sep, regularFont, brush, leftX, y)
+            y += lineH
+
+            If Not String.IsNullOrWhiteSpace(txtReceiptFooter.Text) Then
+                For Each line As String In txtReceiptFooter.Text.Split({vbCrLf, vbLf}, StringSplitOptions.RemoveEmptyEntries)
+                    DrawCenteredLine(g, line.Trim(), regularFont, brush, y, e.MarginBounds)
+                    y += lineH
+                Next
+            Else
+                DrawCenteredLine(g, "Thankyou for your business!", regularFont, brush, y, e.MarginBounds)
+            End If
+
+            brush.Dispose()
+            headerFont.Dispose()
+            titleFont.Dispose()
+            sectionFont.Dispose()
+            regularFont.Dispose()
+            totalFont.Dispose()
+        Catch ex As Exception
+            Console.WriteLine($"Preview print rendering error: {ex.Message}")
+        End Try
     End Sub
 
     Private Function GenerateSampleReceipt() As String
         Dim receipt As New System.Text.StringBuilder()
-
-        receipt.AppendLine("================================================")
-        receipt.AppendLine($"                {txtCompanyName.Text}")
-        receipt.AppendLine("        Dental Supply Management")
-        receipt.AppendLine($"        TIN: {txtTIN.Text} (VAT)")
-        receipt.AppendLine($"        Tel: {txtPhone.Text}")
-        receipt.AppendLine("================================================")
-        receipt.AppendLine("")
-        receipt.AppendLine($"SOLD TO: Sample Customer        TIN: N/A")
-        receipt.AppendLine($"ADDRESS: Walk-in Customer")
-        receipt.AppendLine($"DATE: {DateTime.Now:MM/dd/yyyy}        INVOICE #: 12345")
-        receipt.AppendLine($"CASHIER: {frmLoginvb.LoggedInUsername}")
-        receipt.AppendLine("")
-        receipt.AppendLine("================================================")
-        receipt.AppendLine("QTY | ITEM                    | PRICE   | AMOUNT")
-        receipt.AppendLine("----|-------------------------|---------|--------")
-        receipt.AppendLine("  1 | Sample Product A        | 100.00  | 100.00")
-        receipt.AppendLine("  2 | Sample Product B        |  50.00  | 100.00")
-        receipt.AppendLine("================================================")
-        receipt.AppendLine("SUB-TOTAL (VAT Inclusive)               200.00")
-        receipt.AppendLine("================================================")
-        receipt.AppendLine("VATa Sales                             178.57")
-        receipt.AppendLine("VAT (12%)                               21.43")
-        receipt.AppendLine("")
-        receipt.AppendLine("================================================")
-        receipt.AppendLine("TOTAL AMOUNT DUE                       200.00")
-        receipt.AppendLine("================================================")
-        receipt.AppendLine("")
-        receipt.AppendLine("PAYMENT INFORMATION:")
-        receipt.AppendLine("Payment Method: Cash")
-        receipt.AppendLine("Amount Received: ₱200.00")
-        receipt.AppendLine("Change: ₱0.00")
-        receipt.AppendLine("")
-        receipt.AppendLine("**For SC/PWD (if applicable):**")
-        receipt.AppendLine("SC/PWD ID: ____________  Discount: ₱____")
-        receipt.AppendLine("Signature: ___________________")
-        receipt.AppendLine("")
-        receipt.AppendLine($"BIR Authority to Print No.: {txtBIRAuth.Text}")
-        receipt.AppendLine($"PTU No.: {txtPTUNumber.Text}")
-        receipt.AppendLine("")
-        receipt.AppendLine("================================================")
-        receipt.AppendLine(txtReceiptFooter.Text.Replace(vbCrLf, vbCrLf))
-        receipt.AppendLine("")
-
+        receipt.AppendLine("Receipt preview uses print document rendering.")
         Return receipt.ToString()
     End Function
 

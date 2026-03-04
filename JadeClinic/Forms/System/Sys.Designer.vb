@@ -159,13 +159,14 @@ Partial Class Sys
         btnColorCustomization.ForeColor = Color.White
         btnColorCustomization.ImageAlign = HorizontalAlignment.Left
         btnColorCustomization.ImageSize = New Size(40, 40)
-        btnColorCustomization.Location = New Point(750, 50)
+        btnColorCustomization.Location = New Point(754, 50)
         btnColorCustomization.Name = "btnColorCustomization"
         btnColorCustomization.ShadowDecoration.CustomizableEdges = CustomizableEdges7
         btnColorCustomization.Size = New Size(320, 120)
         btnColorCustomization.TabIndex = 2
         btnColorCustomization.Text = "🎨 Color Customization" & vbCrLf & "Customize app colors & theme"
         btnColorCustomization.TextAlign = HorizontalAlignment.Left
+        btnColorCustomization.Visible = False
         ' 
         ' btnDatabaseBackup
         ' 
