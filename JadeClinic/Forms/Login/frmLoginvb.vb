@@ -20,6 +20,8 @@ Public Class frmLoginvb
     Private failedLoginAttempts As Integer = 0
     Private Const MaxLoginAttempts As Integer = 3
     Private pinInput As String = "" ' Class-level for consistency
+    Private qrScannerEnabled As Boolean = True ' Track QR scanner state
+    Private qrScannerActive As Boolean = False ' Track if QR scanner dialog is currently open
 
     Private Sub frmLoginvb_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         Guna2Panel1.BorderRadius = 50
@@ -53,6 +55,16 @@ Public Class frmLoginvb
                                                    Guna2HtmlLabel5.ForeColor = Color.White ' Back to white
                                                    Guna2HtmlLabel5.Cursor = Cursors.Default ' Default cursor
                                                End Sub
+
+        ' Add event handlers to show QR code when both fields are filled (DISABLED for security)
+        ' AddHandler txtUserName.TextChanged, AddressOf CheckAndShowQRCode
+        ' AddHandler txtPassword.TextChanged, AddressOf CheckAndShowQRCode
+
+        ' Add QR code protection to input fields
+        AddHandler txtUserName.KeyPress, AddressOf ProtectFromQRInput
+        AddHandler txtPassword.KeyPress, AddressOf ProtectFromQRInput
+        AddHandler txtUserName.TextChanged, AddressOf ValidateInputForQRCodes
+        AddHandler txtPassword.TextChanged, AddressOf ValidateInputForQRCodes
     End Sub
 
     ' Initialize database on startup - THIS FIXES THE ERROR!
@@ -77,13 +89,261 @@ Public Class frmLoginvb
         End Try
     End Sub
 
+    ' Protect input fields from QR code input when scanner is not active
+    Private Sub ProtectFromQRInput(sender As Object, e As KeyPressEventArgs)
+        ' If QR scanner is not active, block QR-like input patterns
+        If Not qrScannerActive Then
+            ' Always allow control characters (backspace, delete, etc.)
+            If Char.IsControl(e.KeyChar) Then
+                Return ' Allow all control characters
+            End If
+
+            Dim currentText As String = ""
+            Dim newChar As String = e.KeyChar.ToString()
+
+            ' Handle both Guna2TextBox and regular TextBox
+            If TypeOf sender Is Guna.UI2.WinForms.Guna2TextBox Then
+                Dim gunaTextBox As Guna.UI2.WinForms.Guna2TextBox = CType(sender, Guna.UI2.WinForms.Guna2TextBox)
+                currentText = gunaTextBox.Text
+            ElseIf TypeOf sender Is TextBox Then
+                Dim textBox As TextBox = CType(sender, TextBox)
+                currentText = textBox.Text
+            Else
+                ' Unknown control type, skip validation
+                Return
+            End If
+
+            ' Only block if this would create a clear QR code pattern
+            Dim potentialText As String = currentText + newChar
+            If IsDefiniteQRCodeInput(potentialText) Then
+                e.Handled = True ' Block the input
+                Console.WriteLine($"Blocked QR code input: '{potentialText}'")
+
+                ' Just show a brief tooltip-style message without modal dialog
+                ' You can implement a non-blocking notification here if desired
+            End If
+        End If
+    End Sub
+
+    ' Validate text input for QR code patterns
+    Private Sub ValidateInputForQRCodes(sender As Object, e As EventArgs)
+        If Not qrScannerActive Then
+            Dim text As String = ""
+
+            ' Handle both Guna2TextBox and regular TextBox
+            If TypeOf sender Is Guna.UI2.WinForms.Guna2TextBox Then
+                Dim gunaTextBox As Guna.UI2.WinForms.Guna2TextBox = CType(sender, Guna.UI2.WinForms.Guna2TextBox)
+                text = gunaTextBox.Text
+
+                ' Only clear if this is definitely a complete QR code
+                If IsDefiniteQRCodeInput(text) Then
+                    ' Clear the field silently
+                    gunaTextBox.Clear()
+                    Console.WriteLine($"Cleared QR code input: '{text}'")
+                End If
+            ElseIf TypeOf sender Is TextBox Then
+                Dim textBox As TextBox = CType(sender, TextBox)
+                text = textBox.Text
+
+                ' Only clear if this is definitely a complete QR code
+                If IsDefiniteQRCodeInput(text) Then
+                    ' Clear the field silently
+                    textBox.Clear()
+                    Console.WriteLine($"Cleared QR code input: '{text}'")
+                End If
+            End If
+        End If
+    End Sub
+
+    ' Check if input is definitely a QR code (more restrictive than IsLikelyQRCodeInput)
+    Private Function IsDefiniteQRCodeInput(input As String) As Boolean
+        If String.IsNullOrEmpty(input) Then Return False
+
+        ' Only trigger on exact User-XXXXX pattern
+        If input.StartsWith("User-", StringComparison.OrdinalIgnoreCase) AndAlso input.Length >= 8 Then
+            Dim userIdPart As String = input.Substring(5)
+            If userIdPart.All(AddressOf Char.IsDigit) AndAlso userIdPart.Length >= 3 Then
+                Return True
+            End If
+        End If
+
+        ' Only trigger on very long numeric sequences (8+ digits)
+        If input.Length >= 8 AndAlso input.All(AddressOf Char.IsDigit) Then
+            Return True
+        End If
+
+        Return False
+    End Function
+
+    ' Check if input looks like a QR code (original function, kept for compatibility)
+    Private Function IsLikelyQRCodeInput(input As String) As Boolean
+        If String.IsNullOrEmpty(input) Then Return False
+
+        ' Check for User-XXXXX pattern
+        If input.StartsWith("User-", StringComparison.OrdinalIgnoreCase) Then
+            Return True
+        End If
+
+        ' Check for rapid sequential numeric input (typical of QR scanners)
+        If input.Length > 3 AndAlso input.All(AddressOf Char.IsDigit) Then
+            Return True
+        End If
+
+        ' Check for mixed alphanumeric that could be a QR code
+        If input.Length > 5 AndAlso Not input.Contains(" ") Then
+            Dim alphaCount = input.Count(AddressOf Char.IsLetter)
+            Dim digitCount = input.Count(AddressOf Char.IsDigit)
+            Dim symbolCount = input.Count(Function(c) Not Char.IsLetterOrDigit(c))
+
+            ' If it has a mix of characters typical of QR codes
+            If (alphaCount > 0 AndAlso digitCount > 0) OrElse symbolCount > 0 Then
+                Return True
+            End If
+        End If
+
+        Return False
+    End Function
+
+    ' Check if both username and password are filled, then show QR code
+    Private Sub CheckAndShowQRCode(sender As Object, e As EventArgs)
+        ' Only show QR code if scanner is not currently active and both fields are filled
+        If Not qrScannerActive Then
+            Dim usernameText As String = ""
+            Dim passwordText As String = ""
+
+            ' Get text from username field (handle both control types)
+            If TypeOf txtUserName Is Guna.UI2.WinForms.Guna2TextBox Then
+                usernameText = CType(txtUserName, Guna.UI2.WinForms.Guna2TextBox).Text
+            End If
+
+            ' Get text from password field (handle both control types)
+            If TypeOf txtPassword Is Guna.UI2.WinForms.Guna2TextBox Then
+                passwordText = CType(txtPassword, Guna.UI2.WinForms.Guna2TextBox).Text
+            End If
+
+            If Not String.IsNullOrWhiteSpace(usernameText) AndAlso Not String.IsNullOrWhiteSpace(passwordText) Then
+                ShowUserQRCode()
+            End If
+        End If
+    End Sub
+
+    ' Show the user's QR code based on their username
+    Private Sub ShowUserQRCode()
+        Try
+            ' Only show QR code if scanner is not active
+            If qrScannerActive Then
+                Return ' Exit immediately if scanner is active
+            End If
+
+            Dim username As String = ""
+
+            ' Get username from the appropriate control type
+            If TypeOf txtUserName Is Guna.UI2.WinForms.Guna2TextBox Then
+                username = CType(txtUserName, Guna.UI2.WinForms.Guna2TextBox).Text.Trim()
+
+            Else
+                ' If we can't determine the control type, try accessing .Text property directly
+                username = txtUserName.Text.Trim()
+            End If
+
+            If String.IsNullOrWhiteSpace(username) Then
+                Return ' Don't show QR code if username is empty
+            End If
+
+            ' Get user details from database
+            Dim query As String = "SELECT UserID, FullName FROM Users WHERE Username = @Username AND IsActive = 1"
+            Dim parameters As SqlParameter() = {New SqlParameter("@Username", username)}
+
+            Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters)
+                If reader.Read() Then
+                    Dim userId As Integer = Convert.ToInt32(reader("UserID"))
+                    Dim fullName As String = If(IsDBNull(reader("FullName")), username, reader("FullName").ToString())
+                    Dim qrCode As String = $"User-{userId:D5}"
+
+                    ' Create a form to display the QR code nicely
+                    Dim qrForm As New Form()
+                    qrForm.Text = "Your QR Code"
+                    qrForm.Size = New Size(400, 300)
+                    qrForm.StartPosition = FormStartPosition.CenterParent
+                    qrForm.BackColor = Color.White
+                    qrForm.FormBorderStyle = FormBorderStyle.FixedDialog
+                    qrForm.MaximizeBox = False
+                    qrForm.MinimizeBox = False
+
+                    Dim lblName As New Label()
+                    lblName.Text = $"Name: {fullName}"
+                    lblName.Font = New Font("Poppins", 12, FontStyle.Bold)
+                    lblName.Location = New Point(50, 30)
+                    lblName.AutoSize = True
+                    qrForm.Controls.Add(lblName)
+
+                    Dim lblQR As New Label()
+                    lblQR.Text = $"QR Code: {qrCode}"
+                    lblQR.Font = New Font("Courier New", 16, FontStyle.Bold)
+                    lblQR.Location = New Point(50, 80)
+                    lblQR.AutoSize = True
+                    lblQR.ForeColor = Color.Blue
+                    qrForm.Controls.Add(lblQR)
+
+                    Dim lblInstr As New Label()
+                    lblInstr.Text = "Use this code with the QR scanner to login quickly!"
+                    lblInstr.Font = New Font("Poppins", 10)
+                    lblInstr.Location = New Point(50, 130)
+                    lblInstr.AutoSize = True
+                    qrForm.Controls.Add(lblInstr)
+
+                    Dim btnClose As New Button()
+                    btnClose.Text = "Close"
+                    btnClose.Size = New Size(100, 30)
+                    btnClose.Location = New Point(150, 180)
+                    btnClose.DialogResult = DialogResult.OK
+                    qrForm.Controls.Add(btnClose)
+
+                    Dim btnDisableQR As New Button()
+                    btnDisableQR.Text = If(qrScannerEnabled, "Disable QR", "Enable QR")
+                    btnDisableQR.Size = New Size(100, 30)
+                    btnDisableQR.Location = New Point(150, 220)
+                    AddHandler btnDisableQR.Click, Sub()
+                                                       ToggleQRScanner()
+                                                       btnDisableQR.Text = If(qrScannerEnabled, "Disable QR", "Enable QR")
+                                                   End Sub
+                    qrForm.Controls.Add(btnDisableQR)
+
+                    qrForm.ShowDialog(Me)
+                End If
+            End Using
+        Catch ex As Exception
+            Console.WriteLine($"Error showing QR code: {ex.Message}")
+        End Try
+    End Sub
+
     ' Event handler for QR login label click
     Private Sub Guna2HtmlLabel5_Click(sender As Object, e As EventArgs)
-        ShowQRScanDialog()
+        If qrScannerEnabled Then
+            ShowQRScanDialog()
+        Else
+            MessageBox.Show("QR Scanner is currently disabled. Please use username/password login.", "QR Scanner Disabled", MessageBoxButtons.OK, MessageBoxIcon.Information)
+        End If
+    End Sub
+
+    ' Toggle QR scanner enabled/disabled
+    Private Sub ToggleQRScanner()
+        qrScannerEnabled = Not qrScannerEnabled
+
+        If qrScannerEnabled Then
+            Guna2HtmlLabel5.Text = "🔍 Scan QR Code"
+            Guna2HtmlLabel5.ForeColor = Color.White
+        Else
+            Guna2HtmlLabel5.Text = "🚫 QR Scanner Disabled"
+            Guna2HtmlLabel5.ForeColor = Color.Gray
+        End If
     End Sub
 
     ' Create and show QR scan dialog (QR scanner only, no manual typing)
     Private Sub ShowQRScanDialog()
+        ' Set QR scanner as active
+        qrScannerActive = True
+
         ' Create QR scan dialog form
         Dim qrDialog As New Form()
         qrDialog.Text = "QR Code Scanner - Staff Login"
@@ -98,7 +358,7 @@ Public Class frmLoginvb
 
         ' Create QR input textbox (hidden for scanner input only)
         Dim txtQRInput As New TextBox()
-        txtQRInput.Location = New Point(-100, 10) ' Visible for debugging
+        txtQRInput.Location = New Point(-1000, 10) ' Visible for debugging
         txtQRInput.Size = New Size(200, 20)
         txtQRInput.BackColor = Color.FromArgb(61, 65, 66)
         txtQRInput.ForeColor = Color.White
@@ -113,8 +373,8 @@ Public Class frmLoginvb
         lblDebug.ForeColor = Color.Yellow
         lblDebug.BackColor = Color.Transparent
         lblDebug.AutoSize = True
-        lblDebug.Visible = False ' Made visible for debugging
-        lblDebug.Location = New Point(10, 40)
+        lblDebug.Visible = True ' Made visible for debugging
+        lblDebug.Location = New Point(-1010, 40)
 
         ' Auto-clear timer to clear accidentally typed text
         Dim autoClearTimer As New Timer()
@@ -383,6 +643,7 @@ Public Class frmLoginvb
                                                 Console.WriteLine("QR Dialog closing - cleaning up timers")
                                                 blinkTimer.Stop()
                                                 autoClearTimer.Stop()
+                                                qrScannerActive = False ' Reset active state
                                             Catch ex As Exception
                                                 Console.WriteLine($"FormClosed error: {ex.Message}")
                                             End Try
@@ -418,8 +679,8 @@ Public Class frmLoginvb
 
             Console.WriteLine($"Extracting QR code from: '{input}'")
 
-            ' Look for User-XXXXX pattern in the input
-            Dim pattern As String = "User-\d{5}"
+            ' Look for User-XXXXX pattern in the input (more flexible)
+            Dim pattern As String = "User-\d{1,5}"
             Dim regex As New Regex(pattern)
             Dim match = regex.Match(input)
 
@@ -429,12 +690,19 @@ Public Class frmLoginvb
             End If
 
             ' If no pattern found, check if the entire input is a valid QR code
-            If input.StartsWith("User-") AndAlso input.Length >= 9 Then
+            If input.StartsWith("User-") AndAlso input.Length >= 6 Then
                 Dim userIdPart As String = input.Substring(5)
-                If userIdPart.All(AddressOf Char.IsDigit) Then
+                If userIdPart.All(AddressOf Char.IsDigit) AndAlso userIdPart.Length >= 1 Then
                     Console.WriteLine($"Direct QR code match: {input}")
                     Return input
                 End If
+            End If
+
+            ' Also check for just the number part
+            If input.All(AddressOf Char.IsDigit) AndAlso input.Length >= 1 AndAlso input.Length <= 5 Then
+                Dim qrCode As String = $"User-{input.PadLeft(5, "0"c)}"
+                Console.WriteLine($"Constructed QR code from number: {qrCode}")
+                Return qrCode
             End If
 
             Console.WriteLine($"No valid QR code found in: '{input}'")
