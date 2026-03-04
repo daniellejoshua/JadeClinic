@@ -982,10 +982,8 @@ Public Class ProfileSettings
     ' Navigation methods
 
     Private Sub InitializeSidePanelEvents()
-        ' Add click events for side panel options
+        ' Only add click event for lblProfileSettings (others use Handles keyword)
         AddHandler lblProfileSettings.Click, Sub() ShowProfileSettingsPanel()
-        AddHandler lblChangePin.Click, AddressOf lblChangePin_Click
-        AddHandler lblLogout.Click, AddressOf lblLogout_Click ' Use the proper event handler instead of inline Sub
 
         ' Add hover effects
         AddHoverEffect(lblProfileSettings)

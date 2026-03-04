@@ -412,7 +412,6 @@ Public Class CompanySettings
         receipt.AppendLine("")
         receipt.AppendLine($"BIR Authority to Print No.: {txtBIRAuth.Text}")
         receipt.AppendLine($"PTU No.: {txtPTUNumber.Text}")
-        receipt.AppendLine($"""This Invoice is valid for {nudValidityYears.Value} years from ATP date.""")
         receipt.AppendLine("")
         receipt.AppendLine("================================================")
         receipt.AppendLine(txtReceiptFooter.Text.Replace(vbCrLf, vbCrLf))
@@ -583,4 +582,8 @@ Public Class CompanySettings
                txtCompanyHours.Text <> originalValues("CompanyHours") OrElse
                logoChanged
     End Function
+
+    Private Sub MainPanel_Paint(sender As Object, e As PaintEventArgs) Handles MainPanel.Paint
+
+    End Sub
 End Class

@@ -412,8 +412,8 @@ Public Class Sys
         End If
 
         profileDropdownPanel = New Panel()
-        profileDropdownPanel.Size = New Size(200, 100)
-        profileDropdownPanel.BackColor = DarkSlate
+        profileDropdownPanel.Size = New System.Drawing.Size(200, 100)
+        profileDropdownPanel.BackColor = System.Drawing.Color.FromArgb(41, 44, 45)
         profileDropdownPanel.BorderStyle = BorderStyle.FixedSingle
 
         Dim profileLocation = Guna2CirclePictureBox1.Location
@@ -422,15 +422,14 @@ Public Class Sys
         Dim btnProfileSettings As New Label()
         btnProfileSettings.Text = "⚙️ Profile Settings"
         btnProfileSettings.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
-        btnProfileSettings.ForeColor = PureWhite
-        btnProfileSettings.BackColor = Color.Transparent
-        btnProfileSettings.Size = New Size(190, 40)
-        btnProfileSettings.Location = New Point(5, 5)
+        btnProfileSettings.ForeColor = System.Drawing.Color.White
+        btnProfileSettings.Size = New System.Drawing.Size(190, 40)
+        btnProfileSettings.Location = New System.Drawing.Point(5, 5)
         btnProfileSettings.TextAlign = ContentAlignment.MiddleLeft
         btnProfileSettings.Cursor = Cursors.Hand
 
-        AddHandler btnProfileSettings.MouseEnter, Sub() btnProfileSettings.BackColor = Graphite
-        AddHandler btnProfileSettings.MouseLeave, Sub() btnProfileSettings.BackColor = Color.Transparent
+        AddHandler btnProfileSettings.MouseEnter, Sub() btnProfileSettings.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
+        AddHandler btnProfileSettings.MouseLeave, Sub() btnProfileSettings.BackColor = System.Drawing.Color.Transparent
         AddHandler btnProfileSettings.Click, Sub()
                                                  HideProfileDropdown()
                                                  NavigateToProfileSettings()
@@ -439,15 +438,14 @@ Public Class Sys
         Dim btnLogOut As New Label()
         btnLogOut.Text = "🚪 Log Out"
         btnLogOut.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
-        btnLogOut.ForeColor = PureWhite
-        btnLogOut.BackColor = Color.Transparent
-        btnLogOut.Size = New Size(190, 40)
-        btnLogOut.Location = New Point(5, 50)
+        btnLogOut.ForeColor = System.Drawing.Color.White
+        btnLogOut.Size = New System.Drawing.Size(190, 40)
+        btnLogOut.Location = New System.Drawing.Point(5, 50)
         btnLogOut.TextAlign = ContentAlignment.MiddleLeft
         btnLogOut.Cursor = Cursors.Hand
 
         AddHandler btnLogOut.MouseEnter, Sub() btnLogOut.BackColor = Graphite
-        AddHandler btnLogOut.MouseLeave, Sub() btnLogOut.BackColor = Color.Transparent
+        AddHandler btnLogOut.MouseLeave, Sub() btnLogOut.BackColor = System.Drawing.Color.Transparent
         AddHandler btnLogOut.Click, Sub()
                                         Dim result As DialogResult = MessageBox.Show("Are you sure you want to logout?", "Confirm Logout", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
                                         If result = DialogResult.Yes Then
@@ -462,6 +460,7 @@ Public Class Sys
                                         End If
                                     End Sub
 
+
         profileDropdownPanel.Controls.Add(btnProfileSettings)
         profileDropdownPanel.Controls.Add(btnLogOut)
 
@@ -469,6 +468,7 @@ Public Class Sys
         profileDropdownPanel.BringToFront()
 
         AddHandler Me.Click, AddressOf Form_Click
+
         isProfileDropdownVisible = True
     End Sub
 
@@ -628,39 +628,83 @@ Public Class Sys
             saveDialog.FileName = $"JadeDentalSupply_Backup_{DateTime.Now:yyyyMMdd_HHmmss}.bak"
 
             If saveDialog.ShowDialog() = DialogResult.OK Then
-                ' Simple file copy backup for LocalDB
-                Dim sourcePath As String = Path.Combine(Application.StartupPath, "App_Data", "JadeDentalSupply.mdf")
-                File.Copy(sourcePath, saveDialog.FileName, True)
+                Dim backupPath As String = saveDialog.FileName
+                If Not backupPath.EndsWith(".bak", StringComparison.OrdinalIgnoreCase) Then
+                    backupPath &= ".bak"
+                End If
 
-                MessageBox.Show("Database backup created successfully!", "Backup Complete", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                Dim backupDir As String = Path.GetDirectoryName(backupPath)
+                If Not String.IsNullOrWhiteSpace(backupDir) AndAlso Not Directory.Exists(backupDir) Then
+                    Directory.CreateDirectory(backupDir)
+                End If
 
-                ' Log the backup
-                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Database Backup", $"Database backed up to: {saveDialog.FileName}")
+                Dim connBuilder As New SqlConnectionStringBuilder(Connection.GetConnectionString())
+                Dim databaseName As String = If(String.IsNullOrWhiteSpace(connBuilder.InitialCatalog), "JadeDentalSupply", connBuilder.InitialCatalog)
+                Dim escapedPath As String = backupPath.Replace("'", "''")
+
+                Dim backupSql As String =
+                    $"BACKUP DATABASE [{databaseName}] TO DISK = N'{escapedPath}' WITH INIT, FORMAT, STATS = 10;"
+
+                Using conn As New SqlConnection(Connection.GetConnectionString())
+                    conn.Open()
+                    Using cmd As New SqlCommand(backupSql, conn)
+                        cmd.CommandTimeout = 0
+                        cmd.ExecuteNonQuery()
+                    End Using
+                End Using
+
+                MessageBox.Show($"Database backup created successfully!{vbCrLf}Location: {backupPath}", "Backup Complete", MessageBoxButtons.OK, MessageBoxIcon.Information)
+
+                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Database Backup", $"Database backed up to: {backupPath}")
             End If
         Catch ex As Exception
             MessageBox.Show($"Error creating backup: {ex.Message}", "Backup Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            Console.WriteLine($"Backup error details: {ex}")
         End Try
     End Sub
 
     Private Sub PerformDatabaseRestore()
         Try
             Dim openDialog As New OpenFileDialog()
-            openDialog.Filter = "Backup files (*.bak)|*.bak|Database files (*.mdf)|*.mdf|All files (*.*)|*.*"
+            openDialog.Filter = "Backup files (*.bak)|*.bak|All files (*.*)|*.*"
             openDialog.Title = "Select Database Backup File"
 
             If openDialog.ShowDialog() = DialogResult.OK Then
-                Dim result = MessageBox.Show("Are you sure you want to restore the database? This will overwrite all current data!",
+                Dim result = MessageBox.Show("Are you sure you want to restore the database? This will overwrite all current data!" & vbCrLf & vbCrLf & "IMPORTANT: The application will close after restore.",
                                            "Confirm Restore", MessageBoxButtons.YesNo, MessageBoxIcon.Warning)
 
                 If result = DialogResult.Yes Then
-                    ' Simple file copy restore for LocalDB
-                    Dim targetPath As String = Path.Combine(Application.StartupPath, "App_Data", "JadeDentalSupply.mdf")
-                    File.Copy(openDialog.FileName, targetPath, True)
+                    Dim backupPath As String = openDialog.FileName
+                    If Not File.Exists(backupPath) Then
+                        Throw New FileNotFoundException("Selected backup file was not found.")
+                    End If
 
-                    MessageBox.Show("Database restored successfully! Please restart the application.", "Restore Complete", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                    Dim connBuilder As New SqlConnectionStringBuilder(Connection.GetConnectionString())
+                    Dim databaseName As String = If(String.IsNullOrWhiteSpace(connBuilder.InitialCatalog), "JadeDentalSupply", connBuilder.InitialCatalog)
+                    Dim escapedPath As String = backupPath.Replace("'", "''")
+                    Dim masterConnStr As String = "Server=(localdb)\MSSQLLocalDB;Database=master;Integrated Security=true;TrustServerCertificate=True;"
 
-                    ' Log the restore
-                    Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Database Restore", $"Database restored from: {openDialog.FileName}")
+                    Dim restoreSql As String =
+                        $"ALTER DATABASE [{databaseName}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;" &
+                        $"RESTORE DATABASE [{databaseName}] FROM DISK = N'{escapedPath}' WITH REPLACE, RECOVERY;" &
+                        $"ALTER DATABASE [{databaseName}] SET MULTI_USER;"
+
+                    Using conn As New SqlConnection(masterConnStr)
+                        conn.Open()
+                        Using cmd As New SqlCommand(restoreSql, conn)
+                            cmd.CommandTimeout = 0
+                            cmd.ExecuteNonQuery()
+                        End Using
+                    End Using
+
+                    MessageBox.Show("Database restored successfully! The application will now close.", "Restore Complete", MessageBoxButtons.OK, MessageBoxIcon.Information)
+
+                    Try
+                        Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Database Restore", $"Database restored from: {backupPath}")
+                    Catch
+                    End Try
+
+                    Application.Exit()
                 End If
             End If
         Catch ex As Exception

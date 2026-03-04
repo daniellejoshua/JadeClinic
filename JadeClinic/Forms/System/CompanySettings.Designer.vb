@@ -141,7 +141,7 @@ Partial Class CompanySettings
         TabControl1.Controls.Add(TabPage1)
         TabControl1.Controls.Add(TabPage2)
         TabControl1.Dock = DockStyle.Fill
-        TabControl1.Font = New Font("Poppins", 10.0F)
+        TabControl1.Font = New Font("Poppins", 10F)
         TabControl1.Location = New Point(0, 0)
         TabControl1.Name = "TabControl1"
         TabControl1.SelectedIndex = 0
@@ -165,7 +165,7 @@ Partial Class CompanySettings
         GroupBox2.Controls.Add(btnRemoveLogo)
         GroupBox2.Controls.Add(btnChangeLogo)
         GroupBox2.Controls.Add(picLogo)
-        GroupBox2.Font = New Font("Poppins", 11.0F, FontStyle.Bold)
+        GroupBox2.Font = New Font("Poppins", 11F, FontStyle.Bold)
         GroupBox2.ForeColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
         GroupBox2.Location = New Point(490, 20)
         GroupBox2.Name = "GroupBox2"
@@ -184,7 +184,7 @@ Partial Class CompanySettings
         btnRemoveLogo.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         btnRemoveLogo.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
         btnRemoveLogo.FillColor = Color.FromArgb(CByte(255), CByte(71), CByte(87))
-        btnRemoveLogo.Font = New Font("Segoe UI", 9.0F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        btnRemoveLogo.Font = New Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
         btnRemoveLogo.ForeColor = Color.White
         btnRemoveLogo.Location = New Point(15, 250)
         btnRemoveLogo.Name = "btnRemoveLogo"
@@ -202,7 +202,7 @@ Partial Class CompanySettings
         btnChangeLogo.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         btnChangeLogo.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
         btnChangeLogo.FillColor = Color.FromArgb(CByte(16), CByte(216), CByte(98))
-        btnChangeLogo.Font = New Font("Segoe UI", 9.0F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        btnChangeLogo.Font = New Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
         btnChangeLogo.ForeColor = Color.White
         btnChangeLogo.Location = New Point(15, 210)
         btnChangeLogo.Name = "btnChangeLogo"
@@ -236,7 +236,7 @@ Partial Class CompanySettings
         GroupBox1.Controls.Add(Label2)
         GroupBox1.Controls.Add(txtCompanyName)
         GroupBox1.Controls.Add(Label1)
-        GroupBox1.Font = New Font("Poppins", 11.0F, FontStyle.Bold)
+        GroupBox1.Font = New Font("Poppins", 11F, FontStyle.Bold)
         GroupBox1.ForeColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
         GroupBox1.Location = New Point(20, 20)
         GroupBox1.Name = "GroupBox1"
@@ -257,7 +257,7 @@ Partial Class CompanySettings
         txtWebsite.DisabledState.ForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtWebsite.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtWebsite.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
-        txtWebsite.Font = New Font("Poppins", 10.0F)
+        txtWebsite.Font = New Font("Poppins", 10F)
         txtWebsite.ForeColor = Color.Black
         txtWebsite.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtWebsite.Location = New Point(15, 390)
@@ -272,7 +272,7 @@ Partial Class CompanySettings
         ' Label6
         ' 
         Label6.AutoSize = True
-        Label6.Font = New Font("Poppins", 10.0F)
+        Label6.Font = New Font("Poppins", 10F)
         Label6.ForeColor = Color.White
         Label6.Location = New Point(15, 360)
         Label6.Name = "Label6"
@@ -291,7 +291,7 @@ Partial Class CompanySettings
         txtEmail.DisabledState.ForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtEmail.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtEmail.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
-        txtEmail.Font = New Font("Poppins", 10.0F)
+        txtEmail.Font = New Font("Poppins", 10F)
         txtEmail.ForeColor = Color.Black
         txtEmail.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtEmail.Location = New Point(235, 315)
@@ -306,7 +306,7 @@ Partial Class CompanySettings
         ' Label5
         ' 
         Label5.AutoSize = True
-        Label5.Font = New Font("Poppins", 10.0F)
+        Label5.Font = New Font("Poppins", 10F)
         Label5.ForeColor = Color.White
         Label5.Location = New Point(235, 285)
         Label5.Name = "Label5"
@@ -325,7 +325,7 @@ Partial Class CompanySettings
         txtPhone.DisabledState.ForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtPhone.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtPhone.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
-        txtPhone.Font = New Font("Poppins", 10.0F)
+        txtPhone.Font = New Font("Poppins", 10F)
         txtPhone.ForeColor = Color.Black
         txtPhone.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtPhone.Location = New Point(15, 315)
@@ -340,7 +340,7 @@ Partial Class CompanySettings
         ' Label4
         ' 
         Label4.AutoSize = True
-        Label4.Font = New Font("Poppins", 10.0F)
+        Label4.Font = New Font("Poppins", 10F)
         Label4.ForeColor = Color.White
         Label4.Location = New Point(15, 285)
         Label4.Name = "Label4"
@@ -359,7 +359,7 @@ Partial Class CompanySettings
         txtAddress.DisabledState.ForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtAddress.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtAddress.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
-        txtAddress.Font = New Font("Poppins", 10.0F)
+        txtAddress.Font = New Font("Poppins", 10F)
         txtAddress.ForeColor = Color.Black
         txtAddress.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtAddress.Location = New Point(15, 220)
@@ -375,7 +375,7 @@ Partial Class CompanySettings
         ' Label3
         ' 
         Label3.AutoSize = True
-        Label3.Font = New Font("Poppins", 10.0F)
+        Label3.Font = New Font("Poppins", 10F)
         Label3.ForeColor = Color.White
         Label3.Location = New Point(15, 190)
         Label3.Name = "Label3"
@@ -394,7 +394,7 @@ Partial Class CompanySettings
         txtTIN.DisabledState.ForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtTIN.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtTIN.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
-        txtTIN.Font = New Font("Poppins", 10.0F)
+        txtTIN.Font = New Font("Poppins", 10F)
         txtTIN.ForeColor = Color.Black
         txtTIN.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtTIN.Location = New Point(15, 145)
@@ -409,7 +409,7 @@ Partial Class CompanySettings
         ' Label2
         ' 
         Label2.AutoSize = True
-        Label2.Font = New Font("Poppins", 10.0F)
+        Label2.Font = New Font("Poppins", 10F)
         Label2.ForeColor = Color.White
         Label2.Location = New Point(15, 115)
         Label2.Name = "Label2"
@@ -428,7 +428,7 @@ Partial Class CompanySettings
         txtCompanyName.DisabledState.ForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtCompanyName.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtCompanyName.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
-        txtCompanyName.Font = New Font("Poppins", 10.0F)
+        txtCompanyName.Font = New Font("Poppins", 10F)
         txtCompanyName.ForeColor = Color.Black
         txtCompanyName.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtCompanyName.Location = New Point(15, 70)
@@ -443,7 +443,7 @@ Partial Class CompanySettings
         ' Label1
         ' 
         Label1.AutoSize = True
-        Label1.Font = New Font("Poppins", 10.0F)
+        Label1.Font = New Font("Poppins", 10F)
         Label1.ForeColor = Color.White
         Label1.Location = New Point(15, 40)
         Label1.Name = "Label1"
@@ -472,7 +472,7 @@ Partial Class CompanySettings
         GroupBox3.Controls.Add(Label8)
         GroupBox3.Controls.Add(txtBIRAuth)
         GroupBox3.Controls.Add(Label7)
-        GroupBox3.Font = New Font("Poppins", 11.0F, FontStyle.Bold)
+        GroupBox3.Font = New Font("Poppins", 11F, FontStyle.Bold)
         GroupBox3.ForeColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
         GroupBox3.Location = New Point(20, 20)
         GroupBox3.Name = "GroupBox3"
@@ -493,7 +493,7 @@ Partial Class CompanySettings
         txtReceiptFooter.DisabledState.ForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtReceiptFooter.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtReceiptFooter.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
-        txtReceiptFooter.Font = New Font("Poppins", 10.0F)
+        txtReceiptFooter.Font = New Font("Poppins", 10F)
         txtReceiptFooter.ForeColor = Color.Black
         txtReceiptFooter.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtReceiptFooter.Location = New Point(15, 230)
@@ -509,7 +509,7 @@ Partial Class CompanySettings
         ' Label10
         ' 
         Label10.AutoSize = True
-        Label10.Font = New Font("Poppins", 10.0F)
+        Label10.Font = New Font("Poppins", 10F)
         Label10.ForeColor = Color.White
         Label10.Location = New Point(15, 200)
         Label10.Name = "Label10"
@@ -519,7 +519,7 @@ Partial Class CompanySettings
         ' 
         ' nudValidityYears
         ' 
-        nudValidityYears.Font = New Font("Poppins", 10.0F)
+        nudValidityYears.Font = New Font("Poppins", 10F)
         nudValidityYears.Location = New Point(15, 150)
         nudValidityYears.Maximum = New Decimal(New Integer() {10, 0, 0, 0})
         nudValidityYears.Minimum = New Decimal(New Integer() {1, 0, 0, 0})
@@ -527,17 +527,19 @@ Partial Class CompanySettings
         nudValidityYears.Size = New Size(120, 32)
         nudValidityYears.TabIndex = 5
         nudValidityYears.Value = New Decimal(New Integer() {5, 0, 0, 0})
+        nudValidityYears.Visible = False
         ' 
         ' Label9
         ' 
         Label9.AutoSize = True
-        Label9.Font = New Font("Poppins", 10.0F)
+        Label9.Font = New Font("Poppins", 10F)
         Label9.ForeColor = Color.White
         Label9.Location = New Point(15, 120)
         Label9.Name = "Label9"
         Label9.Size = New Size(126, 30)
         Label9.TabIndex = 4
         Label9.Text = "Validity Years"
+        Label9.Visible = False
         ' 
         ' txtPTUNumber
         ' 
@@ -550,7 +552,7 @@ Partial Class CompanySettings
         txtPTUNumber.DisabledState.ForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtPTUNumber.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtPTUNumber.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
-        txtPTUNumber.Font = New Font("Poppins", 10.0F)
+        txtPTUNumber.Font = New Font("Poppins", 10F)
         txtPTUNumber.ForeColor = Color.Black
         txtPTUNumber.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtPTUNumber.Location = New Point(365, 70)
@@ -565,7 +567,7 @@ Partial Class CompanySettings
         ' Label8
         ' 
         Label8.AutoSize = True
-        Label8.Font = New Font("Poppins", 10.0F)
+        Label8.Font = New Font("Poppins", 10F)
         Label8.ForeColor = Color.White
         Label8.Location = New Point(365, 40)
         Label8.Name = "Label8"
@@ -584,7 +586,7 @@ Partial Class CompanySettings
         txtBIRAuth.DisabledState.ForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtBIRAuth.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtBIRAuth.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
-        txtBIRAuth.Font = New Font("Poppins", 10.0F)
+        txtBIRAuth.Font = New Font("Poppins", 10F)
         txtBIRAuth.ForeColor = Color.Black
         txtBIRAuth.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtBIRAuth.Location = New Point(15, 70)
@@ -599,7 +601,7 @@ Partial Class CompanySettings
         ' Label7
         ' 
         Label7.AutoSize = True
-        Label7.Font = New Font("Poppins", 10.0F)
+        Label7.Font = New Font("Poppins", 10F)
         Label7.ForeColor = Color.White
         Label7.Location = New Point(15, 40)
         Label7.Name = "Label7"
@@ -630,7 +632,7 @@ Partial Class CompanySettings
         btnPreviewReceipt.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         btnPreviewReceipt.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
         btnPreviewReceipt.FillColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
-        btnPreviewReceipt.Font = New Font("Poppins", 11.0F, FontStyle.Bold)
+        btnPreviewReceipt.Font = New Font("Poppins", 11F, FontStyle.Bold)
         btnPreviewReceipt.ForeColor = Color.Black
         btnPreviewReceipt.Location = New Point(20, 10)
         btnPreviewReceipt.Name = "btnPreviewReceipt"
@@ -648,7 +650,7 @@ Partial Class CompanySettings
         btnCancel.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         btnCancel.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
         btnCancel.FillColor = Color.FromArgb(CByte(255), CByte(71), CByte(87))
-        btnCancel.Font = New Font("Poppins", 12.0F, FontStyle.Bold)
+        btnCancel.Font = New Font("Poppins", 12F, FontStyle.Bold)
         btnCancel.ForeColor = Color.White
         btnCancel.Location = New Point(650, 10)
         btnCancel.Name = "btnCancel"
@@ -666,7 +668,7 @@ Partial Class CompanySettings
         btnSave.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         btnSave.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
         btnSave.FillColor = Color.FromArgb(CByte(16), CByte(216), CByte(98))
-        btnSave.Font = New Font("Poppins", 12.0F, FontStyle.Bold)
+        btnSave.Font = New Font("Poppins", 12F, FontStyle.Bold)
         btnSave.ForeColor = Color.White
         btnSave.Location = New Point(520, 10)
         btnSave.Name = "btnSave"
@@ -690,7 +692,7 @@ Partial Class CompanySettings
         ' lblTitle
         ' 
         lblTitle.BackColor = Color.Transparent
-        lblTitle.Font = New Font("Poppins", 20.0F, FontStyle.Bold)
+        lblTitle.Font = New Font("Poppins", 20F, FontStyle.Bold)
         lblTitle.ForeColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
         lblTitle.Location = New Point(0, 10)
         lblTitle.Name = "lblTitle"
@@ -700,7 +702,7 @@ Partial Class CompanySettings
         ' 
         ' CompanySettings
         ' 
-        AutoScaleDimensions = New SizeF(8.0F, 20.0F)
+        AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
         ClientSize = New Size(800, 700)
         Controls.Add(MainPanel)
