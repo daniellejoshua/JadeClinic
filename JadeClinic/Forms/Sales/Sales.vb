@@ -4046,7 +4046,7 @@ Public Class Sales
 
         Dim btnApplyPercentage As New Button()
         btnApplyPercentage.Text = "Apply %"
-        btnApplyPercentage.Location = New Point(270, 30)
+        btnApplyPercentage.Location = New Point(270, 35)
         btnApplyPercentage.Size = New Size(60, 25)
         btnApplyPercentage.BackColor = GoldenYellow
         btnApplyPercentage.ForeColor = DeepCharcoal
@@ -4079,7 +4079,7 @@ Public Class Sales
         Dim btnApplyFixed As New Button()
         btnApplyFixed.Text = "Apply ₱"
         btnApplyFixed.Location = New Point(270, 80)
-        btnApplyFixed.Size = New Size(60, 25)
+        btnApplyFixed.Size = New Size(60, 30)
         btnApplyFixed.BackColor = GoldenYellow
         btnApplyFixed.ForeColor = DeepCharcoal
         AddHandler btnApplyFixed.Click, Sub()

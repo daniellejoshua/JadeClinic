@@ -531,7 +531,7 @@ Public Class Sys
     Private Sub ShowDatabaseBackupDialog()
         Dim backupForm As New Form()
         backupForm.Text = "Database Backup & Restore"
-        backupForm.Size = New Size(500, 350)
+        backupForm.Size = New Size(500, 390)
         backupForm.StartPosition = FormStartPosition.CenterParent
         backupForm.FormBorderStyle = FormBorderStyle.FixedDialog
         backupForm.MaximizeBox = False

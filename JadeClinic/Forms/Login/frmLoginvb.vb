@@ -98,7 +98,7 @@ Public Class frmLoginvb
 
         ' Create QR input textbox (hidden for scanner input only)
         Dim txtQRInput As New TextBox()
-        txtQRInput.Location = New Point(10, 10) ' Visible for debugging
+        txtQRInput.Location = New Point(-100, 10) ' Visible for debugging
         txtQRInput.Size = New Size(200, 20)
         txtQRInput.BackColor = Color.FromArgb(61, 65, 66)
         txtQRInput.ForeColor = Color.White
@@ -113,7 +113,7 @@ Public Class frmLoginvb
         lblDebug.ForeColor = Color.Yellow
         lblDebug.BackColor = Color.Transparent
         lblDebug.AutoSize = True
-        lblDebug.Visible = True ' Made visible for debugging
+        lblDebug.Visible = False ' Made visible for debugging
         lblDebug.Location = New Point(10, 40)
 
         ' Auto-clear timer to clear accidentally typed text

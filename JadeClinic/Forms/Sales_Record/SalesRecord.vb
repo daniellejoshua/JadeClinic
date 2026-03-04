@@ -615,7 +615,6 @@ Public Class SalesRecord
     End Function
     Private Sub Exportbtn_Click(sender As Object, e As EventArgs) Handles Exportbtn.Click
         Try
-            MessageBox.Show($"Runtime EXE:{Environment.NewLine}{Application.ExecutablePath}", "Runtime Path")
 
             Dim sortOrder As String = "Sale Date (Newest First)"
             If SortBy IsNot Nothing AndAlso SortBy.SelectedItem IsNot Nothing Then

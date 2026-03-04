@@ -22,7 +22,15 @@ Public Class SalesRecordExporter
                                   "(s.AmountPaid - s.TotalAmount) AS ChangeAmount, " &
                                   "ISNULL(s.PaymentMethod, '') AS PaymentMethod, " &
                                   "ISNULL(s.DiscountType, '') AS DiscountType, " &
-                                  "ISNULL(s.DiscountAmount, 0) AS DiscountAmount " &
+                                  "ISNULL(s.DiscountAmount, 0) AS DiscountAmount, " &
+                                  "ISNULL((SELECT SUM(si.Quantity * ISNULL(p.CostPrice, 0)) " &
+                                  "        FROM SaleItems si " &
+                                  "        LEFT JOIN Products p ON p.ProductID = si.ProductID " &
+                                  "        WHERE si.SaleID = s.SaleID), 0) AS TotalCost, " &
+                                  "(s.TotalAmount - ISNULL(s.DiscountAmount, 0)) - ISNULL((SELECT SUM(si.Quantity * ISNULL(p.CostPrice, 0)) " &
+                                  "                                             FROM SaleItems si " &
+                                  "                                             LEFT JOIN Products p ON p.ProductID = si.ProductID " &
+                                  "                                             WHERE si.SaleID = s.SaleID), 0) AS ProfitAmount " &
                                   "FROM Sales s " &
                                   "LEFT JOIN Users u ON s.UserID = u.UserID"
 
@@ -93,7 +101,9 @@ Public Class SalesRecordExporter
                         .Change = If(IsDBNull(reader("ChangeAmount")), 0D, Convert.ToDecimal(reader("ChangeAmount"))),
                         .PaymentMethod = If(IsDBNull(reader("PaymentMethod")), "", reader("PaymentMethod").ToString()),
                         .DiscountType = If(IsDBNull(reader("DiscountType")), "None", reader("DiscountType").ToString()),
-                        .DiscountAmount = If(IsDBNull(reader("DiscountAmount")), 0D, Convert.ToDecimal(reader("DiscountAmount")))
+                        .DiscountAmount = If(IsDBNull(reader("DiscountAmount")), 0D, Convert.ToDecimal(reader("DiscountAmount"))),
+                        .TotalCost = If(IsDBNull(reader("TotalCost")), 0D, Convert.ToDecimal(reader("TotalCost"))),
+                        .ProfitAmount = If(IsDBNull(reader("ProfitAmount")), 0D, Convert.ToDecimal(reader("ProfitAmount")))
                     }
 
                     If orderData.OrderID > 0 AndAlso orderData.OrderDate <> DateTime.MinValue Then
@@ -201,6 +211,8 @@ Public Class SalesRecordExporter
             ' Expanded analytics
             Dim totalCounter As Integer = orderDataList.Count
             Dim totalRevenue As Decimal = orderDataList.Sum(Function(o) o.TotalAmount)
+            Dim totalCost As Decimal = orderDataList.Sum(Function(o) o.TotalCost)
+            Dim totalProfit As Decimal = orderDataList.Sum(Function(o) o.ProfitAmount)
             Dim totalReceived As Decimal = orderDataList.Sum(Function(o) o.TotalReceived)
             Dim totalChange As Decimal = orderDataList.Sum(Function(o) o.Change)
             Dim totalDiscounts As Decimal = orderDataList.Sum(Function(o) o.DiscountAmount)
@@ -264,6 +276,7 @@ Public Class SalesRecordExporter
                                                                                                                                                 c.RelativeColumn(2.2F)
                                                                                                                                                 c.RelativeColumn(1.5F)
                                                                                                                                                 c.RelativeColumn(1.8F)
+                                                                                                                                                c.RelativeColumn(1.8F)
                                                                                                                                                 c.RelativeColumn(1.6F)
                                                                                                                                                 c.RelativeColumn(1.3F)
                                                                                                                                                 c.RelativeColumn(1.4F)
@@ -276,6 +289,7 @@ Public Class SalesRecordExporter
                                                                                                                                      header.Cell().Background(Colors.Grey.Darken3).Padding(4).Text("SALE DATE").FontColor(Colors.White).SemiBold().FontSize(7).AlignCenter()
                                                                                                                                      header.Cell().Background(Colors.Grey.Darken3).Padding(4).Text("METHOD").FontColor(Colors.White).SemiBold().FontSize(7).AlignCenter()
                                                                                                                                      header.Cell().Background(Colors.Grey.Darken3).Padding(4).Text("TOTAL").FontColor(Colors.White).SemiBold().FontSize(7).AlignCenter()
+                                                                                                                                     header.Cell().Background(Colors.Grey.Darken3).Padding(4).Text("COST").FontColor(Colors.White).SemiBold().FontSize(7).AlignCenter()
                                                                                                                                      header.Cell().Background(Colors.Grey.Darken3).Padding(4).Text("PAID").FontColor(Colors.White).SemiBold().FontSize(7).AlignCenter()
                                                                                                                                      header.Cell().Background(Colors.Grey.Darken3).Padding(4).Text("CHANGE").FontColor(Colors.White).SemiBold().FontSize(7).AlignCenter()
                                                                                                                                      header.Cell().Background(Colors.Grey.Darken3).Padding(4).Text("DISC TYPE").FontColor(Colors.White).SemiBold().FontSize(7).AlignCenter()
@@ -288,6 +302,7 @@ Public Class SalesRecordExporter
                                                                                                                         table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(sale.OrderDate.ToString("MM/dd/yy HH:mm")).FontSize(7).AlignCenter()
                                                                                                                         table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(If(String.IsNullOrWhiteSpace(sale.PaymentMethod), "N/A", sale.PaymentMethod)).FontSize(7).AlignCenter()
                                                                                                                         table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text($"₱{sale.TotalAmount:F2}").FontSize(7).AlignCenter()
+                                                                                                                        table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text($"₱{sale.TotalCost:F2}").FontSize(7).AlignCenter()
                                                                                                                         table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text($"₱{sale.TotalReceived:F2}").FontSize(7).AlignCenter()
                                                                                                                         table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text($"₱{sale.Change:F2}").FontSize(7).AlignCenter()
                                                                                                                         table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(sale.DiscountType).FontSize(7).AlignCenter()
@@ -300,7 +315,9 @@ Public Class SalesRecordExporter
                                                                                                                                                                                                                              summary.Item().PaddingTop(4).Row(Sub(sRow)
                                                                                                                                                                                                                                                                   sRow.RelativeItem().Column(Sub(left)
                                                                                                                                                                                                                                                                                                  left.Item().Text($"Counter (Transactions): {totalCounter}").FontSize(9)
-                                                                                                                                                                                                                                                                                                 left.Item().Text($"Total Revenue: ₱{totalRevenue:N2}").FontSize(9).SemiBold().FontColor(Colors.Green.Medium)
+                                                                                                                                                                                                                                                                                                 left.Item().Text($"Total Revenue: ₱{totalRevenue:N2}").FontSize(9).SemiBold().FontColor(Colors.Blue.Medium)
+                                                                                                                                                                                                                                                                                                 left.Item().Text($"Total Cost: ₱{totalCost:N2}").FontSize(9).SemiBold().FontColor(Colors.Red.Medium)
+                                                                                                                                                                                                                                                                                                 left.Item().Text($"Total Profit (Less Discount): ₱{totalProfit:N2}").FontSize(9).SemiBold().FontColor(Colors.Green.Medium)
                                                                                                                                                                                                                                                                                                  left.Item().Text($"Highest Sale: ₱{highestSale:N2}").FontSize(9)
                                                                                                                                                                                                                                                                                                  left.Item().Text($"Lowest Sale: ₱{lowestSale:N2}").FontSize(9)
                                                                                                                                                                                                                                                                                                  left.Item().Text($"Orders with Discounts: {ordersWithDiscount} ({discountRate:N1}%)").FontSize(9).FontColor(Colors.Orange.Medium)
@@ -372,4 +389,6 @@ Public Class OrderReportData
     Public Property PaymentMethod As String
     Public Property DiscountType As String
     Public Property DiscountAmount As Decimal
+    Public Property TotalCost As Decimal
+    Public Property ProfitAmount As Decimal
 End Class

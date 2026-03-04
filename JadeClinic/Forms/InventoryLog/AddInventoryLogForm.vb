@@ -273,9 +273,9 @@ Public Class AddInventoryLogForm
 
         yPos += 90
 
-        ' Reference
+        ' Reference (required)
         Dim lblReference As New Label()
-        lblReference.Text = "Reference"
+        lblReference.Text = "Reference *"
         lblReference.Font = New Font("Poppins", 10, FontStyle.Bold)
         lblReference.ForeColor = Color.White
         lblReference.Location = New Point(30, yPos)
@@ -775,6 +775,13 @@ Public Class AddInventoryLogForm
             Return False
         End If
 
+        ' Validate reference (required)
+        If String.IsNullOrWhiteSpace(txtReference.Text) Then
+            MessageBox.Show("Please enter a reference!", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            txtReference.Focus()
+            Return False
+        End If
+
         ' Validate batch fields for ENDO products during Stock IN
         Dim selectedProduct = products(cmbProduct.SelectedIndex)
         Dim productCategory As String = selectedProduct("Category").ToString().ToUpper()
@@ -869,7 +876,7 @@ Public Class AddInventoryLogForm
                             cmd.Parameters.AddWithValue("@ExpiryDate", If(expiryDate.HasValue, expiryDate.Value, DBNull.Value))
                             cmd.Parameters.AddWithValue("@SupplierID", supplierId)
                             cmd.Parameters.AddWithValue("@UserID", frmLoginvb.LoggedInUserID)
-                            cmd.Parameters.AddWithValue("@Reference", If(String.IsNullOrWhiteSpace(txtReference.Text), DBNull.Value, txtReference.Text.Trim()))
+                            cmd.Parameters.AddWithValue("@Reference", txtReference.Text.Trim())
                             cmd.Parameters.AddWithValue("@Notes", If(String.IsNullOrWhiteSpace(txtNotes.Text), DBNull.Value, txtNotes.Text.Trim()))
                             cmd.ExecuteNonQuery()
                         End Using
