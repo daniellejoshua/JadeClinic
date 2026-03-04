@@ -77,7 +77,29 @@ Public Class AuditLog
         End Try
     End Sub
     Private Sub Exportbtn_Click(sender As Object, e As EventArgs)
-        MessageBox.Show("Export not implemented.", "Export", MessageBoxButtons.OK, MessageBoxIcon.Information)
+        Try
+            Dim selectedFilterType As String = If(filtertype IsNot Nothing AndAlso filtertype.SelectedItem IsNot Nothing,
+                                                  filtertype.SelectedItem.ToString(),
+                                                  "All Logs")
+
+            Dim selectedUser As String = If(cmbAccounts IsNot Nothing AndAlso cmbAccounts.SelectedItem IsNot Nothing,
+                                            cmbAccounts.SelectedItem.ToString(),
+                                            "All Accounts")
+
+            Dim selectedDate As DateTime? = Nothing
+            If Guna2DateTimePicker1 IsNot Nothing AndAlso Guna2DateTimePicker1.ShowCheckBox AndAlso Guna2DateTimePicker1.Checked Then
+                selectedDate = Guna2DateTimePicker1.Value.Date
+            End If
+
+            AuditExporter.ExportAuditLogsReport(
+                sortOrder:="Newest First",
+                filterType:=selectedFilterType,
+                filterDate:=selectedDate,
+                selectedUser:=selectedUser)
+
+        Catch ex As Exception
+            MessageBox.Show($"Error exporting audit logs: {ex.Message}", "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
     End Sub
 
     Private Async Sub Filters_Changed(sender As Object, e As EventArgs)
@@ -330,7 +352,13 @@ Public Class AuditLog
                     InventoryLogDataGrid.Rows(rowIndex).Cells("ActionTime").Value = String.Empty
                 End If
 
-                InventoryLogDataGrid.Rows(rowIndex).Cells("ActionType").Value = GetActionType(If(rowData.ContainsKey("Action"), rowData("Action").ToString(), String.Empty))
+                Dim actionText As String = If(rowData.ContainsKey("Action"), rowData("Action").ToString(), String.Empty)
+                Dim actionType As String = GetActionType(actionText)
+
+                InventoryLogDataGrid.Rows(rowIndex).Cells("ActionType").Value = actionType
+                InventoryLogDataGrid.Rows(rowIndex).Cells("ActionType").Style.ForeColor = GetActionTypeColor(actionText)
+                InventoryLogDataGrid.Rows(rowIndex).Cells("ActionType").Style.SelectionForeColor = Color.Black
+                InventoryLogDataGrid.Rows(rowIndex).Cells("ActionType").Style.Font = New Font("Poppins SemiBold", 9.0F, FontStyle.Bold)
 
                 ' Optional: tag row with original data for later use
                 InventoryLogDataGrid.Rows(rowIndex).Tag = rowData
@@ -369,6 +397,34 @@ Public Class AuditLog
             Return "🔑 SESSION"
         Else
             Return "ℹ️ INFO"
+        End If
+    End Function
+
+    Private Function GetActionTypeColor(action As String) As Color
+        Dim a As String = If(action, "").ToLowerInvariant()
+
+        If a.Contains("login") OrElse a.Contains("logout") OrElse a.Contains("logged") Then
+            Return Color.FromArgb(52, 152, 219)      ' Blue - Auth
+        ElseIf a.Contains("navigation") OrElse a.Contains("access") OrElse a.Contains("view") Then
+            Return Color.FromArgb(155, 89, 182)      ' Purple - Navigation
+        ElseIf a.Contains("add") OrElse a.Contains("create") OrElse a.Contains("added") OrElse a.Contains("created") Then
+            Return Color.FromArgb(46, 204, 113)      ' Green - Create
+        ElseIf a.Contains("update") OrElse a.Contains("modify") OrElse a.Contains("edit") OrElse a.Contains("edited") Then
+            Return Color.FromArgb(241, 196, 15)      ' Yellow - Update
+        ElseIf a.Contains("delete") OrElse a.Contains("remove") OrElse a.Contains("deleted") Then
+            Return Color.FromArgb(231, 76, 60)       ' Red - Delete
+        ElseIf a.Contains("export") OrElse a.Contains("report") Then
+            Return Color.FromArgb(26, 188, 156)      ' Teal - Export
+        ElseIf a.Contains("error") OrElse a.Contains("failed") Then
+            Return Color.FromArgb(255, 71, 87)       ' Error red
+        ElseIf a.Contains("security") OrElse a.Contains("unauthorized") Then
+            Return Color.FromArgb(230, 126, 34)      ' Orange - Security
+        ElseIf a.Contains("product") OrElse a.Contains("inventory") Then
+            Return Color.FromArgb(39, 174, 96)       ' Dark green - Inventory
+        ElseIf a.Contains("session") OrElse a.Contains("pin") Then
+            Return Color.FromArgb(142, 68, 173)      ' Deep purple - Session
+        Else
+            Return Color.FromArgb(225, 229, 233)     ' Light gray - Info
         End If
     End Function
 
