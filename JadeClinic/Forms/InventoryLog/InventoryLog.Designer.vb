@@ -77,7 +77,7 @@ Partial Class InventoryLog
         ' PictureBox9
         ' 
         PictureBox9.BackColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
-        PictureBox9.Image = My.Resources.Resources.Jade_Dental_Logo
+        PictureBox9.Image = My.Resources.Resources.FinalLogoOfJAde
         PictureBox9.Location = New Point(63, 7)
         PictureBox9.Name = "PictureBox9"
         PictureBox9.Size = New Size(103, 85)

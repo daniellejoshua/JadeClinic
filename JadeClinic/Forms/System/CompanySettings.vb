@@ -168,6 +168,7 @@ Public Class CompanySettings
         End Try
     End Sub
 
+
     Private Sub PopulateFormFields()
         If currentCompanyData Is Nothing Then Return
 
@@ -239,6 +240,19 @@ Public Class CompanySettings
     End Sub
 
     Private Sub SetDefaultLogoPlaceholder()
+        ' Try loading embedded resource first
+        Try
+            Dim resImg As Image = TryCast(My.Resources.Jade_Dental_Logo1, Image)
+            If resImg IsNot Nothing Then
+                ' Clone so the resource image isn't locked
+                picLogo.Image = New Bitmap(resImg)
+                Return
+            End If
+        Catch
+            ' Fall through to drawn placeholder on error
+        End Try
+
+        ' Fallback: draw programmatic placeholder
         Dim placeholder As New Bitmap(200, 150)
         Using g As Graphics = Graphics.FromImage(placeholder)
             g.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias
@@ -249,6 +263,38 @@ Public Class CompanySettings
         End Using
         picLogo.Image = placeholder
     End Sub
+
+    Private Function GetDefaultLogoBytes() As Byte()
+        ' Try returning embedded resource bytes first
+        Try
+            Dim resImg As Image = TryCast(My.Resources.FinalLogoOfJAde, Image)
+            If resImg IsNot Nothing Then
+                Using ms As New MemoryStream()
+                    resImg.Save(ms, System.Drawing.Imaging.ImageFormat.Png)
+                    Return ms.ToArray()
+                End Using
+            End If
+        Catch
+            ' Fall through to generated placeholder bytes
+        End Try
+
+        ' Create the same fallback placeholder and return PNG bytes
+        Dim placeholder As New Bitmap(200, 150)
+        Using g As Graphics = Graphics.FromImage(placeholder)
+            g.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias
+            g.Clear(Color.LightGray)
+            Using f As New Font("Poppins", 12, FontStyle.Bold)
+                Dim text As String = "Company Logo"
+                Dim textSize = g.MeasureString(text, f)
+                g.DrawString(text, f, Brushes.Gray, (placeholder.Width - textSize.Width) / 2.0F, (placeholder.Height - textSize.Height) / 2.0F)
+            End Using
+        End Using
+
+        Using ms As New MemoryStream()
+            placeholder.Save(ms, System.Drawing.Imaging.ImageFormat.Png)
+            Return ms.ToArray()
+        End Using
+    End Function
 
     Private Sub RefreshCompanyHoursSummary()
         If txtCompanyHours Is Nothing OrElse dtOpeningTime Is Nothing OrElse dtClosingTime Is Nothing OrElse clbClosedDays Is Nothing Then Return
@@ -565,18 +611,18 @@ Public Class CompanySettings
             If isUpdate Then
                 ' Update existing record
                 sql = "UPDATE CompanySettings SET " &
-                      "CompanyName = @CompanyName, " &
-                      "TIN = @TIN, " &
-                      "Address = @Address, " &
-                      "Phone = @Phone, " &
-                      "Email = @Email, " &
-                      "Website = @Website, " &
-                      "BIRAuthNumber = @BIRAuthNumber, " &
-                      "PTUNumber = @PTUNumber, " &
-                      "ValidityYears = @ValidityYears, " &
-                      "ReceiptFooter = @ReceiptFooter, " &
-                      "CompanyHours = @CompanyHours, " &         ' <-- update column
-                      "LastModified = @LastModified"
+                  "CompanyName = @CompanyName, " &
+                  "TIN = @TIN, " &
+                  "Address = @Address, " &
+                  "Phone = @Phone, " &
+                  "Email = @Email, " &
+                  "Website = @Website, " &
+                  "BIRAuthNumber = @BIRAuthNumber, " &
+                  "PTUNumber = @PTUNumber, " &
+                  "ValidityYears = @ValidityYears, " &
+                  "ReceiptFooter = @ReceiptFooter, " &
+                  "CompanyHours = @CompanyHours, " &         ' <-- update column
+                  "LastModified = @LastModified"
 
                 If logoChanged Then
                     sql += ", Logo = @Logo"
@@ -586,13 +632,13 @@ Public Class CompanySettings
             Else
                 ' Insert new record
                 sql = "INSERT INTO CompanySettings " &
-                      "(CompanyName, TIN, Address, Phone, Email, Website, Logo, " &
-                      "BIRAuthNumber, PTUNumber, ValidityYears, ReceiptFooter, CompanyHours, " &
-                      "IsActive, DateCreated, LastModified) " &
-                      "VALUES " &
-                      "(@CompanyName, @TIN, @Address, @Phone, @Email, @Website, @Logo, " &
-                      "@BIRAuthNumber, @PTUNumber, @ValidityYears, @ReceiptFooter, @CompanyHours, " &
-                      "1, @DateCreated, @LastModified)"
+                  "(CompanyName, TIN, Address, Phone, Email, Website, Logo, " &
+                  "BIRAuthNumber, PTUNumber, ValidityYears, ReceiptFooter, CompanyHours, " &
+                  "IsActive, DateCreated, LastModified) " &
+                  "VALUES " &
+                  "(@CompanyName, @TIN, @Address, @Phone, @Email, @Website, @Logo, " &
+                  "@BIRAuthNumber, @PTUNumber, @ValidityYears, @ReceiptFooter, @CompanyHours, " &
+                  "1, @DateCreated, @LastModified)"
 
                 parameters.Add(New SqlParameter("@DateCreated", DateTime.Now))
             End If
@@ -611,13 +657,27 @@ Public Class CompanySettings
             parameters.Add(New SqlParameter("@CompanyHours", If(txtCompanyHours.Text, "").Trim())) ' <-- new parameter
             parameters.Add(New SqlParameter("@LastModified", DateTime.Now))
 
-            ' Handle logo data
+            ' Handle logo data - ensure parameter is typed as VarBinary and save resource logo when user removed
             If logoChanged OrElse Not isUpdate Then
-                If logoData IsNot Nothing Then
-                    parameters.Add(New SqlParameter("@Logo", logoData))
-                Else
-                    parameters.Add(New SqlParameter("@Logo", DBNull.Value))
+                Dim pLogo As New SqlParameter("@Logo", SqlDbType.VarBinary, -1)
+                Dim bytesToSave As Byte() = logoData
+
+                ' If user removed logo (logoData is Nothing), store the embedded resource default logo bytes
+                If bytesToSave Is Nothing Then
+                    Try
+                        bytesToSave = GetDefaultLogoBytes()
+                    Catch
+                        bytesToSave = Nothing
+                    End Try
                 End If
+
+                If bytesToSave IsNot Nothing Then
+                    pLogo.Value = bytesToSave
+                Else
+                    pLogo.Value = DBNull.Value
+                End If
+
+                parameters.Add(pLogo)
             End If
 
             ' Execute the query
@@ -635,7 +695,6 @@ Public Class CompanySettings
             Throw ' Re-throw to be handled by calling method
         End Try
     End Sub
-
     Private Sub btnCancel_Click(sender As Object, e As EventArgs) Handles btnCancel.Click
         Me.DialogResult = DialogResult.Cancel
         Me.Close()

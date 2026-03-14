@@ -784,6 +784,9 @@ Public Class InventoryLog
             ' Handle empty data
             If inventoryData Is Nothing OrElse inventoryData.Count = 0 Then
                 ' Update record count without touching lblUsername
+                ' Ensure no default selection when empty
+                InventoryLogDataGrid.ClearSelection()
+                InventoryLogDataGrid.CurrentCell = Nothing
                 Return
             End If
 
@@ -850,6 +853,14 @@ Public Class InventoryLog
                 End If
             Next
 
+            ' Prevent DataGrid from automatically selecting the first row after refresh
+            InventoryLogDataGrid.ClearSelection()
+            Try
+                InventoryLogDataGrid.CurrentCell = Nothing
+            Catch
+                ' Some DataGridView configurations can throw when setting CurrentCell to Nothing; ignore safely
+            End Try
+
             ' Update record count without overwriting lblUsername
 
         Catch ex As Exception
@@ -902,38 +913,51 @@ Public Class InventoryLog
 
             Dim txNorm As String = If(transactionType, "").Trim().ToLowerInvariant()
 
-            ' default styles
+            ' Keep uniform row background for all rows
             row.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
+            row.DefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
+
+            ' Configure TransactionType cell styles only (do not color full row)
             If InventoryLogDataGrid.Columns.Contains("TransactionType") Then
-                row.Cells("TransactionType").Style.ForeColor = System.Drawing.Color.LightGray
-                row.Cells("TransactionType").Style.Font = New Font(InventoryLogDataGrid.Font, FontStyle.Regular)
-                row.Cells("TransactionType").Style.Alignment = DataGridViewContentAlignment.MiddleCenter
+                Dim cell = row.Cells("TransactionType")
+                cell.Style.Font = New Font(InventoryLogDataGrid.Font, FontStyle.Regular)
+                cell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter
+                ' Default foreground
+                cell.Style.ForeColor = System.Drawing.Color.LightGray
+                ' Ensure selection does not override the ForeColor — set SelectionForeColor to same
+                cell.Style.SelectionForeColor = cell.Style.ForeColor
+                ' Keep selection background consistent with rest of grid
+                cell.Style.SelectionBackColor = InventoryLogDataGrid.DefaultCellStyle.SelectionBackColor
             End If
 
-            ' Ensure product is centered
+            ' Ensure product is centered and uses default colors
             If InventoryLogDataGrid.Columns.Contains("ProductName") Then
-                row.Cells("ProductName").Style.Alignment = DataGridViewContentAlignment.MiddleCenter
-                row.Cells("ProductName").Style.ForeColor = System.Drawing.Color.LightGray
+                Dim pcell = row.Cells("ProductName")
+                pcell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter
+                pcell.Style.ForeColor = System.Drawing.Color.LightGray
             End If
 
             Select Case txNorm
                 Case "stock in", "in", "stock_in", "inbound"
-                    row.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(38, 77, 45) ' darker green row
                     If InventoryLogDataGrid.Columns.Contains("TransactionType") Then
-                        row.Cells("TransactionType").Style.ForeColor = SuccessGreen
-                        row.Cells("TransactionType").Style.Font = New Font(InventoryLogDataGrid.Font, FontStyle.Bold)
+                        Dim cell = row.Cells("TransactionType")
+                        cell.Style.ForeColor = SuccessGreen
+                        cell.Style.SelectionForeColor = SuccessGreen
+                        cell.Style.Font = New Font(InventoryLogDataGrid.Font, FontStyle.Bold)
                     End If
                 Case "stock out", "out", "stock_out", "outbound", "sold"
-                    row.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(90, 45, 45) ' darker red row
                     If InventoryLogDataGrid.Columns.Contains("TransactionType") Then
-                        row.Cells("TransactionType").Style.ForeColor = AlertRed
-                        row.Cells("TransactionType").Style.Font = New Font(InventoryLogDataGrid.Font, FontStyle.Bold)
+                        Dim cell = row.Cells("TransactionType")
+                        cell.Style.ForeColor = AlertRed
+                        cell.Style.SelectionForeColor = AlertRed
+                        cell.Style.Font = New Font(InventoryLogDataGrid.Font, FontStyle.Bold)
                     End If
                 Case "adjustments", "adjust", "adj"
-                    row.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(70, 55, 40)
                     If InventoryLogDataGrid.Columns.Contains("TransactionType") Then
-                        row.Cells("TransactionType").Style.ForeColor = System.Drawing.Color.FromArgb(255, 180, 100)
-                        row.Cells("TransactionType").Style.Font = New Font(InventoryLogDataGrid.Font, FontStyle.Bold)
+                        Dim cell = row.Cells("TransactionType")
+                        cell.Style.ForeColor = System.Drawing.Color.FromArgb(255, 180, 100)
+                        cell.Style.SelectionForeColor = System.Drawing.Color.FromArgb(255, 180, 100)
+                        cell.Style.Font = New Font(InventoryLogDataGrid.Font, FontStyle.Bold)
                     End If
                 Case Else
                     ' leave defaults
