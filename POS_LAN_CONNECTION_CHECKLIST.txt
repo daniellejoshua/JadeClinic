@@ -1,0 +1,131 @@
+JadeClinic POS ? Admin SQL Connection Checklist
+=============================================
+
+Purpose
+-------
+Use this checklist to connect a POS PC to the Admin PC (SQL Server host) over LAN.
+
+Assumptions
+-----------
+- Admin PC hosts SQL Server instance/database.
+- Database name: JadeDentalSupply
+- SQL login: jade_app
+- SQL TCP port: 1433
+
+1) ADMIN PC: Verify IP and SQL listening
+----------------------------------------
+Open Command Prompt:
+
+1. Check current IP:
+   ipconfig
+
+   Note the Admin IPv4 (example: 192.168.68.104)
+
+2. Verify SQL listens on port 1433:
+   netstat -ano | findstr LISTENING | findstr :1433
+
+   Expected: 0.0.0.0:1433 (or admin-ip:1433)
+
+2) ADMIN PC: SQL TCP/IP settings (Configuration Manager)
+--------------------------------------------------------
+SQL Server Configuration Manager -> SQL Server Network Configuration -> Protocols for <INSTANCE>
+
+- TCP/IP = Enabled
+- IP Addresses tab:
+  - For active IPv4: Enabled = Yes
+  - TCP Dynamic Ports = (blank)
+  - TCP Port = 1433
+  - IPAll -> TCP Dynamic Ports = (blank)
+  - IPAll -> TCP Port = 1433
+
+Restart SQL Server service after changes.
+
+3) ADMIN PC: Firewall rules (Run CMD as Administrator)
+-------------------------------------------------------
+netsh advfirewall firewall add rule name="SQL TCP 1433 Public" dir=in action=allow protocol=TCP localport=1433 profile=public
+netsh advfirewall firewall add rule name="SQL TCP 1433 Private" dir=in action=allow protocol=TCP localport=1433 profile=private
+
+(If needed) allow UDP 1434:
+netsh advfirewall firewall add rule name="SQL UDP 1434 Public" dir=in action=allow protocol=UDP localport=1434 profile=public
+netsh advfirewall firewall add rule name="SQL UDP 1434 Private" dir=in action=allow protocol=UDP localport=1434 profile=private
+
+4) NETWORK: Make sure PCs can see each other
+---------------------------------------------
+- Connect both PCs to same LAN (same router/switch, non-guest network).
+- Ensure client isolation/AP isolation is OFF.
+
+From POS:
+  ping <ADMIN_IP>
+
+If ping fails, fix network first before SQL/app checks.
+
+5) POS PC: Test port reachability
+---------------------------------
+In PowerShell:
+
+  Test-NetConnection <ADMIN_IP> -Port 1433
+
+Expected: TcpTestSucceeded : True
+
+6) POS PC: Test SQL login directly
+----------------------------------
+In CMD or PowerShell:
+
+  sqlcmd -S tcp:<ADMIN_IP>,1433 -U jade_app -P <PASSWORD> -d JadeDentalSupply -l 5 -Q "SELECT @@SERVERNAME"
+
+Expected: server name + (1 rows affected)
+
+7) App config per machine
+-------------------------
+Admin machine config:
+  <add key="NodeRole" value="AdminServer" />
+
+POS machine config:
+  <add key="NodeRole" value="PosClient" />
+
+Both should use same SQL endpoint in connection string:
+  Server=<ADMIN_IP>,1433;Database=JadeDentalSupply;User ID=jade_app;Password=...;
+
+Deployed file to edit on POS:
+  JadeClinic.exe.config (beside exe)
+
+8) Quick troubleshooting matrix
+------------------------------
+A) Ping fails
+   -> Not same LAN / AP isolation / network block
+
+B) Ping works, Test-NetConnection fails
+   -> Firewall or SQL not listening on 1433
+
+C) Test-NetConnection works, sqlcmd login fails
+   -> SQL login/user mapping/permissions or wrong password
+
+D) sqlcmd works, app fails
+   -> Wrong deployed config file or stale publish output
+
+9) Useful SQL fixes (run in SSMS on Admin)
+------------------------------------------
+-- Ensure login and DB user mapping exists
+USE master;
+IF NOT EXISTS (SELECT 1 FROM sys.server_principals WHERE name='jade_app')
+    CREATE LOGIN jade_app WITH PASSWORD='REPLACE_WITH_PASSWORD';
+ALTER LOGIN jade_app ENABLE;
+ALTER LOGIN jade_app WITH DEFAULT_DATABASE = JadeDentalSupply;
+
+USE JadeDentalSupply;
+IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name='jade_app')
+    CREATE USER jade_app FOR LOGIN jade_app;
+ALTER ROLE db_datareader ADD MEMBER jade_app;
+ALTER ROLE db_datawriter ADD MEMBER jade_app;
+
+(Temporary for schema initialization only)
+-- ALTER ROLE db_owner ADD MEMBER jade_app;
+
+10) Final verification
+----------------------
+- POS app launches
+- Login works
+- Save sample transaction from POS
+- Data appears on Admin app
+
+Done.

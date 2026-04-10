@@ -1,0 +1,8 @@
+﻿Critical things to be aware of
+•	Concurrency: multiple POS terminals will update stock at once. Use transactions and proper isolation.
+•	Identity/auth: decide Windows auth vs SQL auth early.
+•	Backups: scheduled server backups before cutover.
+•	Permissions: POS user should not have schema-alter rights.
+•	Network outages: define behavior (block sale vs queue locally).
+•	Time sync: ensure all terminals use synchronized time for audit/sales accuracy.
+---

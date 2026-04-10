@@ -1,4 +1,4 @@
-﻿Imports Microsoft.Data.SqlClient
+Imports Microsoft.Data.SqlClient
 
 Public Class DatabaseTestForm
     Inherits Form
@@ -45,9 +45,9 @@ Public Class DatabaseTestForm
             ' Test 2: Basic Connection
             txtResults.AppendText("2. Testing Basic Connection..." & vbCrLf)
             If Connection.TestConnection() Then
-                txtResults.AppendText("   ✅ Connection successful!" & vbCrLf)
+                txtResults.AppendText("   ? Connection successful!" & vbCrLf)
             Else
-                txtResults.AppendText("   ❌ Connection failed!" & vbCrLf)
+                txtResults.AppendText("   ? Connection failed!" & vbCrLf)
             End If
             txtResults.AppendText(vbCrLf)
 
@@ -59,9 +59,9 @@ Public Class DatabaseTestForm
             ' Test 4: Initialize Database
             txtResults.AppendText("4. Testing Database Initialization..." & vbCrLf)
             If Connection.InitializeDatabase() Then
-                txtResults.AppendText("   ✅ Database initialization successful!" & vbCrLf)
+                txtResults.AppendText("   ? Database initialization successful!" & vbCrLf)
             Else
-                txtResults.AppendText("   ❌ Database initialization failed!" & vbCrLf)
+                txtResults.AppendText("   ? Database initialization failed!" & vbCrLf)
             End If
             txtResults.AppendText(vbCrLf)
 
@@ -77,26 +77,26 @@ Public Class DatabaseTestForm
                             Dim tableCount As Integer = 0
                             While reader.Read()
                                 tableCount += 1
-                                txtResults.AppendText($"   ✓ {reader("TABLE_NAME")}" & vbCrLf)
+                                txtResults.AppendText($"   ? {reader("TABLE_NAME")}" & vbCrLf)
                             End While
 
                             If tableCount = 0 Then
-                                txtResults.AppendText("   ⚠️ No tables found - database might need initialization" & vbCrLf)
+                                txtResults.AppendText("   ?? No tables found - database might need initialization" & vbCrLf)
                             Else
-                                txtResults.AppendText($"   ✅ Found {tableCount} tables" & vbCrLf)
+                                txtResults.AppendText($"   ? Found {tableCount} tables" & vbCrLf)
                             End If
                         End Using
                     End Using
                 End Using
             Catch ex As Exception
-                txtResults.AppendText($"   ❌ Error checking tables: {ex.Message}" & vbCrLf)
+                txtResults.AppendText($"   ? Error checking tables: {ex.Message}" & vbCrLf)
             End Try
 
             txtResults.AppendText(vbCrLf)
             txtResults.AppendText("=== Test Complete ===" & vbCrLf)
 
         Catch ex As Exception
-            txtResults.AppendText($"❌ Test failed with error: {ex.Message}" & vbCrLf)
+            txtResults.AppendText($"? Test failed with error: {ex.Message}" & vbCrLf)
             txtResults.AppendText($"Stack trace: {ex.StackTrace}" & vbCrLf)
         End Try
 

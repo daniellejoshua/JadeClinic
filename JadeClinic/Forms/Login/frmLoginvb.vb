@@ -70,22 +70,22 @@ Public Class frmLoginvb
     ' Initialize database on startup - THIS FIXES THE ERROR!
     Private Sub InitializeDatabaseOnStartup()
         Try
-            Console.WriteLine("Initializing database on startup...")
+            Console.WriteLine("Checking database connectivity on startup...")
 
-            ' Test if database initialization is needed
-            If Connection.InitializeDatabase() Then
-                Console.WriteLine("✅ Database is ready for login!")
+            ' Production-safe startup check:
+            ' do NOT run schema initialization from login screen on every client.
+            If Connection.TestConnection() Then
+                Console.WriteLine("✅ Database connection is ready for login.")
             Else
-                Console.WriteLine("❌ Database initialization failed!")
-                MessageBox.Show("Database initialization failed. Please check your LocalDB installation.",
-                              "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                Console.WriteLine("❌ Database connection failed.")
+                MessageBox.Show("Unable to connect to the database server. Please check network and SQL settings.",
+                                "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
             End If
 
         Catch ex As Exception
-            Console.WriteLine($"Database initialization error: {ex.Message}")
-            MessageBox.Show($"Database initialization error: {ex.Message}" & vbCrLf &
-                          "Please ensure SQL Server LocalDB is installed.",
-                          "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            Console.WriteLine($"Database startup check error: {ex.Message}")
+            MessageBox.Show($"Database connection error: {ex.Message}",
+                            "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
 
