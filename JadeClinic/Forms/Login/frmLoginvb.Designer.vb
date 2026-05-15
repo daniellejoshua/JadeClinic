@@ -22,14 +22,14 @@ Partial Class frmLoginvb
     'Do not modify it using the code editor.
     <System.Diagnostics.DebuggerStepThrough()>
     Private Sub InitializeComponent()
-        Dim CustomizableEdges7 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges8 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges1 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges2 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges3 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges4 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges5 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges6 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges15 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges16 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges9 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges10 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges11 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges12 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges13 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges14 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(frmLoginvb))
         Guna2Panel1 = New Guna.UI2.WinForms.Guna2Panel()
         Guna2HtmlLabel5 = New Guna.UI2.WinForms.Guna2HtmlLabel()
@@ -44,6 +44,8 @@ Partial Class frmLoginvb
         txtPassword = New Guna.UI2.WinForms.Guna2TextBox()
         PictureBox1 = New PictureBox()
         SqlCommand1 = New Microsoft.Data.SqlClient.SqlCommand()
+        exitApplicationLbl = New Guna.UI2.WinForms.Guna2HtmlLabel()
+        minimizeLbl = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2Panel1.SuspendLayout()
         CType(PictureBox1, ComponentModel.ISupportInitialize).BeginInit()
         SuspendLayout()
@@ -63,11 +65,11 @@ Partial Class frmLoginvb
         Guna2Panel1.Controls.Add(Guna2HtmlLabel2)
         Guna2Panel1.Controls.Add(Guna2HtmlLabel1)
         Guna2Panel1.Controls.Add(txtPassword)
-        Guna2Panel1.CustomizableEdges = CustomizableEdges7
+        Guna2Panel1.CustomizableEdges = CustomizableEdges15
         Guna2Panel1.FillColor = Color.FromArgb(CByte(41), CByte(40), CByte(45))
-        Guna2Panel1.Location = New Point(436, 196)
+        Guna2Panel1.Location = New Point(670, 357)
         Guna2Panel1.Name = "Guna2Panel1"
-        Guna2Panel1.ShadowDecoration.CustomizableEdges = CustomizableEdges8
+        Guna2Panel1.ShadowDecoration.CustomizableEdges = CustomizableEdges16
         Guna2Panel1.Size = New Size(676, 599)
         Guna2Panel1.TabIndex = 0
         ' 
@@ -108,7 +110,7 @@ Partial Class frmLoginvb
         ' 
         BtnLogin.BackColor = Color.Transparent
         BtnLogin.BorderRadius = 10
-        BtnLogin.CustomizableEdges = CustomizableEdges1
+        BtnLogin.CustomizableEdges = CustomizableEdges9
         BtnLogin.DisabledState.BorderColor = Color.DarkGray
         BtnLogin.DisabledState.CustomBorderColor = Color.DarkGray
         BtnLogin.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
@@ -118,7 +120,7 @@ Partial Class frmLoginvb
         BtnLogin.ForeColor = Color.Black
         BtnLogin.Location = New Point(194, 483)
         BtnLogin.Name = "BtnLogin"
-        BtnLogin.ShadowDecoration.CustomizableEdges = CustomizableEdges2
+        BtnLogin.ShadowDecoration.CustomizableEdges = CustomizableEdges10
         BtnLogin.Size = New Size(133, 57)
         BtnLogin.TabIndex = 9
         BtnLogin.Text = "Login"
@@ -161,7 +163,7 @@ Partial Class frmLoginvb
         txtUserName.BackColor = Color.Transparent
         txtUserName.BorderRadius = 10
         txtUserName.BorderThickness = 0
-        txtUserName.CustomizableEdges = CustomizableEdges3
+        txtUserName.CustomizableEdges = CustomizableEdges11
         txtUserName.DefaultText = ""
         txtUserName.DisabledState.BorderColor = Color.FromArgb(CByte(208), CByte(208), CByte(208))
         txtUserName.DisabledState.FillColor = Color.FromArgb(CByte(226), CByte(226), CByte(226))
@@ -178,7 +180,7 @@ Partial Class frmLoginvb
         txtUserName.PlaceholderForeColor = Color.FromArgb(CByte(119), CByte(121), CByte(121))
         txtUserName.PlaceholderText = "Enter you username"
         txtUserName.SelectedText = ""
-        txtUserName.ShadowDecoration.CustomizableEdges = CustomizableEdges4
+        txtUserName.ShadowDecoration.CustomizableEdges = CustomizableEdges12
         txtUserName.Size = New Size(405, 42)
         txtUserName.TabIndex = 0
         ' 
@@ -209,7 +211,7 @@ Partial Class frmLoginvb
         txtPassword.BackColor = Color.Transparent
         txtPassword.BorderRadius = 10
         txtPassword.BorderThickness = 0
-        txtPassword.CustomizableEdges = CustomizableEdges5
+        txtPassword.CustomizableEdges = CustomizableEdges13
         txtPassword.DefaultText = ""
         txtPassword.DisabledState.BorderColor = Color.FromArgb(CByte(208), CByte(208), CByte(208))
         txtPassword.DisabledState.FillColor = Color.FromArgb(CByte(226), CByte(226), CByte(226))
@@ -226,7 +228,7 @@ Partial Class frmLoginvb
         txtPassword.PlaceholderForeColor = Color.FromArgb(CByte(119), CByte(121), CByte(121))
         txtPassword.PlaceholderText = "Enter your password"
         txtPassword.SelectedText = ""
-        txtPassword.ShadowDecoration.CustomizableEdges = CustomizableEdges6
+        txtPassword.ShadowDecoration.CustomizableEdges = CustomizableEdges14
         txtPassword.Size = New Size(405, 42)
         txtPassword.TabIndex = 1
         ' 
@@ -234,7 +236,7 @@ Partial Class frmLoginvb
         ' 
         PictureBox1.BackColor = Color.Transparent
         PictureBox1.Image = CType(resources.GetObject("PictureBox1.Image"), Image)
-        PictureBox1.Location = New Point(695, 10)
+        PictureBox1.Location = New Point(929, 171)
         PictureBox1.Name = "PictureBox1"
         PictureBox1.Size = New Size(166, 160)
         PictureBox1.SizeMode = PictureBoxSizeMode.StretchImage
@@ -246,15 +248,39 @@ Partial Class frmLoginvb
         SqlCommand1.CommandTimeout = 30
         SqlCommand1.EnableOptimizedParameterBinding = False
         ' 
+        ' exitApplicationLbl
+        ' 
+        exitApplicationLbl.BackColor = Color.Transparent
+        exitApplicationLbl.Font = New Font("Poppins Medium", 16.2F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        exitApplicationLbl.ForeColor = Color.White
+        exitApplicationLbl.Location = New Point(1869, 12)
+        exitApplicationLbl.Name = "exitApplicationLbl"
+        exitApplicationLbl.Size = New Size(21, 50)
+        exitApplicationLbl.TabIndex = 12
+        exitApplicationLbl.Text = "X"
+        ' 
+        ' minimizeLbl
+        ' 
+        minimizeLbl.BackColor = Color.Transparent
+        minimizeLbl.Font = New Font("Poppins Medium", 16.2F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        minimizeLbl.ForeColor = Color.White
+        minimizeLbl.Location = New Point(1827, 12)
+        minimizeLbl.Name = "minimizeLbl"
+        minimizeLbl.Size = New Size(18, 50)
+        minimizeLbl.TabIndex = 13
+        minimizeLbl.Text = "-"
+        ' 
         ' frmLoginvb
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
         BackColor = Color.FromArgb(CByte(30), CByte(30), CByte(30))
-        ClientSize = New Size(1494, 875)
+        ClientSize = New Size(1902, 1033)
+        Controls.Add(minimizeLbl)
+        Controls.Add(exitApplicationLbl)
         Controls.Add(Guna2Panel1)
         Controls.Add(PictureBox1)
-        FormBorderStyle = FormBorderStyle.FixedDialog
+        FormBorderStyle = FormBorderStyle.None
         MaximizeBox = False
         MinimizeBox = False
         Name = "frmLoginvb"
@@ -264,6 +290,7 @@ Partial Class frmLoginvb
         Guna2Panel1.PerformLayout()
         CType(PictureBox1, ComponentModel.ISupportInitialize).EndInit()
         ResumeLayout(False)
+        PerformLayout()
     End Sub
 
     Friend WithEvents Guna2Panel1 As Guna.UI2.WinForms.Guna2Panel
@@ -279,4 +306,6 @@ Partial Class frmLoginvb
     Friend WithEvents Guna2CheckBox1 As Guna.UI2.WinForms.Guna2CheckBox
     Friend WithEvents Guna2HtmlLabel5 As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents SqlCommand1 As Microsoft.Data.SqlClient.SqlCommand
+    Friend WithEvents exitApplicationLbl As Guna.UI2.WinForms.Guna2HtmlLabel
+    Friend WithEvents minimizeLbl As Guna.UI2.WinForms.Guna2HtmlLabel
 End Class

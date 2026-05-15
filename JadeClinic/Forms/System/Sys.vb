@@ -763,7 +763,7 @@ Public Class Sys
 
         ' Show confirmation only for user-initiated close (X button)
         If e.CloseReason = CloseReason.UserClosing Then
-            Dim result As DialogResult = MessageBox.Show("Are you sure you want to exit the application?", "Exit Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
+            Dim result As DialogResult = EscForm.ConfirmExit(Me)
 
             If result = DialogResult.Yes Then
                 ' Log the exit action
