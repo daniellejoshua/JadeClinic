@@ -6,3 +6,6 @@
 •	Network outages: define behavior (block sale vs queue locally).
 •	Time sync: ensure all terminals use synchronized time for audit/sales accuracy.
 ---
+
+
+
