@@ -73,6 +73,7 @@ Partial Class AddProduct
         Guna2HtmlLabel15 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         UnitCmbBox = New Guna.UI2.WinForms.Guna2ComboBox()
         Guna2HtmlLabel11 = New Guna.UI2.WinForms.Guna2HtmlLabel()
+        exitApplicationLbl = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2Panel2.SuspendLayout()
         CType(BarcodeImage, ComponentModel.ISupportInitialize).BeginInit()
         CType(ProductImage, ComponentModel.ISupportInitialize).BeginInit()
@@ -480,12 +481,24 @@ Partial Class AddProduct
         Guna2HtmlLabel11.TabIndex = 96
         Guna2HtmlLabel11.Text = "Unit"
         ' 
+        ' exitApplicationLbl
+        ' 
+        exitApplicationLbl.BackColor = Color.Transparent
+        exitApplicationLbl.Font = New Font("Poppins Medium", 16.2F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        exitApplicationLbl.ForeColor = Color.White
+        exitApplicationLbl.Location = New Point(648, 3)
+        exitApplicationLbl.Name = "exitApplicationLbl"
+        exitApplicationLbl.Size = New Size(21, 50)
+        exitApplicationLbl.TabIndex = 121
+        exitApplicationLbl.Text = "X"
+        ' 
         ' AddProduct
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
         BackColor = Color.FromArgb(CByte(30), CByte(30), CByte(30))
         ClientSize = New Size(688, 691)
+        Controls.Add(exitApplicationLbl)
         Controls.Add(Guna2Panel2)
         Controls.Add(Guna2Panel1)
         Controls.Add(Guna2HtmlLabel6)
@@ -527,4 +540,5 @@ Partial Class AddProduct
     Friend WithEvents BarcodeImage As Guna.UI2.WinForms.Guna2PictureBox
     Friend WithEvents lblStatus As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents cmbStatus As Guna.UI2.WinForms.Guna2ComboBox
+    Friend WithEvents exitApplicationLbl As Guna.UI2.WinForms.Guna2HtmlLabel
 End Class

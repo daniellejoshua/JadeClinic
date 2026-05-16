@@ -193,7 +193,7 @@ Public Class Inventory
         loadingOverlay.Location = New Point(0, 0)
         loadingOverlay.Size = Me.ClientSize
 
-        ' Add overlay to form first
+        ' Add overlay to form
         Me.Controls.Add(loadingOverlay)
         loadingOverlay.BringToFront()
 
@@ -569,7 +569,7 @@ Public Class Inventory
             colStock.HeaderText = "Stock"
             colStock.FillWeight = 9 ' reduced from 10
             colStock.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
-            colStock.DefaultCellStyle.Font = New Font("Poppins SemiBold", 9.5F, FontStyle.Bold)
+            colStock.DefaultCellStyle.Font = New Font("PoppinsSemiBold", 9.5F, FontStyle.Bold)
             colStock.DefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
             colStock.DefaultCellStyle.SelectionBackColor = AccentGold
             colStock.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
@@ -780,37 +780,50 @@ Public Class Inventory
         End Try
     End Sub
 
+    ' REPLACE THESE TWO METHODS with improved overlay handling:
+
+    ' Helper method to create professional overlay panel (matching EscForm dimming)
+    Private Function CreateOverlayPanel() As Panel
+        Dim overlay As New Panel()
+        ' Match EscForm's professional semi-transparent dimming
+        ' Alpha value 100-120 creates perfect visual dimming without being too dark
+        overlay.BackColor = Color.FromArgb(100, 0, 0, 0) ' 55% opacity semi-transparent black
+        overlay.Dock = DockStyle.Fill
+        overlay.Location = New Point(0, 0)
+        overlay.Size = Me.ClientSize
+        ' Ensure overlay stays on top
+        overlay.BringToFront()
+        Return overlay
+    End Function
+    Private Function CreateOverlayForm() As Form
+        Dim overlay As New Form() With {
+            .FormBorderStyle = FormBorderStyle.None,
+            .ShowInTaskbar = False,
+            .StartPosition = FormStartPosition.Manual,
+            .BackColor = Color.Black,
+            .Opacity = 0.55,  ' ✅ Semi-transparent - lets background show through!
+            .TopMost = False
+        }
+        overlay.Bounds = Me.Bounds
+        overlay.Owner = Me
+        overlay.Show()
+        Return overlay
+    End Function
+
+
     Private Sub EditProduct_Click_FromGrid(productId As Integer)
+        Dim overlayForm As Form = Nothing
         Try
-            ' Create overlay panel for modal effect
-            Dim overlayPanel As New Panel()
-            overlayPanel.BackColor = Color.FromArgb(100, 0, 0, 0) ' Semi-transparent black
-            overlayPanel.Dock = DockStyle.Fill
-            overlayPanel.Location = New Point(0, 0)
-            overlayPanel.Size = Me.ClientSize
-            Me.Controls.Add(overlayPanel)
-            overlayPanel.BringToFront()
+            ' Create overlay form (semi-transparent, like EscForm)
+            overlayForm = CreateOverlayForm()
 
             ' Create and show Edit Product form
             Dim editProductForm As New AddProduct()
             editProductForm.SetEditMode(productId)
-            editProductForm.StartPosition = FormStartPosition.CenterParent
-
-            ' Handle form closing to remove overlay
-            AddHandler editProductForm.FormClosed, Sub(s, ev)
-                                                       If overlayPanel IsNot Nothing AndAlso Not overlayPanel.IsDisposed Then
-                                                           Me.Controls.Remove(overlayPanel)
-                                                           overlayPanel.Dispose()
-                                                       End If
-                                                   End Sub
+            editProductForm.StartPosition = FormStartPosition.CenterScreen
+            editProductForm.TopMost = True
 
             Dim result As DialogResult = editProductForm.ShowDialog(Me)
-
-            ' Cleanup overlay if still exists
-            If overlayPanel IsNot Nothing AndAlso Not overlayPanel.IsDisposed Then
-                Me.Controls.Remove(overlayPanel)
-                overlayPanel.Dispose()
-            End If
 
             ' Refresh the inventory list if product was updated
             If result = DialogResult.OK Then
@@ -819,6 +832,12 @@ Public Class Inventory
 
         Catch ex As Exception
             MessageBox.Show($"Error opening edit form: {ex.Message}", "Edit Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        Finally
+            ' Cleanup overlay
+            If overlayForm IsNot Nothing Then
+                overlayForm.Close()
+                overlayForm.Dispose()
+            End If
         End Try
     End Sub
 
@@ -1008,43 +1027,40 @@ Public Class Inventory
         End Try
     End Sub
 
+    ' ============================================================================
+    ' FUNCTION 2: ADD PRODUCT BUTTON CLICK - REFACTORED
+    ' ============================================================================
+    ' Copy this ENTIRE method and REPLACE your existing Guna2Button1_Click
+    ' Location: Replace the current Guna2Button1_Click in Inventory.vb
+    ' ============================================================================
     Private Sub Guna2Button1_Click(sender As Object, e As EventArgs) Handles Guna2Button1.Click
-        ' Create overlay panel for modal effect
-        Dim overlayPanel As New Panel()
-        overlayPanel.BackColor = Color.FromArgb(100, 0, 0, 0) ' Semi-transparent black
-        overlayPanel.Dock = DockStyle.Fill
-        overlayPanel.Location = New Point(0, 0)
-        overlayPanel.Size = Me.ClientSize
-        Me.Controls.Add(overlayPanel)
-        overlayPanel.BringToFront()
+        Dim overlayForm As Form = Nothing
+        Try
+            ' Create overlay form (semi-transparent, like EscForm)
+            overlayForm = CreateOverlayForm()
 
-        ' Create and show AddProduct form
-        Dim addProductForm As New AddProduct()
-        addProductForm.StartPosition = FormStartPosition.CenterParent
+            ' Create and show AddProduct form
+            Dim addProductForm As New AddProduct()
+            addProductForm.StartPosition = FormStartPosition.CenterScreen
+            addProductForm.TopMost = True
 
-        ' Handle form closing to remove overlay
-        AddHandler addProductForm.FormClosed, Sub(s, ev)
-                                                  If overlayPanel IsNot Nothing AndAlso Not overlayPanel.IsDisposed Then
-                                                      Me.Controls.Remove(overlayPanel)
-                                                      overlayPanel.Dispose()
-                                                  End If
-                                              End Sub
+            Dim result As DialogResult = addProductForm.ShowDialog(Me)
 
-        Dim result As DialogResult = addProductForm.ShowDialog(Me)
+            ' Refresh if successful
+            If result = DialogResult.OK Then
+                LoadProducts()
+            End If
 
-        ' Cleanup overlay if still exists
-        If overlayPanel IsNot Nothing AndAlso Not overlayPanel.IsDisposed Then
-            Me.Controls.Remove(overlayPanel)
-            overlayPanel.Dispose()
-        End If
-
-        ' Refresh the inventory list if product was added
-        If result = DialogResult.OK Then
-            LoadProducts()
-        End If
+        Catch ex As Exception
+            MessageBox.Show($"Error opening add product form: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        Finally
+            ' Cleanup overlay
+            If overlayForm IsNot Nothing Then
+                overlayForm.Close()
+                overlayForm.Dispose()
+            End If
+        End Try
     End Sub
-
-
 
     Private Function MatchesFilter(product As Dictionary(Of String, Object)) As Boolean
         Try
@@ -1765,10 +1781,11 @@ Public Class Inventory
 
     Private Sub ProductDataGrid_CellMouseLeave(sender As Object, e As DataGridViewCellEventArgs)
         Try
+            ' ADDED NULL CHECK
+            If tooltipTimer Is Nothing Then Return
+
             ' Stop tooltip timer and hide tooltip with null checks
-            If tooltipTimer IsNot Nothing Then
-                tooltipTimer.Stop()
-            End If
+            tooltipTimer.Stop()
             currentTooltipCell = Nothing
 
             ' Hide tooltip with null check
