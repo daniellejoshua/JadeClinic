@@ -119,8 +119,11 @@ Public Class Dashboard
             Me.BackColor = Color.FromArgb(26, 29, 31) ' Deep Charcoal background #1A1D1F
             Me.MaximizeBox = False
             Me.MinimizeBox = False
-            Me.MinimumSize = Me.Size
-            Me.MaximumSize = Me.Size
+
+            ' Improved full-screen behavior: removing hardcoded size constraints and setting bounds
+            Me.FormBorderStyle = FormBorderStyle.None
+            Me.WindowState = FormWindowState.Maximized
+            Me.Bounds = Screen.PrimaryScreen.Bounds
             Console.WriteLine("Basic form properties set")
 
             ' Apply new color scheme to existing panels
@@ -425,42 +428,7 @@ Public Class Dashboard
         End Try
     End Sub
 
-    ' FormClosing event handler with exit confirmation
-    Private Sub Dashboard_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
-        ' Stop idle timeout monitoring
-        IdleTimeoutManager.Instance.StopMonitoring(Me)
 
-        ' If this is programmatic navigation, don't show confirmation
-        If isNavigating Then
-            Return
-        End If
-
-        ' Prevent multiple confirmations by checking the close reason
-        If e.CloseReason = CloseReason.ApplicationExitCall Then
-            ' If Application.Exit() was already called, don't show confirmation again
-            Return
-        End If
-
-        ' Show confirmation only for user-initiated close (X button)
-        If e.CloseReason = CloseReason.UserClosing Then
-            Dim result As DialogResult = MessageBox.Show("Are you sure you want to exit the application?", "Exit Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
-
-            If result = DialogResult.Yes Then
-                ' Close all forms properly
-                For Each form As Form In Application.OpenForms.Cast(Of Form).ToArray()
-                    If form IsNot Me Then
-                        form.Close()
-                    End If
-                Next
-
-                ' Now exit the application
-                Application.Exit()
-            Else
-                ' Cancel the form closing
-                e.Cancel = True
-            End If
-        End If
-    End Sub
 
     Private Sub LoadDashboardData()
         ' Load real sales/inventory data for all three cards
@@ -553,25 +521,58 @@ Public Class Dashboard
                 End If
             Next
 
-            ' Set PopularPanel background to Graphite
-            PopularPanel.FillColor = Color.FromArgb(61, 65, 69) ' Graphite #3D4145
+            For Each control As Control In PopularPanel.Controls.OfType(Of Panel).ToArray()
+                If control.Name = "popularHeaderPanel" Then
+                    PopularPanel.Controls.Remove(control)
+                    control.Dispose()
+                End If
+            Next
 
-            ' Add title label for Popular Products
+            PopularPanel.Padding = New Padding(15, 10, 15, 15)
+            PopularPanel.FillColor = Color.FromArgb(61, 65, 69)
+
+            ' Header panel
+            Dim headerPanel As New Panel()
+            headerPanel.Name = "popularHeaderPanel"
+            headerPanel.Dock = DockStyle.Top
+            headerPanel.Height = 45
+            headerPanel.BackColor = Color.FromArgb(61, 65, 69)
+            headerPanel.Padding = New Padding(15, 8, 15, 8)
+            PopularPanel.Controls.Add(headerPanel)
+
             Dim titleLabel As New Label()
             titleLabel.Text = "Popular Product"
             titleLabel.Font = New Font("Poppins Medium", 13.8F, FontStyle.Regular)
-            titleLabel.ForeColor = Color.FromArgb(255, 255, 255) ' Pure White
-            titleLabel.Location = New Point(30, 15)
+            titleLabel.ForeColor = Color.FromArgb(255, 255, 255)
             titleLabel.AutoSize = True
             titleLabel.BackColor = Color.Transparent
-            PopularPanel.Controls.Add(titleLabel)
+            titleLabel.Location = New Point(0, 6)
+            headerPanel.Controls.Add(titleLabel)
 
-            ' Move search textbox to specified position with new styling
-            txtProductSearch.Location = New Point(420, 10)
-            txtProductSearch.Size = New Size(200, 20)
+            txtProductSearch.Size = New Size(220, 24)
             txtProductSearch.BorderRadius = 10
             txtProductSearch.BackColor = Color.Transparent
             txtProductSearch.BorderThickness = 1
+            txtProductSearch.Anchor = AnchorStyles.Top Or AnchorStyles.Right
+
+            Dim positionSearch As Action = Sub()
+                                               txtProductSearch.Location = New Point(headerPanel.ClientSize.Width - txtProductSearch.Width, 6)
+                                           End Sub
+            positionSearch()
+            AddHandler headerPanel.SizeChanged, Sub(sender, e)
+                                                    positionSearch()
+                                                End Sub
+
+            If Not headerPanel.Controls.Contains(txtProductSearch) Then
+                headerPanel.Controls.Add(txtProductSearch)
+            End If
+
+            If Not PopularPanel.Controls.Contains(Guna2DataGridView1) Then
+                PopularPanel.Controls.Add(Guna2DataGridView1)
+            End If
+
+            Guna2DataGridView1.Dock = DockStyle.Fill
+            headerPanel.BringToFront()
 
             RemoveHandler txtProductSearch.TextChanged, AddressOf TxtProductSearch_TextChanged
             AddHandler txtProductSearch.TextChanged, AddressOf TxtProductSearch_TextChanged
@@ -583,7 +584,7 @@ Public Class Dashboard
             Guna2DataGridView1.Rows.Clear()
 
             ' Apply new dark theme styling
-            Guna2DataGridView1.BackgroundColor = Color.FromArgb(61, 65, 69) ' Graphite #3D4145
+            Guna2DataGridView1.BackgroundColor = Color.FromArgb(61, 65, 69)
             Guna2DataGridView1.BorderStyle = BorderStyle.None
             Guna2DataGridView1.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal
             Guna2DataGridView1.RowHeadersVisible = False
@@ -597,21 +598,21 @@ Public Class Dashboard
             Guna2DataGridView1.ScrollBars = ScrollBars.Vertical
             Guna2DataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
 
-            ' Cell styling with new color scheme
-            Guna2DataGridView1.GridColor = Color.FromArgb(74, 79, 84) ' Steel Gray separators #4A4F54
-            Guna2DataGridView1.DefaultCellStyle.BackColor = Color.FromArgb(43, 47, 50) ' Dark Slate #2B2F32
-            Guna2DataGridView1.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(43, 47, 50) ' Dark Slate #2B2F32
-            Guna2DataGridView1.DefaultCellStyle.ForeColor = Color.FromArgb(225, 229, 233) ' Light Silver #E1E5E9
-            Guna2DataGridView1.DefaultCellStyle.SelectionBackColor = Color.FromArgb(43, 47, 50) ' Match row background
-            Guna2DataGridView1.DefaultCellStyle.SelectionForeColor = Color.FromArgb(225, 229, 233) ' Match normal text
+            ' Cell styling
+            Guna2DataGridView1.GridColor = Color.FromArgb(74, 79, 84)
+            Guna2DataGridView1.DefaultCellStyle.BackColor = Color.FromArgb(43, 47, 50)
+            Guna2DataGridView1.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(43, 47, 50)
+            Guna2DataGridView1.DefaultCellStyle.ForeColor = Color.FromArgb(225, 229, 233)
+            Guna2DataGridView1.DefaultCellStyle.SelectionBackColor = Color.FromArgb(43, 47, 50)
+            Guna2DataGridView1.DefaultCellStyle.SelectionForeColor = Color.FromArgb(225, 229, 233)
             Guna2DataGridView1.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
             Guna2DataGridView1.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             Guna2DataGridView1.DefaultCellStyle.Padding = New Padding(5, 4, 5, 4)
 
-            ' Header styling with new colors
-            Guna2DataGridView1.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(26, 29, 31) ' Deep Charcoal #1A1D1F
-            Guna2DataGridView1.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(225, 229, 233) ' Light Silver #E1E5E9
-            Guna2DataGridView1.ColumnHeadersDefaultCellStyle.SelectionBackColor = Color.FromArgb(26, 29, 31) ' Deep Charcoal
+            ' Header styling
+            Guna2DataGridView1.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(26, 29, 31)
+            Guna2DataGridView1.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(225, 229, 233)
+            Guna2DataGridView1.ColumnHeadersDefaultCellStyle.SelectionBackColor = Color.FromArgb(26, 29, 31)
             Guna2DataGridView1.ColumnHeadersDefaultCellStyle.Font = New Font("Poppins SemiBold", 10.0F, FontStyle.Regular)
             Guna2DataGridView1.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             Guna2DataGridView1.ColumnHeadersHeight = 50
@@ -663,7 +664,7 @@ Public Class Dashboard
             priceColumn.FillWeight = 15
             priceColumn.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             priceColumn.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Bold)
-            priceColumn.DefaultCellStyle.ForeColor = Color.FromArgb(16, 216, 98) ' Success Green #10D862
+            priceColumn.DefaultCellStyle.ForeColor = Color.FromArgb(16, 216, 98)
             Guna2DataGridView1.Columns.Add(priceColumn)
 
             ' Query to get products ranked by sold quantity
@@ -689,21 +690,21 @@ Public Class Dashboard
 
             Dim rowIndex As Integer = 1
             Dim parameters As SqlParameter() = {
-                New SqlParameter("@Search", searchText),
-                New SqlParameter("@SearchLike", "%" & searchText & "%")
-            }
+            New SqlParameter("@Search", searchText),
+            New SqlParameter("@SearchLike", "%" & searchText & "%")
+        }
 
             Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters)
                 While reader.Read()
                     Dim row As DataGridViewRow = New DataGridViewRow()
                     row.CreateCells(Guna2DataGridView1)
 
-                    row.Cells(0).Value = rowIndex.ToString() ' No
-                    row.Cells(1).Value = reader("ProductCode").ToString() ' Code
-                    row.Cells(2).Value = reader("ProductName").ToString() ' Name
-                    row.Cells(3).Value = reader("Category").ToString() ' Category
-                    row.Cells(4).Value = Convert.ToInt32(reader("TimesSold")).ToString() ' Sold
-                    row.Cells(5).Value = "₱" & Convert.ToDecimal(reader("SellingPrice")).ToString("F2") ' Price
+                    row.Cells(0).Value = rowIndex.ToString()
+                    row.Cells(1).Value = reader("ProductCode").ToString()
+                    row.Cells(2).Value = reader("ProductName").ToString()
+                    row.Cells(3).Value = reader("Category").ToString()
+                    row.Cells(4).Value = Convert.ToInt32(reader("TimesSold")).ToString()
+                    row.Cells(5).Value = "₱" & Convert.ToDecimal(reader("SellingPrice")).ToString("F2")
 
                     Guna2DataGridView1.Rows.Add(row)
                     rowIndex += 1
@@ -740,7 +741,6 @@ Public Class Dashboard
             MessageBox.Show("Unable to load product data. Please try refreshing the dashboard.", "Data Load Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
         End Try
     End Sub
-
     Private Sub TxtProductSearch_TextChanged(sender As Object, e As EventArgs)
         LoadAllPopularProducts()
     End Sub
@@ -750,14 +750,16 @@ Public Class Dashboard
             ' Clear existing controls in LowStockPanel
             LowStockPanel.Controls.Clear()
 
-            ' Add title for the inventory status chart with better margins
+            ' Add title for the inventory status chart
             Dim titleLabel As New Label()
             titleLabel.Text = "Inventory Status Overview"
             titleLabel.Font = New Font("Poppins Medium", 13.8F, FontStyle.Regular)
             titleLabel.ForeColor = Color.White
             titleLabel.BackColor = Color.FromArgb(61, 65, 69)
-            titleLabel.Location = New Point(25, 20)
-            titleLabel.AutoSize = True
+            titleLabel.Dock = DockStyle.Top
+            titleLabel.Height = 50
+            titleLabel.TextAlign = ContentAlignment.MiddleLeft
+            titleLabel.Padding = New Padding(25, 0, 0, 0)
             LowStockPanel.Controls.Add(titleLabel)
 
             ' Query to get inventory status counts for requested categories:
@@ -784,58 +786,72 @@ Public Class Dashboard
                 End If
             End Using
 
-            ' Create main container that centers everything
+            ' Create main container that fills remaining space
             Dim mainContainer As New Panel()
-            mainContainer.Size = New Size(410, 310)
-            mainContainer.Location = New Point(10, 58)
-            mainContainer.BackColor = Color.FromArgb(61, 65, 69)
+            mainContainer.Dock = DockStyle.Fill
+            mainContainer.Padding = New Padding(12)
+            mainContainer.BackColor = Color.FromArgb(52, 56, 60)
             LowStockPanel.Controls.Add(mainContainer)
             ApplyRoundedCorners(mainContainer, 18)
 
-            ' Create pie chart for status overview
+            ' Create pie chart for status overview (responsive)
             Dim pieChart As New PieChart()
-            pieChart.Size = New Size(390, 280)
-            pieChart.Location = New Point(10, 14)
-            pieChart.BackColor = Color.FromArgb(61, 65, 69)
+            pieChart.BackColor = Color.FromArgb(52, 56, 60)
+            pieChart.Margin = New Padding(6)
             ApplyRoundedCorners(pieChart, 14)
+
+            Dim updateChartLayout As Action = Sub()
+                                                  Dim maxWidth = Math.Max(420, mainContainer.ClientSize.Width - 30)
+                                                  Dim maxHeight = Math.Max(420, mainContainer.ClientSize.Height - 30)
+                                                  Dim chartSize = Math.Min(maxWidth, maxHeight)
+
+                                                  pieChart.Size = New Size(chartSize, chartSize)
+                                                  pieChart.Location = New Point((mainContainer.ClientSize.Width - pieChart.Width) \ 2,
+                                                                               (mainContainer.ClientSize.Height - pieChart.Height) \ 2)
+                                              End Sub
+
+            updateChartLayout()
+            AddHandler mainContainer.SizeChanged, Sub(sender, e)
+                                                      updateChartLayout()
+                                                  End Sub
 
             ' Create pie series data (B.R.L, A.R.L, Inactive, No Stock)
             Dim series As New List(Of ISeries)()
 
             If brlCount > 0 Then
                 series.Add(New PieSeries(Of Integer) With {
-                    .Values = {brlCount},
-                    .Name = "B.R.L",
-                    .Fill = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#FFB547")),
-                    .Stroke = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#FFFFFF")) With {.StrokeThickness = 2}
-                })
+                .Values = {brlCount},
+                .Name = "B.R.L",
+                .Fill = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#FFB547")),
+                .Stroke = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#FFFFFF")) With {.StrokeThickness = 2}
+            })
             End If
 
             If arlCount > 0 Then
                 series.Add(New PieSeries(Of Integer) With {
-                    .Values = {arlCount},
-                    .Name = "A.R.L",
-                    .Fill = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#10D862")),
-                    .Stroke = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#FFFFFF")) With {.StrokeThickness = 2}
-                })
+                .Values = {arlCount},
+                .Name = "A.R.L",
+                .Fill = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#10D862")),
+                .Stroke = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#FFFFFF")) With {.StrokeThickness = 2}
+            })
             End If
 
             If inactiveCount > 0 Then
                 series.Add(New PieSeries(Of Integer) With {
-                    .Values = {inactiveCount},
-                    .Name = "Inactive",
-                    .Fill = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#7F8C8D")),
-                    .Stroke = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#FFFFFF")) With {.StrokeThickness = 2}
-                })
+                .Values = {inactiveCount},
+                .Name = "Inactive",
+                .Fill = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#7F8C8D")),
+                .Stroke = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#FFFFFF")) With {.StrokeThickness = 2}
+            })
             End If
 
             If noStockCount > 0 Then
                 series.Add(New PieSeries(Of Integer) With {
-                    .Values = {noStockCount},
-                    .Name = "No Stock",
-                    .Fill = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#FF4757")),
-                    .Stroke = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#FFFFFF")) With {.StrokeThickness = 2}
-                })
+                .Values = {noStockCount},
+                .Name = "No Stock",
+                .Fill = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#FF4757")),
+                .Stroke = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#FFFFFF")) With {.StrokeThickness = 2}
+            })
             End If
 
             pieChart.Series = series
@@ -854,11 +870,9 @@ Public Class Dashboard
             mainContainer.Controls.Add(pieChart)
 
         Catch ex As Exception
-            ' Handle error silently or show messagea
             Console.WriteLine($"Error loading inventory status chart: {ex.Message}")
         End Try
     End Sub
-
     Private Sub LoadChartInterface()
         Try
             AreaChart.Controls.Clear()
@@ -1753,4 +1767,30 @@ Public Class Dashboard
             Console.WriteLine($"Error initializing product search: {ex.Message}")
         End Try
     End Sub
+    Protected Overrides Function ProcessCmdKey(ByRef msg As Message, keyData As Keys) As Boolean
+        If keyData = Keys.Escape Then
+            If isNavigating Then
+                Return True
+            End If
+
+            Dim result As DialogResult = EscForm.ConfirmExit(Me)
+            If result = DialogResult.Yes Then
+                If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+                    Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Application Exit", "User exited the application via Dashboard.")
+                End If
+
+                For Each form As Form In Application.OpenForms.Cast(Of Form).ToArray()
+                    If form IsNot Me Then
+                        form.Close()
+                    End If
+                Next
+
+                Application.Exit()
+            End If
+
+            Return True
+        End If
+
+        Return MyBase.ProcessCmdKey(msg, keyData)
+    End Function
 End Class

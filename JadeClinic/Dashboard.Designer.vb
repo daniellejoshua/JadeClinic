@@ -96,18 +96,18 @@ Partial Class Dashboard
         DailySalesPanel.Controls.Add(Guna2HtmlLabel3)
         DailySalesPanel.Controls.Add(Guna2HtmlLabel1)
         DailySalesPanel.CustomizableEdges = CustomizableEdges2
-        DailySalesPanel.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(69))
+        DailySalesPanel.FillColor = Color.FromArgb(61, 65, 69)
         DailySalesPanel.Location = New Point(236, 61)
         DailySalesPanel.Name = "DailySalesPanel"
         DailySalesPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges3
-        DailySalesPanel.Size = New Size(309, 146)
+        DailySalesPanel.Size = New Size(368, 146)
         DailySalesPanel.TabIndex = 9
         ' 
         ' lbl2
         ' 
         lbl2.AutoSize = True
-        lbl2.BackColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
-        lbl2.Location = New Point(259, 20)
+        lbl2.BackColor = Color.FromArgb(254, 191, 16)
+        lbl2.Location = New Point(317, 16)
         lbl2.Name = "lbl2"
         lbl2.Size = New Size(18, 20)
         lbl2.TabIndex = 68
@@ -115,9 +115,9 @@ Partial Class Dashboard
         ' 
         ' Guna2HtmlLabel2
         ' 
-        Guna2HtmlLabel2.BackColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
-        Guna2HtmlLabel2.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel2.ForeColor = Color.FromArgb(CByte(119), CByte(121), CByte(121))
+        Guna2HtmlLabel2.BackColor = Color.FromArgb(41, 44, 45)
+        Guna2HtmlLabel2.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, 0)
+        Guna2HtmlLabel2.ForeColor = Color.FromArgb(119, 121, 121)
         Guna2HtmlLabel2.Location = New Point(182, 103)
         Guna2HtmlLabel2.Name = "Guna2HtmlLabel2"
         Guna2HtmlLabel2.Size = New Size(3, 2)
@@ -127,15 +127,15 @@ Partial Class Dashboard
         ' 
         ' Guna2CircleButton5
         ' 
-        Guna2CircleButton5.BackColor = Color.FromArgb(CByte(61), CByte(65), CByte(69))
+        Guna2CircleButton5.BackColor = Color.FromArgb(61, 65, 69)
         Guna2CircleButton5.DisabledState.BorderColor = Color.DarkGray
         Guna2CircleButton5.DisabledState.CustomBorderColor = Color.DarkGray
-        Guna2CircleButton5.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
-        Guna2CircleButton5.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        Guna2CircleButton5.FillColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
-        Guna2CircleButton5.Font = New Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2CircleButton5.ForeColor = Color.FromArgb(CByte(26), CByte(29), CByte(31))
-        Guna2CircleButton5.Location = New Point(245, 13)
+        Guna2CircleButton5.DisabledState.FillColor = Color.FromArgb(169, 169, 169)
+        Guna2CircleButton5.DisabledState.ForeColor = Color.FromArgb(141, 141, 141)
+        Guna2CircleButton5.FillColor = Color.FromArgb(254, 191, 16)
+        Guna2CircleButton5.Font = New Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, 0)
+        Guna2CircleButton5.ForeColor = Color.FromArgb(26, 29, 31)
+        Guna2CircleButton5.Location = New Point(303, 9)
         Guna2CircleButton5.Name = "Guna2CircleButton5"
         Guna2CircleButton5.PressedColor = Color.Transparent
         Guna2CircleButton5.ShadowDecoration.CustomizableEdges = CustomizableEdges1
@@ -145,9 +145,9 @@ Partial Class Dashboard
         ' 
         ' lblDateDailySales
         ' 
-        lblDateDailySales.BackColor = Color.FromArgb(CByte(61), CByte(65), CByte(69))
-        lblDateDailySales.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblDateDailySales.ForeColor = Color.FromArgb(CByte(184), CByte(188), CByte(193))
+        lblDateDailySales.BackColor = Color.FromArgb(61, 65, 69)
+        lblDateDailySales.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, 0)
+        lblDateDailySales.ForeColor = Color.FromArgb(184, 188, 193)
         lblDateDailySales.Location = New Point(12, 103)
         lblDateDailySales.Name = "lblDateDailySales"
         lblDateDailySales.Size = New Size(84, 28)
@@ -156,9 +156,9 @@ Partial Class Dashboard
         ' 
         ' Guna2HtmlLabel3
         ' 
-        Guna2HtmlLabel3.BackColor = Color.FromArgb(CByte(61), CByte(65), CByte(69))
-        Guna2HtmlLabel3.Font = New Font("Poppins Medium", 13.8F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel3.ForeColor = Color.FromArgb(CByte(255), CByte(255), CByte(255))
+        Guna2HtmlLabel3.BackColor = Color.FromArgb(61, 65, 69)
+        Guna2HtmlLabel3.Font = New Font("Poppins Medium", 13.8F, FontStyle.Regular, GraphicsUnit.Point, 0)
+        Guna2HtmlLabel3.ForeColor = Color.FromArgb(255, 255, 255)
         Guna2HtmlLabel3.Location = New Point(12, 51)
         Guna2HtmlLabel3.Name = "Guna2HtmlLabel3"
         Guna2HtmlLabel3.Size = New Size(28, 42)
@@ -167,9 +167,9 @@ Partial Class Dashboard
         ' 
         ' Guna2HtmlLabel1
         ' 
-        Guna2HtmlLabel1.BackColor = Color.FromArgb(CByte(61), CByte(65), CByte(69))
-        Guna2HtmlLabel1.Font = New Font("Poppins Light", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel1.ForeColor = Color.FromArgb(CByte(255), CByte(255), CByte(255))
+        Guna2HtmlLabel1.BackColor = Color.FromArgb(61, 65, 69)
+        Guna2HtmlLabel1.Font = New Font("Poppins Light", 10.2F, FontStyle.Regular, GraphicsUnit.Point, 0)
+        Guna2HtmlLabel1.ForeColor = Color.FromArgb(255, 255, 255)
         Guna2HtmlLabel1.Location = New Point(12, 13)
         Guna2HtmlLabel1.Name = "Guna2HtmlLabel1"
         Guna2HtmlLabel1.Size = New Size(91, 32)
@@ -181,11 +181,11 @@ Partial Class Dashboard
         LowStockPanel.AutoScroll = True
         LowStockPanel.BorderRadius = 10
         LowStockPanel.CustomizableEdges = CustomizableEdges4
-        LowStockPanel.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(69))
-        LowStockPanel.Location = New Point(1092, 229)
+        LowStockPanel.FillColor = Color.FromArgb(61, 65, 69)
+        LowStockPanel.Location = New Point(1295, 235)
         LowStockPanel.Name = "LowStockPanel"
         LowStockPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges5
-        LowStockPanel.Size = New Size(446, 373)
+        LowStockPanel.Size = New Size(577, 367)
         LowStockPanel.TabIndex = 63
         ' 
         ' Guna2Panel6
@@ -197,18 +197,18 @@ Partial Class Dashboard
         Guna2Panel6.Controls.Add(Guna2CircleButton6)
         Guna2Panel6.Controls.Add(Guna2HtmlLabel14)
         Guna2Panel6.CustomizableEdges = CustomizableEdges7
-        Guna2Panel6.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(69))
-        Guna2Panel6.Location = New Point(713, 61)
+        Guna2Panel6.FillColor = Color.FromArgb(61, 65, 69)
+        Guna2Panel6.Location = New Point(840, 61)
         Guna2Panel6.Name = "Guna2Panel6"
         Guna2Panel6.ShadowDecoration.CustomizableEdges = CustomizableEdges8
-        Guna2Panel6.Size = New Size(309, 146)
+        Guna2Panel6.Size = New Size(372, 146)
         Guna2Panel6.TabIndex = 56
         ' 
         ' Label2
         ' 
         Label2.AutoSize = True
-        Label2.BackColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
-        Label2.Location = New Point(249, 16)
+        Label2.BackColor = Color.FromArgb(254, 191, 16)
+        Label2.Location = New Point(327, 16)
         Label2.Name = "Label2"
         Label2.Size = New Size(18, 20)
         Label2.TabIndex = 56
@@ -217,9 +217,9 @@ Partial Class Dashboard
         ' Guna2HtmlLabel12
         ' 
         Guna2HtmlLabel12.AutoSize = True
-        Guna2HtmlLabel12.BackColor = Color.FromArgb(CByte(61), CByte(65), CByte(69))
-        Guna2HtmlLabel12.Font = New Font("Segoe UI", 13.8F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel12.ForeColor = Color.FromArgb(CByte(255), CByte(255), CByte(255))
+        Guna2HtmlLabel12.BackColor = Color.FromArgb(61, 65, 69)
+        Guna2HtmlLabel12.Font = New Font("Segoe UI", 13.8F, FontStyle.Regular, GraphicsUnit.Point, 0)
+        Guna2HtmlLabel12.ForeColor = Color.FromArgb(255, 255, 255)
         Guna2HtmlLabel12.Location = New Point(12, 51)
         Guna2HtmlLabel12.Name = "Guna2HtmlLabel12"
         Guna2HtmlLabel12.Size = New Size(81, 31)
@@ -228,9 +228,9 @@ Partial Class Dashboard
         ' 
         ' Guna2HtmlLabel11
         ' 
-        Guna2HtmlLabel11.BackColor = Color.FromArgb(CByte(61), CByte(65), CByte(69))
-        Guna2HtmlLabel11.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel11.ForeColor = Color.FromArgb(CByte(16), CByte(216), CByte(98))
+        Guna2HtmlLabel11.BackColor = Color.FromArgb(61, 65, 69)
+        Guna2HtmlLabel11.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, 0)
+        Guna2HtmlLabel11.ForeColor = Color.FromArgb(16, 216, 98)
         Guna2HtmlLabel11.Location = New Point(12, 103)
         Guna2HtmlLabel11.Name = "Guna2HtmlLabel11"
         Guna2HtmlLabel11.Size = New Size(71, 28)
@@ -239,15 +239,15 @@ Partial Class Dashboard
         ' 
         ' Guna2CircleButton6
         ' 
-        Guna2CircleButton6.BackColor = Color.FromArgb(CByte(61), CByte(65), CByte(69))
+        Guna2CircleButton6.BackColor = Color.FromArgb(61, 65, 69)
         Guna2CircleButton6.DisabledState.BorderColor = Color.DarkGray
         Guna2CircleButton6.DisabledState.CustomBorderColor = Color.DarkGray
-        Guna2CircleButton6.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
-        Guna2CircleButton6.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        Guna2CircleButton6.FillColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
-        Guna2CircleButton6.Font = New Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2CircleButton6.ForeColor = Color.FromArgb(CByte(26), CByte(29), CByte(31))
-        Guna2CircleButton6.Location = New Point(235, 9)
+        Guna2CircleButton6.DisabledState.FillColor = Color.FromArgb(169, 169, 169)
+        Guna2CircleButton6.DisabledState.ForeColor = Color.FromArgb(141, 141, 141)
+        Guna2CircleButton6.FillColor = Color.FromArgb(254, 191, 16)
+        Guna2CircleButton6.Font = New Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, 0)
+        Guna2CircleButton6.ForeColor = Color.FromArgb(26, 29, 31)
+        Guna2CircleButton6.Location = New Point(313, 9)
         Guna2CircleButton6.Name = "Guna2CircleButton6"
         Guna2CircleButton6.PressedColor = Color.Transparent
         Guna2CircleButton6.ShadowDecoration.CustomizableEdges = CustomizableEdges6
@@ -257,9 +257,9 @@ Partial Class Dashboard
         ' 
         ' Guna2HtmlLabel14
         ' 
-        Guna2HtmlLabel14.BackColor = Color.FromArgb(CByte(61), CByte(65), CByte(69))
-        Guna2HtmlLabel14.Font = New Font("Poppins Light", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel14.ForeColor = Color.FromArgb(CByte(255), CByte(255), CByte(255))
+        Guna2HtmlLabel14.BackColor = Color.FromArgb(61, 65, 69)
+        Guna2HtmlLabel14.Font = New Font("Poppins Light", 10.2F, FontStyle.Regular, GraphicsUnit.Point, 0)
+        Guna2HtmlLabel14.ForeColor = Color.FromArgb(255, 255, 255)
         Guna2HtmlLabel14.Location = New Point(12, 13)
         Guna2HtmlLabel14.Name = "Guna2HtmlLabel14"
         Guna2HtmlLabel14.Size = New Size(117, 32)
@@ -275,18 +275,18 @@ Partial Class Dashboard
         Guna2Panel7.Controls.Add(Guna2CircleButton7)
         Guna2Panel7.Controls.Add(Guna2HtmlLabel18)
         Guna2Panel7.CustomizableEdges = CustomizableEdges10
-        Guna2Panel7.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(69))
-        Guna2Panel7.Location = New Point(1170, 61)
+        Guna2Panel7.FillColor = Color.FromArgb(61, 65, 69)
+        Guna2Panel7.Location = New Point(1416, 61)
         Guna2Panel7.Name = "Guna2Panel7"
         Guna2Panel7.ShadowDecoration.CustomizableEdges = CustomizableEdges11
-        Guna2Panel7.Size = New Size(309, 146)
+        Guna2Panel7.Size = New Size(409, 146)
         Guna2Panel7.TabIndex = 57
         ' 
         ' Label1
         ' 
         Label1.AutoSize = True
-        Label1.BackColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
-        Label1.Location = New Point(249, 16)
+        Label1.BackColor = Color.FromArgb(254, 191, 16)
+        Label1.Location = New Point(368, 12)
         Label1.Name = "Label1"
         Label1.Size = New Size(18, 20)
         Label1.TabIndex = 69
@@ -294,9 +294,9 @@ Partial Class Dashboard
         ' 
         ' Guna2HtmlLabel15
         ' 
-        Guna2HtmlLabel15.BackColor = Color.FromArgb(CByte(61), CByte(65), CByte(69))
-        Guna2HtmlLabel15.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel15.ForeColor = Color.FromArgb(CByte(184), CByte(188), CByte(193))
+        Guna2HtmlLabel15.BackColor = Color.FromArgb(61, 65, 69)
+        Guna2HtmlLabel15.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, 0)
+        Guna2HtmlLabel15.ForeColor = Color.FromArgb(184, 188, 193)
         Guna2HtmlLabel15.Location = New Point(12, 103)
         Guna2HtmlLabel15.Name = "Guna2HtmlLabel15"
         Guna2HtmlLabel15.Size = New Size(84, 28)
@@ -305,9 +305,9 @@ Partial Class Dashboard
         ' 
         ' Guna2HtmlLabel16
         ' 
-        Guna2HtmlLabel16.BackColor = Color.FromArgb(CByte(61), CByte(65), CByte(69))
-        Guna2HtmlLabel16.Font = New Font("Poppins Medium", 13.8F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel16.ForeColor = Color.FromArgb(CByte(255), CByte(255), CByte(255))
+        Guna2HtmlLabel16.BackColor = Color.FromArgb(61, 65, 69)
+        Guna2HtmlLabel16.Font = New Font("Poppins Medium", 13.8F, FontStyle.Regular, GraphicsUnit.Point, 0)
+        Guna2HtmlLabel16.ForeColor = Color.FromArgb(255, 255, 255)
         Guna2HtmlLabel16.Location = New Point(12, 51)
         Guna2HtmlLabel16.Name = "Guna2HtmlLabel16"
         Guna2HtmlLabel16.Size = New Size(28, 42)
@@ -316,15 +316,15 @@ Partial Class Dashboard
         ' 
         ' Guna2CircleButton7
         ' 
-        Guna2CircleButton7.BackColor = Color.FromArgb(CByte(61), CByte(65), CByte(69))
+        Guna2CircleButton7.BackColor = Color.FromArgb(61, 65, 69)
         Guna2CircleButton7.DisabledState.BorderColor = Color.DarkGray
         Guna2CircleButton7.DisabledState.CustomBorderColor = Color.DarkGray
-        Guna2CircleButton7.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
-        Guna2CircleButton7.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        Guna2CircleButton7.FillColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
-        Guna2CircleButton7.Font = New Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2CircleButton7.ForeColor = Color.FromArgb(CByte(26), CByte(29), CByte(31))
-        Guna2CircleButton7.Location = New Point(235, 9)
+        Guna2CircleButton7.DisabledState.FillColor = Color.FromArgb(169, 169, 169)
+        Guna2CircleButton7.DisabledState.ForeColor = Color.FromArgb(141, 141, 141)
+        Guna2CircleButton7.FillColor = Color.FromArgb(254, 191, 16)
+        Guna2CircleButton7.Font = New Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, 0)
+        Guna2CircleButton7.ForeColor = Color.FromArgb(26, 29, 31)
+        Guna2CircleButton7.Location = New Point(354, 5)
         Guna2CircleButton7.Name = "Guna2CircleButton7"
         Guna2CircleButton7.PressedColor = Color.Transparent
         Guna2CircleButton7.ShadowDecoration.CustomizableEdges = CustomizableEdges9
@@ -334,9 +334,9 @@ Partial Class Dashboard
         ' 
         ' Guna2HtmlLabel18
         ' 
-        Guna2HtmlLabel18.BackColor = Color.FromArgb(CByte(61), CByte(65), CByte(69))
-        Guna2HtmlLabel18.Font = New Font("Poppins Light", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel18.ForeColor = Color.FromArgb(CByte(255), CByte(255), CByte(255))
+        Guna2HtmlLabel18.BackColor = Color.FromArgb(61, 65, 69)
+        Guna2HtmlLabel18.Font = New Font("Poppins Light", 10.2F, FontStyle.Regular, GraphicsUnit.Point, 0)
+        Guna2HtmlLabel18.ForeColor = Color.FromArgb(255, 255, 255)
         Guna2HtmlLabel18.Location = New Point(12, 13)
         Guna2HtmlLabel18.Name = "Guna2HtmlLabel18"
         Guna2HtmlLabel18.Size = New Size(109, 32)
@@ -352,12 +352,12 @@ Partial Class Dashboard
         DashboardPanel.Location = New Point(-33, 5)
         DashboardPanel.Name = "DashboardPanel"
         DashboardPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges13
-        DashboardPanel.Size = New Size(236, 999)
+        DashboardPanel.Size = New Size(242, 1031)
         DashboardPanel.TabIndex = 64
         ' 
         ' PictureBox9
         ' 
-        PictureBox9.BackColor = Color.FromArgb(CByte(61), CByte(65), CByte(69))
+        PictureBox9.BackColor = Color.FromArgb(61, 65, 69)
         PictureBox9.Image = My.Resources.Resources.Jade_Dental_Logo
         PictureBox9.Location = New Point(60, 3)
         PictureBox9.Name = "PictureBox9"
@@ -371,17 +371,17 @@ Partial Class Dashboard
         AreaChart.AutoScroll = True
         AreaChart.BorderRadius = 10
         AreaChart.CustomizableEdges = CustomizableEdges14
-        AreaChart.FillColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
+        AreaChart.FillColor = Color.FromArgb(41, 44, 45)
         AreaChart.Location = New Point(236, 639)
         AreaChart.Name = "AreaChart"
         AreaChart.ShadowDecoration.CustomizableEdges = CustomizableEdges15
-        AreaChart.Size = New Size(1302, 353)
+        AreaChart.Size = New Size(1636, 397)
         AreaChart.TabIndex = 63
         ' 
         ' Guna2HtmlLabel5
         ' 
-        Guna2HtmlLabel5.BackColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
-        Guna2HtmlLabel5.Font = New Font("Poppins", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Guna2HtmlLabel5.BackColor = Color.FromArgb(41, 44, 45)
+        Guna2HtmlLabel5.Font = New Font("Poppins", 10.2F, FontStyle.Regular, GraphicsUnit.Point, 0)
         Guna2HtmlLabel5.ForeColor = Color.White
         Guna2HtmlLabel5.Location = New Point(20, 15)
         Guna2HtmlLabel5.Name = "Guna2HtmlLabel5"
@@ -391,7 +391,7 @@ Partial Class Dashboard
         ' 
         ' Guna2HtmlLabel10
         ' 
-        Guna2HtmlLabel10.BackColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
+        Guna2HtmlLabel10.BackColor = Color.FromArgb(61, 65, 66)
         Guna2HtmlLabel10.Font = New Font("Poppins", 9F)
         Guna2HtmlLabel10.ForeColor = Color.White
         Guna2HtmlLabel10.Location = New Point(75, 16)
@@ -402,9 +402,9 @@ Partial Class Dashboard
         ' 
         ' Guna2HtmlLabel9
         ' 
-        Guna2HtmlLabel9.BackColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
+        Guna2HtmlLabel9.BackColor = Color.FromArgb(61, 65, 66)
         Guna2HtmlLabel9.Font = New Font("Poppins", 9F)
-        Guna2HtmlLabel9.ForeColor = Color.FromArgb(CByte(233), CByte(196), CByte(106))
+        Guna2HtmlLabel9.ForeColor = Color.FromArgb(233, 196, 106)
         Guna2HtmlLabel9.Location = New Point(480, 6)
         Guna2HtmlLabel9.Name = "Guna2HtmlLabel9"
         Guna2HtmlLabel9.Size = New Size(58, 28)
@@ -413,9 +413,9 @@ Partial Class Dashboard
         ' 
         ' Guna2HtmlLabel7
         ' 
-        Guna2HtmlLabel7.BackColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
+        Guna2HtmlLabel7.BackColor = Color.FromArgb(61, 65, 66)
         Guna2HtmlLabel7.Font = New Font("Poppins", 9F)
-        Guna2HtmlLabel7.ForeColor = Color.FromArgb(CByte(233), CByte(196), CByte(106))
+        Guna2HtmlLabel7.ForeColor = Color.FromArgb(233, 196, 106)
         Guna2HtmlLabel7.Location = New Point(197, 16)
         Guna2HtmlLabel7.Name = "Guna2HtmlLabel7"
         Guna2HtmlLabel7.Size = New Size(43, 28)
@@ -433,7 +433,7 @@ Partial Class Dashboard
         PopularPanel.Location = New Point(236, 235)
         PopularPanel.Name = "PopularPanel"
         PopularPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges19
-        PopularPanel.Size = New Size(822, 367)
+        PopularPanel.Size = New Size(1019, 367)
         PopularPanel.TabIndex = 62
         ' 
         ' txtProductSearch
@@ -443,15 +443,15 @@ Partial Class Dashboard
         txtProductSearch.BorderThickness = 0
         txtProductSearch.CustomizableEdges = CustomizableEdges16
         txtProductSearch.DefaultText = ""
-        txtProductSearch.DisabledState.BorderColor = Color.FromArgb(CByte(208), CByte(208), CByte(208))
-        txtProductSearch.DisabledState.FillColor = Color.FromArgb(CByte(226), CByte(226), CByte(226))
-        txtProductSearch.DisabledState.ForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
-        txtProductSearch.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
-        txtProductSearch.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
-        txtProductSearch.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
+        txtProductSearch.DisabledState.BorderColor = Color.FromArgb(208, 208, 208)
+        txtProductSearch.DisabledState.FillColor = Color.FromArgb(226, 226, 226)
+        txtProductSearch.DisabledState.ForeColor = Color.FromArgb(138, 138, 138)
+        txtProductSearch.DisabledState.PlaceholderForeColor = Color.FromArgb(138, 138, 138)
+        txtProductSearch.FillColor = Color.FromArgb(61, 65, 66)
+        txtProductSearch.FocusedState.BorderColor = Color.FromArgb(94, 148, 255)
         txtProductSearch.Font = New Font("Segoe UI", 9F)
         txtProductSearch.ForeColor = Color.White
-        txtProductSearch.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
+        txtProductSearch.HoverState.BorderColor = Color.FromArgb(94, 148, 255)
         txtProductSearch.Location = New Point(1017, 10)
         txtProductSearch.Margin = New Padding(3, 4, 3, 4)
         txtProductSearch.Name = "txtProductSearch"
@@ -464,7 +464,7 @@ Partial Class Dashboard
         ' Guna2HtmlLabel8
         ' 
         Guna2HtmlLabel8.BackColor = Color.Transparent
-        Guna2HtmlLabel8.Font = New Font("Poppins Medium", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Guna2HtmlLabel8.Font = New Font("Poppins Medium", 10.2F, FontStyle.Regular, GraphicsUnit.Point, 0)
         Guna2HtmlLabel8.ForeColor = Color.White
         Guna2HtmlLabel8.Location = New Point(901, -38)
         Guna2HtmlLabel8.Name = "Guna2HtmlLabel8"
@@ -480,7 +480,7 @@ Partial Class Dashboard
         DataGridViewCellStyle1.BackColor = Color.White
         Guna2DataGridView1.AlternatingRowsDefaultCellStyle = DataGridViewCellStyle1
         DataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleLeft
-        DataGridViewCellStyle2.BackColor = Color.FromArgb(CByte(100), CByte(88), CByte(255))
+        DataGridViewCellStyle2.BackColor = Color.FromArgb(100, 88, 255)
         DataGridViewCellStyle2.Font = New Font("Segoe UI", 9F)
         DataGridViewCellStyle2.ForeColor = Color.White
         DataGridViewCellStyle2.SelectionBackColor = SystemColors.Highlight
@@ -492,12 +492,12 @@ Partial Class Dashboard
         DataGridViewCellStyle3.Alignment = DataGridViewContentAlignment.MiddleLeft
         DataGridViewCellStyle3.BackColor = Color.White
         DataGridViewCellStyle3.Font = New Font("Segoe UI", 9F)
-        DataGridViewCellStyle3.ForeColor = Color.FromArgb(CByte(71), CByte(69), CByte(94))
-        DataGridViewCellStyle3.SelectionBackColor = Color.FromArgb(CByte(231), CByte(229), CByte(255))
-        DataGridViewCellStyle3.SelectionForeColor = Color.FromArgb(CByte(71), CByte(69), CByte(94))
+        DataGridViewCellStyle3.ForeColor = Color.FromArgb(71, 69, 94)
+        DataGridViewCellStyle3.SelectionBackColor = Color.FromArgb(231, 229, 255)
+        DataGridViewCellStyle3.SelectionForeColor = Color.FromArgb(71, 69, 94)
         DataGridViewCellStyle3.WrapMode = DataGridViewTriState.False
         Guna2DataGridView1.DefaultCellStyle = DataGridViewCellStyle3
-        Guna2DataGridView1.GridColor = Color.FromArgb(CByte(231), CByte(229), CByte(255))
+        Guna2DataGridView1.GridColor = Color.FromArgb(231, 229, 255)
         Guna2DataGridView1.Location = New Point(25, 55)
         Guna2DataGridView1.Name = "Guna2DataGridView1"
         Guna2DataGridView1.RowHeadersVisible = False
@@ -510,8 +510,8 @@ Partial Class Dashboard
         Guna2DataGridView1.ThemeStyle.AlternatingRowsStyle.SelectionBackColor = Color.Empty
         Guna2DataGridView1.ThemeStyle.AlternatingRowsStyle.SelectionForeColor = Color.Empty
         Guna2DataGridView1.ThemeStyle.BackColor = Color.White
-        Guna2DataGridView1.ThemeStyle.GridColor = Color.FromArgb(CByte(231), CByte(229), CByte(255))
-        Guna2DataGridView1.ThemeStyle.HeaderStyle.BackColor = Color.FromArgb(CByte(100), CByte(88), CByte(255))
+        Guna2DataGridView1.ThemeStyle.GridColor = Color.FromArgb(231, 229, 255)
+        Guna2DataGridView1.ThemeStyle.HeaderStyle.BackColor = Color.FromArgb(100, 88, 255)
         Guna2DataGridView1.ThemeStyle.HeaderStyle.BorderStyle = DataGridViewHeaderBorderStyle.None
         Guna2DataGridView1.ThemeStyle.HeaderStyle.Font = New Font("Segoe UI", 9F)
         Guna2DataGridView1.ThemeStyle.HeaderStyle.ForeColor = Color.White
@@ -521,15 +521,15 @@ Partial Class Dashboard
         Guna2DataGridView1.ThemeStyle.RowsStyle.BackColor = Color.White
         Guna2DataGridView1.ThemeStyle.RowsStyle.BorderStyle = DataGridViewCellBorderStyle.SingleHorizontal
         Guna2DataGridView1.ThemeStyle.RowsStyle.Font = New Font("Segoe UI", 9F)
-        Guna2DataGridView1.ThemeStyle.RowsStyle.ForeColor = Color.FromArgb(CByte(71), CByte(69), CByte(94))
+        Guna2DataGridView1.ThemeStyle.RowsStyle.ForeColor = Color.FromArgb(71, 69, 94)
         Guna2DataGridView1.ThemeStyle.RowsStyle.Height = 29
-        Guna2DataGridView1.ThemeStyle.RowsStyle.SelectionBackColor = Color.FromArgb(CByte(231), CByte(229), CByte(255))
-        Guna2DataGridView1.ThemeStyle.RowsStyle.SelectionForeColor = Color.FromArgb(CByte(71), CByte(69), CByte(94))
+        Guna2DataGridView1.ThemeStyle.RowsStyle.SelectionBackColor = Color.FromArgb(231, 229, 255)
+        Guna2DataGridView1.ThemeStyle.RowsStyle.SelectionForeColor = Color.FromArgb(71, 69, 94)
         ' 
         ' Guna2HtmlLabel4
         ' 
-        Guna2HtmlLabel4.BackColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
-        Guna2HtmlLabel4.Font = New Font("Poppins Medium", 13.8F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Guna2HtmlLabel4.BackColor = Color.FromArgb(41, 44, 45)
+        Guna2HtmlLabel4.Font = New Font("Poppins Medium", 13.8F, FontStyle.Regular, GraphicsUnit.Point, 0)
         Guna2HtmlLabel4.ForeColor = Color.White
         Guna2HtmlLabel4.Location = New Point(27, 15)
         Guna2HtmlLabel4.Name = "Guna2HtmlLabel4"
@@ -539,9 +539,9 @@ Partial Class Dashboard
         ' 
         ' PopoularSeeAll
         ' 
-        PopoularSeeAll.BackColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
+        PopoularSeeAll.BackColor = Color.FromArgb(61, 65, 66)
         PopoularSeeAll.Font = New Font("Poppins", 9F)
-        PopoularSeeAll.ForeColor = Color.FromArgb(CByte(233), CByte(196), CByte(106))
+        PopoularSeeAll.ForeColor = Color.FromArgb(233, 196, 106)
         PopoularSeeAll.Location = New Point(528, 15)
         PopoularSeeAll.Name = "PopoularSeeAll"
         PopoularSeeAll.Size = New Size(52, 28)
@@ -552,8 +552,8 @@ Partial Class Dashboard
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
-        BackColor = Color.FromArgb(CByte(30), CByte(30), CByte(30))
-        ClientSize = New Size(1550, 1006)
+        BackColor = Color.FromArgb(30, 30, 30)
+        ClientSize = New Size(1902, 1033)
         Controls.Add(PopularPanel)
         Controls.Add(DashboardPanel)
         Controls.Add(Guna2Panel7)
