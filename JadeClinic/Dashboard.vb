@@ -521,24 +521,29 @@ Public Class Dashboard
                 End If
             Next
 
-            For Each control As Control In PopularPanel.Controls.OfType(Of Panel).ToArray()
-                If control.Name = "popularHeaderPanel" Then
-                    PopularPanel.Controls.Remove(control)
-                    control.Dispose()
-                End If
-            Next
-
             PopularPanel.Padding = New Padding(15, 10, 15, 15)
             PopularPanel.FillColor = Color.FromArgb(61, 65, 69)
 
-            ' Header panel
-            Dim headerPanel As New Panel()
-            headerPanel.Name = "popularHeaderPanel"
-            headerPanel.Dock = DockStyle.Top
-            headerPanel.Height = 45
-            headerPanel.BackColor = Color.FromArgb(61, 65, 69)
-            headerPanel.Padding = New Padding(15, 8, 15, 8)
-            PopularPanel.Controls.Add(headerPanel)
+            ' Keep the existing header panel (so txtProductSearch is not disposed)
+            Dim headerPanel As Panel = PopularPanel.Controls.OfType(Of Panel)().
+            FirstOrDefault(Function(p) p.Name = "popularHeaderPanel")
+
+            If headerPanel Is Nothing Then
+                headerPanel = New Panel() With {
+                .Name = "popularHeaderPanel",
+                .Dock = DockStyle.Top,
+                .Height = 45,
+                .BackColor = Color.FromArgb(61, 65, 69),
+                .Padding = New Padding(15, 8, 15, 8)
+            }
+                PopularPanel.Controls.Add(headerPanel)
+            Else
+                ' Clear only labels inside the header (keep txtProductSearch)
+                For Each ctrl As Control In headerPanel.Controls.OfType(Of Label).ToArray()
+                    headerPanel.Controls.Remove(ctrl)
+                    ctrl.Dispose()
+                Next
+            End If
 
             Dim titleLabel As New Label()
             titleLabel.Text = "Popular Product"
@@ -578,6 +583,7 @@ Public Class Dashboard
             AddHandler txtProductSearch.TextChanged, AddressOf TxtProductSearch_TextChanged
 
             Dim searchText As String = If(txtProductSearch.Text, "").Trim()
+            Dim isSearching As Boolean = Not String.IsNullOrWhiteSpace(searchText)
 
             ' Configure the existing DataGridView with new color scheme
             Guna2DataGridView1.Columns.Clear()
@@ -618,6 +624,12 @@ Public Class Dashboard
             Guna2DataGridView1.ColumnHeadersHeight = 50
             Guna2DataGridView1.RowTemplate.Height = 60
             Guna2DataGridView1.EnableHeadersVisualStyles = False
+            Guna2DataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing
+
+
+            For Each col As DataGridViewColumn In Guna2DataGridView1.Columns
+                col.Resizable = DataGridViewTriState.False
+            Next
 
             ' Add columns
             Dim noColumn As New DataGridViewTextBoxColumn()
@@ -666,6 +678,7 @@ Public Class Dashboard
             priceColumn.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Bold)
             priceColumn.DefaultCellStyle.ForeColor = Color.FromArgb(16, 216, 98)
             Guna2DataGridView1.Columns.Add(priceColumn)
+         
 
             ' Query to get products ranked by sold quantity
             Dim query As String = "
@@ -711,17 +724,33 @@ Public Class Dashboard
                 End While
             End Using
 
-            If Guna2DataGridView1.Rows.Count > 0 Then
-                Guna2DataGridView1.Rows(0).DefaultCellStyle.BackColor = Color.FromArgb(225, 196, 120)
-                Guna2DataGridView1.Rows(0).DefaultCellStyle.ForeColor = Color.FromArgb(40, 40, 40)
+            If Guna2DataGridView1.Rows.Count = 0 AndAlso isSearching Then
+                Dim emptyRowIndex As Integer = Guna2DataGridView1.Rows.Add()
+                Dim emptyRow = Guna2DataGridView1.Rows(emptyRowIndex)
+
+                For i As Integer = 0 To Guna2DataGridView1.Columns.Count - 1
+                    emptyRow.Cells(i).Value = String.Empty
+                Next
+
+                emptyRow.Cells("ProductName").Value = "No product found"
+                emptyRow.DefaultCellStyle.ForeColor = Color.LightGray
+                emptyRow.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Italic)
+                emptyRow.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             End If
-            If Guna2DataGridView1.Rows.Count > 1 Then
-                Guna2DataGridView1.Rows(1).DefaultCellStyle.BackColor = Color.FromArgb(192, 192, 192)
-                Guna2DataGridView1.Rows(1).DefaultCellStyle.ForeColor = Color.FromArgb(26, 29, 31)
-            End If
-            If Guna2DataGridView1.Rows.Count > 2 Then
-                Guna2DataGridView1.Rows(2).DefaultCellStyle.BackColor = Color.FromArgb(205, 127, 50)
-                Guna2DataGridView1.Rows(2).DefaultCellStyle.ForeColor = Color.White
+
+            If Not isSearching Then
+                If Guna2DataGridView1.Rows.Count > 0 Then
+                    Guna2DataGridView1.Rows(0).DefaultCellStyle.BackColor = Color.FromArgb(225, 196, 120)
+                    Guna2DataGridView1.Rows(0).DefaultCellStyle.ForeColor = Color.FromArgb(40, 40, 40)
+                End If
+                If Guna2DataGridView1.Rows.Count > 1 Then
+                    Guna2DataGridView1.Rows(1).DefaultCellStyle.BackColor = Color.FromArgb(192, 192, 192)
+                    Guna2DataGridView1.Rows(1).DefaultCellStyle.ForeColor = Color.FromArgb(26, 29, 31)
+                End If
+                If Guna2DataGridView1.Rows.Count > 2 Then
+                    Guna2DataGridView1.Rows(2).DefaultCellStyle.BackColor = Color.FromArgb(205, 127, 50)
+                    Guna2DataGridView1.Rows(2).DefaultCellStyle.ForeColor = Color.White
+                End If
             End If
 
             For Each row As DataGridViewRow In Guna2DataGridView1.Rows
