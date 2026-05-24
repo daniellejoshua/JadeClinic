@@ -23,16 +23,45 @@ Public Class frmLoginvb
     Private qrScannerEnabled As Boolean = True ' Track QR scanner state
     Private qrScannerActive As Boolean = False ' Track if QR scanner dialog is currently open
 
+    Private Const TitleBarHoverHeight As Integer = 8
+    Private isTitleBarVisible As Boolean = False
+    Private pictureBoxTopSpacing As Integer = 20
+    Private Sub EnableTitleBarHover()
+        Me.FormBorderStyle = FormBorderStyle.None
+        Me.ControlBox = False
+        Me.MinimizeBox = False
+        Me.MaximizeBox = False
+        Me.TopMost = False
+    End Sub
+
+    Private Sub frmLoginvb_MouseMove(sender As Object, e As MouseEventArgs)
+        Dim shouldShow = e.Y <= TitleBarHoverHeight
+        If shouldShow <> isTitleBarVisible Then
+            isTitleBarVisible = shouldShow
+            Me.ControlBox = shouldShow
+            Me.MinimizeBox = shouldShow
+        End If
+    End Sub
+
+    Private Sub frmLoginvb_MouseLeave(sender As Object, e As EventArgs)
+        If isTitleBarVisible Then
+            isTitleBarVisible = False
+            Me.ControlBox = False
+            Me.MinimizeBox = False
+        End If
+    End Sub
     Private Sub frmLoginvb_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         Guna2Panel1.BorderRadius = 50
         Me.MaximizeBox = False
+        Me.WindowState = FormWindowState.Maximized
+        Me.FormBorderStyle = FormBorderStyle.None
+        Me.KeyPreview = True
 
+        pictureBoxTopSpacing = Math.Max(20, Guna2Panel1.Top - (PictureBox1.Top + PictureBox1.Height))
+        CenterLoginLayout()
+        EnableTitleBarHover()
 
-        ' Center Guna2Panel1
-        Guna2Panel1.Left = (Me.ClientSize.Width - Guna2Panel1.Width) \ 2
-
-        ' Center PictureBox1 above the panel
-        PictureBox1.Left = (Me.ClientSize.Width - PictureBox1.Width) \ 2
+        AddHandler Me.KeyDown, AddressOf frmLoginvb_KeyDown
 
         ' Set password char to bullet on form load
         txtPassword.PasswordChar = "•"c
@@ -67,25 +96,37 @@ Public Class frmLoginvb
         AddHandler txtPassword.TextChanged, AddressOf ValidateInputForQRCodes
     End Sub
 
+    Private Sub CenterLoginLayout()
+        Dim groupHeight As Integer = PictureBox1.Height + pictureBoxTopSpacing + Guna2Panel1.Height
+        Dim groupTop As Integer = Math.Max(0, (Me.ClientSize.Height - groupHeight) \ 2)
+
+        PictureBox1.Top = groupTop
+        PictureBox1.Left = (Me.ClientSize.Width - PictureBox1.Width) \ 2
+
+        Guna2Panel1.Top = PictureBox1.Bottom + pictureBoxTopSpacing
+        Guna2Panel1.Left = (Me.ClientSize.Width - Guna2Panel1.Width) \ 2
+
+    End Sub
+
     ' Initialize database on startup - THIS FIXES THE ERROR!
     Private Sub InitializeDatabaseOnStartup()
         Try
-            Console.WriteLine("Initializing database on startup...")
+            Console.WriteLine("Checking database connectivity on startup...")
 
-            ' Test if database initialization is needed
-            If Connection.InitializeDatabase() Then
-                Console.WriteLine("✅ Database is ready for login!")
+            ' Production-safe startup check:
+            ' do NOT run schema initialization from login screen on every client.
+            If Connection.TestConnection() Then
+                Console.WriteLine("✅ Database connection is ready for login.")
             Else
-                Console.WriteLine("❌ Database initialization failed!")
-                MessageBox.Show("Database initialization failed. Please check your LocalDB installation.",
-                              "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                Console.WriteLine("❌ Database connection failed.")
+                MessageBox.Show("Unable to connect to the database server. Please check network and SQL settings.",
+                                "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
             End If
 
         Catch ex As Exception
-            Console.WriteLine($"Database initialization error: {ex.Message}")
-            MessageBox.Show($"Database initialization error: {ex.Message}" & vbCrLf &
-                          "Please ensure SQL Server LocalDB is installed.",
-                          "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            Console.WriteLine($"Database startup check error: {ex.Message}")
+            MessageBox.Show($"Database connection error: {ex.Message}",
+                            "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
 
@@ -850,6 +891,16 @@ Public Class frmLoginvb
         ' Log logout when form is closing (if user was logged in)
         If Not String.IsNullOrEmpty(LoggedInUsername) Then
             Utilities.LogAudit(LoggedInUsername, "Logged Out", $"User {LoggedInUsername} logged out or application closed.")
+        End If
+    End Sub
+
+    Private Sub frmLoginvb_KeyDown(sender As Object, e As KeyEventArgs)
+        If e.KeyCode = Keys.Escape Then
+            Dim result As DialogResult = EscForm.ConfirmExit(Me)
+            If result = DialogResult.Yes Then
+                Application.Exit()
+            End If
+            e.Handled = True
         End If
     End Sub
 

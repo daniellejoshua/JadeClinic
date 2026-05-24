@@ -11,72 +11,66 @@ Public Class AddProduct
     Private editProductId As Integer = 0
     Private currentBarcode As String = ""
 
-    ' Public property to set edit mode
     Public Sub SetEditMode(productId As Integer)
         isEditMode = True
         editProductId = productId
     End Sub
 
     Private Sub AddProduct_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        ' Start idle timeout monitoring for modal forms
-        IdleTimeoutManager.Instance.StartMonitoring(Me)
-        ConfigureStatusControls(isEditMode)
-        LoadCategories()
-        ' Removed: LoadSuppliers() - no longer needed
-        SetupFormDefaults()
-        SetupNumericInputValidation()
+        Try
+            ' Start idle timeout monitoring
+            IdleTimeoutManager.Instance.StartMonitoring(Me)
 
-        ' Add close button for borderless form
-        Dim btnClose As New Label()
-        btnClose.Text = "✕"
-        btnClose.Font = New Font("Arial", 16, FontStyle.Bold)
-        btnClose.ForeColor = Color.Gray
-        btnClose.Cursor = Cursors.Hand
-        btnClose.Location = New Point(Me.ClientSize.Width - 40, 15)
-        btnClose.Size = New Size(30, 30)
-        btnClose.TextAlign = ContentAlignment.MiddleCenter
-        AddHandler btnClose.Click, Sub(s, ev) Me.Close()
-        AddHandler btnClose.MouseEnter, Sub(s, ev) btnClose.ForeColor = Color.Red
-        AddHandler btnClose.MouseLeave, Sub(s, ev) btnClose.ForeColor = Color.Gray
-        Me.Controls.Add(btnClose)
-        btnClose.BringToFront()
+            ' Initialize UI
+            InitializeUI()
+            LoadCategories()
+            SetupFormDefaults()
+            SetupNumericInputValidation()
 
-        ' Make form topless by hiding title elements
-        Guna2HtmlLabel6.Visible = False
-        Guna2Panel1.Visible = False
-        Guna2Panel2.Location = New Point(Guna2Panel2.Location.X, 20) ' Move up to fill space
+            ' Load product data if in edit mode
+            If isEditMode Then
+                LoadProductData()
+                Guna2HtmlLabel6.Text = "Edit Product"
+                ShowBarcodeSection()
+            Else
+                HideBarcodeSection()
+            End If
 
-        ' Load product data if in edit mode
-        If isEditMode Then
-            LoadProductData()
-            ' Change title to Edit Product
-            Guna2HtmlLabel6.Text = "Edit Product"
-            ' Show barcode section for edit mode
-            BarcodeImage.Visible = True
-            PrintBarcodeTextBox.Visible = True
-        Else
-            ' Hide barcode section for add mode
-            BarcodeImage.Visible = False
-            PrintBarcodeTextBox.Visible = False
-        End If
+        Catch ex As Exception
+            MessageBox.Show($"Error initializing form: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
     End Sub
-    ' Toggle visibility and initialize the status controls.
-    ' Call: ConfigureStatusControls(isEditMode) in `AddProduct_Load`.
-    ' After loading data call: ConfigureStatusControls(True, Convert.ToBoolean(reader("IsActive")))
+
+    Private Sub InitializeUI()
+        ' Configure status controls
+        ConfigureStatusControls(isEditMode)
+
+        ' Ensure form properties are set correctly
+        Me.FormBorderStyle = FormBorderStyle.None
+        Me.BackColor = Color.FromArgb(30, 30, 30)
+        Me.TopMost = False
+    End Sub
+
+    Private Sub ShowBarcodeSection()
+        BarcodeImage.Visible = True
+        PrintBarcodeTextBox.Visible = True
+    End Sub
+
+    Private Sub HideBarcodeSection()
+        BarcodeImage.Visible = False
+        PrintBarcodeTextBox.Visible = False
+    End Sub
+
     Public Sub ConfigureStatusControls(show As Boolean, Optional isActive As Nullable(Of Boolean) = Nothing)
         Try
-            ' Initialize and populate combo only when present
             If cmbStatus IsNot Nothing Then
-                ' Ensure combobox is in DropDownList mode for consistent selection
                 cmbStatus.DropDownStyle = ComboBoxStyle.DropDownList
 
-                ' Populate items if empty or when showing
                 If cmbStatus.Items.Count = 0 Or show Then
                     cmbStatus.Items.Clear()
                     cmbStatus.Items.AddRange(New String() {"Active", "Inactive"})
                 End If
 
-                ' Set selected value when provided
                 If isActive.HasValue Then
                     cmbStatus.SelectedItem = If(isActive.Value, "Active", "Inactive")
                 ElseIf cmbStatus.SelectedIndex = -1 Then
@@ -86,51 +80,33 @@ Public Class AddProduct
                 cmbStatus.Visible = show
             End If
 
-            ' Toggle label visibility if present
             If lblStatus IsNot Nothing Then
                 lblStatus.Visible = show
             End If
 
         Catch ex As Exception
-            ' Non-fatal: log and continue
             Console.WriteLine($"ConfigureStatusControls warning: {ex.Message}")
         End Try
     End Sub
+
     Private Sub SetupFormDefaults()
         ' Set default values
         cmbCategory.SelectedIndex = -1
-        ' Removed: SupplierCMbBox.SelectedIndex = -1
-
-        ' Setup Unit dropdown
         UnitCmbBox.Items.Clear()
         UnitCmbBox.Items.AddRange(New String() {"PCS", "BOX", "PACK", "BOTTLE", "TUBE", "SET", "PAIR", "DOZEN", "REAM"})
-        UnitCmbBox.SelectedItem = "PCS" ' Default to PCS
+        UnitCmbBox.SelectedItem = "PCS"
 
-        ' Initialize main categories first, then load existing ones
+        ' Initialize categories
         InitializeMainCategories()
 
-        ' Set placeholder text for numeric fields
+        ' Set placeholder text
         CostPriceTextBox.PlaceholderText = "0.00"
         SellingPriceTextBox.PlaceholderText = "0.00"
         WholeSaleTextbox.PlaceholderText = "0.00"
         ReOrderLevelTextBox.PlaceholderText = "0"
-
-        ' Hide supplier controls since we're removing this functionality
-        If Me.Controls.Contains(SupplierCMbBox) Then
-            SupplierCMbBox.Visible = False
-        End If
-
-        ' Hide supplier label too
-        For Each ctrl As Control In Me.Controls
-            If TypeOf ctrl Is Label AndAlso ctrl.Text.ToLower().Contains("supplier") Then
-                ctrl.Visible = False
-            End If
-        Next
     End Sub
 
     Private Sub LoadCategories()
-        ' This method is now replaced by InitializeMainCategories
-        ' Keeping for compatibility but redirect to new method
         Try
             InitializeMainCategories()
         Catch ex As Exception
@@ -141,12 +117,9 @@ Public Class AddProduct
     Private Sub cmbCategory_SelectedIndexChanged(sender As Object, e As EventArgs) Handles cmbCategory.SelectedIndexChanged
         If cmbCategory.SelectedItem IsNot Nothing Then
             Dim selectedCategory As String = cmbCategory.SelectedItem.ToString()
-
             If selectedCategory = "Add Custom Category..." Then
-                ' Show dialog to add custom category
                 AddCustomCategory()
             End If
-            ' Note: Expiry date logic removed - expiry tracking moved to InventoryLog
         End If
     End Sub
 
@@ -154,9 +127,8 @@ Public Class AddProduct
         Dim customCategory As String = InputBox("Enter new category name:", "Add Custom Category")
 
         If Not String.IsNullOrWhiteSpace(customCategory) Then
-            ' Check if category already exists
             If Not cmbCategory.Items.Contains(customCategory) Then
-                cmbCategory.Items.Insert(cmbCategory.Items.Count - 1, customCategory) ' Insert before "Add Custom..."
+                cmbCategory.Items.Insert(cmbCategory.Items.Count - 1, customCategory)
                 cmbCategory.SelectedItem = customCategory
                 customCategories.Add(customCategory)
             Else
@@ -179,8 +151,7 @@ Public Class AddProduct
             End If
         End Using
     End Sub
-    ' Updates the product's active status (IsActive) in the database.
-    ' Returns True on success, False on failure.
+
     Public Function UpdateProductStatus(productId As Integer, isActive As Boolean) As Boolean
         Try
             Dim connStr As String = Connection.GetConnectionString()
@@ -194,13 +165,11 @@ Public Class AddProduct
 
                     Dim affected As Integer = cmd.ExecuteNonQuery()
                     If affected > 0 Then
-                        ' Audit log
                         Try
                             Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Product Status Updated", $"ProductID: {productId} IsActive: {isActive}")
                         Catch
                             ' Don't block on audit logging failure
                         End Try
-
                         Return True
                     End If
 
@@ -232,13 +201,14 @@ Public Class AddProduct
     End Sub
 
     Private Function ValidateForm() As Boolean
-        ' Validate required fields
+        ' Validate product name
         If String.IsNullOrWhiteSpace(txtProductName.Text) Then
             MessageBox.Show("Product name is required!", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
             txtProductName.Focus()
             Return False
         End If
 
+        ' Validate category
         If cmbCategory.SelectedItem Is Nothing OrElse cmbCategory.SelectedItem.ToString() = "Add Custom Category..." Then
             MessageBox.Show("Please select a valid category!", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
             cmbCategory.Focus()
@@ -269,7 +239,7 @@ Public Class AddProduct
             Return False
         End If
 
-        ' Validate that selling price is higher than cost price
+        ' Validate price relationship
         If sellingPrice <= costPrice Then
             MessageBox.Show("Selling price must be higher than cost price!" & Environment.NewLine &
                           $"Cost Price: ₱{costPrice:N2}" & Environment.NewLine &
@@ -287,7 +257,6 @@ Public Class AddProduct
                 Return False
             End If
 
-            ' Validate wholesale price is between cost price and selling price
             If wholesalePrice < costPrice Then
                 MessageBox.Show("Wholesale price cannot be lower than cost price!" & Environment.NewLine &
                               $"Cost Price: ₱{costPrice:N2}" & Environment.NewLine &
@@ -305,8 +274,6 @@ Public Class AddProduct
             End If
         End If
 
-        ' Note: Expiry date validation removed - expiry tracking moved to InventoryLog
-
         Return True
     End Function
 
@@ -317,10 +284,8 @@ Public Class AddProduct
                 conn.Open()
                 Using transaction As SqlTransaction = conn.BeginTransaction()
                     Try
-                        ' Prepare product data (removed expiry logic)
                         Dim selectedCategory As String = cmbCategory.SelectedItem.ToString()
 
-                        ' Insert product with temporary product code (removed SupplierID and expiry fields)
                         Dim insertQuery As String = "INSERT INTO Products (ProductCode, ProductName, Category, Unit, " &
                                                    "CurrentStock, ReorderLevel, CostPrice, SellingPrice, WholesalePrice, " &
                                                    "IsActive, Created, UpdatedAt) " &
@@ -344,7 +309,7 @@ Public Class AddProduct
                             productId = Convert.ToInt32(cmd.ExecuteScalar())
                         End Using
 
-                        ' Update with final ProductCode (no separate barcode field)
+                        ' Update with final ProductCode
                         Dim finalProductCode As String = Utilities.GenerateProductCode(productId)
 
                         Dim updateQuery As String = "UPDATE Products SET ProductCode = @ProductCode WHERE ProductID = @ProductID"
@@ -383,7 +348,6 @@ Public Class AddProduct
                     Try
                         Dim selectedCategory As String = cmbCategory.SelectedItem.ToString()
 
-                        ' Update product including IsActive
                         Dim updateQuery As String = "UPDATE Products SET ProductName = @ProductName, Category = @Category, Unit = @Unit, " &
                                                "ReorderLevel = @ReorderLevel, CostPrice = @CostPrice, SellingPrice = @SellingPrice, " &
                                                "WholesalePrice = @WholesalePrice, IsActive = @IsActive, UpdatedAt = GETDATE() WHERE ProductID = @ProductID"
@@ -396,7 +360,7 @@ Public Class AddProduct
                             cmd.Parameters.AddWithValue("@CostPrice", Convert.ToDecimal(CostPriceTextBox.Text.Trim()))
                             cmd.Parameters.AddWithValue("@SellingPrice", Convert.ToDecimal(SellingPriceTextBox.Text.Trim()))
                             cmd.Parameters.AddWithValue("@WholesalePrice", If(String.IsNullOrWhiteSpace(WholeSaleTextbox.Text), DBNull.Value, Convert.ToDecimal(WholeSaleTextbox.Text.Trim())))
-                            ' Read IsActive from cmbStatus if present; default to True
+
                             Dim isActiveFlag As Boolean = True
                             If cmbStatus IsNot Nothing AndAlso cmbStatus.SelectedItem IsNot Nothing Then
                                 isActiveFlag = (cmbStatus.SelectedItem.ToString() = "Active")
@@ -407,7 +371,6 @@ Public Class AddProduct
                             cmd.ExecuteNonQuery()
                         End Using
 
-                        ' ... rest of method unchanged (image handling, commit, etc.) ...
                         Dim imageWasUpdated As Boolean = False
 
                         If Not String.IsNullOrWhiteSpace(selectedImagePath) AndAlso IO.File.Exists(selectedImagePath) Then
@@ -449,15 +412,12 @@ Public Class AddProduct
             Return False
         End Try
     End Function
+
     Private Sub SaveProductImage(conn As SqlConnection, transaction As SqlTransaction, productId As Integer, imagePath As String)
         Try
-            ' Read the image file and convert to byte array
             Dim imageData As Byte() = File.ReadAllBytes(imagePath)
-
-            ' Create a hash for the image to prevent duplicates
             Dim imageHash As String = Convert.ToBase64String(System.Security.Cryptography.SHA256.Create().ComputeHash(imageData))
 
-            ' First, check if this image already exists in ProductImages
             Dim existingImageId As Object = Nothing
             Dim checkImageQuery As String = "SELECT ImageID FROM ProductImages WHERE ImageHash = @ImageHash"
             Using checkCmd As New SqlCommand(checkImageQuery, conn, transaction)
@@ -468,30 +428,25 @@ Public Class AddProduct
             Dim imageId As Integer
 
             If existingImageId IsNot Nothing Then
-                ' Use existing image
                 imageId = Convert.ToInt32(existingImageId)
             Else
-                ' Insert new image into ProductImages table
                 Dim insertImageQuery As String = "INSERT INTO ProductImages (ImageHash, ImageType, ImageData, CreatedAt, UpdatedAt) VALUES (@ImageHash, @ImageType, @ImageData, GETDATE(), GETDATE()); SELECT SCOPE_IDENTITY()"
                 Using cmdImage As New SqlCommand(insertImageQuery, conn, transaction)
                     cmdImage.Parameters.AddWithValue("@ImageHash", imageHash)
-                    cmdImage.Parameters.AddWithValue("@ImageType", "thumb") ' Default type
+                    cmdImage.Parameters.AddWithValue("@ImageType", "thumb")
                     cmdImage.Parameters.AddWithValue("@ImageData", imageData)
 
                     imageId = Convert.ToInt32(cmdImage.ExecuteScalar())
                 End Using
             End If
 
-            ' Now create the mapping between product and image
             Dim insertMappingQuery As String = "INSERT INTO ProductImageMapping (ProductID, ImageID, CreatedAt) VALUES (@ProductID, @ImageID, GETDATE())"
             Using cmdMapping As New SqlCommand(insertMappingQuery, conn, transaction)
                 cmdMapping.Parameters.AddWithValue("@ProductID", productId)
                 cmdMapping.Parameters.AddWithValue("@ImageID", imageId)
-
                 cmdMapping.ExecuteNonQuery()
             End Using
 
-            ' Optionally, optimize the image (resize, compress, etc.) before saving
             OptimizeImage(imagePath)
 
         Catch ex As Exception
@@ -500,18 +455,12 @@ Public Class AddProduct
     End Sub
 
     Private Sub OptimizeImage(imagePath As String)
-        ' Simplified image optimization to avoid GDI+ errors
         Try
-            ' Skip optimization if it's causing issues
-            ' Just validate the image can be loaded
             Using testImage As Image = Image.FromFile(imagePath)
-                ' If we can load it, it's fine to use as is
                 Console.WriteLine($"Image loaded successfully: {testImage.Width}x{testImage.Height}")
             End Using
         Catch ex As Exception
-            ' Log the warning but don't break the process
             Console.WriteLine($"Warning: Image optimization skipped: {ex.Message}")
-            ' The image was already saved successfully, so this doesn't affect functionality
         End Try
     End Sub
 
@@ -595,13 +544,11 @@ Public Class AddProduct
                                 End Try
                             End If
 
-                            ' Display barcode
                             If Not IsDBNull(reader("ProductCode")) Then
                                 Dim productCode As String = reader("ProductCode").ToString()
                                 GenerateAndDisplayBarcode(productCode)
                             End If
 
-                            ' Ensure status controls reflect DB value AFTER data load
                             If Not IsDBNull(reader("IsActive")) Then
                                 Dim isActiveVal As Boolean = Convert.ToBoolean(reader("IsActive"))
                                 ConfigureStatusControls(True, isActiveVal)
@@ -620,32 +567,25 @@ Public Class AddProduct
     Private Sub ClearForm()
         txtProductName.Clear()
         cmbCategory.SelectedIndex = -1
-        ' Removed: SupplierCMbBox.SelectedIndex = -1
         CostPriceTextBox.Clear()
         SellingPriceTextBox.Clear()
         WholeSaleTextbox.Clear()
         ReOrderLevelTextBox.Clear()
         ProductImage.Image = Nothing
         selectedImagePath = ""
-        ' Note: Expiry date clearing removed - expiry tracking moved to InventoryLog
     End Sub
 
     Private Sub InitializeMainCategories()
         Try
-            ' Main categories for dental supply management
             Dim mainCategories As String() = {"ORTHO", "CONSUMABLES", "SURGERY", "RESTO", "ENDO", "COSMETIC"}
 
-            ' Clear existing categories and add main categories first
             cmbCategory.Items.Clear()
 
             For Each category As String In mainCategories
                 cmbCategory.Items.Add(category)
             Next
 
-            ' Load additional categories from database (existing products)
             LoadAdditionalCategories()
-
-            ' Add "Add Custom" option at the end
             cmbCategory.Items.Add("Add Custom Category...")
 
         Catch ex As Exception
@@ -659,7 +599,6 @@ Public Class AddProduct
             Using conn As New SqlConnection(connStr)
                 conn.Open()
 
-                ' Get distinct categories from existing products that are not in main categories
                 Dim mainCategoriesString As String = "'ORTHO','CONSUMABLES','SURGERY','RESTO','ENDO','COSMETIC'"
                 Dim query As String = $"SELECT DISTINCT Category FROM Products WHERE Category IS NOT NULL AND IsActive = 1 AND Category NOT IN ({mainCategoriesString}) ORDER BY Category"
 
@@ -668,7 +607,6 @@ Public Class AddProduct
                         While reader.Read()
                             If Not IsDBNull(reader("Category")) Then
                                 Dim category As String = reader("Category").ToString()
-                                ' Only add if it's not already in the list
                                 If Not cmbCategory.Items.Contains(category) Then
                                     cmbCategory.Items.Add(category)
                                 End If
@@ -678,13 +616,11 @@ Public Class AddProduct
                 End Using
             End Using
         Catch ex As Exception
-            ' Silent fail - main categories are already loaded
             Console.WriteLine("Note: Could not load additional categories: " & ex.Message)
         End Try
     End Sub
 
     Private Sub SetupNumericInputValidation()
-        ' Add numeric input validation for price fields and reorder level
         AddHandler CostPriceTextBox.KeyPress, AddressOf NumericTextBox_KeyPress
         AddHandler SellingPriceTextBox.KeyPress, AddressOf NumericTextBox_KeyPress
         AddHandler WholeSaleTextbox.KeyPress, AddressOf NumericTextBox_KeyPress
@@ -693,21 +629,17 @@ Public Class AddProduct
 
     Private Sub NumericTextBox_KeyPress(sender As Object, e As KeyPressEventArgs)
         Try
-            ' Respect current culture decimal separator
             Dim decimalSep As String = System.Globalization.CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator
             Dim decimalChar As Char = decimalSep(0)
 
-            ' Allow backspace
             If e.KeyChar = ChrW(Keys.Back) Then
                 Return
             End If
 
-            ' Allow digits
             If Char.IsDigit(e.KeyChar) Then
                 Return
             End If
 
-            ' Handle decimal separator: allow only one in resulting text (account for selected text)
             If e.KeyChar = decimalChar Then
                 Dim tbText As String = String.Empty
                 Dim selStart As Integer = 0
@@ -740,17 +672,14 @@ Public Class AddProduct
                 Return
             End If
 
-            ' Anything else: block
             e.Handled = True
 
         Catch ex As Exception
-            ' Safest fallback: block input that causes an error
             e.Handled = True
         End Try
     End Sub
 
     Private Sub IntegerTextBox_KeyPress(sender As Object, e As KeyPressEventArgs)
-        ' Allow only digits and backspace for integers
         If Not Char.IsDigit(e.KeyChar) AndAlso Not e.KeyChar = ChrW(Keys.Back) Then
             e.Handled = True
         End If
@@ -758,16 +687,10 @@ Public Class AddProduct
 
     Private Sub GenerateAndDisplayBarcode(productCode As String)
         Try
-            ' Create barcode encoder using ProductCode (which now serves as both identifier and barcode)
             Dim encoder As New BarcodeEncoder()
-
-            ' Generate barcode image using ProductCode
             Dim barcodeImg As Bitmap = encoder.Encode(BarcodeFormat.Code128, productCode)
 
-            ' Display in picture box
             BarcodeImage.Image = barcodeImg
-
-            ' Store current product code as barcode
             currentBarcode = productCode
 
         Catch ex As Exception
@@ -775,15 +698,12 @@ Public Class AddProduct
         End Try
     End Sub
 
-    ' Smart cleanup for orphaned images - only runs when images are actually updated
     Private Sub CleanupOrphanedImages()
         Try
-            ' Run cleanup in a separate transaction to avoid affecting main operation
             Dim connStr As String = Connection.GetConnectionString()
             Using cleanupConn As New SqlConnection(connStr)
                 cleanupConn.Open()
 
-                ' Get count of orphaned images first
                 Dim countQuery As String = "SELECT COUNT(*) FROM ProductImages WHERE ImageID NOT IN (SELECT DISTINCT ImageID FROM ProductImageMapping)"
                 Dim orphanCount As Integer
 
@@ -792,7 +712,6 @@ Public Class AddProduct
                 End Using
 
                 If orphanCount > 0 Then
-                    ' Delete orphaned images
                     Dim deleteQuery As String = "DELETE FROM ProductImages WHERE ImageID NOT IN (SELECT DISTINCT ImageID FROM ProductImageMapping)"
                     Dim deletedCount As Integer
 
@@ -800,10 +719,8 @@ Public Class AddProduct
                         deletedCount = deleteCmd.ExecuteNonQuery()
                     End Using
 
-                    ' Log the cleanup activity
                     Console.WriteLine($"🗑️ Cleaned up {deletedCount} orphaned image(s) during product update")
 
-                    ' Log audit trail for cleanup
                     Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Image Cleanup",
                                      $"Cleaned up {deletedCount} orphaned product images during product update")
                 Else
@@ -812,26 +729,18 @@ Public Class AddProduct
             End Using
 
         Catch ex As Exception
-            ' Log error but don't fail the main operation since product update succeeded
             Console.WriteLine($"⚠️ Image cleanup warning: {ex.Message}")
-            ' Don't show error to user since the main product update was successful
         End Try
     End Sub
 
     Private Sub Guna2HtmlLabel1_Click(sender As Object, e As EventArgs) Handles Guna2HtmlLabel1.Click
-        ' Cancel button
-        Me.Close()
+        Close()
     End Sub
 
-    ' Form closing event to stop idle timeout monitoring
     Private Sub AddProduct_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
-        ' Stop idle timeout monitoring when form closes
         IdleTimeoutManager.Instance.StopMonitoring(Me)
     End Sub
 
-    Private Sub Guna2Panel1_Paint(sender As Object, e As PaintEventArgs) Handles Guna2Panel1.Paint
-
-    End Sub
     Private printDocument As Printing.PrintDocument
     Private printPreviewDialog As PrintPreviewDialog
 
@@ -842,34 +751,22 @@ Public Class AddProduct
         End If
 
         Try
-            ' Initialize print document
             printDocument = New Printing.PrintDocument()
 
-            ' Calculate dynamic content dimensions
             Dim margin As Integer = 12
             Dim contentWidth As Integer = 210
-            Dim totalHeight As Integer = margin
-            totalHeight += 32 ' Product Name
-            totalHeight += 22 ' Price
-            totalHeight += 18 ' Category and Unit
-
-            Dim barcodeHeight As Integer = If(BarcodeImage.Image IsNot Nothing, 40, 0)
-            If barcodeHeight > 0 Then totalHeight += barcodeHeight + 4
-            totalHeight += 16 ' Barcode value
-            totalHeight += margin
+            Dim totalHeight As Integer = margin + 32 + 22 + 18 +
+                                       If(BarcodeImage.Image IsNot Nothing, 44, 0) + 16 + margin
 
             Dim paperWidth As Integer = contentWidth + 2 * margin
             Dim paperHeight As Integer = totalHeight
 
-            ' Set custom paper size for label printing (units: hundredths of an inch)
             Dim tagSize As New Printing.PaperSize("ProductLabel", paperWidth, paperHeight)
             printDocument.DefaultPageSettings.PaperSize = tagSize
-            printDocument.DefaultPageSettings.Margins = New Printing.Margins(0, 0, 0, 0) ' No extra margin
+            printDocument.DefaultPageSettings.Margins = New Printing.Margins(0, 0, 0, 0)
 
-            ' Set up print event handler
             AddHandler printDocument.PrintPage, AddressOf OnPrintBarcodePage
 
-            ' Show print preview dialog
             printPreviewDialog = New PrintPreviewDialog()
             printPreviewDialog.Document = printDocument
             printPreviewDialog.Text = "Product Barcode Print Preview"
@@ -883,42 +780,27 @@ Public Class AddProduct
 
     Private Sub OnPrintBarcodePage(sender As Object, e As Printing.PrintPageEventArgs)
         Try
-            ' Settings
             Dim margin As Integer = 12
-            Dim contentWidth As Integer = 210 ' width inside margins
+            Dim contentWidth As Integer = 210
             Dim y As Integer = margin
             Dim g = e.Graphics
             g.Clear(Color.White)
 
-            ' Font definitions
             Dim fontName As New Font("Arial", 11, FontStyle.Bold)
             Dim fontLabel As New Font("Arial", 8, FontStyle.Regular)
             Dim fontPrice As New Font("Arial", 12, FontStyle.Bold)
             Dim fontBarcode As New Font("Courier New", 8, FontStyle.Regular)
 
-            ' Calculate total height dynamically
-            Dim totalHeight As Integer = margin
-            totalHeight += 32 ' Product Name
-            totalHeight += 22 ' Price
-            totalHeight += 18 ' Category and Unit
+            Dim totalHeight As Integer = margin + 32 + 22 + 18 +
+                                       If(BarcodeImage.Image IsNot Nothing, 44, 0) + 16 + margin
 
-            Dim barcodeHeight As Integer = 0
-            If BarcodeImage.Image IsNot Nothing Then
-                barcodeHeight = 40
-                totalHeight += barcodeHeight + 4
-            End If
-            totalHeight += 16 ' Barcode value
-            totalHeight += margin
-
-            ' Set paper size dynamically
             Dim paperWidth As Integer = contentWidth + 2 * margin
             Dim paperHeight As Integer = totalHeight
             e.PageSettings.PaperSize = New Printing.PaperSize("ProductLabel", paperWidth, paperHeight)
 
-            ' Start drawing content
             y = margin
 
-            ' Product Name (centered, bold)
+            ' Product Name
             Dim nameRect As New RectangleF(margin, y, contentWidth, 32)
             Dim productName As String = txtProductName.Text.Trim()
             If productName.Length > 30 Then
@@ -928,40 +810,34 @@ Public Class AddProduct
                         New StringFormat With {.Alignment = StringAlignment.Center, .LineAlignment = StringAlignment.Near})
             y += 32
 
-            ' Price (centered, bold)
+            ' Price
             Dim priceText As String = "₱" & SellingPriceTextBox.Text.Trim()
             g.DrawString(priceText, fontPrice, Brushes.Black,
                         New RectangleF(margin, y, contentWidth, 20),
                         New StringFormat With {.Alignment = StringAlignment.Center})
             y += 22
 
-            ' Category and Unit (centered, small)
+            ' Category and Unit
             Dim categoryUnit As String = $"Category: {cmbCategory.Text.Trim()}   Unit: {UnitCmbBox.Text.Trim()}"
             g.DrawString(categoryUnit, fontLabel, Brushes.Black,
                         New RectangleF(margin, y, contentWidth, 16),
                         New StringFormat With {.Alignment = StringAlignment.Center})
             y += 18
 
-            ' Barcode (centered, large)
+            ' Barcode
             If BarcodeImage.Image IsNot Nothing Then
                 Dim barcodeWidth As Integer = 140
-                barcodeHeight = 40
+                Dim barcodeHeight As Integer = 40
                 Dim barcodeX As Integer = margin + (contentWidth - barcodeWidth) \ 2
                 g.DrawImage(BarcodeImage.Image, barcodeX, y, barcodeWidth, barcodeHeight)
                 y += barcodeHeight + 4
             End If
 
-            ' Barcode value (centered, small, under barcode)
+            ' Barcode value
             g.DrawString(currentBarcode, fontBarcode, Brushes.Black,
                         New RectangleF(margin, y, contentWidth, 14),
                         New StringFormat With {.Alignment = StringAlignment.Center})
-            y += 16
 
-            ' Optional: Draw border for visual clarity (cut line)
-            g.DrawRectangle(New Pen(Color.LightGray, 1), margin \ 2, margin \ 2,
-                           contentWidth + margin, totalHeight - margin)
-
-            ' Dispose fonts
             fontName.Dispose()
             fontLabel.Dispose()
             fontPrice.Dispose()
@@ -972,7 +848,6 @@ Public Class AddProduct
         End Try
     End Sub
 
-    ' Optional: Add a direct print method without preview
     Private Sub PrintBarcodeDirectly()
         If String.IsNullOrWhiteSpace(currentBarcode) Then
             MessageBox.Show("No barcode to print. Please save the product first.", "Print Barcode", MessageBoxButtons.OK, MessageBoxIcon.Warning)
@@ -985,7 +860,6 @@ Public Class AddProduct
                 printDialog.Document = printDocument
 
                 If printDialog.ShowDialog() = DialogResult.OK Then
-                    ' Set up the same print configuration
                     Dim margin As Integer = 12
                     Dim contentWidth As Integer = 210
                     Dim totalHeight As Integer = margin + 32 + 22 + 18 +

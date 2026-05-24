@@ -4,7 +4,7 @@ Imports System.Data
 Public Class AddInventoryLogForm
     Private products As New List(Of Dictionary(Of String, Object))
     Private suppliers As New List(Of Dictionary(Of String, Object))
-    
+
     ' Control variables to store references
     Private cmbProduct As ComboBox
     Private cmbTransactionType As ComboBox
@@ -13,17 +13,20 @@ Public Class AddInventoryLogForm
     Private txtReference As TextBox
     Private txtNotes As TextBox
 
+    ' Field to prevent recursive TextChanged handling
+    Private suppressProductTextChanged As Boolean = False
+
     Private Sub AddInventoryLogForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         ' Start idle timeout monitoring for modal forms
         IdleTimeoutManager.Instance.StartMonitoring(Me)
-        
+
         ' Setup form
         SetupForm()
-        
+
         ' Load data
         LoadProducts()
         LoadSuppliers()
-        
+
         ' Setup controls
         SetupControls()
     End Sub
@@ -138,18 +141,26 @@ Public Class AddInventoryLogForm
         lblProduct.AutoSize = True
         Me.Controls.Add(lblProduct)
 
-        cmbProduct = New ComboBox()
-        cmbProduct.Font = New Font("Poppins", 10)
-        cmbProduct.Location = New Point(30, yPos + 30)
-        cmbProduct.Size = New Size(540, 35)
-        cmbProduct.DropDownStyle = ComboBoxStyle.DropDownList
-        cmbProduct.BackColor = Color.FromArgb(61, 65, 66)
-        cmbProduct.ForeColor = Color.White
-        For Each product In products
-            cmbProduct.Items.Add(product("ProductName").ToString())
-        Next
-        ' Add event handler to show/hide batch fields based on product category
+        cmbProduct = New ComboBox() With {
+            .Font = New Font("Poppins", 10),
+            .Location = New Point(30, yPos + 30),
+            .Size = New Size(540, 35),
+            .DropDownStyle = ComboBoxStyle.DropDown, ' allow typing
+            .BackColor = Color.FromArgb(61, 65, 66),
+            .ForeColor = Color.White,
+            .AutoCompleteMode = AutoCompleteMode.None,
+            .AutoCompleteSource = AutoCompleteSource.None
+        }
+
+        ' Populate with full product list initially (use helper)
+        PopulateComboWithProducts(cmbProduct)
+
+        ' Wire handlers
         AddHandler cmbProduct.SelectedIndexChanged, AddressOf cmbProduct_SelectedIndexChanged
+        AddHandler cmbProduct.TextChanged, AddressOf cmbProduct_TextChanged
+        AddHandler cmbProduct.KeyDown, AddressOf cmbProduct_KeyDown
+        AddHandler cmbProduct.Leave, AddressOf cmbProduct_Leave
+
         Me.Controls.Add(cmbProduct)
 
         yPos += 90
@@ -342,6 +353,16 @@ Public Class AddInventoryLogForm
         btnSave.Cursor = Cursors.Hand
         AddHandler btnSave.Click, AddressOf SaveInventoryLog
         Me.Controls.Add(btnSave)
+    End Sub
+
+    ' Helper to populate combo with full products list (keeps product order in sync)
+    Private Sub PopulateComboWithProducts(cb As ComboBox)
+        cb.BeginUpdate()
+        cb.Items.Clear()
+        For Each p In products
+            cb.Items.Add(p("ProductName").ToString())
+        Next
+        cb.EndUpdate()
     End Sub
 
     ' Event handlers for showing/hiding batch fields
@@ -782,10 +803,19 @@ Public Class AddInventoryLogForm
             Return False
         End If
 
+        ' Require notes for Stock OUT transactions
+        Dim transactionType As String = If(cmbTransactionType.SelectedItem, "").ToString().Trim().ToUpperInvariant()
+        If transactionType = "OUT" Then
+            If String.IsNullOrWhiteSpace(txtNotes.Text) Then
+                MessageBox.Show("Notes are required for Stock OUT transactions!", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                txtNotes.Focus()
+                Return False
+            End If
+        End If
+
         ' Validate batch fields for ENDO products during Stock IN
         Dim selectedProduct = products(cmbProduct.SelectedIndex)
         Dim productCategory As String = selectedProduct("Category").ToString().ToUpper()
-        Dim transactionType As String = cmbTransactionType.SelectedItem.ToString()
 
         If productCategory = "ENDO" AndAlso transactionType = "IN" Then
             ' Get batch controls
@@ -809,7 +839,6 @@ Public Class AddInventoryLogForm
 
         Return True
     End Function
-
     Private Sub SaveInventoryLog(sender As Object, e As EventArgs)
         Try
             ' Validate inputs
@@ -864,7 +893,7 @@ Public Class AddInventoryLogForm
                     Try
                         ' Insert inventory log with batch information
                         Dim logQuery = "INSERT INTO InventoryLog (ProductID, TransactionType, Quantity, PreviousStock, NewStock, BatchNumber, ExpiryDate, SupplierID, UserID, Reference, Notes, CreatedAt) " &
-                                      "VALUES (@ProductID, @TransactionType, @Quantity, @PreviousStock, @NewStock, @BatchNumber, @ExpiryDate, @SupplierID, @UserID, @Reference, @Notes, GETDATE())"
+                                  "VALUES (@ProductID, @TransactionType, @Quantity, @PreviousStock, @NewStock, @BatchNumber, @ExpiryDate, @SupplierID, @UserID, @Reference, @Notes, GETDATE())"
 
                         Using cmd As New SqlCommand(logQuery, conn, transaction)
                             cmd.Parameters.AddWithValue("@ProductID", productId)
@@ -891,8 +920,8 @@ Public Class AddInventoryLogForm
 
                         transaction.Commit()
                         MessageBox.Show("Inventory log saved successfully!" &
-                                      If(Not String.IsNullOrWhiteSpace(batchNumber), Environment.NewLine & $"Batch: {batchNumber}", ""),
-                                      "Success", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                                  If(Not String.IsNullOrWhiteSpace(batchNumber), Environment.NewLine & $"Batch: {batchNumber}", ""),
+                                  "Success", MessageBoxButtons.OK, MessageBoxIcon.Information)
 
                         Me.DialogResult = DialogResult.OK
                         Me.Close()
@@ -914,4 +943,135 @@ Public Class AddInventoryLogForm
         ' Stop idle timeout monitoring when form closes
         IdleTimeoutManager.Instance.StopMonitoring(Me)
     End Sub
+
+    ' Replace the existing cmbProduct_TextChanged with this implementation.
+    Private Sub cmbProduct_TextChanged(sender As Object, e As EventArgs)
+        Try
+            If suppressProductTextChanged Then Return
+
+            Dim cb = CType(sender, ComboBox)
+            Dim originalText As String = If(cb.Text, "")
+            Dim caretPos As Integer = Math.Max(0, Math.Min(cb.SelectionStart, originalText.Length))
+            Dim input = originalText.Trim()
+
+            ' Build matches
+            Dim matches As New List(Of String)
+            If String.IsNullOrEmpty(input) Then
+                For Each p In products
+                    matches.Add(p("ProductName").ToString())
+                Next
+            Else
+                For Each p In products
+                    Dim name = p("ProductName").ToString()
+                    If name.IndexOf(input, StringComparison.OrdinalIgnoreCase) >= 0 Then
+                        matches.Add(name)
+                    End If
+                Next
+            End If
+
+            ' Update items without altering the user's typed text
+            suppressProductTextChanged = True
+            cb.BeginUpdate()
+            cb.Items.Clear()
+            For Each m In matches
+                cb.Items.Add(m)
+            Next
+            cb.EndUpdate()
+
+            cb.DroppedDown = (matches.Count > 0)
+
+            ' Restore typed text and caret
+            cb.Text = originalText
+            cb.SelectionStart = Math.Min(caretPos, cb.Text.Length)
+            cb.SelectionLength = 0
+        Finally
+            suppressProductTextChanged = False
+        End Try
+    End Sub
+
+    ' Update KeyDown to accept suggestion on Tab (or Enter) and set SelectedIndex to the true product index
+    Private Sub cmbProduct_KeyDown(sender As Object, e As KeyEventArgs)
+        Try
+            Dim cb = CType(sender, ComboBox)
+
+            Select Case e.KeyCode
+                Case Keys.Down
+                    If cb.Items.Count > 0 Then cb.DroppedDown = True
+                Case Keys.Escape
+                    cb.DroppedDown = False
+                Case Keys.Enter, Keys.Tab
+                    If cb.Items.Count > 0 Then
+                        ' Determine the suggestion to accept (highlighted in dropdown or first)
+                        Dim suggestedText As String = Nothing
+                        If cb.SelectedItem IsNot Nothing Then
+                            suggestedText = cb.SelectedItem.ToString()
+                        ElseIf cb.Items.Count > 0 Then
+                            suggestedText = cb.Items(0).ToString()
+                        End If
+
+                        If Not String.IsNullOrEmpty(suggestedText) Then
+                            ' Find product index in the master list
+                            Dim productIndex As Integer = -1
+                            For idx As Integer = 0 To products.Count - 1
+                                If String.Equals(products(idx)("ProductName").ToString(), suggestedText, StringComparison.OrdinalIgnoreCase) Then
+                                    productIndex = idx
+                                    Exit For
+                                End If
+                            Next
+
+                            If productIndex >= 0 Then
+                                ' Restore full list and select the correct product index so downstream code uses the right index
+                                suppressProductTextChanged = True
+                                PopulateComboWithProducts(cb)
+                                cb.SelectedIndex = productIndex
+                                cb.DroppedDown = False
+                                suppressProductTextChanged = False
+
+                                ' Move focus to next control when Tab/Enter accepted
+                                e.Handled = True
+                                e.SuppressKeyPress = True
+                                If e.KeyCode = Keys.Tab Then
+                                    Me.SelectNextControl(cb, True, True, True, True)
+                                End If
+                            End If
+                        End If
+                    End If
+            End Select
+        Catch
+            ' ignore
+        End Try
+    End Sub
+
+    Private Sub cmbProduct_Leave(sender As Object, e As EventArgs)
+        Try
+            Dim cb = CType(sender, ComboBox)
+            Dim typed = If(cb.Text, "").Trim()
+            If String.IsNullOrEmpty(typed) Then
+                cb.SelectedIndex = -1
+                Return
+            End If
+
+            ' Try to find exact match in the full products list (case-insensitive)
+            For idx As Integer = 0 To products.Count - 1
+                If String.Equals(products(idx)("ProductName").ToString(), typed, StringComparison.OrdinalIgnoreCase) Then
+                    ' Restore full list then select the exact product position
+                    cb.BeginUpdate()
+                    cb.Items.Clear()
+                    For Each p In products
+                        cb.Items.Add(p("ProductName").ToString())
+                    Next
+                    cb.EndUpdate()
+                    cb.SelectedIndex = idx
+                    Return
+                End If
+            Next
+
+            ' If not found, leave SelectedIndex as -1 so validation will catch it
+            cb.SelectedIndex = -1
+        Catch
+            ' ignore
+        End Try
+    End Sub
+
+
 End Class

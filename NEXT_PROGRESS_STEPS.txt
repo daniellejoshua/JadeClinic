@@ -1,0 +1,63 @@
+JadeClinic - Next Progress Steps
+================================
+
+1) Role-based startup per machine
+---------------------------------
+[ ] Admin PC config: NodeRole=AdminServer
+[ ] POS PC config: NodeRole=PosClient
+[ ] Verify deployed file on POS: JadeClinic.exe.config
+
+2) Database permission hardening
+--------------------------------
+[ ] Remove db_owner from jade_app after schema initialization
+[ ] Keep only db_datareader + db_datawriter for runtime
+[ ] Confirm POS cannot run CREATE/ALTER TABLE
+
+3) Stable LAN setup
+-------------------
+[ ] Put Admin + POS on same LAN/switch/router
+[ ] Use stable Admin IP (static or DHCP reservation)
+[ ] Update all POS configs to same SQL endpoint
+
+4) Deploy to each POS terminal
+------------------------------
+[ ] Publish Release build
+[ ] Copy full publish folder to each POS
+[ ] Edit POS config NodeRole to PosClient
+[ ] Launch and verify no startup DB-init errors
+
+5) Functional multi-PC validation
+---------------------------------
+[ ] Login on POS
+[ ] Create test sale on POS
+[ ] Verify sale appears on Admin immediately
+[ ] Verify stock updates across machines
+[ ] Verify audit log entries are recorded
+
+6) Backup / restore readiness
+-----------------------------
+[ ] Run full database backup on Admin
+[ ] Test restore on a test instance/path
+[ ] Confirm app reconnects after restore scenario
+
+7) Security follow-up
+---------------------
+[ ] Avoid using config role as security authority
+[ ] Enforce permissions by app user role in DB (Users.UserRole)
+[ ] Plan secure connection string storage (DPAPI/protected config)
+[ ] Rotate SQL password before production
+
+8) Demo-day preflight (15 min)
+------------------------------
+[ ] Ping Admin from POS
+[ ] Test-NetConnection AdminIP:1433 from POS
+[ ] sqlcmd test from POS returns server name
+[ ] Open POS app and process one sample transaction
+[ ] Confirm same transaction visible on Admin dashboard/records
+
+Status Notes
+------------
+Date:
+Owner:
+Current blocker:
+Next action:
