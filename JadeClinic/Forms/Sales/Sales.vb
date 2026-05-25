@@ -387,9 +387,8 @@ Public Class Sales
         originalCategoryPanelControls = New List(Of Control)(CategoryPanel.Controls.Cast(Of Control)())
 
         ' Make form non-resizable
-        Me.FormBorderStyle = FormBorderStyle.FixedDialog
-        Me.MaximizeBox = False
-        Me.MinimizeBox = False
+        Me.FormBorderStyle = FormBorderStyle.None
+        Me.WindowState = FormWindowState.Maximized
         ' Add near the end of Sales_Load, after labels are initialized:
         RestoreCartState()
 
@@ -516,7 +515,6 @@ Public Class Sales
         If btnPayment IsNot Nothing Then
             btnPayment.FillColor = GoldenYellow
             btnPayment.ForeColor = DeepCharcoal
-            btnPayment.Location = New Point(64, 260)
         End If
 
         ' ... rest of the method ...
@@ -1141,16 +1139,15 @@ Public Class Sales
 
     ' Helper to arrange dynamic category buttons properly with the main buttons
     Private Sub ArrangeCategoryButtonsFlexWrap()
-        Dim marginX As Integer = 10
-        Dim marginY As Integer = 10
+        Dim marginX As Integer = 20
+        Dim marginY As Integer = 20
         Dim panelWidth As Integer = CategoryPanel.Width
-        Dim buttonWidth As Integer = 167 ' From designer
-        Dim buttonHeight As Integer = 146 ' From designer
 
         ' List of main category buttons with their intended positions
         Dim mainButtons As New List(Of Guna.UI2.WinForms.Guna2Button) From {
             Me.OrthoCatBtn, Me.ConsumablesCatBtn, Me.SurgeryCatBtn, RestoCatBtn, Me.EndoCatBtn, Me.CosmeticCatBtn
         }
+        Dim catBtnSize As Size = Me.OrthoCatBtn.Size
 
         ' Find the lowest Y position of main buttons to place dynamic ones below
         Dim maxY As Integer = 0
@@ -1164,9 +1161,9 @@ Public Class Sales
         Next
 
         ' Start dynamic buttons below the main buttons
-        Dim startX As Integer = marginX + 25
+        Dim startX As Integer = marginX
         Dim startY As Integer = maxY + marginY + 20 ' Add some extra spacing
-        Dim currentX As Integer = startX + 25
+        Dim currentX As Integer = startX
         Dim currentY As Integer = startY
 
         ' Arrange only dynamic buttons (not in mainButtons)
@@ -1174,8 +1171,9 @@ Public Class Sales
             If TypeOf ctrl Is Guna.UI2.WinForms.Guna2Button Then
                 Dim btn = CType(ctrl, Guna.UI2.WinForms.Guna2Button)
                 If Not mainButtons.Contains(btn) Then
+                    btn.Size = catBtnSize
                     ' Check if button fits in current row
-                    If currentX + btn.Width > panelWidth - marginX Then
+                    If currentX + btn.Width > panelWidth - marginX AndAlso currentX > startX Then
                         currentX = startX
                         currentY += btn.Height + marginY
                     End If
@@ -5775,5 +5773,38 @@ Public Class Sales
         End Try
     End Sub
 
+
+    Protected Overrides Function ProcessCmdKey(ByRef msg As Message, keyData As Keys) As Boolean
+        If keyData = Keys.Escape Then
+            ' Check if we're in barcode mode or specific modal
+            If Not String.IsNullOrEmpty(barcodeBuffer) Then
+                barcodeBuffer = ""
+                Return True
+            End If
+
+            If isNavigating Then
+                Return True
+            End If
+
+            Dim result As DialogResult = EscForm.ConfirmExit(Me)
+            If result = DialogResult.Yes Then
+                If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+                    Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Application Exit", "User exited the application via POS/Sales.")
+                End If
+
+                For Each form As Form In Application.OpenForms.Cast(Of Form).ToArray()
+                    If form IsNot Me Then
+                        form.Close()
+                    End If
+                Next
+
+                Application.Exit()
+            End If
+
+            Return True
+        End If
+
+        Return MyBase.ProcessCmdKey(msg, keyData)
+    End Function
 
 End Class
