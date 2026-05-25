@@ -148,7 +148,7 @@
     <value>-33, 5</value>
   </data>
   <data name="DashboardPanel.Size" type="System.Drawing.Size, System.Drawing">
-    <value>236, 885</value>
+    <value>236, 1016</value>
   </data>
   <data name="DashboardPanel.TabIndex" type="System.Int32, mscorlib">
     <value>7</value>
@@ -169,7 +169,7 @@
     <value>Poppins Medium, 9pt</value>
   </data>
   <data name="Guna2Button1.Location" type="System.Drawing.Point, System.Drawing">
-    <value>1265, 105</value>
+    <value>1567, 108</value>
   </data>
   <data name="Guna2Button1.Size" type="System.Drawing.Size, System.Drawing">
     <value>186, 41</value>
@@ -196,7 +196,7 @@
     <value>Poppins Medium, 9pt</value>
   </data>
   <data name="Exportbtn.Location" type="System.Drawing.Point, System.Drawing">
-    <value>1490, 105</value>
+    <value>1792, 108</value>
   </data>
   <data name="Exportbtn.Size" type="System.Drawing.Size, System.Drawing">
     <value>86, 40</value>
@@ -223,7 +223,7 @@
     <value>Poppins Light, 9pt</value>
   </data>
   <data name="lblUsername.Location" type="System.Drawing.Point, System.Drawing">
-    <value>1477, 20</value>
+    <value>1821, 20</value>
   </data>
   <data name="lblUsername.Size" type="System.Drawing.Size, System.Drawing">
     <value>65, 28</value>
@@ -247,7 +247,7 @@
     <value>1</value>
   </data>
   <data name="Guna2CirclePictureBox5.Location" type="System.Drawing.Point, System.Drawing">
-    <value>1440, 20</value>
+    <value>1784, 20</value>
   </data>
   <data name="Guna2CirclePictureBox5.Size" type="System.Drawing.Size, System.Drawing">
     <value>31, 28</value>
@@ -304,7 +304,7 @@
     <value>51</value>
   </data>
   <data name="Guna2DataGridView1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>924, 708</value>
+    <value>1217, 854</value>
   </data>
   <data name="Guna2DataGridView1.TabIndex" type="System.Int32, mscorlib">
     <value>75</value>
@@ -328,7 +328,7 @@
     <value>40</value>
   </data>
   <data name="Guna2ComboBox1.Location" type="System.Drawing.Point, System.Drawing">
-    <value>9, 220</value>
+    <value>9, 251</value>
   </data>
   <data name="Guna2ComboBox1.Size" type="System.Drawing.Size, System.Drawing">
     <value>396, 46</value>
@@ -367,7 +367,7 @@
     <value>Below Re-order Level</value>
   </data>
   <data name="StockCmbBox.Location" type="System.Drawing.Point, System.Drawing">
-    <value>9, 310</value>
+    <value>9, 372</value>
   </data>
   <data name="StockCmbBox.Size" type="System.Drawing.Size, System.Drawing">
     <value>396, 46</value>
@@ -391,7 +391,7 @@
     <value>Poppins Medium, 9pt</value>
   </data>
   <data name="btnResetFilter.Location" type="System.Drawing.Point, System.Drawing">
-    <value>73, 560</value>
+    <value>74, 738</value>
   </data>
   <data name="btnResetFilter.Size" type="System.Drawing.Size, System.Drawing">
     <value>270, 57</value>
@@ -418,14 +418,14 @@
     <value>Segoe UI, 9pt</value>
   </data>
   <data name="txtFilterQuantity.Location" type="System.Drawing.Point, System.Drawing">
-    <value>9, 401</value>
+    <value>9, 489</value>
   </data>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="txtFilterQuantity.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="txtFilterQuantity.Size" type="System.Drawing.Size, System.Drawing">
-    <value>396, 46</value>
+    <value>396, 58</value>
   </data>
   <data name="txtFilterQuantity.TabIndex" type="System.Int32, mscorlib">
     <value>76</value>
@@ -446,13 +446,13 @@
     <value>Segoe UI, 9pt</value>
   </data>
   <data name="txtFilterPrice.Location" type="System.Drawing.Point, System.Drawing">
-    <value>9, 493</value>
+    <value>9, 618</value>
   </data>
   <data name="txtFilterPrice.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="txtFilterPrice.Size" type="System.Drawing.Size, System.Drawing">
-    <value>396, 46</value>
+    <value>396, 58</value>
   </data>
   <data name="txtFilterPrice.TabIndex" type="System.Int32, mscorlib">
     <value>77</value>
@@ -473,13 +473,13 @@
     <value>Segoe UI, 9pt</value>
   </data>
   <data name="txtSearch.Location" type="System.Drawing.Point, System.Drawing">
-    <value>9, 128</value>
+    <value>9, 141</value>
   </data>
   <data name="txtSearch.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="txtSearch.Size" type="System.Drawing.Size, System.Drawing">
-    <value>396, 46</value>
+    <value>396, 58</value>
   </data>
   <data name="txtSearch.TabIndex" type="System.Int32, mscorlib">
     <value>79</value>
@@ -581,7 +581,7 @@
     <value>Poppins Medium, 10.2pt</value>
   </data>
   <data name="Guna2HtmlLabel8.Location" type="System.Drawing.Point, System.Drawing">
-    <value>19, 90</value>
+    <value>19, 103</value>
   </data>
   <data name="Guna2HtmlLabel8.Size" type="System.Drawing.Size, System.Drawing">
     <value>64, 32</value>
@@ -608,7 +608,7 @@
     <value>Poppins Medium, 10.2pt</value>
   </data>
   <data name="Guna2HtmlLabel13.Location" type="System.Drawing.Point, System.Drawing">
-    <value>19, 454</value>
+    <value>19, 579</value>
   </data>
   <data name="Guna2HtmlLabel13.Size" type="System.Drawing.Size, System.Drawing">
     <value>46, 32</value>
@@ -635,7 +635,7 @@
     <value>Poppins Medium, 10.2pt</value>
   </data>
   <data name="Guna2HtmlLabel16.Location" type="System.Drawing.Point, System.Drawing">
-    <value>19, 362</value>
+    <value>19, 450</value>
   </data>
   <data name="Guna2HtmlLabel16.Size" type="System.Drawing.Size, System.Drawing">
     <value>176, 32</value>
@@ -662,7 +662,7 @@
     <value>Poppins Medium, 10.2pt</value>
   </data>
   <data name="Guna2HtmlLabel17.Location" type="System.Drawing.Point, System.Drawing">
-    <value>19, 272</value>
+    <value>19, 334</value>
   </data>
   <data name="Guna2HtmlLabel17.Size" type="System.Drawing.Size, System.Drawing">
     <value>51, 32</value>
@@ -689,7 +689,7 @@
     <value>Poppins Medium, 10.2pt</value>
   </data>
   <data name="Guna2HtmlLabel18.Location" type="System.Drawing.Point, System.Drawing">
-    <value>19, 181</value>
+    <value>19, 212</value>
   </data>
   <data name="Guna2HtmlLabel18.Size" type="System.Drawing.Size, System.Drawing">
     <value>84, 32</value>
@@ -716,7 +716,7 @@
     <value>224, 167</value>
   </data>
   <data name="FilterPanel.Size" type="System.Drawing.Size, System.Drawing">
-    <value>428, 756</value>
+    <value>428, 854</value>
   </data>
   <data name="FilterPanel.TabIndex" type="System.Int32, mscorlib">
     <value>8</value>
@@ -845,7 +845,7 @@
     <value>8, 20</value>
   </data>
   <data name="$this.ClientSize" type="System.Drawing.Size, System.Drawing">
-    <value>1609, 875</value>
+    <value>1902, 1033</value>
   </data>
   <data name="$this.StartPosition" type="System.Windows.Forms.FormStartPosition, System.Windows.Forms">
     <value>CenterScreen</value>

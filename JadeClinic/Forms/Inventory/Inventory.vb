@@ -35,10 +35,10 @@ Public Class Inventory
         InitializeCustomTooltip()
         ' Stop idle timeout monitoring
         IdleTimeoutManager.Instance.StartMonitoring(Me)
-        ' Make form non-resizable
-        Me.FormBorderStyle = FormBorderStyle.FixedDialog
-        Me.MaximizeBox = False
-        Me.MinimizeBox = False
+        ' Make form full-screen and non-resizable like Dashboard/Sales
+        Me.FormBorderStyle = FormBorderStyle.None
+        Me.WindowState = FormWindowState.Maximized
+        Me.Bounds = Screen.PrimaryScreen.Bounds
 
         ' Validate user session
         If Not ValidateUserSession() Then
