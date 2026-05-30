@@ -386,9 +386,11 @@ Public Class Sales
         Me.KeyPreview = True
         originalCategoryPanelControls = New List(Of Control)(CategoryPanel.Controls.Cast(Of Control)())
 
-        ' Make form non-resizable
+        ' Make form non-resizable and fill the working area (respect taskbar)
         Me.FormBorderStyle = FormBorderStyle.None
-        Me.WindowState = FormWindowState.Maximized
+        ' Use the screen WorkingArea so runtime size matches a maximized window but respects taskbar
+        Me.WindowState = FormWindowState.Normal
+        Me.Bounds = Screen.PrimaryScreen.WorkingArea
         ' Add near the end of Sales_Load, after labels are initialized:
         RestoreCartState()
 
@@ -405,8 +407,8 @@ Public Class Sales
         CategoryPanel.ShadowDecoration.Depth = 8 ' Deep shadow
         CategoryPanel.BorderRadius = 12 ' Rounded corners
 
-        ' Create navigation menu (hardcoded)
-        CreateNavigationMenu()
+        ' Create navigation menu using shared NavigationBuilder
+        NavigationBuilder.Build(DashboardPanel, Me, "Sales")
 
         ' Validate user session
         If Not ValidateUserSession() Then
@@ -1725,152 +1727,7 @@ Public Class Sales
     End Sub
 
     Private Sub CreateNavigationMenu()
-        Try
-            ' Clear existing controls except PictureBox9 (logo)
-            For i = DashboardPanel.Controls.Count - 1 To 0 Step -1
-                Dim control As Control = DashboardPanel.Controls(i)
-                If TypeOf control IsNot PictureBox Then
-                    DashboardPanel.Controls.Remove(control)
-                    control.Dispose()
-                End If
-            Next
-
-            ' Set Navigation Panel Background to the new dark navigation color (61,65,66)
-            DashboardPanel.FillColor = System.Drawing.Color.FromArgb(61, 65, 66)
-
-            ' Calculate available space (DashboardPanel is 236x885)
-            Dim availableWidth As Integer = DashboardPanel.Width - 40 ' 20px margins on each side
-            Dim availableHeight As Integer = DashboardPanel.Height - 160 ' Space for logo and title
-
-            ' Logo area (keep existing PictureBox9)
-            PictureBox9.BringToFront()
-
-            ' UPDATED: Get company name from settings
-            Dim companyName As String = CompanySettingsManager.Instance.GetSettingString("CompanyName", "JADE CLINIC")
-
-            ' Add title label - positioned below logo with Golden Yellow
-            Dim titleLabel As New Label()
-            titleLabel.Text = companyName
-            titleLabel.Font = New Font("Poppins", 14, FontStyle.Bold)
-            titleLabel.ForeColor = GoldenYellow
-            titleLabel.BackColor = Color.Transparent
-            titleLabel.AutoSize = False
-            titleLabel.Size = New Size(availableWidth, 30)
-            titleLabel.Location = New Point(20, 110)
-            titleLabel.TextAlign = ContentAlignment.MiddleCenter
-            DashboardPanel.Controls.Add(titleLabel)
-
-            ' Subtitle with LightSilver (visible on dark nav background)
-            Dim subtitleLabel As New Label()
-            subtitleLabel.Text = "Dental Supply Management"
-            subtitleLabel.Font = New Font("Poppins", 10, FontStyle.Regular)
-            subtitleLabel.ForeColor = LightSilver
-            subtitleLabel.BackColor = Color.Transparent
-            subtitleLabel.AutoSize = False
-            subtitleLabel.Size = New Size(availableWidth, 25)
-            subtitleLabel.Location = New Point(20, 145)
-            subtitleLabel.TextAlign = ContentAlignment.MiddleCenter
-            DashboardPanel.Controls.Add(subtitleLabel)
-
-            ' Navigation section separator with a subtle darker line
-            Dim separator1 As New Panel()
-            separator1.BackColor = System.Drawing.Color.FromArgb(50, 50, 50)
-            separator1.Size = New System.Drawing.Size(availableWidth - 20, 2)
-            separator1.Location = New Point(30, 190)
-            DashboardPanel.Controls.Add(separator1)
-
-            ' Navigation section label with LightSilver (visible on dark background)
-            Dim navLabel As New Label()
-            navLabel.Text = "NAVIGATION"
-            navLabel.Font = New Font("Poppins", 10, FontStyle.Bold)
-            navLabel.ForeColor = LightSilver
-            navLabel.BackColor = Color.Transparent
-            navLabel.AutoSize = False
-            navLabel.Size = New System.Drawing.Size(availableWidth, 25)
-            navLabel.Location = New Point(20, 205)
-            navLabel.TextAlign = ContentAlignment.MiddleCenter
-            DashboardPanel.Controls.Add(navLabel)
-
-            ' Calculate button positioning for role-based navigation
-            Dim startY As Integer = 250
-            Dim buttonHeight As Integer = 50
-            Dim buttonSpacing As Integer = 15
-            Dim buttonWidth As Integer = availableWidth - 5
-            Dim buttonIndex As Integer = 0
-            ' Logo area (keep existing PictureBox9)
-            If PictureBox9 IsNot Nothing Then
-                Try
-                    ' Render company logo from settings into the existing PictureBox.
-                    ' Do NOT change PictureBox size or add click handlers.
-                    Dim logoImg As Image = CompanySettingsManager.Instance.GetCompanyLogo()
-                    If logoImg IsNot Nothing Then
-                        PictureBox9.Image = logoImg
-                        PictureBox9.SizeMode = PictureBoxSizeMode.StretchImage
-                    End If
-                Catch ex As Exception
-                    Console.WriteLine($"Unable to set dashboard logo: {ex.Message}")
-                End Try
-
-                PictureBox9.BringToFront()
-            End If
-            ' Get current user role for navigation filtering
-            Dim currentRole As String = If(frmLoginvb.LoggedInRole, "Staff").ToUpper()
-
-            ' Create navigation buttons based on role
-            ' Dashboard Button (not active)
-            If currentRole = "MANAGER" Or currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
-                Dim navDashboardBtn = CreateLargeNavButton("🏠 Dashboard", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-                AddHandler navDashboardBtn.Click, AddressOf NavDashboard_Click
-                buttonIndex += 1
-            End If
-            ' POS/Sales Button (ACTIVE - we're on this page)
-            Dim navPOSBtn = CreateLargeNavButton("🛒 POS / Sales", startY + buttonIndex * (buttonHeight + buttonSpacing), True, buttonWidth, buttonHeight)
-            buttonIndex += 1
-
-            ' Manager and Admin only buttons - Inventory moved here
-            If currentRole = "MANAGER" Or currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
-                ' Inventory Button (only for Manager and Admin)
-                Dim navInventoryBtn = CreateLargeNavButton("📦 Inventory", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-                AddHandler navInventoryBtn.Click, AddressOf NavInventory_Click
-                buttonIndex += 1
-
-                ' Sales Records Button
-                Dim navSalesRecordsBtn = CreateLargeNavButton("📊 Sales Records", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-                AddHandler navSalesRecordsBtn.Click, AddressOf NavSalesRecords_Click
-                buttonIndex += 1
-
-                ' Staff Management Button
-                Dim navStaffBtn = CreateLargeNavButton("👥 Staff", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-                AddHandler navStaffBtn.Click, AddressOf NavStaff_Click
-                buttonIndex += 1
-
-                ' Inventory Logs Button
-                Dim navInventoryLogBtn = CreateLargeNavButton("📋 Inventory Logs", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-                AddHandler navInventoryLogBtn.Click, AddressOf NavInventoryLog_Click
-                buttonIndex += 1
-
-                ' Suppliers (place above Audit Logs)
-                Dim navSuppliersBtn = CreateLargeNavButton("🏷️ Suppliers", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-                AddHandler navSuppliersBtn.Click, AddressOf NavSuppliers_Click
-                buttonIndex += 1
-            End If
-
-            ' Admin only buttons
-            If currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
-                ' Audit Logs Button
-                Dim navAuditLogBtn = CreateLargeNavButton("🔍 Audit Logs", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-                AddHandler navAuditLogBtn.Click, AddressOf NavAuditLog_Click
-                buttonIndex += 1
-
-                ' System Settings Button
-                Dim systemSettingsBtn = CreateLargeNavButton("⚙️ System", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-                AddHandler systemSettingsBtn.Click, AddressOf NavSystemSettings_Click
-                buttonIndex += 1
-            End If
-
-        Catch ex As Exception
-            Console.WriteLine($"Error creating navigation menu: {ex.Message}")
-        End Try
+        NavigationBuilder.Build(DashboardPanel, Me, "Sales")
     End Sub
     Private Sub NavSuppliers_Click(sender As Object, e As EventArgs)
         PersistCartState()

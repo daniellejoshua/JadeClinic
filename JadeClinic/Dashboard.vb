@@ -120,10 +120,10 @@ Public Class Dashboard
             Me.MaximizeBox = False
             Me.MinimizeBox = False
 
-            ' Improved full-screen behavior: removing hardcoded size constraints and setting bounds
+            ' Improved full-screen behavior: remove window chrome and use the WorkingArea to respect taskbar
             Me.FormBorderStyle = FormBorderStyle.None
-            Me.WindowState = FormWindowState.Maximized
-            Me.Bounds = Screen.PrimaryScreen.Bounds
+            Me.WindowState = FormWindowState.Normal
+            Me.Bounds = Screen.PrimaryScreen.WorkingArea
             Console.WriteLine("Basic form properties set")
 
             ' Apply new color scheme to existing panels
@@ -138,8 +138,8 @@ Public Class Dashboard
             End If
             Console.WriteLine("Loading panel shown")
 
-            ' Create navigation menu
-            CreateNavigationMenu()
+            ' Create navigation menu (use shared builder)
+            NavigationBuilder.Build(DashboardPanel, Me, "Dashboard")
             Console.WriteLine("Navigation menu created")
 
             ' Load all UI/data while loading panel is visible
@@ -1381,163 +1381,7 @@ Public Class Dashboard
     End Sub
 
     Private Sub CreateNavigationMenu()
-        Try
-            ' Clear existing controls except PictureBox9 (logo)
-            For i = DashboardPanel.Controls.Count - 1 To 0 Step -1
-                Dim control As Control = DashboardPanel.Controls(i)
-                If TypeOf control IsNot PictureBox Then
-                    DashboardPanel.Controls.Remove(control)
-                    control.Dispose()
-                End If
-            Next
-
-            ' Use dark navigation background (match SalesRecord style but keep Dashboard color choices)
-            DashboardPanel.FillColor = System.Drawing.Color.FromArgb(61, 65, 66)
-
-            ' Logo area: render company logo into existing PictureBox9 without resizing or adding handlers
-            If PictureBox9 IsNot Nothing Then
-                Try
-                    Dim logoImg As System.Drawing.Image = CompanySettingsManager.Instance.GetCompanyLogo()
-                    If logoImg IsNot Nothing Then
-                        PictureBox9.Image = logoImg
-                        PictureBox9.Location = New Point(81, 15)
-                        ' Do NOT change PictureBox9.Size or Location or add any event handlers
-                    End If
-                Catch ex As Exception
-                    Console.WriteLine($"Unable to set dashboard logo: {ex.Message}")
-                End Try
-                PictureBox9.BringToFront()
-            End If
-
-            Dim availableWidth As Integer = DashboardPanel.Width - 40
-            Dim startY As Integer = 250
-            Dim buttonHeight As Integer = 50
-            Dim buttonSpacing As Integer = 15
-            Dim buttonWidth As Integer = availableWidth - 5
-            Dim buttonIndex As Integer = 0
-
-            ' Company name from settings (uses CompanySettingsManager)
-            Dim companyName As String = CompanySettingsManager.Instance.GetSettingString("CompanyName", "JADE CLINIC")
-
-            ' Title and subtitle (dark nav - use light text)
-            Dim titleLabel As New Label()
-            titleLabel.Text = companyName
-            titleLabel.Font = New Font("Poppins", 14, FontStyle.Bold)
-            titleLabel.ForeColor = Color.FromArgb(254, 191, 16) ' Golden Yellow
-            titleLabel.BackColor = Color.Transparent
-            titleLabel.AutoSize = False
-            titleLabel.Size = New Size(availableWidth, 30)
-            titleLabel.Location = New Point(20, 110)
-            titleLabel.TextAlign = ContentAlignment.MiddleCenter
-            DashboardPanel.Controls.Add(titleLabel)
-
-            Dim subtitleLabel As New Label()
-            subtitleLabel.Text = "Dental Supply Management"
-            subtitleLabel.Font = New Font("Poppins", 10, FontStyle.Regular)
-            subtitleLabel.ForeColor = Color.FromArgb(225, 229, 233) ' LightSilver for dark bg
-            subtitleLabel.BackColor = Color.Transparent
-            subtitleLabel.AutoSize = False
-            subtitleLabel.Size = New Size(availableWidth, 25)
-            subtitleLabel.Location = New Point(20, 145)
-            subtitleLabel.TextAlign = ContentAlignment.MiddleCenter
-            DashboardPanel.Controls.Add(subtitleLabel)
-
-            Dim separator1 As New Panel()
-            separator1.BackColor = System.Drawing.Color.FromArgb(50, 50, 50)
-            separator1.Size = New System.Drawing.Size(availableWidth - 20, 2)
-            separator1.Location = New System.Drawing.Point(30, 190)
-            DashboardPanel.Controls.Add(separator1)
-
-            Dim navLabel As New Label()
-            navLabel.Text = "NAVIGATION"
-            navLabel.Font = New Font("Poppins", 10, FontStyle.Bold)
-            navLabel.ForeColor = Color.FromArgb(225, 229, 233)
-            navLabel.BackColor = Color.Transparent
-            navLabel.AutoSize = False
-            navLabel.Size = New System.Drawing.Size(availableWidth, 25)
-            navLabel.Location = New System.Drawing.Point(20, 205)
-            navLabel.TextAlign = ContentAlignment.MiddleCenter
-            DashboardPanel.Controls.Add(navLabel)
-
-            ' Role logic
-            Dim currentRole As String = If(frmLoginvb.LoggedInRole, "Staff").ToUpper()
-
-            ' Create navigation buttons directly with the isActive flag (styleForDarkNav removed)
-            navDashboardBtn = CreateLargeNavButton("🏠 Dashboard", startY + buttonIndex * (buttonHeight + buttonSpacing), True, buttonWidth, buttonHeight)
-            AddHandler navDashboardBtn.Click, AddressOf NavDashboard_Click
-            buttonIndex += 1
-
-            navPOSBtn = CreateLargeNavButton("🛒 POS / Sales", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-            AddHandler navPOSBtn.Click, AddressOf NavPOS_Click
-            buttonIndex += 1
-
-            If currentRole = "MANAGER" Or currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
-                navInventoryBtn = CreateLargeNavButton("📦 Inventory", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-                AddHandler navInventoryBtn.Click, AddressOf NavInventory_Click
-                buttonIndex += 1
-
-                navSalesRecordsBtn = CreateLargeNavButton("📊 Sales Records", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-                AddHandler navSalesRecordsBtn.Click, AddressOf NavSalesRecords_Click
-                buttonIndex += 1
-
-                navStaffBtn = CreateLargeNavButton("👥 Staff", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-                AddHandler navStaffBtn.Click, AddressOf NavStaff_Click
-                buttonIndex += 1
-
-                navInventoryLogBtn = CreateLargeNavButton("📋 Inventory Logs", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-                AddHandler navInventoryLogBtn.Click, AddressOf NavInventoryLog_Click
-                buttonIndex += 1
-            End If
-            If currentRole = "MANAGER" Or currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
-                ' Suppliers (place above Audit Logs)
-                Dim navSuppliersBtn = CreateLargeNavButton("🏷️ Suppliers", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-                AddHandler navSuppliersBtn.Click, AddressOf NavSuppliers_Click
-                buttonIndex += 1
-            End If
-            If currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
-                navAuditLogBtn = CreateLargeNavButton("🔍 Audit Logs", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-                AddHandler navAuditLogBtn.Click, AddressOf NavAuditLog_Click
-                buttonIndex += 1
-
-                Dim systemSettingsBtn = CreateLargeNavButton("⚙️ System", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-                AddHandler systemSettingsBtn.Click, AddressOf NavSystemSettings_Click
-                buttonIndex += 1
-            End If
-
-            ' Add separator before logout (visual)
-            Dim separator2 As New Panel()
-            separator2.BackColor = System.Drawing.Color.FromArgb(50, 50, 50)
-            separator2.Size = New Size(availableWidth - 40, 2)
-            separator2.Location = New Point(40, startY + buttonIndex * (buttonHeight + buttonSpacing) + 10)
-            DashboardPanel.Controls.Add(separator2)
-
-            ' Logout button: keep existing user info & logout behavior untouched
-            navLogoutBtn = CreateLargeNavButton("🚪 Logout", startY + buttonIndex * (buttonHeight + buttonSpacing) + 30, False, buttonWidth, buttonHeight)
-
-            ' Style logout to stand out (red) and ensure hover does not change color
-            navLogoutBtn.FillColor = Color.FromArgb(255, 71, 87) ' Alert Red
-            navLogoutBtn.ForeColor = Color.White
-
-            ' Override hover handlers so the button remains red on hover (no color changes)
-            AddHandler navLogoutBtn.MouseEnter, Sub()
-                                                    navLogoutBtn.FillColor = Color.FromArgb(255, 71, 87)
-                                                    navLogoutBtn.ForeColor = Color.White
-                                                    navLogoutBtn.Font = New Font("Poppins", 10, FontStyle.Bold)
-                                                End Sub
-            AddHandler navLogoutBtn.MouseLeave, Sub()
-                                                    navLogoutBtn.FillColor = Color.FromArgb(255, 71, 87)
-                                                    navLogoutBtn.ForeColor = Color.White
-                                                    navLogoutBtn.Font = New Font("Poppins", 10, FontStyle.Regular)
-                                                End Sub
-
-            AddHandler navLogoutBtn.Click, AddressOf NavLogout_Click
-
-            ' Add user info section (do not modify behavior; but update styling inside separate method)
-            CreateUserInfoSection()
-
-        Catch ex As Exception
-            Console.WriteLine($"Error creating navigation menu: {ex.Message}")
-        End Try
+        NavigationBuilder.Build(DashboardPanel, Me, "Dashboard")
     End Sub
 
     Private Sub CreateUserInfoSection()

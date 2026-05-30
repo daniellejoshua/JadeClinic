@@ -148,7 +148,7 @@
     <value>-33, 5</value>
   </data>
   <data name="DashboardPanel.Size" type="System.Drawing.Size, System.Drawing">
-    <value>236, 1016</value>
+    <value>236, 1036</value>
   </data>
   <data name="DashboardPanel.TabIndex" type="System.Int32, mscorlib">
     <value>7</value>
@@ -304,7 +304,7 @@
     <value>51</value>
   </data>
   <data name="Guna2DataGridView1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>1217, 854</value>
+    <value>1217, 841</value>
   </data>
   <data name="Guna2DataGridView1.TabIndex" type="System.Int32, mscorlib">
     <value>75</value>
@@ -716,7 +716,7 @@
     <value>224, 167</value>
   </data>
   <data name="FilterPanel.Size" type="System.Drawing.Size, System.Drawing">
-    <value>428, 854</value>
+    <value>428, 841</value>
   </data>
   <data name="FilterPanel.TabIndex" type="System.Int32, mscorlib">
     <value>8</value>

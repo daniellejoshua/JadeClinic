@@ -35,18 +35,18 @@ Public Class Inventory
         InitializeCustomTooltip()
         ' Stop idle timeout monitoring
         IdleTimeoutManager.Instance.StartMonitoring(Me)
-        ' Make form full-screen and non-resizable like Dashboard/Sales
+        ' Make form full-screen and non-resizable like Dashboard/Sales; use WorkingArea to respect taskbar
         Me.FormBorderStyle = FormBorderStyle.None
-        Me.WindowState = FormWindowState.Maximized
-        Me.Bounds = Screen.PrimaryScreen.Bounds
+        Me.WindowState = FormWindowState.Normal
+        Me.Bounds = Screen.PrimaryScreen.WorkingArea
 
         ' Validate user session
         If Not ValidateUserSession() Then
             Return
         End If
 
-        ' Create navigation menu (hardcoded from Dashboard)
-        CreateNavigationMenu()
+        ' Create navigation menu using shared NavigationBuilder
+        NavigationBuilder.Build(DashboardPanel, Me, "Inventory")
 
         ' Initialize profile section
         InitializeProfileSection()
@@ -1242,147 +1242,7 @@ Public Class Inventory
     End Sub
 
     Private Sub CreateNavigationMenu()
-        Try
-            ' Remove all controls except the logo
-            For i = DashboardPanel.Controls.Count - 1 To 0 Step -1
-                Dim control As Control = DashboardPanel.Controls(i)
-                If TypeOf control IsNot PictureBox Then
-                    DashboardPanel.Controls.Remove(control)
-                    control.Dispose()
-                End If
-            Next
-
-            DashboardPanel.FillColor = System.Drawing.Color.FromArgb(61, 65, 66)
-
-            ' Render company logo into existing PictureBox9
-            If PictureBox9 IsNot Nothing Then
-                Try
-                    Dim logoImg As System.Drawing.Image = CompanySettingsManager.Instance.GetCompanyLogo()
-                    If logoImg IsNot Nothing Then
-                        PictureBox9.Image = logoImg
-                        PictureBox9.Location = New Point(81, 15)
-                    End If
-                Catch ex As Exception
-                    Console.WriteLine($"Unable to set dashboard logo: {ex.Message}")
-                End Try
-                PictureBox9.BringToFront()
-            End If
-
-            Dim availableWidth As Integer = DashboardPanel.Width - 40
-            Dim startY As Integer = 250
-            Dim buttonHeight As Integer = 50
-            Dim buttonSpacing As Integer = 15
-            Dim buttonWidth As Integer = availableWidth - 5
-            Dim buttonIndex As Integer = 0
-
-            ' Title and subtitle
-            Dim titleLabel As New Label() With {
-            .Text = CompanySettingsManager.Instance.GetSettingString("CompanyName", "JADE CLINIC"),
-            .Font = New Font("Poppins", 14, FontStyle.Bold),
-            .ForeColor = System.Drawing.Color.FromArgb(254, 191, 16),
-            .BackColor = System.Drawing.Color.Transparent,
-            .AutoSize = False,
-            .Size = New Size(availableWidth, 30),
-            .Location = New Point(20, 110),
-            .TextAlign = ContentAlignment.MiddleCenter
-        }
-            DashboardPanel.Controls.Add(titleLabel)
-
-            Dim subtitleLabel As New Label() With {
-            .Text = "Dental Supply Management",
-            .Font = New Font("Poppins", 10, FontStyle.Regular),
-            .ForeColor = System.Drawing.Color.FromArgb(225, 229, 233),
-            .BackColor = System.Drawing.Color.Transparent,
-            .AutoSize = False,
-            .Size = New Size(availableWidth, 25),
-            .Location = New Point(20, 145),
-            .TextAlign = ContentAlignment.MiddleCenter
-        }
-            DashboardPanel.Controls.Add(subtitleLabel)
-
-            Dim separator1 As New Panel() With {
-            .BackColor = System.Drawing.Color.FromArgb(50, 50, 50),
-            .Size = New Size(availableWidth - 20, 2),
-            .Location = New Point(30, 190)
-        }
-            DashboardPanel.Controls.Add(separator1)
-
-            Dim navLabel As New Label() With {
-            .Text = "NAVIGATION",
-            .Font = New Font("Poppins", 10, FontStyle.Bold),
-            .ForeColor = System.Drawing.Color.FromArgb(225, 229, 233),
-            .BackColor = System.Drawing.Color.Transparent,
-            .AutoSize = False,
-            .Size = New Size(availableWidth, 25),
-            .Location = New Point(20, 205),
-            .TextAlign = ContentAlignment.MiddleCenter
-        }
-            DashboardPanel.Controls.Add(navLabel)
-
-            Dim currentRole As String = If(frmLoginvb.LoggedInRole, "Staff").ToUpper()
-
-            ' Ordered navigation:
-            ' Dashboard -> POS / Sales -> Inventory (ACTIVE) -> Sales Records -> Staff (role) ->
-            ' Inventory Logs -> Suppliers -> Audit Logs -> System (admin)
-
-            ' 1. Dashboard
-            Dim navDashboardBtn = CreateLargeNavButton("🏠 Dashboard", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-            AddHandler navDashboardBtn.Click, AddressOf NavDashboard_Click
-            buttonIndex += 1
-
-            ' 2. POS / Sales
-            Dim navPOSBtn = CreateLargeNavButton("🛒 POS / Sales", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-            AddHandler navPOSBtn.Click, AddressOf NavPOS_Click
-            buttonIndex += 1
-
-            ' 3. Inventory (ACTIVE on this page)
-            Dim navInventoryBtn = CreateLargeNavButton("📦 Inventory", startY + buttonIndex * (buttonHeight + buttonSpacing), True, buttonWidth, buttonHeight)
-            ' clicking active can refresh inventory
-            AddHandler navInventoryBtn.Click, Sub()
-                                                  Try
-                                                      LoadProducts()
-                                                  Catch
-                                                  End Try
-                                              End Sub
-            buttonIndex += 1
-
-            ' 4. Sales Records
-            Dim navSalesRecordsBtn = CreateLargeNavButton("📊 Sales Records", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-            AddHandler navSalesRecordsBtn.Click, AddressOf NavSalesRecords_Click
-            buttonIndex += 1
-
-            ' 5. Staff (Manager/Admin)
-            If currentRole = "MANAGER" Or currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
-                Dim navStaffBtn = CreateLargeNavButton("👥 Staff", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-                AddHandler navStaffBtn.Click, AddressOf NavStaff_Click
-                buttonIndex += 1
-            End If
-
-            ' 6. Inventory Logs
-            Dim navInventoryLogBtn = CreateLargeNavButton("📋 Inventory Logs", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-            AddHandler navInventoryLogBtn.Click, AddressOf NavInventoryLog_Click
-            buttonIndex += 1
-
-            ' 7. Suppliers
-            Dim navSuppliersBtn = CreateLargeNavButton("🏷️ Suppliers", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-            AddHandler navSuppliersBtn.Click, AddressOf NavSuppliers_Click
-            buttonIndex += 1
-
-            ' 8. Audit Logs (visible to Admin)
-            Dim navAuditLogBtn = CreateLargeNavButton("🔍 Audit Logs", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-            AddHandler navAuditLogBtn.Click, AddressOf NavAuditLog_Click
-            buttonIndex += 1
-
-            ' 9. System (Admin only)
-            If currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
-                Dim systemSettingsBtn = CreateLargeNavButton("⚙️ System", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-                AddHandler systemSettingsBtn.Click, AddressOf NavSystemSettings_Click
-                buttonIndex += 1
-            End If
-
-        Catch ex As Exception
-            Console.WriteLine($"Error creating navigation menu: {ex.Message}")
-        End Try
+        NavigationBuilder.Build(DashboardPanel, Me, "Inventory")
     End Sub
     Private Sub NavSystemSettings_Click(sender As Object, e As EventArgs)
         isNavigating = True
@@ -1390,47 +1250,6 @@ Public Class Inventory
         Me.Close()
     End Sub
 
-    Private Function CreateLargeNavButton(text As String, yPosition As Integer, isActive As Boolean, buttonWidth As Integer, buttonHeight As Integer) As Guna.UI2.WinForms.Guna2Button
-        Dim btn As New Guna.UI2.WinForms.Guna2Button()
-
-        btn.Text = text
-        btn.Size = New Size(buttonWidth, buttonHeight)
-        btn.Location = New Point(20, yPosition)
-        btn.BorderRadius = 12
-        btn.Font = New Font("Poppins", 10, FontStyle.Regular)
-        btn.TextAlign = HorizontalAlignment.Left
-
-        ' Consistent palette used across forms
-        btn.FillColor = If(isActive, System.Drawing.Color.FromArgb(254, 191, 16), System.Drawing.Color.Transparent)
-        btn.ForeColor = If(isActive, System.Drawing.Color.FromArgb(26, 29, 31), System.Drawing.Color.White)
-        btn.BorderThickness = If(isActive, 0, 1)
-        btn.BorderColor = If(isActive, System.Drawing.Color.Transparent, System.Drawing.Color.FromArgb(80, 80, 80))
-        btn.BackColor = System.Drawing.Color.Transparent
-        btn.Cursor = Cursors.Hand
-
-        btn.ShadowDecoration.Enabled = True
-        btn.ShadowDecoration.Color = System.Drawing.Color.FromArgb(30, 30, 30)
-        btn.ShadowDecoration.Depth = 4
-
-        AddHandler btn.MouseEnter, Sub()
-                                       If Not isActive Then
-                                           btn.FillColor = System.Drawing.Color.FromArgb(48, 52, 54)
-                                           btn.BorderColor = System.Drawing.Color.FromArgb(254, 191, 16)
-                                           btn.Font = New Font("Poppins", 9, FontStyle.Bold)
-                                       End If
-                                   End Sub
-
-        AddHandler btn.MouseLeave, Sub()
-                                       If Not isActive Then
-                                           btn.FillColor = System.Drawing.Color.Transparent
-                                           btn.BorderColor = System.Drawing.Color.FromArgb(80, 80, 80)
-                                           btn.Font = New Font("Poppins", 10, FontStyle.Regular)
-                                       End If
-                                   End Sub
-
-        DashboardPanel.Controls.Add(btn)
-        Return btn
-    End Function
     ' Navigation event handlers
     Private Sub NavDashboard_Click(sender As Object, e As EventArgs)
         isNavigating = True
