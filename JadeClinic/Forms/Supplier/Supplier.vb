@@ -1,4 +1,5 @@
 ﻿Imports Microsoft.Data.SqlClient
+Imports System.Linq
 
 Public Class Supplier
     Private isNavigating As Boolean = False
@@ -11,6 +12,8 @@ Public Class Supplier
 
         Try
             Me.BackColor = Color.FromArgb(30, 30, 30)
+            Me.FormBorderStyle = FormBorderStyle.None
+            Me.WindowState = FormWindowState.Maximized
 
             ' Validate session
             If String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
@@ -50,6 +53,42 @@ Public Class Supplier
         ' Suppliers does not really use date filter but keep for parity
         LoadSuppliersData(If(SortBy.SelectedItem IsNot Nothing, SortBy.SelectedItem.ToString(), ""))
     End Sub
+
+    Protected Overrides Function ProcessCmdKey(ByRef msg As Message, keyData As Keys) As Boolean
+        If keyData = Keys.Escape Then
+            If Me.OwnedForms.Cast(Of Form)().Any(Function(f) f.Visible) Then
+                Return MyBase.ProcessCmdKey(msg, keyData)
+            End If
+
+            If Not Me.ContainsFocus Then
+                Return MyBase.ProcessCmdKey(msg, keyData)
+            End If
+
+            If isNavigating Then
+                Return True
+            End If
+
+            Dim result As DialogResult = EscForm.ConfirmExit(Me)
+            Me.Activate()
+            If result = DialogResult.Yes Then
+                If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+                    Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Application Exit", "User exited the application via Supplier.")
+                End If
+
+                For Each form As Form In Application.OpenForms.Cast(Of Form).ToArray()
+                    If form IsNot Me Then
+                        form.Close()
+                    End If
+                Next
+
+                Application.Exit()
+            End If
+
+            Return True
+        End If
+
+        Return MyBase.ProcessCmdKey(msg, keyData)
+    End Function
 
     Private Sub InitializeDataGridView()
         Try

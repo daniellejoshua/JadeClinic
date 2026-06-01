@@ -67,7 +67,7 @@ Partial Class Staff
         DashboardPanel.Location = New Point(-33, 5)
         DashboardPanel.Name = "DashboardPanel"
         DashboardPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges2
-        DashboardPanel.Size = New Size(236, 885)
+        DashboardPanel.Size = New Size(236, 1016)
         DashboardPanel.TabIndex = 6
         ' 
         ' PictureBox9
@@ -85,7 +85,7 @@ Partial Class Staff
         ' Guna2CirclePictureBox5
         ' 
         Guna2CirclePictureBox5.ImageRotate = 0F
-        Guna2CirclePictureBox5.Location = New Point(1440, 20)
+        Guna2CirclePictureBox5.Location = New Point(1742, 26)
         Guna2CirclePictureBox5.Name = "Guna2CirclePictureBox5"
         Guna2CirclePictureBox5.ShadowDecoration.CustomizableEdges = CustomizableEdges3
         Guna2CirclePictureBox5.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
@@ -125,7 +125,7 @@ Partial Class Staff
         Guna2DataGridView1.Name = "Guna2DataGridView1"
         Guna2DataGridView1.RowHeadersVisible = False
         Guna2DataGridView1.RowHeadersWidth = 51
-        Guna2DataGridView1.Size = New Size(1362, 688)
+        Guna2DataGridView1.Size = New Size(1655, 861)
         Guna2DataGridView1.TabIndex = 41
         Guna2DataGridView1.ThemeStyle.AlternatingRowsStyle.BackColor = Color.White
         Guna2DataGridView1.ThemeStyle.AlternatingRowsStyle.Font = Nothing
@@ -160,7 +160,7 @@ Partial Class Staff
         btnDiscount.FillColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
         btnDiscount.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         btnDiscount.ForeColor = Color.Black
-        btnDiscount.Location = New Point(1314, 100)
+        btnDiscount.Location = New Point(1616, 106)
         btnDiscount.Name = "btnDiscount"
         btnDiscount.ShadowDecoration.CustomizableEdges = CustomizableEdges5
         btnDiscount.Size = New Size(147, 40)
@@ -198,7 +198,7 @@ Partial Class Staff
         Exportbtn.FillColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
         Exportbtn.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Exportbtn.ForeColor = Color.Black
-        Exportbtn.Location = New Point(1501, 100)
+        Exportbtn.Location = New Point(1803, 106)
         Exportbtn.Name = "Exportbtn"
         Exportbtn.ShadowDecoration.CustomizableEdges = CustomizableEdges9
         Exportbtn.Size = New Size(86, 40)
@@ -210,7 +210,7 @@ Partial Class Staff
         lblUsername.BackColor = Color.Transparent
         lblUsername.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         lblUsername.ForeColor = Color.White
-        lblUsername.Location = New Point(1477, 20)
+        lblUsername.Location = New Point(1779, 26)
         lblUsername.Name = "lblUsername"
         lblUsername.Size = New Size(65, 28)
         lblUsername.TabIndex = 74
@@ -232,7 +232,7 @@ Partial Class Staff
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
         BackColor = Color.FromArgb(CByte(30), CByte(30), CByte(30))
-        ClientSize = New Size(1609, 875)
+        ClientSize = New Size(1902, 1033)
         Controls.Add(Guna2HtmlLabel3)
         Controls.Add(lblUsername)
         Controls.Add(Exportbtn)

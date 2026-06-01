@@ -1,6 +1,7 @@
 ﻿Imports Microsoft.Data.SqlClient
 Imports System.Data
 Imports System.IO
+Imports System.Linq
 Imports System.Threading.Tasks
 
 Public Class InventoryLog
@@ -119,11 +120,11 @@ Public Class InventoryLog
 
     Private Sub SetupForm()
         ' Make form non-resizable
-        Me.FormBorderStyle = FormBorderStyle.FixedDialog
-        Me.MaximizeBox = False
-        Me.MinimizeBox = False
-        Me.MinimumSize = Me.Size
-        Me.MaximumSize = Me.Size
+        Me.FormBorderStyle = FormBorderStyle.None
+        Me.TopMost = True
+        Me.WindowState = FormWindowState.Normal
+        Me.Bounds = Screen.PrimaryScreen.Bounds
+        Me.WindowState = FormWindowState.Maximized
 
         ' Set double buffering for better performance
         SetDoubleBuffered(InventoryLogDataGrid)
@@ -1123,6 +1124,42 @@ Public Class InventoryLog
         AuditLog.Show()
         Me.Close()
     End Sub
+
+    Protected Overrides Function ProcessCmdKey(ByRef msg As Message, keyData As Keys) As Boolean
+        If keyData = Keys.Escape Then
+            If Me.OwnedForms.Cast(Of Form)().Any(Function(f) f.Visible) Then
+                Return MyBase.ProcessCmdKey(msg, keyData)
+            End If
+
+            If Not Me.ContainsFocus Then
+                Return MyBase.ProcessCmdKey(msg, keyData)
+            End If
+
+            If isNavigating Then
+                Return True
+            End If
+
+            Dim result As DialogResult = EscForm.ConfirmExit(Me)
+            Me.Activate()
+            If result = DialogResult.Yes Then
+                If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+                    Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Application Exit", "User exited the application via Inventory Log.")
+                End If
+
+                For Each form As Form In Application.OpenForms.Cast(Of Form).ToArray()
+                    If form IsNot Me Then
+                        form.Close()
+                    End If
+                Next
+
+                Application.Exit()
+            End If
+
+            Return True
+        End If
+
+        Return MyBase.ProcessCmdKey(msg, keyData)
+    End Function
 
     ' Navigation methods
     Private Sub InventoryLog_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing

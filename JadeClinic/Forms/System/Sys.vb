@@ -1,6 +1,7 @@
 ﻿Imports System.Drawing
 Imports System.Drawing.Drawing2D
 Imports System.Windows.Forms
+Imports System.Linq
 Imports Guna.UI2.WinForms
 Imports Microsoft.Data.SqlClient
 Imports System.IO
@@ -26,12 +27,10 @@ Public Class Sys
     Private ReadOnly AlertRed As Color = Color.FromArgb(255, 71, 87)           ' #FF4757 - Error/Alert states
 
     Private Sub Sys_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        ' Make form non-resizable
-        ' Stop idle timeout monitoring
+        ' Fullscreen main form behavior
         IdleTimeoutManager.Instance.StartMonitoring(Me)
-        Me.FormBorderStyle = FormBorderStyle.FixedDialog
-        Me.MaximizeBox = False
-        Me.MinimizeBox = False
+        Me.FormBorderStyle = FormBorderStyle.None
+        Me.WindowState = FormWindowState.Maximized
 
         ' Create navigation menu
         CreateNavigationMenu()
@@ -809,6 +808,54 @@ Public Class Sys
             MessageBox.Show($"Unable to open Audit Logs: {ex.Message}", "Navigation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
+
+    Protected Overrides Function ProcessCmdKey(ByRef msg As Message, keyData As Keys) As Boolean
+        If (keyData And Keys.KeyCode) = Keys.Escape Then
+            If isNavigating Then
+                Return True
+            End If
+
+            If Me.OwnedForms.Cast(Of Form)().Any(Function(f) f.Visible) Then
+                Return MyBase.ProcessCmdKey(msg, keyData)
+            End If
+
+            If Application.OpenForms.Cast(Of Form)().Any(Function(f) f IsNot Me AndAlso f.Visible AndAlso f.Modal) Then
+                Return MyBase.ProcessCmdKey(msg, keyData)
+            End If
+
+            If Not Me.ContainsFocus Then
+                Return MyBase.ProcessCmdKey(msg, keyData)
+            End If
+
+            Dim result As DialogResult = EscForm.ConfirmExit(Me)
+
+            If Me.Visible Then
+                Me.Activate()
+                If Me.CanFocus Then
+                    Me.Focus()
+                End If
+            End If
+
+            If result = DialogResult.Yes Then
+                If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+                    Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Application Exit", "User exited the application via System Settings form")
+                End If
+
+                isNavigating = True
+                For Each form As Form In Application.OpenForms.Cast(Of Form).ToArray()
+                    If form IsNot Me Then
+                        form.Close()
+                    End If
+                Next
+
+                Application.Exit()
+            End If
+
+            Return True
+        End If
+
+        Return MyBase.ProcessCmdKey(msg, keyData)
+    End Function
     Private Sub Guna2Panel1_Paint(sender As Object, e As PaintEventArgs) Handles Guna2Panel1.Paint
 
     End Sub

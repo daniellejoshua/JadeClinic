@@ -5,6 +5,7 @@ Imports QuestPDF.Helpers
 Imports QuestPDF.Infrastructure
 Imports System.Drawing
 Imports System.Drawing.Imaging
+Imports System.Linq
 Imports SD = System.Drawing  ' <-- added alias for System.Drawing
 
 
@@ -17,11 +18,11 @@ Public Class Staff
         ' Stop idle timeout monitoring
         IdleTimeoutManager.Instance.StartMonitoring(Me)
         QuestPDF.Settings.License = LicenseType.Community
-        Me.FormBorderStyle = FormBorderStyle.FixedDialog
-        Me.MaximizeBox = False
-        Me.MinimizeBox = False
-        Me.MinimumSize = Me.Size
-        Me.MaximumSize = Me.Size
+        Me.FormBorderStyle = FormBorderStyle.None
+        Me.TopMost = True
+        Me.WindowState = FormWindowState.Normal
+        Me.Bounds = Screen.PrimaryScreen.Bounds
+        Me.WindowState = FormWindowState.Maximized
         ' Initialize form
         Me.Text = "Staff Management"
         ' Prevent resizing of all columns and rows
@@ -107,6 +108,42 @@ Public Class Staff
             Guna2CirclePictureBox5.Image = CreateDefaultProfileAvatar(frmLoginvb.LoggedInUsername)
         End Try
     End Sub
+
+    Protected Overrides Function ProcessCmdKey(ByRef msg As Message, keyData As Keys) As Boolean
+        If keyData = Keys.Escape Then
+            If Me.OwnedForms.Cast(Of Form)().Any(Function(f) f.Visible) Then
+                Return MyBase.ProcessCmdKey(msg, keyData)
+            End If
+
+            If Not Me.ContainsFocus Then
+                Return MyBase.ProcessCmdKey(msg, keyData)
+            End If
+
+            If isNavigating Then
+                Return True
+            End If
+
+            Dim result As DialogResult = EscForm.ConfirmExit(Me)
+            Me.Activate()
+            If result = DialogResult.Yes Then
+                If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+                    Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Application Exit", "User exited the application via Staff.")
+                End If
+
+                For Each form As Form In Application.OpenForms.Cast(Of Form).ToArray()
+                    If form IsNot Me Then
+                        form.Close()
+                    End If
+                Next
+
+                Application.Exit()
+            End If
+
+            Return True
+        End If
+
+        Return MyBase.ProcessCmdKey(msg, keyData)
+    End Function
 
     Private Sub LoadUserProfilePicture()
         Try

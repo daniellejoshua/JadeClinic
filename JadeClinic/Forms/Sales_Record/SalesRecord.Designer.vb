@@ -68,7 +68,7 @@ Partial Class SalesRecord
         DashboardPanel.Location = New Point(-33, 5)
         DashboardPanel.Name = "DashboardPanel"
         DashboardPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges2
-        DashboardPanel.Size = New Size(236, 885)
+        DashboardPanel.Size = New Size(236, 1016)
         DashboardPanel.TabIndex = 6
         ' 
         ' PictureBox9
@@ -86,7 +86,7 @@ Partial Class SalesRecord
         ' Guna2CirclePictureBox5
         ' 
         Guna2CirclePictureBox5.ImageRotate = 0F
-        Guna2CirclePictureBox5.Location = New Point(1440, 20)
+        Guna2CirclePictureBox5.Location = New Point(1753, 20)
         Guna2CirclePictureBox5.Name = "Guna2CirclePictureBox5"
         Guna2CirclePictureBox5.ShadowDecoration.CustomizableEdges = CustomizableEdges3
         Guna2CirclePictureBox5.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
@@ -105,7 +105,7 @@ Partial Class SalesRecord
         Guna2DataGridView1.BackgroundColor = Color.FromArgb(CByte(61), CByte(65), CByte(65))
         DataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleLeft
         DataGridViewCellStyle2.BackColor = Color.FromArgb(CByte(100), CByte(88), CByte(255))
-        DataGridViewCellStyle2.Font = New Font("Segoe UI", 9.0F)
+        DataGridViewCellStyle2.Font = New Font("Segoe UI", 9F)
         DataGridViewCellStyle2.ForeColor = Color.White
         DataGridViewCellStyle2.SelectionBackColor = SystemColors.Highlight
         DataGridViewCellStyle2.SelectionForeColor = SystemColors.HighlightText
@@ -115,7 +115,7 @@ Partial Class SalesRecord
         Guna2DataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.EnableResizing
         DataGridViewCellStyle3.Alignment = DataGridViewContentAlignment.MiddleLeft
         DataGridViewCellStyle3.BackColor = Color.White
-        DataGridViewCellStyle3.Font = New Font("Segoe UI", 9.0F)
+        DataGridViewCellStyle3.Font = New Font("Segoe UI", 9F)
         DataGridViewCellStyle3.ForeColor = Color.FromArgb(CByte(71), CByte(69), CByte(94))
         DataGridViewCellStyle3.SelectionBackColor = Color.FromArgb(CByte(231), CByte(229), CByte(255))
         DataGridViewCellStyle3.SelectionForeColor = Color.FromArgb(CByte(71), CByte(69), CByte(94))
@@ -126,7 +126,7 @@ Partial Class SalesRecord
         Guna2DataGridView1.Name = "Guna2DataGridView1"
         Guna2DataGridView1.RowHeadersVisible = False
         Guna2DataGridView1.RowHeadersWidth = 51
-        Guna2DataGridView1.Size = New Size(1362, 688)
+        Guna2DataGridView1.Size = New Size(1655, 861)
         Guna2DataGridView1.TabIndex = 41
         Guna2DataGridView1.ThemeStyle.AlternatingRowsStyle.BackColor = Color.White
         Guna2DataGridView1.ThemeStyle.AlternatingRowsStyle.Font = Nothing
@@ -137,14 +137,14 @@ Partial Class SalesRecord
         Guna2DataGridView1.ThemeStyle.GridColor = Color.FromArgb(CByte(231), CByte(229), CByte(255))
         Guna2DataGridView1.ThemeStyle.HeaderStyle.BackColor = Color.FromArgb(CByte(100), CByte(88), CByte(255))
         Guna2DataGridView1.ThemeStyle.HeaderStyle.BorderStyle = DataGridViewHeaderBorderStyle.None
-        Guna2DataGridView1.ThemeStyle.HeaderStyle.Font = New Font("Segoe UI", 9.0F)
+        Guna2DataGridView1.ThemeStyle.HeaderStyle.Font = New Font("Segoe UI", 9F)
         Guna2DataGridView1.ThemeStyle.HeaderStyle.ForeColor = Color.White
         Guna2DataGridView1.ThemeStyle.HeaderStyle.HeaightSizeMode = DataGridViewColumnHeadersHeightSizeMode.EnableResizing
         Guna2DataGridView1.ThemeStyle.HeaderStyle.Height = 4
         Guna2DataGridView1.ThemeStyle.ReadOnly = False
         Guna2DataGridView1.ThemeStyle.RowsStyle.BackColor = Color.White
         Guna2DataGridView1.ThemeStyle.RowsStyle.BorderStyle = DataGridViewCellBorderStyle.SingleHorizontal
-        Guna2DataGridView1.ThemeStyle.RowsStyle.Font = New Font("Segoe UI", 9.0F)
+        Guna2DataGridView1.ThemeStyle.RowsStyle.Font = New Font("Segoe UI", 9F)
         Guna2DataGridView1.ThemeStyle.RowsStyle.ForeColor = Color.FromArgb(CByte(71), CByte(69), CByte(94))
         Guna2DataGridView1.ThemeStyle.RowsStyle.Height = 29
         Guna2DataGridView1.ThemeStyle.RowsStyle.SelectionBackColor = Color.FromArgb(CByte(231), CByte(229), CByte(255))
@@ -159,9 +159,9 @@ Partial Class SalesRecord
         Exportbtn.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         Exportbtn.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
         Exportbtn.FillColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
-        Exportbtn.Font = New Font("Poppins Medium", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Exportbtn.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Exportbtn.ForeColor = Color.Black
-        Exportbtn.Location = New Point(1477, 100)
+        Exportbtn.Location = New Point(1790, 100)
         Exportbtn.Name = "Exportbtn"
         Exportbtn.ShadowDecoration.CustomizableEdges = CustomizableEdges5
         Exportbtn.Size = New Size(86, 40)
@@ -171,9 +171,9 @@ Partial Class SalesRecord
         ' lblUsername
         ' 
         lblUsername.BackColor = Color.Transparent
-        lblUsername.Font = New Font("Poppins Light", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        lblUsername.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         lblUsername.ForeColor = Color.White
-        lblUsername.Location = New Point(1477, 20)
+        lblUsername.Location = New Point(1790, 20)
         lblUsername.Name = "lblUsername"
         lblUsername.Size = New Size(65, 28)
         lblUsername.TabIndex = 74
@@ -196,7 +196,7 @@ Partial Class SalesRecord
         Guna2DateTimePicker1.Checked = True
         Guna2DateTimePicker1.CustomizableEdges = CustomizableEdges6
         Guna2DateTimePicker1.FillColor = Color.FromArgb(CByte(30), CByte(30), CByte(30))
-        Guna2DateTimePicker1.Font = New Font("Poppins", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Guna2DateTimePicker1.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2DateTimePicker1.ForeColor = Color.White
         Guna2DateTimePicker1.Format = DateTimePickerFormat.Short
         Guna2DateTimePicker1.Location = New Point(359, 100)
@@ -241,10 +241,10 @@ Partial Class SalesRecord
         ' 
         ' SalesRecord
         ' 
-        AutoScaleDimensions = New SizeF(8.0F, 20.0F)
+        AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
         BackColor = Color.FromArgb(CByte(30), CByte(30), CByte(30))
-        ClientSize = New Size(1609, 875)
+        ClientSize = New Size(1902, 1033)
         Controls.Add(Guna2HtmlLabel4)
         Controls.Add(Guna2DateTimePicker1)
         Controls.Add(Guna2HtmlLabel3)

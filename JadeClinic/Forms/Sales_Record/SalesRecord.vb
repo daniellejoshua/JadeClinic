@@ -1,5 +1,6 @@
 ﻿Imports System.Globalization
 Imports System.IO
+Imports System.Linq
 Imports Guna.UI2.WinForms
 Imports Microsoft.Data.SqlClient
 Imports QuestPDF.Fluent
@@ -29,10 +30,11 @@ Public Class SalesRecord
         ' Start idle timeout monitoring
         IdleTimeoutManager.Instance.StartMonitoring(Me)
         QuestPDF.Settings.License = LicenseType.Community
-        Me.MaximizeBox = False
-        Me.MinimizeBox = False
-        Me.MinimumSize = Me.Size
-        Me.MaximumSize = Me.Size
+        Me.FormBorderStyle = FormBorderStyle.None
+        Me.TopMost = True
+        Me.WindowState = FormWindowState.Normal
+        Me.Bounds = Screen.PrimaryScreen.Bounds
+        Me.WindowState = FormWindowState.Maximized
 
         Me.Text = "Sales Records - Jade Dental"
 
@@ -73,6 +75,42 @@ Public Class SalesRecord
     Private Sub NavProfileSettings_Click(sender As Object, e As EventArgs)
 
     End Sub
+
+    Protected Overrides Function ProcessCmdKey(ByRef msg As Message, keyData As Keys) As Boolean
+        If keyData = Keys.Escape Then
+            If Me.OwnedForms.Cast(Of Form)().Any(Function(f) f.Visible) Then
+                Return MyBase.ProcessCmdKey(msg, keyData)
+            End If
+
+            If Not Me.ContainsFocus Then
+                Return MyBase.ProcessCmdKey(msg, keyData)
+            End If
+
+            If isNavigating Then
+                Return True
+            End If
+
+            Dim result As DialogResult = EscForm.ConfirmExit(Me)
+            Me.Activate()
+            If result = DialogResult.Yes Then
+                If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+                    Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Application Exit", "User exited the application via Sales Records.")
+                End If
+
+                For Each form As Form In Application.OpenForms.Cast(Of Form).ToArray()
+                    If form IsNot Me Then
+                        form.Close()
+                    End If
+                Next
+
+                Application.Exit()
+            End If
+
+            Return True
+        End If
+
+        Return MyBase.ProcessCmdKey(msg, keyData)
+    End Function
     Private Function ValidateUserSession() As Boolean
         If String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
             MessageBox.Show("User session expired. Please log in again.", "Session Error", MessageBoxButtons.OK, MessageBoxIcon.Error)

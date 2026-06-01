@@ -2,6 +2,7 @@
 Imports System.IO
 Imports System.Text.RegularExpressions
 Imports System.Drawing.Imaging
+Imports System.Linq
 
 Public Class ProfileSettings
     ' Store original panel controls for PIN change functionality
@@ -40,7 +41,8 @@ Public Class ProfileSettings
 
         ' Stop idle timeout monitoring
         IdleTimeoutManager.Instance.StartMonitoring(Me) ' Initialize form
-        Me.MaximizeBox = False
+        Me.FormBorderStyle = FormBorderStyle.None
+        Me.WindowState = FormWindowState.Maximized
         Me.Text = "Profile Settings - Personal Information"
 
         ' Validate user session
@@ -927,6 +929,36 @@ Public Class ProfileSettings
                     RestorePanel1Controls()
                     Return True
             End Select
+        ElseIf keyData = Keys.Escape Then
+            If Me.OwnedForms.Cast(Of Form)().Any(Function(f) f.Visible) Then
+                Return MyBase.ProcessCmdKey(msg, keyData)
+            End If
+
+            If Not Me.ContainsFocus Then
+                Return MyBase.ProcessCmdKey(msg, keyData)
+            End If
+
+            If isNavigating Then
+                Return True
+            End If
+
+            Dim result As DialogResult = EscForm.ConfirmExit(Me)
+            Me.Activate()
+            If result = DialogResult.Yes Then
+                If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+                    Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Application Exit", "User exited the application via Profile Settings.")
+                End If
+
+                For Each form As Form In Application.OpenForms.Cast(Of Form).ToArray()
+                    If form IsNot Me Then
+                        form.Close()
+                    End If
+                Next
+
+                Application.Exit()
+            End If
+
+            Return True
         End If
         Return MyBase.ProcessCmdKey(msg, keyData)
     End Function

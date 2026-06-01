@@ -1,5 +1,6 @@
 ﻿Imports System.Globalization
 Imports System.IO
+Imports System.Linq
 Imports Guna.UI2.WinForms
 Imports Microsoft.Data.SqlClient
 
@@ -13,6 +14,11 @@ Public Class AuditLog
         ' Stop idle timeout monitoring
         IdleTimeoutManager.Instance.StartMonitoring(Me) ' Ensure form background is set (designer has BackColor)
         Me.BackColor = Color.FromArgb(30, 30, 30)
+        Me.FormBorderStyle = FormBorderStyle.None
+        Me.TopMost = True
+        Me.WindowState = FormWindowState.Normal
+        Me.Bounds = Screen.PrimaryScreen.Bounds
+        Me.WindowState = FormWindowState.Maximized
 
         ' Create and configure overlay panel (same color as form)
         overlayPanel = New Panel() With {
@@ -106,6 +112,42 @@ Public Class AuditLog
         ' Kick off async refresh but don't block UI
         Await LoadAuditLogsAsync()
     End Sub
+
+    Protected Overrides Function ProcessCmdKey(ByRef msg As Message, keyData As Keys) As Boolean
+        If keyData = Keys.Escape Then
+            If Me.OwnedForms.Cast(Of Form)().Any(Function(f) f.Visible) Then
+                Return MyBase.ProcessCmdKey(msg, keyData)
+            End If
+
+            If Not Me.ContainsFocus Then
+                Return MyBase.ProcessCmdKey(msg, keyData)
+            End If
+
+            If isNavigating Then
+                Return True
+            End If
+
+            Dim result As DialogResult = EscForm.ConfirmExit(Me)
+            Me.Activate()
+            If result = DialogResult.Yes Then
+                If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+                    Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Application Exit", "User exited the application via Audit Log.")
+                End If
+
+                For Each form As Form In Application.OpenForms.Cast(Of Form).ToArray()
+                    If form IsNot Me Then
+                        form.Close()
+                    End If
+                Next
+
+                Application.Exit()
+            End If
+
+            Return True
+        End If
+
+        Return MyBase.ProcessCmdKey(msg, keyData)
+    End Function
 
     Private Sub InitializeDataGridView()
         ' Clear existing columns
