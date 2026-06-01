@@ -1043,6 +1043,51 @@ Public Class InventoryLog
         Sys.Show()
         Me.Close()
     End Sub
+    Private Function CreateLargeNavButton(text As String, yPosition As Integer, isActive As Boolean, buttonWidth As Integer, buttonHeight As Integer) As Guna.UI2.WinForms.Guna2Button
+        Dim btn As New Guna.UI2.WinForms.Guna2Button()
+
+        btn.Text = text
+        btn.Size = New System.Drawing.Size(buttonWidth, buttonHeight)
+        btn.Location = New Point(20, yPosition)
+        btn.BorderRadius = 12
+        btn.Font = New Font("Poppins", 10, FontStyle.Regular)
+        btn.TextAlign = HorizontalAlignment.Left
+
+        ' Colors consistent with SalesRecord navigation using CompanySettingsManager palette
+        Dim primary = CompanySettingsManager.Instance.GetColor("primarycolor")
+        Dim textPrimary = CompanySettingsManager.Instance.GetColor("backgrounddark")
+        Dim borderColor = System.Drawing.Color.FromArgb(80, 80, 80)
+
+        btn.FillColor = If(isActive, primary, System.Drawing.Color.Transparent)
+        btn.ForeColor = If(isActive, textPrimary, CompanySettingsManager.Instance.GetColor("textsecondary"))
+        btn.BorderThickness = If(isActive, 0, 1)
+        btn.BorderColor = If(isActive, System.Drawing.Color.Transparent, borderColor)
+        btn.BackColor = System.Drawing.Color.Transparent
+        btn.Cursor = Cursors.Hand
+
+        btn.ShadowDecoration.Enabled = True
+        btn.ShadowDecoration.Color = System.Drawing.Color.FromArgb(26, 29, 31)
+        btn.ShadowDecoration.Depth = 4
+
+        AddHandler btn.MouseEnter, Sub()
+                                       If Not isActive Then
+                                           btn.FillColor = System.Drawing.Color.FromArgb(48, 52, 54)
+                                           btn.BorderColor = CompanySettingsManager.Instance.GetColor("secondarycolor")
+                                           btn.Font = New Font("Poppins", 9, FontStyle.Bold)
+                                       End If
+                                   End Sub
+
+        AddHandler btn.MouseLeave, Sub()
+                                       If Not isActive Then
+                                           btn.FillColor = System.Drawing.Color.Transparent
+                                           btn.BorderColor = borderColor
+                                           btn.Font = New Font("Poppins", 10, FontStyle.Regular)
+                                       End If
+                                   End Sub
+
+        DashboardPanel.Controls.Add(btn)
+        Return btn
+    End Function
 
     Private Sub NavDashboard_Click(sender As Object, e As EventArgs)
         isNavigating = True

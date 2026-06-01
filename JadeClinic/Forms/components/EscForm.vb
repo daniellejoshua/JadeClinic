@@ -3,6 +3,11 @@
         Dim overlay As Form = Nothing
         Try
             Dim ownerForm = TryCast(owner, Form)
+            ' If the owner form is disabled (another modal dialog is open) do not show the Esc dialog
+            If ownerForm IsNot Nothing AndAlso Not ownerForm.Enabled Then
+                Return DialogResult.No
+            End If
+
             If ownerForm IsNot Nothing Then
                 overlay = New Form() With {
                     .FormBorderStyle = FormBorderStyle.None,
@@ -10,27 +15,37 @@
                     .StartPosition = FormStartPosition.Manual,
                     .BackColor = Color.Black,
                     .Opacity = 0.55,
-                    .TopMost = True
+                    .TopMost = True,
+                    .Enabled = False
                 }
                 overlay.Bounds = ownerForm.Bounds
                 overlay.Owner = ownerForm
                 overlay.Show()
+                overlay.BringToFront()
             End If
 
             Using dialog As New EscForm()
                 dialog.StartPosition = FormStartPosition.CenterScreen
                 dialog.TopMost = True
-                Return dialog.ShowDialog(If(overlay, owner))
+                dialog.KeyPreview = True
+                ' Ensure dialog receives focus immediately; pass the real owner form (not the overlay) so modality works correctly
+                Dim ownerWindow As IWin32Window = If(ownerForm IsNot Nothing, CType(ownerForm, IWin32Window), owner)
+                Dim result As DialogResult = dialog.ShowDialog(ownerWindow)
+                Return result
             End Using
         Finally
             If overlay IsNot Nothing Then
-                overlay.Close()
-                overlay.Dispose()
+                Try
+                    overlay.Close()
+                    overlay.Dispose()
+                Catch
+                End Try
             End If
         End Try
     End Function
 
     Private Sub EscForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        Me.KeyPreview = True
         btnCancel.Focus()
     End Sub
 

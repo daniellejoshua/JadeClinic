@@ -120,11 +120,13 @@ Public Class Dashboard
             Me.MaximizeBox = False
             Me.MinimizeBox = False
 
-            ' Improved full-screen behavior: remove window chrome and use the WorkingArea to respect taskbar
+            ' Improved full-screen behavior: remove window chrome and cover the entire screen including taskbar
             Me.FormBorderStyle = FormBorderStyle.None
+            Me.TopMost = True
             Me.WindowState = FormWindowState.Normal
-            Me.Bounds = Screen.PrimaryScreen.WorkingArea
-            Console.WriteLine("Basic form properties set")
+            Me.Bounds = Screen.PrimaryScreen.Bounds
+            Me.WindowState = FormWindowState.Maximized
+            Console.WriteLine("Basic form properties set (full screen)")
 
             ' Apply new color scheme to existing panels
             ApplyNewColorScheme()
@@ -1642,11 +1644,22 @@ Public Class Dashboard
     End Sub
     Protected Overrides Function ProcessCmdKey(ByRef msg As Message, keyData As Keys) As Boolean
         If keyData = Keys.Escape Then
+            ' If a modal dialog owned by this form is visible, do not show EscForm
+            If Me.OwnedForms.Cast(Of Form)().Any(Function(f) f.Visible) Then
+                Return MyBase.ProcessCmdKey(msg, keyData)
+            End If
+
+            ' Only handle when this form contains focus
+            If Not Me.ContainsFocus Then
+                Return MyBase.ProcessCmdKey(msg, keyData)
+            End If
+
             If isNavigating Then
                 Return True
             End If
 
             Dim result As DialogResult = EscForm.ConfirmExit(Me)
+            Me.Activate()
             If result = DialogResult.Yes Then
                 If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
                     Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Application Exit", "User exited the application via Dashboard.")

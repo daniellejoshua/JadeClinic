@@ -35,10 +35,12 @@ Public Class Inventory
         InitializeCustomTooltip()
         ' Stop idle timeout monitoring
         IdleTimeoutManager.Instance.StartMonitoring(Me)
-        ' Make form full-screen and non-resizable like Dashboard/Sales; use WorkingArea to respect taskbar
+        ' Make form full-screen and non-resizable like Dashboard/Sales; cover entire screen including taskbar
         Me.FormBorderStyle = FormBorderStyle.None
+        Me.TopMost = True
         Me.WindowState = FormWindowState.Normal
-        Me.Bounds = Screen.PrimaryScreen.WorkingArea
+        Me.Bounds = Screen.PrimaryScreen.Bounds
+        Me.WindowState = FormWindowState.Maximized
 
         ' Validate user session
         If Not ValidateUserSession() Then
@@ -1250,6 +1252,47 @@ Public Class Inventory
         Me.Close()
     End Sub
 
+    Private Function CreateLargeNavButton(text As String, yPosition As Integer, isActive As Boolean, buttonWidth As Integer, buttonHeight As Integer) As Guna.UI2.WinForms.Guna2Button
+        Dim btn As New Guna.UI2.WinForms.Guna2Button()
+
+        btn.Text = text
+        btn.Size = New Size(buttonWidth, buttonHeight)
+        btn.Location = New Point(20, yPosition)
+        btn.BorderRadius = 12
+        btn.Font = New Font("Poppins", 10, FontStyle.Regular)
+        btn.TextAlign = HorizontalAlignment.Left
+
+        ' Consistent palette used across forms
+        btn.FillColor = If(isActive, System.Drawing.Color.FromArgb(254, 191, 16), System.Drawing.Color.Transparent)
+        btn.ForeColor = If(isActive, System.Drawing.Color.FromArgb(26, 29, 31), System.Drawing.Color.White)
+        btn.BorderThickness = If(isActive, 0, 1)
+        btn.BorderColor = If(isActive, System.Drawing.Color.Transparent, System.Drawing.Color.FromArgb(80, 80, 80))
+        btn.BackColor = System.Drawing.Color.Transparent
+        btn.Cursor = Cursors.Hand
+
+        btn.ShadowDecoration.Enabled = True
+        btn.ShadowDecoration.Color = System.Drawing.Color.FromArgb(30, 30, 30)
+        btn.ShadowDecoration.Depth = 4
+
+        AddHandler btn.MouseEnter, Sub()
+                                       If Not isActive Then
+                                           btn.FillColor = System.Drawing.Color.FromArgb(48, 52, 54)
+                                           btn.BorderColor = System.Drawing.Color.FromArgb(254, 191, 16)
+                                           btn.Font = New Font("Poppins", 9, FontStyle.Bold)
+                                       End If
+                                   End Sub
+
+        AddHandler btn.MouseLeave, Sub()
+                                       If Not isActive Then
+                                           btn.FillColor = System.Drawing.Color.Transparent
+                                           btn.BorderColor = System.Drawing.Color.FromArgb(80, 80, 80)
+                                           btn.Font = New Font("Poppins", 10, FontStyle.Regular)
+                                       End If
+                                   End Sub
+
+        DashboardPanel.Controls.Add(btn)
+        Return btn
+    End Function
     ' Navigation event handlers
     Private Sub NavDashboard_Click(sender As Object, e As EventArgs)
         isNavigating = True

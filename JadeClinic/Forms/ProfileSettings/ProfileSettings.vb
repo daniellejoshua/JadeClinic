@@ -1079,6 +1079,7 @@ Public Class ProfileSettings
         NavigationBuilder.Build(DashboardPanel, Me, "ProfileSettings")
     End Sub
 
+
     ' Add Nav handler for POS / Sales navigation
     Private Sub NavPOS_Click(sender As Object, e As EventArgs)
         Try
@@ -1152,6 +1153,53 @@ Public Class ProfileSettings
         Me.Close()
     End Sub
 
+    Private Function CreateLargeNavButton(text As String, yPosition As Integer, isActive As Boolean, buttonWidth As Integer, buttonHeight As Integer) As Guna.UI2.WinForms.Guna2Button
+        Dim btn As New Guna.UI2.WinForms.Guna2Button()
+
+        ' Button properties with improved sizing and new color scheme for dark navigation
+        btn.Text = text
+        btn.Size = New System.Drawing.Size(buttonWidth, buttonHeight)
+        btn.Location = New Point(20, yPosition)
+        btn.BorderRadius = 12
+        btn.Font = New Font("Poppins", 10, FontStyle.Regular)
+        btn.TextAlign = HorizontalAlignment.Left
+
+        ' Apply color scheme for dark navigation panel (idle = transparent, text = white)
+        btn.FillColor = If(isActive, GoldenYellow, System.Drawing.Color.Transparent) ' Golden for active
+        btn.ForeColor = If(isActive, DeepCharcoal, PureWhite) ' Dark text on active gold, white on dark background when inactive
+        btn.BorderThickness = If(isActive, 0, 1)
+        btn.BorderColor = If(isActive, System.Drawing.Color.Transparent, System.Drawing.Color.FromArgb(80, 80, 80)) ' subtle border on dark bg
+        btn.BackColor = System.Drawing.Color.Transparent
+        btn.Cursor = Cursors.Hand
+
+        ' Add subtle shadow for depth (tuned for dark nav)
+        btn.ShadowDecoration.Enabled = True
+        btn.ShadowDecoration.Color = System.Drawing.Color.FromArgb(30, 30, 30)
+        btn.ShadowDecoration.Depth = 4
+        btn.ShadowDecoration.Shadow = New Padding(0, 1, 4, 4)
+
+        ' Improved hover effects for dark navigation
+        AddHandler btn.MouseEnter, Sub()
+                                       If Not isActive Then
+                                           btn.FillColor = System.Drawing.Color.FromArgb(48, 52, 54) ' slightly lighter than nav bg
+                                           btn.BorderColor = GoldenYellow
+                                           btn.Font = New Font("Poppins", 9, FontStyle.Bold)
+                                       End If
+                                   End Sub
+
+        AddHandler btn.MouseLeave, Sub()
+                                       If Not isActive Then
+                                           btn.FillColor = System.Drawing.Color.Transparent
+                                           btn.BorderColor = System.Drawing.Color.FromArgb(80, 80, 80)
+                                           btn.Font = New Font("Poppins", 10, FontStyle.Regular)
+                                       End If
+                                   End Sub
+
+        ' Add to panel
+        DashboardPanel.Controls.Add(btn)
+
+        Return btn
+    End Function
     Private Sub InitializeProfileSection()
         Try
             ' Update a small profile area in nav if present

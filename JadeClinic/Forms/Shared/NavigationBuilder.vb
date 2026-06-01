@@ -1,6 +1,7 @@
 Imports System.Reflection
 Imports System.Drawing
 Imports Guna.UI2.WinForms
+Imports Microsoft.Data.SqlClient
 
 Public NotInheritable Class NavigationBuilder
     Private Sub New()
@@ -91,12 +92,8 @@ Public NotInheritable Class NavigationBuilder
 
             Dim currentRole As String = If(frmLoginvb.LoggedInRole, "Staff").ToString().ToUpper()
 
-            ' Helper to determine if a navigation button should be marked active
-            Dim isActiveFor As Func(Of String, Boolean) = Function(name)
-                                                              Return String.Equals(activeItem, name, StringComparison.OrdinalIgnoreCase)
-                                                          End Function
-
-            Dim createBtn As Action(Of String, Integer, Boolean, Action) = Sub(text, yPos, isActive, clickAction)
+            Dim createBtn As Action(Of String, Type, Integer, Action) = Sub(text, targetType, yPos, clickAction)
+                                                                            Dim isActiveBtn As Boolean = String.Equals(activeItem, targetType.Name, StringComparison.OrdinalIgnoreCase) OrElse String.Equals(owner.GetType().Name, targetType.Name, StringComparison.OrdinalIgnoreCase)
                                                                             Dim btn As New Guna2Button()
                                                                             btn.Text = text
                                                                             btn.Size = New Size(buttonWidth, buttonHeight)
@@ -104,95 +101,98 @@ Public NotInheritable Class NavigationBuilder
                                                                             btn.BorderRadius = 12
                                                                             btn.Font = New Font("Poppins", 10, FontStyle.Regular)
                                                                             btn.TextAlign = HorizontalAlignment.Left
-                                                                            btn.FillColor = If(isActive, Color.FromArgb(254, 191, 16), Color.Transparent)
-                                                                            btn.ForeColor = If(isActive, Color.FromArgb(26, 29, 31), Color.White)
-                                                                            btn.BorderThickness = If(isActive, 0, 1)
-                                                                            btn.BorderColor = If(isActive, Color.Transparent, Color.FromArgb(80, 80, 80))
+                                                                            btn.FillColor = If(isActiveBtn, Color.FromArgb(254, 191, 16), Color.Transparent)
+                                                                            btn.ForeColor = If(isActiveBtn, Color.FromArgb(26, 29, 31), Color.White)
+                                                                            btn.BorderThickness = If(isActiveBtn, 0, 1)
+                                                                            btn.BorderColor = If(isActiveBtn, Color.Transparent, Color.FromArgb(80, 80, 80))
                                                                             btn.BackColor = Color.Transparent
                                                                             btn.Cursor = Cursors.Hand
                                                                             btn.ShadowDecoration.Enabled = True
                                                                             btn.ShadowDecoration.Color = Color.FromArgb(30, 30, 30)
                                                                             btn.ShadowDecoration.Depth = 4
                                                                             AddHandler btn.Click, Sub(s, e)
-                                                                                                     Try
-                                                                                                         clickAction()
-                                                                                                     Catch
-                                                                                                     End Try
-                                                                                                 End Sub
+                                                                                                      Try
+                                                                                                          If isActiveBtn Then
+                                                                                                              ' Try to refresh the current form via common refresh methods if available
+                                                                                                              Dim refreshCandidates As String() = {"Refresh", "Reload", "LoadProducts", "LoadDashboardData", "LoadChartData", "RefreshData"}
+                                                                                                              For Each mName In refreshCandidates
+                                                                                                                  Dim mi = owner.GetType().GetMethod(mName, BindingFlags.Instance Or BindingFlags.NonPublic Or BindingFlags.Public)
+                                                                                                                  If mi IsNot Nothing Then
+                                                                                                                      mi.Invoke(owner, Nothing)
+                                                                                                                      Exit For
+                                                                                                                  End If
+                                                                                                              Next
+                                                                                                          Else
+                                                                                                              clickAction()
+                                                                                                          End If
+                                                                                                      Catch
+                                                                                                      End Try
+                                                                                                  End Sub
                                                                             AddHandler btn.MouseEnter, Sub()
-                                                                                                         If Not isActive Then
-                                                                                                             btn.FillColor = Color.FromArgb(48, 52, 54)
-                                                                                                             btn.BorderColor = Color.FromArgb(254, 191, 16)
-                                                                                                             btn.Font = New Font("Poppins", 9, FontStyle.Bold)
-                                                                                                         End If
-                                                                                                     End Sub
+                                                                                                           If Not isActiveBtn Then
+                                                                                                               btn.FillColor = Color.FromArgb(48, 52, 54)
+                                                                                                               btn.BorderColor = Color.FromArgb(254, 191, 16)
+                                                                                                               btn.Font = New Font("Poppins", 9, FontStyle.Bold)
+                                                                                                           End If
+                                                                                                       End Sub
                                                                             AddHandler btn.MouseLeave, Sub()
-                                                                                                         If Not isActive Then
-                                                                                                             btn.FillColor = Color.Transparent
-                                                                                                             btn.BorderColor = Color.FromArgb(80, 80, 80)
-                                                                                                             btn.Font = New Font("Poppins", 10, FontStyle.Regular)
-                                                                                                         End If
-                                                                                                     End Sub
+                                                                                                           If Not isActiveBtn Then
+                                                                                                               btn.FillColor = Color.Transparent
+                                                                                                               btn.BorderColor = Color.FromArgb(80, 80, 80)
+                                                                                                               btn.Font = New Font("Poppins", 10, FontStyle.Regular)
+                                                                                                           End If
+                                                                                                       End Sub
                                                                             dashboardPanel.Controls.Add(btn)
                                                                         End Sub
 
-            ' Navigation buttons (emoji icons preserved) — isActive determined from activeItem
-            createBtn("🏠 Dashboard", startY + buttonIndex * (buttonHeight + buttonSpacing), isActiveFor("Dashboard"), Sub()
-                                                                                                    NavigateToForm(owner, GetType(Dashboard))
-                                                                                                End Sub)
+            ' Navigation buttons (emoji icons preserved) - use target types so active state is computed automatically
+            createBtn("🏠 Dashboard", GetType(Dashboard), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
+                                                                                                                     NavigateToForm(owner, GetType(Dashboard))
+                                                                                                                 End Sub)
             buttonIndex += 1
 
-            createBtn("🛒 POS / Sales", startY + buttonIndex * (buttonHeight + buttonSpacing), isActiveFor("Sales"), Sub()
-                                                                                                        NavigateToForm(owner, GetType(Sales))
-                                                                                                    End Sub)
+            createBtn("🛒 POS / Sales", GetType(Sales), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
+                                                                                                                   NavigateToForm(owner, GetType(Sales))
+                                                                                                               End Sub)
             buttonIndex += 1
 
-            ' Inventory (active depending on activeItem)
-            createBtn("📦 Inventory", startY + buttonIndex * (buttonHeight + buttonSpacing), isActiveFor("Inventory"), Sub()
-                                                                                                          ' If we're already on Inventory, try to refresh via reflection
-                                                                                                          Try
-                                                                                                              If owner.GetType().Name = "Inventory" Then
-                                                                                                                  Dim mi = owner.GetType().GetMethod("LoadProducts", BindingFlags.Instance Or BindingFlags.NonPublic Or BindingFlags.Public)
-                                                                                                                  If mi IsNot Nothing Then mi.Invoke(owner, Nothing)
-                                                                                                              Else
-                                                                                                                  NavigateToForm(owner, GetType(Inventory))
-                                                                                                              End If
-                                                                                                          Catch
-                                                                                                          End Try
-                                                                                                      End Sub)
+            ' Inventory
+            createBtn("📦 Inventory", GetType(Inventory), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
+                                                                                                                     NavigateToForm(owner, GetType(Inventory))
+                                                                                                                 End Sub)
             buttonIndex += 1
 
-            createBtn("📊 Sales Records", startY + buttonIndex * (buttonHeight + buttonSpacing), isActiveFor("SalesRecord"), Sub()
-                                                                                                        NavigateToForm(owner, GetType(SalesRecord))
-                                                                                                    End Sub)
+            createBtn("📊 Sales Records", GetType(SalesRecord), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
+                                                                                                                           NavigateToForm(owner, GetType(SalesRecord))
+                                                                                                                       End Sub)
             buttonIndex += 1
 
             If currentRole = "MANAGER" Or currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
-                createBtn("👥 Staff", startY + buttonIndex * (buttonHeight + buttonSpacing), isActiveFor("Staff"), Sub()
-                                                                                                        NavigateToForm(owner, GetType(Staff))
-                                                                                                    End Sub)
+                createBtn("👥 Staff", GetType(Staff), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
+                                                                                                                 NavigateToForm(owner, GetType(Staff))
+                                                                                                             End Sub)
                 buttonIndex += 1
             End If
 
-            createBtn("📋 Inventory Logs", startY + buttonIndex * (buttonHeight + buttonSpacing), isActiveFor("InventoryLog"), Sub()
-                                                                                                            NavigateToForm(owner, GetType(InventoryLog))
-                                                                                                        End Sub)
+            createBtn("📋 Inventory Logs", GetType(InventoryLog), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
+                                                                                                                             NavigateToForm(owner, GetType(InventoryLog))
+                                                                                                                         End Sub)
             buttonIndex += 1
 
-            createBtn("🏷️ Suppliers", startY + buttonIndex * (buttonHeight + buttonSpacing), isActiveFor("Supplier"), Sub()
-                                                                                                      NavigateToForm(owner, GetType(Supplier))
-                                                                                                  End Sub)
+            createBtn("🏷️ Suppliers", GetType(Supplier), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
+                                                                                                                     NavigateToForm(owner, GetType(Supplier))
+                                                                                                                 End Sub)
             buttonIndex += 1
 
-            createBtn("🔍 Audit Logs", startY + buttonIndex * (buttonHeight + buttonSpacing), isActiveFor("AuditLog"), Sub()
-                                                                                                       NavigateToForm(owner, GetType(AuditLog))
-                                                                                                   End Sub)
+            createBtn("🔍 Audit Logs", GetType(AuditLog), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
+                                                                                                                     NavigateToForm(owner, GetType(AuditLog))
+                                                                                                                 End Sub)
             buttonIndex += 1
 
             If currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
-                createBtn("⚙️ System", startY + buttonIndex * (buttonHeight + buttonSpacing), isActiveFor("Sys"), Sub()
-                                                                                                        NavigateToForm(owner, GetType(Sys))
-                                                                                                    End Sub)
+                createBtn("⚙️ System", GetType(Sys), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
+                                                                                                                NavigateToForm(owner, GetType(Sys))
+                                                                                                            End Sub)
                 buttonIndex += 1
             End If
 
@@ -211,16 +211,40 @@ Public NotInheritable Class NavigationBuilder
                 ' ignore
             End Try
 
+            ' Instantiate and show the new form, then close the owner. Capital enforcement for Sales is handled within the Sales form's Shown handler to ensure the form is visible before any modal dialog.
             Dim frm As Form = CType(Activator.CreateInstance(targetType), Form)
-            frm.StartPosition = FormStartPosition.CenterScreen
-            frm.Show()
-            owner.Close()
-        Catch ex As Exception
-            ' fallback: try to just show the form
             Try
-                Dim frm As Form = CType(Activator.CreateInstance(targetType), Form)
-                frm.Show()
+                frm.StartPosition = FormStartPosition.CenterScreen
+                frm.TopMost = True
+                frm.WindowState = FormWindowState.Normal
+                frm.Bounds = Screen.PrimaryScreen.Bounds
+                frm.WindowState = FormWindowState.Maximized
             Catch
+                ' ignore layout errors for forms that customize their own layout
+            End Try
+
+            frm.Show()
+            Try
+                frm.BringToFront()
+                frm.Activate()
+                Application.DoEvents()
+            Catch
+                ' ignore activation errors
+            End Try
+
+            Try
+                owner.Close()
+            Catch
+                ' ignore close errors
+            End Try
+
+        Catch ex As Exception
+            ' fallback: try to just show the form without fullscreen changes
+            Try
+                Dim frm2 As Form = CType(Activator.CreateInstance(targetType), Form)
+                frm2.Show()
+            Catch
+                ' ignore
             End Try
         End Try
     End Sub
