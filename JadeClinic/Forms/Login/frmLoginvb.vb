@@ -1580,21 +1580,9 @@ Public Class frmLoginvb
                 ' Check user role and route accordingly
                 Dim userRole As String = If(LoggedInRole, "Staff").ToUpper()
 
-                If userRole = "STAFF" Then
-                    ' Staff users go directly to Sales (POS)
-                    Console.WriteLine("Creating Sales form for Staff user...")
-                    Dim salesForm As New Sales()
-                    Console.WriteLine("Showing Sales form for Staff...")
-                    salesForm.Show()
-                    Console.WriteLine("Sales form shown successfully for Staff user!")
-                Else
-                    ' Managers and Admins go to Dashboard
-                    Console.WriteLine("Creating Dashboard for Manager/Admin user...")
-                    Dim dashboardForm As New Dashboard()
-                    Console.WriteLine("Showing Dashboard for Manager/Admin...")
-                    dashboardForm.Show()
-                    Console.WriteLine("Dashboard shown successfully for Manager/Admin user!")
-                End If
+                Dim shell As New MainShell()
+                shell.Show()
+                shell.ShowInitialPage()
 
             Catch ex As Exception
                 Console.WriteLine($"Error showing target form: {ex.Message}")

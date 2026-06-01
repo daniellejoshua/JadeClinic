@@ -211,32 +211,19 @@ Public NotInheritable Class NavigationBuilder
                 ' ignore
             End Try
 
-            ' Instantiate and show the new form, then close the owner. Capital enforcement for Sales is handled within the Sales form's Shown handler to ensure the form is visible before any modal dialog.
+            Dim shell As MainShell = TryCast(owner, MainShell)
+            If shell Is Nothing AndAlso owner IsNot Nothing Then
+                shell = TryCast(owner.FindForm(), MainShell)
+            End If
+
+            If shell IsNot Nothing Then
+                shell.ShowPage(targetType)
+                Return
+            End If
+
+            ' Fallback for legacy usage
             Dim frm As Form = CType(Activator.CreateInstance(targetType), Form)
-            Try
-                frm.StartPosition = FormStartPosition.CenterScreen
-                frm.TopMost = True
-                frm.WindowState = FormWindowState.Normal
-                frm.Bounds = Screen.PrimaryScreen.Bounds
-                frm.WindowState = FormWindowState.Maximized
-            Catch
-                ' ignore layout errors for forms that customize their own layout
-            End Try
-
             frm.Show()
-            Try
-                frm.BringToFront()
-                frm.Activate()
-                Application.DoEvents()
-            Catch
-                ' ignore activation errors
-            End Try
-
-            Try
-                owner.Close()
-            Catch
-                ' ignore close errors
-            End Try
 
         Catch ex As Exception
             ' fallback: try to just show the form without fullscreen changes
