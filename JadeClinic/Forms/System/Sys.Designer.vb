@@ -67,10 +67,10 @@ Partial Class Sys
         Guna2Panel1.Controls.Add(Guna2CirclePictureBox1)
         Guna2Panel1.CustomizableEdges = CustomizableEdges2
         Guna2Panel1.Dock = DockStyle.Top
-        Guna2Panel1.Location = New Point(236, 0)
+        Guna2Panel1.Location = New Point(209, 0)
         Guna2Panel1.Name = "Guna2Panel1"
         Guna2Panel1.ShadowDecoration.CustomizableEdges = CustomizableEdges3
-        Guna2Panel1.Size = New Size(1164, 80)
+        Guna2Panel1.Size = New Size(1191, 80)
         Guna2Panel1.TabIndex = 0
         ' 
         ' lblUsername
@@ -99,13 +99,14 @@ Partial Class Sys
         ' DashboardPanel
         ' 
         DashboardPanel.BackColor = Color.White
+        DashboardPanel.BorderRadius = 30
         DashboardPanel.Controls.Add(PictureBox9)
         DashboardPanel.CustomizableEdges = CustomizableEdges4
         DashboardPanel.Dock = DockStyle.Left
         DashboardPanel.Location = New Point(0, 0)
         DashboardPanel.Name = "DashboardPanel"
         DashboardPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges5
-        DashboardPanel.Size = New Size(236, 885)
+        DashboardPanel.Size = New Size(209, 885)
         DashboardPanel.TabIndex = 1
         ' 
         ' PictureBox9
@@ -125,11 +126,11 @@ Partial Class Sys
         MainContentPanel.Controls.Add(HeaderPanel)
         MainContentPanel.CustomizableEdges = CustomizableEdges16
         MainContentPanel.Dock = DockStyle.Fill
-        MainContentPanel.Location = New Point(236, 80)
+        MainContentPanel.Location = New Point(209, 80)
         MainContentPanel.Name = "MainContentPanel"
         MainContentPanel.Padding = New Padding(20)
         MainContentPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges17
-        MainContentPanel.Size = New Size(1164, 805)
+        MainContentPanel.Size = New Size(1191, 805)
         MainContentPanel.TabIndex = 2
         ' 
         ' ContentAreaPanel
@@ -143,7 +144,7 @@ Partial Class Sys
         ContentAreaPanel.Location = New Point(20, 80)
         ContentAreaPanel.Name = "ContentAreaPanel"
         ContentAreaPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges13
-        ContentAreaPanel.Size = New Size(1124, 705)
+        ContentAreaPanel.Size = New Size(1151, 705)
         ContentAreaPanel.TabIndex = 1
         ' 
         ' btnColorCustomization
@@ -219,7 +220,7 @@ Partial Class Sys
         HeaderPanel.Location = New Point(20, 20)
         HeaderPanel.Name = "HeaderPanel"
         HeaderPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges15
-        HeaderPanel.Size = New Size(1124, 60)
+        HeaderPanel.Size = New Size(1151, 60)
         HeaderPanel.TabIndex = 0
         ' 
         ' lblPageTitle

@@ -203,17 +203,25 @@ Public NotInheritable Class NavigationBuilder
 
     Private Shared Sub NavigateToForm(owner As Form, targetType As Type)
         Try
-            ' Try to set private isNavigating flag via reflection to avoid close confirmation
             Try
                 Dim fld = owner.GetType().GetField("isNavigating", BindingFlags.Instance Or BindingFlags.NonPublic)
                 If fld IsNot Nothing Then fld.SetValue(owner, True)
             Catch
-                ' ignore
             End Try
 
-            Dim shell As MainShell = TryCast(owner, MainShell)
-            If shell Is Nothing AndAlso owner IsNot Nothing Then
-                shell = TryCast(owner.FindForm(), MainShell)
+            Dim shell As MainShell = Nothing
+
+            If TypeOf owner Is MainShell Then
+                shell = DirectCast(owner, MainShell)
+            ElseIf owner IsNot Nothing Then
+                Dim c As Control = owner.Parent
+                While c IsNot Nothing
+                    If TypeOf c Is MainShell Then
+                        shell = DirectCast(c, MainShell)
+                        Exit While
+                    End If
+                    c = c.Parent
+                End While
             End If
 
             If shell IsNot Nothing Then
@@ -221,17 +229,20 @@ Public NotInheritable Class NavigationBuilder
                 Return
             End If
 
-            ' Fallback for legacy usage
             Dim frm As Form = CType(Activator.CreateInstance(targetType), Form)
             frm.Show()
+            If owner IsNot Nothing AndAlso Not owner.IsDisposed Then
+                owner.Close()
+            End If
 
         Catch ex As Exception
-            ' fallback: try to just show the form without fullscreen changes
             Try
                 Dim frm2 As Form = CType(Activator.CreateInstance(targetType), Form)
                 frm2.Show()
+                If owner IsNot Nothing AndAlso Not owner.IsDisposed Then
+                    owner.Close()
+                End If
             Catch
-                ' ignore
             End Try
         End Try
     End Sub

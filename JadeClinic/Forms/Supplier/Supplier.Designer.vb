@@ -64,7 +64,7 @@ Partial Class Supplier
         DashboardPanel.Controls.Add(PictureBox9)
         DashboardPanel.CustomizableEdges = CustomizableEdges1
         DashboardPanel.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
-        DashboardPanel.Location = New Point(-33, 5)
+        DashboardPanel.Location = New Point(-10, 5)
         DashboardPanel.Name = "DashboardPanel"
         DashboardPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges2
         DashboardPanel.Size = New Size(236, 1016)
@@ -83,8 +83,9 @@ Partial Class Supplier
         ' 
         ' Guna2CirclePictureBox5
         ' 
+        Guna2CirclePictureBox5.Anchor = AnchorStyles.Top Or AnchorStyles.Right
         Guna2CirclePictureBox5.ImageRotate = 0F
-        Guna2CirclePictureBox5.Location = New Point(1756, 20)
+        Guna2CirclePictureBox5.Location = New Point(1755, 20)
         Guna2CirclePictureBox5.Name = "Guna2CirclePictureBox5"
         Guna2CirclePictureBox5.ShadowDecoration.CustomizableEdges = CustomizableEdges3
         Guna2CirclePictureBox5.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
@@ -100,6 +101,7 @@ Partial Class Supplier
         InventoryLogDataGrid.AllowUserToResizeRows = False
         DataGridViewCellStyle1.BackColor = Color.White
         InventoryLogDataGrid.AlternatingRowsDefaultCellStyle = DataGridViewCellStyle1
+        InventoryLogDataGrid.Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
         InventoryLogDataGrid.BackgroundColor = Color.FromArgb(CByte(61), CByte(65), CByte(65))
         DataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleLeft
         DataGridViewCellStyle2.BackColor = Color.FromArgb(CByte(100), CByte(88), CByte(255))
@@ -124,7 +126,7 @@ Partial Class Supplier
         InventoryLogDataGrid.Name = "InventoryLogDataGrid"
         InventoryLogDataGrid.RowHeadersVisible = False
         InventoryLogDataGrid.RowHeadersWidth = 51
-        InventoryLogDataGrid.Size = New Size(1655, 861)
+        InventoryLogDataGrid.Size = New Size(1655, 842)
         InventoryLogDataGrid.TabIndex = 41
         InventoryLogDataGrid.ThemeStyle.AlternatingRowsStyle.BackColor = Color.White
         InventoryLogDataGrid.ThemeStyle.AlternatingRowsStyle.Font = Nothing
@@ -170,6 +172,7 @@ Partial Class Supplier
         ' 
         ' Exportbtn
         ' 
+        Exportbtn.Anchor = AnchorStyles.Top Or AnchorStyles.Right
         Exportbtn.BorderRadius = 10
         Exportbtn.CustomizableEdges = CustomizableEdges6
         Exportbtn.DisabledState.BorderColor = Color.DarkGray
@@ -199,6 +202,7 @@ Partial Class Supplier
         ' 
         ' lblUsername
         ' 
+        lblUsername.Anchor = AnchorStyles.Top Or AnchorStyles.Right
         lblUsername.BackColor = Color.Transparent
         lblUsername.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         lblUsername.ForeColor = Color.White

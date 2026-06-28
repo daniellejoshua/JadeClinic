@@ -705,7 +705,7 @@ Partial Class ProfileSettings
         DashboardPanel.Controls.Add(PictureBox9)
         DashboardPanel.CustomizableEdges = CustomizableEdges30
         DashboardPanel.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
-        DashboardPanel.Location = New Point(-33, 5)
+        DashboardPanel.Location = New Point(-10, 5)
         DashboardPanel.Name = "DashboardPanel"
         DashboardPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges31
         DashboardPanel.Size = New Size(236, 885)

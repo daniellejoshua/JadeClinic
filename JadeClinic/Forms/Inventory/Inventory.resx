@@ -145,7 +145,7 @@
     <value>0</value>
   </data>
   <data name="DashboardPanel.Location" type="System.Drawing.Point, System.Drawing">
-    <value>-33, 5</value>
+    <value>-10, 5</value>
   </data>
   <data name="DashboardPanel.Size" type="System.Drawing.Size, System.Drawing">
     <value>236, 1036</value>
@@ -298,13 +298,13 @@
     <value>4</value>
   </data>
   <data name="Guna2DataGridView1.Location" type="System.Drawing.Point, System.Drawing">
-    <value>673, 167</value>
+    <value>685, 167</value>
   </data>
   <data name="Guna2DataGridView1.RowHeadersWidth" type="System.Int32, mscorlib">
     <value>51</value>
   </data>
   <data name="Guna2DataGridView1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>1217, 841</value>
+    <value>1205, 874</value>
   </data>
   <data name="Guna2DataGridView1.TabIndex" type="System.Int32, mscorlib">
     <value>75</value>
@@ -500,7 +500,7 @@
     <value>Poppins Medium, 9pt</value>
   </data>
   <data name="btnInactive.Location" type="System.Drawing.Point, System.Drawing">
-    <value>307, 27</value>
+    <value>295, 27</value>
   </data>
   <data name="btnInactive.Size" type="System.Drawing.Size, System.Drawing">
     <value>98, 37</value>
@@ -713,10 +713,10 @@
     <value>7</value>
   </data>
   <data name="FilterPanel.Location" type="System.Drawing.Point, System.Drawing">
-    <value>224, 167</value>
+    <value>243, 167</value>
   </data>
   <data name="FilterPanel.Size" type="System.Drawing.Size, System.Drawing">
-    <value>428, 841</value>
+    <value>424, 874</value>
   </data>
   <data name="FilterPanel.TabIndex" type="System.Int32, mscorlib">
     <value>8</value>

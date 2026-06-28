@@ -27,30 +27,51 @@ Public Class Sys
     Private ReadOnly AlertRed As Color = Color.FromArgb(255, 71, 87)           ' #FF4757 - Error/Alert states
 
     Private Sub Sys_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        ' Fullscreen main form behavior
-        IdleTimeoutManager.Instance.StartMonitoring(Me)
-        Me.FormBorderStyle = FormBorderStyle.None
-        Me.WindowState = FormWindowState.Maximized
+        Try
+            Console.WriteLine($"Sys_Load: starting. Form size={Me.Size}, ClientSize={Me.ClientSize}, TopLevel={Me.TopLevel}, IsHosted={IsHostedInMainShell()}")
 
-        ' Create navigation menu
-        CreateNavigationMenu()
+            Me.KeyPreview = True
+            IdleTimeoutManager.Instance.StartMonitoring(Me)
 
-        ' Validate user session
-        If Not ValidateUserSession() Then
-            Return
-        End If
+            ' Only set standalone form properties when not hosted in MainShell
+            If Not IsHostedInMainShell() Then
+                Me.FormBorderStyle = FormBorderStyle.None
+                Me.WindowState = FormWindowState.Maximized
+            End If
 
-        ' Initialize profile section
-        InitializeProfileSection()
+            Console.WriteLine("Sys_Load: creating nav menu")
+            ' Create navigation menu directly using shared builder
+            NavigationBuilder.Build(DashboardPanel, Me, "Sys")
 
-        ' Update form title to show logged-in user
-        Me.Text = $"System Settings - {frmLoginvb.LoggedInUsername}"
+            Console.WriteLine("Sys_Load: validating session")
+            ' Validate user session
+            If Not ValidateUserSession() Then
+                Return
+            End If
 
-        ' Start idle timeout monitoring
-        IdleTimeoutManager.Instance.StartMonitoring(Me)
+            Console.WriteLine("Sys_Load: initializing profile")
+            ' Initialize profile section
+            InitializeProfileSection()
 
-        ' Initialize UI
-        InitializeButtons()
+            ' Update form title to show logged-in user
+            Me.Text = $"System Settings - {frmLoginvb.LoggedInUsername}"
+
+            Console.WriteLine("Sys_Load: starting idle timeout")
+            ' Start idle timeout monitoring
+            IdleTimeoutManager.Instance.StartMonitoring(Me)
+
+            Console.WriteLine("Sys_Load: initializing buttons")
+            ' Initialize UI
+            InitializeButtons()
+
+            Console.WriteLine($"Sys_Load: completed. Controls count={Me.Controls.Count}")
+
+            ' Set focus to form so ESC key works immediately
+            Me.Activate()
+            Me.Focus()
+        Catch ex As Exception
+            MessageBox.Show($"Sys_Load error: {ex.Message}", "Sys Load Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
     End Sub
 
     Private Sub InitializeButtons()
@@ -89,213 +110,15 @@ Public Class Sys
 
     End Sub
 
-    ' Create navigation menu
-    Private Sub CreateNavigationMenu()
-        NavigationBuilder.Build(DashboardPanel, Me, "Sys")
-        Exit Sub
-        Try
-            ' Remove existing controls except the logo
-            For i = DashboardPanel.Controls.Count - 1 To 0 Step -1
-                Dim control As Control = DashboardPanel.Controls(i)
-                If TypeOf control IsNot PictureBox Then
-                    DashboardPanel.Controls.Remove(control)
-                    control.Dispose()
-                End If
-            Next
-
-            ' Use the shared dark sidebar palette for consistency
-            DashboardPanel.FillColor = System.Drawing.Color.FromArgb(61, 65, 66)
-
-            ' Render company logo into existing PictureBox9
-            If PictureBox9 IsNot Nothing Then
-                Try
-                    Dim logoImg As System.Drawing.Image = CompanySettingsManager.Instance.GetCompanyLogo()
-                    If logoImg IsNot Nothing Then
-                        PictureBox9.Image = logoImg
-                        PictureBox9.Location = New Point(81, 15)
-                    End If
-                Catch ex As Exception
-                    Console.WriteLine($"Unable to set dashboard logo: {ex.Message}")
-                End Try
-                PictureBox9.BringToFront()
-            End If
-
-            Dim availableWidth As Integer = DashboardPanel.Width - 40
-            Dim startY As Integer = 250
-            Dim buttonHeight As Integer = 50
-            Dim buttonSpacing As Integer = 15
-            Dim buttonWidth As Integer = availableWidth - 5
-            Dim buttonIndex As Integer = 0
-
-            ' Title and subtitle (consistent across forms)
-            Dim titleLabel As New Label() With {
-            .Text = CompanySettingsManager.Instance.GetSettingString("CompanyName", "JADE CLINIC"),
-            .Font = New Font("Poppins", 14, FontStyle.Bold),
-            .ForeColor = GoldenYellow,
-            .BackColor = Color.Transparent,
-            .AutoSize = False,
-            .Size = New Size(availableWidth, 30),
-            .Location = New Point(20, 110),
-            .TextAlign = ContentAlignment.MiddleCenter
-        }
-            DashboardPanel.Controls.Add(titleLabel)
-
-            Dim subtitleLabel As New Label() With {
-            .Text = "Dental Supply Management",
-            .Font = New Font("Poppins", 10, FontStyle.Regular),
-            .ForeColor = LightSilver,
-            .BackColor = Color.Transparent,
-            .AutoSize = False,
-            .Size = New Size(availableWidth, 25),
-            .Location = New Point(20, 145),
-            .TextAlign = ContentAlignment.MiddleCenter
-        }
-            DashboardPanel.Controls.Add(subtitleLabel)
-
-            Dim separator1 As New Panel() With {
-            .BackColor = System.Drawing.Color.FromArgb(50, 50, 50),
-            .Size = New Size(availableWidth - 20, 2),
-            .Location = New Point(30, 190)
-        }
-            DashboardPanel.Controls.Add(separator1)
-
-            Dim navLabel As New Label() With {
-            .Text = "NAVIGATION",
-            .Font = New Font("Poppins", 10, FontStyle.Bold),
-            .ForeColor = LightSilver,
-            .BackColor = Color.Transparent,
-            .AutoSize = False,
-            .Size = New Size(availableWidth, 25),
-            .Location = New Point(20, 205),
-            .TextAlign = ContentAlignment.MiddleCenter
-        }
-            DashboardPanel.Controls.Add(navLabel)
-
-            Dim currentRole As String = If(frmLoginvb.LoggedInRole, "Staff").ToUpper()
-
-            ' Ordered navigation:
-            ' Dashboard -> POS / Sales -> Inventory -> Sales Records -> Staff -> Inventory Logs -> Suppliers -> Audit Logs -> System (active)
-
-            ' 1. Dashboard
-            Dim navDashboardBtn = CreateLargeNavButton("🏠 Dashboard", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-            AddHandler navDashboardBtn.Click, AddressOf NavDashboard_Click
-            buttonIndex += 1
-
-            ' 2. POS / Sales
-            Dim navPOSBtn = CreateLargeNavButton("🛒 POS / Sales", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-            AddHandler navPOSBtn.Click, AddressOf NavSales_Click
-            buttonIndex += 1
-
-            ' 3. Inventory
-            Dim navInventoryBtn = CreateLargeNavButton("📦 Inventory", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-            AddHandler navInventoryBtn.Click, AddressOf NavInventory_Click
-            buttonIndex += 1
-
-            ' 4. Sales Records
-            Dim navSalesRecordsBtn = CreateLargeNavButton("📊 Sales Records", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-            AddHandler navSalesRecordsBtn.Click, AddressOf NavSalesRecords_Click
-            buttonIndex += 1
-
-            ' 5. Staff (role)
-            If currentRole = "MANAGER" Or currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
-                Dim navStaffBtn = CreateLargeNavButton("👥 Staff", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-                AddHandler navStaffBtn.Click, AddressOf NavStaff_Click
-                buttonIndex += 1
-            End If
-
-            ' 6. Inventory Logs
-            Dim navInventoryLogBtn = CreateLargeNavButton("📋 Inventory Logs", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-            AddHandler navInventoryLogBtn.Click, AddressOf NavInventoryLog_Click
-            buttonIndex += 1
-
-            ' 7. Suppliers
-            Dim navSuppliersBtn = CreateLargeNavButton("🏷️ Suppliers", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-            AddHandler navSuppliersBtn.Click, AddressOf NavSuppliers_Click
-            buttonIndex += 1
-
-            ' 8. Audit Logs (visible to Admin)
-            Dim navAuditLogBtn As Guna.UI2.WinForms.Guna2Button = Nothing
-            If currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
-                navAuditLogBtn = CreateLargeNavButton("🔍 Audit Logs", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
-                AddHandler navAuditLogBtn.Click, AddressOf NavAuditLog_Click
-                buttonIndex += 1
-            Else
-                ' keep space for visual consistency (optional)
-            End If
-
-            ' 9. System (ACTIVE on this form)
-            Dim systemBtn = CreateLargeNavButton("⚙️ System", startY + buttonIndex * (buttonHeight + buttonSpacing), True, buttonWidth, buttonHeight)
-            ' active button: refresh current view when clicked
-            AddHandler systemBtn.Click, Sub()
-                                            ' nothing destructive: just keep focus or refresh settings UI
-                                            Try
-                                                ' reinitialize UI if needed
-                                                InitializeButtons()
-                                            Catch
-                                            End Try
-                                        End Sub
-            buttonIndex += 1
-
-        Catch ex As Exception
-            Console.WriteLine($"Error creating navigation menu: {ex.Message}")
-        End Try
-    End Sub
-    Private Sub NavSuppliers_Click(sender As Object, e As EventArgs)
-        Try
-            isNavigating = True
-            Supplier.Show()
-            Me.Close()
-        Catch ex As Exception
-            MessageBox.Show($"Unable to open Suppliers: {ex.Message}", "Navigation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-        End Try
-    End Sub
-    Private Function CreateLargeNavButton(text As String, yPosition As Integer, isActive As Boolean, buttonWidth As Integer, buttonHeight As Integer) As Guna.UI2.WinForms.Guna2Button
-        Dim btn As New Guna.UI2.WinForms.Guna2Button()
-
-        btn.Text = text
-        btn.Size = New Size(buttonWidth, buttonHeight)
-        btn.Location = New Point(20, yPosition)
-        btn.BorderRadius = 12
-        btn.Font = New Font("Poppins", 10, FontStyle.Regular)
-        btn.TextAlign = HorizontalAlignment.Left
-
-        ' Consistent palette used across forms
-        btn.FillColor = If(isActive, GoldenYellow, System.Drawing.Color.Transparent)
-        btn.ForeColor = If(isActive, DeepCharcoal, PureWhite)
-        btn.BorderThickness = If(isActive, 0, 1)
-        btn.BorderColor = If(isActive, System.Drawing.Color.Transparent, System.Drawing.Color.FromArgb(80, 80, 80))
-        btn.BackColor = System.Drawing.Color.Transparent
-        btn.Cursor = Cursors.Hand
-
-        btn.ShadowDecoration.Enabled = True
-        btn.ShadowDecoration.Color = DeepCharcoal
-        btn.ShadowDecoration.Depth = 4
-
-        AddHandler btn.MouseEnter, Sub()
-                                       If Not isActive Then
-                                           btn.FillColor = System.Drawing.Color.FromArgb(48, 52, 54)
-                                           btn.BorderColor = RichOlive
-                                           btn.Font = New Font("Poppins", 9, FontStyle.Bold)
-                                       End If
-                                   End Sub
-
-        AddHandler btn.MouseLeave, Sub()
-                                       If Not isActive Then
-                                           btn.FillColor = System.Drawing.Color.Transparent
-                                           btn.BorderColor = System.Drawing.Color.FromArgb(80, 80, 80)
-                                           btn.Font = New Font("Poppins", 10, FontStyle.Regular)
-                                       End If
-                                   End Sub
-
-        DashboardPanel.Controls.Add(btn)
-        Return btn
-    End Function
-    ' Helper method to validate user session
     Private Function ValidateUserSession() As Boolean
         If String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
             MessageBox.Show("User session expired. Please log in again.", "Session Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-            frmLoginvb.Show()
-            Me.Hide()
+            If IsHostedInMainShell() Then
+                GetMainShell().ShowPage(GetType(frmLoginvb))
+            Else
+                frmLoginvb.Show()
+            End If
+            Me.Close()
             Return False
         End If
         Return True
@@ -493,18 +316,17 @@ Public Class Sys
                 Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Navigation", "Navigated from System to ProfileSettings")
             End If
 
-            ' Prevent the form-closing confirmation and hide dropdown first
             isNavigating = True
             HideProfileDropdown()
 
-            ' Open ProfileSettings form (centered) and close this form
             Dim profileForm As New ProfileSettings()
             profileForm.StartPosition = FormStartPosition.CenterScreen
             profileForm.Show()
 
-            Me.Close()
+            If Not IsHostedInMainShell() Then
+                Me.Close()
+            End If
         Catch ex As Exception
-            ' Restore flag on failure and show error
             isNavigating = False
             MessageBox.Show($"Unable to open Profile Settings: {ex.Message}", "Navigation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
@@ -713,56 +535,18 @@ Public Class Sys
         End Try
     End Sub
 
-    ' Navigation event handlers
-    Private Sub NavDashboard_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        Dashboard.Show()
-        Me.Close()
-    End Sub
-
-    Private Sub NavSales_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        Sales.Show()
-        Me.Close()
-    End Sub
-
-    Private Sub NavInventory_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        Inventory.Show()
-        Me.Close()
-    End Sub
-
-
-
-    Private Sub NavStaff_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        Staff.Show()
-        Me.Close()
-    End Sub
-
-    Private Sub NavInventoryLog_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        InventoryLog.Show()
-        Me.Close()
-    End Sub
-
-
-
     Private Sub Sys_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
-        ' Stop idle timeout monitoring
         IdleTimeoutManager.Instance.StopMonitoring(Me)
 
-        ' If this is programmatic navigation, don't show confirmation
         If isNavigating Then
             Return
         End If
 
-        ' Prevent multiple confirmations by checking the close reason
-        If e.CloseReason = CloseReason.ApplicationExitCall Then
+        ' Skip exit confirmation when hosted in MainShell
+        If IsHostedInMainShell() Then
             Return
         End If
 
-        ' Show confirmation only for user-initiated close (X button)
         If e.CloseReason = CloseReason.UserClosing Then
             Dim result As DialogResult = EscForm.ConfirmExit(Me)
 
@@ -784,29 +568,6 @@ Public Class Sys
                 e.Cancel = True
             End If
         End If
-    End Sub
-    Private Sub NavSalesRecords_Click(sender As Object, e As EventArgs)
-        Try
-            isNavigating = True
-            Dim salesRecordsForm As New SalesRecord()
-            salesRecordsForm.StartPosition = FormStartPosition.CenterScreen
-            salesRecordsForm.Show()
-            Me.Close()
-        Catch ex As Exception
-            MessageBox.Show($"Unable to open Sales Records: {ex.Message}", "Navigation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-        End Try
-    End Sub
-
-    Private Sub NavAuditLog_Click(sender As Object, e As EventArgs)
-        Try
-            isNavigating = True
-            Dim auditLogForm As New AuditLog()
-            auditLogForm.StartPosition = FormStartPosition.CenterScreen
-            auditLogForm.Show()
-            Me.Close()
-        Catch ex As Exception
-            MessageBox.Show($"Unable to open Audit Logs: {ex.Message}", "Navigation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-        End Try
     End Sub
 
     Protected Overrides Function ProcessCmdKey(ByRef msg As Message, keyData As Keys) As Boolean
@@ -859,4 +620,26 @@ Public Class Sys
     Private Sub Guna2Panel1_Paint(sender As Object, e As PaintEventArgs) Handles Guna2Panel1.Paint
 
     End Sub
+
+    Private Function IsHostedInMainShell() As Boolean
+        Dim parent As Control = Me.Parent
+        While parent IsNot Nothing
+            If TypeOf parent Is MainShell Then
+                Return True
+            End If
+            parent = parent.Parent
+        End While
+        Return False
+    End Function
+
+    Private Function GetMainShell() As MainShell
+        Dim parent As Control = Me.Parent
+        While parent IsNot Nothing
+            If TypeOf parent Is MainShell Then
+                Return CType(parent, MainShell)
+            End If
+            parent = parent.Parent
+        End While
+        Return Nothing
+    End Function
 End Class

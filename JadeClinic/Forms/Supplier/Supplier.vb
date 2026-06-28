@@ -1,5 +1,6 @@
 ﻿Imports Microsoft.Data.SqlClient
 Imports System.Linq
+Imports System.Reflection
 
 Public Class Supplier
     Private isNavigating As Boolean = False
@@ -9,27 +10,39 @@ Public Class Supplier
 
 
     Private Sub Supplier_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-
+        DashboardPanel.Location = New Point(-10, 5)
         Try
+            Me.KeyPreview = True
             Me.BackColor = Color.FromArgb(30, 30, 30)
-            Me.FormBorderStyle = FormBorderStyle.None
-            Me.WindowState = FormWindowState.Maximized
+
+            ' Only set standalone form properties when not hosted in MainShell
+            If Not IsHostedInMainShell() Then
+                Me.FormBorderStyle = FormBorderStyle.None
+                Me.WindowState = FormWindowState.Maximized
+            End If
 
             ' Validate session
             If String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
                 MessageBox.Show("User session expired. Please log in again.", "Session Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-                frmLoginvb.Show()
+                If IsHostedInMainShell() Then
+                    GetMainShell().ShowPage(GetType(frmLoginvb))
+                Else
+                    frmLoginvb.Show()
+                End If
                 Me.Close()
-
                 Return
             End If
+
+            ' Enable double buffering for smooth scrolling
+            SetDoubleBuffered(InventoryLogDataGrid)
+
             ' Start idle timeout monitoring
             IdleTimeoutManager.Instance.StartMonitoring(Me)
             ' Initialize profile section
             InitializeProfileSection()
 
-            ' Create navigation (match other pages)
-            CreateNavigationMenu()
+            ' Create navigation directly using shared builder
+            NavigationBuilder.Build(DashboardPanel, Me, "Supplier")
 
             ' Initialize grid and controls
             InitializeDataGridView()
@@ -40,9 +53,30 @@ Public Class Supplier
             AddHandler Exportbtn.Click, AddressOf Exportbtn_Click
             ' Load data on UI thread to avoid cross-thread control access
             LoadSuppliersData()
+
+            ' Set focus to form so ESC key works immediately
+            Me.Activate()
+            Me.Focus()
+
+            ' Align DataGridView bottom with DashboardPanel bottom
+            AlignDataGridViewToPanel()
         Catch ex As Exception
             MessageBox.Show($"Error initializing Suppliers page: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
+    End Sub
+
+    Private Sub AlignDataGridViewToPanel()
+        If DashboardPanel IsNot Nothing AndAlso InventoryLogDataGrid IsNot Nothing Then
+            Dim panelBottom As Integer = DashboardPanel.Location.Y + DashboardPanel.Size.Height
+            Dim newHeight As Integer = panelBottom - InventoryLogDataGrid.Location.Y
+            If newHeight > 100 Then
+                InventoryLogDataGrid.Size = New Size(InventoryLogDataGrid.Size.Width, newHeight)
+            End If
+        End If
+    End Sub
+
+    Private Sub Supplier_Resize(sender As Object, e As EventArgs) Handles Me.Resize
+        AlignDataGridViewToPanel()
     End Sub
 
     Private Sub Exportbtn_Click(sender As Object, e As EventArgs)
@@ -56,16 +90,20 @@ Public Class Supplier
 
     Protected Overrides Function ProcessCmdKey(ByRef msg As Message, keyData As Keys) As Boolean
         If keyData = Keys.Escape Then
+            If isNavigating Then
+                Return True
+            End If
+
             If Me.OwnedForms.Cast(Of Form)().Any(Function(f) f.Visible) Then
+                Return MyBase.ProcessCmdKey(msg, keyData)
+            End If
+
+            If Application.OpenForms.Cast(Of Form)().Any(Function(f) f IsNot Me AndAlso f.Visible AndAlso f.Modal) Then
                 Return MyBase.ProcessCmdKey(msg, keyData)
             End If
 
             If Not Me.ContainsFocus Then
                 Return MyBase.ProcessCmdKey(msg, keyData)
-            End If
-
-            If isNavigating Then
-                Return True
             End If
 
             Dim result As DialogResult = EscForm.ConfirmExit(Me)
@@ -559,24 +597,22 @@ Public Class Supplier
         isProfileDropdownVisible = True
     End Sub
     Private Sub NavigateToProfileSettings()
-        ' Navigate to ProfileSettings form (preserve audit and dropdown state).
         Try
             If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
-                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Navigation", "Navigated from Inventory to ProfileSettings")
+                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Navigation", "Navigated from Supplier to ProfileSettings")
             End If
 
-            ' Prevent the form-closing confirmation and hide the dropdown first
             isNavigating = True
             HideProfileDropdown()
 
-            ' Open ProfileSettings and close Inventory
             Dim profileForm As New ProfileSettings()
             profileForm.StartPosition = FormStartPosition.CenterScreen
             profileForm.Show()
 
-            Me.Close()
+            If Not IsHostedInMainShell() Then
+                Me.Close()
+            End If
         Catch ex As Exception
-            ' Restore navigating flag on failure and show error
             isNavigating = False
             MessageBox.Show($"Unable to open Profile Settings: {ex.Message}", "Navigation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
@@ -596,107 +632,6 @@ Public Class Supplier
         HideProfileDropdown()
     End Sub
 
-    Private Sub CreateNavigationMenu()
-        NavigationBuilder.Build(DashboardPanel, Me, "Supplier")
-    End Sub
-    Private Sub NavSalesRecords_Click(sender As Object, e As EventArgs)
-        Try
-            isNavigating = True
-            Dim salesRecordForm As New SalesRecord()
-            salesRecordForm.Show()
-            Me.Close()
-        Catch ex As Exception
-            isNavigating = False
-            MessageBox.Show($"Unable to open Sales Records: {ex.Message}", "Navigation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-        End Try
-    End Sub
-    Private Function CreateLargeNavButton(text As String, yPosition As Integer, isActive As Boolean, buttonWidth As Integer, buttonHeight As Integer) As Guna.UI2.WinForms.Guna2Button
-        Dim btn As New Guna.UI2.WinForms.Guna2Button()
-        btn.Text = text
-        btn.Size = New System.Drawing.Size(buttonWidth, buttonHeight)
-        btn.Location = New Point(20, yPosition)
-        btn.BorderRadius = 12
-        btn.Font = New Font("Poppins", 10, FontStyle.Regular)
-        btn.TextAlign = HorizontalAlignment.Left
-
-        btn.FillColor = If(isActive, System.Drawing.Color.FromArgb(254, 191, 16), System.Drawing.Color.Transparent)
-        btn.ForeColor = If(isActive, System.Drawing.Color.FromArgb(26, 29, 31), System.Drawing.Color.White)
-        btn.BorderThickness = If(isActive, 0, 1)
-        btn.BorderColor = If(isActive, System.Drawing.Color.Transparent, System.Drawing.Color.FromArgb(80, 80, 80))
-        btn.BackColor = System.Drawing.Color.Transparent
-        btn.Cursor = Cursors.Hand
-
-        btn.ShadowDecoration.Enabled = True
-        btn.ShadowDecoration.Color = System.Drawing.Color.FromArgb(30, 30, 30)
-        btn.ShadowDecoration.Depth = 4
-
-        AddHandler btn.MouseEnter, Sub()
-                                       If Not isActive Then
-                                           btn.FillColor = System.Drawing.Color.FromArgb(48, 52, 54)
-                                           btn.BorderColor = System.Drawing.Color.FromArgb(254, 191, 16)
-                                           btn.Font = New Font("Poppins", 9, FontStyle.Bold)
-                                       End If
-                                   End Sub
-        AddHandler btn.MouseLeave, Sub()
-                                       If Not isActive Then
-                                           btn.FillColor = System.Drawing.Color.Transparent
-                                           btn.BorderColor = System.Drawing.Color.FromArgb(80, 80, 80)
-                                           btn.Font = New Font("Poppins", 10, FontStyle.Regular)
-                                       End If
-                                   End Sub
-
-        DashboardPanel.Controls.Add(btn)
-        Return btn
-    End Function
-
-    ' Navigation handlers
-    Private Sub NavDashboard_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        Dashboard.Show()
-        Me.Close()
-    End Sub
-
-    Private Sub NavPOS_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        Sales.Show()
-        Me.Close()
-    End Sub
-
-    Private Sub NavInventory_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        Inventory.Show()
-        Me.Close()
-    End Sub
-
-    Private Sub NavInventoryLog_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        InventoryLog.Show()
-        Me.Close()
-    End Sub
-
-    Private Sub NavStaff_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        Staff.Show()
-        Me.Close()
-    End Sub
-
-    Private Sub NavSystemSettings_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        Sys.Show()
-        Me.Close()
-    End Sub
-
-    Private Sub NavAuditLog_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        AuditLog.Show()
-        Me.Close()
-    End Sub
-
-    Private Sub NavSuppliers_Click(sender As Object, e As EventArgs)
-        ' Already on suppliers - no navigation needed, but keep consistent behavior
-        ' Close nothing; optionally refresh
-        LoadSuppliersData()
-    End Sub
     Private Sub ShowSupplierDetails(supplierTag As Dictionary(Of String, Object))
         Try
             Dim supplierId As Integer = Convert.ToInt32(supplierTag("SupplierID"))
@@ -1087,9 +1022,12 @@ Public Class Supplier
     End Sub
 
     Private Sub Supplier_FormClosing(sender As Object, e As FormClosingEventArgs) Handles Me.FormClosing
-        ' Stop idle timeout monitoring
         IdleTimeoutManager.Instance.StopMonitoring(Me)
         If isNavigating Then
+            Return
+        End If
+        ' Skip exit confirmation when hosted in MainShell
+        If IsHostedInMainShell() Then
             Return
         End If
         ' Show confirmation only for user-initiated close (X button)
@@ -1097,19 +1035,49 @@ Public Class Supplier
             Dim result As DialogResult = EscForm.ConfirmExit(Me)
 
             If result = DialogResult.Yes Then
-                ' Close all forms properly
                 For Each form As Form In Application.OpenForms.Cast(Of Form).ToArray()
                     If form IsNot Me Then
                         form.Close()
                     End If
                 Next
-
-                ' Now exit the application
                 Application.Exit()
             Else
-                ' Cancel the form closing
                 e.Cancel = True
             End If
         End If
+    End Sub
+
+    Private Function IsHostedInMainShell() As Boolean
+        Dim parent As Control = Me.Parent
+        While parent IsNot Nothing
+            If TypeOf parent Is MainShell Then
+                Return True
+            End If
+            parent = parent.Parent
+        End While
+        Return False
+    End Function
+
+    Private Function GetMainShell() As MainShell
+        Dim parent As Control = Me.Parent
+        While parent IsNot Nothing
+            If TypeOf parent Is MainShell Then
+                Return CType(parent, MainShell)
+            End If
+            parent = parent.Parent
+        End While
+        Return Nothing
+    End Function
+
+    Private Sub SetDoubleBuffered(ctrl As Control)
+        Try
+            Dim prop = ctrl.GetType().GetProperty("DoubleBuffered", BindingFlags.Instance Or BindingFlags.NonPublic)
+            If prop IsNot Nothing Then prop.SetValue(ctrl, True, Nothing)
+        Catch
+        End Try
+    End Sub
+
+    Private Sub DashboardPanel_Paint(sender As Object, e As PaintEventArgs) Handles DashboardPanel.Paint
+
     End Sub
 End Class

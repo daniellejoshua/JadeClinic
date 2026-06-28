@@ -19,28 +19,30 @@ Partial Class MainShell
 
     <System.Diagnostics.DebuggerStepThrough()>
     Private Sub InitializeComponent()
-        Me.ContentPanel = New Panel()
-        Me.SuspendLayout()
-        '
-        'ContentPanel
-        '
-        Me.ContentPanel.Dock = DockStyle.Fill
-        Me.ContentPanel.Location = New Point(0, 0)
-        Me.ContentPanel.Name = "ContentPanel"
-        Me.ContentPanel.Size = New Size(1280, 720)
-        Me.ContentPanel.TabIndex = 0
-        '
-        'MainShell
-        '
-        Me.AutoScaleDimensions = New SizeF(7.0!, 15.0!)
-        Me.AutoScaleMode = AutoScaleMode.Font
-        Me.ClientSize = New Size(1280, 720)
-        Me.Controls.Add(Me.ContentPanel)
-        Me.FormBorderStyle = FormBorderStyle.None
-        Me.Name = "MainShell"
-        Me.StartPosition = FormStartPosition.CenterScreen
-        Me.Text = "Jade Clinic"
-        Me.WindowState = FormWindowState.Maximized
-        Me.ResumeLayout(False)
+        ContentPanel = New Panel()
+        SuspendLayout()
+        ' 
+        ' ContentPanel
+        ' 
+        ContentPanel.Dock = DockStyle.Fill
+        ContentPanel.Location = New Point(0, 0)
+        ContentPanel.Margin = New Padding(3, 4, 3, 4)
+        ContentPanel.Name = "ContentPanel"
+        ContentPanel.Size = New Size(1463, 960)
+        ContentPanel.TabIndex = 0
+        ' 
+        ' MainShell
+        ' 
+        AutoScaleDimensions = New SizeF(8F, 20F)
+        AutoScaleMode = AutoScaleMode.Font
+        ClientSize = New Size(1463, 960)
+        Controls.Add(ContentPanel)
+        FormBorderStyle = FormBorderStyle.None
+        Margin = New Padding(3, 4, 3, 4)
+        Name = "MainShell"
+        StartPosition = FormStartPosition.CenterScreen
+        Text = "Jade Clinic"
+        WindowState = FormWindowState.Maximized
+        ResumeLayout(False)
     End Sub
 End Class

@@ -1,7 +1,9 @@
 Imports System.Linq
+Imports System.Reflection
 
 Public Class MainShell
     Private _currentPage As Form
+    Private ReadOnly _loadingOverlay As Panel
 
     Public Sub New()
         InitializeComponent()
@@ -10,38 +12,42 @@ Public Class MainShell
         Me.WindowState = FormWindowState.Normal
         Me.Bounds = Screen.PrimaryScreen.Bounds
         Me.WindowState = FormWindowState.Maximized
+        ContentPanel.BackColor = Color.FromArgb(26, 29, 31)
+        _loadingOverlay = New Panel() With {
+            .Dock = DockStyle.Fill,
+            .BackColor = Color.FromArgb(26, 29, 31),
+            .Visible = False
+        }
     End Sub
 
     Public Sub ShowPage(pageType As Type)
-        If pageType Is Nothing Then
-            Return
-        End If
+        If pageType Is Nothing Then Return
 
         If _currentPage IsNot Nothing Then
-            Try
-                _currentPage.Close()
-            Catch
-            End Try
-            Try
-                _currentPage.Dispose()
-            Catch
-            End Try
+            _currentPage.Dispose()
             _currentPage = Nothing
         End If
+
+        ContentPanel.Controls.Clear()
 
         Dim page As Form = CType(Activator.CreateInstance(pageType), Form)
         page.TopLevel = False
         page.FormBorderStyle = FormBorderStyle.None
         page.Dock = DockStyle.Fill
-        page.StartPosition = FormStartPosition.Manual
-
-        ContentPanel.Controls.Clear()
         ContentPanel.Controls.Add(page)
+        page.Show()
+        page.Activate()
+        page.Focus()
 
         _currentPage = page
-        page.Show()
-        page.BringToFront()
-        page.Focus()
+    End Sub
+
+    Private Sub ShowOverlay(visible As Boolean)
+        If _loadingOverlay Is Nothing Then Return
+        _loadingOverlay.Visible = visible
+        If visible Then
+            _loadingOverlay.BringToFront()
+        End If
     End Sub
 
     Public Sub ShowInitialPage()

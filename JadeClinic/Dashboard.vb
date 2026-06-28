@@ -70,43 +70,60 @@ Public Class Dashboard
             InitializeComponent()
             Console.WriteLine("InitializeComponent completed")
 
-            ' Initialize loadingPanel with null checks
-            loadingPanel = New Panel With {
-                .Dock = DockStyle.Fill,
-                .BackColor = System.Drawing.Color.FromArgb(128, 0, 0, 0),
-                .Visible = False
-            }
-            Console.WriteLine("LoadingPanel created")
-
-            loadingLabel = New Label With {
-                .Text = "Loading Dashboard...",
-                .ForeColor = System.Drawing.Color.White,
-                .Font = New Font("Poppins", 16),
-                .AutoSize = True,
-                .BackColor = System.Drawing.Color.Transparent
-            }
-            Console.WriteLine("LoadingLabel created")
-
-            loadingPanel.Controls.Add(loadingLabel)
-            Me.Controls.Add(loadingPanel)
-            Console.WriteLine("Loading controls added")
-
-            AddHandler loadingPanel.SizeChanged, Sub()
-                                                     Try
-                                                         If loadingLabel IsNot Nothing AndAlso loadingPanel IsNot Nothing Then
-                                                             loadingLabel.Location = New Point((loadingPanel.Width - loadingLabel.Width) \ 2, (loadingPanel.Height - loadingLabel.Height) \ 2)
-                                                         End If
-                                                     Catch ex As Exception
-                                                         Console.WriteLine($"Error in loadingPanel.SizeChanged: {ex.Message}")
-                                                     End Try
-                                                 End Sub
-            loadingPanel.BringToFront()
             Console.WriteLine("Dashboard constructor completed successfully")
-
         Catch ex As Exception
             Console.WriteLine($"Error in Dashboard constructor: {ex.Message}")
             Console.WriteLine($"Stack trace: {ex.StackTrace}")
-            Throw ' Re-throw the exception so the calling code knows there was an error
+            Throw
+        End Try
+    End Sub
+
+    Private Sub ShowLoadingOverlay()
+        loadingPanel = New Panel()
+        loadingPanel.BackColor = Color.Transparent
+        loadingPanel.Dock = DockStyle.Fill
+        loadingPanel.Location = New Point(0, 0)
+        loadingPanel.Size = Me.ClientSize
+
+        Me.Controls.Add(loadingPanel)
+        loadingPanel.BringToFront()
+
+        loadingLabel = New Label With {
+            .Text = "Loading Dashboard...",
+            .ForeColor = Color.White,
+            .Font = New Font("Poppins", 16, FontStyle.Regular),
+            .AutoSize = True,
+            .BackColor = Color.Transparent
+        }
+
+        loadingPanel.Controls.Add(loadingLabel)
+        CenterLoadingLabel()
+
+        AddHandler loadingPanel.SizeChanged, Sub()
+            CenterLoadingLabel()
+        End Sub
+    End Sub
+
+    Private Sub HideLoadingOverlay()
+        If loadingPanel IsNot Nothing Then
+            Me.Controls.Remove(loadingPanel)
+            loadingPanel.Dispose()
+            loadingPanel = Nothing
+        End If
+        loadingLabel = Nothing
+    End Sub
+
+    Private Sub CenterLoadingLabel()
+        Try
+            If loadingLabel IsNot Nothing AndAlso loadingPanel IsNot Nothing Then
+                loadingLabel.AutoSize = True
+                Application.DoEvents()
+                loadingLabel.Location = New Point(
+                    (loadingPanel.Width - loadingLabel.Width) \ 2,
+                    (loadingPanel.Height - loadingLabel.Height) \ 2
+                )
+            End If
+        Catch
         End Try
     End Sub
 
@@ -132,13 +149,10 @@ Public Class Dashboard
             ApplyNewColorScheme()
             Console.WriteLine("Color scheme applied")
 
-            ' Show loading panel first
-            If loadingPanel IsNot Nothing Then
-                loadingPanel.Visible = True
-                loadingPanel.BringToFront()
-                Await Task.Delay(200) ' Let UI render the overlay
-            End If
-            Console.WriteLine("Loading panel shown")
+            ' Show loading overlay
+            ShowLoadingOverlay()
+            Await Task.Delay(200)
+            Console.WriteLine("Loading overlay shown")
 
             ' Create navigation menu (use shared builder)
             NavigationBuilder.Build(DashboardPanel, Me, "Dashboard")
@@ -192,11 +206,9 @@ Public Class Dashboard
             InitializeProfileSection()
             Console.WriteLine("Profile section initialized")
 
-            ' Hide loading panel last
-            If loadingPanel IsNot Nothing Then
-                loadingPanel.Visible = False
-            End If
-            Console.WriteLine("Loading panel hidden")
+            ' Hide loading overlay
+            HideLoadingOverlay()
+            Console.WriteLine("Loading overlay hidden")
 
             Console.WriteLine("Dashboard_Load completed successfully")
 
@@ -210,14 +222,7 @@ Public Class Dashboard
             Console.WriteLine($"Error in Dashboard_Load: {ex.Message}")
             Console.WriteLine($"Stack trace: {ex.StackTrace}")
 
-            ' Try to hide loading panel even if there's an error
-            Try
-                If loadingPanel IsNot Nothing Then
-                    loadingPanel.Visible = False
-                End If
-            Catch
-                ' Ignore errors hiding loading panel
-            End Try
+            HideLoadingOverlay()
 
             ' Show error to user
             MessageBox.Show($"Error loading dashboard: {ex.Message}{vbCrLf}{vbCrLf}Some features may not work correctly.",

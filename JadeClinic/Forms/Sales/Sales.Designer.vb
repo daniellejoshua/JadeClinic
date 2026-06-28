@@ -148,10 +148,10 @@ Partial Class Sales
         CategoryPanel.CustomizableEdges = CustomizableEdges13
         CategoryPanel.FillColor = Color.Transparent
         CategoryPanel.ForeColor = Color.White
-        CategoryPanel.Location = New Point(209, 96)
+        CategoryPanel.Location = New Point(231, 96)
         CategoryPanel.Name = "CategoryPanel"
         CategoryPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges14
-        CategoryPanel.Size = New Size(1049, 938)
+        CategoryPanel.Size = New Size(1027, 938)
         CategoryPanel.TabIndex = 2
         ' 
         ' Label7
@@ -709,7 +709,7 @@ Partial Class Sales
         DashboardPanel.Controls.Add(PictureBox9)
         DashboardPanel.CustomizableEdges = CustomizableEdges25
         DashboardPanel.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
-        DashboardPanel.Location = New Point(-33, 5)
+        DashboardPanel.Location = New Point(-10, 5)
         DashboardPanel.Name = "DashboardPanel"
         DashboardPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges26
         DashboardPanel.Size = New Size(236, 1029)
