@@ -173,6 +173,11 @@ Public Class InventoryLog
                 AddInventoryLog.Visible = True
             End If
 
+            ' Fix DateTimePicker dropdown for hosted forms
+            If Guna2DateTimePicker1 IsNot Nothing Then
+                AddHandler Guna2DateTimePicker1.DropDown, AddressOf DateTimePicker_DropDown
+            End If
+
         Catch ex As Exception
             MessageBox.Show($"Error setting up controls: {ex.Message}", "Setup Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
@@ -633,15 +638,8 @@ Public Class InventoryLog
     End Sub
     Private Async Function LoadInventoryLogsAsync() As Task
         Try
-            ' Show loading panel first with minimum display time
-            If loadingPanel IsNot Nothing Then
-                loadingPanel.Visible = True
-                loadingPanel.BringToFront()
-                Await Task.Delay(200) ' Let UI render the overlay
-            End If
-
-            ' Start timing to ensure minimum display duration
-            Dim startTime As DateTime = DateTime.Now
+            ' Show inline loading label on DataGridView
+            ShowLoadingLabel("Loading filters...")
 
             ' Get current sort order
             Dim sortOrder As String = If(SortBy?.SelectedItem?.ToString(), "Date (Newest First)")
@@ -649,25 +647,15 @@ Public Class InventoryLog
             ' Load data in background thread
             Dim inventoryData = Await Task.Run(Function() GetInventoryLogsData(sortOrder, selectedDate))
 
-            ' Ensure minimum loading display time of 1 second
-            Dim elapsedMs As Integer = CInt((DateTime.Now - startTime).TotalMilliseconds)
-            If elapsedMs < 1000 Then
-                Await Task.Delay(1000 - elapsedMs)
-            End If
-
             ' Update UI on main thread
             LoadInventoryLogsDataOnUI(inventoryData)
 
-            ' Hide loading panel
-            If loadingPanel IsNot Nothing Then
-                loadingPanel.Visible = False
-            End If
+            ' Hide loading label immediately after UI is updated
+            HideLoadingLabel()
 
         Catch ex As Exception
-            ' Hide loading panel in case of error
-            If loadingPanel IsNot Nothing Then
-                loadingPanel.Visible = False
-            End If
+            ' Hide loading label in case of error
+            HideLoadingLabel()
             MessageBox.Show("Error loading inventory logs: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Function
@@ -1503,5 +1491,83 @@ Public Class InventoryLog
         Catch ex As Exception
             MessageBox.Show($"Export failed: {ex.Message}", "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
+    End Sub
+
+    Private Sub DateTimePicker_DropDown(sender As Object, e As EventArgs)
+        If IsHostedInMainShell() Then
+            Dim shell As MainShell = GetMainShell()
+            If shell IsNot Nothing Then
+                shell.TopMost = False
+                AddHandler DirectCast(sender, Guna.UI2.WinForms.Guna2DateTimePicker).CloseUp, AddressOf DateTimePicker_CloseUp
+            End If
+        End If
+    End Sub
+
+    Private Sub DateTimePicker_CloseUp(sender As Object, e As EventArgs)
+        If IsHostedInMainShell() Then
+            Dim shell As MainShell = GetMainShell()
+            If shell IsNot Nothing Then
+                shell.TopMost = True
+            End If
+            RemoveHandler DirectCast(sender, Guna.UI2.WinForms.Guna2DateTimePicker).CloseUp, AddressOf DateTimePicker_CloseUp
+        End If
+    End Sub
+
+    Private Function IsHostedInMainShell() As Boolean
+        Dim parent As Control = Me.Parent
+        While parent IsNot Nothing
+            If TypeOf parent Is MainShell Then
+                Return True
+            End If
+            parent = parent.Parent
+        End While
+        Return False
+    End Function
+
+    Private Function GetMainShell() As MainShell
+        Dim parent As Control = Me.Parent
+        While parent IsNot Nothing
+            If TypeOf parent Is MainShell Then
+                Return CType(parent, MainShell)
+            End If
+            parent = parent.Parent
+        End While
+        Return Nothing
+    End Function
+
+    Private Sub ShowLoadingLabel(message As String)
+        If loadingLabel Is Nothing Then
+            loadingLabel = New Label() With {
+                .Text = message,
+                .Font = New Font("Poppins", 11, FontStyle.Italic),
+                .ForeColor = Color.LightGray,
+                .BackColor = Color.Transparent,
+                .AutoSize = True,
+                .Name = "loadingLabel"
+            }
+        Else
+            loadingLabel.Text = message
+        End If
+
+        ' Position over the DataGridView
+        If InventoryLogDataGrid IsNot Nothing Then
+            loadingLabel.Location = New Point(
+                InventoryLogDataGrid.Left + (InventoryLogDataGrid.Width \ 2) - (loadingLabel.Width \ 2),
+                InventoryLogDataGrid.Top + (InventoryLogDataGrid.Height \ 2) - (loadingLabel.Height \ 2)
+            )
+            InventoryLogDataGrid.Parent.Controls.Add(loadingLabel)
+            loadingLabel.BringToFront()
+        End If
+    End Sub
+
+    Private Sub HideLoadingLabel()
+        If loadingLabel IsNot Nothing Then
+            Try
+                loadingLabel.Parent.Controls.Remove(loadingLabel)
+                loadingLabel.Dispose()
+            Catch
+            End Try
+            loadingLabel = Nothing
+        End If
     End Sub
 End Class

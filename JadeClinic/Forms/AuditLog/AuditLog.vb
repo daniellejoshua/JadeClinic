@@ -44,6 +44,9 @@ Public Class AuditLog
         AddHandler Guna2DateTimePicker1.ValueChanged, AddressOf Filters_Changed
         AddHandler Exportbtn.Click, AddressOf Exportbtn_Click
 
+        ' Fix DateTimePicker dropdown for hosted forms
+        AddHandler Guna2DateTimePicker1.DropDown, AddressOf DateTimePicker_DropDown
+
         ' Default date filter to Today and enable the checkbox so filter is active on start
         Try
             Guna2DateTimePicker1.ShowCheckBox = True
@@ -56,6 +59,27 @@ Public Class AuditLog
         ' Load data (with today's date filter active by default)
         Await LoadAuditLogsAsync()
     End Sub
+
+    Private Sub DateTimePicker_DropDown(sender As Object, e As EventArgs)
+        If IsHostedInMainShell() Then
+            Dim shell As MainShell = GetMainShell()
+            If shell IsNot Nothing Then
+                shell.TopMost = False
+                AddHandler Guna2DateTimePicker1.CloseUp, AddressOf DateTimePicker_CloseUp
+            End If
+        End If
+    End Sub
+
+    Private Sub DateTimePicker_CloseUp(sender As Object, e As EventArgs)
+        If IsHostedInMainShell() Then
+            Dim shell As MainShell = GetMainShell()
+            If shell IsNot Nothing Then
+                shell.TopMost = True
+            End If
+            RemoveHandler Guna2DateTimePicker1.CloseUp, AddressOf DateTimePicker_CloseUp
+        End If
+    End Sub
+
     ' Call this from AuditLog_Load (after InitializeFilterTypeComboBox)
     Private Sub InitializeUserAccountsCombo()
         Try
@@ -329,8 +353,8 @@ Public Class AuditLog
     End Function
     Private Async Function LoadAuditLogsAsync() As Task
         Try
-            overlayPanel.Visible = True
-            overlayPanel.BringToFront()
+            ' Show inline loading label on DataGridView
+            ShowLoadingLabel("Loading filters...")
 
             Dim selectedFilterType As String = If(filtertype.SelectedItem IsNot Nothing, filtertype.SelectedItem.ToString(), "All Logs")
             Dim filterDate As DateTime? = Nothing
@@ -376,7 +400,7 @@ Public Class AuditLog
                 noRow.DefaultCellStyle.Font = New Font(InventoryLogDataGrid.DefaultCellStyle.Font.FontFamily, InventoryLogDataGrid.DefaultCellStyle.Font.Size, FontStyle.Italic)
 
                 InventoryLogDataGrid.ClearSelection()
-                overlayPanel.Visible = False
+                HideLoadingLabel()
                 Return
             End If
 
@@ -412,7 +436,7 @@ Public Class AuditLog
         Catch ex As Exception
             MessageBox.Show($"Error loading audit logs: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         Finally
-            overlayPanel.Visible = False
+            HideLoadingLabel()
         End Try
     End Function ' Map action text to emoji + short label for grid
     Private Function GetActionType(action As String) As String
@@ -818,6 +842,66 @@ Public Class AuditLog
                 ' Cancel the form closing
                 e.Cancel = True
             End If
+        End If
+    End Sub
+
+    Private Function IsHostedInMainShell() As Boolean
+        Dim parent As Control = Me.Parent
+        While parent IsNot Nothing
+            If TypeOf parent Is MainShell Then
+                Return True
+            End If
+            parent = parent.Parent
+        End While
+        Return False
+    End Function
+
+    Private Function GetMainShell() As MainShell
+        Dim parent As Control = Me.Parent
+        While parent IsNot Nothing
+            If TypeOf parent Is MainShell Then
+                Return CType(parent, MainShell)
+            End If
+            parent = parent.Parent
+        End While
+        Return Nothing
+    End Function
+
+    Private loadingLabel As Label = Nothing
+
+    Private Sub ShowLoadingLabel(message As String)
+        If loadingLabel Is Nothing Then
+            loadingLabel = New Label() With {
+                .Text = message,
+                .Font = New Font("Poppins", 11, FontStyle.Italic),
+                .ForeColor = Color.LightGray,
+                .BackColor = Color.Transparent,
+                .AutoSize = True,
+                .Name = "loadingLabel"
+            }
+        Else
+            loadingLabel.Text = message
+        End If
+
+        ' Position over the DataGridView
+        If InventoryLogDataGrid IsNot Nothing Then
+            loadingLabel.Location = New Point(
+                InventoryLogDataGrid.Left + (InventoryLogDataGrid.Width \ 2) - (loadingLabel.Width \ 2),
+                InventoryLogDataGrid.Top + (InventoryLogDataGrid.Height \ 2) - (loadingLabel.Height \ 2)
+            )
+            InventoryLogDataGrid.Parent.Controls.Add(loadingLabel)
+            loadingLabel.BringToFront()
+        End If
+    End Sub
+
+    Private Sub HideLoadingLabel()
+        If loadingLabel IsNot Nothing Then
+            Try
+                loadingLabel.Parent.Controls.Remove(loadingLabel)
+                loadingLabel.Dispose()
+            Catch
+            End Try
+            loadingLabel = Nothing
         End If
     End Sub
 End Class

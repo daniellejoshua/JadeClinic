@@ -264,6 +264,9 @@ Public Class SalesRecord
 
         RemoveHandler Guna2DateTimePicker1.CheckedChanged, AddressOf DtpSaleDate_CheckedChanged
         AddHandler Guna2DateTimePicker1.CheckedChanged, AddressOf DtpSaleDate_CheckedChanged
+
+        ' Fix DateTimePicker dropdown for hosted forms
+        AddHandler Guna2DateTimePicker1.DropDown, AddressOf DateTimePicker_DropDown
     End Sub
     Private Sub LoadOrderRecordsData(Optional sortOrder As String = "", Optional filterDate As DateTime? = Nothing)
         Try
@@ -812,4 +815,46 @@ Public Class SalesRecord
             End If
         End If
     End Sub
+
+    Private Sub DateTimePicker_DropDown(sender As Object, e As EventArgs)
+        If IsHostedInMainShell() Then
+            Dim shell As MainShell = GetMainShell()
+            If shell IsNot Nothing Then
+                shell.TopMost = False
+                AddHandler DirectCast(sender, Guna.UI2.WinForms.Guna2DateTimePicker).CloseUp, AddressOf DateTimePicker_CloseUp
+            End If
+        End If
+    End Sub
+
+    Private Sub DateTimePicker_CloseUp(sender As Object, e As EventArgs)
+        If IsHostedInMainShell() Then
+            Dim shell As MainShell = GetMainShell()
+            If shell IsNot Nothing Then
+                shell.TopMost = True
+            End If
+            RemoveHandler DirectCast(sender, Guna.UI2.WinForms.Guna2DateTimePicker).CloseUp, AddressOf DateTimePicker_CloseUp
+        End If
+    End Sub
+
+    Private Function IsHostedInMainShell() As Boolean
+        Dim parent As Control = Me.Parent
+        While parent IsNot Nothing
+            If TypeOf parent Is MainShell Then
+                Return True
+            End If
+            parent = parent.Parent
+        End While
+        Return False
+    End Function
+
+    Private Function GetMainShell() As MainShell
+        Dim parent As Control = Me.Parent
+        While parent IsNot Nothing
+            If TypeOf parent Is MainShell Then
+                Return CType(parent, MainShell)
+            End If
+            parent = parent.Parent
+        End While
+        Return Nothing
+    End Function
 End Class

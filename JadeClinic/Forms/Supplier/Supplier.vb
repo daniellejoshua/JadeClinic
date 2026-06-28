@@ -1080,4 +1080,8 @@ Public Class Supplier
     Private Sub DashboardPanel_Paint(sender As Object, e As PaintEventArgs) Handles DashboardPanel.Paint
 
     End Sub
+
+    Private Sub SortBy_SelectedIndexChanged_1(sender As Object, e As EventArgs) Handles SortBy.SelectedIndexChanged
+
+    End Sub
 End Class
