@@ -497,6 +497,9 @@ Public Class Staff
         Try
             ' Clear existing rows
             Guna2DataGridView1.Rows.Clear()
+            
+            ' Hide any existing "No records" message
+            DataGridViewHelper.HideNoRecordsMessage()
 
             ' Build query including Email and Phone
             Dim query As String = "SELECT UserID, Username, PIN, Email, Phone, UserRole, Photo, IsActive FROM Users"
@@ -583,6 +586,11 @@ Public Class Staff
                 }
                 End While
             End Using
+
+            ' Show "No staff found" message if empty
+            If Guna2DataGridView1.Rows.Count = 0 Then
+                DataGridViewHelper.ShowNoRecordsMessage(Guna2DataGridView1, "No Staff Members Found")
+            End If
 
         Catch ex As Exception
             MessageBox.Show($"Error loading staff data: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)

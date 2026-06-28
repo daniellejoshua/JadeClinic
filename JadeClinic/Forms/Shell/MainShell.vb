@@ -8,7 +8,6 @@ Public Class MainShell
     Public Sub New()
         InitializeComponent()
         Me.FormBorderStyle = FormBorderStyle.None
-        Me.TopMost = True
         Me.WindowState = FormWindowState.Normal
         Me.Bounds = Screen.PrimaryScreen.Bounds
         Me.WindowState = FormWindowState.Maximized

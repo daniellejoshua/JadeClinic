@@ -352,7 +352,7 @@ Partial Class Dashboard
         DashboardPanel.Location = New Point(-10, 5)
         DashboardPanel.Name = "DashboardPanel"
         DashboardPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges13
-        DashboardPanel.Size = New Size(242, 1031)
+        DashboardPanel.Size = New Size(236, 1016)
         DashboardPanel.TabIndex = 64
         ' 
         ' PictureBox9

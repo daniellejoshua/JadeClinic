@@ -763,6 +763,9 @@ Public Class InventoryLog
 
             ' Clear existing rows
             InventoryLogDataGrid.Rows.Clear()
+            
+            ' Hide any existing "No records" message
+            DataGridViewHelper.HideNoRecordsMessage()
 
             ' Check for error in data
             If inventoryData IsNot Nothing AndAlso inventoryData.Count > 0 AndAlso inventoryData(0).ContainsKey("Error") Then
@@ -772,10 +775,7 @@ Public Class InventoryLog
 
             ' Handle empty data
             If inventoryData Is Nothing OrElse inventoryData.Count = 0 Then
-                ' Update record count without touching lblUsername
-                ' Ensure no default selection when empty
-                InventoryLogDataGrid.ClearSelection()
-                InventoryLogDataGrid.CurrentCell = Nothing
+                DataGridViewHelper.ShowNoRecordsMessage(InventoryLogDataGrid, "No Inventory Logs Found")
                 Return
             End If
 
@@ -1494,23 +1494,11 @@ Public Class InventoryLog
     End Sub
 
     Private Sub DateTimePicker_DropDown(sender As Object, e As EventArgs)
-        If IsHostedInMainShell() Then
-            Dim shell As MainShell = GetMainShell()
-            If shell IsNot Nothing Then
-                shell.TopMost = False
-                AddHandler DirectCast(sender, Guna.UI2.WinForms.Guna2DateTimePicker).CloseUp, AddressOf DateTimePicker_CloseUp
-            End If
-        End If
+        ' DateTimePicker dropdown now works without TopMost toggle
     End Sub
 
     Private Sub DateTimePicker_CloseUp(sender As Object, e As EventArgs)
-        If IsHostedInMainShell() Then
-            Dim shell As MainShell = GetMainShell()
-            If shell IsNot Nothing Then
-                shell.TopMost = True
-            End If
-            RemoveHandler DirectCast(sender, Guna.UI2.WinForms.Guna2DateTimePicker).CloseUp, AddressOf DateTimePicker_CloseUp
-        End If
+        ' No longer needed
     End Sub
 
     Private Function IsHostedInMainShell() As Boolean

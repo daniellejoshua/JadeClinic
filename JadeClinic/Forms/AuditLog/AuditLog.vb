@@ -61,23 +61,11 @@ Public Class AuditLog
     End Sub
 
     Private Sub DateTimePicker_DropDown(sender As Object, e As EventArgs)
-        If IsHostedInMainShell() Then
-            Dim shell As MainShell = GetMainShell()
-            If shell IsNot Nothing Then
-                shell.TopMost = False
-                AddHandler Guna2DateTimePicker1.CloseUp, AddressOf DateTimePicker_CloseUp
-            End If
-        End If
+        ' DateTimePicker dropdown now works without TopMost toggle
     End Sub
 
     Private Sub DateTimePicker_CloseUp(sender As Object, e As EventArgs)
-        If IsHostedInMainShell() Then
-            Dim shell As MainShell = GetMainShell()
-            If shell IsNot Nothing Then
-                shell.TopMost = True
-            End If
-            RemoveHandler Guna2DateTimePicker1.CloseUp, AddressOf DateTimePicker_CloseUp
-        End If
+        ' No longer needed
     End Sub
 
     ' Call this from AuditLog_Load (after InitializeFilterTypeComboBox)
@@ -378,28 +366,13 @@ Public Class AuditLog
 
             ' Clear grid before updating
             InventoryLogDataGrid.Rows.Clear()
+            
+            ' Hide any existing "No records" message
+            DataGridViewHelper.HideNoRecordsMessage()
 
             ' Handle no results
             If results Is Nothing OrElse results.Count = 0 Then
-                Dim rowIndex As Integer = InventoryLogDataGrid.Rows.Add()
-                For i As Integer = 0 To InventoryLogDataGrid.Columns.Count - 1
-                    InventoryLogDataGrid.Rows(rowIndex).Cells(i).Value = String.Empty
-                Next
-
-                If InventoryLogDataGrid.Columns.Contains("Details") Then
-                    InventoryLogDataGrid.Rows(rowIndex).Cells("Details").Value = "No audit logs found for the selected filters."
-                Else
-                    InventoryLogDataGrid.Rows(rowIndex).Cells(0).Value = "No audit logs found for the selected filters."
-                End If
-
-                Dim noRow As DataGridViewRow = InventoryLogDataGrid.Rows(rowIndex)
-                noRow.ReadOnly = True
-                noRow.DefaultCellStyle.ForeColor = Color.LightGray
-                noRow.DefaultCellStyle.BackColor = InventoryLogDataGrid.DefaultCellStyle.BackColor
-                noRow.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
-                noRow.DefaultCellStyle.Font = New Font(InventoryLogDataGrid.DefaultCellStyle.Font.FontFamily, InventoryLogDataGrid.DefaultCellStyle.Font.Size, FontStyle.Italic)
-
-                InventoryLogDataGrid.ClearSelection()
+                DataGridViewHelper.ShowNoRecordsMessage(InventoryLogDataGrid, "No Audit Logs Found")
                 HideLoadingLabel()
                 Return
             End If

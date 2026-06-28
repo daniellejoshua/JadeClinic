@@ -271,6 +271,9 @@ Public Class SalesRecord
     Private Sub LoadOrderRecordsData(Optional sortOrder As String = "", Optional filterDate As DateTime? = Nothing)
         Try
             Guna2DataGridView1.Rows.Clear()
+            
+            ' Hide any existing "No records" message
+            DataGridViewHelper.HideNoRecordsMessage()
 
             Dim query As String = "SELECT s.SaleID, u.Username, s.SaleDate, s.PaymentMethod, s.TotalAmount, s.AmountPaid, " &
                           "(s.AmountPaid - s.TotalAmount) AS Change, " &
@@ -349,18 +352,7 @@ Public Class SalesRecord
             End Using
 
             If Guna2DataGridView1.Rows.Count = 0 Then
-                Dim noDataIndex As Integer = Guna2DataGridView1.Rows.Add()
-                Dim noDataRow = Guna2DataGridView1.Rows(noDataIndex)
-
-                For i As Integer = 0 To Guna2DataGridView1.Columns.Count - 1
-                    noDataRow.Cells(i).Value = String.Empty
-                Next
-
-                noDataRow.Cells("OrderDate").Value = "No Sales Record Found"
-                noDataRow.ReadOnly = True
-                noDataRow.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
-                noDataRow.DefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
-                noDataRow.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Italic)
+                DataGridViewHelper.ShowNoRecordsMessage(Guna2DataGridView1, "No Sales Records Found")
             End If
 
             Guna2DataGridView1.ClearSelection()
@@ -817,23 +809,11 @@ Public Class SalesRecord
     End Sub
 
     Private Sub DateTimePicker_DropDown(sender As Object, e As EventArgs)
-        If IsHostedInMainShell() Then
-            Dim shell As MainShell = GetMainShell()
-            If shell IsNot Nothing Then
-                shell.TopMost = False
-                AddHandler DirectCast(sender, Guna.UI2.WinForms.Guna2DateTimePicker).CloseUp, AddressOf DateTimePicker_CloseUp
-            End If
-        End If
+        ' DateTimePicker dropdown now works without TopMost toggle
     End Sub
 
     Private Sub DateTimePicker_CloseUp(sender As Object, e As EventArgs)
-        If IsHostedInMainShell() Then
-            Dim shell As MainShell = GetMainShell()
-            If shell IsNot Nothing Then
-                shell.TopMost = True
-            End If
-            RemoveHandler DirectCast(sender, Guna.UI2.WinForms.Guna2DateTimePicker).CloseUp, AddressOf DateTimePicker_CloseUp
-        End If
+        ' No longer needed
     End Sub
 
     Private Function IsHostedInMainShell() As Boolean

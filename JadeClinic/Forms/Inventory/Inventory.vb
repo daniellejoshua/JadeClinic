@@ -680,6 +680,15 @@ Public Class Inventory
 
             ' Clear existing rows
             productDataGrid.Rows.Clear()
+            
+            ' Hide any existing "No records" message
+            DataGridViewHelper.HideNoRecordsMessage()
+
+            ' Handle no products found
+            If filteredProducts Is Nothing OrElse filteredProducts.Count = 0 Then
+                DataGridViewHelper.ShowNoRecordsMessage(productDataGrid, "No Products Found")
+                Return
+            End If
 
             ' Define lighter palette colors
             Dim LightRed As Color = Color.FromArgb(255, 153, 153)       ' light red for out of stock / inactive
