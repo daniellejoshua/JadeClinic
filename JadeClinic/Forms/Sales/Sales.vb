@@ -1,4 +1,4 @@
-﻿Imports System.Drawing
+Imports System.Drawing
 Imports System.Drawing.Drawing2D
 Imports System.Drawing.Printing
 Imports System.IO
@@ -99,15 +99,16 @@ Public Class Sales
     Private receiptVatableBeforeDiscount As Decimal = 0D
     Private WithEvents txtBarcodeInput As New TextBox With {.Visible = True, .TabIndex = 0}
 
-    ' Dental Clinic Color Palette Constants
+    ' Jade Clinic Color Palette Constants (from brand guide)
     Private ReadOnly GoldenYellow As Color = Color.FromArgb(254, 191, 16)      ' #FECF10 - Primary brand color
-    Private ReadOnly RichOlive As Color = Color.FromArgb(190, 154, 48)         ' #BE9A30 - Secondary accent
-    Private ReadOnly DeepCharcoal As Color = Color.FromArgb(26, 29, 31)        ' #1A1D1F - Primary dark
-    Private ReadOnly DarkSlate As Color = Color.FromArgb(43, 47, 50)           ' #2B2F32 - Secondary dark
-    Private ReadOnly Graphite As Color = Color.FromArgb(61, 65, 69)            ' #3D4145 - Card background
-    Private ReadOnly SteelGray As Color = Color.FromArgb(74, 79, 84)           ' #4A4F54 - Interactive elements
-    Private ReadOnly PureWhite As Color = Color.FromArgb(255, 255, 255)        ' #FFFFFF - Text on dark
-    Private ReadOnly LightSilver As Color = Color.FromArgb(225, 229, 233)      ' #E1E5E9 - Secondary text
+    Private ReadOnly JadeOlive As Color = Color.FromArgb(190, 154, 48)         ' #BE9A30 - Secondary accent
+    Private ReadOnly OffWhite As Color = Color.FromArgb(249, 249, 249)         ' #F9F9F9 - Main background
+    Private ReadOnly PureWhite As Color = Color.FromArgb(255, 255, 255)        ' #FFFFFF - Card backgrounds
+    Private ReadOnly LightGray As Color = Color.FromArgb(240, 240, 240)        ' #F0F0F0 - Subtle surfaces
+    Private ReadOnly BorderGray As Color = Color.FromArgb(230, 230, 230)       ' #E6E6E6 - Borders
+    Private ReadOnly DarkText As Color = Color.FromArgb(51, 51, 51)            ' #333333 - Primary text
+    Private ReadOnly MediumText As Color = Color.FromArgb(102, 102, 102)       ' #666666 - Secondary text
+    Private ReadOnly LightText As Color = Color.FromArgb(153, 153, 153)        ' #999999 - Tertiary text
     Private ReadOnly SuccessGreen As Color = Color.FromArgb(16, 216, 98)       ' #10D862 - Success states
     Private ReadOnly AlertRed As Color = Color.FromArgb(255, 71, 87)           ' #FF4757 - Error/Alert states
     Private selectedCustomerTIN As String = ""
@@ -123,7 +124,7 @@ Public Class Sales
     ' POS lock color control caches
     Private originalCategoryButtonFillColors As New Dictionary(Of Guna.UI2.WinForms.Guna2Button, Color)()
     Private originalCategoryOverlayColors As New Dictionary(Of Control, Color)()
-    Private posLockCategoryFillColor As Color = Graphite
+    Private posLockCategoryFillColor As Color = LightGray
     Private posLockLabelBackColor As Color = Color.Empty
 
 
@@ -403,9 +404,7 @@ Public Class Sales
 
 
 
-        ' Enhanced CategoryPanel (main focus area) - Updated colors
-        CategoryPanel.BorderColor = GoldenYellow ' Golden Yellow
-        CategoryPanel.ShadowDecoration.Depth = 8 ' Deep shadow
+
         CategoryPanel.BorderRadius = 12 ' Rounded corners
 
         ' Create navigation menu using shared NavigationBuilder
@@ -446,16 +445,33 @@ Public Class Sales
             AddHandler kvp.Key.Click, Sub(senderBtn, eBtn)
                                           ShowCategoryProducts(kvp.Value)
                                       End Sub
+
+            ' Update button colors to match Jade Clinic palette
+            kvp.Key.FillColor = JadeOlive
+            kvp.Key.ForeColor = Color.White
+            kvp.Key.BackColor = Color.Transparent
+            kvp.Key.BorderColor = Color.FromArgb(212, 190, 123)
+            kvp.Key.BorderThickness = 2
+
+            AddHandler kvp.Key.MouseDown, Sub()
+                                              kvp.Key.BorderColor = Color.White
+                                              kvp.Key.BorderThickness = 4
+                                          End Sub
+            AddHandler kvp.Key.MouseUp, Sub()
+                                            kvp.Key.BorderColor = Color.FromArgb(212, 190, 123)
+                                            kvp.Key.BorderThickness = 2
+                                        End Sub
+
             AddHandler kvp.Key.MouseEnter, Sub(senderBtn, eBtn)
                                                Dim btn = CType(senderBtn, Guna.UI2.WinForms.Guna2Button)
                                                btn.HoverState.FillColor = btn.FillColor
-                                               btn.HoverState.BorderColor = PureWhite
+                                               btn.HoverState.BorderColor = JadeOlive
                                                btn.BorderThickness = 2
                                                btn.Cursor = Cursors.Hand
                                            End Sub
             AddHandler kvp.Key.MouseLeave, Sub(senderBtn, eBtn)
                                                Dim btn = CType(senderBtn, Guna.UI2.WinForms.Guna2Button)
-                                               btn.BorderThickness = 0
+                                               btn.BorderThickness = 2
                                            End Sub
         Next
 
@@ -466,13 +482,13 @@ Public Class Sales
                 AddHandler btn.MouseEnter, Sub(senderBtn, eBtn)
                                                Dim b = CType(senderBtn, Guna.UI2.WinForms.Guna2Button)
                                                b.HoverState.FillColor = b.FillColor
-                                               b.HoverState.BorderColor = PureWhite
+                                               b.HoverState.BorderColor = JadeOlive
                                                b.BorderThickness = 2
                                                b.Cursor = Cursors.Hand
                                            End Sub
                 AddHandler btn.MouseLeave, Sub(senderBtn, eBtn)
                                                Dim b = CType(senderBtn, Guna.UI2.WinForms.Guna2Button)
-                                               b.BorderThickness = 0
+                                               b.BorderThickness = 2
                                            End Sub
             End If
         Next
@@ -517,7 +533,7 @@ Public Class Sales
         ' Set payment button to golden color
         If btnPayment IsNot Nothing Then
             btnPayment.FillColor = GoldenYellow
-            btnPayment.ForeColor = DeepCharcoal
+            btnPayment.ForeColor = DarkText
         End If
 
         ' ... rest of the method ...
@@ -576,8 +592,8 @@ Public Class Sales
                 Dim productCard As New Guna.UI2.WinForms.Guna2Panel()
                 productCard.Size = New Size(cardWidth, cardHeight)
                 productCard.BorderRadius = 10
-                productCard.FillColor = DarkSlate ' Updated to match clinic theme
-                productCard.BorderColor = RichOlive ' Golden accent border
+                productCard.FillColor = OffWhite ' Updated to match clinic theme
+                productCard.BorderColor = JadeOlive ' Golden accent border
                 productCard.BorderThickness = 1
 
                 ' Set the Tag property to the ProductID for UpdateStockLabel method
@@ -616,7 +632,8 @@ Public Class Sales
                 Dim lblProductName As New Guna.UI2.WinForms.Guna2HtmlLabel()
                 lblProductName.Text = displayName
                 lblProductName.Font = New Font("Poppins Light", 9.0F, FontStyle.Regular)
-                lblProductName.ForeColor = PureWhite ' Updated color
+                lblProductName.ForeColor = DarkText
+                lblProductName.BackColor = Color.Transparent
                 lblProductName.Location = New Point(10, cardHeight - 120)
                 lblProductName.AutoSize = True
                 productCard.Controls.Add(lblProductName)
@@ -630,9 +647,10 @@ Public Class Sales
                 ' Add product price
                 Dim originalPrice As Decimal = Convert.ToDecimal(reader("SellingPrice"))
                 Dim lblProductPrice As New Label()
-                lblProductPrice.Text = $"Price: ₱{originalPrice:F2}"  ' FIXED: Changed ? to ₱
-                lblProductPrice.ForeColor = LightSilver ' Updated color
+                lblProductPrice.Text = $"Price: ₱{originalPrice:F2}"
+                lblProductPrice.ForeColor = DarkText
                 lblProductPrice.Font = New Font("Poppins Light", 9.0F, FontStyle.Regular)
+                lblProductPrice.BackColor = Color.Transparent
                 lblProductPrice.Location = New Point(10, cardHeight - 90)
                 lblProductPrice.AutoSize = True
                 productCard.Controls.Add(lblProductPrice)
@@ -641,7 +659,8 @@ Public Class Sales
                 Dim lblProductCode As New Label()
                 lblProductCode.Text = $"Code: {reader("ProductCode").ToString()}"
                 lblProductCode.Font = New Font("Poppins", 7.5F, FontStyle.Regular)
-                lblProductCode.ForeColor = GoldenYellow ' Updated to match brand
+                lblProductCode.ForeColor = JadeOlive
+                lblProductCode.BackColor = Color.Transparent
                 lblProductCode.AutoSize = True
                 lblProductCode.Location = New Point(10, cardHeight - 70)
                 productCard.Controls.Add(lblProductCode)
@@ -660,8 +679,9 @@ Public Class Sales
 
                 Dim displayStock As Integer = Math.Max(0, stock - reservedQty)
                 lblStock.Text = $"Stock: {displayStock}"
-                lblStock.ForeColor = If(displayStock > 0, SuccessGreen, AlertRed) ' Updated colors
+                lblStock.ForeColor = If(displayStock > 0, SuccessGreen, AlertRed)
                 lblStock.Font = New Font("Poppins Light", 9.0F, FontStyle.Regular)
+                lblStock.BackColor = Color.Transparent
                 lblStock.Location = New Point(10, cardHeight - 50)
                 lblStock.AutoSize = True
                 productCard.Controls.Add(lblStock)
@@ -674,7 +694,7 @@ Public Class Sales
                                                    End Sub
                 AddHandler productCard.MouseLeave, Sub()
                                                        productCard.BorderThickness = 1
-                                                       productCard.BorderColor = RichOlive
+                                                       productCard.BorderColor = JadeOlive
                                                    End Sub
 
                 ' Save product data for details
@@ -692,7 +712,7 @@ Public Class Sales
                                                   HandleProductInteraction(productData, False) ' False = manual click
                                               End Sub
 
-                ' ✅ ADD THESE MISSING LINES:
+                ' ? ADD THESE MISSING LINES:
                 ' Add to tracking list
                 productCardControls.Add(productCard)
 
@@ -752,7 +772,7 @@ Public Class Sales
     Private Sub ShowBarcodeAddedNotification(productName As String)
         ' Create a temporary label for feedback
         Dim notificationLabel As New Label()
-        notificationLabel.Text = $"✓ {productName} added!"
+        notificationLabel.Text = $"{productName} added!"
         notificationLabel.Font = New Font("Poppins", 12, FontStyle.Bold)
         notificationLabel.ForeColor = PureWhite
         notificationLabel.BackColor = SuccessGreen
@@ -806,9 +826,9 @@ Public Class Sales
     ' Add instruction label for users
     Private Sub AddBarcodeInstructions()
         Dim instructionLabel As New Label()
-        instructionLabel.Text = "💡 Tip: Hold Shift/Ctrl while scanning or clicking for quantity selection"
+        instructionLabel.Text = "Tip: Hold Shift/Ctrl while scanning or clicking for quantity selection"
         instructionLabel.Font = New Font("Poppins", 9, FontStyle.Italic)
-        instructionLabel.ForeColor = LightSilver
+        instructionLabel.ForeColor = MediumText
         instructionLabel.Location = New Point(20, Me.Height - 80)
         instructionLabel.AutoSize = True
         Me.Controls.Add(instructionLabel)
@@ -906,7 +926,7 @@ Public Class Sales
                 Me.Cursor = Cursors.Default
 
                 If Not authorized Then
-                    ' Authorization cancelled/failed — nothing to do
+                    ' Authorization cancelled/failed � nothing to do
                     Return
                 End If
 
@@ -984,7 +1004,7 @@ Public Class Sales
         Dim notificationLabel As New Label()
         notificationLabel.Text = $"Item Voided: {productName}"
         If Not String.IsNullOrWhiteSpace(approver) Then
-            notificationLabel.Text &= $"  •  By: {approver}"
+            notificationLabel.Text &= $"  �  By: {approver}"
         End If
         notificationLabel.Font = New Font("Poppins", 11, FontStyle.Bold)
         notificationLabel.ForeColor = PureWhite
@@ -1106,16 +1126,17 @@ Public Class Sales
                 Next
 
                 If Not exists Then
-                    ' Create a new button styled like OrthoCatBtn
+                    ' Create a new button with Jade Clinic color palette
                     Dim btnCategory As New Guna.UI2.WinForms.Guna2Button()
                     btnCategory.Text = catName
                     btnCategory.Size = Me.OrthoCatBtn.Size
                     btnCategory.BorderRadius = Me.OrthoCatBtn.BorderRadius
-                    btnCategory.FillColor = Me.OrthoCatBtn.FillColor
-                    btnCategory.Font = Me.OrthoCatBtn.Font
-                    btnCategory.ForeColor = Me.OrthoCatBtn.ForeColor
-                    btnCategory.BackColor = Me.OrthoCatBtn.BackColor
-                    btnCategory.BorderColor = Me.OrthoCatBtn.BorderColor
+                    btnCategory.FillColor = JadeOlive
+                    btnCategory.Font = New Font("Segoe UI", 12.0F)
+                    btnCategory.ForeColor = Color.White
+                    btnCategory.BackColor = Color.Transparent
+                    btnCategory.BorderColor = Color.FromArgb(212, 190, 123)
+                    btnCategory.BorderThickness = 2
 
                     Dim toolTip As New ToolTip()
                     toolTip.SetToolTip(btnCategory, $"Click to view {catName} products")
@@ -1126,13 +1147,13 @@ Public Class Sales
                     AddHandler btnCategory.MouseEnter, Sub(senderBtn, eBtn)
                                                            Dim btn = CType(senderBtn, Guna.UI2.WinForms.Guna2Button)
                                                            btn.HoverState.FillColor = btn.FillColor
-                                                           btn.HoverState.BorderColor = PureWhite
+                                                           btn.HoverState.BorderColor = JadeOlive
                                                            btn.BorderThickness = 2
                                                            btn.Cursor = Cursors.Hand
                                                        End Sub
                     AddHandler btnCategory.MouseLeave, Sub(senderBtn, eBtn)
                                                            Dim btn = CType(senderBtn, Guna.UI2.WinForms.Guna2Button)
-                                                           btn.BorderThickness = 0
+                                                           btn.BorderThickness = 2
                                                        End Sub
                     CategoryPanel.Controls.Add(btnCategory)
                 End If
@@ -1359,7 +1380,7 @@ Public Class Sales
                 .Location = New Point(Me.ClientSize.Width - 120, 8),
                 .Anchor = AnchorStyles.Top Or AnchorStyles.Right,
                 .BorderRadius = 8,
-                .FillColor = RichOlive,
+                .FillColor = JadeOlive,
                 .ForeColor = PureWhite
             }
             AddHandler btnEditCapital.Click, AddressOf BtnEditCapital_Click
@@ -1438,7 +1459,7 @@ Public Class Sales
         .Location = New Point(20, 16),
         .AutoSize = True,
         .Font = New Font("Poppins", 10, FontStyle.Regular),
-        .ForeColor = DeepCharcoal
+        .ForeColor = DarkText
     }
 
         Dim txtCapital As New Guna.UI2.WinForms.Guna2TextBox() With {
@@ -1446,7 +1467,7 @@ Public Class Sales
         .Size = New Size(380, 40),
         .BorderRadius = 8,
         .FillColor = PureWhite,
-        .ForeColor = DeepCharcoal,
+        .ForeColor = DarkText,
         .Font = New Font("Poppins", 12, FontStyle.Bold),
         .TextAlign = HorizontalAlignment.Right
     }
@@ -1459,7 +1480,7 @@ Public Class Sales
         .Size = New Size(160, 44),
         .Location = New Point(220, 150),
         .Font = New Font("Poppins", 10, FontStyle.Bold),
-        .FillColor = RichOlive,
+        .FillColor = JadeOlive,
         .ForeColor = PureWhite,
         .BorderRadius = 10
     }
@@ -1479,7 +1500,7 @@ Public Class Sales
         .Location = New Point(20, 100),
         .AutoSize = True,
         .Font = New Font("Poppins", 10, FontStyle.Regular),
-        .ForeColor = DeepCharcoal
+        .ForeColor = DarkText
     }
 
         ' Helper to parse user input (accepts current-culture decimal separator)
@@ -1522,7 +1543,7 @@ Public Class Sales
                                                 Return
                                             End If
 
-                                            ' All other digits allowed — don't aggressively limit integer length here
+                                            ' All other digits allowed � don't aggressively limit integer length here
                                         End Sub
 
         ' Update preview with thousands separator and two decimals while user types (non-intrusive)
@@ -1658,7 +1679,7 @@ Public Class Sales
             Return
         End If
 
-        ' Prevent editing if sales for today exist — button should be hidden but double-check.
+        ' Prevent editing if sales for today exist � button should be hidden but double-check.
         If HasSalesForToday() Then
             MessageBox.Show("Opening capital cannot be edited after sales have been recorded for today.", "Action Not Allowed", MessageBoxButtons.OK, MessageBoxIcon.Warning)
             btnEditCapital.Visible = False
@@ -1674,7 +1695,7 @@ Public Class Sales
     ' Helper method for "not found" notifications
     Private Sub ShowBarcodeNotFoundNotification(barcode As String)
         Dim notificationLabel As New Label()
-        notificationLabel.Text = $"⚠ Product '{barcode}' not found"
+        notificationLabel.Text = $"Product '{barcode}' not found"
         notificationLabel.Font = New Font("Poppins", 12, FontStyle.Bold)
         notificationLabel.ForeColor = PureWhite
         notificationLabel.BackColor = AlertRed
@@ -1706,7 +1727,7 @@ Public Class Sales
     ' Helper method for error notifications
     Private Sub ShowBarcodeErrorNotification(errorMessage As String)
         Dim notificationLabel As New Label()
-        notificationLabel.Text = $"❌ Barcode Error: {errorMessage}"
+        notificationLabel.Text = $"Barcode Error: {errorMessage}"
         notificationLabel.Font = New Font("Poppins", 11, FontStyle.Bold)
         notificationLabel.ForeColor = PureWhite
         notificationLabel.BackColor = AlertRed
@@ -1773,11 +1794,11 @@ Public Class Sales
             titleLabel.TextAlign = ContentAlignment.MiddleCenter
             DashboardPanel.Controls.Add(titleLabel)
 
-            ' Subtitle with LightSilver (visible on dark nav background)
+            ' Subtitle with MediumText (visible on dark nav background)
             Dim subtitleLabel As New Label()
             subtitleLabel.Text = "Dental Supply Management"
             subtitleLabel.Font = New Font("Poppins", 10, FontStyle.Regular)
-            subtitleLabel.ForeColor = LightSilver
+            subtitleLabel.ForeColor = MediumText
             subtitleLabel.BackColor = Color.Transparent
             subtitleLabel.AutoSize = False
             subtitleLabel.Size = New Size(availableWidth, 25)
@@ -1792,11 +1813,11 @@ Public Class Sales
             separator1.Location = New Point(30, 190)
             DashboardPanel.Controls.Add(separator1)
 
-            ' Navigation section label with LightSilver (visible on dark background)
+            ' Navigation section label with MediumText (visible on dark background)
             Dim navLabel As New Label()
             navLabel.Text = "NAVIGATION"
             navLabel.Font = New Font("Poppins", 10, FontStyle.Bold)
-            navLabel.ForeColor = LightSilver
+            navLabel.ForeColor = MediumText
             navLabel.BackColor = Color.Transparent
             navLabel.AutoSize = False
             navLabel.Size = New System.Drawing.Size(availableWidth, 25)
@@ -1832,38 +1853,38 @@ Public Class Sales
             ' Create navigation buttons based on role
             ' Dashboard Button (not active)
             If currentRole = "MANAGER" Or currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
-                Dim navDashboardBtn = CreateLargeNavButton("🏠 Dashboard", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
+                Dim navDashboardBtn = CreateLargeNavButton("Dashboard", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
                 AddHandler navDashboardBtn.Click, AddressOf NavDashboard_Click
                 buttonIndex += 1
             End If
             ' POS/Sales Button (ACTIVE - we're on this page)
-            Dim navPOSBtn = CreateLargeNavButton("🛒 POS / Sales", startY + buttonIndex * (buttonHeight + buttonSpacing), True, buttonWidth, buttonHeight)
+            Dim navPOSBtn = CreateLargeNavButton("POS / Sales", startY + buttonIndex * (buttonHeight + buttonSpacing), True, buttonWidth, buttonHeight)
             buttonIndex += 1
 
             ' Manager and Admin only buttons - Inventory moved here
             If currentRole = "MANAGER" Or currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
                 ' Inventory Button (only for Manager and Admin)
-                Dim navInventoryBtn = CreateLargeNavButton("📦 Inventory", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
+                Dim navInventoryBtn = CreateLargeNavButton("Inventory", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
                 AddHandler navInventoryBtn.Click, AddressOf NavInventory_Click
                 buttonIndex += 1
 
                 ' Sales Records Button
-                Dim navSalesRecordsBtn = CreateLargeNavButton("📊 Sales Records", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
+                Dim navSalesRecordsBtn = CreateLargeNavButton("Sales Records", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
                 AddHandler navSalesRecordsBtn.Click, AddressOf NavSalesRecords_Click
                 buttonIndex += 1
 
                 ' Staff Management Button
-                Dim navStaffBtn = CreateLargeNavButton("👥 Staff", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
+                Dim navStaffBtn = CreateLargeNavButton("Staff", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
                 AddHandler navStaffBtn.Click, AddressOf NavStaff_Click
                 buttonIndex += 1
 
                 ' Inventory Logs Button
-                Dim navInventoryLogBtn = CreateLargeNavButton("📋 Inventory Logs", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
+                Dim navInventoryLogBtn = CreateLargeNavButton("Inventory Logs", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
                 AddHandler navInventoryLogBtn.Click, AddressOf NavInventoryLog_Click
                 buttonIndex += 1
 
                 ' Suppliers (place above Audit Logs)
-                Dim navSuppliersBtn = CreateLargeNavButton("🏷️ Suppliers", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
+                Dim navSuppliersBtn = CreateLargeNavButton("Suppliers", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
                 AddHandler navSuppliersBtn.Click, AddressOf NavSuppliers_Click
                 buttonIndex += 1
             End If
@@ -1871,12 +1892,12 @@ Public Class Sales
             ' Admin only buttons
             If currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
                 ' Audit Logs Button
-                Dim navAuditLogBtn = CreateLargeNavButton("🔍 Audit Logs", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
+                Dim navAuditLogBtn = CreateLargeNavButton("Audit Logs", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
                 AddHandler navAuditLogBtn.Click, AddressOf NavAuditLog_Click
                 buttonIndex += 1
 
                 ' System Settings Button
-                Dim systemSettingsBtn = CreateLargeNavButton("⚙️ System", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
+                Dim systemSettingsBtn = CreateLargeNavButton("System", startY + buttonIndex * (buttonHeight + buttonSpacing), False, buttonWidth, buttonHeight)
                 AddHandler systemSettingsBtn.Click, AddressOf NavSystemSettings_Click
                 buttonIndex += 1
             End If
@@ -1909,7 +1930,7 @@ Public Class Sales
 
         ' Apply color scheme for dark navigation panel (idle = transparent, text = white)
         btn.FillColor = If(isActive, GoldenYellow, System.Drawing.Color.Transparent) ' Golden for active
-        btn.ForeColor = If(isActive, DeepCharcoal, PureWhite) ' Dark text on active gold, white on dark background when inactive
+        btn.ForeColor = If(isActive, DarkText, PureWhite) ' Dark text on active gold, white on dark background when inactive
         btn.BorderThickness = If(isActive, 0, 1)
         btn.BorderColor = If(isActive, System.Drawing.Color.Transparent, System.Drawing.Color.FromArgb(80, 80, 80)) ' subtle border on dark bg
         btn.BackColor = System.Drawing.Color.Transparent
@@ -2278,9 +2299,9 @@ Public Class Sales
     ' NEW: Customer Information Modal
     ' NEW: Enhanced Customer Information Modal with improved spacing and design
     ' NEW: Enhanced Customer Information Modal with improved spacing and design
-    ' Replace ShowCustomerInformationModal — preserve snapshot fields but allow nulls
+    ' Replace ShowCustomerInformationModal � preserve snapshot fields but allow nulls
     Private Sub ShowCustomerInformationModal()
-        ' Create customer information modal form (simplified — no customer type buttons)
+        ' Create customer information modal form (simplified � no customer type buttons)
         Dim customerForm As New Form()
         customerForm.Text = "Customer Information"
         customerForm.Size = New Size(535, 480) ' resized after removing customer-type controls
@@ -2288,7 +2309,7 @@ Public Class Sales
         customerForm.FormBorderStyle = FormBorderStyle.FixedDialog
         customerForm.MaximizeBox = False
         customerForm.MinimizeBox = False
-        customerForm.BackColor = DarkSlate
+        customerForm.BackColor = OffWhite
         customerForm.ShowInTaskbar = False
 
         ' Get total amount for display
@@ -2308,7 +2329,7 @@ Public Class Sales
         Dim lblTitle As New Label() With {
         .Text = "CUSTOMER INFORMATION",
         .Font = New Font("Poppins", 18, FontStyle.Bold),
-        .ForeColor = PureWhite,
+        .ForeColor = Color.FromArgb(95, 95, 95),
         .Location = New Point(0, 0),
         .Size = New Size(480, 35),
         .TextAlign = ContentAlignment.MiddleCenter
@@ -2329,7 +2350,7 @@ Public Class Sales
         Dim separator As New Panel() With {
         .Size = New Size(440, 2),
         .Location = New Point(40, 90),
-        .BackColor = RichOlive
+        .BackColor = JadeOlive
     }
         customerForm.Controls.Add(separator)
 
@@ -2345,7 +2366,7 @@ Public Class Sales
         Dim lblName As New Label() With {
         .Text = "Customer Name",
         .Font = New Font("Poppins", 11, FontStyle.Regular),
-        .ForeColor = LightSilver,
+        .ForeColor = MediumText,
         .Location = New Point(0, 0),
         .Size = New Size(150, 25)
     }
@@ -2355,12 +2376,12 @@ Public Class Sales
         .Size = New Size(460, 40),
         .Location = New Point(0, 25),
         .PlaceholderText = "Customer Name (optional)",
-        .PlaceholderForeColor = SteelGray,
+        .PlaceholderForeColor = BorderGray,
         .Font = New Font("Poppins", 11, FontStyle.Regular),
         .BorderRadius = 10,
         .FillColor = PureWhite,
-        .ForeColor = DeepCharcoal,
-        .BorderColor = SteelGray,
+        .ForeColor = DarkText,
+        .BorderColor = BorderGray,
         .BorderThickness = 1,
         .Text = If(selectedCustomerName, "")
     }
@@ -2370,7 +2391,7 @@ Public Class Sales
         Dim lblTIN As New Label() With {
         .Text = "Customer TIN",
         .Font = New Font("Poppins", 11, FontStyle.Regular),
-        .ForeColor = LightSilver,
+        .ForeColor = MediumText,
         .Location = New Point(0, 75),
         .Size = New Size(150, 25)
     }
@@ -2380,12 +2401,12 @@ Public Class Sales
         .Size = New Size(460, 40),
         .Location = New Point(0, 100),
         .PlaceholderText = "TIN (optional)",
-        .PlaceholderForeColor = SteelGray,
+        .PlaceholderForeColor = BorderGray,
         .Font = New Font("Poppins", 11, FontStyle.Regular),
         .BorderRadius = 10,
         .FillColor = PureWhite,
-        .ForeColor = DeepCharcoal,
-        .BorderColor = SteelGray,
+        .ForeColor = DarkText,
+        .BorderColor = BorderGray,
         .BorderThickness = 1,
         .Text = selectedCustomerTIN
     }
@@ -2395,7 +2416,7 @@ Public Class Sales
         Dim lblPhone As New Label() With {
         .Text = "Phone Number",
         .Font = New Font("Poppins", 11, FontStyle.Regular),
-        .ForeColor = LightSilver,
+        .ForeColor = MediumText,
         .Location = New Point(0, 150),
         .Size = New Size(150, 25)
     }
@@ -2405,12 +2426,12 @@ Public Class Sales
         .Size = New Size(220, 45),
         .Location = New Point(0, 175),
         .PlaceholderText = "Phone (optional)",
-        .PlaceholderForeColor = SteelGray,
+        .PlaceholderForeColor = BorderGray,
         .Font = New Font("Poppins", 11, FontStyle.Regular),
         .BorderRadius = 10,
         .FillColor = PureWhite,
-        .ForeColor = DeepCharcoal,
-        .BorderColor = SteelGray,
+        .ForeColor = DarkText,
+        .BorderColor = BorderGray,
         .BorderThickness = 1,
         .Text = selectedCustomerPhone
     }
@@ -2419,7 +2440,7 @@ Public Class Sales
         Dim lblEmail As New Label() With {
         .Text = "Email Address",
         .Font = New Font("Poppins", 11, FontStyle.Regular),
-        .ForeColor = LightSilver,
+        .ForeColor = MediumText,
         .Location = New Point(240, 150),
         .Size = New Size(150, 25)
     }
@@ -2429,12 +2450,12 @@ Public Class Sales
         .Size = New Size(220, 45),
         .Location = New Point(240, 175),
         .PlaceholderText = "Email (optional)",
-        .PlaceholderForeColor = SteelGray,
+        .PlaceholderForeColor = BorderGray,
         .Font = New Font("Poppins", 11, FontStyle.Regular),
         .BorderRadius = 10,
         .FillColor = PureWhite,
-        .ForeColor = DeepCharcoal,
-        .BorderColor = SteelGray,
+        .ForeColor = DarkText,
+        .BorderColor = BorderGray,
         .BorderThickness = 1,
         .Text = selectedCustomerEmail
     }
@@ -2453,7 +2474,7 @@ Public Class Sales
         .Size = New Size(200, 50),
         .Location = New Point(260, 0),
         .Font = New Font("Poppins", 12, FontStyle.Bold),
-        .ForeColor = DeepCharcoal,
+        .ForeColor = DarkText,
         .FillColor = SuccessGreen,
         .BorderRadius = 12,
         .BorderThickness = 0
@@ -2464,13 +2485,13 @@ Public Class Sales
                                           Dim emailVal As String = txtEmail.Text.Trim()
                                           Dim tinVal As String = txtTIN.Text.Trim()
 
-                                          ' Preserve selectedCustomerName/email/phone — allow null if empty
+                                          ' Preserve selectedCustomerName/email/phone � allow null if empty
                                           selectedCustomerName = If(String.IsNullOrWhiteSpace(nameVal), Nothing, nameVal)
                                           selectedCustomerPhone = If(String.IsNullOrWhiteSpace(phoneVal), Nothing, phoneVal)
                                           selectedCustomerEmail = If(String.IsNullOrWhiteSpace(emailVal), Nothing, emailVal)
                                           selectedCustomerTIN = If(String.IsNullOrWhiteSpace(tinVal), Nothing, tinVal)
 
-                                          ' Do NOT create or query Customers table — treat customers as ephemeral
+                                          ' Do NOT create or query Customers table � treat customers as ephemeral
                                           selectedCustomerId = Nothing
 
                                           customerForm.DialogResult = DialogResult.OK
@@ -2483,10 +2504,11 @@ Public Class Sales
         .Size = New Size(140, 50),
         .Location = New Point(80, 0),
         .Font = New Font("Poppins", 12, FontStyle.Regular),
-        .ForeColor = PureWhite,
-        .FillColor = AlertRed,
-        .BorderRadius = 12,
-        .BorderThickness = 0
+        .ForeColor = Color.FromArgb(95, 95, 95),
+        .FillColor = Color.FromArgb(250, 249, 246),
+        .BorderColor = Color.FromArgb(200, 198, 192),
+        .BorderThickness = 1,
+        .BorderRadius = 12
     }
         AddHandler btnCancel.Click, Sub()
                                         selectedCustomerName = If(String.IsNullOrWhiteSpace(txtCustomerName.Text.Trim()), Nothing, txtCustomerName.Text.Trim())
@@ -2496,8 +2518,8 @@ Public Class Sales
                                         customerForm.DialogResult = DialogResult.Cancel
                                         customerForm.Close()
                                     End Sub
-        AddHandler btnCancel.MouseEnter, Sub() btnCancel.FillColor = Color.FromArgb(220, 60, 75)
-        AddHandler btnCancel.MouseLeave, Sub() btnCancel.FillColor = AlertRed
+        AddHandler btnCancel.MouseEnter, Sub() btnCancel.FillColor = Color.FromArgb(240, 238, 232)
+        AddHandler btnCancel.MouseLeave, Sub() btnCancel.FillColor = Color.FromArgb(250, 249, 246)
         buttonSection.Controls.Add(btnCancel)
 
         ' Keyboard handlers
@@ -2535,7 +2557,7 @@ Public Class Sales
         paymentForm.FormBorderStyle = FormBorderStyle.FixedDialog
         paymentForm.MaximizeBox = False
         paymentForm.MinimizeBox = False
-        paymentForm.BackColor = DarkSlate
+        paymentForm.BackColor = OffWhite
         paymentForm.ShowInTaskbar = False
 
         ' Get total amount
@@ -2548,7 +2570,7 @@ Public Class Sales
         Dim lblTitle As New Label()
         lblTitle.Text = "Select Payment Method"
         lblTitle.Font = New Font("Poppins", 14, FontStyle.Bold)
-        lblTitle.ForeColor = PureWhite
+        lblTitle.ForeColor = Color.FromArgb(95, 95, 95)
         lblTitle.Location = New Point(20, 10)
         lblTitle.Size = New Size(560, 30)
         lblTitle.TextAlign = ContentAlignment.MiddleCenter
@@ -2557,22 +2579,27 @@ Public Class Sales
         Dim lblCustomerInfo As New Label()
         lblCustomerInfo.Text = If(String.IsNullOrWhiteSpace(selectedCustomerName), "Customer:", $"Customer: {selectedCustomerName} ({selectedCustomerType})")
         lblCustomerInfo.Font = New Font("Poppins", 10, FontStyle.Regular)
-        lblCustomerInfo.ForeColor = GoldenYellow
+        lblCustomerInfo.ForeColor = Color.FromArgb(95, 95, 95)
         lblCustomerInfo.Location = New Point(20, 60)
         lblCustomerInfo.Size = New Size(560, 25)
         lblCustomerInfo.TextAlign = ContentAlignment.MiddleCenter
         paymentForm.Controls.Add(lblCustomerInfo)
 
-
         ' Total amount display
         Dim lblTotal As New Label()
         lblTotal.Text = $"Total Amount: ₱{totalAmount:F2}"
         lblTotal.Font = New Font("Poppins", 10, FontStyle.Bold)
-        lblTotal.ForeColor = SuccessGreen
+        lblTotal.ForeColor = Color.FromArgb(95, 95, 95)
         lblTotal.Location = New Point(20, 100)
         lblTotal.Size = New Size(560, 30)
         lblTotal.TextAlign = ContentAlignment.MiddleCenter
         paymentForm.Controls.Add(lblTotal)
+
+        Dim cashColor As Color = Color.FromArgb(76, 175, 80)
+        Dim gcashColor As Color = Color.FromArgb(0, 120, 212)
+        Dim cardColor As Color = Color.FromArgb(124, 58, 237)
+        Dim actionBorder As Color = Color.FromArgb(200, 198, 192)
+        Dim goldAccent As Color = Color.FromArgb(191, 155, 48)
 
         ' Payment method buttons (centered)
         Dim buttonStartX As Integer = (paymentForm.Width - (3 * 150 + 2 * 40)) / 2
@@ -2582,19 +2609,19 @@ Public Class Sales
         btnCash.Text = "💵" & vbCrLf & "Cash"
         btnCash.Size = New Size(150, 100)
         btnCash.Location = New Point(buttonStartX, 160)
-        btnCash.Font = New Font("Poppins", 12, FontStyle.Bold)
-        btnCash.ForeColor = DeepCharcoal
-        btnCash.FillColor = SuccessGreen
+        btnCash.Font = New Font("Poppins", 14, FontStyle.Bold)
+        btnCash.ForeColor = Color.White
+        btnCash.FillColor = cashColor
+        btnCash.BorderThickness = 0
         btnCash.BorderRadius = 15
-        btnCash.TextAlign = HorizontalAlignment.Center
+        btnCash.HoverState.FillColor = Color.FromArgb(67, 160, 71)
+        btnCash.PressedColor = Color.FromArgb(56, 142, 60)
         AddHandler btnCash.Click, Sub()
                                       selectedPaymentMethod = "Cash"
                                       paymentReference = ""
                                       paymentForm.DialogResult = DialogResult.OK
                                       paymentForm.Close()
                                   End Sub
-        AddHandler btnCash.MouseEnter, Sub() btnCash.FillColor = GoldenYellow
-        AddHandler btnCash.MouseLeave, Sub() If Not btnCash.Focused Then btnCash.FillColor = SuccessGreen
         paymentForm.Controls.Add(btnCash)
 
         ' GCash button
@@ -2602,18 +2629,18 @@ Public Class Sales
         btnGCash.Text = "📱" & vbCrLf & "GCash"
         btnGCash.Size = New Size(150, 100)
         btnGCash.Location = New Point(buttonStartX + 190, 160)
-        btnGCash.Font = New Font("Poppins", 12, FontStyle.Bold)
-        btnGCash.ForeColor = PureWhite
-        btnGCash.FillColor = Color.FromArgb(0, 120, 212)
+        btnGCash.Font = New Font("Poppins", 14, FontStyle.Bold)
+        btnGCash.ForeColor = Color.White
+        btnGCash.FillColor = gcashColor
+        btnGCash.BorderThickness = 0
         btnGCash.BorderRadius = 15
-        btnGCash.TextAlign = HorizontalAlignment.Center
+        btnGCash.HoverState.FillColor = Color.FromArgb(0, 102, 190)
+        btnGCash.PressedColor = Color.FromArgb(0, 85, 160)
         AddHandler btnGCash.Click, Sub()
                                        selectedPaymentMethod = "GCash"
                                        paymentForm.DialogResult = DialogResult.Yes
                                        paymentForm.Close()
                                    End Sub
-        AddHandler btnGCash.MouseEnter, Sub() btnGCash.FillColor = GoldenYellow
-        AddHandler btnGCash.MouseLeave, Sub() If Not btnGCash.Focused Then btnGCash.FillColor = Color.FromArgb(0, 120, 212)
         paymentForm.Controls.Add(btnGCash)
 
         ' Card button
@@ -2621,72 +2648,64 @@ Public Class Sales
         btnCard.Text = "💳" & vbCrLf & "Card"
         btnCard.Size = New Size(150, 100)
         btnCard.Location = New Point(buttonStartX + 380, 160)
-        btnCard.Font = New Font("Poppins", 12, FontStyle.Bold)
-        btnCard.ForeColor = PureWhite
-        btnCard.FillColor = Color.FromArgb(138, 43, 226)
+        btnCard.Font = New Font("Poppins", 14, FontStyle.Bold)
+        btnCard.ForeColor = Color.White
+        btnCard.FillColor = cardColor
+        btnCard.BorderThickness = 0
         btnCard.BorderRadius = 15
-        btnCard.TextAlign = HorizontalAlignment.Center
+        btnCard.HoverState.FillColor = Color.FromArgb(109, 46, 209)
+        btnCard.PressedColor = Color.FromArgb(91, 33, 182)
         AddHandler btnCard.Click, Sub()
                                       selectedPaymentMethod = "Card"
                                       paymentForm.DialogResult = DialogResult.Yes
                                       paymentForm.Close()
                                   End Sub
-        AddHandler btnCard.MouseEnter, Sub() btnCard.FillColor = GoldenYellow
-        AddHandler btnCard.MouseLeave, Sub() If Not btnCard.Focused Then btnCard.FillColor = Color.FromArgb(138, 43, 226)
         paymentForm.Controls.Add(btnCard)
 
         ' Action buttons
         Dim btnBackToCustomer As New Guna.UI2.WinForms.Guna2Button()
         btnBackToCustomer.Text = "← Back to Customer"
-        btnBackToCustomer.Size = New Size(180, 50)
-        btnBackToCustomer.Location = New Point(120, 320)
+        btnBackToCustomer.Size = New Size(180, 45)
+        btnBackToCustomer.Location = New Point(120, 300)
         btnBackToCustomer.Font = New Font("Poppins", 11, FontStyle.Regular)
-        btnBackToCustomer.ForeColor = PureWhite
-        btnBackToCustomer.FillColor = SteelGray
+        btnBackToCustomer.ForeColor = Color.FromArgb(95, 95, 95)
+        btnBackToCustomer.FillColor = Color.FromArgb(250, 249, 246)
+        btnBackToCustomer.BorderColor = actionBorder
+        btnBackToCustomer.BorderThickness = 1
         btnBackToCustomer.BorderRadius = 12
+        btnBackToCustomer.HoverState.FillColor = Color.FromArgb(240, 238, 232)
         AddHandler btnBackToCustomer.Click, Sub()
                                                 paymentForm.DialogResult = DialogResult.Retry
                                                 paymentForm.Close()
                                             End Sub
-        AddHandler btnBackToCustomer.MouseEnter, Sub() btnBackToCustomer.FillColor = Graphite
-        AddHandler btnBackToCustomer.MouseLeave, Sub() If Not btnBackToCustomer.Focused Then btnBackToCustomer.FillColor = SteelGray
         paymentForm.Controls.Add(btnBackToCustomer)
 
         Dim btnCancel As New Guna.UI2.WinForms.Guna2Button()
         btnCancel.Text = "Cancel"
-        btnCancel.Size = New Size(120, 50)
-        btnCancel.Location = New Point(320, 320)
+        btnCancel.Size = New Size(120, 45)
+        btnCancel.Location = New Point(320, 300)
         btnCancel.Font = New Font("Poppins", 11, FontStyle.Regular)
-        btnCancel.ForeColor = PureWhite
-        btnCancel.FillColor = AlertRed
+        btnCancel.ForeColor = Color.FromArgb(200, 70, 70)
+        btnCancel.FillColor = Color.FromArgb(255, 245, 245)
+        btnCancel.BorderColor = Color.FromArgb(220, 120, 120)
+        btnCancel.BorderThickness = 1
         btnCancel.BorderRadius = 12
+        btnCancel.HoverState.FillColor = Color.FromArgb(255, 235, 235)
         AddHandler btnCancel.Click, Sub()
                                         paymentForm.DialogResult = DialogResult.Cancel
                                         paymentForm.Close()
                                     End Sub
-        AddHandler btnCancel.MouseEnter, Sub() btnCancel.FillColor = Color.FromArgb(200, 50, 50)
-        AddHandler btnCancel.MouseLeave, Sub() If Not btnCancel.Focused Then btnCancel.FillColor = AlertRed
         paymentForm.Controls.Add(btnCancel)
 
         ' Keyboard navigation support
         Dim paymentButtons As New List(Of Guna.UI2.WinForms.Guna2Button) From {btnCash, btnGCash, btnCard, btnBackToCustomer, btnCancel}
         For Each btn In paymentButtons
             AddHandler btn.GotFocus, Sub()
-                                         btn.FillColor = GoldenYellow
+                                         btn.BorderColor = Color.FromArgb(191, 155, 48)
                                          btn.BorderThickness = 2
                                      End Sub
             AddHandler btn.LostFocus, Sub()
-                                          If btn Is btnCash Then
-                                              btn.FillColor = SuccessGreen
-                                          ElseIf btn Is btnGCash Then
-                                              btn.FillColor = Color.FromArgb(0, 120, 212)
-                                          ElseIf btn Is btnCard Then
-                                              btn.FillColor = Color.FromArgb(138, 43, 226)
-                                          ElseIf btn Is btnBackToCustomer Then
-                                              btn.FillColor = SteelGray
-                                          ElseIf btn Is btnCancel Then
-                                              btn.FillColor = AlertRed
-                                          End If
+                                          btn.BorderColor = Color.FromArgb(200, 198, 192)
                                           btn.BorderThickness = 1
                                       End Sub
         Next
@@ -2747,7 +2766,7 @@ Public Class Sales
         refForm.FormBorderStyle = FormBorderStyle.FixedDialog
         refForm.MaximizeBox = False
         refForm.MinimizeBox = False
-        refForm.BackColor = DarkSlate
+        refForm.BackColor = OffWhite
         refForm.ShowInTaskbar = False
         refForm.KeyPreview = True ' Enable keyboard input for the form
 
@@ -2761,7 +2780,7 @@ Public Class Sales
         Dim lblTitle As New Label()
         lblTitle.Text = $"{selectedPaymentMethod} Payment"
         lblTitle.Font = New Font("Poppins", 14, FontStyle.Bold)
-        lblTitle.ForeColor = PureWhite
+        lblTitle.ForeColor = Color.FromArgb(95, 95, 95)
         lblTitle.Size = New Size(410, 30)
         lblTitle.Location = New Point((refForm.Width - lblTitle.Width) \ 2, 20) ' CENTERED
         lblTitle.TextAlign = ContentAlignment.MiddleCenter
@@ -2771,7 +2790,7 @@ Public Class Sales
         Dim lblTotal As New Label()
         lblTotal.Text = $"Total: ₱{totalAmount:F2}"
         lblTotal.Font = New Font("Poppins", 12, FontStyle.Bold)
-        lblTotal.ForeColor = GoldenYellow
+        lblTotal.ForeColor = Color.FromArgb(95, 95, 95)
         lblTotal.Size = New Size(410, 25)
         lblTotal.Location = New Point((refForm.Width - lblTotal.Width) \ 2, 60) ' CENTERED
         lblTotal.TextAlign = ContentAlignment.MiddleCenter
@@ -2781,7 +2800,7 @@ Public Class Sales
         Dim lblReference As New Label()
         lblReference.Text = "Enter Reference Number:"
         lblReference.Font = New Font("Poppins", 12, FontStyle.Regular)
-        lblReference.ForeColor = PureWhite
+        lblReference.ForeColor = Color.FromArgb(95, 95, 95)
         lblReference.Size = New Size(200, 25)
         lblReference.Location = New Point((refForm.Width - lblReference.Width) \ 2, 110) ' CENTERED
         lblReference.TextAlign = ContentAlignment.MiddleCenter
@@ -2794,8 +2813,10 @@ Public Class Sales
         txtReference.PlaceholderText = "Enter transaction reference number"
         txtReference.Font = New Font("Poppins", 12, FontStyle.Regular)
         txtReference.BorderRadius = 8
-        txtReference.FillColor = PureWhite
-        txtReference.ForeColor = DeepCharcoal
+        txtReference.FillColor = Color.FromArgb(250, 249, 246)
+        txtReference.ForeColor = Color.FromArgb(95, 95, 95)
+        txtReference.BorderColor = Color.FromArgb(200, 198, 192)
+        txtReference.BorderThickness = 1
         refForm.Controls.Add(txtReference)
 
         ' Action buttons - CENTERED GROUP
@@ -2804,14 +2825,22 @@ Public Class Sales
         Dim totalButtonWidth As Integer = 120 + 200 + buttonSpacing ' btnBack + btnComplete + spacing
         Dim buttonGroupStartX As Integer = (refForm.Width - totalButtonWidth) \ 2
 
+        Dim cardFill As Color = Color.FromArgb(250, 249, 246)
+        Dim cardFore As Color = Color.FromArgb(95, 95, 95)
+        Dim cardBorder As Color = Color.FromArgb(200, 198, 192)
+        Dim cardHover As Color = Color.FromArgb(240, 238, 232)
+        Dim goldAccent As Color = Color.FromArgb(191, 155, 48)
+
         Dim btnComplete As New Guna.UI2.WinForms.Guna2Button()
         btnComplete.Text = "Confirm Payment"
         btnComplete.Size = New Size(200, 50)
         btnComplete.Location = New Point(buttonGroupStartX + 120 + buttonSpacing, 200) ' Position after btnBack
         btnComplete.Font = New Font("Poppins", 10, FontStyle.Bold)
-        btnComplete.ForeColor = DeepCharcoal
-        btnComplete.FillColor = SuccessGreen
+        btnComplete.ForeColor = Color.White
+        btnComplete.FillColor = Color.FromArgb(76, 175, 80)
+        btnComplete.BorderThickness = 0
         btnComplete.BorderRadius = 12
+        btnComplete.HoverState.FillColor = Color.FromArgb(67, 160, 71)
         AddHandler btnComplete.Click, Sub()
                                           If String.IsNullOrWhiteSpace(txtReference.Text) Then
                                               MessageBox.Show("Please enter a reference number.", "Missing Reference", MessageBoxButtons.OK, MessageBoxIcon.Warning)
@@ -2821,8 +2850,6 @@ Public Class Sales
                                           refForm.DialogResult = DialogResult.OK
                                           refForm.Close()
                                       End Sub
-        AddHandler btnComplete.MouseEnter, Sub() btnComplete.FillColor = GoldenYellow
-        AddHandler btnComplete.MouseLeave, Sub() btnComplete.FillColor = SuccessGreen
         refForm.Controls.Add(btnComplete)
 
         Dim btnBack As New Guna.UI2.WinForms.Guna2Button()
@@ -2830,15 +2857,16 @@ Public Class Sales
         btnBack.Size = New Size(120, 50)
         btnBack.Location = New Point(buttonGroupStartX, 200) ' Start of group
         btnBack.Font = New Font("Poppins", 12, FontStyle.Regular)
-        btnBack.ForeColor = PureWhite
-        btnBack.FillColor = SteelGray
+        btnBack.ForeColor = Color.FromArgb(95, 95, 95)
+        btnBack.FillColor = Color.FromArgb(250, 249, 246)
+        btnBack.BorderColor = Color.FromArgb(200, 198, 192)
+        btnBack.BorderThickness = 1
         btnBack.BorderRadius = 12
+        btnBack.HoverState.FillColor = Color.FromArgb(240, 238, 232)
         AddHandler btnBack.Click, Sub()
                                       refForm.DialogResult = DialogResult.Cancel
                                       refForm.Close()
                                   End Sub
-        AddHandler btnBack.MouseEnter, Sub() btnBack.FillColor = Graphite
-        AddHandler btnBack.MouseLeave, Sub() btnBack.FillColor = SteelGray
         refForm.Controls.Add(btnBack)
 
         ' Add KeyDown handler for keyboard support
@@ -2878,7 +2906,7 @@ Public Class Sales
         cashForm.FormBorderStyle = FormBorderStyle.FixedDialog
         cashForm.MaximizeBox = False
         cashForm.MinimizeBox = False
-        cashForm.BackColor = DarkSlate
+        cashForm.BackColor = OffWhite
         cashForm.ShowInTaskbar = False
         cashForm.KeyPreview = True ' Enable keyboard input for the form
 
@@ -2899,7 +2927,7 @@ Public Class Sales
         Dim lblTitle As New Label()
         lblTitle.Text = "CASH PAYMENT"
         lblTitle.Font = New Font("Poppins", 18, FontStyle.Bold)
-        lblTitle.ForeColor = PureWhite
+        lblTitle.ForeColor = Color.FromArgb(95, 95, 95)
         lblTitle.Location = New Point(0, 0)
         lblTitle.Size = New Size(480, 35)
         lblTitle.TextAlign = ContentAlignment.MiddleCenter
@@ -2919,7 +2947,7 @@ Public Class Sales
         Dim lblOrderTotal As New Label()
         lblOrderTotal.Text = $"Total Due: ₱{totalAmount:F2}"
         lblOrderTotal.Font = New Font("Poppins", 14, FontStyle.Bold)
-        lblOrderTotal.ForeColor = LightSilver
+        lblOrderTotal.ForeColor = MediumText
         lblOrderTotal.Location = New Point(0, 70)
         lblOrderTotal.Size = New Size(480, 30)
         lblOrderTotal.TextAlign = ContentAlignment.MiddleCenter
@@ -2929,7 +2957,7 @@ Public Class Sales
         Dim separator As New Panel()
         separator.Size = New Size(440, 2)
         separator.Location = New Point(40, 160) ' Moved down from 155
-        separator.BackColor = RichOlive
+        separator.BackColor = JadeOlive
         cashForm.Controls.Add(separator)
 
         ' Amount display section with improved spacing - ADJUSTED Y position
@@ -2943,7 +2971,7 @@ Public Class Sales
         Dim lblAmountReceived As New Label()
         lblAmountReceived.Text = "Amount Received"
         lblAmountReceived.Font = New Font("Poppins", 12, FontStyle.Regular)
-        lblAmountReceived.ForeColor = LightSilver
+        lblAmountReceived.ForeColor = Color.FromArgb(95, 95, 95)
         lblAmountReceived.Location = New Point(0, 0)
         lblAmountReceived.Size = New Size(480, 25)
         lblAmountReceived.TextAlign = ContentAlignment.MiddleCenter
@@ -2954,7 +2982,7 @@ Public Class Sales
         lblAmountDisplay = New Guna.UI2.WinForms.Guna2HtmlLabel()
         lblAmountDisplay.Text = "₱0.00"
         lblAmountDisplay.Font = New Font("Segoe UI", 28, FontStyle.Bold)
-        lblAmountDisplay.ForeColor = GoldenYellow
+        lblAmountDisplay.ForeColor = Color.FromArgb(95, 95, 95)
         lblAmountDisplay.AutoSize = True
         lblAmountDisplay.Location = New Point((480 - 150) / 2, 30)
         amountSection.Controls.Add(lblAmountDisplay)
@@ -2963,7 +2991,7 @@ Public Class Sales
         Dim lblInputHint As New Label()
         lblInputHint.Text = "Type amount or use keypad below"
         lblInputHint.Font = New Font("Poppins", 9, FontStyle.Italic)
-        lblInputHint.ForeColor = SteelGray
+        lblInputHint.ForeColor = BorderGray
         lblInputHint.Location = New Point(0, 90)
         lblInputHint.Size = New Size(480, 20)
         lblInputHint.TextAlign = ContentAlignment.MiddleCenter
@@ -2979,7 +3007,7 @@ Public Class Sales
         Dim lblChangeLabel As New Label()
         lblChangeLabel.Text = "Change:"
         lblChangeLabel.Font = New Font("Poppins", 12, FontStyle.Regular)
-        lblChangeLabel.ForeColor = PureWhite
+        lblChangeLabel.ForeColor = Color.FromArgb(95, 95, 95)
         lblChangeLabel.Location = New Point(140, 5)
         lblChangeLabel.Size = New Size(120, 35)
         changeSection.Controls.Add(lblChangeLabel)
@@ -3043,12 +3071,12 @@ Public Class Sales
                                           ' Update input hint based on state
                                           If String.IsNullOrEmpty(amountText) Then
                                               lblInputHint.Text = "Type amount or use keypad below"
-                                              lblInputHint.ForeColor = SteelGray
+                                              lblInputHint.ForeColor = BorderGray
                                           ElseIf Decimal.TryParse(lblAmountDisplay.Text.Replace("₱", ""), displayValue) AndAlso (displayValue - totalAmount) >= 0D Then
-                                              lblInputHint.Text = "✓ Sufficient amount entered"
+                                              lblInputHint.Text = "Sufficient amount entered"
                                               lblInputHint.ForeColor = SuccessGreen
                                           Else
-                                              lblInputHint.Text = "⚠ Insufficient amount"
+                                              lblInputHint.Text = "Insufficient amount"
                                               lblInputHint.ForeColor = AlertRed
                                           End If
                                       End Sub
@@ -3068,49 +3096,33 @@ Public Class Sales
         Dim buttonStartY As Integer = 0
         Dim buttonTexts As String() = {"1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "X"}
 
+        Dim kpFill As Color = Color.FromArgb(250, 249, 246)
+        Dim kpFore As Color = Color.FromArgb(95, 95, 95)
+        Dim kpHover As Color = Color.FromArgb(240, 238, 232)
+
         For i = 0 To buttonTexts.Length - 1
             Dim button As New Guna.UI2.WinForms.Guna2Button()
             button.Size = New Size(buttonSize, buttonSize)
             button.BorderRadius = 10
-            button.FillColor = SteelGray ' Updated color
-            button.BackColor = DarkSlate
-            button.ForeColor = PureWhite
+            button.FillColor = kpFill
+            button.BackColor = OffWhite
+            button.ForeColor = kpFore
+            button.BorderColor = Color.FromArgb(200, 198, 192)
+            button.BorderThickness = 1
             button.Font = New Font("Poppins", 14, FontStyle.Bold)
             button.Text = buttonTexts(i)
             button.TabStop = False
+            button.HoverState.FillColor = kpHover
 
             ' Special styling for different buttons
             If button.Text = "X" Then
-                button.FillColor = AlertRed
-                button.BorderColor = AlertRed
+                button.FillColor = Color.FromArgb(220, 60, 75)
+                button.ForeColor = Color.FromArgb(250, 249, 246)
+                button.HoverState.FillColor = Color.FromArgb(200, 50, 50)
             ElseIf button.Text = "." Then
                 ' Visual hint that decimal requires digits first
                 button.Font = New Font("Poppins", 18, FontStyle.Bold)
             End If
-
-            ' Add hover effect with validation feedback
-            AddHandler button.MouseEnter, Sub()
-                                              If button.Text = "." AndAlso enteredAmount.Length = 0 Then
-                                                  ' Show visual feedback that decimal point needs digits first
-                                                  button.FillColor = AlertRed
-                                                  button.ForeColor = PureWhite
-                                              ElseIf button.Text = "X" Then
-                                                  button.FillColor = Color.FromArgb(220, 60, 75)
-                                              Else
-                                                  button.FillColor = GoldenYellow
-                                                  button.ForeColor = DeepCharcoal
-                                              End If
-                                          End Sub
-
-            AddHandler button.MouseLeave, Sub()
-                                              If button.Text = "X" Then
-                                                  button.FillColor = AlertRed
-                                                  button.ForeColor = PureWhite
-                                              Else
-                                                  button.FillColor = SteelGray
-                                                  button.ForeColor = PureWhite
-                                              End If
-                                          End Sub
 
             Dim row = i \ 3
             Dim col = i Mod 3
@@ -3144,14 +3156,22 @@ Public Class Sales
         quickAmountSection.BackColor = Color.Transparent
         cashForm.Controls.Add(quickAmountSection)
 
+        Dim cardFill As Color = Color.FromArgb(250, 249, 246)
+        Dim cardFore As Color = Color.FromArgb(95, 95, 95)
+        Dim cardBorder As Color = Color.FromArgb(200, 198, 192)
+        Dim cardHover As Color = Color.FromArgb(240, 238, 232)
+        Dim goldAccent As Color = Color.FromArgb(191, 155, 48)
+
         Dim btnExact As New Guna.UI2.WinForms.Guna2Button()
         btnExact.Text = $"Exact"
         btnExact.Size = New Size(140, 40)
         btnExact.Location = New Point(100, 5)
         btnExact.Font = New Font("Poppins", 10, FontStyle.Bold)
-        btnExact.ForeColor = DeepCharcoal
-        btnExact.FillColor = LightSilver
+        btnExact.ForeColor = Color.White
+        btnExact.FillColor = Color.FromArgb(76, 175, 80)
+        btnExact.BorderThickness = 0
         btnExact.BorderRadius = 10
+        btnExact.HoverState.FillColor = Color.FromArgb(67, 160, 71)
         AddHandler btnExact.Click, Sub()
                                        ' Set the exact total amount directly
                                        enteredAmount = totalAmount.ToString("F2")
@@ -3169,15 +3189,16 @@ Public Class Sales
         btnClear.Size = New Size(100, 40)
         btnClear.Location = New Point(260, 5)
         btnClear.Font = New Font("Poppins", 10, FontStyle.Bold)
-        btnClear.ForeColor = PureWhite
-        btnClear.FillColor = SteelGray
+        btnClear.ForeColor = Color.FromArgb(95, 95, 95)
+        btnClear.FillColor = Color.FromArgb(250, 249, 246)
+        btnClear.BorderColor = Color.FromArgb(200, 198, 192)
+        btnClear.BorderThickness = 1
         btnClear.BorderRadius = 10
+        btnClear.HoverState.FillColor = Color.FromArgb(240, 238, 232)
         AddHandler btnClear.Click, Sub()
                                        enteredAmount = ""
                                        UpdateCashAmountDisplay()
                                    End Sub
-        AddHandler btnClear.MouseEnter, Sub() btnClear.FillColor = Graphite
-        AddHandler btnClear.MouseLeave, Sub() btnClear.FillColor = SteelGray
         quickAmountSection.Controls.Add(btnClear)
 
         ' Action buttons section - ADJUSTED Y position
@@ -3192,9 +3213,11 @@ Public Class Sales
         btnComplete.Size = New Size(160, 50)
         btnComplete.Location = New Point(300, 5)
         btnComplete.Font = New Font("Poppins", 12, FontStyle.Bold)
-        btnComplete.ForeColor = DeepCharcoal
-        btnComplete.FillColor = SuccessGreen
+        btnComplete.ForeColor = Color.White
+        btnComplete.FillColor = Color.FromArgb(76, 175, 80)
+        btnComplete.BorderThickness = 0
         btnComplete.BorderRadius = 12
+        btnComplete.HoverState.FillColor = Color.FromArgb(67, 160, 71)
         AddHandler btnComplete.Click, Sub()
                                           Dim receivedAmount As Decimal = 0D
                                           Dim amountText As String = lblAmountDisplay.Text.Replace("₱", "")
@@ -3205,8 +3228,6 @@ Public Class Sales
                                           cashForm.DialogResult = DialogResult.OK
                                           cashForm.Close()
                                       End Sub
-        AddHandler btnComplete.MouseEnter, Sub() btnComplete.FillColor = GoldenYellow
-        AddHandler btnComplete.MouseLeave, Sub() btnComplete.FillColor = SuccessGreen
         actionSection.Controls.Add(btnComplete)
 
         Dim btnBack As New Guna.UI2.WinForms.Guna2Button()
@@ -3214,15 +3235,16 @@ Public Class Sales
         btnBack.Size = New Size(120, 50)
         btnBack.Location = New Point(40, 5)
         btnBack.Font = New Font("Poppins", 11, FontStyle.Regular)
-        btnBack.ForeColor = PureWhite
-        btnBack.FillColor = SteelGray
+        btnBack.ForeColor = Color.FromArgb(95, 95, 95)
+        btnBack.FillColor = Color.FromArgb(250, 249, 246)
+        btnBack.BorderColor = Color.FromArgb(200, 198, 192)
+        btnBack.BorderThickness = 1
         btnBack.BorderRadius = 12
+        btnBack.HoverState.FillColor = Color.FromArgb(240, 238, 232)
         AddHandler btnBack.Click, Sub()
                                       cashForm.DialogResult = DialogResult.Cancel
                                       cashForm.Close()
                                   End Sub
-        AddHandler btnBack.MouseEnter, Sub() btnBack.FillColor = Graphite
-        AddHandler btnBack.MouseLeave, Sub() btnBack.FillColor = SteelGray
         actionSection.Controls.Add(btnBack)
 
         Dim btnCancel As New Guna.UI2.WinForms.Guna2Button()
@@ -3230,15 +3252,16 @@ Public Class Sales
         btnCancel.Size = New Size(120, 50)
         btnCancel.Location = New Point(170, 5)
         btnCancel.Font = New Font("Poppins", 11, FontStyle.Regular)
-        btnCancel.ForeColor = PureWhite
-        btnCancel.FillColor = AlertRed
+        btnCancel.ForeColor = Color.FromArgb(200, 70, 70)
+        btnCancel.FillColor = Color.FromArgb(255, 245, 245)
+        btnCancel.BorderColor = Color.FromArgb(220, 120, 120)
+        btnCancel.BorderThickness = 1
         btnCancel.BorderRadius = 12
+        btnCancel.HoverState.FillColor = Color.FromArgb(255, 235, 235)
         AddHandler btnCancel.Click, Sub()
                                         cashForm.DialogResult = DialogResult.Abort
                                         cashForm.Close()
                                     End Sub
-        AddHandler btnCancel.MouseEnter, Sub() btnCancel.FillColor = Color.FromArgb(200, 50, 50)
-        AddHandler btnCancel.MouseLeave, Sub() btnCancel.FillColor = AlertRed
         actionSection.Controls.Add(btnCancel)
 
         ' ENHANCED: Keyboard support with better decimal validation
@@ -3262,7 +3285,7 @@ Public Class Sales
 
                                              ' Handle backspace/delete
                                          ElseIf e.KeyCode = Keys.Back OrElse e.KeyCode = Keys.Delete Then
-                                             ProcessKeypadInputEnhanced("⌫", UpdateCashAmountDisplay)
+                                             ProcessKeypadInputEnhanced("?", UpdateCashAmountDisplay)
                                              e.Handled = True
 
                                              ' Handle Enter key to complete payment
@@ -3315,7 +3338,7 @@ Public Class Sales
     Private Sub ProcessKeypadInputEnhanced(input As String, updateCallback As Action)
         ' We enforce exactly 1 decimal place and make '.' put the next digit into the decimal slot
         Select Case input
-            Case "⌫" ' Backspace
+            Case "?" ' Backspace
                 If enteredAmount.Length > 0 Then
                     enteredAmount = enteredAmount.Substring(0, enteredAmount.Length - 1)
                 End If
@@ -3347,7 +3370,7 @@ Public Class Sales
                     ' Append digit after decimal (or if user previously trimmed decimals, this becomes the decimal digit)
                     enteredAmount &= input
                 Else
-                    ' No decimal yet — append digit to integer portion
+                    ' No decimal yet � append digit to integer portion
                     ' Keep sensible overall length (allows reasonably large amounts)
                     If enteredAmount.Length < 12 Then
                         enteredAmount &= input
@@ -3360,7 +3383,7 @@ Public Class Sales
     ' HELPER: Process keypad input consistently
     Private Sub ProcessKeypadInput(input As String, updateCallback As Action)
         Select Case input
-            Case "⌫" ' Backspace
+            Case "?" ' Backspace
                 If enteredAmount.Length > 0 Then
                     enteredAmount = enteredAmount.Substring(0, enteredAmount.Length - 1)
                 End If
@@ -3529,8 +3552,8 @@ Public Class Sales
             Dim orderPanel As New Guna.UI2.WinForms.Guna2Panel()
             orderPanel.Size = New Size(orderSummaryPanel.Width - 40, panelHeight)
             orderPanel.BorderRadius = 8
-            orderPanel.FillColor = DeepCharcoal
-            orderPanel.BorderColor = Color.FromArgb(50, 50, 50)
+            orderPanel.FillColor = Color.FromArgb(250, 249, 246)
+            orderPanel.BorderColor = BorderGray
             orderPanel.BorderThickness = 1
             orderPanel.Location = New Point(20, currentY)
             currentY += panelHeight + marginY
@@ -3548,15 +3571,15 @@ Public Class Sales
             ' Hover behavior: subtle gray highlight and hand cursor to indicate clickability
             AddHandler orderPanel.MouseEnter, Sub()
                                                   Try
-                                                      orderPanel.FillColor = Color.FromArgb(70, Graphite.R, Graphite.G, Graphite.B) ' slightly lighter gray
-                                                      orderPanel.BorderColor = GoldenYellow
+                                                      orderPanel.FillColor = LightGray
+                                                      orderPanel.BorderColor = JadeOlive
                                                       orderPanel.BorderThickness = 2
                                                       orderPanel.Cursor = Cursors.Hand
 
                                                       ' also update child label colors for contrast
                                                       For Each child As Control In orderPanel.Controls
                                                           If TypeOf child Is Label OrElse TypeOf child Is Guna.UI2.WinForms.Guna2HtmlLabel Then
-                                                              child.ForeColor = LightSilver
+                                                              child.ForeColor = DarkText
                                                           End If
                                                       Next
                                                   Catch
@@ -3572,19 +3595,18 @@ Public Class Sales
 
                                                       For Each child As Control In orderPanel.Controls
                                                           If TypeOf child Is Label OrElse TypeOf child Is Guna.UI2.WinForms.Guna2HtmlLabel Then
-                                                              child.ForeColor = PureWhite
+                                                              child.ForeColor = DarkText
                                                           End If
                                                       Next
                                                   Catch
                                                   End Try
                                               End Sub
 
-            ' Single-click gives a subtle feedback (does not remove item) — you can change to select on click
+            ' Single-click gives a subtle feedback (does not remove item)
             AddHandler orderPanel.MouseClick, Sub()
                                                   Try
-                                                      ' Flash a darker shade briefly to acknowledge click
                                                       Dim prev As Color = orderPanel.FillColor
-                                                      orderPanel.FillColor = Color.FromArgb(90, 90, 90)
+                                                      orderPanel.FillColor = BorderGray
                                                       Dim t As New Timer() With {.Interval = 120}
                                                       AddHandler t.Tick, Sub()
                                                                              t.Stop()
@@ -3601,7 +3623,7 @@ Public Class Sales
             Dim lblOrderId As New Guna.UI2.WinForms.Guna2HtmlLabel()
             lblOrderId.Text = (i + 1).ToString("D2")
             lblOrderId.Font = New Font("Poppins Light", 9.0F, FontStyle.Regular)
-            lblOrderId.ForeColor = PureWhite
+            lblOrderId.ForeColor = Color.FromArgb(95, 95, 95)
             lblOrderId.Location = New Point(12, baseY)
             lblOrderId.AutoSize = True
 
@@ -3612,7 +3634,7 @@ Public Class Sales
             Dim lblCustomer As New Guna.UI2.WinForms.Guna2HtmlLabel()
             lblCustomer.Text = displayName
             lblCustomer.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
-            lblCustomer.ForeColor = PureWhite
+            lblCustomer.ForeColor = Color.FromArgb(95, 95, 95)
             lblCustomer.Location = New Point(lblOrderId.Right + 18, baseY)
             lblCustomer.AutoSize = True
 
@@ -3625,7 +3647,7 @@ Public Class Sales
             Dim lblQuantity As New Guna.UI2.WinForms.Guna2HtmlLabel()
             lblQuantity.Text = prod("Quantity").ToString() & "x"
             lblQuantity.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
-            lblQuantity.ForeColor = PureWhite
+            lblQuantity.ForeColor = Color.FromArgb(95, 95, 95)
             lblQuantity.Location = New Point(320, baseY)
             lblQuantity.AutoSize = True
 
@@ -3633,14 +3655,14 @@ Public Class Sales
             Dim lblTotal As New Guna.UI2.WinForms.Guna2HtmlLabel()
             lblTotal.Text = lineTotalVatInclusive.ToString("N2")
             lblTotal.Font = New Font("Poppins Regular", 9.0F)
-            lblTotal.ForeColor = PureWhite
+            lblTotal.ForeColor = Color.FromArgb(95, 95, 95)
             lblTotal.Location = New Point(orderPanel.Width - 90, baseY)
             lblTotal.AutoSize = True
 
             ' Tooltip: show original unit price and if discounted, the discounted unit price
             Dim tooltipText As String = $"Unit price (VAT inc): ₱{unitPriceVatInclusive:F2}"
             If displayUnitVatInc <> unitPriceVatInclusive Then
-                tooltipText &= $" → Discounted: ₱{displayUnitVatInc:F2}"
+                tooltipText &= $" ? Discounted: ₱{displayUnitVatInc:F2}"
             End If
             tt.SetToolTip(lblTotal, tooltipText)
 
@@ -3815,7 +3837,7 @@ Public Class Sales
                                     cmdUpdate.ExecuteNonQuery()
                                 End Using
 
-                                ' Insert InventoryLog entry (OUT) — use 'OUT' to satisfy CHECK constraint
+                                ' Insert InventoryLog entry (OUT) � use 'OUT' to satisfy CHECK constraint
                                 Dim insertLogQuery As String =
                             "INSERT INTO InventoryLog (ProductID, TransactionType, Quantity, PreviousStock, NewStock, SupplierID, Reference, Notes, UserID, CreatedAt) " &
                             "VALUES (@ProductID, @TransactionType, @Quantity, @PreviousStock, @NewStock, @SupplierID, @Reference, @Notes, @UserID, @CreatedAt)"
@@ -4029,70 +4051,98 @@ Public Class Sales
         ShowSimpleDiscountDialog()
     End Sub
 
-    ' Simple discount dialog
+    ' Simple discount dialog - modern Guna2 style
     Private Sub ShowSimpleDiscountDialog()
         Dim discountForm As New Form()
         discountForm.Text = "Apply Discount"
-        discountForm.Size = New Size(350, 250)
+        discountForm.Size = New Size(440, 300)
         discountForm.StartPosition = FormStartPosition.CenterParent
         discountForm.FormBorderStyle = FormBorderStyle.FixedDialog
         discountForm.MaximizeBox = False
         discountForm.MinimizeBox = False
-        discountForm.BackColor = DarkSlate
+        discountForm.BackColor = Color.FromArgb(248, 247, 242)
 
-        ' Percentage discount
+        Dim labelColor As Color = Color.FromArgb(95, 95, 95)
+
+        ' --- Percentage discount row ---
         Dim lblPercentage As New Label()
         lblPercentage.Text = "Percentage Discount (%):"
-        lblPercentage.Location = New Point(20, 30)
-        lblPercentage.Size = New Size(150, 25)
+        lblPercentage.Location = New Point(25, 25)
+        lblPercentage.Size = New Size(170, 30)
         lblPercentage.Font = New Font("Poppins", 10, FontStyle.Regular)
-        lblPercentage.ForeColor = PureWhite
+        lblPercentage.ForeColor = labelColor
+        lblPercentage.TextAlign = ContentAlignment.MiddleLeft
         discountForm.Controls.Add(lblPercentage)
 
-        Dim txtPercentage As New TextBox()
-        txtPercentage.Location = New Point(180, 30)
-        txtPercentage.Size = New Size(80, 25)
+        Dim txtPercentage As New Guna.UI2.WinForms.Guna2TextBox()
         txtPercentage.Text = "0"
+        txtPercentage.Location = New Point(200, 25)
+        txtPercentage.Size = New Size(80, 32)
+        txtPercentage.Font = New Font("Poppins", 10, FontStyle.Bold)
+        txtPercentage.ForeColor = labelColor
+        txtPercentage.FillColor = Color.FromArgb(250, 249, 246)
+        txtPercentage.BorderColor = Color.FromArgb(200, 198, 192)
+        txtPercentage.BorderThickness = 1
+        txtPercentage.BorderRadius = 8
+        txtPercentage.TextAlign = HorizontalAlignment.Center
         discountForm.Controls.Add(txtPercentage)
 
-        Dim btnApplyPercentage As New Button()
-        btnApplyPercentage.Text = "Apply %"
-        btnApplyPercentage.Location = New Point(270, 35)
-        btnApplyPercentage.Size = New Size(60, 25)
-        btnApplyPercentage.BackColor = GoldenYellow
-        btnApplyPercentage.ForeColor = DeepCharcoal
-        AddHandler btnApplyPercentage.Click, Sub()
-                                                 Dim percentage As Decimal
-                                                 If Decimal.TryParse(txtPercentage.Text, percentage) Then
-                                                     ApplyPercentageDiscount(percentage)
-                                                     discountForm.Close()
-                                                 Else
-                                                     MessageBox.Show("Please enter a valid percentage.", "Invalid Input", MessageBoxButtons.OK, MessageBoxIcon.Warning)
-                                                 End If
-                                             End Sub
-        discountForm.Controls.Add(btnApplyPercentage)
+        Dim btnApplyPct As New Guna.UI2.WinForms.Guna2Button()
+        btnApplyPct.Text = "Apply %"
+        btnApplyPct.Size = New Size(100, 34)
+        btnApplyPct.Location = New Point(295, 24)
+        btnApplyPct.Font = New Font("Poppins", 10, FontStyle.Bold)
+        btnApplyPct.ForeColor = Color.White
+        btnApplyPct.FillColor = Color.FromArgb(76, 175, 80)
+        btnApplyPct.BorderThickness = 0
+        btnApplyPct.BorderRadius = 8
+        btnApplyPct.HoverState.FillColor = Color.FromArgb(67, 160, 71)
+        btnApplyPct.PressedColor = Color.FromArgb(56, 142, 60)
+        AddHandler btnApplyPct.Click, Sub()
+                                          Dim percentage As Decimal
+                                          If Decimal.TryParse(txtPercentage.Text, percentage) Then
+                                              ApplyPercentageDiscount(percentage)
+                                              discountForm.Close()
+                                          Else
+                                              MessageBox.Show("Please enter a valid percentage.", "Invalid Input", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                                          End If
+                                      End Sub
+        discountForm.Controls.Add(btnApplyPct)
 
-        ' Fixed discount
+        ' --- Fixed discount row ---
         Dim lblFixed As New Label()
         lblFixed.Text = "Fixed Discount (₱):"
-        lblFixed.Location = New Point(20, 80)
-        lblFixed.Size = New Size(150, 25)
+        lblFixed.Location = New Point(25, 75)
+        lblFixed.Size = New Size(170, 30)
         lblFixed.Font = New Font("Poppins", 10, FontStyle.Regular)
-        lblFixed.ForeColor = PureWhite
+        lblFixed.ForeColor = labelColor
+        lblFixed.TextAlign = ContentAlignment.MiddleLeft
         discountForm.Controls.Add(lblFixed)
 
-        Dim txtFixed As New TextBox()
-        txtFixed.Location = New Point(180, 80)
-        txtFixed.Size = New Size(80, 25)
+        Dim txtFixed As New Guna.UI2.WinForms.Guna2TextBox()
         txtFixed.Text = "0.00"
+        txtFixed.Location = New Point(200, 75)
+        txtFixed.Size = New Size(80, 32)
+        txtFixed.Font = New Font("Poppins", 10, FontStyle.Bold)
+        txtFixed.ForeColor = labelColor
+        txtFixed.FillColor = Color.FromArgb(250, 249, 246)
+        txtFixed.BorderColor = Color.FromArgb(200, 198, 192)
+        txtFixed.BorderThickness = 1
+        txtFixed.BorderRadius = 8
+        txtFixed.TextAlign = HorizontalAlignment.Center
         discountForm.Controls.Add(txtFixed)
 
-        Dim btnApplyFixed As New Button()
+        Dim btnApplyFixed As New Guna.UI2.WinForms.Guna2Button()
         btnApplyFixed.Text = "Apply ₱"
-        btnApplyFixed.Location = New Point(270, 80)
-        btnApplyFixed.Size = New Size(60, 30)
-        btnApplyFixed.BackColor = GoldenYellow
-        btnApplyFixed.ForeColor = DeepCharcoal
+        btnApplyFixed.Size = New Size(100, 34)
+        btnApplyFixed.Location = New Point(295, 74)
+        btnApplyFixed.Font = New Font("Poppins", 10, FontStyle.Bold)
+        btnApplyFixed.ForeColor = Color.White
+        btnApplyFixed.FillColor = Color.FromArgb(0, 120, 212)
+        btnApplyFixed.BorderThickness = 0
+        btnApplyFixed.BorderRadius = 8
+        btnApplyFixed.HoverState.FillColor = Color.FromArgb(0, 102, 190)
+        btnApplyFixed.PressedColor = Color.FromArgb(0, 85, 160)
         AddHandler btnApplyFixed.Click, Sub()
                                             Dim amount As Decimal
                                             If Decimal.TryParse(txtFixed.Text, amount) Then
@@ -4104,29 +4154,60 @@ Public Class Sales
                                         End Sub
         discountForm.Controls.Add(btnApplyFixed)
 
-        ' Remove discount button
-        Dim btnRemoveDiscount As New Button()
+        ' --- Current discount info ---
+        If discountAmount > 0 Then
+            Dim lblCurrentDiscount As New Label()
+            lblCurrentDiscount.Text = $"Current discount: {discountType} ₱{discountAmount:F2}"
+            lblCurrentDiscount.Location = New Point(25, 125)
+            lblCurrentDiscount.Size = New Size(350, 25)
+            lblCurrentDiscount.Font = New Font("Poppins", 9, FontStyle.Italic)
+            lblCurrentDiscount.ForeColor = labelColor
+            discountForm.Controls.Add(lblCurrentDiscount)
+        End If
+
+        ' --- Bottom row: Remove Discount + Close side by side ---
+        Dim btnRemoveDiscount As New Guna.UI2.WinForms.Guna2Button()
         btnRemoveDiscount.Text = "Remove Discount"
-        btnRemoveDiscount.Size = New Size(150, 30)
-        btnRemoveDiscount.BackColor = AlertRed
-        btnRemoveDiscount.ForeColor = PureWhite
-        btnRemoveDiscount.Location = New Point((discountForm.ClientSize.Width - btnRemoveDiscount.Width) \ 2, 130)
+        btnRemoveDiscount.Size = New Size(170, 40)
+        btnRemoveDiscount.Location = New Point(40, 170)
+        btnRemoveDiscount.Font = New Font("Poppins", 10, FontStyle.Bold)
+        btnRemoveDiscount.ForeColor = Color.FromArgb(200, 70, 70)
+        btnRemoveDiscount.FillColor = Color.FromArgb(255, 245, 245)
+        btnRemoveDiscount.BorderColor = Color.FromArgb(220, 120, 120)
+        btnRemoveDiscount.BorderThickness = 1
+        btnRemoveDiscount.BorderRadius = 10
+        btnRemoveDiscount.HoverState.FillColor = Color.FromArgb(255, 235, 235)
+        btnRemoveDiscount.PressedColor = Color.FromArgb(255, 220, 220)
         AddHandler btnRemoveDiscount.Click, Sub()
                                                 RemoveDiscount()
                                                 discountForm.Close()
                                             End Sub
         discountForm.Controls.Add(btnRemoveDiscount)
 
-        ' Show current discount if any
-        If discountAmount > 0 Then
-            Dim lblCurrentDiscount As New Label()
-            lblCurrentDiscount.Text = $"Current: {discountType} ₱{discountAmount:F2}"
-            lblCurrentDiscount.Location = New Point(20, 180)
-            lblCurrentDiscount.Size = New Size(300, 25)
-            lblCurrentDiscount.Font = New Font("Poppins", 9, FontStyle.Regular)
-            lblCurrentDiscount.ForeColor = GoldenYellow
-            discountForm.Controls.Add(lblCurrentDiscount)
-        End If
+        Dim btnClose As New Guna.UI2.WinForms.Guna2Button()
+        btnClose.Text = "Close"
+        btnClose.Size = New Size(170, 40)
+        btnClose.Location = New Point(230, 170)
+        btnClose.Font = New Font("Poppins", 10, FontStyle.Regular)
+        btnClose.ForeColor = labelColor
+        btnClose.FillColor = Color.FromArgb(250, 249, 246)
+        btnClose.BorderColor = Color.FromArgb(200, 198, 192)
+        btnClose.BorderThickness = 1
+        btnClose.BorderRadius = 10
+        btnClose.HoverState.FillColor = Color.FromArgb(240, 238, 232)
+        AddHandler btnClose.Click, Sub()
+                                       discountForm.Close()
+                                   End Sub
+        discountForm.Controls.Add(btnClose)
+
+        ' Keyboard support
+        discountForm.KeyPreview = True
+        AddHandler discountForm.KeyDown, Sub(sender As Object, e As KeyEventArgs)
+                                             If e.KeyCode = Keys.Escape Then
+                                                 discountForm.Close()
+                                                 e.Handled = True
+                                             End If
+                                         End Sub
 
         discountForm.ShowDialog()
     End Sub
@@ -4273,8 +4354,8 @@ Public Class Sales
         Try
             ' Set username without emoji
             lblUsername.Text = frmLoginvb.LoggedInUsername
-            lblUsername.Font = New Font("Poppins", 10.0F, FontStyle.Regular)
-            lblUsername.ForeColor = PureWhite
+            lblUsername.Font = New Font("Poppins Light", 10.0F, FontStyle.Regular)
+            lblUsername.ForeColor = Color.FromArgb(59, 59, 59)
 
             ' Load user profile picture
             LoadUserProfilePicture()
@@ -4397,7 +4478,7 @@ Public Class Sales
         ' Create dropdown panel
         profileDropdownPanel = New Panel()
         profileDropdownPanel.Size = New System.Drawing.Size(200, 100)
-        profileDropdownPanel.BackColor = DarkSlate ' Updated color
+        profileDropdownPanel.BackColor = OffWhite ' Updated color
         profileDropdownPanel.BorderStyle = BorderStyle.FixedSingle
 
         ' Determine the container that holds the profile picture (keep same parent so coordinates align)
@@ -4411,16 +4492,16 @@ Public Class Sales
 
         ' Create Profile Settings button
         Dim btnProfileSettings As New Label()
-        btnProfileSettings.Text = "⚙️ Profile Settings"
+        btnProfileSettings.Text = "Profile Settings"
         btnProfileSettings.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
-        btnProfileSettings.ForeColor = PureWhite
+        btnProfileSettings.ForeColor = Color.FromArgb(59, 59, 59)
         btnProfileSettings.BackColor = System.Drawing.Color.Transparent
         btnProfileSettings.Size = New System.Drawing.Size(190, 40)
         btnProfileSettings.Location = New Point(5, 5)
         btnProfileSettings.TextAlign = ContentAlignment.MiddleLeft
         btnProfileSettings.Cursor = Cursors.Hand
 
-        AddHandler btnProfileSettings.MouseEnter, Sub() btnProfileSettings.BackColor = Graphite
+        AddHandler btnProfileSettings.MouseEnter, Sub() btnProfileSettings.BackColor = LightGray
         AddHandler btnProfileSettings.MouseLeave, Sub() btnProfileSettings.BackColor = System.Drawing.Color.Transparent
         AddHandler btnProfileSettings.Click, Sub()
                                                  HideProfileDropdown()
@@ -4429,9 +4510,9 @@ Public Class Sales
 
         ' Create Log Out button
         Dim btnLogOut As New Label()
-        btnLogOut.Text = "🚪 Log Out"
+        btnLogOut.Text = "Log Out"
         btnLogOut.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
-        btnLogOut.ForeColor = PureWhite
+        btnLogOut.ForeColor = Color.FromArgb(59, 59, 59)
         btnLogOut.BackColor = System.Drawing.Color.Transparent
         btnLogOut.Size = New System.Drawing.Size(190, 40)
         btnLogOut.Location = New Point(5, 50)
@@ -4639,7 +4720,7 @@ Public Class Sales
         quantityForm.FormBorderStyle = FormBorderStyle.FixedDialog
         quantityForm.MaximizeBox = False
         quantityForm.MinimizeBox = False
-        quantityForm.BackColor = DarkSlate
+        quantityForm.BackColor = OffWhite
         quantityForm.ShowInTaskbar = False
         quantityForm.KeyPreview = True ' Enable keyboard input for the form
 
@@ -4647,7 +4728,7 @@ Public Class Sales
         Dim lblProductName As New Label()
         lblProductName.Text = productData("ProductName").ToString()
         lblProductName.Font = New Font("Poppins", 16, FontStyle.Bold) ' Increased font size
-        lblProductName.ForeColor = PureWhite
+        lblProductName.ForeColor = Color.FromArgb(95, 95, 95)
         lblProductName.Location = New Point(30, 25) ' Adjusted margins
         lblProductName.Size = New Size(490, 35) ' WIDER
         lblProductName.TextAlign = ContentAlignment.MiddleCenter
@@ -4657,7 +4738,7 @@ Public Class Sales
         Dim lblPrice As New Label()
         lblPrice.Text = $"Price: ₱{Convert.ToDecimal(productData("Price")):N2}"
         lblPrice.Font = New Font("Poppins", 14, FontStyle.Regular) ' Increased font size
-        lblPrice.ForeColor = GoldenYellow
+        lblPrice.ForeColor = Color.FromArgb(95, 95, 95)
         lblPrice.Location = New Point(30, 70)
         lblPrice.Size = New Size(490, 30) ' WIDER
         lblPrice.TextAlign = ContentAlignment.MiddleCenter
@@ -4685,7 +4766,7 @@ Public Class Sales
         Dim lblQuantity As New Label()
         lblQuantity.Text = "Quantity:"
         lblQuantity.Font = New Font("Poppins", 14, FontStyle.Bold) ' Increased font size
-        lblQuantity.ForeColor = PureWhite
+        lblQuantity.ForeColor = Color.FromArgb(95, 95, 95)
         lblQuantity.Location = New Point(180, 5) ' CENTERED
         lblQuantity.Size = New Size(130, 30)
         lblQuantity.TextAlign = ContentAlignment.MiddleCenter
@@ -4695,9 +4776,9 @@ Public Class Sales
         Dim txtQuantity As New Guna.UI2.WinForms.Guna2TextBox()
         txtQuantity.Text = "1"
         txtQuantity.Font = New Font("Poppins", 16, FontStyle.Bold) ' Increased font size
-        txtQuantity.ForeColor = DeepCharcoal
+        txtQuantity.ForeColor = DarkText
         txtQuantity.FillColor = PureWhite
-        txtQuantity.BorderColor = SteelGray
+        txtQuantity.BorderColor = BorderGray
         txtQuantity.BorderRadius = 10
         txtQuantity.Size = New Size(100, 45) ' LARGER
         txtQuantity.Location = New Point(195, 35) ' CENTERED
@@ -4711,9 +4792,12 @@ Public Class Sales
         btnPlus.Size = New Size(60, 45) ' LARGER
         btnPlus.Location = New Point(310, 35) ' Adjusted position
         btnPlus.Font = New Font("Poppins", 18, FontStyle.Bold) ' Increased font size
-        btnPlus.ForeColor = DeepCharcoal
-        btnPlus.FillColor = SuccessGreen
+        btnPlus.ForeColor = Color.FromArgb(95, 95, 95)
+        btnPlus.FillColor = Color.FromArgb(250, 249, 246)
+        btnPlus.BorderColor = Color.FromArgb(200, 198, 192)
+        btnPlus.BorderThickness = 1
         btnPlus.BorderRadius = 10
+        btnPlus.HoverState.FillColor = Color.FromArgb(240, 238, 232)
         AddHandler btnPlus.Click, Sub()
                                       Dim currentQty As Integer
                                       If Integer.TryParse(txtQuantity.Text, currentQty) Then
@@ -4722,8 +4806,6 @@ Public Class Sales
                                           End If
                                       End If
                                   End Sub
-        AddHandler btnPlus.MouseEnter, Sub() btnPlus.FillColor = GoldenYellow
-        AddHandler btnPlus.MouseLeave, Sub() btnPlus.FillColor = SuccessGreen
         quantitySection.Controls.Add(btnPlus)
 
         ' Minus button - LARGER and repositioned
@@ -4732,9 +4814,12 @@ Public Class Sales
         btnMinus.Size = New Size(60, 45) ' LARGER
         btnMinus.Location = New Point(120, 35) ' Adjusted position
         btnMinus.Font = New Font("Poppins", 18, FontStyle.Bold) ' Increased font size
-        btnMinus.ForeColor = DeepCharcoal
-        btnMinus.FillColor = AlertRed
+        btnMinus.ForeColor = Color.FromArgb(95, 95, 95)
+        btnMinus.FillColor = Color.FromArgb(250, 249, 246)
+        btnMinus.BorderColor = Color.FromArgb(200, 198, 192)
+        btnMinus.BorderThickness = 1
         btnMinus.BorderRadius = 10
+        btnMinus.HoverState.FillColor = Color.FromArgb(240, 238, 232)
         AddHandler btnMinus.Click, Sub()
                                        Dim currentQty As Integer
                                        If Integer.TryParse(txtQuantity.Text, currentQty) Then
@@ -4743,15 +4828,13 @@ Public Class Sales
                                            End If
                                        End If
                                    End Sub
-        AddHandler btnMinus.MouseEnter, Sub() btnMinus.FillColor = Color.FromArgb(220, 60, 75)
-        AddHandler btnMinus.MouseLeave, Sub() btnMinus.FillColor = AlertRed
         quantitySection.Controls.Add(btnMinus)
 
         ' Total price display - WIDER and LARGER
         Dim lblTotal As New Label()
         lblTotal.Text = $"Total: ₱{Convert.ToDecimal(productData("Price")):N2}"
         lblTotal.Font = New Font("Poppins", 16, FontStyle.Bold) ' Increased font size
-        lblTotal.ForeColor = GoldenYellow
+        lblTotal.ForeColor = Color.FromArgb(95, 95, 95)
         lblTotal.Location = New Point(30, 250)
         lblTotal.Size = New Size(490, 35) ' WIDER and TALLER
         lblTotal.TextAlign = ContentAlignment.MiddleCenter
@@ -4781,9 +4864,11 @@ Public Class Sales
         btnAddToCart.Size = New Size(180, 55) ' LARGER
         btnAddToCart.Location = New Point(250, 0) ' Adjusted position
         btnAddToCart.Font = New Font("Poppins", 10, FontStyle.Bold) ' Increased font size
-        btnAddToCart.ForeColor = DeepCharcoal
-        btnAddToCart.FillColor = SuccessGreen
+        btnAddToCart.ForeColor = Color.White
+        btnAddToCart.FillColor = Color.FromArgb(76, 175, 80)
+        btnAddToCart.BorderThickness = 0
         btnAddToCart.BorderRadius = 12
+        btnAddToCart.HoverState.FillColor = Color.FromArgb(67, 160, 71)
         AddHandler btnAddToCart.Click, Sub()
                                            Dim quantity As Integer
                                            If Integer.TryParse(txtQuantity.Text, quantity) AndAlso quantity > 0 Then
@@ -4799,8 +4884,6 @@ Public Class Sales
                                                MessageBox.Show("Please enter a valid quantity.", "Invalid Quantity", MessageBoxButtons.OK, MessageBoxIcon.Warning)
                                            End If
                                        End Sub
-        AddHandler btnAddToCart.MouseEnter, Sub() btnAddToCart.FillColor = GoldenYellow
-        AddHandler btnAddToCart.MouseLeave, Sub() btnAddToCart.FillColor = SuccessGreen
         buttonSection.Controls.Add(btnAddToCart)
         ' Inside ShowQuantitySelector, after creating txtQuantity
         ' Inside ShowQuantitySelector, after creating txtQuantity
@@ -4844,15 +4927,16 @@ Public Class Sales
         btnCancel.Size = New Size(150, 55) ' LARGER
         btnCancel.Location = New Point(80, 0) ' Adjusted position
         btnCancel.Font = New Font("Poppins", 14, FontStyle.Bold) ' Increased font size
-        btnCancel.ForeColor = PureWhite
-        btnCancel.FillColor = AlertRed
+        btnCancel.ForeColor = Color.FromArgb(200, 70, 70)
+        btnCancel.FillColor = Color.FromArgb(255, 245, 245)
+        btnCancel.BorderColor = Color.FromArgb(220, 120, 120)
+        btnCancel.BorderThickness = 1
         btnCancel.BorderRadius = 12
+        btnCancel.HoverState.FillColor = Color.FromArgb(255, 235, 235)
         AddHandler btnCancel.Click, Sub()
                                         quantityForm.DialogResult = DialogResult.Cancel
                                         quantityForm.Close()
                                     End Sub
-        AddHandler btnCancel.MouseEnter, Sub() btnCancel.FillColor = Color.FromArgb(200, 50, 50)
-        AddHandler btnCancel.MouseLeave, Sub() btnCancel.FillColor = AlertRed
         buttonSection.Controls.Add(btnCancel)
 
         ' Add KeyDown handler for keyboard support
@@ -5000,7 +5084,7 @@ Public Class Sales
             ' As a last resort create a plain placeholder bitmap
             Dim placeholder As New Bitmap(desiredWidth, desiredHeight)
             Using g As Graphics = Graphics.FromImage(placeholder)
-                g.Clear(Graphite)
+                g.Clear(LightGray)
                 Using f As New Font("Segoe UI", 8)
                     TextRenderer.DrawText(g, "No Image", f, New Rectangle(0, 0, desiredWidth, desiredHeight), Color.White, TextFormatFlags.HorizontalCenter Or TextFormatFlags.VerticalCenter)
                 End Using
@@ -5010,6 +5094,123 @@ Public Class Sales
     End Function
     Private Sub lblSearchProduct_Click(sender As Object, e As EventArgs) Handles lblSearchProduct.Click
         ShowProductSearchModal()
+    End Sub
+
+    ' Show only the matching product card from search
+    Private Sub ShowSingleProductCard(productId As Integer, productName As String, category As String)
+        CategoryPanel.Controls.Clear()
+        productCardControls.Clear()
+        backCategory.Visible = True
+        LabelTitle.Text = $"Search: {productName}"
+
+        Dim query As String = "SELECT ProductID, ProductName, SellingPrice, ProductCode, ReorderLevel, CurrentStock, Category FROM Products WHERE ProductID = @ProductID AND IsActive = 1"
+        Dim param As New SqlParameter("@ProductID", productId)
+        Using reader As SqlDataReader = Utilities.ExecuteReader(query, {param})
+            If reader.Read() Then
+                Dim cardWidth As Integer = 230
+                Dim cardHeight As Integer = 220
+
+                Dim productCard As New Guna.UI2.WinForms.Guna2Panel()
+                productCard.Size = New Size(cardWidth, cardHeight)
+                productCard.BorderRadius = 10
+                productCard.FillColor = OffWhite
+                productCard.BorderColor = GoldenYellow
+                productCard.BorderThickness = 2
+                productCard.Tag = reader("ProductID").ToString()
+                productCard.Location = New Point(28, 18)
+
+                Dim productImage As New Guna.UI2.WinForms.Guna2PictureBox()
+                Try
+                    Dim img As Image = LoadProductImage(productId, 90, 90)
+                    productImage.Image = img
+                Catch
+                    productImage.Image = My.Resources.Jade_Dental_Logo
+                End Try
+                productImage.Size = New Size(90, 90)
+                productImage.Location = New Point(cardWidth - productImage.Width - 10, 10)
+                productImage.SizeMode = PictureBoxSizeMode.StretchImage
+                productImage.BorderRadius = 10
+                productCard.Controls.Add(productImage)
+
+                Dim fullProductName As String = reader("ProductName").ToString()
+                Dim maxNameLength As Integer = 18
+                Dim displayName As String = If(fullProductName.Length > maxNameLength, fullProductName.Substring(0, maxNameLength) & "...", fullProductName)
+                Dim lblProductName As New Guna.UI2.WinForms.Guna2HtmlLabel()
+                lblProductName.Text = displayName
+                lblProductName.Font = New Font("Poppins Light", 9.0F, FontStyle.Regular)
+                lblProductName.ForeColor = DarkText
+                lblProductName.BackColor = Color.Transparent
+                lblProductName.Location = New Point(10, cardHeight - 120)
+                lblProductName.AutoSize = True
+                productCard.Controls.Add(lblProductName)
+                If fullProductName.Length > maxNameLength Then
+                    Dim toolTip As New ToolTip()
+                    toolTip.SetToolTip(lblProductName, fullProductName)
+                End If
+
+                Dim originalPrice As Decimal = Convert.ToDecimal(reader("SellingPrice"))
+                Dim lblProductPrice As New Label()
+                lblProductPrice.Text = $"Price: ₱{originalPrice:F2}"
+                lblProductPrice.ForeColor = DarkText
+                lblProductPrice.Font = New Font("Poppins Light", 9.0F, FontStyle.Regular)
+                lblProductPrice.BackColor = Color.Transparent
+                lblProductPrice.Location = New Point(10, cardHeight - 90)
+                lblProductPrice.AutoSize = True
+                productCard.Controls.Add(lblProductPrice)
+
+                Dim lblProductCode As New Label()
+                lblProductCode.Text = $"Code: {reader("ProductCode").ToString()}"
+                lblProductCode.Font = New Font("Poppins", 7.5F, FontStyle.Regular)
+                lblProductCode.ForeColor = JadeOlive
+                lblProductCode.BackColor = Color.Transparent
+                lblProductCode.AutoSize = True
+                lblProductCode.Location = New Point(10, cardHeight - 70)
+                productCard.Controls.Add(lblProductCode)
+
+                Dim lblStock As New Label()
+                Dim stock As Integer = Convert.ToInt32(reader("CurrentStock"))
+                Dim reservedQty As Integer = 0
+                For Each orderItem In currentOrderList
+                    If orderItem("ProductID").ToString() = reader("ProductID").ToString() Then
+                        reservedQty += CInt(orderItem("Quantity"))
+                    End If
+                Next
+                Dim displayStock As Integer = Math.Max(0, stock - reservedQty)
+                lblStock.Text = $"Stock: {displayStock}"
+                lblStock.ForeColor = If(displayStock > 0, SuccessGreen, AlertRed)
+                lblStock.Font = New Font("Poppins Light", 9.0F, FontStyle.Regular)
+                lblStock.BackColor = Color.Transparent
+                lblStock.Location = New Point(10, cardHeight - 50)
+                lblStock.AutoSize = True
+                productCard.Controls.Add(lblStock)
+
+                AddHandler productCard.MouseEnter, Sub()
+                                                       productCard.BorderThickness = 3
+                                                       productCard.BorderColor = GoldenYellow
+                                                       productCard.Cursor = Cursors.Hand
+                                                   End Sub
+                AddHandler productCard.MouseLeave, Sub()
+                                                       productCard.BorderThickness = 2
+                                                       productCard.BorderColor = GoldenYellow
+                                                   End Sub
+
+                Dim productData As New Dictionary(Of String, Object) From {
+                    {"ProductID", reader("ProductID")},
+                    {"ProductName", reader("ProductName")},
+                    {"Price", originalPrice},
+                    {"ProductCode", reader("ProductCode")},
+                    {"Category", reader("Category")},
+                    {"CurrentStock", stock}
+                }
+
+                AddHandler productCard.Click, Sub(sender2, e2)
+                                                  HandleProductInteraction(productData, False)
+                                              End Sub
+
+                productCardControls.Add(productCard)
+                CategoryPanel.Controls.Add(productCard)
+            End If
+        End Using
     End Sub
 
     ' Mini modal to search products by barcode or name and add to order (uses existing AddProductToOrder / ShowQuantitySelector)
@@ -5024,7 +5225,7 @@ Public Class Sales
             .Size = New Size(420, 180),
             .StartPosition = FormStartPosition.CenterParent,
             .FormBorderStyle = FormBorderStyle.FixedDialog,
-            .BackColor = DarkSlate,
+            .BackColor = OffWhite,
             .MaximizeBox = False,
             .MinimizeBox = False,
             .ShowInTaskbar = False
@@ -5032,7 +5233,7 @@ Public Class Sales
 
         Dim lbl As New Label() With {
             .Text = "Enter barcode or product name:",
-            .ForeColor = PureWhite,
+            .ForeColor = Color.FromArgb(95, 95, 95),
             .Font = New Font("Poppins", 10, FontStyle.Regular),
             .Location = New Point(12, 12),
             .AutoSize = True
@@ -5044,8 +5245,10 @@ Public Class Sales
             .Size = New Size(360, 36),
             .Location = New Point(12, 50),
             .BorderRadius = 8,
-            .FillColor = PureWhite,
-            .ForeColor = DeepCharcoal
+            .FillColor = Color.FromArgb(250, 249, 246),
+            .ForeColor = Color.FromArgb(95, 95, 95),
+            .BorderColor = Color.FromArgb(200, 198, 192),
+            .BorderThickness = 1
         }
         searchForm.Controls.Add(txtSearch)
 
@@ -5053,23 +5256,30 @@ Public Class Sales
             .Text = "Close",
             .Size = New Size(88, 34),
             .Location = New Point(284, 96),
-            .FillColor = AlertRed,
-            .ForeColor = PureWhite,
+            .FillColor = Color.FromArgb(250, 249, 246),
+            .ForeColor = Color.FromArgb(95, 95, 95),
+            .BorderColor = Color.FromArgb(200, 198, 192),
+            .BorderThickness = 1,
             .BorderRadius = 8
         }
+        btnClose.HoverState.FillColor = Color.FromArgb(240, 238, 232)
         searchForm.Controls.Add(btnClose)
 
         Dim btnSearch As New Guna.UI2.WinForms.Guna2Button() With {
             .Text = "Search",
             .Size = New Size(88, 34),
             .Location = New Point(190, 96),
-            .FillColor = GoldenYellow,
-            .ForeColor = DeepCharcoal,
+            .FillColor = Color.FromArgb(0, 120, 212),
+            .ForeColor = Color.White,
+            .BorderThickness = 0,
             .BorderRadius = 8
         }
+        btnSearch.HoverState.FillColor = Color.FromArgb(0, 102, 190)
         searchForm.Controls.Add(btnSearch)
 
-        ' Helper to run the lookup and show category if found
+        ' Stores search result for processing after modal closes
+        Dim searchResult As Tuple(Of Integer, String, String) = Nothing
+
         Dim DoLookup = Sub()
                            Dim term As String = txtSearch.Text.Trim()
                            If String.IsNullOrWhiteSpace(term) Then
@@ -5078,7 +5288,6 @@ Public Class Sales
                            End If
 
                            Try
-                               ' Prefer exact product code match first, otherwise partial name match
                                Dim query As String = "SELECT TOP 1 ProductID, ProductName, Category FROM Products WHERE IsActive = 1 AND (ProductCode = @term OR ProductName LIKE @like) ORDER BY CASE WHEN ProductCode = @term THEN 0 ELSE 1 END, ProductName"
                                Dim parameters As SqlParameter() = {
                                    New SqlParameter("@term", term),
@@ -5091,52 +5300,8 @@ Public Class Sales
                                        Dim productName As String = reader("ProductName").ToString()
                                        Dim category As String = If(reader("Category") IsNot DBNull.Value, reader("Category").ToString(), String.Empty)
 
-                                       ' Close/hide modal before navigating UI
-                                       searchForm.Hide()
-
-                                       ' Show the product's category so product cards are visible
-                                       If Not String.IsNullOrEmpty(category) Then
-                                           ShowCategoryProducts(category)
-                                       Else
-                                           ' If category missing, show all categories (fallback)
-                                           backCategory.Visible = False
-                                           CategoryPanel.AutoScrollPosition = New Point(0, 0)
-                                       End If
-
-                                       ' Allow UI to build product cards
-                                       Application.DoEvents()
-
-                                       ' Highlight the matching product card if present
-                                       For Each ctrl As Control In productCardControls
-                                           If TypeOf ctrl Is Guna.UI2.WinForms.Guna2Panel AndAlso ctrl.Tag IsNot Nothing Then
-                                               Try
-                                                   If Convert.ToInt32(ctrl.Tag) = productId Then
-                                                       Dim pnl = CType(ctrl, Guna.UI2.WinForms.Guna2Panel)
-                                                       ' Flash highlight
-                                                       Dim origBorder As Color = pnl.BorderColor
-                                                       Dim origThickness As Integer = pnl.BorderThickness
-                                                       pnl.BorderColor = GoldenYellow
-                                                       pnl.BorderThickness = 3
-                                                       pnl.BringToFront()
-
-                                                       ' Revert after short delay
-                                                       Dim t As New Timer() With {.Interval = 1400}
-                                                       AddHandler t.Tick, Sub()
-                                                                              t.Stop()
-                                                                              pnl.BorderColor = origBorder
-                                                                              pnl.BorderThickness = origThickness
-                                                                              t.Dispose()
-                                                                          End Sub
-                                                       t.Start()
-                                                       Exit For
-                                                   End If
-                                               Catch
-                                                   ' ignore conversion errors
-                                               End Try
-                                           End If
-                                       Next
-
-                                       Return
+                                       searchResult = Tuple.Create(productId, productName, category)
+                                       searchForm.DialogResult = DialogResult.OK
                                    Else
                                        MessageBox.Show($"No product match for '{term}'.", "Not Found", MessageBoxButtons.OK, MessageBoxIcon.Information)
                                    End If
@@ -5153,21 +5318,28 @@ Public Class Sales
                                           If ke.KeyCode = Keys.Enter Then
                                               ke.Handled = True
                                               DoLookup()
-                                              ' Close the modal if it was hidden by a match
-                                              If Not searchForm.IsDisposed Then
-                                                  searchForm.Close()
-                                              End If
                                           ElseIf ke.KeyCode = Keys.Escape Then
                                               searchForm.Close()
                                           End If
                                       End Sub
 
         ' Show modal
-        searchForm.ShowDialog()
+        If searchForm.ShowDialog() = DialogResult.OK AndAlso searchResult IsNot Nothing Then
+            Dim productId As Integer = searchResult.Item1
+            Dim productName As String = searchResult.Item2
+            Dim category As String = searchResult.Item3
+
+            If Not String.IsNullOrEmpty(category) Then
+                ShowSingleProductCard(productId, productName, category)
+            Else
+                backCategory.Visible = False
+                CategoryPanel.AutoScrollPosition = New Point(0, 0)
+            End If
+        End If
         searchForm.Dispose()
     End Sub
     Private Function FindOrCreateCustomer(name As String, phone As String, email As String, tin As String, customerType As String) As Integer?
-        ' Customers table removed — do not insert or query Customers.
+        ' Customers table removed � do not insert or query Customers.
         ' Keep customer snapshot in Sales (CustomerName, CustomerTIN, SalesData).
         Try
             Console.WriteLine("Customer persistence disabled: not creating or querying Customers table.")
@@ -5253,7 +5425,7 @@ Public Class Sales
             .FormBorderStyle = FormBorderStyle.FixedDialog,
             .MaximizeBox = False,
             .MinimizeBox = False,
-            .BackColor = DarkSlate,
+            .BackColor = OffWhite,
             .KeyPreview = True,
             .ShowInTaskbar = False
         }
@@ -5283,7 +5455,7 @@ Public Class Sales
             Dim lblQty As New Label With {
             .Text = $"Quantity to remove: {quantityToVoid}",
             .Font = New Font("Poppins", 9, FontStyle.Regular),
-            .ForeColor = LightSilver,
+            .ForeColor = MediumText,
             .AutoSize = False,
             .Size = New Size(520, 20),
             .Location = New Point(20, 82),
@@ -5296,7 +5468,7 @@ Public Class Sales
             .Size = New Size(240, 42),
             .Location = New Point(30, 126),
             .BorderRadius = 10,
-            .FillColor = RichOlive,
+            .FillColor = JadeOlive,
             .ForeColor = PureWhite,
             .Font = New Font("Poppins", 11, FontStyle.Bold)
         }
@@ -5306,7 +5478,7 @@ Public Class Sales
             .Size = New Size(240, 42),
             .Location = New Point(290, 126),
             .BorderRadius = 10,
-            .FillColor = SteelGray,
+            .FillColor = BorderGray,
             .ForeColor = PureWhite,
             .Font = New Font("Poppins", 11, FontStyle.Bold)
         }
@@ -5317,7 +5489,7 @@ Public Class Sales
             Dim lblScanInstruction As New Label With {
             .Text = "Scan manager/admin QR now",
             .Font = New Font("Poppins", 10, FontStyle.Italic),
-            .ForeColor = LightSilver,
+            .ForeColor = MediumText,
             .AutoSize = False,
             .Size = New Size(500, 24),
             .Location = New Point(30, 212),
@@ -5330,8 +5502,8 @@ Public Class Sales
             .Size = New Size(1, 1),
             .Location = New Point(dlg.ClientSize.Width - 6, dlg.ClientSize.Height - 6),
             .BorderThickness = 0,
-            .FillColor = DarkSlate,
-            .ForeColor = DarkSlate,
+            .FillColor = OffWhite,
+            .ForeColor = OffWhite,
             .PlaceholderText = "",
             .Visible = True
         }
@@ -5346,7 +5518,7 @@ Public Class Sales
 
             Dim lblUser As New Label With {
             .Text = "Username",
-            .ForeColor = LightSilver,
+            .ForeColor = MediumText,
             .Font = New Font("Poppins", 8),
             .AutoSize = True,
             .Location = New Point(0, 0)
@@ -5357,12 +5529,12 @@ Public Class Sales
             .Location = New Point(0, 26),
             .BorderRadius = 8,
             .FillColor = PureWhite,
-            .ForeColor = DeepCharcoal
+            .ForeColor = DarkText
         }
 
             Dim lblPass As New Label With {
             .Text = "Password",
-            .ForeColor = LightSilver,
+            .ForeColor = MediumText,
             .Font = New Font("Poppins", 8),
             .AutoSize = True,
             .Location = New Point(0, 80)
@@ -5373,7 +5545,7 @@ Public Class Sales
             .Location = New Point(0, 108),
             .BorderRadius = 8,
             .FillColor = PureWhite,
-            .ForeColor = DeepCharcoal,
+            .ForeColor = DarkText,
             .UseSystemPasswordChar = True
         }
 
@@ -5385,7 +5557,7 @@ Public Class Sales
 
             Dim lblStatus As New Label With {
             .Text = "Waiting for manager/admin authorization...",
-            .ForeColor = LightSilver,
+            .ForeColor = MediumText,
             .Font = New Font("Poppins", 9, FontStyle.Italic),
             .AutoSize = False,
             .Size = New Size(500, 20),
@@ -5400,7 +5572,7 @@ Public Class Sales
             .Location = New Point(290, 405),
             .BorderRadius = 10,
             .FillColor = SuccessGreen,
-            .ForeColor = DeepCharcoal,
+            .ForeColor = DarkText,
             .Font = New Font("Poppins", 10, FontStyle.Bold)
         }
 
@@ -5437,7 +5609,7 @@ Public Class Sales
                 isAuthorizingQr = True
                 Try
                     lblStatus.Text = "Processing QR authorization..."
-                    lblStatus.ForeColor = LightSilver
+                    lblStatus.ForeColor = MediumText
 
                     If TryAuthorizeVoidByQr(qrRaw, approvedBy) Then
                         Console.WriteLine($"[VOID AUTH DEBUG] QR authorization SUCCESS. ApprovedBy='{approvedBy}'")
@@ -5460,8 +5632,8 @@ Public Class Sales
 
             AddHandler btnQrMode.Click, Sub()
                                             qrMode = True
-                                            btnQrMode.FillColor = RichOlive
-                                            btnPassMode.FillColor = SteelGray
+                                            btnQrMode.FillColor = JadeOlive
+                                            btnPassMode.FillColor = BorderGray
                                             pnlPass.Visible = False
                                             lblScanInstruction.Visible = True
 
@@ -5470,14 +5642,14 @@ Public Class Sales
 
                                             txtQr.Text = ""
                                             lblStatus.Text = "Waiting for manager/admin authorization..."
-                                            lblStatus.ForeColor = LightSilver
+                                            lblStatus.ForeColor = MediumText
                                             txtQr.Focus()
                                         End Sub
 
             AddHandler btnPassMode.Click, Sub()
                                               qrMode = False
-                                              btnPassMode.FillColor = RichOlive
-                                              btnQrMode.FillColor = SteelGray
+                                              btnPassMode.FillColor = JadeOlive
+                                              btnQrMode.FillColor = BorderGray
                                               pnlPass.Visible = True
                                               lblScanInstruction.Visible = False
 
@@ -5809,7 +5981,15 @@ Public Class Sales
                 Return True
             End If
 
-            Dim result As DialogResult = EscForm.ConfirmExit(Me)
+            Dim result As DialogResult
+
+            ' If showing products inside a category, Escape goes back to categories
+            If backCategory IsNot Nothing AndAlso backCategory.Visible Then
+                backCategory.PerformClick()
+                Return True
+            End If
+
+            result = EscForm.ConfirmExit(Me)
             Me.Activate()
             If result = DialogResult.Yes Then
                 If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
@@ -5829,6 +6009,20 @@ Public Class Sales
         End If
 
         Return MyBase.ProcessCmdKey(msg, keyData)
+    End Function
+
+    Private Function CreateButtonIcon(iconText As String, backColor As Color, Optional size As Integer = 36) As Bitmap
+        Dim bmp As New Bitmap(size, size)
+        Using g As Graphics = Graphics.FromImage(bmp)
+            g.SmoothingMode = SmoothingMode.AntiAlias
+            Using brush As New SolidBrush(backColor)
+                g.FillEllipse(brush, 2, 2, size - 4, size - 4)
+            End Using
+            Using f As New Font("Segoe UI", size \ 2 - 2, FontStyle.Bold)
+                TextRenderer.DrawText(g, iconText, f, New Rectangle(0, 0, size, size), Color.White, Color.Transparent, TextFormatFlags.HorizontalCenter Or TextFormatFlags.VerticalCenter)
+            End Using
+        End Using
+        Return bmp
     End Function
 
 End Class

@@ -18,7 +18,7 @@ Public NotInheritable Class NavigationBuilder
                 End If
             Next
 
-            dashboardPanel.FillColor = Color.FromArgb(61, 65, 66)
+            dashboardPanel.FillColor = Color.White
 
             ' Render company logo into existing PictureBox9 if present
             Dim logoCtrl() As Control = dashboardPanel.Controls.Find("PictureBox9", True)
@@ -50,7 +50,7 @@ Public NotInheritable Class NavigationBuilder
             Dim titleLabel As New Label() With {
                 .Text = companyName,
                 .Font = New Font("Poppins", 14, FontStyle.Bold),
-                .ForeColor = Color.FromArgb(254, 191, 16),
+                .ForeColor = Color.FromArgb(61, 65, 66),
                 .BackColor = Color.Transparent,
                 .AutoSize = False,
                 .Size = New Size(availableWidth, 30),
@@ -62,7 +62,7 @@ Public NotInheritable Class NavigationBuilder
             Dim subtitleLabel As New Label() With {
                 .Text = "Dental Supply Management",
                 .Font = New Font("Poppins", 10, FontStyle.Regular),
-                .ForeColor = Color.FromArgb(225, 229, 233),
+                .ForeColor = Color.FromArgb(120, 120, 120),
                 .BackColor = Color.Transparent,
                 .AutoSize = False,
                 .Size = New Size(availableWidth, 25),
@@ -72,7 +72,7 @@ Public NotInheritable Class NavigationBuilder
             dashboardPanel.Controls.Add(subtitleLabel)
 
             Dim separator1 As New Panel() With {
-                .BackColor = Color.FromArgb(50, 50, 50),
+                .BackColor = Color.FromArgb(230, 230, 230),
                 .Size = New Size(availableWidth - 20, 2),
                 .Location = New Point(30, 190)
             }
@@ -81,7 +81,7 @@ Public NotInheritable Class NavigationBuilder
             Dim navLabel As New Label() With {
                 .Text = "NAVIGATION",
                 .Font = New Font("Poppins", 10, FontStyle.Bold),
-                .ForeColor = Color.FromArgb(225, 229, 233),
+                .ForeColor = Color.FromArgb(120, 120, 120),
                 .BackColor = Color.Transparent,
                 .AutoSize = False,
                 .Size = New Size(availableWidth, 25),
@@ -101,15 +101,15 @@ Public NotInheritable Class NavigationBuilder
                                                                             btn.BorderRadius = 12
                                                                             btn.Font = New Font("Poppins", 10, FontStyle.Regular)
                                                                             btn.TextAlign = HorizontalAlignment.Left
-                                                                            btn.FillColor = If(isActiveBtn, Color.FromArgb(254, 191, 16), Color.Transparent)
-                                                                            btn.ForeColor = If(isActiveBtn, Color.FromArgb(26, 29, 31), Color.White)
-                                                                            btn.BorderThickness = If(isActiveBtn, 0, 1)
-                                                                            btn.BorderColor = If(isActiveBtn, Color.Transparent, Color.FromArgb(80, 80, 80))
-                                                                            btn.BackColor = Color.Transparent
-                                                                            btn.Cursor = Cursors.Hand
-                                                                            btn.ShadowDecoration.Enabled = True
-                                                                            btn.ShadowDecoration.Color = Color.FromArgb(30, 30, 30)
-                                                                            btn.ShadowDecoration.Depth = 4
+btn.FillColor = If(isActiveBtn, Color.FromArgb(196, 154, 44), Color.White)
+                                                                             btn.ForeColor = If(isActiveBtn, Color.White, Color.FromArgb(60, 60, 60))
+                                                                             btn.BorderThickness = 0
+                                                                             btn.BorderColor = Color.Transparent
+                                                                             btn.BackColor = Color.Transparent
+                                                                             btn.Cursor = Cursors.Hand
+                                                                             btn.ShadowDecoration.Enabled = If(isActiveBtn, True, False)
+                                                                             btn.ShadowDecoration.Color = Color.FromArgb(200, 180, 100)
+                                                                             btn.ShadowDecoration.Depth = If(isActiveBtn, 4, 0)
                                                                             AddHandler btn.Click, Sub(s, e)
                                                                                                       Try
                                                                                                           If isActiveBtn Then
@@ -128,20 +128,18 @@ Public NotInheritable Class NavigationBuilder
                                                                                                       Catch
                                                                                                       End Try
                                                                                                   End Sub
-                                                                            AddHandler btn.MouseEnter, Sub()
-                                                                                                           If Not isActiveBtn Then
-                                                                                                               btn.FillColor = Color.FromArgb(48, 52, 54)
-                                                                                                               btn.BorderColor = Color.FromArgb(254, 191, 16)
-                                                                                                               btn.Font = New Font("Poppins", 9, FontStyle.Bold)
-                                                                                                           End If
-                                                                                                       End Sub
-                                                                            AddHandler btn.MouseLeave, Sub()
-                                                                                                           If Not isActiveBtn Then
-                                                                                                               btn.FillColor = Color.Transparent
-                                                                                                               btn.BorderColor = Color.FromArgb(80, 80, 80)
-                                                                                                               btn.Font = New Font("Poppins", 10, FontStyle.Regular)
-                                                                                                           End If
-                                                                                                       End Sub
+AddHandler btn.MouseEnter, Sub()
+                                                                                                            If Not isActiveBtn Then
+                                                                                                                btn.FillColor = Color.FromArgb(245, 245, 245)
+                                                                                                                btn.Font = New Font("Poppins", 9, FontStyle.Bold)
+                                                                                                            End If
+                                                                                                        End Sub
+                                                                             AddHandler btn.MouseLeave, Sub()
+                                                                                                            If Not isActiveBtn Then
+                                                                                                                btn.FillColor = Color.White
+                                                                                                                btn.Font = New Font("Poppins", 10, FontStyle.Regular)
+                                                                                                            End If
+                                                                                                        End Sub
                                                                             dashboardPanel.Controls.Add(btn)
                                                                         End Sub
 
