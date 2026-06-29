@@ -202,7 +202,7 @@ Public Class Inventory
         ' Create loading label
         Dim loadingLabel As New Label With {
             .Text = "Loading Inventory...",
-            .ForeColor = Color.White,
+            .ForeColor = Color.FromArgb(42, 42, 42),
             .Font = New Font("Poppins", 16, FontStyle.Regular),
             .AutoSize = True,
             .BackColor = Color.Transparent
@@ -489,25 +489,26 @@ Public Class Inventory
             ' Disable DataGridView's built-in tooltips to prevent conflicts
             productDataGrid.ShowCellToolTips = False
 
-            ' --- DARK / BLACK STYLE PALETTE ---
-            productDataGrid.BackgroundColor = System.Drawing.Color.FromArgb(41, 44, 45)
-            productDataGrid.GridColor = System.Drawing.Color.White
+            ' --- JADE CLINIC BRAND PALETTE ---
+            productDataGrid.BackgroundColor = System.Drawing.Color.FromArgb(250, 249, 246)
+            productDataGrid.GridColor = System.Drawing.Color.FromArgb(230, 230, 230)          ' BorderGray
             productDataGrid.BorderStyle = BorderStyle.None
             productDataGrid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal
+            productDataGrid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None
 
-            productDataGrid.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
-            productDataGrid.AlternatingRowsDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
-            productDataGrid.DefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
-            productDataGrid.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(255, 204, 77)
-            productDataGrid.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
+            productDataGrid.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(255, 255, 255)  ' PureWhite
+            productDataGrid.AlternatingRowsDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(250, 249, 246)
+            productDataGrid.DefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51)     ' DarkText
+            productDataGrid.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(235, 228, 200) ' Olive-beige
+            productDataGrid.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.FromArgb(51, 51, 51) ' DarkText
             productDataGrid.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
             productDataGrid.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             productDataGrid.DefaultCellStyle.Padding = New Padding(10, 6, 10, 6)
 
             ' Header styling
-            productDataGrid.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(30, 30, 30)
-            productDataGrid.ColumnHeadersDefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
-            productDataGrid.ColumnHeadersDefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(30, 30, 30)
+            productDataGrid.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(250, 249, 246)
+            productDataGrid.ColumnHeadersDefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51)  ' DarkText
+            productDataGrid.ColumnHeadersDefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(250, 249, 246)
             productDataGrid.ColumnHeadersDefaultCellStyle.Font = New Font("Poppins SemiBold", 10.5F, FontStyle.Bold)
             productDataGrid.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             productDataGrid.ColumnHeadersHeight = 55
@@ -517,10 +518,11 @@ Public Class Inventory
             ' Clear existing columns
             productDataGrid.Columns.Clear()
 
-            ' Colour accents
-            Dim AccentGold As Color = System.Drawing.Color.FromArgb(255, 204, 77)
-            Dim AccentGoldDark As Color = System.Drawing.Color.FromArgb(200, 140, 0)
-            Dim PriceGold As Color = System.Drawing.Color.FromArgb(200, 140, 0)
+            ' Jade Clinic brand accents
+            Dim GoldenYellow As Color = System.Drawing.Color.FromArgb(254, 191, 16)
+            Dim JadeOlive As Color = System.Drawing.Color.FromArgb(190, 154, 48)
+            Dim DarkText As Color = System.Drawing.Color.FromArgb(51, 51, 51)
+            Dim MediumText As Color = System.Drawing.Color.FromArgb(102, 102, 102)
 
             ' Product Information column (slightly shorter to make room for Status)
             ' In SetupProductDataGrid(), replace ProductName column config with this:
@@ -535,46 +537,46 @@ Public Class Inventory
             colProductName.MinimumWidth = 280
 
             colProductName.DefaultCellStyle.Font = New Font("Poppins SemiBold", 9.5F, FontStyle.Regular)
-            colProductName.DefaultCellStyle.ForeColor = AccentGoldDark
+            colProductName.DefaultCellStyle.ForeColor = DarkText
             colProductName.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft
             colProductName.DefaultCellStyle.Padding = New Padding(5, 5, 5, 5)
-            colProductName.DefaultCellStyle.SelectionBackColor = AccentGold
-            colProductName.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
+            colProductName.DefaultCellStyle.SelectionBackColor = Color.FromArgb(235, 228, 200)
+            colProductName.DefaultCellStyle.SelectionForeColor = DarkText
             productDataGrid.Columns.Add(colProductName)
             ' Category column (slightly narrowed)
             Dim colCategory As New DataGridViewTextBoxColumn()
             colCategory.Name = "Category"
             colCategory.HeaderText = "Category"
-            colCategory.FillWeight = 16 ' reduced from 18
+            colCategory.FillWeight = 16
             colCategory.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             colCategory.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
-            colCategory.DefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
-            colCategory.DefaultCellStyle.SelectionBackColor = AccentGold
-            colCategory.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
+            colCategory.DefaultCellStyle.ForeColor = MediumText
+            colCategory.DefaultCellStyle.SelectionBackColor = Color.FromArgb(235, 228, 200)
+            colCategory.DefaultCellStyle.SelectionForeColor = DarkText
             productDataGrid.Columns.Add(colCategory)
 
             ' Unit column (slightly narrowed)
             Dim colUnit As New DataGridViewTextBoxColumn()
             colUnit.Name = "Unit"
             colUnit.HeaderText = "Unit"
-            colUnit.FillWeight = 8 ' reduced from 10
+            colUnit.FillWeight = 8
             colUnit.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             colUnit.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
-            colUnit.DefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
-            colUnit.DefaultCellStyle.SelectionBackColor = AccentGold
-            colUnit.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
+            colUnit.DefaultCellStyle.ForeColor = MediumText
+            colUnit.DefaultCellStyle.SelectionBackColor = Color.FromArgb(235, 228, 200)
+            colUnit.DefaultCellStyle.SelectionForeColor = DarkText
             productDataGrid.Columns.Add(colUnit)
 
             ' Stock column (slightly narrowed)
             Dim colStock As New DataGridViewTextBoxColumn()
             colStock.Name = "CurrentStock"
             colStock.HeaderText = "Stock"
-            colStock.FillWeight = 9 ' reduced from 10
+            colStock.FillWeight = 9
             colStock.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             colStock.DefaultCellStyle.Font = New Font("PoppinsSemiBold", 9.5F, FontStyle.Bold)
-            colStock.DefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
-            colStock.DefaultCellStyle.SelectionBackColor = AccentGold
-            colStock.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
+            colStock.DefaultCellStyle.ForeColor = MediumText
+            colStock.DefaultCellStyle.SelectionBackColor = Color.FromArgb(235, 228, 200)
+            colStock.DefaultCellStyle.SelectionForeColor = DarkText
             productDataGrid.Columns.Add(colStock)
 
             ' Cost Price column
@@ -584,21 +586,21 @@ Public Class Inventory
             colCostPrice.FillWeight = 12
             colCostPrice.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             colCostPrice.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
-            colCostPrice.DefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
-            colCostPrice.DefaultCellStyle.SelectionBackColor = AccentGold
-            colCostPrice.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
+            colCostPrice.DefaultCellStyle.ForeColor = MediumText
+            colCostPrice.DefaultCellStyle.SelectionBackColor = Color.FromArgb(235, 228, 200)
+            colCostPrice.DefaultCellStyle.SelectionForeColor = DarkText
             productDataGrid.Columns.Add(colCostPrice)
 
             ' Selling Price column
             Dim colSellingPrice As New DataGridViewTextBoxColumn()
             colSellingPrice.Name = "SellingPrice"
             colSellingPrice.HeaderText = "Price"
-            colSellingPrice.FillWeight = 14 ' slightly reduced to balance layout
+            colSellingPrice.FillWeight = 14
             colSellingPrice.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             colSellingPrice.DefaultCellStyle.Font = New Font("PoppinsSemiBold", 9.5F, FontStyle.Bold)
-            colSellingPrice.DefaultCellStyle.ForeColor = PriceGold
-            colSellingPrice.DefaultCellStyle.SelectionBackColor = AccentGold
-            colSellingPrice.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
+            colSellingPrice.DefaultCellStyle.ForeColor = DarkText
+            colSellingPrice.DefaultCellStyle.SelectionBackColor = Color.FromArgb(235, 228, 200)
+            colSellingPrice.DefaultCellStyle.SelectionForeColor = DarkText
             productDataGrid.Columns.Add(colSellingPrice)
 
             ' Status column (Active / Inactive) - fixed width for consistent layout
@@ -608,20 +610,19 @@ Public Class Inventory
 
             ' Make the column fixed-width (not participating in Fill autosizing)
             colStatus.AutoSizeMode = DataGridViewAutoSizeColumnMode.None
-            colStatus.Width = 100              ' adjust to taste
+            colStatus.Width = 130
             colStatus.MinimumWidth = 70
             colStatus.MaxInputLength = 50
             colStatus.ReadOnly = True
 
             colStatus.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             colStatus.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
-            colStatus.DefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
-            colStatus.DefaultCellStyle.SelectionBackColor = AccentGold
-            colStatus.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
+            colStatus.DefaultCellStyle.ForeColor = MediumText
+            colStatus.DefaultCellStyle.SelectionBackColor = Color.FromArgb(235, 228, 200)
+            colStatus.DefaultCellStyle.SelectionForeColor = DarkText
 
             productDataGrid.Columns.Add(colStatus)
-            ' Actions column
-            ' Actions column — fixed width, non-resizable, shows edit icon/text and not participating in Fill autosizing
+            ' Actions column — fixed width, non-resizable, shows edit icon/text
             Dim colActions As New DataGridViewTextBoxColumn()
             colActions.Name = "Actions"
             colActions.HeaderText = ""
@@ -636,10 +637,10 @@ Public Class Inventory
             colActions.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
 
             ' Visuals
-            colActions.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
-            colActions.DefaultCellStyle.ForeColor = AccentGoldDark
-            colActions.DefaultCellStyle.SelectionBackColor = AccentGold
-            colActions.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
+            colActions.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(255, 255, 255)
+            colActions.DefaultCellStyle.ForeColor = JadeOlive
+            colActions.DefaultCellStyle.SelectionBackColor = Color.FromArgb(235, 228, 200)
+            colActions.DefaultCellStyle.SelectionForeColor = DarkText
             colActions.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
 
             ' Show a default edit marker when cell value is null/empty
@@ -680,7 +681,7 @@ Public Class Inventory
 
             ' Clear existing rows
             productDataGrid.Rows.Clear()
-            
+
             ' Hide any existing "No records" message
             DataGridViewHelper.HideNoRecordsMessage()
 
@@ -691,10 +692,10 @@ Public Class Inventory
             End If
 
             ' Define lighter palette colors
-            Dim LightRed As Color = Color.FromArgb(255, 153, 153)       ' light red for out of stock / inactive
-            Dim LightOrange As Color = Color.FromArgb(255, 179, 102)    ' light orange for below reorder (B.R.L)
-            Dim LightGreen As Color = Color.FromArgb(144, 238, 144)     ' light green for above reorder (A.R.L)
-            Dim AccentGoldDark As Color = Color.FromArgb(200, 140, 0)
+            Dim LightRed As Color = Color.FromArgb(220, 80, 70)        ' red for out of stock / inactive
+            Dim LightOrange As Color = Color.FromArgb(230, 150, 40)    ' orange for below reorder (B.R.L)
+            Dim LightGreen As Color = Color.FromArgb(80, 160, 80)      ' green for above reorder (A.R.L)
+            Dim JadeOlive As Color = Color.FromArgb(190, 154, 48)
 
             ' Load filtered products into DataGridView
             For Each productData As Dictionary(Of String, Object) In filteredProducts
@@ -867,12 +868,12 @@ Public Class Inventory
                         e.Handled = True
                         e.PaintBackground(e.ClipBounds, True)
 
-                        ' Define brand colors with golden accent
-                        Dim AccentGold As Color = Color.FromArgb(255, 204, 77)
-                        Dim AccentGoldDark As Color = Color.FromArgb(200, 140, 0)
+                        ' Define Jade Clinic brand colors
+                        Dim GoldenYellow As Color = Color.FromArgb(254, 191, 16)
+                        Dim JadeOlive As Color = Color.FromArgb(190, 154, 48)
                         Dim MediumGray As Color = Color.FromArgb(120, 120, 120)
                         Dim LightGray As Color = Color.FromArgb(200, 200, 200)
-                        Dim HeaderTextSelected As Color = Color.FromArgb(26, 29, 31) ' darker text on gold selection for better contrast
+                        Dim DarkText As Color = Color.FromArgb(51, 51, 51)
 
                         ' Calculate layout dimensions with better spacing
                         Dim imageSize As Integer = 50
@@ -923,7 +924,7 @@ Public Class Inventory
                             Using bgBrush As New SolidBrush(Color.FromArgb(245, 245, 245))
                                 e.Graphics.FillRectangle(bgBrush, imageRect)
                             End Using
-                            Using borderPen As New Pen(AccentGoldDark, 1)
+                            Using borderPen As New Pen(JadeOlive, 1)
                                 e.Graphics.DrawRectangle(borderPen, imageRect)
                             End Using
 
@@ -956,8 +957,8 @@ Public Class Inventory
                         ' Determine if row is selected
                         Dim isRowSelected As Boolean = productDataGrid.Rows(e.RowIndex).Selected
 
-                        ' Choose main text color based on selection (dark golden idle, dark text on selection)
-                        Dim productNameColor As Color = If(isRowSelected, HeaderTextSelected, AccentGoldDark)
+                        ' Choose main text color based on selection (dark text idle, dark text on selection)
+                        Dim productNameColor As Color = If(isRowSelected, DarkText, DarkText)
                         Using productNameFont As New Font("Poppins SemiBold", 10.5F, FontStyle.Bold)
                             Using productNameBrush As New SolidBrush(productNameColor)
                                 Dim nameFormat As New StringFormat() With {
@@ -977,7 +978,7 @@ Public Class Inventory
                         Dim productCode As String = productData("ProductCode").ToString()
 
                         ' Subtitle color: dark on gold selection, medium gray otherwise
-                        Dim codeTextColor As Color = If(isRowSelected, HeaderTextSelected, MediumGray)
+                        Dim codeTextColor As Color = If(isRowSelected, DarkText, MediumGray)
 
                         Using codeFont As New Font("Poppins", 8.5F, FontStyle.Regular)
                             Using codeBrush As New SolidBrush(codeTextColor)
@@ -1000,20 +1001,20 @@ Public Class Inventory
                     Dim stockStatus As String = If(productDataGrid.Rows(e.RowIndex).Cells("CurrentStock").Tag?.ToString(), "IN_STOCK")
                     Dim isRowSelected As Boolean = productDataGrid.Rows(e.RowIndex).Selected
 
-                    ' If row is selected, custom paint darker colored text for contrast on gold selection background
+                    ' If row is selected, use the same medium colors for readability on soft selection
                     If isRowSelected Then
                         e.Handled = True
                         e.PaintBackground(e.ClipBounds, True)
 
-                        ' Determine darker text color based on stock status for readability on gold
+                        ' Use the same medium stock colors on the soft selection background
                         Dim textColor As Color
                         Select Case stockStatus
                             Case "OUT_OF_STOCK"
-                                textColor = Color.FromArgb(150, 30, 40) ' darker red
+                                textColor = Color.FromArgb(220, 80, 70)
                             Case "LOW_STOCK"
-                                textColor = Color.FromArgb(150, 100, 0) ' darker amber
+                                textColor = Color.FromArgb(230, 150, 40)
                             Case Else ' "IN_STOCK"
-                                textColor = Color.FromArgb(10, 90, 30) ' darker green
+                                textColor = Color.FromArgb(80, 160, 80)
                         End Select
 
                         ' Draw the stock number with appropriate color
@@ -1271,21 +1272,21 @@ Public Class Inventory
         btn.Font = New Font("Poppins", 10, FontStyle.Regular)
         btn.TextAlign = HorizontalAlignment.Left
 
-        ' Consistent palette used across forms
+        ' Jade Clinic palette for nav buttons
         btn.FillColor = If(isActive, System.Drawing.Color.FromArgb(254, 191, 16), System.Drawing.Color.Transparent)
-        btn.ForeColor = If(isActive, System.Drawing.Color.FromArgb(26, 29, 31), System.Drawing.Color.White)
+        btn.ForeColor = If(isActive, System.Drawing.Color.FromArgb(51, 51, 51), System.Drawing.Color.FromArgb(51, 51, 51))
         btn.BorderThickness = If(isActive, 0, 1)
-        btn.BorderColor = If(isActive, System.Drawing.Color.Transparent, System.Drawing.Color.FromArgb(80, 80, 80))
+        btn.BorderColor = If(isActive, System.Drawing.Color.Transparent, System.Drawing.Color.FromArgb(200, 200, 200))
         btn.BackColor = System.Drawing.Color.Transparent
         btn.Cursor = Cursors.Hand
 
         btn.ShadowDecoration.Enabled = True
-        btn.ShadowDecoration.Color = System.Drawing.Color.FromArgb(30, 30, 30)
-        btn.ShadowDecoration.Depth = 4
+        btn.ShadowDecoration.Color = System.Drawing.Color.FromArgb(200, 200, 200)
+        btn.ShadowDecoration.Depth = 2
 
         AddHandler btn.MouseEnter, Sub()
                                        If Not isActive Then
-                                           btn.FillColor = System.Drawing.Color.FromArgb(48, 52, 54)
+                                           btn.FillColor = System.Drawing.Color.FromArgb(240, 240, 240)
                                            btn.BorderColor = System.Drawing.Color.FromArgb(254, 191, 16)
                                            btn.Font = New Font("Poppins", 9, FontStyle.Bold)
                                        End If
@@ -1294,7 +1295,7 @@ Public Class Inventory
         AddHandler btn.MouseLeave, Sub()
                                        If Not isActive Then
                                            btn.FillColor = System.Drawing.Color.Transparent
-                                           btn.BorderColor = System.Drawing.Color.FromArgb(80, 80, 80)
+                                           btn.BorderColor = System.Drawing.Color.FromArgb(200, 200, 200)
                                            btn.Font = New Font("Poppins", 10, FontStyle.Regular)
                                        End If
                                    End Sub
@@ -1365,7 +1366,7 @@ Public Class Inventory
             ' Set username without emoji
             lblUsername.Text = frmLoginvb.LoggedInUsername
             lblUsername.Font = New Font("Poppins", 10.0F, FontStyle.Regular)
-            lblUsername.ForeColor = System.Drawing.Color.White
+            lblUsername.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51)
 
             ' Load user profile picture
             LoadUserProfilePicture()
@@ -1488,7 +1489,7 @@ Public Class Inventory
         ' Create dropdown panel
         profileDropdownPanel = New Panel()
         profileDropdownPanel.Size = New System.Drawing.Size(200, 100)
-        profileDropdownPanel.BackColor = System.Drawing.Color.FromArgb(41, 44, 45)
+        profileDropdownPanel.BackColor = System.Drawing.Color.FromArgb(255, 255, 255)
         profileDropdownPanel.BorderStyle = BorderStyle.FixedSingle
 
         ' Position below the profile picture
@@ -1499,7 +1500,7 @@ Public Class Inventory
         Dim btnProfileSettings As New Label()
         btnProfileSettings.Text = "⚙️ Profile Settings"
         btnProfileSettings.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
-        btnProfileSettings.ForeColor = System.Drawing.Color.White
+        btnProfileSettings.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51)
         btnProfileSettings.BackColor = System.Drawing.Color.Transparent
         btnProfileSettings.Size = New System.Drawing.Size(190, 40)
         btnProfileSettings.Location = New Point(5, 5)
@@ -1508,7 +1509,7 @@ Public Class Inventory
 
         ' Add hover effect to Profile Settings
         AddHandler btnProfileSettings.MouseEnter, Sub()
-                                                      btnProfileSettings.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
+                                                      btnProfileSettings.BackColor = System.Drawing.Color.FromArgb(240, 240, 240)
                                                   End Sub
         AddHandler btnProfileSettings.MouseLeave, Sub()
                                                       btnProfileSettings.BackColor = System.Drawing.Color.Transparent
@@ -1524,7 +1525,7 @@ Public Class Inventory
         Dim btnLogOut As New Label()
         btnLogOut.Text = "🚪 Log Out"
         btnLogOut.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
-        btnLogOut.ForeColor = System.Drawing.Color.White
+        btnLogOut.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51)
         btnLogOut.BackColor = System.Drawing.Color.Transparent
         btnLogOut.Size = New System.Drawing.Size(190, 40)
         btnLogOut.Location = New Point(5, 50)
@@ -1533,7 +1534,7 @@ Public Class Inventory
 
         ' Add hover effect to Log Out
         AddHandler btnLogOut.MouseEnter, Sub()
-                                             btnLogOut.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
+                                             btnLogOut.BackColor = System.Drawing.Color.FromArgb(240, 240, 240)
                                          End Sub
         AddHandler btnLogOut.MouseLeave, Sub()
                                              btnLogOut.BackColor = System.Drawing.Color.Transparent
@@ -1797,7 +1798,7 @@ Public Class Inventory
 
             ' default visuals
             Dim defaultFill As Color = Color.Transparent
-            Dim defaultFore As Color = Color.White
+            Dim defaultFore As Color = Color.FromArgb(51, 51, 51)
 
             ' Clear all to default first
             If btnAllCtrl IsNot Nothing Then
@@ -1815,8 +1816,8 @@ Public Class Inventory
 
             ' Apply active visuals
             If btnAllCtrl IsNot Nothing AndAlso Not statusFilter.HasValue Then
-                btnAllCtrl.FillColor = Color.White
-                btnAllCtrl.ForeColor = Color.Black
+                btnAllCtrl.FillColor = Color.FromArgb(254, 191, 16)
+                btnAllCtrl.ForeColor = Color.FromArgb(51, 51, 51)
             End If
 
             If btnActiveCtrl IsNot Nothing AndAlso statusFilter.HasValue AndAlso statusFilter.Value Then
@@ -1829,10 +1830,10 @@ Public Class Inventory
                 btnInactiveCtrl.ForeColor = Color.White
             End If
 
-            ' Optional: give a subtle border when selected so contrast is clearer on dark background
-            If btnAllCtrl IsNot Nothing Then btnAllCtrl.BorderColor = If(Not statusFilter.HasValue, Color.FromArgb(200, 200, 200), Color.FromArgb(80, 80, 80))
-            If btnActiveCtrl IsNot Nothing Then btnActiveCtrl.BorderColor = If(statusFilter.HasValue AndAlso statusFilter.Value, Color.FromArgb(200, 200, 200), Color.FromArgb(80, 80, 80))
-            If btnInactiveCtrl IsNot Nothing Then btnInactiveCtrl.BorderColor = If(statusFilter.HasValue AndAlso statusFilter.Value = False, Color.FromArgb(200, 200, 200), Color.FromArgb(80, 80, 80))
+            ' Subtle border for selected state
+            If btnAllCtrl IsNot Nothing Then btnAllCtrl.BorderColor = If(Not statusFilter.HasValue, Color.FromArgb(230, 230, 230), Color.FromArgb(200, 200, 200))
+            If btnActiveCtrl IsNot Nothing Then btnActiveCtrl.BorderColor = If(statusFilter.HasValue AndAlso statusFilter.Value, Color.FromArgb(200, 200, 200), Color.FromArgb(230, 230, 230))
+            If btnInactiveCtrl IsNot Nothing Then btnInactiveCtrl.BorderColor = If(statusFilter.HasValue AndAlso statusFilter.Value = False, Color.FromArgb(200, 200, 200), Color.FromArgb(230, 230, 230))
 
         Catch ex As Exception
             ' Non-fatal: ignore visual update errors
@@ -1917,5 +1918,41 @@ Public Class Inventory
             MessageBox.Show($"Export failed: {ex.Message}", "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
+
+    Protected Overrides Function ProcessCmdKey(ByRef msg As Message, keyData As Keys) As Boolean
+        If keyData = Keys.Escape Then
+            If Me.OwnedForms.Cast(Of Form)().Any(Function(f) f.Visible) Then
+                Return MyBase.ProcessCmdKey(msg, keyData)
+            End If
+
+            If Not Me.ContainsFocus Then
+                Return MyBase.ProcessCmdKey(msg, keyData)
+            End If
+
+            If isNavigating Then
+                Return True
+            End If
+
+            Dim result As DialogResult = EscForm.ConfirmExit(Me)
+            Me.Activate()
+            If result = DialogResult.Yes Then
+                If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+                    Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Application Exit", "User exited the application via Inventory.")
+                End If
+
+                For Each form As Form In Application.OpenForms.Cast(Of Form).ToArray()
+                    If form IsNot Me Then
+                        form.Close()
+                    End If
+                Next
+
+                Application.Exit()
+            End If
+
+            Return True
+        End If
+
+        Return MyBase.ProcessCmdKey(msg, keyData)
+    End Function
 
 End Class

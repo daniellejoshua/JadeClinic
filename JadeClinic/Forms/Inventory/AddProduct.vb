@@ -47,7 +47,7 @@ Public Class AddProduct
 
         ' Ensure form properties are set correctly
         Me.FormBorderStyle = FormBorderStyle.None
-        Me.BackColor = Color.FromArgb(30, 30, 30)
+        Me.BackColor = Color.White
         Me.TopMost = False
     End Sub
 

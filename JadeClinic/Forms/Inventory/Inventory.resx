@@ -298,13 +298,13 @@
     <value>4</value>
   </data>
   <data name="Guna2DataGridView1.Location" type="System.Drawing.Point, System.Drawing">
-    <value>685, 167</value>
+    <value>3, 3</value>
   </data>
   <data name="Guna2DataGridView1.RowHeadersWidth" type="System.Int32, mscorlib">
     <value>51</value>
   </data>
   <data name="Guna2DataGridView1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>1205, 874</value>
+    <value>1214, 898</value>
   </data>
   <data name="Guna2DataGridView1.TabIndex" type="System.Int32, mscorlib">
     <value>75</value>
@@ -316,7 +316,7 @@
     <value>Guna.UI2.WinForms.Guna2DataGridView, Guna.UI2, Culture=neutral, PublicKeyToken=8b9d14aa5142e261</value>
   </data>
   <data name="&gt;&gt;Guna2DataGridView1.Parent" xml:space="preserve">
-    <value>$this</value>
+    <value>Guna2Panel1</value>
   </data>
   <data name="&gt;&gt;Guna2DataGridView1.ZOrder" xml:space="preserve">
     <value>0</value>
@@ -838,6 +838,27 @@
   <data name="&gt;&gt;Guna2HtmlLabel14.Type" xml:space="preserve">
     <value>Guna.UI2.WinForms.Guna2HtmlLabel, Guna.UI2, Culture=neutral, PublicKeyToken=8b9d14aa5142e261</value>
   </data>
+  <data name="Guna2Panel1.Location" type="System.Drawing.Point, System.Drawing">
+    <value>673, 167</value>
+  </data>
+  <data name="Guna2Panel1.Size" type="System.Drawing.Size, System.Drawing">
+    <value>1222, 874</value>
+  </data>
+  <data name="Guna2Panel1.TabIndex" type="System.Int32, mscorlib">
+    <value>76</value>
+  </data>
+  <data name="&gt;&gt;Guna2Panel1.Name" xml:space="preserve">
+    <value>Guna2Panel1</value>
+  </data>
+  <data name="&gt;&gt;Guna2Panel1.Type" xml:space="preserve">
+    <value>Guna.UI2.WinForms.Guna2Panel, Guna.UI2, Culture=neutral, PublicKeyToken=8b9d14aa5142e261</value>
+  </data>
+  <data name="&gt;&gt;Guna2Panel1.Parent" xml:space="preserve">
+    <value>$this</value>
+  </data>
+  <data name="&gt;&gt;Guna2Panel1.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
   <metadata name="$this.Localizable" type="System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>True</value>
   </metadata>
@@ -846,6 +867,9 @@
   </data>
   <data name="$this.ClientSize" type="System.Drawing.Size, System.Drawing">
     <value>1902, 1033</value>
+  </data>
+  <data name="$this.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
+    <value>NoControl</value>
   </data>
   <data name="$this.StartPosition" type="System.Windows.Forms.FormStartPosition, System.Windows.Forms">
     <value>CenterScreen</value>
