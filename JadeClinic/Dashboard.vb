@@ -90,7 +90,7 @@ Public Class Dashboard
 
         loadingLabel = New Label With {
             .Text = "Loading Dashboard...",
-            .ForeColor = Color.White,
+            .ForeColor = Color.FromArgb(51, 51, 51),
             .Font = New Font("Poppins", 16, FontStyle.Regular),
             .AutoSize = True,
             .BackColor = Color.Transparent
@@ -100,8 +100,8 @@ Public Class Dashboard
         CenterLoadingLabel()
 
         AddHandler loadingPanel.SizeChanged, Sub()
-            CenterLoadingLabel()
-        End Sub
+                                                 CenterLoadingLabel()
+                                             End Sub
     End Sub
 
     Private Sub HideLoadingOverlay()
@@ -133,7 +133,7 @@ Public Class Dashboard
 
             ' Initialize form with new color scheme
             Me.Text = $"JadeClinic Dashboard - Welcome {frmLoginvb.LoggedInUsername}"
-            Me.BackColor = Color.FromArgb(26, 29, 31) ' Deep Charcoal background #1A1D1F
+            Me.BackColor = Color.White
             Me.MaximizeBox = False
             Me.MinimizeBox = False
 
@@ -176,20 +176,20 @@ Public Class Dashboard
 
             ' Initialize chart filter buttons if they exist
             If btnAll IsNot Nothing Then
-                btnAll.FillColor = Color.FromArgb(61, 65, 69) ' Graphite #3D4145
-                btnAll.ForeColor = Color.FromArgb(255, 255, 255) ' Pure White
+                btnAll.FillColor = Color.FromArgb(240, 240, 240)
+                btnAll.ForeColor = Color.FromArgb(51, 51, 51)
             End If
             If btnMonthly IsNot Nothing Then
-                btnMonthly.FillColor = Color.FromArgb(61, 65, 69) ' Graphite #3D4145
-                btnMonthly.ForeColor = Color.FromArgb(255, 255, 255) ' Pure White
+                btnMonthly.FillColor = Color.FromArgb(240, 240, 240)
+                btnMonthly.ForeColor = Color.FromArgb(51, 51, 51)
             End If
             If btnWeekly IsNot Nothing Then
-                btnWeekly.FillColor = Color.FromArgb(254, 191, 16) ' Golden Yellow #FECF10
-                btnWeekly.ForeColor = Color.FromArgb(26, 29, 31) ' Deep Charcoal text
+                btnWeekly.FillColor = Color.FromArgb(254, 191, 16)
+                btnWeekly.ForeColor = Color.FromArgb(51, 51, 51)
             End If
             If btnDaily IsNot Nothing Then
-                btnDaily.FillColor = Color.FromArgb(61, 65, 69) ' Graphite #3D4145
-                btnDaily.ForeColor = Color.FromArgb(255, 255, 255) ' Pure White
+                btnDaily.FillColor = Color.FromArgb(240, 240, 240)
+                btnDaily.ForeColor = Color.FromArgb(51, 51, 51)
             End If
             SetActiveChartButton(currentChartMode)
             Console.WriteLine("Filter buttons initialized")
@@ -245,8 +245,8 @@ Public Class Dashboard
             If kv.Value Is Nothing Then Continue For
 
             Dim active = kv.Key.Equals(mode, StringComparison.OrdinalIgnoreCase)
-            kv.Value.FillColor = If(active, Color.White, Color.FromArgb(61, 65, 69))
-            kv.Value.ForeColor = If(active, Color.FromArgb(26, 29, 31), Color.White)
+            kv.Value.FillColor = If(active, Color.FromArgb(254, 191, 16), Color.FromArgb(240, 240, 240))
+            kv.Value.ForeColor = If(active, Color.FromArgb(51, 51, 51), Color.FromArgb(51, 51, 51))
         Next
     End Sub
 
@@ -278,14 +278,16 @@ Public Class Dashboard
             Console.WriteLine("ApplyNewColorScheme starting...")
 
             ' Update main form background
-            Me.BackColor = Color.FromArgb(26, 29, 31) ' Deep Charcoal background #1A1D1F
+            Me.BackColor = Color.White
             Console.WriteLine("Form background updated")
 
             ' Update main statistic panels with new color scheme - add null checks
 
             ' DailySalesPanel - First statistics card
             If DailySalesPanel IsNot Nothing Then
-                DailySalesPanel.FillColor = Color.FromArgb(61, 65, 69) ' Graphite #3D4145
+                DailySalesPanel.FillColor = Color.FromArgb(250, 250, 249)
+                DailySalesPanel.BorderColor = Color.FromArgb(246, 245, 242)
+                DailySalesPanel.BorderThickness = 2
                 Console.WriteLine("DailySalesPanel updated")
 
                 ' Update labels in DailySalesPanel
@@ -296,7 +298,9 @@ Public Class Dashboard
 
             ' Guna2Panel6 - Second statistics card  
             If Guna2Panel6 IsNot Nothing Then
-                Guna2Panel6.FillColor = Color.FromArgb(61, 65, 69) ' Graphite #3D4145
+                Guna2Panel6.FillColor = Color.FromArgb(250, 250, 249)
+                Guna2Panel6.BorderColor = Color.FromArgb(246, 245, 242)
+                Guna2Panel6.BorderThickness = 2
                 UpdatePanelLabels(Guna2Panel6)
                 Console.WriteLine("Guna2Panel6 updated")
             Else
@@ -305,7 +309,9 @@ Public Class Dashboard
 
             ' Guna2Panel7 - Third statistics card
             If Guna2Panel7 IsNot Nothing Then
-                Guna2Panel7.FillColor = Color.FromArgb(61, 65, 69) ' Graphite #3D4145
+                Guna2Panel7.FillColor = Color.FromArgb(250, 250, 249)
+                Guna2Panel7.BorderColor = Color.FromArgb(246, 245, 242)
+                Guna2Panel7.BorderThickness = 2
                 UpdatePanelLabels(Guna2Panel7)
                 Console.WriteLine("Guna2Panel7 updated")
             Else
@@ -314,7 +320,9 @@ Public Class Dashboard
 
             ' LowStockPanel - Inventory status panel
             If LowStockPanel IsNot Nothing Then
-                LowStockPanel.FillColor = Color.FromArgb(61, 65, 69) ' Graphite #3D4145
+                LowStockPanel.FillColor = Color.FromArgb(250, 250, 249)
+                LowStockPanel.BorderColor = Color.FromArgb(246, 245, 242)
+                LowStockPanel.BorderThickness = 2
                 Console.WriteLine("LowStockPanel updated")
             Else
                 Console.WriteLine("LowStockPanel is null")
@@ -322,7 +330,9 @@ Public Class Dashboard
 
             ' AreaChart - Chart panel
             If AreaChart IsNot Nothing Then
-                AreaChart.FillColor = Color.FromArgb(61, 65, 69) ' Graphite #3D4145
+                AreaChart.FillColor = Color.FromArgb(250, 250, 249)
+                AreaChart.BorderColor = Color.FromArgb(246, 245, 242)
+                AreaChart.BorderThickness = 2
                 Console.WriteLine("AreaChart updated")
             Else
                 Console.WriteLine("AreaChart is null")
@@ -330,7 +340,9 @@ Public Class Dashboard
 
             ' Update navigation colors
             If DashboardPanel IsNot Nothing Then
-                DashboardPanel.FillColor = Color.White
+                DashboardPanel.FillColor = Color.FromArgb(250, 250, 249)
+                DashboardPanel.BorderColor = Color.FromArgb(246, 245, 242)
+                DashboardPanel.BorderThickness = 2
                 Console.WriteLine("DashboardPanel updated")
             Else
                 Console.WriteLine("DashboardPanel is null")
@@ -366,11 +378,16 @@ Public Class Dashboard
                 If TypeOf control Is Label Then
                     Dim lbl As Label = CType(control, Label)
 
+                    ' Skip icon labels on circle buttons (olive BackColor) — keep designer ForeColor
+                    If lbl.BackColor = Color.FromArgb(191, 155, 48) Then
+                        Continue For
+                    End If
+
                     ' Check if it's a main heading/value label
                     If lbl.Font IsNot Nothing AndAlso (lbl.Font.Size > 12 OrElse lbl.Font.Bold) Then
-                        lbl.ForeColor = Color.FromArgb(255, 255, 255) ' Pure White for main text
+                        lbl.ForeColor = Color.FromArgb(51, 51, 51) ' DarkText for main text
                     Else
-                        lbl.ForeColor = Color.FromArgb(225, 229, 233) ' Light Silver for secondary text
+                        lbl.ForeColor = Color.FromArgb(102, 102, 102) ' MediumText for secondary text
                     End If
 
                 ElseIf TypeOf control Is Guna2HtmlLabel Then
@@ -378,7 +395,7 @@ Public Class Dashboard
 
                     ' Check if it's a main value label by font size
                     If htmlLbl.Font IsNot Nothing AndAlso (htmlLbl.Font.Size > 12 OrElse htmlLbl.Font.Bold) Then
-                        htmlLbl.ForeColor = Color.FromArgb(255, 255, 255) ' Pure White for main values
+                        htmlLbl.ForeColor = Color.FromArgb(51, 51, 51) ' DarkText for main values
                     Else
                         ' Keep specific colors for growth indicators
                         If htmlLbl.Text IsNot Nothing Then
@@ -387,20 +404,22 @@ Public Class Dashboard
                             ElseIf htmlLbl.Text.Contains("↘") Then
                                 htmlLbl.ForeColor = Color.FromArgb(255, 71, 87) ' Alert Red
                             Else
-                                htmlLbl.ForeColor = Color.FromArgb(225, 229, 233) ' Light Silver
+                                htmlLbl.ForeColor = Color.FromArgb(102, 102, 102) ' MediumText
                             End If
                         Else
-                            htmlLbl.ForeColor = Color.FromArgb(225, 229, 233) ' Light Silver
+                            htmlLbl.ForeColor = Color.FromArgb(102, 102, 102) ' MediumText
                         End If
                     End If
 
                 ElseIf TypeOf control Is Guna2CircleButton Then
                     Dim circleBtn As Guna2CircleButton = CType(control, Guna2CircleButton)
 
-                    ' Update circle buttons with golden yellow accent
-                    circleBtn.FillColor = Color.FromArgb(254, 191, 16) ' Golden Yellow #FECF10
-                    circleBtn.ForeColor = Color.FromArgb(26, 29, 31) ' Deep Charcoal text
-                    circleBtn.BorderColor = Color.FromArgb(190, 154, 48) ' Rich Olive border
+                    ' Update circle buttons with JadeOlive accent — no hover color change
+                    circleBtn.FillColor = Color.FromArgb(191, 155, 48) ' JadeOlive
+                    circleBtn.ForeColor = Color.White
+                    circleBtn.BorderColor = Color.FromArgb(191, 155, 48) ' JadeOlive border
+                    circleBtn.HoverState.FillColor = Color.FromArgb(191, 155, 48)
+                    circleBtn.HoverState.ForeColor = Color.White
 
                 End If
             Next
@@ -470,7 +489,7 @@ Public Class Dashboard
                     Guna2HtmlLabel12.Text = "₱" & activeStockValue.ToString("N0")
                     Guna2HtmlLabel14.Text = "Stock Value"
                     Guna2HtmlLabel11.Text = "Active products only"
-                    Guna2HtmlLabel11.ForeColor = Color.LightGray
+                    Guna2HtmlLabel11.ForeColor = Color.FromArgb(102, 102, 102)
 
                     lastProductCount = totalOrders
                 Else
@@ -482,7 +501,7 @@ Public Class Dashboard
             Guna2HtmlLabel3.Text = "0"
             Guna2HtmlLabel12.Text = "₱0"
             Guna2HtmlLabel11.Text = "Active products only"
-            Guna2HtmlLabel11.ForeColor = Color.Gray
+            Guna2HtmlLabel11.ForeColor = Color.FromArgb(102, 102, 102)
             Console.WriteLine($"Error loading dashboard card #1/#2 data: {ex.Message}")
         End Try
     End Sub
@@ -504,7 +523,7 @@ Public Class Dashboard
                     ' Card 3: Total Revenue
                     Guna2HtmlLabel16.Text = String.Format(Globalization.CultureInfo.GetCultureInfo("en-PH"), "{0}{1:N0}", pesoSign, totalRevenue)
                     Guna2HtmlLabel15.Text = "Total Revenue"
-                    Guna2HtmlLabel15.ForeColor = Color.LightGray
+                    Guna2HtmlLabel15.ForeColor = Color.FromArgb(102, 102, 102)
                     Guna2HtmlLabel18.Text = "All recorded sales"
                 Else
                     Guna2HtmlLabel16.Font = New Font("Segoe UI", Guna2HtmlLabel16.Font.Size, Guna2HtmlLabel16.Font.Style)
@@ -529,7 +548,9 @@ Public Class Dashboard
             Next
 
             PopularPanel.Padding = New Padding(15, 10, 15, 15)
-            PopularPanel.FillColor = Color.FromArgb(61, 65, 69)
+            PopularPanel.FillColor = Color.FromArgb(250, 250, 249)
+            PopularPanel.BorderColor = Color.FromArgb(246, 245, 242)
+            PopularPanel.BorderThickness = 2
 
             ' Keep the existing header panel (so txtProductSearch is not disposed)
             Dim headerPanel As Panel = PopularPanel.Controls.OfType(Of Panel)().
@@ -540,7 +561,7 @@ Public Class Dashboard
                 .Name = "popularHeaderPanel",
                 .Dock = DockStyle.Top,
                 .Height = 45,
-                .BackColor = Color.FromArgb(61, 65, 69),
+                .BackColor = Color.Transparent,
                 .Padding = New Padding(15, 8, 15, 8)
             }
                 PopularPanel.Controls.Add(headerPanel)
@@ -555,7 +576,7 @@ Public Class Dashboard
             Dim titleLabel As New Label()
             titleLabel.Text = "Popular Product"
             titleLabel.Font = New Font("Poppins Medium", 13.8F, FontStyle.Regular)
-            titleLabel.ForeColor = Color.FromArgb(255, 255, 255)
+            titleLabel.ForeColor = Color.FromArgb(51, 51, 51)
             titleLabel.AutoSize = True
             titleLabel.BackColor = Color.Transparent
             titleLabel.Location = New Point(0, 6)
@@ -597,7 +618,7 @@ Public Class Dashboard
             Guna2DataGridView1.Rows.Clear()
 
             ' Apply new dark theme styling
-            Guna2DataGridView1.BackgroundColor = Color.FromArgb(61, 65, 69)
+            Guna2DataGridView1.BackgroundColor = Color.FromArgb(250, 250, 249)
             Guna2DataGridView1.BorderStyle = BorderStyle.None
             Guna2DataGridView1.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal
             Guna2DataGridView1.RowHeadersVisible = False
@@ -612,20 +633,20 @@ Public Class Dashboard
             Guna2DataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
 
             ' Cell styling
-            Guna2DataGridView1.GridColor = Color.FromArgb(74, 79, 84)
-            Guna2DataGridView1.DefaultCellStyle.BackColor = Color.FromArgb(43, 47, 50)
-            Guna2DataGridView1.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(43, 47, 50)
-            Guna2DataGridView1.DefaultCellStyle.ForeColor = Color.FromArgb(225, 229, 233)
-            Guna2DataGridView1.DefaultCellStyle.SelectionBackColor = Color.FromArgb(43, 47, 50)
-            Guna2DataGridView1.DefaultCellStyle.SelectionForeColor = Color.FromArgb(225, 229, 233)
+            Guna2DataGridView1.GridColor = Color.FromArgb(230, 230, 230)
+            Guna2DataGridView1.DefaultCellStyle.BackColor = Color.White
+            Guna2DataGridView1.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(250, 250, 249)
+            Guna2DataGridView1.DefaultCellStyle.ForeColor = Color.FromArgb(51, 51, 51)
+            Guna2DataGridView1.DefaultCellStyle.SelectionBackColor = Color.FromArgb(235, 228, 200)
+            Guna2DataGridView1.DefaultCellStyle.SelectionForeColor = Color.FromArgb(51, 51, 51)
             Guna2DataGridView1.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
             Guna2DataGridView1.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             Guna2DataGridView1.DefaultCellStyle.Padding = New Padding(5, 4, 5, 4)
 
             ' Header styling
-            Guna2DataGridView1.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(26, 29, 31)
-            Guna2DataGridView1.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(225, 229, 233)
-            Guna2DataGridView1.ColumnHeadersDefaultCellStyle.SelectionBackColor = Color.FromArgb(26, 29, 31)
+            Guna2DataGridView1.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(250, 250, 249)
+            Guna2DataGridView1.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(51, 51, 51)
+            Guna2DataGridView1.ColumnHeadersDefaultCellStyle.SelectionBackColor = Color.FromArgb(250, 250, 249)
             Guna2DataGridView1.ColumnHeadersDefaultCellStyle.Font = New Font("Poppins SemiBold", 10.0F, FontStyle.Regular)
             Guna2DataGridView1.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             Guna2DataGridView1.ColumnHeadersHeight = 50
@@ -683,9 +704,9 @@ Public Class Dashboard
             priceColumn.FillWeight = 15
             priceColumn.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             priceColumn.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Bold)
-            priceColumn.DefaultCellStyle.ForeColor = Color.FromArgb(16, 216, 98)
+            priceColumn.DefaultCellStyle.ForeColor = Color.FromArgb(51, 51, 51)
             Guna2DataGridView1.Columns.Add(priceColumn)
-         
+
 
             ' Query to get products ranked by sold quantity
             Dim query As String = "
@@ -740,23 +761,23 @@ Public Class Dashboard
                 Next
 
                 emptyRow.Cells("ProductName").Value = "No product found"
-                emptyRow.DefaultCellStyle.ForeColor = Color.LightGray
+                emptyRow.DefaultCellStyle.ForeColor = Color.FromArgb(102, 102, 102)
                 emptyRow.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Italic)
                 emptyRow.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
             End If
 
             If Not isSearching Then
                 If Guna2DataGridView1.Rows.Count > 0 Then
-                    Guna2DataGridView1.Rows(0).DefaultCellStyle.BackColor = Color.FromArgb(225, 196, 120)
-                    Guna2DataGridView1.Rows(0).DefaultCellStyle.ForeColor = Color.FromArgb(40, 40, 40)
+                    Guna2DataGridView1.Rows(0).DefaultCellStyle.BackColor = Color.FromArgb(235, 205, 80)
+                    Guna2DataGridView1.Rows(0).DefaultCellStyle.ForeColor = Color.FromArgb(51, 51, 51)
                 End If
                 If Guna2DataGridView1.Rows.Count > 1 Then
-                    Guna2DataGridView1.Rows(1).DefaultCellStyle.BackColor = Color.FromArgb(192, 192, 192)
-                    Guna2DataGridView1.Rows(1).DefaultCellStyle.ForeColor = Color.FromArgb(26, 29, 31)
+                    Guna2DataGridView1.Rows(1).DefaultCellStyle.BackColor = Color.FromArgb(205, 205, 210)
+                    Guna2DataGridView1.Rows(1).DefaultCellStyle.ForeColor = Color.FromArgb(51, 51, 51)
                 End If
                 If Guna2DataGridView1.Rows.Count > 2 Then
-                    Guna2DataGridView1.Rows(2).DefaultCellStyle.BackColor = Color.FromArgb(205, 127, 50)
-                    Guna2DataGridView1.Rows(2).DefaultCellStyle.ForeColor = Color.White
+                    Guna2DataGridView1.Rows(2).DefaultCellStyle.BackColor = Color.FromArgb(180, 145, 80)
+                    Guna2DataGridView1.Rows(2).DefaultCellStyle.ForeColor = Color.FromArgb(51, 51, 51)
                 End If
             End If
 
@@ -768,8 +789,8 @@ Public Class Dashboard
 
             txtProductSearch.PlaceholderText = "🔍 Search products..."
             txtProductSearch.Font = New Font("Poppins", 10.0F)
-            txtProductSearch.ForeColor = Color.FromArgb(225, 229, 233)
-            txtProductSearch.BackColor = Color.FromArgb(61, 65, 65)
+            txtProductSearch.ForeColor = Color.FromArgb(51, 51, 51)
+            txtProductSearch.BackColor = Color.FromArgb(245, 245, 245)
             txtProductSearch.BorderRadius = 10
 
         Catch ex As Exception
@@ -790,8 +811,8 @@ Public Class Dashboard
             Dim titleLabel As New Label()
             titleLabel.Text = "Inventory Status Overview"
             titleLabel.Font = New Font("Poppins Medium", 13.8F, FontStyle.Regular)
-            titleLabel.ForeColor = Color.White
-            titleLabel.BackColor = Color.FromArgb(61, 65, 69)
+            titleLabel.ForeColor = Color.FromArgb(51, 51, 51)
+            titleLabel.BackColor = Color.Transparent
             titleLabel.Dock = DockStyle.Top
             titleLabel.Height = 50
             titleLabel.TextAlign = ContentAlignment.MiddleLeft
@@ -826,13 +847,13 @@ Public Class Dashboard
             Dim mainContainer As New Panel()
             mainContainer.Dock = DockStyle.Fill
             mainContainer.Padding = New Padding(12)
-            mainContainer.BackColor = Color.FromArgb(52, 56, 60)
+            mainContainer.BackColor = Color.FromArgb(250, 250, 249)
             LowStockPanel.Controls.Add(mainContainer)
             ApplyRoundedCorners(mainContainer, 18)
 
             ' Create pie chart for status overview (responsive)
             Dim pieChart As New PieChart()
-            pieChart.BackColor = Color.FromArgb(52, 56, 60)
+            pieChart.BackColor = Color.FromArgb(250, 250, 249)
             pieChart.Margin = New Padding(6)
             ApplyRoundedCorners(pieChart, 14)
 
@@ -895,13 +916,13 @@ Public Class Dashboard
             ' Configure chart animation and interactivity
             pieChart.AnimationsSpeed = TimeSpan.FromMilliseconds(1200)
             pieChart.LegendPosition = LiveChartsCore.Measure.LegendPosition.Right
-            pieChart.LegendTextPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColors.White)
-            pieChart.LegendBackgroundPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#3D4145"))
+            pieChart.LegendTextPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#333333"))
+            pieChart.LegendBackgroundPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#F5F5F5"))
 
             ' Enhanced tooltip with numbers
             pieChart.TooltipPosition = LiveChartsCore.Measure.TooltipPosition.Top
-            pieChart.TooltipBackgroundPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#3D4145"))
-            pieChart.TooltipTextPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColors.White)
+            pieChart.TooltipBackgroundPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#F5F5F5"))
+            pieChart.TooltipTextPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#333333"))
 
             mainContainer.Controls.Add(pieChart)
 
@@ -917,7 +938,7 @@ Public Class Dashboard
             titleLabel = New Label()
             titleLabel.Text = "Sales Overview"
             titleLabel.Font = New Font("Poppins Medium", 16, FontStyle.Bold)
-            titleLabel.ForeColor = Color.White
+            titleLabel.ForeColor = Color.FromArgb(51, 51, 51)
             titleLabel.Dock = DockStyle.Top
             titleLabel.Height = 40
             titleLabel.TextAlign = ContentAlignment.MiddleLeft
@@ -927,13 +948,13 @@ Public Class Dashboard
             Dim topPanel As New Panel()
             topPanel.Height = 50
             topPanel.Dock = DockStyle.Top
-            topPanel.BackColor = Color.FromArgb(61, 65, 69)
+            topPanel.BackColor = Color.Transparent
 
             ' Sales legend on the left
             Dim salesLegend As New Label()
             salesLegend.Text = "● Sales Tracking"
             salesLegend.Font = New Font("Poppins", 11, FontStyle.Bold)
-            salesLegend.ForeColor = Color.Orange
+            salesLegend.ForeColor = Color.FromArgb(254, 191, 16)
             salesLegend.AutoSize = True
             salesLegend.Location = New Point(15, 15)
             topPanel.Controls.Add(salesLegend)
@@ -979,7 +1000,7 @@ Public Class Dashboard
             chartPanel = New Panel()
             chartPanel.Dock = DockStyle.Fill
             chartPanel.Padding = New Padding(20)
-            chartPanel.BackColor = Color.FromArgb(61, 65, 69)
+            chartPanel.BackColor = Color.Transparent
             ApplyRoundedCorners(chartPanel, 18)
 
             ' Try to create LiveCharts CartesianChart
@@ -988,7 +1009,7 @@ Public Class Dashboard
                 salesChart.Dock = DockStyle.Fill
                 salesChart.Margin = New Padding(5)
                 salesChart.LegendPosition = LiveChartsCore.Measure.LegendPosition.Hidden
-                salesChart.BackColor = Color.FromArgb(61, 65, 69)
+                salesChart.BackColor = Color.Transparent
                 chartPanel.Controls.Add(salesChart)
                 ApplyRoundedCorners(salesChart, 14)
                 Console.WriteLine("LiveCharts CartesianChart created successfully")
@@ -1016,8 +1037,8 @@ Public Class Dashboard
         Dim btn As New Guna2Button()
         btn.Text = text
         btn.Font = New Font("Poppins", 10, FontStyle.Regular)
-        btn.FillColor = Color.FromArgb(61, 65, 69)
-        btn.ForeColor = Color.White
+        btn.FillColor = Color.FromArgb(240, 240, 240)
+        btn.ForeColor = Color.FromArgb(51, 51, 51)
         btn.BorderRadius = 10
         btn.Size = New Size(120, 32)
         btn.Margin = New Padding(0, 0, 8, 0)
@@ -1061,9 +1082,9 @@ Public Class Dashboard
                         .Values = salesData.ToArray(),
                         .Name = "Sales",
                         .GeometrySize = 8,
-                        .GeometryStroke = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColors.White, 2),
-                        .Fill = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#FF9800").WithAlpha(30)),
-                        .Stroke = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#FF9800"), 4),
+                        .GeometryStroke = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#333333"), 2),
+                        .Fill = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#FECF10").WithAlpha(30)),
+                        .Stroke = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#FECF10"), 4),
                         .LineSmoothness = 0.8,
                         .AnimationsSpeed = TimeSpan.FromMilliseconds(1500)
                     }
@@ -1079,8 +1100,8 @@ Public Class Dashboard
                     New Axis With {
                         .Labels = labels.ToArray(),
                         .TextSize = 12,
-                        .LabelsPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColors.LightGray),
-                        .SeparatorsPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColors.Gray.WithAlpha(30)) With {
+                        .LabelsPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#666666")),
+                        .SeparatorsPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#CCCCCC").WithAlpha(50)) With {
                             .StrokeThickness = 1
                         },
                         .AnimationsSpeed = TimeSpan.FromMilliseconds(1000)
@@ -1090,11 +1111,11 @@ Public Class Dashboard
                     salesChart.YAxes = {
                     New Axis With {
                         .TextSize = 12,
-                        .LabelsPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColors.LightGray),
+                        .LabelsPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#666666")),
                         .Position = LiveChartsCore.Measure.AxisPosition.Start,
                         .MinLimit = yAxisMin,
                         .MaxLimit = yAxisMax,
-                        .SeparatorsPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColors.Gray.WithAlpha(20)) With {
+                        .SeparatorsPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#CCCCCC").WithAlpha(40)) With {
                             .StrokeThickness = 1
                         },
                         .AnimationsSpeed = TimeSpan.FromMilliseconds(800),
@@ -1136,7 +1157,7 @@ Public Class Dashboard
                        $"Total Sales: ₱{If(salesData.Count > 0, salesData.Sum(), 0):N2}" & vbCrLf &
                        "LiveCharts not available - using fallback display",
                 .Font = New Font("Poppins", 12, FontStyle.Regular),
-                .ForeColor = Color.White,
+                .ForeColor = Color.FromArgb(51, 51, 51),
                 .BackColor = Color.Transparent,
                 .AutoSize = False,
                 .Size = New Size(400, 200),
@@ -1420,9 +1441,9 @@ Public Class Dashboard
             .Name = "tinyUserInfoPanel",
             .Size = New Size(panelWidth, panelHeight),
             .Location = New Point(panelX + 10, panelY),
-            .FillColor = Color.FromArgb(61, 65, 69),
+            .FillColor = Color.FromArgb(250, 250, 249),
             .BorderRadius = 8,
-            .BackColor = Color.FromArgb(61, 65, 69)
+            .BackColor = Color.FromArgb(250, 250, 249)
         }
 
             ' Small avatar picture box
@@ -1475,7 +1496,7 @@ Public Class Dashboard
                 avatar.Image = bmp
             Catch
                 ' fallback: plain background
-                avatar.BackColor = Color.FromArgb(80, 80, 80)
+                avatar.BackColor = Color.FromArgb(200, 200, 200)
             End Try
 
             ' Username label (compact) - enable ellipsis when text is too long
@@ -1485,7 +1506,7 @@ Public Class Dashboard
             .Location = New Point(avatar.Right + 6, 6),
             .Text = username,
             .Font = New Font("Poppins", 9.0F, FontStyle.Bold),
-            .ForeColor = Color.FromArgb(254, 191, 16),
+            .ForeColor = Color.FromArgb(51, 51, 51),
             .BackColor = Color.Transparent,
             .AutoEllipsis = True
         }
@@ -1497,7 +1518,7 @@ Public Class Dashboard
             .Location = New Point(avatar.Right + 6, userLabel.Bottom - 2),
             .Text = If(String.IsNullOrEmpty(frmLoginvb.LoggedInRole), "", frmLoginvb.LoggedInRole),
             .Font = New Font("Poppins", 8.0F, FontStyle.Regular),
-            .ForeColor = Color.FromArgb(225, 229, 233),
+            .ForeColor = Color.FromArgb(102, 102, 102),
             .BackColor = Color.Transparent
         }
 
@@ -1548,19 +1569,19 @@ Public Class Dashboard
         btn.TextAlign = HorizontalAlignment.Left
 
         btn.FillColor = If(isActive, System.Drawing.Color.FromArgb(254, 191, 16), System.Drawing.Color.Transparent)
-        btn.ForeColor = If(isActive, System.Drawing.Color.FromArgb(26, 29, 31), System.Drawing.Color.White)
+        btn.ForeColor = If(isActive, System.Drawing.Color.FromArgb(51, 51, 51), System.Drawing.Color.FromArgb(51, 51, 51))
         btn.BorderThickness = If(isActive, 0, 1)
-        btn.BorderColor = If(isActive, System.Drawing.Color.Transparent, System.Drawing.Color.FromArgb(80, 80, 80))
+        btn.BorderColor = If(isActive, System.Drawing.Color.Transparent, System.Drawing.Color.FromArgb(200, 200, 200))
         btn.BackColor = System.Drawing.Color.Transparent
         btn.Cursor = Cursors.Hand
 
         btn.ShadowDecoration.Enabled = True
-        btn.ShadowDecoration.Color = System.Drawing.Color.FromArgb(30, 30, 30)
-        btn.ShadowDecoration.Depth = 4
+        btn.ShadowDecoration.Color = System.Drawing.Color.FromArgb(200, 200, 200)
+        btn.ShadowDecoration.Depth = 2
 
         AddHandler btn.MouseEnter, Sub()
                                        If Not isActive Then
-                                           btn.FillColor = System.Drawing.Color.FromArgb(48, 52, 54)
+                                           btn.FillColor = System.Drawing.Color.FromArgb(240, 240, 240)
                                            btn.BorderColor = System.Drawing.Color.FromArgb(254, 191, 16)
                                            btn.Font = New Font("Poppins", 9, FontStyle.Bold)
                                        End If
@@ -1568,7 +1589,7 @@ Public Class Dashboard
         AddHandler btn.MouseLeave, Sub()
                                        If Not isActive Then
                                            btn.FillColor = System.Drawing.Color.Transparent
-                                           btn.BorderColor = System.Drawing.Color.FromArgb(80, 80, 80)
+                                           btn.BorderColor = System.Drawing.Color.FromArgb(200, 200, 200)
                                            btn.Font = New Font("Poppins", 10, FontStyle.Regular)
                                        End If
                                    End Sub
@@ -1637,8 +1658,8 @@ Public Class Dashboard
             txtProductSearch.BorderThickness = 1
             txtProductSearch.PlaceholderText = "🔍 Search products..."
             txtProductSearch.Font = New Font("Poppins", 10.0F)
-            txtProductSearch.ForeColor = Color.FromArgb(225, 229, 233)
-            txtProductSearch.BackColor = Color.FromArgb(61, 65, 65)
+            txtProductSearch.ForeColor = Color.FromArgb(51, 51, 51)
+            txtProductSearch.BackColor = Color.FromArgb(245, 245, 245)
             txtProductSearch.BorderRadius = 10
 
             ' Add event handler for search
@@ -1684,4 +1705,12 @@ Public Class Dashboard
 
         Return MyBase.ProcessCmdKey(msg, keyData)
     End Function
+
+    Private Sub Guna2CircleButton6_Click(sender As Object, e As EventArgs) Handles Guna2CircleButton6.Click
+
+    End Sub
+
+    Private Sub Guna2CircleButton5_Click(sender As Object, e As EventArgs) Handles Guna2CircleButton5.Click
+
+    End Sub
 End Class
