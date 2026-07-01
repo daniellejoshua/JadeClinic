@@ -304,7 +304,7 @@
     <value>51</value>
   </data>
   <data name="Guna2DataGridView1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>1214, 898</value>
+    <value>1214, 851</value>
   </data>
   <data name="Guna2DataGridView1.TabIndex" type="System.Int32, mscorlib">
     <value>75</value>
@@ -716,7 +716,7 @@
     <value>243, 167</value>
   </data>
   <data name="FilterPanel.Size" type="System.Drawing.Size, System.Drawing">
-    <value>424, 874</value>
+    <value>424, 860</value>
   </data>
   <data name="FilterPanel.TabIndex" type="System.Int32, mscorlib">
     <value>8</value>
@@ -842,7 +842,7 @@
     <value>673, 167</value>
   </data>
   <data name="Guna2Panel1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>1222, 874</value>
+    <value>1222, 860</value>
   </data>
   <data name="Guna2Panel1.TabIndex" type="System.Int32, mscorlib">
     <value>76</value>
@@ -867,9 +867,6 @@
   </data>
   <data name="$this.ClientSize" type="System.Drawing.Size, System.Drawing">
     <value>1902, 1033</value>
-  </data>
-  <data name="$this.ImeMode" type="System.Windows.Forms.ImeMode, System.Windows.Forms">
-    <value>NoControl</value>
   </data>
   <data name="$this.StartPosition" type="System.Windows.Forms.FormStartPosition, System.Windows.Forms">
     <value>CenterScreen</value>

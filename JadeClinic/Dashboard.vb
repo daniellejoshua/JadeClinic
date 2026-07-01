@@ -441,14 +441,9 @@ Public Class Dashboard
         Return True
     End Function
 
-    ' Profile dropdown panel
-    Private profileDropdownPanel As Panel = Nothing
-    Private isProfileDropdownVisible As Boolean = False
-
     Private Sub InitializeProfileSection()
         Try
             ' Initialize profile section for logged-in user
-            ' You can add profile picture loading and dropdown functionality here if needed
         Catch ex As Exception
             ' Fallback if there's an error - silently fail since profile controls may not exist on all forms
         End Try

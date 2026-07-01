@@ -45,7 +45,6 @@ Partial Class EscForm
         ' 
         ' mainPanel
         ' 
-        mainPanel.BackColor = Color.Transparent
         mainPanel.BorderRadius = 18
         mainPanel.Controls.Add(btnClose)
         mainPanel.Controls.Add(lblTitle)
@@ -55,7 +54,7 @@ Partial Class EscForm
         mainPanel.Controls.Add(btnExit)
         mainPanel.Controls.Add(btnCancel)
         mainPanel.CustomizableEdges = CustomizableEdges7
-        mainPanel.FillColor = Color.FromArgb(CByte(43), CByte(47), CByte(50))
+        mainPanel.FillColor = Color.FromArgb(250, 249, 246)
         mainPanel.Location = New Point(20, 20)
         mainPanel.Name = "mainPanel"
         mainPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges8
@@ -72,7 +71,7 @@ Partial Class EscForm
         btnClose.DisabledState.CustomBorderColor = Color.DarkGray
         btnClose.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         btnClose.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        btnClose.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(69))
+        btnClose.FillColor = Color.FromArgb(191, 155, 48)
         btnClose.Font = New Font("Poppins Medium", 9.0F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
         btnClose.ForeColor = Color.White
         btnClose.Location = New Point(372, 14)
@@ -85,7 +84,7 @@ Partial Class EscForm
         ' lblTitle
         ' 
         lblTitle.Font = New Font("Poppins", 18.0F, FontStyle.Bold)
-        lblTitle.ForeColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
+        lblTitle.ForeColor = Color.FromArgb(42, 42, 42)
         lblTitle.Location = New Point(20, 40)
         lblTitle.Name = "lblTitle"
         lblTitle.Size = New Size(380, 40)
@@ -96,7 +95,7 @@ Partial Class EscForm
         ' lblSubtitle
         ' 
         lblSubtitle.Font = New Font("Poppins", 10.0F)
-        lblSubtitle.ForeColor = Color.FromArgb(CByte(225), CByte(229), CByte(233))
+        lblSubtitle.ForeColor = Color.FromArgb(59, 59, 59)
         lblSubtitle.Location = New Point(30, 90)
         lblSubtitle.Name = "lblSubtitle"
         lblSubtitle.Size = New Size(360, 24)
@@ -106,7 +105,7 @@ Partial Class EscForm
         ' 
         ' separatorPanel
         ' 
-        separatorPanel.BackColor = Color.FromArgb(CByte(61), CByte(65), CByte(69))
+        separatorPanel.BackColor = Color.FromArgb(220, 220, 220)
         separatorPanel.Location = New Point(40, 130)
         separatorPanel.Name = "separatorPanel"
         separatorPanel.Size = New Size(340, 2)
@@ -115,7 +114,7 @@ Partial Class EscForm
         ' lblDetails
         ' 
         lblDetails.Font = New Font("Poppins", 9.5F)
-        lblDetails.ForeColor = Color.FromArgb(CByte(184), CByte(188), CByte(193))
+        lblDetails.ForeColor = Color.FromArgb(59, 59, 59)
         lblDetails.Location = New Point(40, 150)
         lblDetails.Name = "lblDetails"
         lblDetails.Size = New Size(340, 200)
@@ -126,9 +125,9 @@ Partial Class EscForm
         ' 
         btnExit.BorderRadius = 12
         btnExit.CustomizableEdges = CustomizableEdges3
-        btnExit.FillColor = Color.FromArgb(CByte(255), CByte(71), CByte(87))
+        btnExit.FillColor = Color.FromArgb(254, 191, 16)
         btnExit.Font = New Font("Poppins", 10.0F, FontStyle.Bold)
-        btnExit.ForeColor = Color.White
+        btnExit.ForeColor = Color.FromArgb(51, 51, 51)
         btnExit.Location = New Point(20, 415)
         btnExit.Name = "btnExit"
         btnExit.ShadowDecoration.CustomizableEdges = CustomizableEdges4
@@ -140,8 +139,8 @@ Partial Class EscForm
         ' 
         btnCancel.BorderRadius = 12
         btnCancel.CustomizableEdges = CustomizableEdges5
-        btnCancel.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(69))
-        btnCancel.Font = New Font("Poppins", 10.0F)
+        btnCancel.FillColor = Color.FromArgb(191, 155, 48)
+        btnCancel.Font = New Font("Poppins", 10.0F, FontStyle.Bold)
         btnCancel.ForeColor = Color.White
         btnCancel.Location = New Point(217, 415)
         btnCancel.Name = "btnCancel"
@@ -154,7 +153,7 @@ Partial Class EscForm
         ' 
         AutoScaleDimensions = New SizeF(8.0F, 20.0F)
         AutoScaleMode = AutoScaleMode.Font
-        BackColor = Color.FromArgb(CByte(26), CByte(29), CByte(31))
+        BackColor = Color.White
         ClientSize = New Size(460, 560)
         Controls.Add(mainPanel)
         FormBorderStyle = FormBorderStyle.None

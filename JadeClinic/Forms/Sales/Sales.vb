@@ -92,9 +92,6 @@ Public Class Sales
     }
     ' Map overlay label -> the category button it visually sits on
     Private overlayToButton As New Dictionary(Of Control, Guna.UI2.WinForms.Guna2Button)()
-    ' Profile dropdown panel
-    Private profileDropdownPanel As Panel = Nothing
-    Private isProfileDropdownVisible As Boolean = False
     ' Add this new field near the other receipt fields (top of class)
     Private receiptVatableBeforeDiscount As Decimal = 0D
     Private WithEvents txtBarcodeInput As New TextBox With {.Visible = True, .TabIndex = 0}
@@ -1242,26 +1239,19 @@ Public Class Sales
     End Sub
 
     Private Sub AttachClickHandlersToAllControls(parentControl As Control)
-        ' Attach click handlers to close the profile dropdown when clicking outside it.
-        ' Skip the profile picture and username controls so their clicks won't immediately hide the dropdown.
-        If parentControl Is profileDropdownPanel Then
-            Return
-        End If
-
         For Each ctrl As Control In parentControl.Controls
-            ' Skip the dropdown itself and the profile controls to avoid immediate hide after toggle
-            If ctrl Is profileDropdownPanel OrElse ctrl Is Guna2CirclePictureBox5 OrElse ctrl Is lblUsername Then
-                ' Still recurse into children of these controls in case there are nested controls that should hide the dropdown
+            ' Skip the profile controls to avoid immediate hide after toggle
+            If ctrl Is Guna2CirclePictureBox5 OrElse ctrl Is lblUsername Then
                 If ctrl.HasChildren Then
                     AttachClickHandlersToAllControls(ctrl)
                 End If
                 Continue For
             End If
 
-            ' Add a click handler that will hide the dropdown if visible and also keep barcode focus behavior
+            ' Add a click handler that will hide the dropdown if visible
             AddHandler ctrl.Click, Sub()
-                                       If isProfileDropdownVisible Then
-                                           HideProfileDropdown()
+                                       If ProfileManager.IsProfileDropdownVisible(Me) Then
+                                           ProfileManager.HideProfileDropdown(Me)
                                        End If
 
                                        ' Keep original focus behaviour for barcode input
@@ -1281,7 +1271,7 @@ Public Class Sales
 
     Private Sub FocusBarcodeInputIfAllowed()
         ' Don't focus barcode input when customer selection or payment panels are active
-        If Not pinPanelActive AndAlso Not totalPanelActive AndAlso Not isProfileDropdownVisible Then
+        If Not pinPanelActive AndAlso Not totalPanelActive AndAlso Not ProfileManager.IsProfileDropdownVisible(Me) Then
             Try
                 If txtBarcodeInput IsNot Nothing AndAlso Not txtBarcodeInput.IsDisposed Then
                     Console.WriteLine("Focusing barcode input")
@@ -4351,212 +4341,7 @@ Public Class Sales
     End Sub
 
     Private Sub InitializeProfileSection()
-        Try
-            ' Set username without emoji
-            lblUsername.Text = frmLoginvb.LoggedInUsername
-            lblUsername.Font = New Font("Poppins Light", 10.0F, FontStyle.Regular)
-            lblUsername.ForeColor = Color.FromArgb(59, 59, 59)
-
-            ' Load user profile picture
-            LoadUserProfilePicture()
-
-            ' Add click event to profile picture and username
-            AddHandler Guna2CirclePictureBox5.Click, AddressOf ProfilePicture_Click
-            AddHandler lblUsername.Click, AddressOf ProfilePicture_Click
-
-            ' Add hover effects
-            AddHandler Guna2CirclePictureBox5.MouseEnter, Sub()
-                                                              Guna2CirclePictureBox5.Cursor = Cursors.Hand
-                                                          End Sub
-            AddHandler lblUsername.MouseEnter, Sub()
-                                                   lblUsername.Cursor = Cursors.Hand
-                                               End Sub
-
-        Catch ex As Exception
-            ' Fallback if there's an error
-            lblUsername.Text = frmLoginvb.LoggedInUsername
-            Guna2CirclePictureBox5.Image = CreateDefaultProfileAvatar(frmLoginvb.LoggedInUsername)
-        End Try
-    End Sub
-
-    Private Sub LoadUserProfilePicture()
-        Try
-            If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
-                ' Query to get the logged-in user's photo
-                Dim query As String = "SELECT Photo FROM Users WHERE Username = @Username"
-                Dim parameters As SqlParameter() = {
-                    New SqlParameter("@Username", frmLoginvb.LoggedInUsername)
-                }
-
-                Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters)
-                    If reader.Read() Then
-                        ' Configure the PictureBox for circular profile picture
-                        Guna2CirclePictureBox5.SizeMode = PictureBoxSizeMode.Zoom
-                        Guna2CirclePictureBox5.BorderStyle = BorderStyle.None
-
-                        If Not IsDBNull(reader("Photo")) Then
-                            ' Load user's actual photo
-                            Dim photoBytes As Byte() = CType(reader("Photo"), Byte())
-                            Using ms As New IO.MemoryStream(photoBytes)
-                                Dim loadedImage As Image = Image.FromStream(ms)
-                                Guna2CirclePictureBox5.Image = New Bitmap(loadedImage)
-                                loadedImage.Dispose()
-                            End Using
-                        Else
-                            ' Create and display default avatar
-                            Guna2CirclePictureBox5.Image = CreateDefaultProfileAvatar(frmLoginvb.LoggedInUsername)
-                        End If
-                    End If
-                End Using
-            End If
-        Catch ex As Exception
-            ' If there's an error, show default avatar
-            Guna2CirclePictureBox5.Image = CreateDefaultProfileAvatar(If(frmLoginvb.LoggedInUsername, "User"))
-        End Try
-    End Sub
-
-    ' Create default profile avatar method
-    Private Function CreateDefaultProfileAvatar(username As String) As System.Drawing.Image
-        Dim bitmap As New Bitmap(50, 50)
-        Using g As Graphics = Graphics.FromImage(bitmap)
-            ' Enable anti-aliasing for smooth circles
-            g.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias
-
-            ' Fill background with a color based on username
-            Dim colors() As System.Drawing.Color = {
-                System.Drawing.Color.FromArgb(255, 107, 107),
-                System.Drawing.Color.FromArgb(78, 205, 196),
-                System.Drawing.Color.FromArgb(85, 98, 112),
-                System.Drawing.Color.FromArgb(129, 236, 236),
-                System.Drawing.Color.FromArgb(116, 185, 255)
-            }
-            Dim colorIndex As Integer = Math.Abs(username.GetHashCode()) Mod colors.Length
-            g.FillEllipse(New SolidBrush(colors(colorIndex)), 0, 0, 50, 50)
-
-            ' Draw initials
-            Dim initials As String = ""
-            If username.Length > 0 Then
-                initials = username.Substring(0, 1).ToUpper()
-                If username.Length > 1 Then
-                    For i As Integer = 1 To username.Length - 1
-                        If Char.IsUpper(username(i)) OrElse username(i) = " "c Then
-                            If username(i) <> " "c Then
-                                initials += username(i).ToString().ToUpper()
-                                Exit For
-                            End If
-                        End If
-                    Next
-                End If
-            End If
-
-            Using font As New System.Drawing.Font("Poppins", 14, System.Drawing.FontStyle.Bold)
-                Dim textSize = g.MeasureString(initials, font)
-                g.DrawString(initials, font, New SolidBrush(PureWhite),
-                    (50 - textSize.Width) / 2, (50 - textSize.Height) / 2)
-            End Using
-        End Using
-        Return bitmap
-    End Function
-
-    Private Sub ProfilePicture_Click(sender As Object, e As EventArgs)
-        ToggleProfileDropdown()
-    End Sub
-
-    Private Sub ToggleProfileDropdown()
-        If isProfileDropdownVisible Then
-            HideProfileDropdown()
-        Else
-            ShowProfileDropdown()
-        End If
-    End Sub
-
-    Private Sub ShowProfileDropdown()
-        If profileDropdownPanel IsNot Nothing Then
-            HideProfileDropdown()
-        End If
-
-        ' Create dropdown panel
-        profileDropdownPanel = New Panel()
-        profileDropdownPanel.Size = New System.Drawing.Size(200, 100)
-        profileDropdownPanel.BackColor = OffWhite ' Updated color
-        profileDropdownPanel.BorderStyle = BorderStyle.FixedSingle
-
-        ' Determine the container that holds the profile picture (keep same parent so coordinates align)
-        Dim container As Control = If(Guna2CirclePictureBox5.Parent, CType(Me, Control))
-
-        ' Calculate location relative to that container so the dropdown positions correctly
-        Dim picLocation As Point = Guna2CirclePictureBox5.Location
-        Dim dropdownX As Integer = picLocation.X - ((profileDropdownPanel.Width - Guna2CirclePictureBox5.Width) \ 2)
-        Dim dropdownY As Integer = picLocation.Y + Guna2CirclePictureBox5.Height + 5
-        profileDropdownPanel.Location = New Point(Math.Max(0, dropdownX), Math.Max(0, dropdownY))
-
-        ' Create Profile Settings button
-        Dim btnProfileSettings As New Label()
-        btnProfileSettings.Text = "Profile Settings"
-        btnProfileSettings.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
-        btnProfileSettings.ForeColor = Color.FromArgb(59, 59, 59)
-        btnProfileSettings.BackColor = System.Drawing.Color.Transparent
-        btnProfileSettings.Size = New System.Drawing.Size(190, 40)
-        btnProfileSettings.Location = New Point(5, 5)
-        btnProfileSettings.TextAlign = ContentAlignment.MiddleLeft
-        btnProfileSettings.Cursor = Cursors.Hand
-
-        AddHandler btnProfileSettings.MouseEnter, Sub() btnProfileSettings.BackColor = LightGray
-        AddHandler btnProfileSettings.MouseLeave, Sub() btnProfileSettings.BackColor = System.Drawing.Color.Transparent
-        AddHandler btnProfileSettings.Click, Sub()
-                                                 HideProfileDropdown()
-                                                 NavigateToProfileSettings()
-                                             End Sub
-
-        ' Create Log Out button
-        Dim btnLogOut As New Label()
-        btnLogOut.Text = "Log Out"
-        btnLogOut.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
-        btnLogOut.ForeColor = Color.FromArgb(59, 59, 59)
-        btnLogOut.BackColor = System.Drawing.Color.Transparent
-        btnLogOut.Size = New System.Drawing.Size(190, 40)
-        btnLogOut.Location = New Point(5, 50)
-        btnLogOut.TextAlign = ContentAlignment.MiddleLeft
-        btnLogOut.Cursor = Cursors.Hand
-
-        AddHandler btnLogOut.Click, Sub()
-                                        Dim result As DialogResult = MessageBox.Show("Are you sure you want to logout?", "Confirm Logout", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
-                                        If result = DialogResult.Yes Then
-                                            PersistCartState()
-
-                                            If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
-                                                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Log Out", "User logged out of the application.")
-                                            End If
-                                            frmLoginvb.LogoutUser()
-                                            isNavigating = True
-                                            Me.Hide()
-                                            Dim loginForm As New frmLoginvb()
-                                            loginForm.Show()
-                                        End If
-                                    End Sub
-        profileDropdownPanel.Controls.Add(btnProfileSettings)
-        profileDropdownPanel.Controls.Add(btnLogOut)
-
-        ' Add panel to the same container as the profile picture so coordinates are consistent
-        container.Controls.Add(profileDropdownPanel)
-        profileDropdownPanel.BringToFront()
-
-        ' The application already attaches click handlers recursively (AttachClickHandlersToAllControls)
-        ' which will call HideProfileDropdown() when the user clicks outside the dropdown.
-        isProfileDropdownVisible = True
-    End Sub
-
-    Private Sub HideProfileDropdown()
-        If profileDropdownPanel IsNot Nothing Then
-            Dim parentCtrl As Control = profileDropdownPanel.Parent
-            If parentCtrl IsNot Nothing AndAlso parentCtrl.Controls.Contains(profileDropdownPanel) Then
-                parentCtrl.Controls.Remove(profileDropdownPanel)
-            End If
-            profileDropdownPanel.Dispose()
-            profileDropdownPanel = Nothing
-        End If
-
-        isProfileDropdownVisible = False
+        ProfileManager.InitializeProfile(Me, lblUsername, Guna2CirclePictureBox5, AddressOf NavigateToProfileSettings)
     End Sub
     ' Navigation event handlers
     Private Sub NavDashboard_Click(sender As Object, e As EventArgs)
@@ -4612,11 +4397,6 @@ Public Class Sales
     End Sub
 
 
-
-    Private Sub Form_Click(sender As Object, e As EventArgs)
-        ' Hide dropdown when clicking elsewhere on the form
-        HideProfileDropdown()
-    End Sub
 
     Private Sub NavigateToProfileSettings()
         PersistCartState()
@@ -5356,7 +5136,7 @@ Public Class Sales
         End If
 
         ' GLOBAL SHORTCUTS (only when no modal/customer/payment panels are active)
-        If Not totalPanelActive AndAlso Not pinPanelActive AndAlso Not isProfileDropdownVisible Then
+        If Not totalPanelActive AndAlso Not pinPanelActive AndAlso Not ProfileManager.IsProfileDropdownVisible(Me) Then
             ' Ctrl+Enter -> go to payment (explicit shortcut)
             If e.KeyCode = Keys.Enter AndAlso e.Control Then
                 If currentOrderList.Count > 0 Then
@@ -5378,7 +5158,7 @@ Public Class Sales
         End If
 
         ' Existing barcode / payment logic
-        If Not totalPanelActive AndAlso Not pinPanelActive AndAlso Not isProfileDropdownVisible Then
+        If Not totalPanelActive AndAlso Not pinPanelActive AndAlso Not ProfileManager.IsProfileDropdownVisible(Me) Then
             ' Check if this might be barcode input (we have characters in buffer or it's a barcode-related key)
             Dim isBarcodeKey As Boolean = False
 

@@ -33,6 +33,8 @@ Partial Class InventoryLog
         Dim CustomizableEdges9 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges10 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges11 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges12 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges13 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         LabelTitle = New Label()
         DashboardPanel = New Guna.UI2.WinForms.Guna2Panel()
         PictureBox9 = New PictureBox()
@@ -45,17 +47,19 @@ Partial Class InventoryLog
         Guna2DateTimePicker1 = New Guna.UI2.WinForms.Guna2DateTimePicker()
         Guna2HtmlLabel4 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         AddInventoryLog = New Guna.UI2.WinForms.Guna2Button()
+        Guna2Panel1 = New Guna.UI2.WinForms.Guna2Panel()
         DashboardPanel.SuspendLayout()
         CType(PictureBox9, ComponentModel.ISupportInitialize).BeginInit()
         CType(Guna2CirclePictureBox5, ComponentModel.ISupportInitialize).BeginInit()
         CType(InventoryLogDataGrid, ComponentModel.ISupportInitialize).BeginInit()
+        Guna2Panel1.SuspendLayout()
         SuspendLayout()
         ' 
         ' LabelTitle
         ' 
         LabelTitle.AutoSize = True
         LabelTitle.Font = New Font("Poppins Medium", 16.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        LabelTitle.ForeColor = Color.White
+        LabelTitle.ForeColor = Color.FromArgb(CByte(42), CByte(42), CByte(42))
         LabelTitle.Location = New Point(262, 20)
         LabelTitle.Name = "LabelTitle"
         LabelTitle.Size = New Size(211, 50)
@@ -104,7 +108,8 @@ Partial Class InventoryLog
         InventoryLogDataGrid.AllowUserToResizeRows = False
         DataGridViewCellStyle1.BackColor = Color.White
         InventoryLogDataGrid.AlternatingRowsDefaultCellStyle = DataGridViewCellStyle1
-        InventoryLogDataGrid.BackgroundColor = Color.FromArgb(CByte(61), CByte(65), CByte(65))
+        InventoryLogDataGrid.Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
+        InventoryLogDataGrid.BackgroundColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
         DataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleLeft
         DataGridViewCellStyle2.BackColor = Color.FromArgb(CByte(100), CByte(88), CByte(255))
         DataGridViewCellStyle2.Font = New Font("Segoe UI", 9F)
@@ -124,18 +129,18 @@ Partial Class InventoryLog
         DataGridViewCellStyle3.WrapMode = DataGridViewTriState.False
         InventoryLogDataGrid.DefaultCellStyle = DataGridViewCellStyle3
         InventoryLogDataGrid.GridColor = Color.FromArgb(CByte(231), CByte(229), CByte(255))
-        InventoryLogDataGrid.Location = New Point(235, 160)
+        InventoryLogDataGrid.Location = New Point(6, 3)
         InventoryLogDataGrid.Name = "InventoryLogDataGrid"
         InventoryLogDataGrid.RowHeadersVisible = False
         InventoryLogDataGrid.RowHeadersWidth = 51
-        InventoryLogDataGrid.Size = New Size(1655, 861)
+        InventoryLogDataGrid.Size = New Size(1651, 852)
         InventoryLogDataGrid.TabIndex = 41
         InventoryLogDataGrid.ThemeStyle.AlternatingRowsStyle.BackColor = Color.White
         InventoryLogDataGrid.ThemeStyle.AlternatingRowsStyle.Font = Nothing
         InventoryLogDataGrid.ThemeStyle.AlternatingRowsStyle.ForeColor = Color.Empty
         InventoryLogDataGrid.ThemeStyle.AlternatingRowsStyle.SelectionBackColor = Color.Empty
         InventoryLogDataGrid.ThemeStyle.AlternatingRowsStyle.SelectionForeColor = Color.Empty
-        InventoryLogDataGrid.ThemeStyle.BackColor = Color.FromArgb(CByte(61), CByte(65), CByte(65))
+        InventoryLogDataGrid.ThemeStyle.BackColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
         InventoryLogDataGrid.ThemeStyle.GridColor = Color.FromArgb(CByte(231), CByte(229), CByte(255))
         InventoryLogDataGrid.ThemeStyle.HeaderStyle.BackColor = Color.FromArgb(CByte(100), CByte(88), CByte(255))
         InventoryLogDataGrid.ThemeStyle.HeaderStyle.BorderStyle = DataGridViewHeaderBorderStyle.None
@@ -155,18 +160,17 @@ Partial Class InventoryLog
         ' SortBy
         ' 
         SortBy.BackColor = Color.Transparent
+        SortBy.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
         SortBy.BorderRadius = 10
-        SortBy.BorderThickness = 0
         SortBy.CustomizableEdges = CustomizableEdges4
         SortBy.DrawMode = DrawMode.OwnerDrawFixed
         SortBy.DropDownStyle = ComboBoxStyle.DropDownList
-        SortBy.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
         SortBy.FocusedColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         SortBy.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         SortBy.Font = New Font("Poppins Light", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         SortBy.ForeColor = Color.White
         SortBy.ItemHeight = 40
-        SortBy.Location = New Point(622, 102)
+        SortBy.Location = New Point(621, 96)
         SortBy.Name = "SortBy"
         SortBy.ShadowDecoration.CustomizableEdges = CustomizableEdges5
         SortBy.Size = New Size(309, 46)
@@ -180,9 +184,9 @@ Partial Class InventoryLog
         Exportbtn.DisabledState.CustomBorderColor = Color.DarkGray
         Exportbtn.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         Exportbtn.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        Exportbtn.FillColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
+        Exportbtn.FillColor = Color.FromArgb(CByte(191), CByte(155), CByte(48))
         Exportbtn.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Exportbtn.ForeColor = Color.Black
+        Exportbtn.ForeColor = Color.White
         Exportbtn.Location = New Point(1779, 102)
         Exportbtn.Name = "Exportbtn"
         Exportbtn.ShadowDecoration.CustomizableEdges = CustomizableEdges7
@@ -194,8 +198,8 @@ Partial Class InventoryLog
         ' 
         Guna2HtmlLabel3.BackColor = Color.Transparent
         Guna2HtmlLabel3.Font = New Font("Poppins", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel3.ForeColor = Color.White
-        Guna2HtmlLabel3.Location = New Point(542, 110)
+        Guna2HtmlLabel3.ForeColor = Color.FromArgb(CByte(42), CByte(42), CByte(42))
+        Guna2HtmlLabel3.Location = New Point(541, 104)
         Guna2HtmlLabel3.Name = "Guna2HtmlLabel3"
         Guna2HtmlLabel3.Size = New Size(65, 32)
         Guna2HtmlLabel3.TabIndex = 68
@@ -205,7 +209,7 @@ Partial Class InventoryLog
         ' 
         lblUsername.BackColor = Color.Transparent
         lblUsername.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblUsername.ForeColor = Color.White
+        lblUsername.ForeColor = Color.FromArgb(CByte(59), CByte(59), CByte(59))
         lblUsername.Location = New Point(1793, 20)
         lblUsername.Name = "lblUsername"
         lblUsername.Size = New Size(65, 28)
@@ -214,14 +218,16 @@ Partial Class InventoryLog
         ' 
         ' Guna2DateTimePicker1
         ' 
+        Guna2DateTimePicker1.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
         Guna2DateTimePicker1.BorderRadius = 10
+        Guna2DateTimePicker1.BorderThickness = 1
         Guna2DateTimePicker1.Checked = True
         Guna2DateTimePicker1.CustomizableEdges = CustomizableEdges8
-        Guna2DateTimePicker1.FillColor = Color.FromArgb(CByte(30), CByte(30), CByte(30))
+        Guna2DateTimePicker1.FillColor = Color.White
         Guna2DateTimePicker1.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2DateTimePicker1.ForeColor = Color.White
+        Guna2DateTimePicker1.ForeColor = Color.Black
         Guna2DateTimePicker1.Format = DateTimePickerFormat.Short
-        Guna2DateTimePicker1.Location = New Point(357, 108)
+        Guna2DateTimePicker1.Location = New Point(356, 102)
         Guna2DateTimePicker1.MaxDate = New Date(9998, 12, 31, 0, 0, 0, 0)
         Guna2DateTimePicker1.MinDate = New Date(1753, 1, 1, 0, 0, 0, 0)
         Guna2DateTimePicker1.Name = "Guna2DateTimePicker1"
@@ -234,8 +240,8 @@ Partial Class InventoryLog
         ' 
         Guna2HtmlLabel4.BackColor = Color.Transparent
         Guna2HtmlLabel4.Font = New Font("Poppins", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel4.ForeColor = Color.White
-        Guna2HtmlLabel4.Location = New Point(235, 116)
+        Guna2HtmlLabel4.ForeColor = Color.FromArgb(CByte(42), CByte(42), CByte(42))
+        Guna2HtmlLabel4.Location = New Point(234, 110)
         Guna2HtmlLabel4.Name = "Guna2HtmlLabel4"
         Guna2HtmlLabel4.Size = New Size(116, 32)
         Guna2HtmlLabel4.TabIndex = 77
@@ -249,9 +255,9 @@ Partial Class InventoryLog
         AddInventoryLog.DisabledState.CustomBorderColor = Color.DarkGray
         AddInventoryLog.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         AddInventoryLog.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        AddInventoryLog.FillColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
+        AddInventoryLog.FillColor = Color.FromArgb(CByte(191), CByte(155), CByte(48))
         AddInventoryLog.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        AddInventoryLog.ForeColor = Color.Black
+        AddInventoryLog.ForeColor = Color.White
         AddInventoryLog.Location = New Point(1578, 102)
         AddInventoryLog.Name = "AddInventoryLog"
         AddInventoryLog.ShadowDecoration.CustomizableEdges = CustomizableEdges11
@@ -260,12 +266,26 @@ Partial Class InventoryLog
         AddInventoryLog.Text = "Add Inventory Log"
         AddInventoryLog.Visible = False
         ' 
+        ' Guna2Panel1
+        ' 
+        Guna2Panel1.BorderColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
+        Guna2Panel1.BorderThickness = 2
+        Guna2Panel1.Controls.Add(InventoryLogDataGrid)
+        Guna2Panel1.CustomizableEdges = CustomizableEdges12
+        Guna2Panel1.FillColor = Color.FromArgb(CByte(250), CByte(249), CByte(246))
+        Guna2Panel1.Location = New Point(235, 160)
+        Guna2Panel1.Name = "Guna2Panel1"
+        Guna2Panel1.ShadowDecoration.CustomizableEdges = CustomizableEdges13
+        Guna2Panel1.Size = New Size(1657, 861)
+        Guna2Panel1.TabIndex = 79
+        ' 
         ' InventoryLog
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
-        BackColor = Color.FromArgb(CByte(30), CByte(30), CByte(30))
+        BackColor = Color.White
         ClientSize = New Size(1902, 1033)
+        Controls.Add(Guna2Panel1)
         Controls.Add(AddInventoryLog)
         Controls.Add(Guna2HtmlLabel4)
         Controls.Add(Guna2DateTimePicker1)
@@ -273,7 +293,6 @@ Partial Class InventoryLog
         Controls.Add(Guna2HtmlLabel3)
         Controls.Add(Exportbtn)
         Controls.Add(SortBy)
-        Controls.Add(InventoryLogDataGrid)
         Controls.Add(Guna2CirclePictureBox5)
         Controls.Add(DashboardPanel)
         Controls.Add(LabelTitle)
@@ -285,6 +304,7 @@ Partial Class InventoryLog
         CType(PictureBox9, ComponentModel.ISupportInitialize).EndInit()
         CType(Guna2CirclePictureBox5, ComponentModel.ISupportInitialize).EndInit()
         CType(InventoryLogDataGrid, ComponentModel.ISupportInitialize).EndInit()
+        Guna2Panel1.ResumeLayout(False)
         ResumeLayout(False)
         PerformLayout()
     End Sub
@@ -303,4 +323,5 @@ Partial Class InventoryLog
     Friend WithEvents Guna2DateTimePicker1 As Guna.UI2.WinForms.Guna2DateTimePicker
     Friend WithEvents Guna2HtmlLabel4 As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents AddInventoryLog As Guna.UI2.WinForms.Guna2Button
+    Friend WithEvents Guna2Panel1 As Guna.UI2.WinForms.Guna2Panel
 End Class

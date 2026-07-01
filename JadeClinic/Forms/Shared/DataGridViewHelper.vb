@@ -16,8 +16,8 @@ Public Module DataGridViewHelper
             noRecordsLabel = New Label() With {
                 .AutoSize = True,
                 .Font = New Font("Poppins", 10.0F, FontStyle.Italic),
-                .ForeColor = Color.LightGray,
-                .BackColor = System.Drawing.Color.FromArgb(41, 44, 45),
+                .ForeColor = System.Drawing.Color.FromArgb(102, 102, 102),
+                .BackColor = System.Drawing.Color.FromArgb(250, 249, 246),
                 .TextAlign = ContentAlignment.MiddleCenter
             }
             noRecordsLabel.Name = "noRecordsLabel"
@@ -50,7 +50,7 @@ Public Module DataGridViewHelper
             )
 
             ' Set the label's background to match the DataGridView's background
-            noRecordsLabel.BackColor = System.Drawing.Color.FromArgb(41, 44, 45)
+            noRecordsLabel.BackColor = System.Drawing.Color.FromArgb(250, 249, 246)
 
 
             ' Ensure label is above the grid but below any other overlays

@@ -11,8 +11,7 @@ Public Class Sys
     Private isNavigating As Boolean = False
 
     ' Profile dropdown panel
-    Private profileDropdownPanel As Panel = Nothing
-    Private isProfileDropdownVisible As Boolean = False
+    ' Profile managed by ProfileManager
 
     ' Dental Clinic Color Palette Constants
     Private ReadOnly GoldenYellow As Color = Color.FromArgb(254, 191, 16)      ' #FECF10 - Primary brand color
@@ -125,189 +124,7 @@ Public Class Sys
     End Function
 
     Private Sub InitializeProfileSection()
-        Try
-            lblUsername.Text = frmLoginvb.LoggedInUsername
-            lblUsername.Font = New Font("Poppins", 10.0F, FontStyle.Regular)
-            lblUsername.ForeColor = PureWhite
-
-            LoadUserProfilePicture()
-
-            AddHandler Guna2CirclePictureBox1.Click, AddressOf ProfilePicture_Click
-            AddHandler lblUsername.Click, AddressOf ProfilePicture_Click
-
-            AddHandler Guna2CirclePictureBox1.MouseEnter, Sub()
-                                                              Guna2CirclePictureBox1.Cursor = Cursors.Hand
-                                                          End Sub
-            AddHandler lblUsername.MouseEnter, Sub()
-                                                   lblUsername.Cursor = Cursors.Hand
-                                               End Sub
-
-        Catch ex As Exception
-            lblUsername.Text = frmLoginvb.LoggedInUsername
-            Guna2CirclePictureBox1.Image = CreateDefaultProfileAvatar(frmLoginvb.LoggedInUsername)
-        End Try
-    End Sub
-
-    Private Sub LoadUserProfilePicture()
-        Try
-            If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
-                Dim query As String = "SELECT Photo FROM Users WHERE Username = @Username"
-                Dim parameters As SqlParameter() = {
-                    New SqlParameter("@Username", frmLoginvb.LoggedInUsername)
-                }
-
-                Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters)
-                    If reader.Read() Then
-                        Guna2CirclePictureBox1.SizeMode = PictureBoxSizeMode.Zoom
-                        Guna2CirclePictureBox1.BorderStyle = BorderStyle.None
-
-                        If Not IsDBNull(reader("Photo")) Then
-                            Dim photoBytes As Byte() = CType(reader("Photo"), Byte())
-                            Using ms As New MemoryStream(photoBytes)
-                                Dim loadedImage As Image = Image.FromStream(ms)
-                                Guna2CirclePictureBox1.Image = New Bitmap(loadedImage)
-                                loadedImage.Dispose()
-                            End Using
-                        Else
-                            Guna2CirclePictureBox1.Image = CreateDefaultProfileAvatar(frmLoginvb.LoggedInUsername)
-                        End If
-                    End If
-                End Using
-            End If
-        Catch ex As Exception
-            Guna2CirclePictureBox1.Image = CreateDefaultProfileAvatar(If(frmLoginvb.LoggedInUsername, "User"))
-        End Try
-    End Sub
-
-    Private Function CreateDefaultProfileAvatar(username As String) As Image
-        Dim bitmap As New Bitmap(50, 50)
-        Using g As Graphics = Graphics.FromImage(bitmap)
-            g.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias
-
-            Dim colors() As Color = {
-                Color.FromArgb(255, 107, 107),
-                Color.FromArgb(78, 205, 196),
-                Color.FromArgb(85, 98, 112),
-                Color.FromArgb(129, 236, 236),
-                Color.FromArgb(116, 185, 255)
-            }
-            Dim colorIndex As Integer = Math.Abs(username.GetHashCode()) Mod colors.Length
-            g.FillEllipse(New SolidBrush(colors(colorIndex)), 0, 0, 50, 50)
-
-            Dim initials As String = ""
-            If username.Length > 0 Then
-                initials = username.Substring(0, 1).ToUpper()
-                If username.Length > 1 Then
-                    For i As Integer = 1 To username.Length - 1
-                        If Char.IsUpper(username(i)) OrElse username(i) = " "c Then
-                            If username(i) <> " "c Then
-                                initials += username(i).ToString().ToUpper()
-                                Exit For
-                            End If
-                        End If
-                    Next
-                End If
-            End If
-
-            Using font As New Font("Poppins", 14, FontStyle.Bold)
-                Dim textSize = g.MeasureString(initials, font)
-                g.DrawString(initials, font, New SolidBrush(PureWhite),
-                    (50 - textSize.Width) / 2, (50 - textSize.Height) / 2)
-            End Using
-        End Using
-        Return bitmap
-    End Function
-
-    Private Sub ProfilePicture_Click(sender As Object, e As EventArgs)
-        ToggleProfileDropdown()
-    End Sub
-
-    Private Sub ToggleProfileDropdown()
-        If isProfileDropdownVisible Then
-            HideProfileDropdown()
-        Else
-            ShowProfileDropdown()
-        End If
-    End Sub
-
-    Private Sub ShowProfileDropdown()
-        If profileDropdownPanel IsNot Nothing Then
-            HideProfileDropdown()
-        End If
-
-        profileDropdownPanel = New Panel()
-        profileDropdownPanel.Size = New System.Drawing.Size(200, 100)
-        profileDropdownPanel.BackColor = System.Drawing.Color.FromArgb(41, 44, 45)
-        profileDropdownPanel.BorderStyle = BorderStyle.FixedSingle
-
-        Dim profileLocation = Guna2CirclePictureBox1.Location
-        profileDropdownPanel.Location = New Point(profileLocation.X - 90, profileLocation.Y + Guna2CirclePictureBox1.Height + 5)
-
-        Dim btnProfileSettings As New Label()
-        btnProfileSettings.Text = "⚙️ Profile Settings"
-        btnProfileSettings.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
-        btnProfileSettings.ForeColor = System.Drawing.Color.White
-        btnProfileSettings.Size = New System.Drawing.Size(190, 40)
-        btnProfileSettings.Location = New System.Drawing.Point(5, 5)
-        btnProfileSettings.TextAlign = ContentAlignment.MiddleLeft
-        btnProfileSettings.Cursor = Cursors.Hand
-
-        AddHandler btnProfileSettings.MouseEnter, Sub() btnProfileSettings.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
-        AddHandler btnProfileSettings.MouseLeave, Sub() btnProfileSettings.BackColor = System.Drawing.Color.Transparent
-        AddHandler btnProfileSettings.Click, Sub()
-                                                 HideProfileDropdown()
-                                                 NavigateToProfileSettings()
-                                             End Sub
-
-        Dim btnLogOut As New Label()
-        btnLogOut.Text = "🚪 Log Out"
-        btnLogOut.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
-        btnLogOut.ForeColor = System.Drawing.Color.White
-        btnLogOut.Size = New System.Drawing.Size(190, 40)
-        btnLogOut.Location = New System.Drawing.Point(5, 50)
-        btnLogOut.TextAlign = ContentAlignment.MiddleLeft
-        btnLogOut.Cursor = Cursors.Hand
-
-        AddHandler btnLogOut.MouseEnter, Sub() btnLogOut.BackColor = Graphite
-        AddHandler btnLogOut.MouseLeave, Sub() btnLogOut.BackColor = System.Drawing.Color.Transparent
-        AddHandler btnLogOut.Click, Sub()
-                                        Dim result As DialogResult = MessageBox.Show("Are you sure you want to logout?", "Confirm Logout", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
-                                        If result = DialogResult.Yes Then
-                                            If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
-                                                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Log Out", "User logged out of the application.")
-                                            End If
-                                            frmLoginvb.LogoutUser()
-                                            isNavigating = True
-                                            Me.Hide()
-                                            Dim loginForm As New frmLoginvb()
-                                            loginForm.Show()
-                                        End If
-                                    End Sub
-
-
-        profileDropdownPanel.Controls.Add(btnProfileSettings)
-        profileDropdownPanel.Controls.Add(btnLogOut)
-
-        Me.Controls.Add(profileDropdownPanel)
-        profileDropdownPanel.BringToFront()
-
-        AddHandler Me.Click, AddressOf Form_Click
-
-        isProfileDropdownVisible = True
-    End Sub
-
-    Private Sub HideProfileDropdown()
-        If profileDropdownPanel IsNot Nothing Then
-            Me.Controls.Remove(profileDropdownPanel)
-            profileDropdownPanel.Dispose()
-            profileDropdownPanel = Nothing
-        End If
-        isProfileDropdownVisible = False
-        RemoveHandler Me.Click, AddressOf Form_Click
-    End Sub
-
-    Private Sub Form_Click(sender As Object, e As EventArgs)
-        HideProfileDropdown()
+        ProfileManager.InitializeProfile(Me, lblUsername, Guna2CirclePictureBox1, AddressOf NavigateToProfileSettings)
     End Sub
 
     Private Sub NavigateToProfileSettings()
@@ -317,7 +134,7 @@ Public Class Sys
             End If
 
             isNavigating = True
-            HideProfileDropdown()
+            ProfileManager.HideProfileDropdown(Me)
 
             Dim profileForm As New ProfileSettings()
             profileForm.StartPosition = FormStartPosition.CenterScreen

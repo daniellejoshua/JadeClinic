@@ -40,7 +40,7 @@ Public Class InventoryLog
         ' Create centered loading label
         loadingLabel = New Label() With {
         .Text = "Loading Inventory Logs...",
-        .ForeColor = System.Drawing.Color.White,
+        .ForeColor = System.Drawing.Color.FromArgb(51, 51, 51),
         .Font = New Font("Poppins", 16, FontStyle.Regular),
         .AutoSize = True,
         .BackColor = System.Drawing.Color.Transparent,
@@ -212,29 +212,29 @@ Public Class InventoryLog
             InventoryLogDataGrid.EnableHeadersVisualStyles = False
 
             ' Theme & general cell style
-            InventoryLogDataGrid.BackgroundColor = System.Drawing.Color.FromArgb(41, 44, 45)
-            InventoryLogDataGrid.GridColor = System.Drawing.Color.White
+            InventoryLogDataGrid.BackgroundColor = System.Drawing.Color.FromArgb(250, 249, 246)
+            InventoryLogDataGrid.GridColor = System.Drawing.Color.FromArgb(220, 220, 220)
             InventoryLogDataGrid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal
 
             InventoryLogDataGrid.DefaultCellStyle = New DataGridViewCellStyle() With {
-            .BackColor = System.Drawing.Color.FromArgb(61, 65, 66),
-            .ForeColor = System.Drawing.Color.LightGray,
-            .SelectionBackColor = System.Drawing.Color.FromArgb(255, 204, 77),
-            .SelectionForeColor = System.Drawing.Color.Black,
+            .BackColor = System.Drawing.Color.White,
+            .ForeColor = System.Drawing.Color.FromArgb(51, 51, 51),
+            .SelectionBackColor = System.Drawing.Color.FromArgb(235, 228, 200),
+            .SelectionForeColor = System.Drawing.Color.FromArgb(51, 51, 51),
             .Font = New Font("Poppins", 9.0F, FontStyle.Regular),
             .Alignment = DataGridViewContentAlignment.MiddleCenter,
             .Padding = New Padding(8, 6, 8, 6)
         }
 
             InventoryLogDataGrid.AlternatingRowsDefaultCellStyle = New DataGridViewCellStyle() With {
-            .BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
+            .BackColor = System.Drawing.Color.FromArgb(250, 249, 246)
         }
 
             InventoryLogDataGrid.ColumnHeadersDefaultCellStyle = New DataGridViewCellStyle() With {
-            .BackColor = System.Drawing.Color.FromArgb(30, 30, 30),
-            .ForeColor = System.Drawing.Color.LightGray,
-            .SelectionBackColor = System.Drawing.Color.FromArgb(30, 30, 30),
-            .Font = New Font("Poppins SemiBold", 10.0F, FontStyle.Regular),
+            .BackColor = System.Drawing.Color.FromArgb(250, 249, 246),
+            .ForeColor = System.Drawing.Color.FromArgb(51, 51, 51),
+            .SelectionBackColor = System.Drawing.Color.FromArgb(250, 249, 246),
+            .Font = New Font("Poppins SemiBold", 10.5F, FontStyle.Bold),
             .Alignment = DataGridViewContentAlignment.MiddleCenter
         }
             InventoryLogDataGrid.ColumnHeadersHeight = 50
@@ -263,7 +263,7 @@ Public Class InventoryLog
                 .Alignment = DataGridViewContentAlignment.MiddleCenter,
                 .Padding = New Padding(10, 6, 10, 6),
                 .Font = New Font("Poppins SemiBold", 9.0F, FontStyle.Regular),
-                .ForeColor = System.Drawing.Color.LightGray,
+                .ForeColor = System.Drawing.Color.FromArgb(51, 51, 51),
                 .WrapMode = DataGridViewTriState.False
             },
             .FillWeight = 28
@@ -325,7 +325,7 @@ Public Class InventoryLog
             .DefaultCellStyle = New DataGridViewCellStyle() With {
                 .Alignment = DataGridViewContentAlignment.MiddleLeft,
                 .WrapMode = DataGridViewTriState.True,
-                .ForeColor = System.Drawing.Color.LightGray
+                .ForeColor = System.Drawing.Color.FromArgb(102, 102, 102)
             },
             .FillWeight = 20
         })
@@ -442,7 +442,7 @@ Public Class InventoryLog
             .FormBorderStyle = FormBorderStyle.FixedDialog,
             .MaximizeBox = False,
             .MinimizeBox = False,
-            .BackColor = DarkSlate,
+            .BackColor = System.Drawing.Color.FromArgb(250, 250, 249),
             .ShowInTaskbar = False
         }
 
@@ -457,7 +457,7 @@ Public Class InventoryLog
             .AllowUserToDeleteRows = False,
             .RowHeadersVisible = False,
             .AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
-            .BackgroundColor = DarkSlate,
+            .BackgroundColor = System.Drawing.Color.FromArgb(250, 250, 249),
             .BorderStyle = BorderStyle.None,
             .SelectionMode = DataGridViewSelectionMode.FullRowSelect,
             .MultiSelect = False
@@ -465,18 +465,18 @@ Public Class InventoryLog
 
             ' Visual styling for the grid
             dgv.ColumnHeadersDefaultCellStyle = New DataGridViewCellStyle() With {
-            .BackColor = Color.FromArgb(30, 30, 30),
-            .ForeColor = Color.LightGray,
+            .BackColor = System.Drawing.Color.FromArgb(250, 249, 246),
+            .ForeColor = System.Drawing.Color.FromArgb(51, 51, 51),
             .Font = New Font("Poppins SemiBold", 10),
             .Alignment = DataGridViewContentAlignment.MiddleLeft
         }
             dgv.EnableHeadersVisualStyles = False
 
             dgv.DefaultCellStyle = New DataGridViewCellStyle() With {
-            .BackColor = Color.FromArgb(61, 65, 66),
-            .ForeColor = Color.LightGray,
-            .SelectionBackColor = Color.FromArgb(61, 65, 66), ' make selection visually neutral
-            .SelectionForeColor = Color.LightGray,
+            .BackColor = System.Drawing.Color.White,
+            .ForeColor = System.Drawing.Color.FromArgb(51, 51, 51),
+            .SelectionBackColor = System.Drawing.Color.FromArgb(235, 228, 200),
+            .SelectionForeColor = System.Drawing.Color.FromArgb(51, 51, 51),
             .Font = New Font("Poppins", 10),
             .WrapMode = DataGridViewTriState.True
         }
@@ -601,8 +601,8 @@ Public Class InventoryLog
             .Text = "Export",
             .Size = New Size(120, 38),
             .Location = New Point(detailForm.ClientSize.Width - pad - 260, detailForm.ClientSize.Height - 70),
-            .BackColor = SteelGray,
-            .ForeColor = Color.White,
+            .BackColor = System.Drawing.Color.FromArgb(254, 191, 16), ' GoldenYellow
+            .ForeColor = System.Drawing.Color.FromArgb(51, 51, 51),
             .Font = New Font("Poppins", 10, FontStyle.Regular),
             .FlatStyle = FlatStyle.Flat
         }
@@ -763,7 +763,7 @@ Public Class InventoryLog
 
             ' Clear existing rows
             InventoryLogDataGrid.Rows.Clear()
-            
+
             ' Hide any existing "No records" message
             DataGridViewHelper.HideNoRecordsMessage()
 
@@ -864,7 +864,7 @@ Public Class InventoryLog
 
             ' Prevent the form-closing confirmation and hide the dropdown first
             isNavigating = True
-            HideProfileDropdown()
+            ProfileManager.HideProfileDropdown(Me)
 
             ' Open ProfileSettings and close InventoryLog
             Dim profileForm As New ProfileSettings()
@@ -903,8 +903,8 @@ Public Class InventoryLog
             Dim txNorm As String = If(transactionType, "").Trim().ToLowerInvariant()
 
             ' Keep uniform row background for all rows
-            row.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
-            row.DefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
+            row.DefaultCellStyle.BackColor = System.Drawing.Color.White
+            row.DefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51)
 
             ' Configure TransactionType cell styles only (do not color full row)
             If InventoryLogDataGrid.Columns.Contains("TransactionType") Then
@@ -912,7 +912,7 @@ Public Class InventoryLog
                 cell.Style.Font = New Font(InventoryLogDataGrid.Font, FontStyle.Regular)
                 cell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter
                 ' Default foreground
-                cell.Style.ForeColor = System.Drawing.Color.LightGray
+                cell.Style.ForeColor = System.Drawing.Color.FromArgb(102, 102, 102)
                 ' Ensure selection does not override the ForeColor — set SelectionForeColor to same
                 cell.Style.SelectionForeColor = cell.Style.ForeColor
                 ' Keep selection background consistent with rest of grid
@@ -923,7 +923,7 @@ Public Class InventoryLog
             If InventoryLogDataGrid.Columns.Contains("ProductName") Then
                 Dim pcell = row.Cells("ProductName")
                 pcell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter
-                pcell.Style.ForeColor = System.Drawing.Color.LightGray
+                pcell.Style.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51)
             End If
 
             Select Case txNorm
@@ -1045,7 +1045,7 @@ Public Class InventoryLog
         ' Colors consistent with SalesRecord navigation using CompanySettingsManager palette
         Dim primary = CompanySettingsManager.Instance.GetColor("primarycolor")
         Dim textPrimary = CompanySettingsManager.Instance.GetColor("backgrounddark")
-        Dim borderColor = System.Drawing.Color.FromArgb(80, 80, 80)
+        Dim borderColor = System.Drawing.Color.FromArgb(200, 200, 200)
 
         btn.FillColor = If(isActive, primary, System.Drawing.Color.Transparent)
         btn.ForeColor = If(isActive, textPrimary, CompanySettingsManager.Instance.GetColor("textsecondary"))
@@ -1055,12 +1055,12 @@ Public Class InventoryLog
         btn.Cursor = Cursors.Hand
 
         btn.ShadowDecoration.Enabled = True
-        btn.ShadowDecoration.Color = System.Drawing.Color.FromArgb(26, 29, 31)
+        btn.ShadowDecoration.Color = System.Drawing.Color.FromArgb(200, 200, 200)
         btn.ShadowDecoration.Depth = 4
 
         AddHandler btn.MouseEnter, Sub()
                                        If Not isActive Then
-                                           btn.FillColor = System.Drawing.Color.FromArgb(48, 52, 54)
+                                           btn.FillColor = System.Drawing.Color.FromArgb(240, 240, 240)
                                            btn.BorderColor = CompanySettingsManager.Instance.GetColor("secondarycolor")
                                            btn.Font = New Font("Poppins", 9, FontStyle.Bold)
                                        End If
@@ -1223,249 +1223,7 @@ Public Class InventoryLog
     End Function
 
     Private Sub InitializeProfileSection()
-        Try
-            ' Set username if lblUsername control exists
-            If lblUsername IsNot Nothing Then
-                lblUsername.Text = frmLoginvb.LoggedInUsername
-                lblUsername.Font = New Font("Poppins", 10.0F, FontStyle.Regular)
-                lblUsername.ForeColor = System.Drawing.Color.White
-            End If
-
-            ' Load user profile picture if control exists
-            LoadUserProfilePicture()
-
-            ' Add click event to profile picture and username if they exist
-            If Guna2CirclePictureBox5 IsNot Nothing Then
-                AddHandler Guna2CirclePictureBox5.Click, AddressOf ProfilePicture_Click
-                AddHandler Guna2CirclePictureBox5.MouseEnter, Sub()
-                                                                  Guna2CirclePictureBox5.Cursor = Cursors.Hand
-                                                              End Sub
-            End If
-
-            If lblUsername IsNot Nothing Then
-                AddHandler lblUsername.Click, AddressOf ProfilePicture_Click
-                AddHandler lblUsername.MouseEnter, Sub()
-                                                       lblUsername.Cursor = Cursors.Hand
-                                                   End Sub
-            End If
-
-        Catch ex As Exception
-            ' Fallback if there's an error
-            If lblUsername IsNot Nothing Then
-                lblUsername.Text = frmLoginvb.LoggedInUsername
-            End If
-        End Try
-    End Sub
-
-    Private Sub LoadUserProfilePicture()
-        Try
-            If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) AndAlso Guna2CirclePictureBox5 IsNot Nothing Then
-                ' Query to get the logged-in user's photo
-                Dim query As String = "SELECT Photo FROM Users WHERE Username = @Username"
-                Dim parameters As SqlParameter() = {
-                New SqlParameter("@Username", frmLoginvb.LoggedInUsername)
-            }
-
-                Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters)
-                    If reader.Read() Then
-                        ' Configure the PictureBox for circular profile picture
-                        Guna2CirclePictureBox5.SizeMode = PictureBoxSizeMode.Zoom
-                        Guna2CirclePictureBox5.BorderStyle = BorderStyle.None
-
-                        If Not IsDBNull(reader("Photo")) Then
-                            ' Load user's actual photo
-                            Dim photoBytes As Byte() = CType(reader("Photo"), Byte())
-                            Using ms As New IO.MemoryStream(photoBytes)
-                                Dim loadedImage As Image = Image.FromStream(ms)
-                                Guna2CirclePictureBox5.Image = New Bitmap(loadedImage)
-                                loadedImage.Dispose()
-                            End Using
-                        Else
-                            ' Create and display default avatar
-                            Guna2CirclePictureBox5.Image = CreateDefaultProfileAvatar(frmLoginvb.LoggedInUsername)
-                        End If
-                    End If
-                End Using
-            End If
-        Catch ex As Exception
-            ' If there's an error, show default avatar
-            If Guna2CirclePictureBox5 IsNot Nothing Then
-                Guna2CirclePictureBox5.Image = CreateDefaultProfileAvatar(If(frmLoginvb.LoggedInUsername, "User"))
-            End If
-        End Try
-    End Sub
-
-    ' Create default profile avatar method
-    Private Function CreateDefaultProfileAvatar(username As String) As System.Drawing.Image
-        Dim bitmap As New Bitmap(50, 50)
-        Using g As Graphics = Graphics.FromImage(bitmap)
-            ' Enable anti-aliasing for smooth circles
-            g.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias
-
-            ' Fill background with a color based on username
-            Dim colors() As System.Drawing.Color = {
-            System.Drawing.Color.FromArgb(255, 107, 107),
-            System.Drawing.Color.FromArgb(78, 205, 196),
-            System.Drawing.Color.FromArgb(85, 98, 112),
-            System.Drawing.Color.FromArgb(129, 236, 236),
-            System.Drawing.Color.FromArgb(116, 185, 255)
-        }
-            Dim colorIndex As Integer = Math.Abs(username.GetHashCode()) Mod colors.Length
-            g.FillEllipse(New SolidBrush(colors(colorIndex)), 0, 0, 50, 50)
-
-            ' Draw initials
-            Dim initials As String = ""
-            If username.Length > 0 Then
-                initials = username.Substring(0, 1).ToUpper()
-                If username.Length > 1 Then
-                    For i As Integer = 1 To username.Length - 1
-                        If Char.IsUpper(username(i)) OrElse username(i) = " "c Then
-                            If username(i) <> " "c Then
-                                initials += username(i).ToString().ToUpper()
-                                Exit For
-                            End If
-                        End If
-                    Next
-                End If
-            End If
-
-            Using font As New System.Drawing.Font("Poppins", 14, System.Drawing.FontStyle.Bold)
-                Dim textSize = g.MeasureString(initials, font)
-                g.DrawString(initials, font, Brushes.White,
-                (50 - textSize.Width) / 2, (50 - textSize.Height) / 2)
-            End Using
-        End Using
-        Return bitmap
-    End Function
-
-    ' Profile dropdown panel
-    Private profileDropdownPanel As Panel = Nothing
-    Private isProfileDropdownVisible As Boolean = False
-
-    Private Sub ProfilePicture_Click(sender As Object, e As EventArgs)
-        ToggleProfileDropdown()
-    End Sub
-
-    Private Sub ToggleProfileDropdown()
-        If isProfileDropdownVisible Then
-            HideProfileDropdown()
-        Else
-            ShowProfileDropdown()
-        End If
-    End Sub
-
-    Private Sub ShowProfileDropdown()
-        If profileDropdownPanel IsNot Nothing Then
-            HideProfileDropdown()
-        End If
-
-        ' Create dropdown panel
-        profileDropdownPanel = New Panel()
-        profileDropdownPanel.Size = New System.Drawing.Size(200, 100)
-        profileDropdownPanel.BackColor = System.Drawing.Color.FromArgb(41, 44, 45)
-        profileDropdownPanel.BorderStyle = BorderStyle.FixedSingle
-
-        ' Position below the profile picture
-        If Guna2CirclePictureBox5 IsNot Nothing Then
-            Dim profileLocation = Guna2CirclePictureBox5.Location
-            profileDropdownPanel.Location = New Point(profileLocation.X - 90, profileLocation.Y + Guna2CirclePictureBox5.Height + 5)
-        End If
-
-        ' Create Profile Settings button
-        Dim btnProfileSettings As New Label()
-        btnProfileSettings.Text = "⚙️ Profile Settings"
-        btnProfileSettings.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
-        btnProfileSettings.ForeColor = System.Drawing.Color.White
-        btnProfileSettings.BackColor = System.Drawing.Color.Transparent
-        btnProfileSettings.Size = New System.Drawing.Size(190, 40)
-        btnProfileSettings.Location = New Point(5, 5)
-        btnProfileSettings.TextAlign = ContentAlignment.MiddleLeft
-        btnProfileSettings.Cursor = Cursors.Hand
-
-        ' Add hover effect to Profile Settings
-        AddHandler btnProfileSettings.MouseEnter, Sub()
-                                                      btnProfileSettings.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
-                                                  End Sub
-        AddHandler btnProfileSettings.MouseLeave, Sub()
-                                                      btnProfileSettings.BackColor = System.Drawing.Color.Transparent
-                                                  End Sub
-
-        ' Add click event to Profile Settings
-        AddHandler btnProfileSettings.Click, Sub()
-                                                 HideProfileDropdown()
-                                                 NavigateToProfileSettings()
-                                             End Sub
-
-        ' Create Log Out button
-        Dim btnLogOut As New Label()
-        btnLogOut.Text = "🚪 Log Out"
-        btnLogOut.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
-        btnLogOut.ForeColor = System.Drawing.Color.White
-        btnLogOut.BackColor = System.Drawing.Color.Transparent
-        btnLogOut.Size = New System.Drawing.Size(190, 40)
-        btnLogOut.Location = New Point(5, 50)
-        btnLogOut.TextAlign = ContentAlignment.MiddleLeft
-        btnLogOut.Cursor = Cursors.Hand
-
-        ' Add hover effect to Log Out
-        AddHandler btnLogOut.MouseEnter, Sub()
-                                             btnLogOut.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
-                                         End Sub
-        AddHandler btnLogOut.MouseLeave, Sub()
-                                             btnLogOut.BackColor = System.Drawing.Color.Transparent
-                                         End Sub
-
-        ' Add click event to Log Out - JUST LOGOUT, DON'T EXIT APPLICATION
-        AddHandler btnLogOut.Click, Sub()
-                                        ' Confirm logout before proceeding
-                                        Dim result As DialogResult = MessageBox.Show("Are you sure you want to logout?", "Confirm Logout", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
-
-                                        If result = DialogResult.Yes Then
-                                            ' Log the logout action
-                                            If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
-                                                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Log Out", "User logged out of the application.")
-                                            End If
-
-                                            ' Clear user session and return to login (don't exit application)
-                                            frmLoginvb.LogoutUser()
-
-                                            ' Navigate to login form without closing the application
-                                            isNavigating = True
-                                            Me.Hide()
-                                            Dim loginForm As New frmLoginvb()
-                                            loginForm.Show()
-                                        End If
-                                    End Sub
-
-        ' Add buttons to panel
-        profileDropdownPanel.Controls.Add(btnProfileSettings)
-        profileDropdownPanel.Controls.Add(btnLogOut)
-
-        ' Add panel to form
-        Me.Controls.Add(profileDropdownPanel)
-        profileDropdownPanel.BringToFront()
-
-        ' Add click event to form to hide dropdown when clicked elsewhere
-        AddHandler Me.Click, AddressOf Form_Click
-
-        isProfileDropdownVisible = True
-    End Sub
-
-    Private Sub HideProfileDropdown()
-        If profileDropdownPanel IsNot Nothing Then
-            Me.Controls.Remove(profileDropdownPanel)
-            profileDropdownPanel.Dispose()
-            profileDropdownPanel = Nothing
-        End If
-        isProfileDropdownVisible = False
-
-        ' Remove form click event
-        RemoveHandler Me.Click, AddressOf Form_Click
-    End Sub
-
-    Private Sub Form_Click(sender As Object, e As EventArgs)
-        ' Hide dropdown when clicking elsewhere on the form
-        HideProfileDropdown()
+        ProfileManager.InitializeProfile(Me, lblUsername, Guna2CirclePictureBox5, AddressOf NavigateToProfileSettings)
     End Sub
 
 
@@ -1528,7 +1286,7 @@ Public Class InventoryLog
             loadingLabel = New Label() With {
                 .Text = message,
                 .Font = New Font("Poppins", 11, FontStyle.Italic),
-                .ForeColor = Color.LightGray,
+                .ForeColor = Color.FromArgb(102, 102, 102),
                 .BackColor = Color.Transparent,
                 .AutoSize = True,
                 .Name = "loadingLabel"
