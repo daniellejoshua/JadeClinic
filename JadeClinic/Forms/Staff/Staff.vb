@@ -105,7 +105,41 @@ Public Class Staff
         End Try
     End Function
 
+    Protected Overrides Function ProcessCmdKey(ByRef msg As Message, keyData As Keys) As Boolean
+        If keyData = Keys.Escape Then
+            If Me.OwnedForms.Cast(Of Form)().Any(Function(f) f.Visible) Then
+                Return MyBase.ProcessCmdKey(msg, keyData)
+            End If
 
+            If Not Me.ContainsFocus Then
+                Return MyBase.ProcessCmdKey(msg, keyData)
+            End If
+
+            If isNavigating Then
+                Return True
+            End If
+
+            Dim result As DialogResult = EscForm.ConfirmExit(Me)
+            Me.Activate()
+            If result = DialogResult.Yes Then
+                If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
+                    Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Application Exit", "User exited the application via Staff Management.")
+                End If
+
+                For Each form As Form In Application.OpenForms.Cast(Of Form).ToArray()
+                    If form IsNot Me Then
+                        form.Close()
+                    End If
+                Next
+
+                Application.Exit()
+            End If
+
+            Return True
+        End If
+
+        Return MyBase.ProcessCmdKey(msg, keyData)
+    End Function
 
     Private Sub InitializeSortComboBox()
         SortBy.Items.Clear()
@@ -128,31 +162,31 @@ Public Class Staff
         ' Center all cell text
         Guna2DataGridView1.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
 
-        ' Dark themed DataGridView
-        Guna2DataGridView1.BackgroundColor = System.Drawing.Color.FromArgb(41, 44, 45)
-        Guna2DataGridView1.GridColor = System.Drawing.Color.White
+        ' Light themed DataGridView
+        Guna2DataGridView1.BackgroundColor = System.Drawing.Color.FromArgb(250, 249, 246)
+        Guna2DataGridView1.GridColor = System.Drawing.Color.FromArgb(220, 220, 220)
         Guna2DataGridView1.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal
         Guna2DataGridView1.EnableHeadersVisualStyles = False
 
         Guna2DataGridView1.DefaultCellStyle = New DataGridViewCellStyle() With {
-        .BackColor = System.Drawing.Color.FromArgb(61, 65, 66),
-        .ForeColor = System.Drawing.Color.LightGray,
-        .SelectionBackColor = System.Drawing.Color.FromArgb(255, 204, 77),
-        .SelectionForeColor = System.Drawing.Color.Black,
+        .BackColor = System.Drawing.Color.White,
+        .ForeColor = System.Drawing.Color.FromArgb(51, 51, 51),
+        .SelectionBackColor = System.Drawing.Color.FromArgb(235, 228, 200),
+        .SelectionForeColor = System.Drawing.Color.FromArgb(51, 51, 51),
         .Font = New Font("Poppins", 9.0F, FontStyle.Regular),
         .Alignment = DataGridViewContentAlignment.MiddleCenter,
         .Padding = New Padding(8, 6, 8, 6)
     }
 
         Guna2DataGridView1.AlternatingRowsDefaultCellStyle = New DataGridViewCellStyle() With {
-        .BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
+        .BackColor = System.Drawing.Color.FromArgb(250, 249, 246)
     }
 
         Guna2DataGridView1.ColumnHeadersDefaultCellStyle = New DataGridViewCellStyle() With {
-        .BackColor = System.Drawing.Color.FromArgb(30, 30, 30),
-        .ForeColor = System.Drawing.Color.LightGray,
-        .SelectionBackColor = System.Drawing.Color.FromArgb(30, 30, 30),
-        .Font = New Font("Poppins SemiBold", 10.0F, FontStyle.Regular),
+        .BackColor = System.Drawing.Color.FromArgb(250, 249, 246),
+        .ForeColor = System.Drawing.Color.FromArgb(51, 51, 51),
+        .SelectionBackColor = System.Drawing.Color.FromArgb(250, 249, 246),
+        .Font = New Font("Poppins SemiBold", 10.5F, FontStyle.Bold),
         .Alignment = DataGridViewContentAlignment.MiddleCenter
     }
         Guna2DataGridView1.ColumnHeadersHeight = 50
@@ -219,7 +253,7 @@ Public Class Staff
         .DefaultCellStyle = New DataGridViewCellStyle() With {
             .Alignment = DataGridViewContentAlignment.MiddleCenter,
             .Font = New Font("Segoe UI Emoji", 12, FontStyle.Regular),
-            .ForeColor = System.Drawing.Color.LightGray
+            .ForeColor = System.Drawing.Color.FromArgb(51, 51, 51)
         }
     }
         Guna2DataGridView1.Columns.Add(actionsCol)
@@ -405,7 +439,7 @@ Public Class Staff
             Dim clickTimer As New Timer()
             clickTimer.Interval = 150
             AddHandler clickTimer.Tick, Sub()
-                                            Guna2DataGridView1.Rows(e.RowIndex).Cells("Actions").Style.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
+                                            Guna2DataGridView1.Rows(e.RowIndex).Cells("Actions").Style.BackColor = System.Drawing.Color.White
                                             clickTimer.Stop()
                                         End Sub
             clickTimer.Start()
@@ -426,7 +460,7 @@ Public Class Staff
     Private Sub Guna2DataGridView1_CellMouseEnter(sender As Object, e As DataGridViewCellEventArgs) Handles Guna2DataGridView1.CellMouseEnter
         If e.RowIndex >= 0 AndAlso e.ColumnIndex = Guna2DataGridView1.Columns("Actions").Index Then
             ' Add hover effect for actions column
-            Guna2DataGridView1.Rows(e.RowIndex).Cells("Actions").Style.BackColor = System.Drawing.Color.FromArgb(81, 85, 86)
+            Guna2DataGridView1.Rows(e.RowIndex).Cells("Actions").Style.BackColor = System.Drawing.Color.FromArgb(237, 237, 237)
             Guna2DataGridView1.Cursor = Cursors.Hand
         End If
     End Sub
@@ -434,7 +468,7 @@ Public Class Staff
     Private Sub Guna2DataGridView1_CellMouseLeave(sender As Object, e As DataGridViewCellEventArgs) Handles Guna2DataGridView1.CellMouseLeave
         If e.RowIndex >= 0 AndAlso e.ColumnIndex = Guna2DataGridView1.Columns("Actions").Index Then
             ' Remove hover effect for actions column
-            Guna2DataGridView1.Rows(e.RowIndex).Cells("Actions").Style.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
+            Guna2DataGridView1.Rows(e.RowIndex).Cells("Actions").Style.BackColor = System.Drawing.Color.White
             Guna2DataGridView1.Cursor = Cursors.Default
         End If
     End Sub
@@ -499,14 +533,14 @@ Public Class Staff
         pinDialog.Text = "PIN Confirmation"
         pinDialog.Size = New System.Drawing.Size(320, 180)
         pinDialog.StartPosition = FormStartPosition.CenterParent
-        pinDialog.BackColor = System.Drawing.Color.FromArgb(41, 44, 45)
+        pinDialog.BackColor = System.Drawing.Color.White
         pinDialog.FormBorderStyle = FormBorderStyle.FixedDialog
         pinDialog.MaximizeBox = False
         pinDialog.MinimizeBox = False
 
         Dim lblPrompt As New Label()
         lblPrompt.Text = promptText
-        lblPrompt.ForeColor = System.Drawing.Color.White
+        lblPrompt.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51)
         lblPrompt.Font = New Font("Poppins", 10)
         lblPrompt.AutoSize = True
         lblPrompt.Location = New System.Drawing.Point(20, 20)
@@ -516,8 +550,8 @@ Public Class Staff
         txtPin.MaxLength = 4
         txtPin.Location = New System.Drawing.Point(20, 50)
         txtPin.Size = New System.Drawing.Size(260, 30)
-        txtPin.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
-        txtPin.ForeColor = System.Drawing.Color.White
+        txtPin.BackColor = System.Drawing.Color.FromArgb(237, 237, 237)
+        txtPin.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51)
         txtPin.Font = New Font("Poppins", 12)
 
         Dim btnConfirm As New Button()
@@ -533,8 +567,8 @@ Public Class Staff
         btnCancel.Text = "Cancel"
         btnCancel.Location = New System.Drawing.Point(140, 90)
         btnCancel.Size = New System.Drawing.Size(100, 32)
-        btnCancel.BackColor = System.Drawing.Color.Gray
-        btnCancel.ForeColor = System.Drawing.Color.White
+        btnCancel.BackColor = System.Drawing.Color.FromArgb(200, 200, 200)
+        btnCancel.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51)
         btnCancel.Font = New Font("Poppins", 10)
         btnCancel.FlatStyle = FlatStyle.Flat
 
@@ -648,7 +682,7 @@ Public Class Staff
 
         ' Show confirmation only for user-initiated close (X button)
         If e.CloseReason = CloseReason.UserClosing Then
-            Dim result As DialogResult = MessageBox.Show("Are you sure you want to exit the application?", "Exit Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
+            Dim result As DialogResult = EscForm.ConfirmExit(Me)
 
             If result = DialogResult.Yes Then
                 ' Log the exit action
@@ -705,19 +739,19 @@ Public Class Staff
         btn.TextAlign = HorizontalAlignment.Left
 
         btn.FillColor = If(isActive, System.Drawing.Color.FromArgb(254, 191, 16), System.Drawing.Color.Transparent)
-        btn.ForeColor = If(isActive, System.Drawing.Color.FromArgb(26, 29, 31), System.Drawing.Color.White)
+        btn.ForeColor = If(isActive, System.Drawing.Color.FromArgb(26, 29, 31), System.Drawing.Color.FromArgb(51, 51, 51))
         btn.BorderThickness = If(isActive, 0, 1)
-        btn.BorderColor = If(isActive, System.Drawing.Color.Transparent, System.Drawing.Color.FromArgb(80, 80, 80))
+        btn.BorderColor = If(isActive, System.Drawing.Color.Transparent, System.Drawing.Color.FromArgb(200, 200, 200))
         btn.BackColor = System.Drawing.Color.Transparent
         btn.Cursor = Cursors.Hand
 
         btn.ShadowDecoration.Enabled = True
-        btn.ShadowDecoration.Color = System.Drawing.Color.FromArgb(30, 30, 30)
+        btn.ShadowDecoration.Color = System.Drawing.Color.FromArgb(200, 200, 200)
         btn.ShadowDecoration.Depth = 4
 
         AddHandler btn.MouseEnter, Sub()
                                        If Not isActive Then
-                                           btn.FillColor = System.Drawing.Color.FromArgb(48, 52, 54)
+                                           btn.FillColor = System.Drawing.Color.FromArgb(237, 237, 237)
                                            btn.BorderColor = System.Drawing.Color.FromArgb(254, 191, 16)
                                            btn.Font = New Font("Poppins", 9, FontStyle.Bold)
 
@@ -726,7 +760,7 @@ Public Class Staff
         AddHandler btn.MouseLeave, Sub()
                                        If Not isActive Then
                                            btn.FillColor = System.Drawing.Color.Transparent
-                                           btn.BorderColor = System.Drawing.Color.FromArgb(80, 80, 80)
+                                           btn.BorderColor = System.Drawing.Color.FromArgb(200, 200, 200)
                                            btn.Font = New Font("Poppins", 10, FontStyle.Regular)
                                        End If
                                    End Sub

@@ -902,8 +902,6 @@ Public Class InventoryLog
 
             Dim txNorm As String = If(transactionType, "").Trim().ToLowerInvariant()
 
-            ' Keep uniform row background for all rows
-            row.DefaultCellStyle.BackColor = System.Drawing.Color.White
             row.DefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51)
 
             ' Configure TransactionType cell styles only (do not color full row)

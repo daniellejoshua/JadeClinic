@@ -17,11 +17,13 @@ Public Class IdleTimeoutManager
 
     ' Timer and settings
     Private WithEvents idleTimer As Timer
-    Private ReadOnly IDLE_TIMEOUT_SECONDS As Integer = 300 ' 5 minutes
+    Private ReadOnly IDLE_TIMEOUT_SECONDS As Integer = 5 ' 5 minutes
     Private isTimerEnabled As Boolean = True
     Private currentForm As Form
     Private overlay As Panel
     Private passwordDialog As Form
+    Private logoutPending As Boolean = False
+    Private pendingFormToClose As Form = Nothing
 
     Private Sub New()
         ' Initialize the idle timer
@@ -300,37 +302,42 @@ Public Class IdleTimeoutManager
             ' Create overlay to block interaction with main form
             CreateOverlay()
 
-            ' Create password dialog with new design - Dim Gray background with Gold/White text
+            ' Create password dialog with light theme
+            Dim dlgW As Integer = 580
             passwordDialog = New Form()
             passwordDialog.Text = "Session Timeout"
-            passwordDialog.Size = New Size(500, 380) ' Increased size for better spacing
+            passwordDialog.Size = New Size(dlgW, 380)
             passwordDialog.StartPosition = FormStartPosition.CenterParent
             passwordDialog.FormBorderStyle = FormBorderStyle.FixedDialog
             passwordDialog.MaximizeBox = False
             passwordDialog.MinimizeBox = False
-            passwordDialog.ControlBox = False ' Disable X button - user must choose Continue or Logout
-            passwordDialog.BackColor = System.Drawing.Color.FromArgb(70, 70, 70) ' Dim Gray background
+            passwordDialog.ControlBox = False
+            passwordDialog.BackColor = System.Drawing.Color.White
             passwordDialog.TopMost = True
+
+            Dim marginL As Integer = (dlgW - 480) \ 2
 
             ' Title label with Golden Yellow
             Dim lblTitle As New Label()
             lblTitle.Text = "🔒 Session Timeout"
             lblTitle.Font = New Font("Segoe UI", 18, FontStyle.Bold)
-            lblTitle.ForeColor = System.Drawing.Color.FromArgb(254, 191, 16) ' Golden Yellow
+            lblTitle.ForeColor = System.Drawing.Color.FromArgb(254, 191, 16)
             lblTitle.BackColor = System.Drawing.Color.Transparent
             lblTitle.AutoSize = True
-            lblTitle.Location = New Point(0, 25)
+            AddHandler passwordDialog.Load, Sub()
+                                                lblTitle.Location = New Point((dlgW - lblTitle.Width) \ 2, 25)
+                                            End Sub
             passwordDialog.Controls.Add(lblTitle)
 
-            ' Instruction label with White text
+            ' Instruction label
             Dim lblInstruction As New Label()
             lblInstruction.Text = "Your session has timed out due to inactivity." & vbCrLf & "Please enter your password to continue."
             lblInstruction.Font = New Font("Segoe UI", 11, FontStyle.Regular)
-            lblInstruction.ForeColor = System.Drawing.Color.White ' White text
+            lblInstruction.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51)
             lblInstruction.BackColor = System.Drawing.Color.Transparent
             lblInstruction.AutoSize = False
-            lblInstruction.Size = New Size(440, 60)
-            lblInstruction.Location = New Point(30, 80)
+            lblInstruction.Size = New Size(480, 60)
+            lblInstruction.Location = New Point(marginL, 80)
             lblInstruction.TextAlign = ContentAlignment.MiddleCenter
             passwordDialog.Controls.Add(lblInstruction)
 
@@ -338,79 +345,72 @@ Public Class IdleTimeoutManager
             Dim lblUsername As New Label()
             lblUsername.Text = $"User: {frmLoginvb.LoggedInUsername}"
             lblUsername.Font = New Font("Segoe UI", 10, FontStyle.Bold)
-            lblUsername.ForeColor = System.Drawing.Color.FromArgb(254, 191, 16) ' Golden Yellow
+            lblUsername.ForeColor = System.Drawing.Color.FromArgb(254, 191, 16)
             lblUsername.BackColor = System.Drawing.Color.Transparent
             lblUsername.AutoSize = True
-            lblUsername.Location = New Point(30, 155)
+            lblUsername.Location = New Point(marginL, 155)
             passwordDialog.Controls.Add(lblUsername)
 
-            ' Password label with White text
+            ' Password label
             Dim lblPasswordLabel As New Label()
             lblPasswordLabel.Text = "Password:"
             lblPasswordLabel.Font = New Font("Segoe UI", 10, FontStyle.Regular)
-            lblPasswordLabel.ForeColor = System.Drawing.Color.White ' White text
+            lblPasswordLabel.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51)
             lblPasswordLabel.BackColor = System.Drawing.Color.Transparent
             lblPasswordLabel.AutoSize = True
-            lblPasswordLabel.Location = New Point(30, 185)
+            lblPasswordLabel.Location = New Point(marginL, 185)
             passwordDialog.Controls.Add(lblPasswordLabel)
 
-            ' Password textbox with darker gray background and white text
+            ' Password textbox
             Dim txtPassword As New TextBox()
             txtPassword.PasswordChar = "•"c
             txtPassword.Font = New Font("Segoe UI", 12, FontStyle.Regular)
-            txtPassword.BackColor = System.Drawing.Color.FromArgb(50, 50, 50) ' Darker gray
-            txtPassword.ForeColor = System.Drawing.Color.White ' White text
-            txtPassword.Location = New Point(30, 210)
-            txtPassword.Size = New Size(440, 35)
+            txtPassword.BackColor = System.Drawing.Color.FromArgb(237, 237, 237)
+            txtPassword.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51)
+            txtPassword.Location = New Point(marginL, 210)
+            txtPassword.Size = New Size(480, 35)
             txtPassword.BorderStyle = BorderStyle.FixedSingle
             passwordDialog.Controls.Add(txtPassword)
 
-            ' Continue button with Golden Yellow background and black text
+            ' Continue button
             Dim btnContinue As New Button()
             btnContinue.Text = "Continue"
             btnContinue.Font = New Font("Segoe UI", 11, FontStyle.Bold)
-            btnContinue.BackColor = System.Drawing.Color.FromArgb(254, 191, 16) ' Golden Yellow
-            btnContinue.ForeColor = System.Drawing.Color.Black ' Black text for contrast
+            btnContinue.BackColor = System.Drawing.Color.FromArgb(254, 191, 16)
+            btnContinue.ForeColor = System.Drawing.Color.Black
             btnContinue.FlatStyle = FlatStyle.Flat
             btnContinue.FlatAppearance.BorderSize = 0
             btnContinue.Size = New Size(130, 40)
-            btnContinue.Location = New Point(210, 270)
+            btnContinue.Location = New Point(marginL + 110, 270)
             btnContinue.Cursor = Cursors.Hand
 
-            ' Add hover effect for Continue button
             AddHandler btnContinue.MouseEnter, Sub()
-                                                   btnContinue.BackColor = System.Drawing.Color.FromArgb(220, 165, 12) ' Darker gold on hover
+                                                   btnContinue.BackColor = System.Drawing.Color.FromArgb(220, 165, 12)
                                                End Sub
             AddHandler btnContinue.MouseLeave, Sub()
-                                                   btnContinue.BackColor = System.Drawing.Color.FromArgb(254, 191, 16) ' Back to original gold
+                                                   btnContinue.BackColor = System.Drawing.Color.FromArgb(254, 191, 16)
                                                End Sub
 
-            ' Logout button with Alert Red background and white text
+            ' Logout button
             Dim btnLogout As New Button()
             btnLogout.Text = "Logout"
             btnLogout.Font = New Font("Segoe UI", 11, FontStyle.Regular)
-            btnLogout.BackColor = System.Drawing.Color.FromArgb(255, 71, 87) ' Alert Red
-            btnLogout.ForeColor = System.Drawing.Color.White ' White text
+            btnLogout.BackColor = System.Drawing.Color.FromArgb(255, 71, 87)
+            btnLogout.ForeColor = System.Drawing.Color.White
             btnLogout.FlatStyle = FlatStyle.Flat
             btnLogout.FlatAppearance.BorderSize = 0
             btnLogout.Size = New Size(130, 40)
-            btnLogout.Location = New Point(350, 270)
+            btnLogout.Location = New Point(marginL + 250, 270)
             btnLogout.Cursor = Cursors.Hand
 
-            ' Add hover effect for Logout button
             AddHandler btnLogout.MouseEnter, Sub()
-                                                 btnLogout.BackColor = System.Drawing.Color.FromArgb(220, 50, 50) ' Darker red on hover
+                                                 btnLogout.BackColor = System.Drawing.Color.FromArgb(220, 50, 50)
                                              End Sub
             AddHandler btnLogout.MouseLeave, Sub()
-                                                 btnLogout.BackColor = System.Drawing.Color.FromArgb(255, 71, 87) ' Back to original red
+                                                 btnLogout.BackColor = System.Drawing.Color.FromArgb(255, 71, 87)
                                              End Sub
 
             passwordDialog.Controls.AddRange({btnContinue, btnLogout})
-
-            ' Center title after form is created
-            AddHandler passwordDialog.Load, Sub()
-                                                lblTitle.Location = New Point((passwordDialog.Width - lblTitle.Width) / 2, 25)
-                                            End Sub
 
             ' Event handlers
             AddHandler btnContinue.Click, Sub()
@@ -427,19 +427,32 @@ Public Class IdleTimeoutManager
                                                 End If
                                             End Sub
 
-            ' Show dialog
             txtPassword.Focus()
+            passwordDialog.ShowDialog(currentForm)
 
-            ' IMPORTANT: Use ShowDialog asynchronously to prevent timer conflicts
-            Task.Run(Sub()
-                         Try
-                             Me.currentForm.Invoke(Sub()
-                                                       passwordDialog.ShowDialog(currentForm)
-                                                   End Sub)
-                         Catch ex As Exception
-                             Console.WriteLine($"Error showing dialog: {ex.Message}")
-                         End Try
-                     End Sub)
+            ' After dialog closes, handle any pending logout (form-hide and login-show must happen OUTSIDE modal pump)
+            If logoutPending Then
+                frmLoginvb.LogoutUser()
+                ResetManagerState()
+
+                If pendingFormToClose IsNot Nothing AndAlso Not pendingFormToClose.IsDisposed Then
+                    Console.WriteLine($"Hiding monitored form after dialog close: {pendingFormToClose.Name}")
+                    pendingFormToClose.Hide()
+                End If
+
+                Try
+                    Dim loginForm As New frmLoginvb()
+                    loginForm.Show()
+                Catch loginEx As Exception
+                    Console.WriteLine($"Error creating login form: {loginEx.Message}")
+                    MessageBox.Show("Session ended. Please restart the application.", "Logout Complete",
+                                   MessageBoxButtons.OK, MessageBoxIcon.Information)
+                    Application.Exit()
+                End Try
+
+                logoutPending = False
+                pendingFormToClose = Nothing
+            End If
 
         Catch ex As Exception
             Console.WriteLine($"Error showing password dialog: {ex.Message}")
@@ -512,17 +525,28 @@ Public Class IdleTimeoutManager
                 Else
                     ' User not found (should not happen)
                     MessageBox.Show("User not found. Logging out.", "Authentication Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-                    LogoutUser(dialog)
+                    pendingFormToClose = currentForm
+                    DisableTimer()
+                    If currentForm IsNot Nothing Then StopMonitoring(currentForm)
+                    logoutPending = True
+                    RemoveOverlay()
+                    dialog.Close()
                 End If
             End Using
 
         Catch ex As Exception
             MessageBox.Show($"Authentication error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-            LogoutUser(dialog)
+            pendingFormToClose = currentForm
+            DisableTimer()
+            If currentForm IsNot Nothing Then StopMonitoring(currentForm)
+            logoutPending = True
+            RemoveOverlay()
+            dialog.Close()
         End Try
     End Sub
 
-    ' Logout user
+    ' Logout user (called from button click inside modal dialog)
+    ' Only sets the flag and closes dialog; actual form cleanup happens after ShowDialog returns
     Private Sub LogoutUser(dialog As Form)
         Try
             ' Log the logout action
@@ -530,90 +554,39 @@ Public Class IdleTimeoutManager
                 Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Session Timeout Logout", "User logged out due to idle timeout")
             End If
 
-            ' CRITICAL: Store reference to current form before clearing it
-            Dim formToClose As Form = currentForm
+            ' Store reference to current form before clearing it
+            pendingFormToClose = currentForm
 
             ' Stop monitoring completely before logout
             DisableTimer()
 
             ' Clear monitoring but keep the form reference for closing
             If currentForm IsNot Nothing Then
-                StopMonitoring(currentForm) ' This will set currentForm = Nothing
+                StopMonitoring(currentForm)
             End If
 
-            ' Close the timeout dialog first
+            ' Remove overlay first, then close dialog
+            RemoveOverlay()
             If dialog IsNot Nothing AndAlso Not dialog.IsDisposed Then
                 dialog.Close()
             End If
-            RemoveOverlay()
 
-            ' Clear user session
-            frmLoginvb.LogoutUser()
-
-            ' Now close the actual form that was being monitored - SET NAVIGATION FLAG
-            If formToClose IsNot Nothing AndAlso Not formToClose.IsDisposed Then
-                Console.WriteLine($"Closing monitored form: {formToClose.Name}")
-
-                ' Check if the form has an isNavigating property (like Dashboard)
-                Try
-                    Dim isNavigatingField = formToClose.GetType().GetField("isNavigating",
-                        Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.Instance)
-                    If isNavigatingField IsNot Nothing Then
-                        isNavigatingField.SetValue(formToClose, True)
-                        Console.WriteLine("Set isNavigating flag to True")
-                    End If
-                Catch
-                    ' If field doesn't exist, continue without error
-                End Try
-
-                formToClose.Close() ' Close instead of Hide to properly dispose
-            End If
-
-            ' Reset the singleton instance state completely
-            ResetManagerState()
-
-            ' Show login form
-            Try
-                Dim loginForm As New frmLoginvb()
-                loginForm.Show()
-            Catch loginEx As Exception
-                Console.WriteLine($"Error creating login form: {loginEx.Message}")
-                ' If we can't show login form, try to exit gracefully
-                MessageBox.Show("Session ended. Please restart the application.", "Logout Complete",
-                               MessageBoxButtons.OK, MessageBoxIcon.Information)
-                Application.Exit()
-            End Try
+            ' Set flag so ShowPasswordDialog knows to continue cleanup after ShowDialog returns
+            logoutPending = True
 
         Catch ex As Exception
             Console.WriteLine($"Error during logout: {ex.Message}")
 
-            ' Don't exit immediately - try to recover
             Try
-                ' Clean up what we can
-                DisableTimer()
-                ResetManagerState()
-
-                ' Close any open dialogs
+                RemoveOverlay()
                 If dialog IsNot Nothing AndAlso Not dialog.IsDisposed Then
                     dialog.Close()
                 End If
-
-                ' Clear session
-                frmLoginvb.LogoutUser()
-
-                ' Try to show login form
-                Dim loginForm As New frmLoginvb()
-                loginForm.Show()
-
-                ' Show a user-friendly message
-                MessageBox.Show("Your session has been ended due to a timeout. Please login again.",
-                               "Session Timeout", MessageBoxButtons.OK, MessageBoxIcon.Information)
-
+                DisableTimer()
+                pendingFormToClose = currentForm
+                logoutPending = True
             Catch recoveryEx As Exception
                 Console.WriteLine($"Error during logout recovery: {recoveryEx.Message}")
-                ' Only exit as last resort
-                MessageBox.Show("Session ended due to an error. The application will now close.",
-                               "Session Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
                 Application.Exit()
             End Try
         End Try

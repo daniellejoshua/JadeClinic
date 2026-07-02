@@ -16,12 +16,12 @@ Public Class AddStaff
     ' Dental Clinic Color Palette Constants
     Private ReadOnly GoldenYellow As Color = Color.FromArgb(254, 191, 16)      ' #FECF10 - Primary brand color
     Private ReadOnly RichOlive As Color = Color.FromArgb(190, 154, 48)         ' #BE9A30 - Secondary accent
-    Private ReadOnly DeepCharcoal As Color = Color.FromArgb(26, 29, 31)        ' #1A1D1F - Primary dark
-    Private ReadOnly DarkSlate As Color = Color.FromArgb(43, 47, 50)           ' #2B2F32 - Secondary dark
-    Private ReadOnly Graphite As Color = Color.FromArgb(61, 65, 69)            ' #3D4145 - Card background
-    Private ReadOnly SteelGray As Color = Color.FromArgb(74, 79, 84)           ' #4A4F54 - Interactive elements
-    Private ReadOnly PureWhite As Color = Color.FromArgb(255, 255, 255)        ' #FFFFFF - Text on dark
-    Private ReadOnly LightSilver As Color = Color.FromArgb(225, 229, 233)      ' #E1E5E9 - Secondary text
+    Private ReadOnly DeepCharcoal As Color = Color.FromArgb(51, 51, 51)        ' #333333 - Dark text
+    Private ReadOnly DarkSlate As Color = Color.White                          ' White - Card background
+    Private ReadOnly Graphite As Color = Color.FromArgb(61, 65, 69)            ' #3D4145 - Card background (unused)
+    Private ReadOnly SteelGray As Color = Color.FromArgb(254, 191, 16)         ' #FECF10 - GoldenYellow
+    Private ReadOnly PureWhite As Color = Color.FromArgb(255, 255, 255)        ' #FFFFFF - White
+    Private ReadOnly LightSilver As Color = Color.FromArgb(102, 102, 102)      ' #666666 - Medium text
     Private ReadOnly SuccessGreen As Color = Color.FromArgb(16, 216, 98)       ' #10D862 - Success states
     Private ReadOnly AlertRed As Color = Color.FromArgb(255, 71, 87)
     Private Sub AddStaff_Load(sender As Object, e As EventArgs) Handles MyBase.Load
@@ -165,7 +165,8 @@ Public Class AddStaff
 
         ' Position the validation/message label to top-right as requested
         Try
-            Guna2HtmlLabel15.Location = New Point(200, 21)
+            Guna2HtmlLabel15.Location = New Point(180, 21)
+            Guna2HtmlLabel15.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
             Guna2HtmlLabel15.BringToFront()
         Catch
             ' Ignore if control not present or designer-managed
@@ -630,7 +631,7 @@ Public Class AddStaff
         Dim titleLbl As New Label With {
         .Text = "STAFF ACCOUNT CREATED",
         .Font = New Font("Poppins", 14, FontStyle.Bold),
-        .ForeColor = PureWhite,
+        .ForeColor = DeepCharcoal,
         .AutoSize = False,
         .Size = New Size(520, 30),
         .Location = New Point(20, 12),
@@ -688,7 +689,7 @@ Public Class AddStaff
         Dim sep As New Panel With {
         .Size = New Size(500, 1),
         .Location = New Point(0, 112),
-        .BackColor = Color.FromArgb(70, 70, 70)
+        .BackColor = Color.FromArgb(200, 200, 200)
     }
         infoPanel.Controls.Add(sep)
 
@@ -731,7 +732,7 @@ Public Class AddStaff
         .Size = New Size(140, 40),
         .Location = New Point(270, 330),
         .FillColor = SteelGray,
-        .ForeColor = PureWhite,
+        .ForeColor = DeepCharcoal,
         .BorderRadius = 10
     }
         dlg.Controls.Add(btnCopy)
