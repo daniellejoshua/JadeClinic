@@ -58,7 +58,7 @@ Partial Class EscForm
         mainPanel.Location = New Point(20, 20)
         mainPanel.Name = "mainPanel"
         mainPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges8
-        mainPanel.ShadowDecoration.Depth = 10
+        mainPanel.ShadowDecoration.Depth = 5
         mainPanel.ShadowDecoration.Enabled = True
         mainPanel.Size = New Size(420, 520)
         mainPanel.TabIndex = 0
@@ -123,29 +123,29 @@ Partial Class EscForm
         ' 
         ' btnExit
         ' 
-        btnExit.BorderRadius = 12
+        btnExit.BorderRadius = 8
         btnExit.CustomizableEdges = CustomizableEdges3
-        btnExit.FillColor = Color.FromArgb(254, 191, 16)
+        btnExit.FillColor = Color.FromArgb(220, 80, 70)
         btnExit.Font = New Font("Poppins", 10.0F, FontStyle.Bold)
-        btnExit.ForeColor = Color.FromArgb(51, 51, 51)
+        btnExit.ForeColor = Color.White
         btnExit.Location = New Point(20, 415)
         btnExit.Name = "btnExit"
         btnExit.ShadowDecoration.CustomizableEdges = CustomizableEdges4
-        btnExit.Size = New Size(184, 44)
+        btnExit.Size = New Size(185, 44)
         btnExit.TabIndex = 5
         btnExit.Text = "Exit Application"
         ' 
         ' btnCancel
         ' 
-        btnCancel.BorderRadius = 12
+        btnCancel.BorderRadius = 8
         btnCancel.CustomizableEdges = CustomizableEdges5
         btnCancel.FillColor = Color.FromArgb(191, 155, 48)
-        btnCancel.Font = New Font("Poppins", 10.0F, FontStyle.Bold)
+        btnCancel.Font = New Font("Poppins", 9.0F, FontStyle.Bold)
         btnCancel.ForeColor = Color.White
         btnCancel.Location = New Point(217, 415)
         btnCancel.Name = "btnCancel"
         btnCancel.ShadowDecoration.CustomizableEdges = CustomizableEdges6
-        btnCancel.Size = New Size(189, 44)
+        btnCancel.Size = New Size(195, 44)
         btnCancel.TabIndex = 6
         btnCancel.Text = "Stay in Application"
         ' 

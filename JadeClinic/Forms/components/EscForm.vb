@@ -47,6 +47,18 @@
     Private Sub EscForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         Me.KeyPreview = True
         btnCancel.Focus()
+        ApplyRoundedRegion()
+    End Sub
+
+    Private Sub ApplyRoundedRegion()
+        Dim radius As Integer = 18
+        Dim path As New Drawing2D.GraphicsPath()
+        path.AddArc(0, 0, radius, radius, 180, 90)
+        path.AddArc(Me.Width - radius, 0, radius, radius, 270, 90)
+        path.AddArc(Me.Width - radius, Me.Height - radius, radius, radius, 0, 90)
+        path.AddArc(0, Me.Height - radius, radius, radius, 90, 90)
+        path.CloseAllFigures()
+        Me.Region = New Region(path)
     End Sub
 
     Private Sub btnExit_Click(sender As Object, e As EventArgs) Handles btnExit.Click

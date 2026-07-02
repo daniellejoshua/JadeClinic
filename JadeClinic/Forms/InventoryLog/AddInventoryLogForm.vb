@@ -16,6 +16,10 @@ Public Class AddInventoryLogForm
     ' Field to prevent recursive TextChanged handling
     Private suppressProductTextChanged As Boolean = False
 
+    Private Const BatchSectionHeight As Integer = 90
+    Private batchOffsetApplied As Boolean = False
+    Private belowBatchControls As New List(Of Control)
+
     Private Sub AddInventoryLogForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         ' Start idle timeout monitoring for modal forms
         IdleTimeoutManager.Instance.StartMonitoring(Me)
@@ -35,12 +39,12 @@ Public Class AddInventoryLogForm
         ' Make form non-resizable
         Me.FormBorderStyle = FormBorderStyle.None
         Me.StartPosition = FormStartPosition.CenterParent
-        Me.BackColor = Color.FromArgb(30, 30, 30)
-        Me.Size = New Size(600, 750) ' Increased height for batch fields
+        Me.BackColor = Color.White
+        Me.Size = New Size(600, 760)
 
         ' Add border
         AddHandler Me.Paint, Sub(s, e)
-                                 Using pen As New Pen(Color.FromArgb(61, 65, 66), 2)
+                                 Using pen As New Pen(Color.FromArgb(220, 220, 220), 2)
                                      e.Graphics.DrawRectangle(pen, 0, 0, Me.Width - 1, Me.Height - 1)
                                  End Using
                              End Sub
@@ -104,6 +108,8 @@ Public Class AddInventoryLogForm
     Private Sub SetupControls()
         ' Create and setup all controls programmatically
         CreateControls()
+        ' Initial collapse (batch fields hidden by default) — no gap
+        ApplyBatchLayout(False)
     End Sub
 
     Private Sub CreateControls()
@@ -111,7 +117,7 @@ Public Class AddInventoryLogForm
         Dim lblTitle As New Label()
         lblTitle.Text = "Add Inventory Log"
         lblTitle.Font = New Font("Poppins", 16, FontStyle.Bold)
-        lblTitle.ForeColor = Color.White
+        lblTitle.ForeColor = Color.FromArgb(42, 42, 42)
         lblTitle.Location = New Point(30, 30)
         lblTitle.AutoSize = True
         Me.Controls.Add(lblTitle)
@@ -120,14 +126,14 @@ Public Class AddInventoryLogForm
         Dim btnClose As New Label()
         btnClose.Text = "X"
         btnClose.Font = New Font("Arial", 16, FontStyle.Bold)
-        btnClose.ForeColor = Color.Gray
+        btnClose.ForeColor = Color.FromArgb(153, 153, 153)
         btnClose.Cursor = Cursors.Hand
         btnClose.Location = New Point(560, 30)
         btnClose.Size = New Size(30, 30)
         btnClose.TextAlign = ContentAlignment.MiddleCenter
         AddHandler btnClose.Click, Sub(s, ev) Me.Close()
-        AddHandler btnClose.MouseEnter, Sub(s, ev) btnClose.ForeColor = Color.Red
-        AddHandler btnClose.MouseLeave, Sub(s, ev) btnClose.ForeColor = Color.Gray
+        AddHandler btnClose.MouseEnter, Sub(s, ev) btnClose.ForeColor = Color.FromArgb(254, 191, 16)
+        AddHandler btnClose.MouseLeave, Sub(s, ev) btnClose.ForeColor = Color.FromArgb(153, 153, 153)
         Me.Controls.Add(btnClose)
 
         Dim yPos = 100
@@ -136,7 +142,7 @@ Public Class AddInventoryLogForm
         Dim lblProduct As New Label()
         lblProduct.Text = "Product *"
         lblProduct.Font = New Font("Poppins", 10, FontStyle.Bold)
-        lblProduct.ForeColor = Color.White
+        lblProduct.ForeColor = Color.FromArgb(42, 42, 42)
         lblProduct.Location = New Point(30, yPos)
         lblProduct.AutoSize = True
         Me.Controls.Add(lblProduct)
@@ -146,8 +152,10 @@ Public Class AddInventoryLogForm
             .Location = New Point(30, yPos + 30),
             .Size = New Size(540, 35),
             .DropDownStyle = ComboBoxStyle.DropDown, ' allow typing
-            .BackColor = Color.FromArgb(61, 65, 66),
-            .ForeColor = Color.White,
+            .BackColor = Color.FromArgb(245, 245, 245),
+            .ForeColor = Color.FromArgb(51, 51, 51),
+            .DrawMode = DrawMode.OwnerDrawFixed,
+            .DropDownHeight = 200,
             .AutoCompleteMode = AutoCompleteMode.None,
             .AutoCompleteSource = AutoCompleteSource.None
         }
@@ -156,6 +164,7 @@ Public Class AddInventoryLogForm
         PopulateComboWithProducts(cmbProduct)
 
         ' Wire handlers
+        AddHandler cmbProduct.DrawItem, AddressOf ComboBox_DrawItem
         AddHandler cmbProduct.SelectedIndexChanged, AddressOf cmbProduct_SelectedIndexChanged
         AddHandler cmbProduct.TextChanged, AddressOf cmbProduct_TextChanged
         AddHandler cmbProduct.KeyDown, AddressOf cmbProduct_KeyDown
@@ -169,7 +178,7 @@ Public Class AddInventoryLogForm
         Dim lblTransactionType As New Label()
         lblTransactionType.Text = "Transaction Type *"
         lblTransactionType.Font = New Font("Poppins", 10, FontStyle.Bold)
-        lblTransactionType.ForeColor = Color.White
+        lblTransactionType.ForeColor = Color.FromArgb(42, 42, 42)
         lblTransactionType.Location = New Point(30, yPos)
         lblTransactionType.AutoSize = True
         Me.Controls.Add(lblTransactionType)
@@ -179,10 +188,13 @@ Public Class AddInventoryLogForm
         cmbTransactionType.Location = New Point(30, yPos + 30)
         cmbTransactionType.Size = New Size(260, 35)
         cmbTransactionType.DropDownStyle = ComboBoxStyle.DropDownList
-        cmbTransactionType.BackColor = Color.FromArgb(61, 65, 66)
-        cmbTransactionType.ForeColor = Color.White
+        cmbTransactionType.BackColor = Color.FromArgb(245, 245, 245)
+        cmbTransactionType.ForeColor = Color.FromArgb(51, 51, 51)
+        cmbTransactionType.DrawMode = DrawMode.OwnerDrawFixed
+        cmbTransactionType.DropDownHeight = 200
         cmbTransactionType.Items.AddRange(New String() {"IN", "OUT"})
         ' Add event handler to show/hide batch fields based on transaction type
+        AddHandler cmbTransactionType.DrawItem, AddressOf ComboBox_DrawItem
         AddHandler cmbTransactionType.SelectedIndexChanged, AddressOf cmbTransactionType_SelectedIndexChanged
         Me.Controls.Add(cmbTransactionType)
 
@@ -190,7 +202,7 @@ Public Class AddInventoryLogForm
         Dim lblQuantity As New Label()
         lblQuantity.Text = "Quantity *"
         lblQuantity.Font = New Font("Poppins", 10, FontStyle.Bold)
-        lblQuantity.ForeColor = Color.White
+        lblQuantity.ForeColor = Color.FromArgb(42, 42, 42)
         lblQuantity.Location = New Point(310, yPos)
         lblQuantity.AutoSize = True
         Me.Controls.Add(lblQuantity)
@@ -199,8 +211,8 @@ Public Class AddInventoryLogForm
         txtQuantity.Font = New Font("Poppins", 10)
         txtQuantity.Location = New Point(310, yPos + 30)
         txtQuantity.Size = New Size(260, 35)
-        txtQuantity.BackColor = Color.FromArgb(61, 65, 66)
-        txtQuantity.ForeColor = Color.White
+        txtQuantity.BackColor = Color.FromArgb(245, 245, 245)
+        txtQuantity.ForeColor = Color.FromArgb(51, 51, 51)
         txtQuantity.BorderStyle = BorderStyle.FixedSingle
         Me.Controls.Add(txtQuantity)
 
@@ -210,7 +222,7 @@ Public Class AddInventoryLogForm
         Dim lblBatchNumber As New Label()
         lblBatchNumber.Text = "Batch Number"
         lblBatchNumber.Font = New Font("Poppins", 10, FontStyle.Bold)
-        lblBatchNumber.ForeColor = Color.White
+        lblBatchNumber.ForeColor = Color.FromArgb(42, 42, 42)
         lblBatchNumber.Location = New Point(30, yPos)
         lblBatchNumber.AutoSize = True
         lblBatchNumber.Name = "lblBatchNumber"
@@ -220,8 +232,8 @@ Public Class AddInventoryLogForm
         txtBatchNumber.Font = New Font("Poppins", 10)
         txtBatchNumber.Location = New Point(30, yPos + 30)
         txtBatchNumber.Size = New Size(260, 35)
-        txtBatchNumber.BackColor = Color.FromArgb(61, 65, 66)
-        txtBatchNumber.ForeColor = Color.White
+        txtBatchNumber.BackColor = Color.FromArgb(245, 245, 245)
+        txtBatchNumber.ForeColor = Color.FromArgb(51, 51, 51)
         txtBatchNumber.BorderStyle = BorderStyle.FixedSingle
         txtBatchNumber.PlaceholderText = "e.g., BATCH-001"
         txtBatchNumber.Name = "txtBatchNumber"
@@ -231,7 +243,7 @@ Public Class AddInventoryLogForm
         Dim lblExpiryDate As New Label()
         lblExpiryDate.Text = "Expiry Date"
         lblExpiryDate.Font = New Font("Poppins", 10, FontStyle.Bold)
-        lblExpiryDate.ForeColor = Color.White
+        lblExpiryDate.ForeColor = Color.FromArgb(42, 42, 42)
         lblExpiryDate.Location = New Point(310, yPos)
         lblExpiryDate.AutoSize = True
         lblExpiryDate.Name = "lblExpiryDate"
@@ -241,8 +253,8 @@ Public Class AddInventoryLogForm
         dtpExpiryDate.Font = New Font("Poppins", 10)
         dtpExpiryDate.Location = New Point(310, yPos + 30)
         dtpExpiryDate.Size = New Size(260, 35)
-        dtpExpiryDate.BackColor = Color.FromArgb(61, 65, 66)
-        dtpExpiryDate.ForeColor = Color.White
+        dtpExpiryDate.BackColor = Color.FromArgb(245, 245, 245)
+        dtpExpiryDate.ForeColor = Color.FromArgb(51, 51, 51)
         dtpExpiryDate.Format = DateTimePickerFormat.Short
         dtpExpiryDate.Value = DateTime.Now.AddYears(1) ' Default to 1 year from now
         dtpExpiryDate.Name = "dtpExpiryDate"
@@ -260,18 +272,21 @@ Public Class AddInventoryLogForm
         Dim lblSupplier As New Label()
         lblSupplier.Text = "Supplier *"
         lblSupplier.Font = New Font("Poppins", 10, FontStyle.Bold)
-        lblSupplier.ForeColor = Color.White
+        lblSupplier.ForeColor = Color.FromArgb(42, 42, 42)
         lblSupplier.Location = New Point(30, yPos)
         lblSupplier.AutoSize = True
         Me.Controls.Add(lblSupplier)
+        belowBatchControls.Add(lblSupplier)
 
         cmbSupplier = New ComboBox()
         cmbSupplier.Font = New Font("Poppins", 10)
         cmbSupplier.Location = New Point(30, yPos + 30)
         cmbSupplier.Size = New Size(540, 35)
         cmbSupplier.DropDownStyle = ComboBoxStyle.DropDownList
-        cmbSupplier.BackColor = Color.FromArgb(61, 65, 66)
-        cmbSupplier.ForeColor = Color.White
+        cmbSupplier.BackColor = Color.FromArgb(245, 245, 245)
+        cmbSupplier.ForeColor = Color.FromArgb(51, 51, 51)
+        cmbSupplier.DrawMode = DrawMode.OwnerDrawFixed
+        cmbSupplier.DropDownHeight = 200
         cmbSupplier.Items.Add("-- Select Supplier --")
         For Each supplier In suppliers
             cmbSupplier.Items.Add(supplier("SupplierName").ToString())
@@ -279,8 +294,10 @@ Public Class AddInventoryLogForm
         cmbSupplier.Items.Add("Add New Supplier...")
         cmbSupplier.SelectedIndex = 0
         ' Add event handler for handling new supplier option
+        AddHandler cmbSupplier.DrawItem, AddressOf ComboBox_DrawItem
         AddHandler cmbSupplier.SelectedIndexChanged, AddressOf cmbSupplier_SelectedIndexChanged
         Me.Controls.Add(cmbSupplier)
+        belowBatchControls.Add(cmbSupplier)
 
         yPos += 90
 
@@ -288,20 +305,22 @@ Public Class AddInventoryLogForm
         Dim lblReference As New Label()
         lblReference.Text = "Reference *"
         lblReference.Font = New Font("Poppins", 10, FontStyle.Bold)
-        lblReference.ForeColor = Color.White
+        lblReference.ForeColor = Color.FromArgb(42, 42, 42)
         lblReference.Location = New Point(30, yPos)
         lblReference.AutoSize = True
         Me.Controls.Add(lblReference)
+        belowBatchControls.Add(lblReference)
 
         txtReference = New TextBox()
         txtReference.Font = New Font("Poppins", 10)
         txtReference.Location = New Point(30, yPos + 30)
         txtReference.Size = New Size(540, 35)
-        txtReference.BackColor = Color.FromArgb(61, 65, 66)
-        txtReference.ForeColor = Color.White
+        txtReference.BackColor = Color.FromArgb(245, 245, 245)
+        txtReference.ForeColor = Color.FromArgb(51, 51, 51)
         txtReference.BorderStyle = BorderStyle.FixedSingle
         txtReference.PlaceholderText = "Purchase Order #, Invoice #, etc."
         Me.Controls.Add(txtReference)
+        belowBatchControls.Add(txtReference)
 
         yPos += 90
 
@@ -313,17 +332,19 @@ Public Class AddInventoryLogForm
         lblNotes.Location = New Point(30, yPos)
         lblNotes.AutoSize = True
         Me.Controls.Add(lblNotes)
+        belowBatchControls.Add(lblNotes)
 
         txtNotes = New TextBox()
         txtNotes.Font = New Font("Poppins", 10)
         txtNotes.Location = New Point(30, yPos + 30)
         txtNotes.Size = New Size(540, 80)
-        txtNotes.BackColor = Color.FromArgb(61, 65, 66)
-        txtNotes.ForeColor = Color.White
+        txtNotes.BackColor = Color.FromArgb(245, 245, 245)
+        txtNotes.ForeColor = Color.FromArgb(51, 51, 51)
         txtNotes.BorderStyle = BorderStyle.FixedSingle
         txtNotes.Multiline = True
         txtNotes.PlaceholderText = "Additional notes about this transaction..."
         Me.Controls.Add(txtNotes)
+        belowBatchControls.Add(txtNotes)
 
         yPos += 140
 
@@ -333,26 +354,36 @@ Public Class AddInventoryLogForm
         btnCancel.Font = New Font("Poppins", 10)
         btnCancel.Location = New Point(350, yPos)
         btnCancel.Size = New Size(100, 40)
-        btnCancel.BackColor = Color.FromArgb(60, 60, 60)
-        btnCancel.ForeColor = Color.White
+        btnCancel.BackColor = Color.FromArgb(200, 200, 200)
+        btnCancel.ForeColor = Color.FromArgb(51, 51, 51)
         btnCancel.FlatStyle = FlatStyle.Flat
         btnCancel.FlatAppearance.BorderSize = 0
         btnCancel.Cursor = Cursors.Hand
         AddHandler btnCancel.Click, Sub(s, ev) Me.Close()
         Me.Controls.Add(btnCancel)
+        belowBatchControls.Add(btnCancel)
 
         Dim btnSave As New Button()
         btnSave.Text = "Save Log"
         btnSave.Font = New Font("Poppins", 10, FontStyle.Bold)
         btnSave.Location = New Point(470, yPos)
         btnSave.Size = New Size(100, 40)
-        btnSave.BackColor = Color.White
-        btnSave.ForeColor = Color.Black
+        btnSave.BackColor = Color.FromArgb(254, 191, 16)
+        btnSave.ForeColor = Color.FromArgb(51, 51, 51)
         btnSave.FlatStyle = FlatStyle.Flat
         btnSave.FlatAppearance.BorderSize = 0
         btnSave.Cursor = Cursors.Hand
         AddHandler btnSave.Click, AddressOf SaveInventoryLog
         Me.Controls.Add(btnSave)
+        belowBatchControls.Add(btnSave)
+    End Sub
+
+    Private Sub ApplyBatchLayout(expanded As Boolean)
+        Dim delta = If(expanded, BatchSectionHeight, -BatchSectionHeight)
+        For Each ctl In belowBatchControls
+            ctl.Top += delta
+        Next
+        batchOffsetApplied = expanded
     End Sub
 
     ' Helper to populate combo with full products list (keeps product order in sync)
@@ -365,8 +396,53 @@ Public Class AddInventoryLogForm
         cb.EndUpdate()
     End Sub
 
+    Private Sub ComboBox_DrawItem(sender As Object, e As DrawItemEventArgs)
+        If e.Index < 0 Then Return
+        Dim cb = CType(sender, ComboBox)
+
+        e.Graphics.FillRectangle(New SolidBrush(cb.BackColor), e.Bounds)
+
+        If (e.State And DrawItemState.Selected) = DrawItemState.Selected Then
+            e.Graphics.FillRectangle(New SolidBrush(Color.FromArgb(235, 228, 200)), e.Bounds)
+        End If
+
+        Using textBrush As New SolidBrush(cb.ForeColor)
+            e.Graphics.DrawString(cb.Items(e.Index).ToString(), cb.Font, textBrush, e.Bounds.X + 3, e.Bounds.Y + 3)
+        End Using
+
+        e.DrawFocusRectangle()
+    End Sub
+
     ' Event handlers for showing/hiding batch fields
     Private Sub cmbProduct_SelectedIndexChanged(sender As Object, e As EventArgs)
+        Dim cb = CType(sender, ComboBox)
+        If suppressProductTextChanged Then Return
+        If products.Count = 0 Then Return
+
+        ' Only restore full list when dropdown is closed (user clicked item or pressed Enter)
+        ' Don't interfere while user is still browsing with arrow keys
+        If Not cb.DroppedDown Then
+            If cb.SelectedIndex >= 0 AndAlso cb.SelectedItem IsNot Nothing Then
+                Dim selectedText = cb.SelectedItem.ToString()
+                Dim productIndex As Integer = -1
+                For idx As Integer = 0 To products.Count - 1
+                    If String.Equals(products(idx)("ProductName").ToString(), selectedText, StringComparison.OrdinalIgnoreCase) Then
+                        productIndex = idx
+                        Exit For
+                    End If
+                Next
+
+                If productIndex >= 0 AndAlso productIndex < products.Count Then
+                    suppressProductTextChanged = True
+                    PopulateComboWithProducts(cb)
+                    If cb.Items.Count > productIndex Then
+                        cb.SelectedIndex = productIndex
+                    End If
+                    suppressProductTextChanged = False
+                End If
+            End If
+        End If
+
         UpdateBatchFieldsVisibility()
     End Sub
 
@@ -402,7 +478,7 @@ Public Class AddInventoryLogForm
         supplierForm.Size = New Size(500, 450)
         supplierForm.StartPosition = FormStartPosition.CenterParent
         supplierForm.FormBorderStyle = FormBorderStyle.None
-        supplierForm.BackColor = Color.FromArgb(30, 30, 30)
+        supplierForm.BackColor = Color.White
         supplierForm.ShowInTaskbar = False
 
         ' Add rounded corners
@@ -416,20 +492,20 @@ Public Class AddInventoryLogForm
 
         ' Add border panel
         Dim borderPanel As New Panel()
-        borderPanel.BackColor = Color.FromArgb(61, 65, 66)
+        borderPanel.BackColor = Color.FromArgb(220, 220, 220)
         borderPanel.Dock = DockStyle.Fill
         borderPanel.Padding = New Padding(2)
         supplierForm.Controls.Add(borderPanel)
 
         ' Inner panel
         Dim contentPanel As New Panel()
-        contentPanel.BackColor = Color.FromArgb(30, 30, 30)
+        contentPanel.BackColor = Color.White
         contentPanel.Dock = DockStyle.Fill
         borderPanel.Controls.Add(contentPanel)
 
         ' Title panel
         Dim titlePanel As New Panel()
-        titlePanel.BackColor = Color.FromArgb(40, 40, 40)
+        titlePanel.BackColor = Color.FromArgb(250, 249, 246)
         titlePanel.Dock = DockStyle.Top
         titlePanel.Height = 60
         contentPanel.Controls.Add(titlePanel)
@@ -437,7 +513,7 @@ Public Class AddInventoryLogForm
         Dim lblTitle As New Label()
         lblTitle.Text = "Add New Supplier"
         lblTitle.Font = New Font("Poppins SemiBold", 14, FontStyle.Bold)
-        lblTitle.ForeColor = Color.White
+        lblTitle.ForeColor = Color.FromArgb(42, 42, 42)
         lblTitle.Location = New Point(20, 15)
         lblTitle.AutoSize = True
         titlePanel.Controls.Add(lblTitle)
@@ -446,7 +522,7 @@ Public Class AddInventoryLogForm
         Dim btnClose As New Label()
         btnClose.Text = "?"
         btnClose.Font = New Font("Arial", 16, FontStyle.Bold)
-        btnClose.ForeColor = Color.Gray
+        btnClose.ForeColor = Color.FromArgb(153, 153, 153)
         btnClose.Cursor = Cursors.Hand
         btnClose.Location = New Point(460, 15)
         btnClose.Size = New Size(30, 30)
@@ -455,15 +531,15 @@ Public Class AddInventoryLogForm
                                        overlayPanel.Dispose()
                                        supplierForm.Close()
                                    End Sub
-        AddHandler btnClose.MouseEnter, Sub(s, ev) btnClose.ForeColor = Color.Red
-        AddHandler btnClose.MouseLeave, Sub(s, ev) btnClose.ForeColor = Color.Gray
+        AddHandler btnClose.MouseEnter, Sub(s, ev) btnClose.ForeColor = Color.FromArgb(254, 191, 16)
+        AddHandler btnClose.MouseLeave, Sub(s, ev) btnClose.ForeColor = Color.FromArgb(153, 153, 153)
         titlePanel.Controls.Add(btnClose)
 
         ' Main panel
         Dim mainPanel As New Panel()
         mainPanel.Location = New Point(0, 60)
         mainPanel.Size = New Size(500, 390)
-        mainPanel.BackColor = Color.FromArgb(30, 30, 30)
+        mainPanel.BackColor = Color.White
         mainPanel.AutoScroll = True
         contentPanel.Controls.Add(mainPanel)
 
@@ -471,7 +547,7 @@ Public Class AddInventoryLogForm
         Dim lblName As New Label()
         lblName.Text = "Supplier Name *"
         lblName.Font = New Font("Poppins", 10)
-        lblName.ForeColor = Color.White
+        lblName.ForeColor = Color.FromArgb(42, 42, 42)
         lblName.Location = New Point(30, 20)
         lblName.AutoSize = True
         mainPanel.Controls.Add(lblName)
@@ -480,8 +556,8 @@ Public Class AddInventoryLogForm
         txtName.Font = New Font("Poppins", 10)
         txtName.Location = New Point(30, 50)
         txtName.Size = New Size(430, 35)
-        txtName.BackColor = Color.FromArgb(45, 45, 45)
-        txtName.ForeColor = Color.White
+        txtName.BackColor = Color.FromArgb(245, 245, 245)
+        txtName.ForeColor = Color.FromArgb(51, 51, 51)
         txtName.BorderStyle = BorderStyle.FixedSingle
         mainPanel.Controls.Add(txtName)
 
@@ -489,7 +565,7 @@ Public Class AddInventoryLogForm
         Dim lblContact As New Label()
         lblContact.Text = "Contact Person"
         lblContact.Font = New Font("Poppins", 10)
-        lblContact.ForeColor = Color.White
+        lblContact.ForeColor = Color.FromArgb(42, 42, 42)
         lblContact.Location = New Point(30, 100)
         lblContact.AutoSize = True
         mainPanel.Controls.Add(lblContact)
@@ -498,8 +574,8 @@ Public Class AddInventoryLogForm
         txtContact.Font = New Font("Poppins", 10)
         txtContact.Location = New Point(30, 130)
         txtContact.Size = New Size(430, 35)
-        txtContact.BackColor = Color.FromArgb(45, 45, 45)
-        txtContact.ForeColor = Color.White
+        txtContact.BackColor = Color.FromArgb(245, 245, 245)
+        txtContact.ForeColor = Color.FromArgb(51, 51, 51)
         txtContact.BorderStyle = BorderStyle.FixedSingle
         mainPanel.Controls.Add(txtContact)
 
@@ -507,7 +583,7 @@ Public Class AddInventoryLogForm
         Dim lblPhone As New Label()
         lblPhone.Text = "Phone"
         lblPhone.Font = New Font("Poppins", 10)
-        lblPhone.ForeColor = Color.White
+        lblPhone.ForeColor = Color.FromArgb(42, 42, 42)
         lblPhone.Location = New Point(30, 180)
         lblPhone.AutoSize = True
         mainPanel.Controls.Add(lblPhone)
@@ -516,8 +592,8 @@ Public Class AddInventoryLogForm
         txtPhone.Font = New Font("Poppins", 10)
         txtPhone.Location = New Point(30, 210)
         txtPhone.Size = New Size(430, 35)
-        txtPhone.BackColor = Color.FromArgb(45, 45, 45)
-        txtPhone.ForeColor = Color.White
+        txtPhone.BackColor = Color.FromArgb(245, 245, 245)
+        txtPhone.ForeColor = Color.FromArgb(51, 51, 51)
         txtPhone.BorderStyle = BorderStyle.FixedSingle
         mainPanel.Controls.Add(txtPhone)
 
@@ -525,7 +601,7 @@ Public Class AddInventoryLogForm
         Dim lblEmail As New Label()
         lblEmail.Text = "Email"
         lblEmail.Font = New Font("Poppins", 10)
-        lblEmail.ForeColor = Color.White
+        lblEmail.ForeColor = Color.FromArgb(42, 42, 42)
         lblEmail.Location = New Point(30, 260)
         lblEmail.AutoSize = True
         mainPanel.Controls.Add(lblEmail)
@@ -534,8 +610,8 @@ Public Class AddInventoryLogForm
         txtEmail.Font = New Font("Poppins", 10)
         txtEmail.Location = New Point(30, 290)
         txtEmail.Size = New Size(430, 35)
-        txtEmail.BackColor = Color.FromArgb(45, 45, 45)
-        txtEmail.ForeColor = Color.White
+        txtEmail.BackColor = Color.FromArgb(245, 245, 245)
+        txtEmail.ForeColor = Color.FromArgb(51, 51, 51)
         txtEmail.BorderStyle = BorderStyle.FixedSingle
         mainPanel.Controls.Add(txtEmail)
 
@@ -552,8 +628,8 @@ Public Class AddInventoryLogForm
         btnSave.Font = New Font("Poppins SemiBold", 10, FontStyle.Bold)
         btnSave.Location = New Point(300, 0)
         btnSave.Size = New Size(130, 40)
-        btnSave.BackColor = Color.White
-        btnSave.ForeColor = Color.Black
+        btnSave.BackColor = Color.FromArgb(254, 191, 16)
+        btnSave.ForeColor = Color.FromArgb(51, 51, 51)
         btnSave.FlatStyle = FlatStyle.Flat
         btnSave.FlatAppearance.BorderSize = 0
         btnSave.Cursor = Cursors.Hand
@@ -596,8 +672,8 @@ Public Class AddInventoryLogForm
         btnCancel.Font = New Font("Poppins", 10)
         btnCancel.Location = New Point(160, 0)
         btnCancel.Size = New Size(130, 40)
-        btnCancel.BackColor = Color.FromArgb(60, 60, 60)
-        btnCancel.ForeColor = Color.White
+        btnCancel.BackColor = Color.FromArgb(200, 200, 200)
+        btnCancel.ForeColor = Color.FromArgb(51, 51, 51)
         btnCancel.FlatStyle = FlatStyle.Flat
         btnCancel.FlatAppearance.BorderSize = 0
         btnCancel.Cursor = Cursors.Hand
@@ -721,10 +797,17 @@ Public Class AddInventoryLogForm
                 lblExpiryDate.Visible = shouldShowBatchFields
                 If shouldShowBatchFields Then
                     lblExpiryDate.Text = "Expiry Date *" ' Make it required for ENDO
-                    lblExpiryDate.ForeColor = Color.FromArgb(255, 100, 100) ' Light red to indicate required
+                    lblExpiryDate.ForeColor = Color.FromArgb(254, 191, 16) ' GoldenYellow to indicate required
                 End If
             End If
             If dtpExpiryDate IsNot Nothing Then dtpExpiryDate.Visible = shouldShowBatchFields
+
+            ' Toggle layout: shift below-batch controls and form height
+            If shouldShowBatchFields AndAlso Not batchOffsetApplied Then
+                ApplyBatchLayout(True)
+            ElseIf Not shouldShowBatchFields AndAlso batchOffsetApplied Then
+                ApplyBatchLayout(False)
+            End If
 
         Catch ex As Exception
             ' Silent fail - batch fields will remain in their current state
@@ -803,19 +886,10 @@ Public Class AddInventoryLogForm
             Return False
         End If
 
-        ' Require notes for Stock OUT transactions
-        Dim transactionType As String = If(cmbTransactionType.SelectedItem, "").ToString().Trim().ToUpperInvariant()
-        If transactionType = "OUT" Then
-            If String.IsNullOrWhiteSpace(txtNotes.Text) Then
-                MessageBox.Show("Notes are required for Stock OUT transactions!", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-                txtNotes.Focus()
-                Return False
-            End If
-        End If
-
         ' Validate batch fields for ENDO products during Stock IN
         Dim selectedProduct = products(cmbProduct.SelectedIndex)
         Dim productCategory As String = selectedProduct("Category").ToString().ToUpper()
+        Dim transactionType As String = If(cmbTransactionType.SelectedItem, "").ToString().Trim().ToUpperInvariant()
 
         If productCategory = "ENDO" AndAlso transactionType = "IN" Then
             ' Get batch controls
@@ -944,13 +1018,18 @@ Public Class AddInventoryLogForm
         IdleTimeoutManager.Instance.StopMonitoring(Me)
     End Sub
 
-    ' Replace the existing cmbProduct_TextChanged with this implementation.
     Private Sub cmbProduct_TextChanged(sender As Object, e As EventArgs)
-        Try
-            If suppressProductTextChanged Then Return
+        If suppressProductTextChanged Then Return
 
-            Dim cb = CType(sender, ComboBox)
-            Dim originalText As String = If(cb.Text, "")
+        Dim cb = CType(sender, ComboBox)
+        Dim originalText As String = If(cb.Text, "")
+
+        ' If dropdown is open and text matches an item, it's arrow navigation — skip re-filtering
+        If cb.DroppedDown AndAlso cb.Items.OfType(Of String)().Any(Function(s) s.Equals(originalText, StringComparison.OrdinalIgnoreCase)) Then
+            Return
+        End If
+
+        Try
             Dim caretPos As Integer = Math.Max(0, Math.Min(cb.SelectionStart, originalText.Length))
             Dim input = originalText.Trim()
 
@@ -995,45 +1074,40 @@ Public Class AddInventoryLogForm
             Dim cb = CType(sender, ComboBox)
 
             Select Case e.KeyCode
-                Case Keys.Down
-                    If cb.Items.Count > 0 Then cb.DroppedDown = True
                 Case Keys.Escape
                     cb.DroppedDown = False
-                Case Keys.Enter, Keys.Tab
-                    If cb.Items.Count > 0 Then
-                        ' Determine the suggestion to accept (highlighted in dropdown or first)
-                        Dim suggestedText As String = Nothing
-                        If cb.SelectedItem IsNot Nothing Then
-                            suggestedText = cb.SelectedItem.ToString()
-                        ElseIf cb.Items.Count > 0 Then
-                            suggestedText = cb.Items(0).ToString()
-                        End If
+                Case Keys.Enter
+                    If cb.Items.Count = 0 Then Exit Select
+                    ' Determine the suggestion to accept (highlighted in dropdown or first)
+                    Dim suggestedText As String = Nothing
+                    If cb.SelectedItem IsNot Nothing Then
+                        suggestedText = cb.SelectedItem.ToString()
+                    Else
+                        suggestedText = cb.Items(0).ToString()
+                    End If
 
-                        If Not String.IsNullOrEmpty(suggestedText) Then
-                            ' Find product index in the master list
-                            Dim productIndex As Integer = -1
-                            For idx As Integer = 0 To products.Count - 1
-                                If String.Equals(products(idx)("ProductName").ToString(), suggestedText, StringComparison.OrdinalIgnoreCase) Then
-                                    productIndex = idx
-                                    Exit For
-                                End If
-                            Next
-
-                            If productIndex >= 0 Then
-                                ' Restore full list and select the correct product index so downstream code uses the right index
-                                suppressProductTextChanged = True
-                                PopulateComboWithProducts(cb)
-                                cb.SelectedIndex = productIndex
-                                cb.DroppedDown = False
-                                suppressProductTextChanged = False
-
-                                ' Move focus to next control when Tab/Enter accepted
-                                e.Handled = True
-                                e.SuppressKeyPress = True
-                                If e.KeyCode = Keys.Tab Then
-                                    Me.SelectNextControl(cb, True, True, True, True)
-                                End If
+                    If Not String.IsNullOrEmpty(suggestedText) Then
+                        ' Find product index in the master list
+                        Dim productIndex As Integer = -1
+                        For idx As Integer = 0 To products.Count - 1
+                            If String.Equals(products(idx)("ProductName").ToString(), suggestedText, StringComparison.OrdinalIgnoreCase) Then
+                                productIndex = idx
+                                Exit For
                             End If
+                        Next
+
+                        If productIndex >= 0 AndAlso productIndex < products.Count Then
+                            suppressProductTextChanged = True
+                            PopulateComboWithProducts(cb)
+                            If cb.Items.Count > productIndex Then
+                                cb.SelectedIndex = productIndex
+                            End If
+                            cb.DroppedDown = False
+                            suppressProductTextChanged = False
+
+                            UpdateBatchFieldsVisibility()
+                            e.Handled = True
+                            e.SuppressKeyPress = True
                         End If
                     End If
             End Select
@@ -1051,17 +1125,18 @@ Public Class AddInventoryLogForm
                 Return
             End If
 
-            ' Try to find exact match in the full products list (case-insensitive)
+            ' Always confirm against master list — Arrow-navigated index may be from filtered list
             For idx As Integer = 0 To products.Count - 1
                 If String.Equals(products(idx)("ProductName").ToString(), typed, StringComparison.OrdinalIgnoreCase) Then
-                    ' Restore full list then select the exact product position
-                    cb.BeginUpdate()
-                    cb.Items.Clear()
-                    For Each p In products
-                        cb.Items.Add(p("ProductName").ToString())
-                    Next
-                    cb.EndUpdate()
-                    cb.SelectedIndex = idx
+                    If cb.SelectedIndex <> idx OrElse cb.Items.Count <> products.Count Then
+                        suppressProductTextChanged = True
+                        PopulateComboWithProducts(cb)
+                        If cb.Items.Count > idx Then
+                            cb.SelectedIndex = idx
+                        End If
+                        suppressProductTextChanged = False
+                    End If
+                    UpdateBatchFieldsVisibility()
                     Return
                 End If
             Next
