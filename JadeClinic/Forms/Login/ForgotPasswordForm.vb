@@ -27,7 +27,7 @@ Public Class ForgotPasswordForm
         Me.MaximizeBox = False
         Me.MinimizeBox = False
         Me.StartPosition = FormStartPosition.CenterParent
-        Me.BackColor = Drawing.Color.FromArgb(41, 44, 45)
+        Me.BackColor = Drawing.Color.White
         InitializeStepControls()
         ShowStep(1)
         Me.KeyPreview = True
@@ -48,14 +48,14 @@ Public Class ForgotPasswordForm
             .Text = "Step 1",
             .Font = New Drawing.Font("Poppins", 18, Drawing.FontStyle.Bold),
             .Location = New Drawing.Point(marginX, marginY),
-            .ForeColor = Drawing.Color.White,
+            .ForeColor = Drawing.Color.FromArgb(51, 51, 51),
             .AutoSize = True,
             .BackColor = Drawing.Color.Transparent
         }
         lblInstruction = New Label() With {
             .Text = "",
             .Location = New Drawing.Point(marginX, marginY + 50),
-            .ForeColor = Drawing.Color.White,
+            .ForeColor = Drawing.Color.FromArgb(51, 51, 51),
             .Font = New Drawing.Font("Poppins", 12, Drawing.FontStyle.Regular),
             .AutoSize = True,
             .BackColor = Drawing.Color.Transparent
@@ -64,8 +64,8 @@ Public Class ForgotPasswordForm
             .Location = New Drawing.Point(marginX, marginY + 95),
             .Width = controlWidth,
             .Font = New Drawing.Font("Poppins", 12, Drawing.FontStyle.Regular),
-            .ForeColor = Drawing.Color.White,
-            .BackColor = Drawing.Color.FromArgb(61, 65, 66),
+            .ForeColor = Drawing.Color.FromArgb(51, 51, 51),
+            .BackColor = Drawing.Color.FromArgb(237, 237, 237),
             .BorderStyle = BorderStyle.FixedSingle,
             .TextAlign = HorizontalAlignment.Center
         }
@@ -74,8 +74,8 @@ Public Class ForgotPasswordForm
             .Location = New Drawing.Point(marginX, marginY + 95),
             .Width = controlWidth,
             .Font = New Drawing.Font("Poppins", 12, Drawing.FontStyle.Regular),
-            .ForeColor = Drawing.Color.White,
-            .BackColor = Drawing.Color.FromArgb(61, 65, 66),
+            .ForeColor = Drawing.Color.FromArgb(51, 51, 51),
+            .BackColor = Drawing.Color.FromArgb(237, 237, 237),
             .BorderStyle = BorderStyle.FixedSingle,
             .TextAlign = HorizontalAlignment.Center,
             .Visible = False
@@ -84,8 +84,8 @@ Public Class ForgotPasswordForm
             .Location = New Drawing.Point(marginX, marginY + 140),
             .Width = controlWidth,
             .Font = New Drawing.Font("Poppins", 12, Drawing.FontStyle.Regular),
-            .ForeColor = Drawing.Color.White,
-            .BackColor = Drawing.Color.FromArgb(61, 65, 66),
+            .ForeColor = Drawing.Color.FromArgb(51, 51, 51),
+            .BackColor = Drawing.Color.FromArgb(237, 237, 237),
             .BorderStyle = BorderStyle.FixedSingle,
             .TextAlign = HorizontalAlignment.Center,
             .Visible = False
@@ -94,8 +94,8 @@ Public Class ForgotPasswordForm
             .Location = New Drawing.Point(marginX, marginY + 185),
             .Width = controlWidth,
             .Font = New Drawing.Font("Poppins", 12, Drawing.FontStyle.Regular),
-            .ForeColor = Drawing.Color.White,
-            .BackColor = Drawing.Color.FromArgb(61, 65, 66),
+            .ForeColor = Drawing.Color.FromArgb(51, 51, 51),
+            .BackColor = Drawing.Color.FromArgb(237, 237, 237),
             .BorderStyle = BorderStyle.FixedSingle,
             .TextAlign = HorizontalAlignment.Center,
             .Visible = False
@@ -107,8 +107,8 @@ Public Class ForgotPasswordForm
             .Width = buttonWidth,
             .Height = buttonHeight,
             .Font = New Drawing.Font("Poppins", 11, Drawing.FontStyle.Regular),
-            .BackColor = Drawing.Color.FromArgb(61, 65, 66),
-            .ForeColor = Drawing.Color.White,
+            .BackColor = Drawing.Color.FromArgb(237, 237, 237),
+            .ForeColor = Drawing.Color.FromArgb(51, 51, 51),
             .FlatStyle = FlatStyle.Flat,
             .Visible = False
         }
@@ -119,8 +119,8 @@ Public Class ForgotPasswordForm
             .Width = buttonWidth,
             .Height = buttonHeight,
             .Font = New Drawing.Font("Poppins", 11, Drawing.FontStyle.Regular),
-            .BackColor = Drawing.Color.FromArgb(255, 204, 77),
-            .ForeColor = Drawing.Color.Black,
+            .BackColor = Drawing.Color.FromArgb(254, 191, 16),
+            .ForeColor = Drawing.Color.FromArgb(51, 51, 51),
             .FlatStyle = FlatStyle.Flat
         }
         btnNext.FlatAppearance.BorderSize = 0
@@ -130,7 +130,7 @@ Public Class ForgotPasswordForm
             .Width = buttonWidth,
             .Height = buttonHeight,
             .Font = New Drawing.Font("Poppins", 11, Drawing.FontStyle.Regular),
-            .BackColor = Drawing.Color.FromArgb(61, 65, 66),
+            .BackColor = Drawing.Color.FromArgb(220, 80, 70),
             .ForeColor = Drawing.Color.White,
             .FlatStyle = FlatStyle.Flat
         }
@@ -141,8 +141,8 @@ Public Class ForgotPasswordForm
             .PasswordChar = "*"c,
             .Visible = False,
             .Font = New Drawing.Font("Poppins", 12, Drawing.FontStyle.Regular),
-            .ForeColor = Drawing.Color.White,
-            .BackColor = Drawing.Color.FromArgb(61, 65, 66),
+            .ForeColor = Drawing.Color.FromArgb(51, 51, 51),
+            .BackColor = Drawing.Color.FromArgb(237, 237, 237),
             .BorderStyle = BorderStyle.FixedSingle,
             .TextAlign = HorizontalAlignment.Center
         }
@@ -152,8 +152,8 @@ Public Class ForgotPasswordForm
             .PasswordChar = "*"c,
             .Visible = False,
             .Font = New Drawing.Font("Poppins", 12, Drawing.FontStyle.Regular),
-            .ForeColor = Drawing.Color.White,
-            .BackColor = Drawing.Color.FromArgb(61, 65, 66),
+            .ForeColor = Drawing.Color.FromArgb(51, 51, 51),
+            .BackColor = Drawing.Color.FromArgb(237, 237, 237),
             .BorderStyle = BorderStyle.FixedSingle,
             .TextAlign = HorizontalAlignment.Center
         }

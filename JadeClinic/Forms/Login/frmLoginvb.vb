@@ -77,11 +77,11 @@ Public Class frmLoginvb
 
         ' Add hover effect for QR login label with proper cursor
         AddHandler Guna2HtmlLabel5.MouseEnter, Sub()
-                                                   Guna2HtmlLabel5.ForeColor = Color.FromArgb(255, 204, 77) ' Orange color on hover
+                                                   Guna2HtmlLabel5.ForeColor = Color.FromArgb(254, 191, 16) ' GoldenYellow on hover
                                                    Guna2HtmlLabel5.Cursor = Cursors.Hand ' Hand cursor on hover
                                                End Sub
         AddHandler Guna2HtmlLabel5.MouseLeave, Sub()
-                                                   Guna2HtmlLabel5.ForeColor = Color.White ' Back to white
+                                                   Guna2HtmlLabel5.ForeColor = Color.FromArgb(51, 51, 51) ' Back to DarkText
                                                    Guna2HtmlLabel5.Cursor = Cursors.Default ' Default cursor
                                                End Sub
 
@@ -390,7 +390,7 @@ Public Class frmLoginvb
         qrDialog.Text = "QR Code Scanner - Staff Login"
         qrDialog.Size = New Size(550, 480)
         qrDialog.StartPosition = FormStartPosition.CenterParent
-        qrDialog.BackColor = Color.FromArgb(41, 44, 45)
+        qrDialog.BackColor = Color.White
         qrDialog.FormBorderStyle = FormBorderStyle.FixedDialog
         qrDialog.MaximizeBox = False
         qrDialog.MinimizeBox = False
@@ -401,8 +401,8 @@ Public Class frmLoginvb
         Dim txtQRInput As New TextBox()
         txtQRInput.Location = New Point(-1000, 10) ' Visible for debugging
         txtQRInput.Size = New Size(200, 20)
-        txtQRInput.BackColor = Color.FromArgb(61, 65, 66)
-        txtQRInput.ForeColor = Color.White
+        txtQRInput.BackColor = Color.FromArgb(237, 237, 237)
+        txtQRInput.ForeColor = Color.FromArgb(51, 51, 51)
         txtQRInput.BorderStyle = BorderStyle.FixedSingle
         txtQRInput.TabIndex = 0
         txtQRInput.TabStop = True
@@ -411,7 +411,7 @@ Public Class frmLoginvb
         Dim lblDebug As New Label()
         lblDebug.Text = "Debug: (empty)"
         lblDebug.Font = New Font("Poppins", 8.0F, FontStyle.Regular)
-        lblDebug.ForeColor = Color.Yellow
+        lblDebug.ForeColor = Color.FromArgb(102, 102, 102)
         lblDebug.BackColor = Color.Transparent
         lblDebug.AutoSize = True
         lblDebug.Visible = True ' Made visible for debugging
@@ -423,9 +423,9 @@ Public Class frmLoginvb
 
         ' Title label
         Dim lblTitle As New Label()
-        lblTitle.Text = "🔍 QR Code Scanner"
+        lblTitle.Text = "QR Code Scanner"
         lblTitle.Font = New Font("Poppins", 18.0F, FontStyle.Bold)
-        lblTitle.ForeColor = Color.White
+        lblTitle.ForeColor = Color.FromArgb(51, 51, 51)
         lblTitle.BackColor = Color.Transparent
         lblTitle.AutoSize = True
         lblTitle.Location = New Point(0, 70) ' Temporary position
@@ -433,9 +433,9 @@ Public Class frmLoginvb
 
         ' Instruction label
         Dim lblInstruction As New Label()
-        lblInstruction.Text = "📱 Point your QR scanner at the staff QR code"
+        lblInstruction.Text = "Point your QR scanner at the staff QR code"
         lblInstruction.Font = New Font("Poppins", 11.0F, FontStyle.Regular)
-        lblInstruction.ForeColor = Color.FromArgb(255, 204, 77)
+        lblInstruction.ForeColor = Color.FromArgb(51, 51, 51)
         lblInstruction.BackColor = Color.Transparent
         lblInstruction.AutoSize = True
         lblInstruction.Location = New Point(0, 120) ' Temporary position
@@ -445,7 +445,7 @@ Public Class frmLoginvb
         Dim lblInstruction2 As New Label()
         lblInstruction2.Text = "Scanner will automatically detect and process QR codes"
         lblInstruction2.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
-        lblInstruction2.ForeColor = Color.LightGray
+        lblInstruction2.ForeColor = Color.FromArgb(102, 102, 102)
         lblInstruction2.BackColor = Color.Transparent
         lblInstruction2.AutoSize = True
         lblInstruction2.Location = New Point(0, 150) ' Temporary position
@@ -453,9 +453,9 @@ Public Class frmLoginvb
 
         ' Status label
         Dim lblStatus As New Label()
-        lblStatus.Text = "🔍 Ready to scan QR code..."
+        lblStatus.Text = "Ready to scan QR code..."
         lblStatus.Font = New Font("Poppins", 10.0F, FontStyle.Regular)
-        lblStatus.ForeColor = Color.LightGreen
+        lblStatus.ForeColor = Color.FromArgb(80, 160, 80)
         lblStatus.BackColor = Color.Transparent
         lblStatus.AutoSize = True
         lblStatus.Location = New Point(0, 200) ' Temporary position
@@ -463,9 +463,9 @@ Public Class frmLoginvb
 
         ' QR indicator (blinking effect)
         Dim lblQRIndicator As New Label()
-        lblQRIndicator.Text = "🟢 Scanner Active - Waiting for QR code..."
+        lblQRIndicator.Text = "Scanner Active - Waiting for QR code..."
         lblQRIndicator.Font = New Font("Poppins", 10.0F, FontStyle.Regular)
-        lblQRIndicator.ForeColor = Color.FromArgb(100, 255, 100)
+        lblQRIndicator.ForeColor = Color.FromArgb(80, 160, 80)
         lblQRIndicator.BackColor = Color.Transparent
         lblQRIndicator.AutoSize = True
         lblQRIndicator.Location = New Point(0, 230) ' Temporary position
@@ -473,10 +473,10 @@ Public Class frmLoginvb
 
         ' Close button (centered)
         Dim btnClose As New Button()
-        btnClose.Text = "✕ Close Scanner"
+        btnClose.Text = "Close Scanner"
         btnClose.Size = New Size(140, 40)
         btnClose.Location = New Point((qrDialog.ClientSize.Width - 140) / 2, 320)
-        btnClose.BackColor = Color.FromArgb(255, 100, 100)
+        btnClose.BackColor = Color.FromArgb(220, 80, 70)
         btnClose.ForeColor = Color.White
         btnClose.Font = New Font("Poppins", 10.0F, FontStyle.Regular)
         btnClose.FlatStyle = FlatStyle.Flat
@@ -489,10 +489,10 @@ Public Class frmLoginvb
 
         ' Add hover effect to close button
         AddHandler btnClose.MouseEnter, Sub()
-                                            btnClose.BackColor = Color.FromArgb(255, 50, 50)
+                                            btnClose.BackColor = Color.FromArgb(190, 60, 50)
                                         End Sub
         AddHandler btnClose.MouseLeave, Sub()
-                                            btnClose.BackColor = Color.FromArgb(255, 100, 100)
+                                            btnClose.BackColor = Color.FromArgb(220, 80, 70)
                                         End Sub
 
         ' Add all controls to dialog first
@@ -514,12 +514,12 @@ Public Class frmLoginvb
         blinkTimer.Interval = 1000
         AddHandler blinkTimer.Tick, Sub()
                                         Try
-                                            If lblQRIndicator.ForeColor = Color.FromArgb(100, 255, 100) Then
-                                                lblQRIndicator.ForeColor = Color.Gray
-                                                lblQRIndicator.Text = "🔘 Scanner Active - Waiting for QR code..."
+                                            If lblQRIndicator.ForeColor = Color.FromArgb(80, 160, 80) Then
+                                                lblQRIndicator.ForeColor = Color.FromArgb(102, 102, 102)
+                                                lblQRIndicator.Text = "Scanner Active - Waiting for QR code..."
                                             Else
-                                                lblQRIndicator.ForeColor = Color.FromArgb(100, 255, 100)
-                                                lblQRIndicator.Text = "🟢 Scanner Active - Waiting for QR code..."
+                                                lblQRIndicator.ForeColor = Color.FromArgb(80, 160, 80)
+                                                lblQRIndicator.Text = "Scanner Active - Waiting for QR code..."
                                             End If
                                             ' Recenter after text change
                                             lblQRIndicator.Location = New Point((qrDialog.ClientSize.Width - lblQRIndicator.Width) / 2, 230)
@@ -536,8 +536,8 @@ Public Class frmLoginvb
                                                 If Not String.IsNullOrEmpty(txtQRInput.Text) AndAlso Not txtQRInput.Text.Trim().StartsWith("User-") Then
                                                     Console.WriteLine($"Auto-clearing: '{txtQRInput.Text}'")
                                                     txtQRInput.Clear()
-                                                    lblStatus.Text = "🗑️ Cleared accidental input - Ready to scan..."
-                                                    lblStatus.ForeColor = Color.Orange
+                                                    lblStatus.Text = "Cleared accidental input - Ready to scan..."
+                                                    lblStatus.ForeColor = Color.FromArgb(230, 150, 40)
                                                     lblStatus.Location = New Point((qrDialog.ClientSize.Width - lblStatus.Width) / 2, 200)
                                                     lblDebug.Text = "Debug: Auto-cleared"
 
@@ -547,8 +547,8 @@ Public Class frmLoginvb
                                                     AddHandler resetStatusTimer.Tick, Sub()
                                                                                           Try
                                                                                               resetStatusTimer.Stop()
-                                                                                              lblStatus.Text = "🔍 Ready to scan QR code..."
-                                                                                              lblStatus.ForeColor = Color.LightGreen
+                                                                                              lblStatus.Text = "Ready to scan QR code..."
+                                                                                              lblStatus.ForeColor = Color.FromArgb(80, 160, 80)
                                                                                               lblStatus.Location = New Point((qrDialog.ClientSize.Width - lblStatus.Width) / 2, 200)
                                                                                               lblDebug.Text = "Debug: (empty)"
                                                                                           Catch ex As Exception
@@ -597,12 +597,12 @@ Public Class frmLoginvb
 
                                                    If Not String.IsNullOrEmpty(qrCode) Then
                                                        Console.WriteLine($"Valid QR code found: {qrCode}")
-                                                       lblStatus.Text = "🔄 Processing QR code..."
-                                                       lblStatus.ForeColor = Color.Yellow
+                                                       lblStatus.Text = "Processing QR code..."
+                                                       lblStatus.ForeColor = Color.FromArgb(230, 150, 40)
                                                        lblStatus.Location = New Point((qrDialog.ClientSize.Width - lblStatus.Width) / 2, 200)
 
-                                                       lblQRIndicator.Text = "⏳ Processing..."
-                                                       lblQRIndicator.ForeColor = Color.Yellow
+                                                       lblQRIndicator.Text = "Processing..."
+                                                       lblQRIndicator.ForeColor = Color.FromArgb(230, 150, 40)
                                                        lblQRIndicator.Location = New Point((qrDialog.ClientSize.Width - lblQRIndicator.Width) / 2, 230)
 
                                                        ' Small delay to show processing state
@@ -616,12 +616,12 @@ Public Class frmLoginvb
                                                            qrDialog.Close()
                                                        Else
                                                            Console.WriteLine("QR login failed")
-                                                           lblStatus.Text = "❌ Invalid QR code. Please try again."
-                                                           lblStatus.ForeColor = Color.Red
+                                                           lblStatus.Text = "Invalid QR code. Please try again."
+                                                           lblStatus.ForeColor = Color.FromArgb(220, 80, 70)
                                                            lblStatus.Location = New Point((qrDialog.ClientSize.Width - lblStatus.Width) / 2, 200)
 
-                                                           lblQRIndicator.Text = "🔴 Error - Ready for next scan"
-                                                           lblQRIndicator.ForeColor = Color.Red
+                                                           lblQRIndicator.Text = "Error - Ready for next scan"
+                                                           lblQRIndicator.ForeColor = Color.FromArgb(220, 80, 70)
                                                            lblQRIndicator.Location = New Point((qrDialog.ClientSize.Width - lblQRIndicator.Width) / 2, 230)
                                                            txtQRInput.Clear()
                                                            lblDebug.Text = "Debug: (cleared after error)"
@@ -632,12 +632,12 @@ Public Class frmLoginvb
                                                            AddHandler resetTimer.Tick, Sub()
                                                                                            Try
                                                                                                resetTimer.Stop()
-                                                                                               lblStatus.Text = "🔍 Ready to scan QR code..."
-                                                                                               lblStatus.ForeColor = Color.LightGreen
+                                                                                               lblStatus.Text = "Ready to scan QR code..."
+                                                                                               lblStatus.ForeColor = Color.FromArgb(80, 160, 80)
                                                                                                lblStatus.Location = New Point((qrDialog.ClientSize.Width - lblStatus.Width) / 2, 200)
 
-                                                                                               lblQRIndicator.Text = "🟢 Scanner Active - Waiting for QR code..."
-                                                                                               lblQRIndicator.ForeColor = Color.FromArgb(100, 255, 100)
+                                                                                               lblQRIndicator.Text = "Scanner Active - Waiting for QR code..."
+                                                                                               lblQRIndicator.ForeColor = Color.FromArgb(80, 160, 80)
                                                                                                lblQRIndicator.Location = New Point((qrDialog.ClientSize.Width - lblQRIndicator.Width) / 2, 230)
                                                                                                lblDebug.Text = "Debug: (empty)"
                                                                                            Catch ex As Exception
@@ -649,8 +649,8 @@ Public Class frmLoginvb
                                                    Else
                                                        Console.WriteLine("No valid QR code found")
                                                        ' No valid QR code found, clear input and show message
-                                                       lblStatus.Text = "⚠️ No valid QR code detected. Please scan again."
-                                                       lblStatus.ForeColor = Color.Orange
+                                                       lblStatus.Text = "No valid QR code detected. Please scan again."
+                                                       lblStatus.ForeColor = Color.FromArgb(230, 150, 40)
                                                        lblStatus.Location = New Point((qrDialog.ClientSize.Width - lblStatus.Width) / 2, 200)
                                                        txtQRInput.Clear()
                                                        lblDebug.Text = "Debug: No valid QR code"
@@ -661,8 +661,8 @@ Public Class frmLoginvb
                                                        AddHandler resetTimer.Tick, Sub()
                                                                                        Try
                                                                                            resetTimer.Stop()
-                                                                                           lblStatus.Text = "🔍 Ready to scan QR code..."
-                                                                                           lblStatus.ForeColor = Color.LightGreen
+                                                                                           lblStatus.Text = "Ready to scan QR code..."
+                                                                                           lblStatus.ForeColor = Color.FromArgb(80, 160, 80)
                                                                                            lblStatus.Location = New Point((qrDialog.ClientSize.Width - lblStatus.Width) / 2, 200)
                                                                                            lblDebug.Text = "Debug: (empty)"
                                                                                        Catch ex As Exception
@@ -1076,14 +1076,14 @@ Public Class frmLoginvb
         pinPanel = New Guna.UI2.WinForms.Guna2Panel()
         pinPanel.Size = Guna2Panel1.Size
         pinPanel.BorderRadius = 10
-        pinPanel.FillColor = Color.FromArgb(41, 44, 45)
+        pinPanel.FillColor = Color.FromArgb(250, 250, 249)
         pinPanel.Location = Guna2Panel1.Location
         pinPanel.TabStop = True
 
         Dim lblTitle As New Guna.UI2.WinForms.Guna2HtmlLabel()
         lblTitle.Text = "Enter your PIN"
         lblTitle.Font = New Font("Poppins SemiBold", 18.0F, FontStyle.Regular)
-        lblTitle.ForeColor = Color.White
+        lblTitle.ForeColor = Color.FromArgb(51, 51, 51)
         lblTitle.AutoSize = True
         lblTitle.Location = New Point((pinPanel.Width - lblTitle.Width) \ 2, 30)
         pinPanel.Controls.Add(lblTitle)
@@ -1095,9 +1095,9 @@ Public Class frmLoginvb
         For i = 0 To 3
             Dim indicator As New Guna.UI2.WinForms.Guna2CircleButton()
             indicator.Size = New Size(indicatorSize, indicatorSize)
-            indicator.FillColor = Color.FromArgb(61, 65, 66)   ' empty indicator color
-            indicator.BackColor = Color.FromArgb(41, 44, 45)
-            indicator.BorderColor = Color.Transparent
+            indicator.FillColor = Color.FromArgb(237, 237, 237)   ' empty indicator color
+            indicator.BackColor = Color.FromArgb(250, 250, 249)
+            indicator.BorderColor = Color.FromArgb(200, 200, 200)
             indicator.Location = New Point(indicatorStartX + i * (indicatorSize + indicatorSpacing), 90)
             pinIndicators.Add(indicator)
             pinPanel.Controls.Add(indicator)
@@ -1108,9 +1108,9 @@ Public Class frmLoginvb
         btnBack.Font = New Font("Poppins SemiBold", 16.0F, FontStyle.Regular)
         btnBack.Size = New Size(50, 50)
         btnBack.BorderRadius = 10
-        btnBack.FillColor = Color.FromArgb(61, 66, 66)
-        btnBack.ForeColor = Color.White
-        btnBack.BackColor = Color.FromArgb(41, 44, 45)
+        btnBack.FillColor = Color.FromArgb(237, 237, 237)
+        btnBack.ForeColor = Color.FromArgb(51, 51, 51)
+        btnBack.BackColor = Color.FromArgb(250, 250, 249)
         btnBack.Location = New Point(20, 20)
         AddHandler btnBack.Click, Sub()
                                       Me.Controls.Remove(pinPanel)
@@ -1131,15 +1131,15 @@ Public Class frmLoginvb
             Dim button As New Guna.UI2.WinForms.Guna2Button()
             button.Size = New Size(buttonSize, buttonSize)
             button.BorderRadius = 16
-            button.FillColor = Color.FromArgb(61, 66, 66)
-            button.BackColor = Color.FromArgb(41, 44, 45)
-            button.ForeColor = Color.White
+            button.FillColor = Color.FromArgb(237, 237, 237)
+            button.BackColor = Color.FromArgb(250, 250, 249)
+            button.ForeColor = Color.FromArgb(51, 51, 51)
             button.Font = New Font("Poppins SemiBold", 18.0F, FontStyle.Regular)
             button.Text = buttonTexts(i)
 
             ' Special styling for X (delete) button
             If button.Text = "X" Then
-                button.ForeColor = Color.FromArgb(255, 71, 87)
+                button.ForeColor = Color.FromArgb(220, 80, 70)
             End If
 
             Dim row = i \ 3
@@ -1150,22 +1150,22 @@ Public Class frmLoginvb
             AddHandler button.MouseEnter, Sub()
                                               Try
                                                   If button.Text = "X" Then
-                                                      button.FillColor = Color.FromArgb(255, 71, 87)
+                                                      button.FillColor = Color.FromArgb(220, 80, 70)
                                                       button.ForeColor = Color.White
                                                   Else
-                                                      button.FillColor = Color.FromArgb(255, 204, 77) ' hover gold
-                                                      button.ForeColor = Color.FromArgb(26, 29, 31)
+                                                      button.FillColor = Color.FromArgb(254, 191, 16) ' hover GoldenYellow
+                                                      button.ForeColor = Color.FromArgb(51, 51, 51)
                                                   End If
                                               Catch
                                               End Try
                                           End Sub
             AddHandler button.MouseLeave, Sub()
                                               Try
-                                                  button.FillColor = Color.FromArgb(61, 66, 66)
+                                                  button.FillColor = Color.FromArgb(237, 237, 237)
                                                   If button.Text = "X" Then
-                                                      button.ForeColor = Color.FromArgb(255, 71, 87)
+                                                      button.ForeColor = Color.FromArgb(220, 80, 70)
                                                   Else
-                                                      button.ForeColor = Color.White
+                                                      button.ForeColor = Color.FromArgb(51, 51, 51)
                                                   End If
                                               Catch
                                               End Try
@@ -1184,8 +1184,8 @@ Public Class frmLoginvb
         Dim lblForgotPin As New Label()
         lblForgotPin.Text = "Forgot PIN?"
         lblForgotPin.Font = New Font("Poppins", 10.0F, FontStyle.Underline)
-        lblForgotPin.ForeColor = Color.FromArgb(255, 204, 77)
-        lblForgotPin.BackColor = pinPanel.FillColor
+        lblForgotPin.ForeColor = Color.FromArgb(254, 191, 16)
+        lblForgotPin.BackColor = Color.FromArgb(250, 250, 249)
         lblForgotPin.AutoSize = True
         lblForgotPin.Cursor = Cursors.Hand
         lblForgotPin.Location = New Point((pinPanel.Width - 90) \ 2, buttonStartY + 4 * (buttonSize + buttonSpacing) + 8)
@@ -1239,7 +1239,7 @@ Public Class frmLoginvb
         .FormBorderStyle = FormBorderStyle.FixedDialog,
         .MaximizeBox = False,
         .MinimizeBox = False,
-        .BackColor = Color.FromArgb(41, 44, 45),
+        .BackColor = Color.White,
         .KeyPreview = True
     }
 
@@ -1249,7 +1249,7 @@ Public Class frmLoginvb
         Dim lblTitle As New Label With {
         .Text = "RESET PIN",
         .Font = New Font("Poppins", 16, FontStyle.Bold),
-        .ForeColor = Color.White,
+        .ForeColor = Color.FromArgb(51, 51, 51),
         .AutoSize = False,
         .Size = New Size(520, 34),
         .Location = New Point(20, 14),
@@ -1261,7 +1261,7 @@ Public Class frmLoginvb
         Dim lblUser As New Label With {
         .Text = $"User: {targetUsername}",
         .Font = New Font("Poppins", 9, FontStyle.Regular),
-        .ForeColor = Color.Gainsboro,
+        .ForeColor = Color.FromArgb(102, 102, 102),
         .AutoSize = False,
         .Size = New Size(520, 24),
         .Location = New Point(20, 48),
@@ -1273,7 +1273,7 @@ Public Class frmLoginvb
         Dim lblStep1 As New Label With {
         .Text = "1. Verify Passkeys",
         .Font = New Font("Poppins", 9, FontStyle.Bold),
-        .ForeColor = Color.FromArgb(255, 204, 77),
+        .ForeColor = Color.FromArgb(254, 191, 16),
         .AutoSize = True,
         .BackColor = Color.Transparent,
         .Location = New Point(90, 84)
@@ -1281,7 +1281,7 @@ Public Class frmLoginvb
         Dim lblStep2 As New Label With {
         .Text = "2. Set New PIN",
         .Font = New Font("Poppins", 9, FontStyle.Bold),
-        .ForeColor = Color.Gray,
+        .ForeColor = Color.FromArgb(102, 102, 102),
         .AutoSize = True,
         .BackColor = Color.Transparent,
         .Location = New Point(360, 84)
@@ -1289,7 +1289,7 @@ Public Class frmLoginvb
         Dim stepLine As New Panel With {
         .Size = New Size(120, 2),
         .Location = New Point(220, 94),
-        .BackColor = Color.Gray
+        .BackColor = Color.FromArgb(200, 200, 200)
     }
         dlg.Controls.Add(lblStep1)
         dlg.Controls.Add(stepLine)
@@ -1298,7 +1298,7 @@ Public Class frmLoginvb
         Dim lblInstruction As New Label With {
         .Text = "",
         .Font = New Font("Poppins", 10, FontStyle.Regular),
-        .ForeColor = Color.White,
+        .ForeColor = Color.FromArgb(51, 51, 51),
         .AutoSize = False,
         .Size = New Size(520, 28),
         .Location = New Point(20, 112),
@@ -1308,9 +1308,9 @@ Public Class frmLoginvb
         dlg.Controls.Add(lblInstruction)
 
         ' Step 1 controls
-        Dim txtK1 As New TextBox With {.Location = New Point(50, 154), .Size = New Size(460, 30), .TextAlign = HorizontalAlignment.Center}
-        Dim txtK2 As New TextBox With {.Location = New Point(50, 194), .Size = New Size(460, 30), .TextAlign = HorizontalAlignment.Center}
-        Dim txtK3 As New TextBox With {.Location = New Point(50, 234), .Size = New Size(460, 30), .TextAlign = HorizontalAlignment.Center}
+        Dim txtK1 As New TextBox With {.Location = New Point(50, 154), .Size = New Size(460, 30), .TextAlign = HorizontalAlignment.Center, .BackColor = Color.FromArgb(237, 237, 237), .ForeColor = Color.FromArgb(51, 51, 51)}
+        Dim txtK2 As New TextBox With {.Location = New Point(50, 194), .Size = New Size(460, 30), .TextAlign = HorizontalAlignment.Center, .BackColor = Color.FromArgb(237, 237, 237), .ForeColor = Color.FromArgb(51, 51, 51)}
+        Dim txtK3 As New TextBox With {.Location = New Point(50, 234), .Size = New Size(460, 30), .TextAlign = HorizontalAlignment.Center, .BackColor = Color.FromArgb(237, 237, 237), .ForeColor = Color.FromArgb(51, 51, 51)}
         Try
             txtK1.PlaceholderText = "Passkey 1"
             txtK2.PlaceholderText = "Passkey 2"
@@ -1328,7 +1328,9 @@ Public Class frmLoginvb
         .TextAlign = HorizontalAlignment.Center,
         .MaxLength = 4,
         .UseSystemPasswordChar = True,
-        .Visible = False
+        .Visible = False,
+        .BackColor = Color.FromArgb(237, 237, 237),
+        .ForeColor = Color.FromArgb(51, 51, 51)
     }
         Dim txtConfirmPin As New TextBox With {
         .Location = New Point(290, 174),
@@ -1336,7 +1338,9 @@ Public Class frmLoginvb
         .TextAlign = HorizontalAlignment.Center,
         .MaxLength = 4,
         .UseSystemPasswordChar = True,
-        .Visible = False
+        .Visible = False,
+        .BackColor = Color.FromArgb(237, 237, 237),
+        .ForeColor = Color.FromArgb(51, 51, 51)
     }
         Try
             txtNewPin.PlaceholderText = "New 4-digit PIN"
@@ -1358,7 +1362,7 @@ Public Class frmLoginvb
 
         Dim lblStatus As New Label With {
         .Text = "",
-        .ForeColor = Color.FromArgb(255, 120, 120),
+        .ForeColor = Color.FromArgb(220, 80, 70),
         .AutoSize = False,
         .Size = New Size(520, 24),
         .Location = New Point(20, 274),
@@ -1371,8 +1375,8 @@ Public Class frmLoginvb
         .Text = "Back",
         .Size = New Size(110, 38),
         .Location = New Point(120, 318),
-        .BackColor = Color.FromArgb(61, 65, 66),
-        .ForeColor = Color.White,
+        .BackColor = Color.FromArgb(237, 237, 237),
+        .ForeColor = Color.FromArgb(51, 51, 51),
         .FlatStyle = FlatStyle.Flat,
         .Visible = False
     }
@@ -1382,8 +1386,8 @@ Public Class frmLoginvb
         .Text = "Next",
         .Size = New Size(110, 38),
         .Location = New Point(240, 318),
-        .BackColor = Color.FromArgb(255, 204, 77),
-        .ForeColor = Color.Black,
+        .BackColor = Color.FromArgb(254, 191, 16),
+        .ForeColor = Color.FromArgb(51, 51, 51),
         .FlatStyle = FlatStyle.Flat
     }
         btnNext.FlatAppearance.BorderSize = 0
@@ -1392,7 +1396,7 @@ Public Class frmLoginvb
         .Text = "Cancel",
         .Size = New Size(110, 38),
         .Location = New Point(360, 318),
-        .BackColor = Color.FromArgb(255, 100, 100),
+        .BackColor = Color.FromArgb(220, 80, 70),
         .ForeColor = Color.White,
         .FlatStyle = FlatStyle.Flat
     }
@@ -1409,9 +1413,9 @@ Public Class frmLoginvb
 
             If currentStep = 1 Then
                 lblInstruction.Text = "Enter your three recovery passkeys."
-                lblStep1.ForeColor = Color.FromArgb(255, 204, 77)
-                lblStep2.ForeColor = Color.Gray
-                stepLine.BackColor = Color.Gray
+                lblStep1.ForeColor = Color.FromArgb(254, 191, 16)
+                lblStep2.ForeColor = Color.FromArgb(102, 102, 102)
+                stepLine.BackColor = Color.FromArgb(200, 200, 200)
 
                 txtK1.Visible = True
                 txtK2.Visible = True
@@ -1424,9 +1428,9 @@ Public Class frmLoginvb
                 txtK1.Focus()
             Else
                 lblInstruction.Text = "Create and confirm your new 4-digit PIN."
-                lblStep1.ForeColor = Color.FromArgb(100, 180, 120)
-                lblStep2.ForeColor = Color.FromArgb(255, 204, 77)
-                stepLine.BackColor = Color.FromArgb(255, 204, 77)
+                lblStep1.ForeColor = Color.FromArgb(80, 160, 80)
+                lblStep2.ForeColor = Color.FromArgb(254, 191, 16)
+                stepLine.BackColor = Color.FromArgb(254, 191, 16)
 
                 txtK1.Visible = False
                 txtK2.Visible = False
@@ -1611,7 +1615,7 @@ Public Class frmLoginvb
                 MessageBox.Show("Incorrect PIN.", "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)
                 pinInput = ""
                 For Each indicator In pinIndicators
-                    indicator.FillColor = Color.FromArgb(240, 240, 240) ' Light gray for empty state
+                    indicator.FillColor = Color.FromArgb(237, 237, 237)
                 Next
             End If
         End If
@@ -1629,7 +1633,7 @@ Public Class frmLoginvb
         If input = "X" Then
             If pinInput.Length > 0 Then
                 pinInput = pinInput.Substring(0, pinInput.Length - 1)
-                pinIndicators(pinInput.Length).FillColor = Color.FromArgb(240, 240, 240) ' Light gray for empty
+                pinIndicators(pinInput.Length).FillColor = Color.FromArgb(237, 237, 237)
             End If
         ElseIf input = "ENTER" Then
             If pinInput.Length = 4 Then
@@ -1638,7 +1642,7 @@ Public Class frmLoginvb
         ElseIf input >= "0" And input <= "9" Then
             If pinInput.Length < 4 Then
                 pinInput &= input
-                pinIndicators(pinInput.Length - 1).FillColor = Color.Yellow ' Rich Olive for filled indicators
+                pinIndicators(pinInput.Length - 1).FillColor = Color.FromArgb(254, 191, 16)
             End If
             If pinInput.Length = 4 Then
                 ValidatePin(expectedPin, pinIndicators, pinPanel)
