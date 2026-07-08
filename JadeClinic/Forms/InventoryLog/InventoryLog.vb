@@ -1,4 +1,5 @@
-﻿Imports Microsoft.Data.SqlClient
+Imports Microsoft.Data.Sqlite
+Imports System.Data.Common
 Imports System.Data
 Imports System.IO
 Imports System.Linq
@@ -151,10 +152,10 @@ Public Class InventoryLog
             ' Setup DataGrid
             SetupDataGrid()
 
-            ' Setup date filter - default to today - check if control exists first
+            ' Setup date filter - default to no filter, user can select a date
             If Guna2DateTimePicker1 IsNot Nothing Then
                 Guna2DateTimePicker1.Value = DateTime.Now.Date
-                selectedDate = DateTime.Today
+                selectedDate = Nothing
 
                 ' Ensure date change handler is wired so the filter actually works
                 RemoveHandler Guna2DateTimePicker1.ValueChanged, AddressOf Guna2DateTimePicker1_ValueChanged
@@ -342,7 +343,7 @@ Public Class InventoryLog
             Dim actionCol As New DataGridViewButtonColumn() With {
             .Name = "Action",
             .HeaderText = "",
-            .Text = "👁️",
+            .Text = Char.ConvertFromUtf32(&H1F50D),
             .UseColumnTextForButtonValue = True,
             .FlatStyle = FlatStyle.Flat,
             .FillWeight = 6
@@ -530,14 +531,14 @@ Public Class InventoryLog
                 Try
                     Dim connStr = Connection.GetConnectionString()
                     If Not String.IsNullOrEmpty(connStr) Then
-                        Using conn As New SqlConnection(connStr)
+                        Using conn As New SqliteConnection(connStr)
                             conn.Open()
-                            Dim q As String = "SELECT TOP 1 p.Category, il.BatchNumber, il.ExpiryDate " &
+                            Dim q As String = "SELECT p.Category, il.BatchNumber, il.ExpiryDate " &
                                           "FROM InventoryLog il LEFT JOIN Products p ON il.ProductID = p.ProductID " &
                                           "WHERE il.LogID = @LogID"
-                            Using cmd As New SqlCommand(q, conn)
+                            Using cmd As New SqliteCommand(q, conn)
                                 cmd.Parameters.AddWithValue("@LogID", Convert.ToInt32(logId))
-                                Using r As SqlDataReader = cmd.ExecuteReader()
+                                Using r As DbDataReader = cmd.ExecuteReader()
                                     If r.Read() Then
                                         If String.IsNullOrWhiteSpace(productCategory) AndAlso Not IsDBNull(r("Category")) Then productCategory = r("Category").ToString()
                                         If String.IsNullOrWhiteSpace(batchNumber) AndAlso r.GetSchemaTable().Rows.Cast(Of DataRow)().Any(Function(rr) rr("ColumnName").ToString() = "BatchNumber") Then
@@ -674,7 +675,7 @@ Public Class InventoryLog
 
         ' Add date filter if provided
         If filterDate.HasValue Then
-            whereClauses.Add("CAST(il.CreatedAt AS DATE) = @FilterDate")
+            whereClauses.Add("DATE(il.CreatedAt) = @FilterDate")
             parameters.Add(New SqlParameter("@FilterDate", filterDate.Value.Date))
         End If
 
@@ -710,15 +711,16 @@ Public Class InventoryLog
                 Return inventoryLogs
             End If
 
-            Using conn As New SqlConnection(connStr)
+            Using conn As New SqliteConnection(connStr)
                 conn.Open()
-                Using cmd As New SqlCommand(query, conn)
+                Using cmd As New SqliteCommand(query, conn)
                     ' Add parameters
-                    For Each param In parameters
+                    Dim dbParams = DbProvider.ConvertSqlParameters(parameters.ToArray())
+                    For Each param In dbParams
                         cmd.Parameters.Add(param)
                     Next
 
-                    Using reader As SqlDataReader = cmd.ExecuteReader()
+                    Using reader As DbDataReader = cmd.ExecuteReader()
                         While reader.Read()
                             Dim logData As New Dictionary(Of String, Object) From {
                 {"LogID", If(IsDBNull(reader("LogID")), 0, reader("LogID"))},
@@ -878,16 +880,16 @@ Public Class InventoryLog
         End Try
     End Sub
     Private Function GetTransactionIndicator(transactionType As String) As String
-        If String.IsNullOrWhiteSpace(transactionType) Then Return "ℹ️ INFO"
+        If String.IsNullOrWhiteSpace(transactionType) Then Return ChrW(&H2139) & " INFO"
         Select Case transactionType.Trim().ToLowerInvariant()
             Case "stock in", "in", "stock_in", "inbound"
-                Return "📈 IN"
+                Return ChrW(&H2B07) & " IN"
             Case "stock out", "out", "stock_out", "outbound", "sold"
-                Return "📉 OUT"
+                Return ChrW(&H2B06) & " OUT"
             Case "adjustments", "adjust", "adj"
-                Return "⚖️ ADJ"
+                Return ChrW(&H2699) & " ADJ"
             Case Else
-                Return "ℹ️ INFO"
+                Return ChrW(&H2139) & " INFO"
         End Select
     End Function
 
@@ -911,7 +913,7 @@ Public Class InventoryLog
                 cell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter
                 ' Default foreground
                 cell.Style.ForeColor = System.Drawing.Color.FromArgb(102, 102, 102)
-                ' Ensure selection does not override the ForeColor — set SelectionForeColor to same
+                ' Ensure selection does not override the ForeColor � set SelectionForeColor to same
                 cell.Style.SelectionForeColor = cell.Style.ForeColor
                 ' Keep selection background consistent with rest of grid
                 cell.Style.SelectionBackColor = InventoryLogDataGrid.DefaultCellStyle.SelectionBackColor

@@ -789,9 +789,9 @@ Partial Class Sales
         lblSearchProduct.ForeColor = Color.FromArgb(CByte(42), CByte(42), CByte(42))
         lblSearchProduct.Location = New Point(1076, 65)
         lblSearchProduct.Name = "lblSearchProduct"
-        lblSearchProduct.Size = New Size(166, 26)
+        lblSearchProduct.Size = New Size(161, 26)
         lblSearchProduct.TabIndex = 81
-        lblSearchProduct.Text = "🔍Search Product"
+        lblSearchProduct.Text = "🔍 Search Product"
         ' 
         ' Sales
         ' 

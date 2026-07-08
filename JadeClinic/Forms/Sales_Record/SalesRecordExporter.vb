@@ -1,6 +1,6 @@
-﻿Imports System.IO
+Imports System.IO
 Imports System.Linq
-Imports Microsoft.Data.SqlClient
+Imports System.Data.Common
 Imports QuestPDF.Fluent
 Imports QuestPDF.Helpers
 Imports QuestPDF.Infrastructure
@@ -20,17 +20,17 @@ Public Class SalesRecordExporter
 
             Dim query As String = "SELECT s.SaleID, u.Username, s.SaleDate, s.TotalAmount, s.AmountPaid, " &
                                   "(s.AmountPaid - s.TotalAmount) AS ChangeAmount, " &
-                                  "ISNULL(s.PaymentMethod, '') AS PaymentMethod, " &
-                                  "ISNULL(s.DiscountType, '') AS DiscountType, " &
-                                  "ISNULL(s.DiscountAmount, 0) AS DiscountAmount, " &
-                                  "ISNULL((SELECT SUM(si.Quantity * ISNULL(p.CostPrice, 0)) " &
-                                  "        FROM SaleItems si " &
-                                  "        LEFT JOIN Products p ON p.ProductID = si.ProductID " &
-                                  "        WHERE si.SaleID = s.SaleID), 0) AS TotalCost, " &
-                                  "(s.TotalAmount - ISNULL(s.DiscountAmount, 0)) - ISNULL((SELECT SUM(si.Quantity * ISNULL(p.CostPrice, 0)) " &
-                                  "                                             FROM SaleItems si " &
-                                  "                                             LEFT JOIN Products p ON p.ProductID = si.ProductID " &
-                                  "                                             WHERE si.SaleID = s.SaleID), 0) AS ProfitAmount " &
+                                  "IFNULL(s.PaymentMethod, '') AS PaymentMethod, " &
+                                  "IFNULL(s.DiscountType, '') AS DiscountType, " &
+                                  "IFNULL(s.DiscountAmount, 0) AS DiscountAmount, " &
+                                   "IFNULL((SELECT SUM(si.Quantity * IFNULL(p.CostPrice, 0)) " &
+                                   "        FROM SaleItems si " &
+                                   "        LEFT JOIN Products p ON p.ProductID = si.ProductID " &
+                                   "        WHERE si.SaleID = s.SaleID), 0) AS TotalCost, " &
+                                   "(s.TotalAmount - IFNULL(s.DiscountAmount, 0)) - IFNULL((SELECT SUM(si.Quantity * IFNULL(p.CostPrice, 0)) " &
+                                   "                                             FROM SaleItems si " &
+                                   "                                             LEFT JOIN Products p ON p.ProductID = si.ProductID " &
+                                   "                                             WHERE si.SaleID = s.SaleID), 0) AS ProfitAmount " &
                                   "FROM Sales s " &
                                   "LEFT JOIN Users u ON s.UserID = u.UserID"
 
@@ -38,25 +38,25 @@ Public Class SalesRecordExporter
 
             Select Case filterType
                 Case "Today's Sales", "Today's Orders"
-                    whereClauses.Add("CAST(s.SaleDate AS DATE) = CAST(GETDATE() AS DATE)")
+                    whereClauses.Add("DATE(s.SaleDate) = date('now')")
                 Case "This Week's Sales", "This Week's Orders"
-                    whereClauses.Add("s.SaleDate >= DATEADD(week, DATEDIFF(week, 0, GETDATE()), 0)")
+                    whereClauses.Add("s.SaleDate >= datetime('now', 'start of week')")
                 Case "This Month's Sales", "This Month's Orders"
-                    whereClauses.Add("MONTH(s.SaleDate) = MONTH(GETDATE()) AND YEAR(s.SaleDate) = YEAR(GETDATE())")
+                    whereClauses.Add("CAST(strftime('%m', s.SaleDate) AS INTEGER) = CAST(strftime('%m', 'now') AS INTEGER) AND CAST(strftime('%Y', s.SaleDate) AS INTEGER) = CAST(strftime('%Y', 'now') AS INTEGER)")
                 Case "Sales with Discounts", "Orders with Discounts"
-                    whereClauses.Add("ISNULL(s.DiscountAmount, 0) > 0")
+                    whereClauses.Add("IFNULL(s.DiscountAmount, 0) > 0")
                 Case "Sales without Discounts", "Orders without Discounts"
-                    whereClauses.Add("ISNULL(s.DiscountAmount, 0) = 0")
-                Case "High Value Sales (₱1000+)", "High Value Orders (₱1000+)"
+                    whereClauses.Add("IFNULL(s.DiscountAmount, 0) = 0")
+                Case "High Value Sales (?1000+)", "High Value Orders (?1000+)"
                     whereClauses.Add("s.TotalAmount >= 1000")
-                Case "Low Value Sales (<₱500)", "Low Value Orders (<₱500)"
+                Case "Low Value Sales (<?500)", "Low Value Orders (<?500)"
                     whereClauses.Add("s.TotalAmount < 500")
                 Case Else
                     ' All Sales
             End Select
 
             If filterDate.HasValue Then
-                whereClauses.Add("CAST(s.SaleDate AS DATE) = @FilterDate")
+                whereClauses.Add("DATE(s.SaleDate) = @FilterDate")
             End If
 
             If whereClauses.Count > 0 Then
@@ -90,7 +90,7 @@ Public Class SalesRecordExporter
                 parameters.Add(New SqlParameter("@FilterDate", filterDate.Value.Date))
             End If
 
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters.ToArray())
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters.ToArray())
                 While reader.Read()
                     Dim orderData As New OrderReportData() With {
                         .OrderID = If(IsDBNull(reader("SaleID")), 0, Convert.ToInt32(reader("SaleID"))),
@@ -301,12 +301,12 @@ Public Class SalesRecordExporter
                                                                                                                         table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(sale.CreatedBy).FontSize(7)
                                                                                                                         table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(sale.OrderDate.ToString("MM/dd/yy HH:mm")).FontSize(7).AlignCenter()
                                                                                                                         table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(If(String.IsNullOrWhiteSpace(sale.PaymentMethod), "N/A", sale.PaymentMethod)).FontSize(7).AlignCenter()
-                                                                                                                        table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text($"₱{sale.TotalAmount:F2}").FontSize(7).AlignCenter()
-                                                                                                                        table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text($"₱{sale.TotalCost:F2}").FontSize(7).AlignCenter()
-                                                                                                                        table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text($"₱{sale.TotalReceived:F2}").FontSize(7).AlignCenter()
-                                                                                                                        table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text($"₱{sale.Change:F2}").FontSize(7).AlignCenter()
+                                                                                                                        table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text($"?{sale.TotalAmount:F2}").FontSize(7).AlignCenter()
+                                                                                                                        table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text($"?{sale.TotalCost:F2}").FontSize(7).AlignCenter()
+                                                                                                                        table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text($"?{sale.TotalReceived:F2}").FontSize(7).AlignCenter()
+                                                                                                                        table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text($"?{sale.Change:F2}").FontSize(7).AlignCenter()
                                                                                                                         table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(sale.DiscountType).FontSize(7).AlignCenter()
-                                                                                                                        table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text($"₱{sale.DiscountAmount:F2}").FontSize(7).AlignCenter()
+                                                                                                                        table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text($"?{sale.DiscountAmount:F2}").FontSize(7).AlignCenter()
                                                                                                                     Next
                                                                                                                 End Sub)
 
@@ -315,26 +315,26 @@ Public Class SalesRecordExporter
                                                                                                                                                                                                                              summary.Item().PaddingTop(4).Row(Sub(sRow)
                                                                                                                                                                                                                                                                   sRow.RelativeItem().Column(Sub(left)
                                                                                                                                                                                                                                                                                                  left.Item().Text($"Counter (Transactions): {totalCounter}").FontSize(9)
-                                                                                                                                                                                                                                                                                                 left.Item().Text($"Total Revenue: ₱{totalRevenue:N2}").FontSize(9).SemiBold().FontColor(Colors.Blue.Medium)
-                                                                                                                                                                                                                                                                                                 left.Item().Text($"Total Cost: ₱{totalCost:N2}").FontSize(9).SemiBold().FontColor(Colors.Red.Medium)
-                                                                                                                                                                                                                                                                                                 left.Item().Text($"Total Profit (Less Discount): ₱{totalProfit:N2}").FontSize(9).SemiBold().FontColor(Colors.Green.Medium)
-                                                                                                                                                                                                                                                                                                 left.Item().Text($"Highest Sale: ₱{highestSale:N2}").FontSize(9)
-                                                                                                                                                                                                                                                                                                 left.Item().Text($"Lowest Sale: ₱{lowestSale:N2}").FontSize(9)
+                                                                                                                                                                                                                                                                                                 left.Item().Text($"Total Revenue: ?{totalRevenue:N2}").FontSize(9).SemiBold().FontColor(Colors.Blue.Medium)
+                                                                                                                                                                                                                                                                                                 left.Item().Text($"Total Cost: ?{totalCost:N2}").FontSize(9).SemiBold().FontColor(Colors.Red.Medium)
+                                                                                                                                                                                                                                                                                                 left.Item().Text($"Total Profit (Less Discount): ?{totalProfit:N2}").FontSize(9).SemiBold().FontColor(Colors.Green.Medium)
+                                                                                                                                                                                                                                                                                                 left.Item().Text($"Highest Sale: ?{highestSale:N2}").FontSize(9)
+                                                                                                                                                                                                                                                                                                 left.Item().Text($"Lowest Sale: ?{lowestSale:N2}").FontSize(9)
                                                                                                                                                                                                                                                                                                  left.Item().Text($"Orders with Discounts: {ordersWithDiscount} ({discountRate:N1}%)").FontSize(9).FontColor(Colors.Orange.Medium)
                                                                                                                                                                                                                                                                                              End Sub)
                                                                                                                                                                                                                                                                   sRow.RelativeItem().Column(Sub(right)
-                                                                                                                                                                                                                                                                                                 right.Item().Text($"Total Amount Paid: ₱{totalReceived:N2}").FontSize(9)
-                                                                                                                                                                                                                                                                                                 right.Item().Text($"Total Change: ₱{totalChange:N2}").FontSize(9)
-                                                                                                                                                                                                                                                                                                 right.Item().Text($"Total Discounts Given: ₱{totalDiscounts:N2}").FontSize(9).FontColor(Colors.Red.Medium)
-                                                                                                                                                                                                                                                                                                 right.Item().Text($"Opening Capital: ₱{reportCapital:N2}").FontSize(9)
-                                                                                                                                                                                                                                                                                                 right.Item().Text($"Expected Amount (Capital + Revenue): ₱{expectedAmount:N2}").FontSize(9).SemiBold().FontColor(Colors.Green.Darken2)
+                                                                                                                                                                                                                                                                                                 right.Item().Text($"Total Amount Paid: ?{totalReceived:N2}").FontSize(9)
+                                                                                                                                                                                                                                                                                                 right.Item().Text($"Total Change: ?{totalChange:N2}").FontSize(9)
+                                                                                                                                                                                                                                                                                                 right.Item().Text($"Total Discounts Given: ?{totalDiscounts:N2}").FontSize(9).FontColor(Colors.Red.Medium)
+                                                                                                                                                                                                                                                                                                 right.Item().Text($"Opening Capital: ?{reportCapital:N2}").FontSize(9)
+                                                                                                                                                                                                                                                                                                 right.Item().Text($"Expected Amount (Capital + Revenue): ?{expectedAmount:N2}").FontSize(9).SemiBold().FontColor(Colors.Green.Darken2)
                                                                                                                                                                                                                                                                                              End Sub)
                                                                                                                                                                                                                                                               End Sub)
 
                                                                                                                                                                                                                              summary.Item().PaddingTop(8).Row(Sub(pmRow)
-                                                                                                                                                                                                                                                                  pmRow.RelativeItem().Text($"Cash Amount: ₱{cashAmount:N2}").FontSize(9).SemiBold().FontColor(Colors.Green.Darken1)
-                                                                                                                                                                                                                                                                  pmRow.RelativeItem().Text($"GCash Amount: ₱{gcashAmount:N2}").FontSize(9).SemiBold().FontColor(Colors.Blue.Medium)
-                                                                                                                                                                                                                                                                  pmRow.RelativeItem().Text($"Card Amount: ₱{cardAmount:N2}").FontSize(9).SemiBold().FontColor(Colors.Purple.Medium)
+                                                                                                                                                                                                                                                                  pmRow.RelativeItem().Text($"Cash Amount: ?{cashAmount:N2}").FontSize(9).SemiBold().FontColor(Colors.Green.Darken1)
+                                                                                                                                                                                                                                                                  pmRow.RelativeItem().Text($"GCash Amount: ?{gcashAmount:N2}").FontSize(9).SemiBold().FontColor(Colors.Blue.Medium)
+                                                                                                                                                                                                                                                                  pmRow.RelativeItem().Text($"Card Amount: ?{cardAmount:N2}").FontSize(9).SemiBold().FontColor(Colors.Purple.Medium)
                                                                                                                                                                                                                                                               End Sub)
                                                                                                                                                                                                                          End Sub)
 
@@ -353,7 +353,7 @@ Public Class SalesRecordExporter
                                                                                                                                   For Each u In perUser
                                                                                                                                       userTable.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(u.UserName).FontSize(8)
                                                                                                                                       userTable.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(u.Counter.ToString()).FontSize(8).AlignCenter()
-                                                                                                                                      userTable.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text($"₱{u.Amount:N2}").FontSize(8).AlignCenter()
+                                                                                                                                      userTable.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text($"?{u.Amount:N2}").FontSize(8).AlignCenter()
                                                                                                                                   Next
                                                                                                                               End Sub)
                                                                                         End Sub)

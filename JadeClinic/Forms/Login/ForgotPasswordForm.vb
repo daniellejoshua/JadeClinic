@@ -1,5 +1,5 @@
-﻿Imports System.Windows.Forms
-Imports Microsoft.Data.SqlClient
+Imports System.Windows.Forms
+Imports System.Data.Common
 Imports System.Linq
 
 Public Class ForgotPasswordForm

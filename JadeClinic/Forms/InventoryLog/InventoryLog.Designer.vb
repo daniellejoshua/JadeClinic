@@ -1,4 +1,4 @@
-﻿<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
+<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
 Partial Class InventoryLog
     Inherits System.Windows.Forms.Form
 
@@ -170,7 +170,7 @@ Partial Class InventoryLog
         SortBy.FocusedColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         SortBy.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         SortBy.Font = New Font("Poppins Light", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        SortBy.ForeColor = Color.White
+        SortBy.ForeColor = Color.Black
         SortBy.ItemHeight = 40
         SortBy.Location = New Point(621, 96)
         SortBy.Name = "SortBy"

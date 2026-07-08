@@ -1,4 +1,4 @@
-﻿<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
+<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
 Partial Class IdCard
     Inherits System.Windows.Forms.Form
 
@@ -69,9 +69,9 @@ Partial Class IdCard
         ' 
         ' pnlIDCard
         ' 
-        pnlIDCard.BackColor = Color.Black
+        pnlIDCard.BackColor = Color.White
         pnlIDCard.BackgroundImageLayout = ImageLayout.Stretch
-        pnlIDCard.BorderColor = Color.Black
+        pnlIDCard.BorderColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
         pnlIDCard.BorderRadius = 15
         pnlIDCard.BorderThickness = 2
         pnlIDCard.Controls.Add(Guna2HtmlLabel1)
@@ -87,7 +87,7 @@ Partial Class IdCard
         pnlIDCard.Controls.Add(picStaffPhoto)
         pnlIDCard.Controls.Add(Guna2Panel1)
         pnlIDCard.CustomizableEdges = CustomizableEdges8
-        pnlIDCard.FillColor = Color.Transparent
+        pnlIDCard.FillColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
         pnlIDCard.Location = New Point(30, 30)
         pnlIDCard.Name = "pnlIDCard"
         pnlIDCard.ShadowDecoration.CustomizableEdges = CustomizableEdges9
@@ -96,9 +96,9 @@ Partial Class IdCard
         ' 
         ' Guna2HtmlLabel1
         ' 
-        Guna2HtmlLabel1.BackColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
-        Guna2HtmlLabel1.Font = New Font("Poppins Medium", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel1.ForeColor = Color.Black
+        Guna2HtmlLabel1.BackColor = Color.Transparent
+        Guna2HtmlLabel1.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Guna2HtmlLabel1.ForeColor = Color.FromArgb(CByte(59), CByte(59), CByte(59))
         Guna2HtmlLabel1.Location = New Point(80, 305)
         Guna2HtmlLabel1.Name = "Guna2HtmlLabel1"
         Guna2HtmlLabel1.Size = New Size(46, 28)
@@ -122,7 +122,7 @@ Partial Class IdCard
         ' lblPasskeys
         ' 
         lblPasskeys.BackColor = Color.Transparent
-        lblPasskeys.Font = New Font("Poppins", 8.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        lblPasskeys.Font = New Font("Poppins", 8F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         lblPasskeys.ForeColor = Color.FromArgb(CByte(64), CByte(64), CByte(64))
         lblPasskeys.Location = New Point(-99, 128)
         lblPasskeys.Name = "lblPasskeys"
@@ -134,7 +134,7 @@ Partial Class IdCard
         ' lblPinTitle
         ' 
         lblPinTitle.BackColor = Color.Transparent
-        lblPinTitle.Font = New Font("Poppins Medium", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        lblPinTitle.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         lblPinTitle.ForeColor = Color.Black
         lblPinTitle.Location = New Point(278, 76)
         lblPinTitle.Name = "lblPinTitle"
@@ -145,9 +145,9 @@ Partial Class IdCard
         ' 
         ' lblUserID
         ' 
-        lblUserID.BackColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
+        lblUserID.BackColor = Color.Transparent
         lblUserID.Font = New Font("Poppins", 10.2F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
-        lblUserID.ForeColor = Color.Black
+        lblUserID.ForeColor = Color.FromArgb(CByte(59), CByte(59), CByte(59))
         lblUserID.Location = New Point(148, 301)
         lblUserID.Name = "lblUserID"
         lblUserID.Size = New Size(20, 32)
@@ -156,9 +156,9 @@ Partial Class IdCard
         ' 
         ' lblPhone
         ' 
-        lblPhone.BackColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
-        lblPhone.Font = New Font("Poppins", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblPhone.ForeColor = Color.Black
+        lblPhone.BackColor = Color.Transparent
+        lblPhone.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        lblPhone.ForeColor = Color.FromArgb(CByte(59), CByte(59), CByte(59))
         lblPhone.Location = New Point(146, 369)
         lblPhone.Name = "lblPhone"
         lblPhone.Size = New Size(87, 28)
@@ -167,9 +167,9 @@ Partial Class IdCard
         ' 
         ' lblPhoneTitle
         ' 
-        lblPhoneTitle.BackColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
-        lblPhoneTitle.Font = New Font("Poppins Medium", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblPhoneTitle.ForeColor = Color.Black
+        lblPhoneTitle.BackColor = Color.Transparent
+        lblPhoneTitle.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        lblPhoneTitle.ForeColor = Color.FromArgb(CByte(59), CByte(59), CByte(59))
         lblPhoneTitle.Location = New Point(80, 369)
         lblPhoneTitle.Name = "lblPhoneTitle"
         lblPhoneTitle.Size = New Size(54, 28)
@@ -178,9 +178,9 @@ Partial Class IdCard
         ' 
         ' lblEmail
         ' 
-        lblEmail.BackColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
-        lblEmail.Font = New Font("Poppins", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblEmail.ForeColor = Color.Black
+        lblEmail.BackColor = Color.Transparent
+        lblEmail.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        lblEmail.ForeColor = Color.FromArgb(CByte(59), CByte(59), CByte(59))
         lblEmail.Location = New Point(146, 337)
         lblEmail.Name = "lblEmail"
         lblEmail.Size = New Size(162, 28)
@@ -189,9 +189,9 @@ Partial Class IdCard
         ' 
         ' lblEmailTitle
         ' 
-        lblEmailTitle.BackColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
-        lblEmailTitle.Font = New Font("Poppins", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblEmailTitle.ForeColor = Color.Black
+        lblEmailTitle.BackColor = Color.Transparent
+        lblEmailTitle.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        lblEmailTitle.ForeColor = Color.FromArgb(CByte(59), CByte(59), CByte(59))
         lblEmailTitle.Location = New Point(80, 337)
         lblEmailTitle.Name = "lblEmailTitle"
         lblEmailTitle.Size = New Size(47, 28)
@@ -200,9 +200,9 @@ Partial Class IdCard
         ' 
         ' lblRole
         ' 
-        lblRole.BackColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
-        lblRole.Font = New Font("Poppins", 10.0F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
-        lblRole.ForeColor = Color.Black
+        lblRole.BackColor = Color.Transparent
+        lblRole.Font = New Font("Poppins", 10F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        lblRole.ForeColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
         lblRole.Location = New Point(174, 266)
         lblRole.Name = "lblRole"
         lblRole.Size = New Size(47, 32)
@@ -224,17 +224,19 @@ Partial Class IdCard
         ' 
         ' Guna2Panel1
         ' 
-        Guna2Panel1.BackColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
+        Guna2Panel1.BackColor = Color.White
         Guna2Panel1.BackgroundImageLayout = ImageLayout.Stretch
-        Guna2Panel1.BorderColor = Color.Black
+        Guna2Panel1.BorderColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
+        Guna2Panel1.BorderRadius = 8
+        Guna2Panel1.BorderThickness = 1
         Guna2Panel1.Controls.Add(QrCodePicturebox)
         Guna2Panel1.Controls.Add(PictureBox1)
         Guna2Panel1.Controls.Add(Guna2HtmlLabel5)
         Guna2Panel1.Controls.Add(Guna2HtmlLabel6)
         Guna2Panel1.Controls.Add(txtUsername)
         Guna2Panel1.CustomizableEdges = CustomizableEdges6
-        Guna2Panel1.FillColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
-        Guna2Panel1.ForeColor = Color.Black
+        Guna2Panel1.FillColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
+        Guna2Panel1.ForeColor = Color.FromArgb(CByte(225), CByte(229), CByte(233))
         Guna2Panel1.Location = New Point(3, 183)
         Guna2Panel1.Name = "Guna2Panel1"
         Guna2Panel1.ShadowDecoration.CustomizableEdges = CustomizableEdges7
@@ -266,7 +268,7 @@ Partial Class IdCard
         ' Guna2HtmlLabel5
         ' 
         Guna2HtmlLabel5.BackColor = Color.Transparent
-        Guna2HtmlLabel5.Font = New Font("Poppins", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Guna2HtmlLabel5.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel5.ForeColor = Color.FromArgb(CByte(224), CByte(224), CByte(224))
         Guna2HtmlLabel5.Location = New Point(146, 369)
         Guna2HtmlLabel5.Name = "Guna2HtmlLabel5"
@@ -277,7 +279,7 @@ Partial Class IdCard
         ' Guna2HtmlLabel6
         ' 
         Guna2HtmlLabel6.BackColor = Color.Transparent
-        Guna2HtmlLabel6.Font = New Font("Poppins Medium", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Guna2HtmlLabel6.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel6.ForeColor = Color.White
         Guna2HtmlLabel6.Location = New Point(80, 369)
         Guna2HtmlLabel6.Name = "Guna2HtmlLabel6"
@@ -297,10 +299,10 @@ Partial Class IdCard
         txtUsername.DisabledState.FillColor = Color.Transparent
         txtUsername.DisabledState.ForeColor = Color.White
         txtUsername.DisabledState.PlaceholderForeColor = Color.White
-        txtUsername.FillColor = Color.Transparent
+        txtUsername.FillColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
         txtUsername.FocusedState.BorderColor = Color.Transparent
-        txtUsername.Font = New Font("Microsoft Sans Serif", 18.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        txtUsername.ForeColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
+        txtUsername.Font = New Font("Microsoft Sans Serif", 18F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        txtUsername.ForeColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
         txtUsername.HoverState.BorderColor = Color.Transparent
         txtUsername.Location = New Point(0, 0)
         txtUsername.Margin = New Padding(3, 4, 3, 4)
@@ -317,7 +319,7 @@ Partial Class IdCard
         ' lblPin
         ' 
         lblPin.BackColor = Color.Transparent
-        lblPin.Font = New Font("Poppins", 12.0F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
+        lblPin.Font = New Font("Poppins", 12F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
         lblPin.ForeColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
         lblPin.Location = New Point(425, 42)
         lblPin.Name = "lblPin"
@@ -343,9 +345,9 @@ Partial Class IdCard
         btnClose.DisabledState.CustomBorderColor = Color.DarkGray
         btnClose.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         btnClose.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        btnClose.FillColor = Color.FromArgb(CByte(224), CByte(224), CByte(224))
-        btnClose.Font = New Font("Poppins Medium", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        btnClose.ForeColor = Color.Black
+        btnClose.FillColor = Color.FromArgb(CByte(74), CByte(79), CByte(84))
+        btnClose.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        btnClose.ForeColor = Color.White
         btnClose.Location = New Point(350, 600)
         btnClose.Name = "btnClose"
         btnClose.ShadowDecoration.CustomizableEdges = CustomizableEdges13
@@ -361,9 +363,9 @@ Partial Class IdCard
         btnPrint.DisabledState.CustomBorderColor = Color.DarkGray
         btnPrint.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         btnPrint.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        btnPrint.FillColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
-        btnPrint.Font = New Font("Poppins Medium", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        btnPrint.ForeColor = Color.Black
+        btnPrint.FillColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
+        btnPrint.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        btnPrint.ForeColor = Color.FromArgb(CByte(26), CByte(29), CByte(31))
         btnPrint.Location = New Point(260, 600)
         btnPrint.Name = "btnPrint"
         btnPrint.ShadowDecoration.CustomizableEdges = CustomizableEdges15
@@ -373,9 +375,9 @@ Partial Class IdCard
         ' 
         ' IdCard
         ' 
-        AutoScaleDimensions = New SizeF(8.0F, 20.0F)
+        AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
-        BackColor = Color.FromArgb(CByte(30), CByte(30), CByte(30))
+        BackColor = Color.White
         BackgroundImageLayout = ImageLayout.Stretch
         ClientSize = New Size(460, 650)
         Controls.Add(Guna2GradientPanel1)

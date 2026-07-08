@@ -1,10 +1,10 @@
-﻿Imports System.Drawing
+Imports System.Drawing
 Imports System.Drawing.Printing
 Imports System.IO
 Imports System.Security.Cryptography
 Imports System.Text
 Imports Guna.UI2.WinForms
-Imports Microsoft.Data.SqlClient
+Imports System.Data.Common
 
 Public Class AddStaff
     Private staffPhotoBytes As Byte() = Nothing
@@ -283,7 +283,7 @@ Public Class AddStaff
                     Catch
                     End Try
 
-                    MessageBox.Show("You cannot change the staff photo while viewing/editing an existing account here.", "Read‑Only", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                    MessageBox.Show("You cannot change the staff photo while viewing/editing an existing account here.", "Read-Only", MessageBoxButtons.OK, MessageBoxIcon.Information)
                 End If
 
                 ' Ensure placeholder shows "No Photo" when no photo exists (match add-mode messaging style).
@@ -374,7 +374,7 @@ Public Class AddStaff
                 Dim compressionRatio As Double = If(originalSize > 0, (1 - (CDbl(compressedSize) / originalSize)) * 100, 0)
 
                 lblStaffPicture.Text = $"Optimized ({ImageCompression.FormatFileSize(compressedSize)}, {compressionRatio:F0}% smaller)"
-                Console.WriteLine($"Image compressed: {ImageCompression.FormatFileSize(originalSize)} → {ImageCompression.FormatFileSize(compressedSize)} ({compressionRatio:F1}% reduction)")
+                Console.WriteLine($"Image compressed: {ImageCompression.FormatFileSize(originalSize)} ? {ImageCompression.FormatFileSize(compressedSize)} ({compressionRatio:F1}% reduction)")
             End Using
 
             ' Re-validate form after image upload
@@ -585,7 +585,7 @@ Public Class AddStaff
         Dim insertQuery As String = "
         INSERT INTO Users (Username, PasswordHash, FullName, Email, Phone, UserRole, pin, QRCode, IsActive, CreatedAt, UpdatedAt) 
         VALUES (@Username, @PasswordHash, @FullName, @Email, @Phone, @UserRole, @Pin, @QRCode, @IsActive, @CreatedAt, @UpdatedAt);
-        SELECT SCOPE_IDENTITY();"
+        SELECT last_insert_rowid();"
 
         Dim parameters() As SqlParameter = {
         New SqlParameter("@Username", username),
@@ -892,7 +892,7 @@ Public Class AddStaff
                                     End If
                                 End Sub
 
-        ' Show the dialog (modal) — do not auto-close the AddStaff form until user closes the print/passkey modal
+        ' Show the dialog (modal) � do not auto-close the AddStaff form until user closes the print/passkey modal
         dlg.ShowDialog(Me)
         dlg.Dispose()
 
@@ -1081,7 +1081,7 @@ Public Class AddStaff
     Private Function IsPasskeyUniqueInPasskeysColumn(passkey As String) As Boolean
         Try
             ' Check if the passkey exists in the comma-separated Passkeys column
-            Dim query As String = "SELECT COUNT(*) FROM Users WHERE (',' + ISNULL(Passkeys, '') + ',') LIKE '%,' + @p + ',%'"
+            Dim query As String = "SELECT COUNT(*) FROM Users WHERE (',' + IFNULL(Passkeys, '') + ',') LIKE '%,' + @p + ',%'"
             Dim param As New SqlParameter("@p", passkey)
             Dim count As Integer = CInt(Utilities.ExecuteScalar(query, New SqlParameter() {param}))
             Return count = 0
@@ -1326,7 +1326,7 @@ Public Class AddStaff
             Return False
         End Try
     End Function
-    'pdated status handler — Do Not disable combobox; enforce one-way change With statusLocked.
+    'pdated status handler � Do Not disable combobox; enforce one-way change With statusLocked.
     Private Sub Guna2ComboBox1_SelectedIndexChanged(sender As Object, e As EventArgs)
         Try
             If Not isEditMode Then Return
@@ -1387,7 +1387,7 @@ Public Class AddStaff
                 Try
                     Dim query As String = "SELECT Photo FROM Users WHERE UserID = @UserID"
                     Dim parameters() As SqlParameter = {New SqlParameter("@UserID", CInt(userData("UserID")))}
-                    Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters)
+                    Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters)
                         If reader.Read() AndAlso Not IsDBNull(reader("Photo")) Then
                             Dim dbBytes = CType(reader("Photo"), Byte())
                             Using ms As New MemoryStream(dbBytes)
@@ -1420,7 +1420,7 @@ Public Class AddStaff
     End Sub
     ' Separate method to handle photo loading in edit mode
     ' Replace LoadExistingPhoto contents (the portion that creates display image) with this to render stored photos stretched to control.
-    Private Sub LoadExistingPhoto(reader As SqlDataReader)
+    Private Sub LoadExistingPhoto(reader As DbDataReader)
         Try
             If Not IsDBNull(reader("Photo")) Then
                 Dim photoBytes As Byte() = CType(reader("Photo"), Byte())

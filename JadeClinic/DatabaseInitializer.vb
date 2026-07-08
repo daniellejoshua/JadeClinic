@@ -1,20 +1,16 @@
-﻿' (entire file with edits)
-Imports Microsoft.Data.SqlClient
+' (entire file with edits)
+Imports System.Data.Common
 Imports System.Configuration
 Imports System.IO
 
 Public Class DatabaseInitializer
 
-    ' Database schema creation that matches your ACTUAL SQL script
+    ' Create all schema using SQLite-compatible DDL
     Public Shared Sub CreateDatabaseSchema()
         Try
             Console.WriteLine("Creating database schema...")
 
-            ' Create tables in the right order (no foreign key dependencies first)
-            CreateUsersTableActual() ' Match your real schema with passkeys in Users table
-
-            ' NOTE: Customers table creation intentionally skipped by design (no persistent customer records required)
-
+            CreateUsersTableActual()
             CreateSuppliersTableActual()
             CreateProductsTableActual()
             CreateProductImagesTableActual()
@@ -22,67 +18,57 @@ Public Class DatabaseInitializer
             CreateSaleItemsTableActual()
             CreateInventoryLogTableActual()
             CreateAuditLogTableActual()
-            CreateCompanySettingsTableActual() ' Add company settings table
+            CreateCompanySettingsTableActual()
 
-            ' Create initial data
             CreateInitialData()
 
-            ' Update database for batch tracking support (for existing databases)
-            BatchTrackingMigration.UpdateDatabaseForBatchTracking()
+            ' Run batch tracking migration if present (no-op if not needed)
+            Try
+                BatchTrackingMigration.UpdateDatabaseForBatchTracking()
+            Catch
+            End Try
 
-            Console.WriteLine("🎉 Database schema created successfully!")
-
+            Console.WriteLine("?? Database schema created successfully!")
         Catch ex As Exception
-            Console.WriteLine($"❌ Error creating database schema: {ex.Message}")
+            Console.WriteLine($"? Error creating database schema: {ex.Message}")
             Throw New Exception($"Failed to create database schema: {ex.Message}")
         End Try
     End Sub
 
     Private Shared Sub CreateUsersTableActual()
-        Dim query As String = "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Users' AND xtype='U') " &
-            "CREATE TABLE Users(" &
-            "UserID int IDENTITY(1,1) PRIMARY KEY, " &
-            "Username nvarchar(50) NOT NULL UNIQUE, " &
-            "PasswordHash nvarchar(255) NOT NULL, " &
-            "FullName nvarchar(100) NOT NULL, " &
-            "UserRole nvarchar(20) DEFAULT 'Staff', " &
-            "IsActive bit DEFAULT 1, " &
-            "CreatedAt datetime DEFAULT getdate(), " &
-            "UpdatedAt datetime DEFAULT getdate(), " &
-            "pin int NULL, " &
-            "Photo varbinary(max) NULL, " &
-            "QRCode nvarchar(100) NULL, " &
-            "Email varchar(255) NULL, " &
-            "Phone varchar(20) NULL, " &
-            "Passkeys nvarchar(max) NULL)"
+        Dim query As String = "CREATE TABLE IF NOT EXISTS Users (" &
+            "UserID INTEGER PRIMARY KEY AUTOINCREMENT, " &
+            "Username TEXT NOT NULL UNIQUE, " &
+            "PasswordHash TEXT NOT NULL, " &
+            "FullName TEXT NOT NULL, " &
+            "UserRole TEXT DEFAULT 'Staff', " &
+            "IsActive INTEGER DEFAULT 1, " &
+            "CreatedAt DATETIME DEFAULT (CURRENT_TIMESTAMP), " &
+            "UpdatedAt DATETIME DEFAULT (CURRENT_TIMESTAMP), " &
+            "pin INTEGER NULL, " &
+            "Photo BLOB NULL, " &
+            "QRCode TEXT NULL, " &
+            "Email TEXT NULL, " &
+            "Phone TEXT NULL, " &
+            "Passkeys TEXT NULL)"
 
         DatabaseHelper.ExecuteNonQuery(query, Nothing)
 
-        ' Add index for QRCode (from your SQL script)
-        Dim indexQuery As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Users_QRCode') " &
-            "CREATE NONCLUSTERED INDEX IX_Users_QRCode ON Users (QRCode ASC) " &
-            "WHERE QRCode IS NOT NULL"
-
+        Dim indexQuery As String = "CREATE INDEX IF NOT EXISTS IX_Users_QRCode ON Users (QRCode)"
         Try
             DatabaseHelper.ExecuteNonQuery(indexQuery, Nothing)
         Catch ex As Exception
             Console.WriteLine($"Note: Could not create QRCode index: {ex.Message}")
         End Try
 
-        ' Add index for UserRole and IsActive (frequently queried together)
-        Dim roleActiveIndexQuery As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Users_Role_Active') " &
-            "CREATE NONCLUSTERED INDEX IX_Users_Role_Active ON Users (UserRole ASC, IsActive ASC)"
-
+        Dim roleActiveIndexQuery As String = "CREATE INDEX IF NOT EXISTS IX_Users_Role_Active ON Users (UserRole, IsActive)"
         Try
             DatabaseHelper.ExecuteNonQuery(roleActiveIndexQuery, Nothing)
         Catch ex As Exception
             Console.WriteLine($"Note: Could not create Role/Active index: {ex.Message}")
         End Try
 
-        ' Add index for Email (for login by email scenarios)
-        Dim emailIndexQuery As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Users_Email') " &
-            "CREATE NONCLUSTERED INDEX IX_Users_Email ON Users (Email ASC) WHERE Email IS NOT NULL"
-
+        Dim emailIndexQuery As String = "CREATE INDEX IF NOT EXISTS IX_Users_Email ON Users (Email)"
         Try
             DatabaseHelper.ExecuteNonQuery(emailIndexQuery, Nothing)
         Catch ex As Exception
@@ -91,63 +77,58 @@ Public Class DatabaseInitializer
     End Sub
 
     Private Shared Sub CreateSuppliersTableActual()
-        Dim query As String = "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Suppliers' AND xtype='U') " &
-            "CREATE TABLE Suppliers(" &
-            "SupplierID int IDENTITY(1,1) PRIMARY KEY, " &
-            "SupplierCode nvarchar(50) NOT NULL UNIQUE, " &
-            "SupplierName nvarchar(200) NOT NULL, " &
-            "ContactPerson nvarchar(100) NULL, " &
-            "Phone nvarchar(20) NULL, " &
-            "Email nvarchar(100) NULL, " &
-            "IsActive bit DEFAULT 1)"
+        Dim query As String = "CREATE TABLE IF NOT EXISTS Suppliers (" &
+            "SupplierID INTEGER PRIMARY KEY AUTOINCREMENT, " &
+            "SupplierCode TEXT NOT NULL UNIQUE, " &
+            "SupplierName TEXT NOT NULL, " &
+            "ContactPerson TEXT NULL, " &
+            "Phone TEXT NULL, " &
+            "Email TEXT NULL, " &
+            "IsActive INTEGER DEFAULT 1)"
 
         DatabaseHelper.ExecuteNonQuery(query, Nothing)
     End Sub
 
     Private Shared Sub CreateProductsTableActual()
-        Dim query As String = "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Products' AND xtype='U') " &
-            "CREATE TABLE Products(" &
-            "ProductID int IDENTITY(1,1) PRIMARY KEY, " &
-            "ProductCode nvarchar(50) NOT NULL UNIQUE, " &
-            "ProductName nvarchar(200) NOT NULL, " &
-            "Category nvarchar(100) NULL, " &
-            "Unit nvarchar(20) DEFAULT 'PCS', " &
-            "CurrentStock int DEFAULT 0, " &
-            "ReorderLevel int DEFAULT 10, " &
-            "CostPrice decimal(18,2) NOT NULL, " &
-            "SellingPrice decimal(18,2) NOT NULL, " &
-            "SupplierID int NULL, " &
-            "IsActive bit DEFAULT 1, " &
-            "Created datetime DEFAULT getdate(), " &
-            "WholesalePrice decimal(18,2) NULL, " &
-            "UpdatedAt datetime DEFAULT getdate(), " &
+        Dim query As String = "CREATE TABLE IF NOT EXISTS Products (" &
+            "ProductID INTEGER PRIMARY KEY AUTOINCREMENT, " &
+            "ProductCode TEXT NOT NULL UNIQUE, " &
+            "ProductName TEXT NOT NULL, " &
+            "Category TEXT NULL, " &
+            "Unit TEXT DEFAULT 'PCS', " &
+            "CurrentStock INTEGER DEFAULT 0, " &
+            "ReorderLevel INTEGER DEFAULT 10, " &
+            "CostPrice REAL NOT NULL, " &
+            "SellingPrice REAL NOT NULL, " &
+            "SupplierID INTEGER NULL, " &
+            "IsActive INTEGER DEFAULT 1, " &
+            "Created DATETIME DEFAULT (CURRENT_TIMESTAMP), " &
+            "WholesalePrice REAL NULL, " &
+            "UpdatedAt DATETIME DEFAULT (CURRENT_TIMESTAMP), " &
             "FOREIGN KEY (SupplierID) REFERENCES Suppliers(SupplierID))"
 
         DatabaseHelper.ExecuteNonQuery(query, Nothing)
 
-        ' Add index for Category and IsActive (for product filtering)
-        Dim categoryIndexQuery As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Products_Category_Active') " &
-            "CREATE NONCLUSTERED INDEX IX_Products_Category_Active ON Products (Category ASC, IsActive ASC) WHERE Category IS NOT NULL"
-
+        Dim categoryIndexQuery As String = "CREATE INDEX IF NOT EXISTS IX_Products_Category_Active ON Products (Category, IsActive)"
         Try
             DatabaseHelper.ExecuteNonQuery(categoryIndexQuery, Nothing)
         Catch ex As Exception
             Console.WriteLine($"Note: Could not create Category/Active index: {ex.Message}")
         End Try
 
-        ' Add index for SupplierID (foreign key lookups)
-        Dim supplierIndexQuery As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Products_Supplier') " &
-            "CREATE NONCLUSTERED INDEX IX_Products_Supplier ON Products (SupplierID ASC) WHERE SupplierID IS NOT NULL"
-
+        Dim supplierIndexQuery As String = "CREATE INDEX IF NOT EXISTS IX_Products_Supplier ON Products (SupplierID)"
         Try
             DatabaseHelper.ExecuteNonQuery(supplierIndexQuery, Nothing)
         Catch ex As Exception
             Console.WriteLine($"Note: Could not create Supplier index: {ex.Message}")
         End Try
 
-        ' Add index for ProductName (for search functionality)
-        Dim nameIndexQuery As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Products_Name') " &
-            "CREATE NONCLUSTERED INDEX IX_Products_Name ON Products (ProductName ASC)"
+        Dim nameIndexQuery As String = "CREATE INDEX IF NOT EXISTS IX_Products_Name ON Products (ProductName)"
+        Try
+            DatabaseHelper.ExecuteNonQuery(nameIndexQuery, Nothing)
+        Catch ex As Exception
+            Console.WriteLine($"Note: Could not create ProductName index: {ex.Message}")
+        End Try
 
         Try
             DatabaseHelper.ExecuteNonQuery(nameIndexQuery, Nothing)
@@ -156,8 +137,8 @@ Public Class DatabaseInitializer
         End Try
 
         ' Add index for low stock alerts (CurrentStock <= ReorderLevel)
-        Dim stockIndexQuery As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Products_Stock_Alert') " &
-            "CREATE NONCLUSTERED INDEX IX_Products_Stock_Alert ON Products (CurrentStock ASC, ReorderLevel ASC, IsActive ASC)"
+        Dim stockIndexQuery As String =
+            "CREATE INDEX IF NOT EXISTS IX_Products_Stock_Alert ON Products (CurrentStock ASC, ReorderLevel ASC, IsActive ASC)"
 
         Try
             DatabaseHelper.ExecuteNonQuery(stockIndexQuery, Nothing)
@@ -167,34 +148,32 @@ Public Class DatabaseInitializer
     End Sub
 
     Private Shared Sub CreateProductImagesTableActual()
-        Dim query As String = "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='ProductImages' AND xtype='U') " &
-            "CREATE TABLE ProductImages(" &
-            "ImageID int IDENTITY(1,1) PRIMARY KEY, " &
-            "ImageHash nvarchar(255) NOT NULL UNIQUE, " &
-            "ImageType nvarchar(10) DEFAULT 'thumb', " &
-            "ImageData varbinary(max) NOT NULL, " &
-            "CreatedAt datetime DEFAULT getdate(), " &
-            "UpdatedAt datetime DEFAULT getdate())"
+        Dim query As String = "CREATE TABLE IF NOT EXISTS ProductImages (" &
+            "ImageID INTEGER PRIMARY KEY AUTOINCREMENT, " &
+            "ImageHash TEXT NOT NULL UNIQUE, " &
+            "ImageType TEXT DEFAULT 'thumb', " &
+            "ImageData BLOB NOT NULL, " &
+            "CreatedAt DATETIME DEFAULT (CURRENT_TIMESTAMP), " &
+            "UpdatedAt DATETIME DEFAULT (CURRENT_TIMESTAMP)" &
+            ")"
 
         DatabaseHelper.ExecuteNonQuery(query, Nothing)
 
         ' Create ProductImageMapping table for many-to-many relationship
-        Dim mappingQuery As String = "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='ProductImageMapping' AND xtype='U') " &
-            "CREATE TABLE ProductImageMapping(" &
-            "MappingID int IDENTITY(1,1) PRIMARY KEY, " &
-            "ProductID int NOT NULL, " &
-            "ImageID int NOT NULL, " &
-            "CreatedAt datetime DEFAULT getdate(), " &
+        Dim mappingQuery As String = "CREATE TABLE IF NOT EXISTS ProductImageMapping (" &
+            "MappingID INTEGER PRIMARY KEY AUTOINCREMENT, " &
+            "ProductID INTEGER NOT NULL, " &
+            "ImageID INTEGER NOT NULL, " &
+            "CreatedAt DATETIME DEFAULT (CURRENT_TIMESTAMP), " &
             "FOREIGN KEY (ProductID) REFERENCES Products(ProductID), " &
             "FOREIGN KEY (ImageID) REFERENCES ProductImages(ImageID), " &
-            "UNIQUE(ProductID, ImageID))"
+            "UNIQUE(ProductID, ImageID)" &
+            ")"
 
         DatabaseHelper.ExecuteNonQuery(mappingQuery, Nothing)
 
         ' Add index for ProductImages hash (for duplicate detection)
-        Dim hashIndexQuery As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_ProductImages_Hash') " &
-            "CREATE NONCLUSTERED INDEX IX_ProductImages_Hash ON ProductImages (ImageHash ASC)"
-
+        Dim hashIndexQuery As String = "CREATE INDEX IF NOT EXISTS IX_ProductImages_Hash ON ProductImages (ImageHash)"
         Try
             DatabaseHelper.ExecuteNonQuery(hashIndexQuery, Nothing)
         Catch ex As Exception
@@ -202,9 +181,7 @@ Public Class DatabaseInitializer
         End Try
 
         ' Add index for ProductImageMapping (for product image lookups)
-        Dim mappingIndexQuery As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_ProductImageMapping_Product') " &
-            "CREATE NONCLUSTERED INDEX IX_ProductImageMapping_Product ON ProductImageMapping (ProductID ASC)"
-
+        Dim mappingIndexQuery As String = "CREATE INDEX IF NOT EXISTS IX_ProductImageMapping_Product ON ProductImageMapping (ProductID)"
         Try
             DatabaseHelper.ExecuteNonQuery(mappingIndexQuery, Nothing)
         Catch ex As Exception
@@ -215,84 +192,58 @@ Public Class DatabaseInitializer
     ' Customers table intentionally not created (ephemeral customers only via sales snapshots)
 
     Private Shared Sub CreateSalesTableActual()
-        ' Sales table: keep SalesData JSON but add reportable explicit columns for scale.
-        ' Note: CustomerID column and FK removed since we don't persist customer records.
-        Dim query As String = "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='Sales' AND xtype='U') " &
-        "CREATE TABLE Sales(" &
-        "SaleID int IDENTITY(1,1) PRIMARY KEY, " &
-        "SaleNumber AS ('SALE'+right('00000'+CONVERT(nvarchar(10),SaleID),5)) PERSISTED, " &
-        "SaleDate datetime DEFAULT getdate(), " &
-        "CustomerName nvarchar(200) NULL, " &
-        "CustomerTIN nvarchar(50) NULL, " &            ' persisted TIN for quick reads
-        "UserID int NULL, " &
-        "TotalAmount decimal(18,2) DEFAULT 0, " &
-        "AmountPaid decimal(18,2) DEFAULT 0, " &
-        "PaymentMethod nvarchar(20) DEFAULT 'Cash', " &
-        "IsVoid bit DEFAULT 0, " &
-        "Reference nvarchar(100) NULL, " &
-        "SalesData nvarchar(max) not null, " &
-        "Status nvarchar(50) DEFAULT 'Completed', " &
-        "DiscountType nvarchar(50) NULL, " &
-        "DiscountAmount decimal(18,2) NOT NULL DEFAULT 0, " &
-        "FOREIGN KEY (UserID) REFERENCES Users(UserID))"
+        Dim query As String = "CREATE TABLE IF NOT EXISTS Sales (" &
+            "SaleID INTEGER PRIMARY KEY AUTOINCREMENT, " &
+            "SaleNumber TEXT, " &
+            "SaleDate DATETIME DEFAULT (CURRENT_TIMESTAMP), " &
+            "CustomerName TEXT NULL, " &
+            "CustomerTIN TEXT NULL, " &
+            "UserID INTEGER NULL, " &
+            "TotalAmount REAL DEFAULT 0, " &
+            "AmountPaid REAL DEFAULT 0, " &
+            "PaymentMethod TEXT DEFAULT 'Cash', " &
+            "IsVoid INTEGER DEFAULT 0, " &
+            "Reference TEXT NULL, " &
+            "SalesData TEXT NOT NULL, " &
+            "Status TEXT DEFAULT 'Completed', " &
+            "DiscountType TEXT NULL, " &
+            "DiscountAmount REAL NOT NULL DEFAULT 0, " &
+            "FOREIGN KEY (UserID) REFERENCES Users(UserID)" &
+            ")"
 
         DatabaseHelper.ExecuteNonQuery(query, Nothing)
 
-        ' Backwards-compatible: ensure CustomerTIN exists (keep for snapshots)
+        ' Ensure CustomerTIN column exists (no-op if created above)
         Try
-            Dim addCustomerTIN As String = "IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'Sales' AND COLUMN_NAME = 'CustomerTIN') " &
-            "ALTER TABLE Sales ADD CustomerTIN nvarchar(50) NULL"
-            DatabaseHelper.ExecuteNonQuery(addCustomerTIN, Nothing)
-        Catch ex As Exception
-            Console.WriteLine($"Note: Could not add CustomerTIN to Sales: {ex.Message}")
-        End Try
-
-        ' Index for CustomerTIN (still useful for quick lookups by TIN)
-        Try
-            Dim idxCustomerTIN As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_Sales_CustomerTIN') " &
-            "CREATE NONCLUSTERED INDEX IX_Sales_CustomerTIN ON Sales (CustomerTIN ASC) WHERE CustomerTIN IS NOT NULL"
+            Dim idxCustomerTIN As String = "CREATE INDEX IF NOT EXISTS IX_Sales_CustomerTIN ON Sales (CustomerTIN)"
             DatabaseHelper.ExecuteNonQuery(idxCustomerTIN, Nothing)
         Catch ex As Exception
             Console.WriteLine($"Note: Could not create CustomerTIN index on Sales: {ex.Message}")
         End Try
 
-        ' ... existing index creation for SaleDate, DiscountAmount etc. ...
+        ' Additional indexes (SaleDate, DiscountAmount) can be created similarly if needed
     End Sub
 
     Private Shared Sub CreateSaleItemsTableActual()
-        ' SaleItems: store both the charged unit price and the original price + per-line discount for historical accuracy
-        Dim query As String = "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='SaleItems' AND xtype='U') " &
-            "CREATE TABLE SaleItems(" &
-            "SaleItemID int IDENTITY(1,1) PRIMARY KEY, " &
-            "SaleID int NOT NULL, " &
-            "ProductID int NOT NULL, " &
-            "Quantity int NOT NULL, " &
-            "UnitPrice decimal(18,2) NOT NULL, " &
-            "OriginalUnitPrice decimal(18,2) NULL, " &
-            "LineDiscountAmount decimal(18,2) NOT NULL DEFAULT 0, " &
-            "SubTotal AS (Quantity * UnitPrice), " &
+        Dim query As String = "CREATE TABLE IF NOT EXISTS SaleItems (" &
+            "SaleItemID INTEGER PRIMARY KEY AUTOINCREMENT, " &
+            "SaleID INTEGER NOT NULL, " &
+            "ProductID INTEGER NOT NULL, " &
+            "Quantity INTEGER NOT NULL, " &
+            "UnitPrice REAL NOT NULL, " &
+            "OriginalUnitPrice REAL NULL, " &
+            "LineDiscountAmount REAL NOT NULL DEFAULT 0, " &
+            "SubTotal REAL, " &
             "FOREIGN KEY (SaleID) REFERENCES Sales(SaleID), " &
-            "FOREIGN KEY (ProductID) REFERENCES Products(ProductID))"
+            "FOREIGN KEY (ProductID) REFERENCES Products(ProductID)" &
+            ")"
 
         DatabaseHelper.ExecuteNonQuery(query, Nothing)
 
-        ' Backwards-compatible: add columns to existing SaleItems table if they don't exist
-        Try
-            Dim addOriginalPrice As String = "IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'SaleItems' AND COLUMN_NAME = 'OriginalUnitPrice') " &
-                "ALTER TABLE SaleItems ADD OriginalUnitPrice decimal(18,2) NULL"
-            DatabaseHelper.ExecuteNonQuery(addOriginalPrice, Nothing)
-
-            Dim addLineDiscount As String = "IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'SaleItems' AND COLUMN_NAME = 'LineDiscountAmount') " &
-                "ALTER TABLE SaleItems ADD LineDiscountAmount decimal(18,2) NOT NULL DEFAULT 0"
-            DatabaseHelper.ExecuteNonQuery(addLineDiscount, Nothing)
-        Catch ex As Exception
-            Console.WriteLine($"Note: Could not add SaleItems columns: {ex.Message}")
-        End Try
+        ' Backwards-compatible column adds are not straightforward in SQLite; if needed, handle via migration logic
 
         ' Add index for SaleID (foreign key lookups for sale details)
-        Dim saleIndexQuery As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_SaleItems_Sale') " &
-            "CREATE NONCLUSTERED INDEX IX_SaleItems_Sale ON SaleItems (SaleID ASC)"
-
+        Dim saleIndexQuery As String = "CREATE INDEX IF NOT EXISTS IX_SaleItems_Sale ON SaleItems (SaleID)"
         Try
             DatabaseHelper.ExecuteNonQuery(saleIndexQuery, Nothing)
         Catch ex As Exception
@@ -300,8 +251,12 @@ Public Class DatabaseInitializer
         End Try
 
         ' Add index for ProductID (to track product sales)
-        Dim productIndexQuery As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_SaleItems_Product') " &
-            "CREATE NONCLUSTERED INDEX IX_SaleItems_Product ON SaleItems (ProductID ASC)"
+        Dim productIndexQuery As String = "CREATE INDEX IF NOT EXISTS IX_SaleItems_Product ON SaleItems (ProductID)"
+        Try
+            DatabaseHelper.ExecuteNonQuery(productIndexQuery, Nothing)
+        Catch ex As Exception
+            Console.WriteLine($"Note: Could not create ProductID index: {ex.Message}")
+        End Try
 
         Try
             DatabaseHelper.ExecuteNonQuery(productIndexQuery, Nothing)
@@ -311,109 +266,72 @@ Public Class DatabaseInitializer
     End Sub
 
     Private Shared Sub CreateInventoryLogTableActual()
-        Dim query As String = "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='InventoryLog' AND xtype='U') " &
-            "CREATE TABLE InventoryLog(" &
-            "LogID int IDENTITY(1,1) PRIMARY KEY, " &
-            "ProductID int NOT NULL, " &
-            "TransactionType varchar(10) NOT NULL CHECK (TransactionType IN ('IN', 'OUT', 'ADJUST')), " &
-            "Quantity int NOT NULL CHECK (Quantity > 0), " &
-            "PreviousStock int NULL, " &
-            "NewStock int NULL, " &
-            "BatchNumber nvarchar(50) NULL, " &
-            "ExpiryDate date NULL, " &
-            "SupplierID int NULL, " &
-            "UserID int NOT NULL, " &
-            "Reference varchar(100) NULL, " &
-            "Notes nvarchar(500) NULL, " &
-            "CreatedAt datetime DEFAULT getdate(), " &
+        Dim query As String = "CREATE TABLE IF NOT EXISTS InventoryLog (" &
+            "LogID INTEGER PRIMARY KEY AUTOINCREMENT, " &
+            "ProductID INTEGER NOT NULL, " &
+            "TransactionType TEXT NOT NULL CHECK (TransactionType IN ('IN','OUT','ADJUST')), " &
+            "Quantity INTEGER NOT NULL CHECK (Quantity > 0), " &
+            "PreviousStock INTEGER NULL, " &
+            "NewStock INTEGER NULL, " &
+            "BatchNumber TEXT NULL, " &
+            "ExpiryDate TEXT NULL, " &
+            "SupplierID INTEGER NULL, " &
+            "UserID INTEGER NOT NULL, " &
+            "Reference TEXT NULL, " &
+            "Notes TEXT NULL, " &
+            "CreatedAt DATETIME DEFAULT (CURRENT_TIMESTAMP), " &
             "FOREIGN KEY (ProductID) REFERENCES Products(ProductID), " &
             "FOREIGN KEY (SupplierID) REFERENCES Suppliers(SupplierID), " &
-            "FOREIGN KEY (UserID) REFERENCES Users(UserID))"
+            "FOREIGN KEY (UserID) REFERENCES Users(UserID)" &
+            ")"
 
         DatabaseHelper.ExecuteNonQuery(query, Nothing)
 
-        ' Add BatchNumber and ExpiryDate columns if they don't exist (for existing databases)
+        ' Create useful indexes
         Try
-            Dim addBatchQuery As String = "IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'InventoryLog' AND COLUMN_NAME = 'BatchNumber') " &
-                "ALTER TABLE InventoryLog ADD BatchNumber nvarchar(50) NULL"
-            DatabaseHelper.ExecuteNonQuery(addBatchQuery, Nothing)
-
-            Dim addExpiryQuery As String = "IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'InventoryLog' AND COLUMN_NAME = 'ExpiryDate') " &
-                "ALTER TABLE InventoryLog ADD ExpiryDate date NULL"
-            DatabaseHelper.ExecuteNonQuery(addExpiryQuery, Nothing)
-        Catch ex As Exception
-            Console.WriteLine($"Note: Could not add batch/expiry columns: {ex.Message}")
-        End Try
-
-        ' Add index for ProductID and CreatedAt (for product history)
-        Dim productDateIndexQuery As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_InventoryLog_Product_Date') " &
-            "CREATE NONCLUSTERED INDEX IX_InventoryLog_Product_Date ON InventoryLog (ProductID ASC, CreatedAt DESC)"
-
-        Try
-            DatabaseHelper.ExecuteNonQuery(productDateIndexQuery, Nothing)
+            DatabaseHelper.ExecuteNonQuery("CREATE INDEX IF NOT EXISTS IX_InventoryLog_Product_Date ON InventoryLog (ProductID, CreatedAt)", Nothing)
         Catch ex As Exception
             Console.WriteLine($"Note: Could not create Product/Date index: {ex.Message}")
         End Try
 
-        ' Add index for CreatedAt (for date-based queries)
-        Dim dateIndexQuery As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_InventoryLog_Date') " &
-            "CREATE NONCLUSTERED INDEX IX_InventoryLog_Date ON InventoryLog (CreatedAt DESC)"
-
         Try
-            DatabaseHelper.ExecuteNonQuery(dateIndexQuery, Nothing)
+            DatabaseHelper.ExecuteNonQuery("CREATE INDEX IF NOT EXISTS IX_InventoryLog_Date ON InventoryLog (CreatedAt)", Nothing)
         Catch ex As Exception
             Console.WriteLine($"Note: Could not create Date index: {ex.Message}")
         End Try
 
-        ' Add index for UserID (to track who made changes)
-        Dim userIndexQuery As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_InventoryLog_User') " &
-            "CREATE NONCLUSTERED INDEX IX_InventoryLog_User ON InventoryLog (UserID ASC)"
-
         Try
-            DatabaseHelper.ExecuteNonQuery(userIndexQuery, Nothing)
+            DatabaseHelper.ExecuteNonQuery("CREATE INDEX IF NOT EXISTS IX_InventoryLog_User ON InventoryLog (UserID)", Nothing)
         Catch ex As Exception
             Console.WriteLine($"Note: Could not create User index: {ex.Message}")
         End Try
 
-        ' Add index for BatchNumber (for batch tracking queries)
-        Dim batchIndexQuery As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_InventoryLog_Batch') " &
-            "CREATE NONCLUSTERED INDEX IX_InventoryLog_Batch ON InventoryLog (BatchNumber ASC) WHERE BatchNumber IS NOT NULL"
-
         Try
-            DatabaseHelper.ExecuteNonQuery(batchIndexQuery, Nothing)
+            DatabaseHelper.ExecuteNonQuery("CREATE INDEX IF NOT EXISTS IX_InventoryLog_Batch ON InventoryLog (BatchNumber)", Nothing)
         Catch ex As Exception
             Console.WriteLine($"Note: Could not create BatchNumber index: {ex.Message}")
         End Try
 
-        ' Add index for ExpiryDate (for expiry tracking)
-        Dim expiryIndexQuery As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_InventoryLog_Expiry') " &
-            "CREATE NONCLUSTERED INDEX IX_InventoryLog_Expiry ON InventoryLog (ExpiryDate ASC) WHERE ExpiryDate IS NOT NULL"
-
         Try
-            DatabaseHelper.ExecuteNonQuery(expiryIndexQuery, Nothing)
+            DatabaseHelper.ExecuteNonQuery("CREATE INDEX IF NOT EXISTS IX_InventoryLog_Expiry ON InventoryLog (ExpiryDate)", Nothing)
         Catch ex As Exception
             Console.WriteLine($"Note: Could not create ExpiryDate index: {ex.Message}")
         End Try
     End Sub
 
     Private Shared Sub CreateAuditLogTableActual()
-        Dim query As String = "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='AuditLog' AND xtype='U') " &
-            "CREATE TABLE AuditLog(" &
-            "AuditID int IDENTITY(1,1) PRIMARY KEY, " &
-            "Action nvarchar(200) NOT NULL, " &
-            "Details nvarchar(1000) NULL, " &
-            "ActionTime datetime DEFAULT getdate(), " &
-            "UserID int NULL, " &
+        Dim query As String = "CREATE TABLE IF NOT EXISTS AuditLog (" &
+            "AuditID INTEGER PRIMARY KEY AUTOINCREMENT, " &
+            "Action TEXT NOT NULL, " &
+            "Details TEXT NULL, " &
+            "ActionTime DATETIME DEFAULT (CURRENT_TIMESTAMP), " &
+            "UserID INTEGER NULL, " &
             "FOREIGN KEY (UserID) REFERENCES Users(UserID))"
 
         DatabaseHelper.ExecuteNonQuery(query, Nothing)
 
-        ' Add index for AuditLog (from your SQL script)
-        Dim indexQuery As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_AuditLog_UserID_ActionTime') " &
-            "CREATE NONCLUSTERED INDEX IX_AuditLog_UserID_ActionTime ON AuditLog (UserID ASC, ActionTime ASC)"
-
         Try
-            DatabaseHelper.ExecuteNonQuery(indexQuery, Nothing)
+            DatabaseHelper.ExecuteNonQuery("CREATE INDEX IF NOT EXISTS IX_AuditLog_UserID_ActionTime ON AuditLog (UserID, ActionTime)", Nothing)
         Catch ex As Exception
             Console.WriteLine($"Note: Could not create AuditLog index: {ex.Message}")
         End Try
@@ -421,24 +339,24 @@ Public Class DatabaseInitializer
 
     ' FIXED: Restore the proper function name and add the actual logo resource conversion
     Private Shared Sub CreateCompanySettingsTableActual()
-        Dim query As String = "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='CompanySettings' AND xtype='U') " &
-        "CREATE TABLE CompanySettings(" &
-        "SettingID int IDENTITY(1,1) PRIMARY KEY, " &
-        "CompanyName nvarchar(200) NOT NULL, " &
-        "TIN nvarchar(50) NULL, " &
-        "Address nvarchar(500) NULL, " &
-        "Phone nvarchar(50) NULL, " &
-        "Email nvarchar(100) NULL, " &
-        "Website nvarchar(200) NULL, " &
-        "Logo varbinary(max) NULL, " &
-        "BIRAuthNumber nvarchar(100) NULL, " &
-        "PTUNumber nvarchar(100) NULL, " &
-        "ValidityYears int NOT NULL DEFAULT 5, " &
-        "ReceiptFooter nvarchar(300) NULL, " &
-        "CompanyHours nvarchar(1000) NULL, " &          ' <-- new column
-        "IsActive bit NOT NULL DEFAULT 1, " &
-        "DateCreated datetime2 NOT NULL DEFAULT GETDATE()," &
-        "LastModified datetime2 NOT NULL DEFAULT GETDATE())"
+        Dim query As String = "CREATE TABLE IF NOT EXISTS CompanySettings (" &
+        "SettingID INTEGER PRIMARY KEY AUTOINCREMENT, " &
+        "CompanyName TEXT NOT NULL, " &
+        "TIN TEXT NULL, " &
+        "Address TEXT NULL, " &
+        "Phone TEXT NULL, " &
+        "Email TEXT NULL, " &
+        "Website TEXT NULL, " &
+        "Logo BLOB NULL, " &
+        "BIRAuthNumber TEXT NULL, " &
+        "PTUNumber TEXT NULL, " &
+        "ValidityYears INTEGER NOT NULL DEFAULT 5, " &
+        "ReceiptFooter TEXT NULL, " &
+        "CompanyHours TEXT NULL, " &          ' <-- new column
+        "IsActive INTEGER NOT NULL DEFAULT 1, " &
+        "DateCreated DATETIME NOT NULL DEFAULT (CURRENT_TIMESTAMP), " &
+        "LastModified DATETIME NOT NULL DEFAULT (CURRENT_TIMESTAMP)" &
+        ")"
 
         DatabaseHelper.ExecuteNonQuery(query, Nothing)
     End Sub
@@ -446,7 +364,7 @@ Public Class DatabaseInitializer
     Private Shared Sub CreateDefaultCompanySettings()
         Try
             Dim checkSql As String = "SELECT COUNT(*) FROM CompanySettings WHERE IsActive = 1"
-            Dim settingsCount = Utilities.ExecuteScalar(checkSql, New SqlParameter() {})
+            Dim settingsCount = Utilities.ExecuteScalar(checkSql, Nothing)
 
             If Convert.ToInt32(settingsCount) = 0 Then
                 ' Convert Jade Dental Logo resource to byte array
@@ -480,7 +398,7 @@ Public Class DatabaseInitializer
             }
 
                 Utilities.ExecuteNonQuery(sql, params)
-                Console.WriteLine("✅ Default company settings created with Jade Dental Clinic logo")
+                Console.WriteLine("? Default company settings created with Jade Dental Clinic logo")
             End If
         Catch ex As Exception
             Console.WriteLine($"Warning: Could not create default company settings: {ex.Message}")
@@ -518,7 +436,7 @@ Public Class DatabaseInitializer
                 ' Generate passkeys for admin user
                 CreateDefaultPasskeys(adminUserId)
 
-                Console.WriteLine("✅ Default admin user created (username: admin, password: admin123, PIN: 1234)")
+                Console.WriteLine("? Default admin user created (username: admin, password: admin123, PIN: 1234)")
             End If
         Catch ex As Exception
             Console.WriteLine($"Warning: Could not create default admin user: {ex.Message}")
@@ -540,7 +458,7 @@ Public Class DatabaseInitializer
 
             DatabaseHelper.ExecuteNonQuery(updatePasskeysQuery, passkeyParams)
 
-            Console.WriteLine($"🔑 Generated 3 recovery passkeys: {String.Join(", ", passkeys)}")
+            Console.WriteLine($"?? Generated 3 recovery passkeys: {String.Join(", ", passkeys)}")
         Catch ex As Exception
             Console.WriteLine($"Warning: Could not create default passkeys: {ex.Message}")
         End Try
@@ -607,5 +525,5 @@ Public Class DatabaseInitializer
 
     ' ENHANCED: Include actual Jade Dental Clinic logo from resources as default
 
-    ' 🔥 ADD THIS NEW METHOD:
+    ' ?? ADD THIS NEW METHOD:
 End Class

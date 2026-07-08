@@ -1,4 +1,4 @@
-﻿<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
+<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
 Partial Class Inventory
     Inherits System.Windows.Forms.Form
 
@@ -135,9 +135,9 @@ Partial Class Inventory
         Exportbtn.DisabledState.CustomBorderColor = Color.DarkGray
         Exportbtn.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         Exportbtn.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        Exportbtn.FillColor = Color.FromArgb(CByte(255), CByte(204), CByte(77))
+        Exportbtn.FillColor = Color.FromArgb(CByte(191), CByte(155), CByte(48))
         resources.ApplyResources(Exportbtn, "Exportbtn")
-        Exportbtn.ForeColor = Color.Black
+        Exportbtn.ForeColor = Color.White
         Exportbtn.Name = "Exportbtn"
         Exportbtn.ShadowDecoration.CustomizableEdges = CustomizableEdges6
         ' 
@@ -226,7 +226,7 @@ Partial Class Inventory
         Guna2ComboBox1.FocusedColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         Guna2ComboBox1.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         resources.ApplyResources(Guna2ComboBox1, "Guna2ComboBox1")
-        Guna2ComboBox1.ForeColor = Color.White
+        Guna2ComboBox1.ForeColor = Color.Black
         Guna2ComboBox1.Name = "Guna2ComboBox1"
         Guna2ComboBox1.ShadowDecoration.CustomizableEdges = CustomizableEdges9
         ' 
@@ -241,7 +241,7 @@ Partial Class Inventory
         StockCmbBox.FocusedColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         StockCmbBox.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         resources.ApplyResources(StockCmbBox, "StockCmbBox")
-        StockCmbBox.ForeColor = Color.White
+        StockCmbBox.ForeColor = Color.Black
         StockCmbBox.Items.AddRange(New Object() {resources.GetString("StockCmbBox.Items"), resources.GetString("StockCmbBox.Items1"), resources.GetString("StockCmbBox.Items2"), resources.GetString("StockCmbBox.Items3")})
         StockCmbBox.Name = "StockCmbBox"
         StockCmbBox.ShadowDecoration.CustomizableEdges = CustomizableEdges11
@@ -274,7 +274,7 @@ Partial Class Inventory
         txtFilterQuantity.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtFilterQuantity.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         resources.ApplyResources(txtFilterQuantity, "txtFilterQuantity")
-        txtFilterQuantity.ForeColor = Color.White
+        txtFilterQuantity.ForeColor = Color.Black
         txtFilterQuantity.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtFilterQuantity.Name = "txtFilterQuantity"
         txtFilterQuantity.PlaceholderForeColor = Color.White
@@ -295,7 +295,7 @@ Partial Class Inventory
         txtFilterPrice.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtFilterPrice.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         resources.ApplyResources(txtFilterPrice, "txtFilterPrice")
-        txtFilterPrice.ForeColor = Color.White
+        txtFilterPrice.ForeColor = Color.Black
         txtFilterPrice.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtFilterPrice.Name = "txtFilterPrice"
         txtFilterPrice.PlaceholderForeColor = Color.White
@@ -316,7 +316,7 @@ Partial Class Inventory
         txtSearch.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtSearch.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         resources.ApplyResources(txtSearch, "txtSearch")
-        txtSearch.ForeColor = Color.White
+        txtSearch.ForeColor = Color.Black
         txtSearch.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtSearch.Name = "txtSearch"
         txtSearch.PlaceholderForeColor = Color.White

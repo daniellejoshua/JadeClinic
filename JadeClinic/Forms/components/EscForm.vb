@@ -1,4 +1,4 @@
-﻿Public Class EscForm
+Public Class EscForm
     Public Shared Function ConfirmExit(owner As IWin32Window) As DialogResult
         Dim overlay As Form = Nothing
         Try

@@ -1,4 +1,4 @@
-﻿<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
+<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
 Partial Class ProfileSettings
     Inherits System.Windows.Forms.Form
 
@@ -672,7 +672,7 @@ Partial Class ProfileSettings
         lblLogout.Name = "lblLogout"
         lblLogout.Size = New Size(115, 36)
         lblLogout.TabIndex = 57
-        lblLogout.Text = "◀️ Log out "
+        lblLogout.Text = Char.ConvertFromUtf32(&H1F6AA) & " Log out "
         ' 
         ' lblChangePin
         ' 
@@ -684,7 +684,7 @@ Partial Class ProfileSettings
         lblChangePin.Name = "lblChangePin"
         lblChangePin.Size = New Size(162, 36)
         lblChangePin.TabIndex = 56
-        lblChangePin.Text = "⚙️ Change Pin"
+        lblChangePin.Text = Char.ConvertFromUtf32(&H1F511) & " Change Pin"
         ' 
         ' lblProfileSettings
         ' 
@@ -696,7 +696,7 @@ Partial Class ProfileSettings
         lblProfileSettings.Name = "lblProfileSettings"
         lblProfileSettings.Size = New Size(193, 36)
         lblProfileSettings.TabIndex = 55
-        lblProfileSettings.Text = "👤 Profile Settings"
+        lblProfileSettings.Text = ChrW(&H2699) & " Profile Settings"
         ' 
         ' DashboardPanel
         ' 

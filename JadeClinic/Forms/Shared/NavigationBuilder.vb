@@ -1,7 +1,7 @@
 Imports System.Reflection
 Imports System.Drawing
 Imports Guna.UI2.WinForms
-Imports Microsoft.Data.SqlClient
+Imports System.Data.Common
 
 Public NotInheritable Class NavigationBuilder
     Private Sub New()

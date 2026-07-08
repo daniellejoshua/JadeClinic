@@ -1,4 +1,5 @@
-Imports Microsoft.Data.SqlClient
+Imports Microsoft.Data.Sqlite
+Imports System.Data.Common
 Imports System.Data
 
 Public Class AddInventoryLogForm
@@ -53,13 +54,13 @@ Public Class AddInventoryLogForm
     Private Sub LoadProducts()
         Try
             Dim connStr As String = Connection.GetConnectionString()
-            Using conn As New SqlConnection(connStr)
+            Using conn As New SqliteConnection(connStr)
                 conn.Open()
 
                 ' Include Category in the query to determine if batch tracking is needed
                 Dim query As String = "SELECT ProductID, ProductName, Category, CurrentStock FROM Products WHERE IsActive = 1 ORDER BY ProductName"
-                Using cmd As New SqlCommand(query, conn)
-                    Using reader As SqlDataReader = cmd.ExecuteReader()
+                Using cmd As New SqliteCommand(query, conn)
+                    Using reader As DbDataReader = cmd.ExecuteReader()
                         products.Clear()
 
                         While reader.Read()
@@ -82,12 +83,12 @@ Public Class AddInventoryLogForm
     Private Sub LoadSuppliers()
         Try
             Dim connStr As String = Connection.GetConnectionString()
-            Using conn As New SqlConnection(connStr)
+            Using conn As New SqliteConnection(connStr)
                 conn.Open()
 
                 Dim query As String = "SELECT SupplierID, SupplierName FROM Suppliers WHERE IsActive = 1 ORDER BY SupplierName"
-                Using cmd As New SqlCommand(query, conn)
-                    Using reader As SqlDataReader = cmd.ExecuteReader()
+                Using cmd As New SqliteCommand(query, conn)
+                    Using reader As DbDataReader = cmd.ExecuteReader()
                         suppliers.Clear()
 
                         While reader.Read()
@@ -698,10 +699,10 @@ Public Class AddInventoryLogForm
     Private Function CheckSupplierExists(supplierName As String) As Boolean
         Try
             Dim connStr As String = Connection.GetConnectionString()
-            Using conn As New SqlConnection(connStr)
+            Using conn As New SqliteConnection(connStr)
                 conn.Open()
                 Dim query As String = "SELECT COUNT(*) FROM Suppliers WHERE LOWER(SupplierName) = LOWER(@SupplierName) AND IsActive = 1"
-                Using cmd As New SqlCommand(query, conn)
+                Using cmd As New SqliteCommand(query, conn)
                     cmd.Parameters.AddWithValue("@SupplierName", supplierName)
                     Dim count As Integer = Convert.ToInt32(cmd.ExecuteScalar())
                     Return count > 0
@@ -716,7 +717,7 @@ Public Class AddInventoryLogForm
     Private Function SaveSupplier(supplierName As String, contactPerson As String, phone As String, email As String) As Boolean
         Try
             Dim connStr As String = Connection.GetConnectionString()
-            Using conn As New SqlConnection(connStr)
+            Using conn As New SqliteConnection(connStr)
                 conn.Open()
 
                 ' Generate unique supplier code
@@ -724,7 +725,7 @@ Public Class AddInventoryLogForm
 
                 Dim query As String = "INSERT INTO Suppliers (SupplierCode, SupplierName, ContactPerson, Phone, Email, IsActive) " +
                                      "VALUES (@SupplierCode, @SupplierName, @ContactPerson, @Phone, @Email, 1)"
-                Using cmd As New SqlCommand(query, conn)
+                Using cmd As New SqliteCommand(query, conn)
                     cmd.Parameters.AddWithValue("@SupplierCode", supplierCode)
                     cmd.Parameters.AddWithValue("@SupplierName", supplierName)
                     cmd.Parameters.AddWithValue("@ContactPerson", If(String.IsNullOrWhiteSpace(contactPerson), DBNull.Value, contactPerson))
@@ -740,10 +741,10 @@ Public Class AddInventoryLogForm
         End Try
     End Function
 
-    Private Function GenerateSupplierCode(conn As SqlConnection) As String
+    Private Function GenerateSupplierCode(conn As SqliteConnection) As String
         Try
-            Dim query As String = "SELECT ISNULL(MAX(CAST(SUBSTRING(SupplierCode, 2, LEN(SupplierCode)) AS INT)), 0) + 1 FROM Suppliers WHERE SupplierCode LIKE 'S%' AND ISNUMERIC(SUBSTRING(SupplierCode, 2, LEN(SupplierCode))) = 1"
-            Using cmd As New SqlCommand(query, conn)
+            Dim query As String = "SELECT IFNULL(MAX(CAST(SUBSTR(SupplierCode, 2) AS INTEGER)), 0) + 1 FROM Suppliers WHERE SupplierCode LIKE 'S%'"
+            Using cmd As New SqliteCommand(query, conn)
                 Dim result As Object = cmd.ExecuteScalar()
                 Dim nextId As Integer = If(result Is Nothing OrElse IsDBNull(result), 1, Convert.ToInt32(result))
                 Return "S" & nextId.ToString("D5")
@@ -817,12 +818,12 @@ Public Class AddInventoryLogForm
     Private Function GenerateNextBatchNumber(productId As Integer, productCategory As String) As String
         Try
             Dim connStr As String = Connection.GetConnectionString()
-            Using conn As New SqlConnection(connStr)
+            Using conn As New SqliteConnection(connStr)
                 conn.Open()
 
                 ' Get the highest batch number for this product
                 Dim query As String = "SELECT MAX(BatchNumber) FROM InventoryLog WHERE ProductID = @ProductID AND BatchNumber IS NOT NULL"
-                Using cmd As New SqlCommand(query, conn)
+                Using cmd As New SqliteCommand(query, conn)
                     cmd.Parameters.AddWithValue("@ProductID", productId)
 
                     Dim lastBatch As String = cmd.ExecuteScalar()?.ToString()
@@ -961,15 +962,15 @@ Public Class AddInventoryLogForm
 
             ' Save to database
             Dim connStr As String = Connection.GetConnectionString()
-            Using conn As New SqlConnection(connStr)
+            Using conn As New SqliteConnection(connStr)
                 conn.Open()
                 Using transaction = conn.BeginTransaction()
                     Try
                         ' Insert inventory log with batch information
                         Dim logQuery = "INSERT INTO InventoryLog (ProductID, TransactionType, Quantity, PreviousStock, NewStock, BatchNumber, ExpiryDate, SupplierID, UserID, Reference, Notes, CreatedAt) " &
-                                  "VALUES (@ProductID, @TransactionType, @Quantity, @PreviousStock, @NewStock, @BatchNumber, @ExpiryDate, @SupplierID, @UserID, @Reference, @Notes, GETDATE())"
+                                    "VALUES (@ProductID, @TransactionType, @Quantity, @PreviousStock, @NewStock, @BatchNumber, @ExpiryDate, @SupplierID, @UserID, @Reference, @Notes, datetime('now'))"
 
-                        Using cmd As New SqlCommand(logQuery, conn, transaction)
+                        Using cmd As New SqliteCommand(logQuery, conn, transaction)
                             cmd.Parameters.AddWithValue("@ProductID", productId)
                             cmd.Parameters.AddWithValue("@TransactionType", cmbTransactionType.SelectedItem.ToString())
                             cmd.Parameters.AddWithValue("@Quantity", quantity)
@@ -985,8 +986,8 @@ Public Class AddInventoryLogForm
                         End Using
 
                         ' Update product stock
-                        Dim updateQuery = "UPDATE Products SET CurrentStock = @NewStock, UpdatedAt = GETDATE() WHERE ProductID = @ProductID"
-                        Using cmd As New SqlCommand(updateQuery, conn, transaction)
+                        Dim updateQuery = "UPDATE Products SET CurrentStock = @NewStock, UpdatedAt = datetime('now') WHERE ProductID = @ProductID"
+                        Using cmd As New SqliteCommand(updateQuery, conn, transaction)
                             cmd.Parameters.AddWithValue("@NewStock", newStock)
                             cmd.Parameters.AddWithValue("@ProductID", productId)
                             cmd.ExecuteNonQuery()

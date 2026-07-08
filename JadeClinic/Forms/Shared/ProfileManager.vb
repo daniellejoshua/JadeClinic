@@ -1,4 +1,4 @@
-Imports Microsoft.Data.SqlClient
+Imports System.Data.Common
 
 Public Module ProfileManager
     Private profileDropdownPanels As New Dictionary(Of Form, Panel)()
@@ -46,7 +46,7 @@ Public Module ProfileManager
                     New SqlParameter("@Username", frmLoginvb.LoggedInUsername)
                 }
 
-                Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters)
+                Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters)
                     If reader.Read() Then
                         profilePic.SizeMode = PictureBoxSizeMode.Zoom
                         profilePic.BorderStyle = BorderStyle.None

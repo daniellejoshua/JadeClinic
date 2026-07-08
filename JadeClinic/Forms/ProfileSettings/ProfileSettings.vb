@@ -1,4 +1,4 @@
-﻿Imports Microsoft.Data.SqlClient
+Imports System.Data.Common
 Imports System.IO
 Imports System.Text.RegularExpressions
 Imports System.Drawing.Imaging
@@ -64,8 +64,8 @@ Public Class ProfileSettings
         InitializeSidePanelEvents()
 
         ' Set password fields to password mode
-        txtNewPassword.PasswordChar = "●"c
-        txtConfirmPassword.PasswordChar = "●"c
+        txtNewPassword.PasswordChar = "?"c
+        txtConfirmPassword.PasswordChar = "?"c
 
         ' Ensure the profile settings panel is visible and active by default
         Guna2Panel1.Visible = True
@@ -102,7 +102,7 @@ Public Class ProfileSettings
                 New SqlParameter("@Username", frmLoginvb.LoggedInUsername)
             }
 
-                Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters)
+                Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters)
                     If reader.Read() Then
                         ' Read combined passkeys column (single column in current schema)
                         Dim passkeysCombined As String = If(IsDBNull(reader("Passkeys")), "", reader("Passkeys").ToString())
@@ -125,7 +125,7 @@ Public Class ProfileSettings
                     End If
                 End Using
             End If
-        Catch ex As SqlException
+        Catch ex As Exception
             ' If the selected column name doesn't exist for some reason, fall back to a safe query
             If ex.Message.Contains("Invalid column name") Then
                 Try
@@ -133,7 +133,7 @@ Public Class ProfileSettings
                     Dim parameters As SqlParameter() = {
                     New SqlParameter("@Username", frmLoginvb.LoggedInUsername)
                 }
-                    Using reader As SqlDataReader = Utilities.ExecuteReader(fallbackQuery, parameters)
+                    Using reader As DbDataReader = Utilities.ExecuteReader(fallbackQuery, parameters)
                         If reader.Read() Then
                             currentUserData = New Dictionary(Of String, Object) From {
                             {"UserID", reader("UserID")},
@@ -267,9 +267,9 @@ Public Class ProfileSettings
                 Dim passkeys = passkeysText.Split(","c)
 
                 ' Hide all passkey labels initially
-                lblpasskey1.Text = "••••••"
-                lblpasskey2.Text = "••••••"
-                lblpasskey3.Text = "••••••"
+                lblpasskey1.Text = ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF)
+                lblpasskey2.Text = ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF)
+                lblpasskey3.Text = ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF)
 
                 ' Show available passkeys (hidden by default)
                 If passkeys.Length >= 1 AndAlso Not String.IsNullOrEmpty(passkeys(0).Trim()) Then
@@ -307,7 +307,7 @@ Public Class ProfileSettings
             lblPrompt.Location = New Point(20, 20)
 
             Dim txtPin As New TextBox()
-            txtPin.PasswordChar = "●"c
+            txtPin.PasswordChar = "?"c
             txtPin.MaxLength = 4
             txtPin.Location = New Point(20, 50)
             txtPin.Size = New Size(260, 30)
@@ -363,15 +363,15 @@ Public Class ProfileSettings
                 If lblpasskey3.Tag IsNot Nothing Then lblpasskey3.Text = lblpasskey3.Tag.ToString()
             Else
                 ' PIN not accepted, keep passkeys hidden and uncheck
-                lblpasskey1.Text = "••••••"
-                lblpasskey2.Text = "••••••"
-                lblpasskey3.Text = "••••••"
+                lblpasskey1.Text = ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF)
+                lblpasskey2.Text = ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF)
+                lblpasskey3.Text = ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF)
                 Guna2CheckBox1.Checked = False
             End If
         Else
-            lblpasskey1.Text = "••••••"
-            lblpasskey2.Text = "••••••"
-            lblpasskey3.Text = "••••••"
+            lblpasskey1.Text = ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF)
+            lblpasskey2.Text = ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF)
+            lblpasskey3.Text = ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF)
         End If
     End Sub
 
@@ -645,7 +645,7 @@ Public Class ProfileSettings
 
         ' Back button
         Dim btnBack As New Guna.UI2.WinForms.Guna2CircleButton()
-        btnBack.Text = "←"
+        btnBack.Text = ChrW(&H25C0)
         btnBack.Font = New Font("Poppins", 16.0F, FontStyle.Bold)
         btnBack.Size = New Size(50, 50)
         btnBack.FillColor = WarmBeige
@@ -678,7 +678,7 @@ Public Class ProfileSettings
         Dim buttonStartX As Integer = (Guna2Panel1.Width - (buttonSize * 3 + buttonSpacing * 2)) / 2
         Dim buttonStartY As Integer = 200
 
-        Dim buttonLabels() As String = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "×", "0", "✓"}
+        Dim buttonLabels() As String = {"1", "2", "3", "4", "5", "6", "7", "8", "9", ChrW(&H232B), "0", ChrW(&H2714)}
 
         For i = 0 To buttonLabels.Length - 1
             Dim button As New Guna.UI2.WinForms.Guna2Button()
@@ -695,10 +695,10 @@ Public Class ProfileSettings
                                       buttonStartY + row * (buttonSize + buttonSpacing) + 20)
 
             ' Special colors for special buttons
-            If button.Text = "×" Then
+            If button.Text = ChrW(&H232B) Then
                 button.FillColor = AlertRed
                 button.ForeColor = Color.White
-            ElseIf button.Text = "✓" Then
+            ElseIf button.Text = ChrW(&H2714) Then
                 button.FillColor = SuccessGreen
                 button.ForeColor = Color.White
             End If
@@ -733,14 +733,14 @@ Public Class ProfileSettings
 
     Private Sub HandlePinButtonClick(buttonText As String)
         Select Case buttonText
-            Case "×"
+            Case ChrW(&H232B)
                 ' Backspace
                 If pinInput.Length > 0 Then
                     pinInput = pinInput.Substring(0, pinInput.Length - 1)
                     pinIndicators(pinInput.Length).FillColor = Color.FromArgb(200, 200, 200)
                 End If
 
-            Case "✓"
+            Case ChrW(&H2714)
                 ' Confirm/Submit
                 If pinInput.Length = 4 Then
                     ProcessPinInput()
@@ -923,10 +923,10 @@ Public Class ProfileSettings
                     HandlePinButtonClick("9")
                     Return True
                 Case Keys.Back, Keys.Delete
-                    HandlePinButtonClick("×")
+                    HandlePinButtonClick(ChrW(&H232B))
                     Return True
                 Case Keys.Enter
-                    HandlePinButtonClick("✓")
+                    HandlePinButtonClick(ChrW(&H2714))
                     Return True
                 Case Keys.Escape
                     RestorePanel1Controls()
@@ -1002,10 +1002,10 @@ Public Class ProfileSettings
                     HandlePinButtonClick("9")
                     e.Handled = True
                 Case Keys.Back, Keys.Delete
-                    HandlePinButtonClick("×")
+                    HandlePinButtonClick(ChrW(&H232B))
                     e.Handled = True
                 Case Keys.Enter
-                    HandlePinButtonClick("✓")
+                    HandlePinButtonClick(ChrW(&H2714))
                     e.Handled = True
                 Case Keys.Escape
                     RestorePanel1Controls()

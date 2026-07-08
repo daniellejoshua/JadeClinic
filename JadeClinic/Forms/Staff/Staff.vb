@@ -1,4 +1,4 @@
-﻿Imports Microsoft.Data.SqlClient
+Imports System.Data.Common
 Imports System.IO
 Imports QuestPDF.Fluent
 Imports QuestPDF.Helpers
@@ -270,7 +270,7 @@ Public Class Staff
         Try
             ' Clear existing rows
             Guna2DataGridView1.Rows.Clear()
-            
+
             ' Hide any existing "No records" message
             DataGridViewHelper.HideNoRecordsMessage()
 
@@ -306,7 +306,7 @@ Public Class Staff
                     End If
             End Select
 
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, Nothing)
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, Nothing)
                 While reader.Read()
                     Dim userId As Integer = Convert.ToInt32(reader("UserID"))
                     Dim username As String = reader("Username").ToString()
@@ -338,11 +338,10 @@ Public Class Staff
                     Guna2DataGridView1.Rows(rowIndex).Cells("Email").Value = email
                     Guna2DataGridView1.Rows(rowIndex).Cells("Phone").Value = phone
                     Guna2DataGridView1.Rows(rowIndex).Cells("UserRole").Value = userRole
-                    Guna2DataGridView1.Rows(rowIndex).Cells("IsActive").Value = If(isActive, "✅ Active", "❌ Inactive")
+                    Guna2DataGridView1.Rows(rowIndex).Cells("IsActive").Value = If(isActive, ChrW(&H2713) & " Active", ChrW(&H2718) & " Inactive")
                     Guna2DataGridView1.Rows(rowIndex).Cells("Actions").Value = "👁️      |    ✏️  "
-
                     Dim statusCell = Guna2DataGridView1.Rows(rowIndex).Cells("IsActive")
-                    statusCell.Value = If(isActive, "✅ Active", "❌ Inactive")
+                    statusCell.Value = If(isActive, ChrW(&H2713) & " Active", ChrW(&H2718) & " Inactive")
                     statusCell.Style.ForeColor = If(isActive, SD.Color.FromArgb(16, 216, 98), SD.Color.FromArgb(255, 71, 87))
                     statusCell.Style.Font = New Font(Guna2DataGridView1.Font, FontStyle.Bold)
 
@@ -422,54 +421,52 @@ Public Class Staff
         End If
     End Sub
 
-    Private Sub Guna2DataGridView1_CellClick(sender As Object, e As DataGridViewCellEventArgs) Handles Guna2DataGridView1.CellClick
-        ' Handle clicks on the Actions column
-        If e.RowIndex >= 0 AndAlso e.ColumnIndex = Guna2DataGridView1.Columns("Actions").Index Then
-            Dim userData As Dictionary(Of String, Object) = CType(Guna2DataGridView1.Rows(e.RowIndex).Tag, Dictionary(Of String, Object))
+    Private Sub Guna2DataGridView1_CellMouseClick(sender As Object, e As DataGridViewCellMouseEventArgs) Handles Guna2DataGridView1.CellMouseClick
+        ' Handle clicks on the Actions column, detect left/right half
+        If e.RowIndex >= 0 Then
+            Dim colName As String = Guna2DataGridView1.Columns(e.ColumnIndex).Name
+            If colName = "Actions" Then
+                Dim userData As Dictionary(Of String, Object) = CType(Guna2DataGridView1.Rows(e.RowIndex).Tag, Dictionary(Of String, Object))
+                Dim cellBounds As Rectangle = Guna2DataGridView1.GetCellDisplayRectangle(e.ColumnIndex, e.RowIndex, False)
+                Dim isLeftHalf As Boolean = e.X < cellBounds.Width \ 2
 
-            ' Get the cell rectangle to determine click position
-            Dim cellRect As Rectangle = Guna2DataGridView1.GetCellDisplayRectangle(e.ColumnIndex, e.RowIndex, False)
+                ' Add click effect - briefly change cell background
+                Guna2DataGridView1.Rows(e.RowIndex).Cells(e.ColumnIndex).Style.BackColor = System.Drawing.Color.FromArgb(255, 204, 77)
+                Dim clickTimer As New Timer()
+                clickTimer.Interval = 150
+                AddHandler clickTimer.Tick, Sub()
+                                                Guna2DataGridView1.Rows(e.RowIndex).Cells(e.ColumnIndex).Style.BackColor = System.Drawing.Color.White
+                                                clickTimer.Stop()
+                                            End Sub
+                clickTimer.Start()
 
-            ' Calculate relative click position within the cell
-            Dim mousePos As Point = Guna2DataGridView1.PointToClient(MousePosition)
-            Dim clickX As Integer = mousePos.X - cellRect.X
-
-            ' Add click effect - briefly change cell background
-            Guna2DataGridView1.Rows(e.RowIndex).Cells("Actions").Style.BackColor = System.Drawing.Color.FromArgb(255, 204, 77)
-            Dim clickTimer As New Timer()
-            clickTimer.Interval = 150
-            AddHandler clickTimer.Tick, Sub()
-                                            Guna2DataGridView1.Rows(e.RowIndex).Cells("Actions").Style.BackColor = System.Drawing.Color.White
-                                            clickTimer.Stop()
-                                        End Sub
-            clickTimer.Start()
-
-            ' Determine which action was clicked based on position
-            If clickX < 65 Then
-                ' View action
-                ViewUser(userData)
-            ElseIf clickX < 130 Then
-                ' Edit action
-                EditUser(userData)
-
+                If isLeftHalf Then
+                    ViewUser(userData)
+                Else
+                    EditUser(userData)
+                End If
             End If
         End If
     End Sub
 
     ' Add hover effects for DataGridView
     Private Sub Guna2DataGridView1_CellMouseEnter(sender As Object, e As DataGridViewCellEventArgs) Handles Guna2DataGridView1.CellMouseEnter
-        If e.RowIndex >= 0 AndAlso e.ColumnIndex = Guna2DataGridView1.Columns("Actions").Index Then
-            ' Add hover effect for actions column
-            Guna2DataGridView1.Rows(e.RowIndex).Cells("Actions").Style.BackColor = System.Drawing.Color.FromArgb(237, 237, 237)
-            Guna2DataGridView1.Cursor = Cursors.Hand
+        If e.RowIndex >= 0 Then
+            Dim colName As String = Guna2DataGridView1.Columns(e.ColumnIndex).Name
+            If colName = "Actions" Then
+                Guna2DataGridView1.Rows(e.RowIndex).Cells(e.ColumnIndex).Style.BackColor = System.Drawing.Color.FromArgb(237, 237, 237)
+                Guna2DataGridView1.Cursor = Cursors.Hand
+            End If
         End If
     End Sub
 
     Private Sub Guna2DataGridView1_CellMouseLeave(sender As Object, e As DataGridViewCellEventArgs) Handles Guna2DataGridView1.CellMouseLeave
-        If e.RowIndex >= 0 AndAlso e.ColumnIndex = Guna2DataGridView1.Columns("Actions").Index Then
-            ' Remove hover effect for actions column
-            Guna2DataGridView1.Rows(e.RowIndex).Cells("Actions").Style.BackColor = System.Drawing.Color.White
-            Guna2DataGridView1.Cursor = Cursors.Default
+        If e.RowIndex >= 0 Then
+            Dim colName As String = Guna2DataGridView1.Columns(e.ColumnIndex).Name
+            If colName = "Actions" Then
+                Guna2DataGridView1.Rows(e.RowIndex).Cells(e.ColumnIndex).Style.BackColor = System.Drawing.Color.White
+                Guna2DataGridView1.Cursor = Cursors.Default
+            End If
         End If
     End Sub
 
@@ -494,7 +491,7 @@ Public Class Staff
             If (needsPhoto Or needsQr Or needsEmail Or needsPhone) AndAlso userData.ContainsKey("UserID") Then
                 Try
                     Dim userId As Integer = Convert.ToInt32(userData("UserID"))
-                    Using reader As SqlDataReader = Utilities.ExecuteReader(
+                    Using reader As DbDataReader = Utilities.ExecuteReader(
                     "SELECT Photo, QRCode, Email, Phone FROM Users WHERE UserID = @UserID",
                     New SqlParameter("@UserID", userId))
                         If reader.Read() Then
@@ -546,7 +543,7 @@ Public Class Staff
         lblPrompt.Location = New System.Drawing.Point(20, 20)
 
         Dim txtPin As New TextBox()
-        txtPin.PasswordChar = "●"c
+        txtPin.PasswordChar = "?"c
         txtPin.MaxLength = 4
         txtPin.Location = New System.Drawing.Point(20, 50)
         txtPin.Size = New System.Drawing.Size(260, 30)
@@ -856,7 +853,7 @@ Public Class Staff
                 If rowTag.ContainsKey("UserID") Then
                     Try
                         Dim userId As Integer = Convert.ToInt32(rowTag("UserID"))
-                        Using reader As SqlDataReader = Utilities.ExecuteReader("SELECT Photo, QRCode FROM Users WHERE UserID = @UserID", New SqlParameter("@UserID", userId))
+                        Using reader As DbDataReader = Utilities.ExecuteReader("SELECT Photo, QRCode FROM Users WHERE UserID = @UserID", New SqlParameter("@UserID", userId))
                             If reader.Read() Then
                                 If Not IsDBNull(reader("Photo")) Then
                                     rowTag("Photo") = CType(reader("Photo"), Byte())

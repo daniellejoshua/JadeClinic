@@ -1,6 +1,6 @@
-﻿Imports System.IO
+Imports System.IO
 Imports System.Linq
-Imports Microsoft.Data.SqlClient
+Imports System.Data.Common
 Imports QuestPDF.Fluent
 Imports QuestPDF.Helpers
 Imports QuestPDF.Infrastructure
@@ -31,11 +31,11 @@ Public Class InventoryLogExporter
 
             Select Case filterType
                 Case "Today's Logs"
-                    whereClauses.Add("CAST(il.CreatedAt AS DATE) = CAST(GETDATE() AS DATE)")
+                    whereClauses.Add("DATE(il.CreatedAt) = date('now')")
                 Case "This Week's Logs"
-                    whereClauses.Add("il.CreatedAt >= DATEADD(week, DATEDIFF(week, 0, GETDATE()), 0)")
+                    whereClauses.Add("il.CreatedAt >= datetime('now', 'start of week')")
                 Case "This Month's Logs"
-                    whereClauses.Add("MONTH(il.CreatedAt) = MONTH(GETDATE()) AND YEAR(il.CreatedAt) = YEAR(GETDATE())")
+                    whereClauses.Add("CAST(strftime('%m', il.CreatedAt) AS INTEGER) = CAST(strftime('%m', 'now') AS INTEGER) AND CAST(strftime('%Y', il.CreatedAt) AS INTEGER) = CAST(strftime('%Y', 'now') AS INTEGER)")
                 Case "Stock In Only"
                     whereClauses.Add("LOWER(il.TransactionType) IN ('stock in', 'in', 'stock_in', 'inbound')")
                 Case "Stock Out Only"
@@ -50,7 +50,7 @@ Public Class InventoryLogExporter
             End Select
 
             If filterDate.HasValue Then
-                whereClauses.Add("CAST(il.CreatedAt AS DATE) = @FilterDate")
+                whereClauses.Add("DATE(il.CreatedAt) = @FilterDate")
             End If
 
             If whereClauses.Count > 0 Then
@@ -82,7 +82,7 @@ Public Class InventoryLogExporter
                 parameters.Add(New SqlParameter("@FilterDate", filterDate.Value.Date))
             End If
 
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters.ToArray())
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters.ToArray())
                 While reader.Read()
                     Dim inventoryData As New InventoryLogReportData() With {
                         .LogID = If(IsDBNull(reader("LogID")), 0, Convert.ToInt32(reader("LogID"))),

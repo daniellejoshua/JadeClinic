@@ -1,4 +1,4 @@
-﻿Imports Microsoft.Data.SqlClient
+Imports System.Data.Common
 Imports System.IO
 Imports System.Drawing
 
@@ -243,7 +243,7 @@ Public Class CompanySettingsManager
             _cachedSettings = New Dictionary(Of String, Object)()
             
             Dim query As String = "SELECT * FROM CompanySettings WHERE IsActive = 1 ORDER BY DateCreated DESC"
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
                 If reader.Read() Then
                     For i = 0 To reader.FieldCount - 1
                         Dim fieldName = reader.GetName(i)
@@ -263,16 +263,16 @@ Public Class CompanySettingsManager
 
     Private Sub LoadColorsFromDatabase()
         Try
-            Console.WriteLine("🔄 Loading colors from database...")
+            Console.WriteLine("?? Loading colors from database...")
 
 
 
             _cachedColors = New Dictionary(Of String, Color)()
 
             Dim query As String = "SELECT * FROM ColorSettings WHERE IsActive = 1 ORDER BY DateCreated DESC"
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
                 If reader.Read() Then
-                    Console.WriteLine("✅ Found active ColorSettings record")
+                    Console.WriteLine("? Found active ColorSettings record")
                     For i = 0 To reader.FieldCount - 1
                         Dim fieldName = reader.GetName(i)
                         If Not reader.IsDBNull(i) AndAlso fieldName.ToLower().Contains("color") Then
@@ -281,24 +281,24 @@ Public Class CompanySettingsManager
                             Console.WriteLine($"  Loaded {fieldName}: {colorString} -> {ColorFromString(colorString)}")
                         End If
                     Next
-                    Console.WriteLine($"✅ Loaded {_cachedColors.Count} colors from database")
+                    Console.WriteLine($"? Loaded {_cachedColors.Count} colors from database")
                 Else
-                    Console.WriteLine("❌ No active ColorSettings found - using defaults")
+                    Console.WriteLine("? No active ColorSettings found - using defaults")
                 End If
             End Using
 
             _lastColorCacheUpdate = DateTime.Now
 
         Catch ex As Exception
-            Console.WriteLine($"❌ Error loading color settings from database: {ex.Message}")
-            Console.WriteLine($"❌ Full exception: {ex.ToString()}")
+            Console.WriteLine($"? Error loading color settings from database: {ex.Message}")
+            Console.WriteLine($"? Full exception: {ex.ToString()}")
 
-            ' 🔥 IMPORTANT: Don't override saved colors, just use what we have
+            ' ?? IMPORTANT: Don't override saved colors, just use what we have
             ' If there's an error, still try to load defaults but don't clear existing cache
             If _cachedColors Is Nothing OrElse _cachedColors.Count = 0 Then
-                Console.WriteLine("⚠️  No cached colors available, loading defaults as fallback")
+                Console.WriteLine("??  No cached colors available, loading defaults as fallback")
             Else
-                Console.WriteLine("⚠️  Keeping existing cached colors despite database error")
+                Console.WriteLine("??  Keeping existing cached colors despite database error")
             End If
 
             _lastColorCacheUpdate = DateTime.Now
@@ -325,9 +325,9 @@ Public Class CompanySettingsManager
             _cachedColors = New Dictionary(Of String, Color)()
 
             Dim query As String = "SELECT * FROM ColorSettings WHERE IsActive = 1 ORDER BY DateCreated DESC"
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
                 If reader.Read() Then
-                    Console.WriteLine("✅ Found ColorSettings record in database")
+                    Console.WriteLine("? Found ColorSettings record in database")
                     For i = 0 To reader.FieldCount - 1
                         Dim fieldName = reader.GetName(i)
                         Dim fieldValue = If(reader.IsDBNull(i), "NULL", reader.GetValue(i).ToString())
@@ -340,7 +340,7 @@ Public Class CompanySettingsManager
                         End If
                     Next
                 Else
-                    Console.WriteLine("❌ No ColorSettings record found in database")
+                    Console.WriteLine("? No ColorSettings record found in database")
                 End If
             End Using
 
@@ -348,7 +348,7 @@ Public Class CompanySettingsManager
             Console.WriteLine($"After manual reload - colors count: {_cachedColors.Count}")
 
         Catch ex As Exception
-            Console.WriteLine($"❌ Error in debug color reload: {ex.Message}")
+            Console.WriteLine($"? Error in debug color reload: {ex.Message}")
         End Try
         Console.WriteLine("=====================================")
     End Sub
@@ -372,9 +372,9 @@ Public Class CompanySettingsManager
             _cachedColors = New Dictionary(Of String, Color)()
 
             Dim query As String = "SELECT * FROM ColorSettings WHERE IsActive = 1 ORDER BY DateCreated DESC"
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
                 If reader.Read() Then
-                    debugMsg &= "✅ Found ColorSettings record in database" & vbCrLf
+                    debugMsg &= "? Found ColorSettings record in database" & vbCrLf
                     For i = 0 To reader.FieldCount - 1
                         Dim fieldName = reader.GetName(i)
                         Dim fieldValue = If(reader.IsDBNull(i), "NULL", reader.GetValue(i).ToString())
@@ -387,7 +387,7 @@ Public Class CompanySettingsManager
                         End If
                     Next
                 Else
-                    debugMsg &= "❌ No ColorSettings record found in database" & vbCrLf
+                    debugMsg &= "? No ColorSettings record found in database" & vbCrLf
                 End If
             End Using
 
@@ -395,7 +395,7 @@ Public Class CompanySettingsManager
             debugMsg &= $"After manual reload - colors count: {_cachedColors.Count}" & vbCrLf
 
         Catch ex As Exception
-            debugMsg &= $"❌ Error in debug color reload: {ex.Message}" & vbCrLf
+            debugMsg &= $"? Error in debug color reload: {ex.Message}" & vbCrLf
         End Try
         debugMsg &= "=====================================" & vbCrLf
 

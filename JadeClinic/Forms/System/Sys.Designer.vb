@@ -1,4 +1,4 @@
-﻿<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
+<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
 Partial Class Sys
     Inherits System.Windows.Forms.Form
 
@@ -167,7 +167,7 @@ Partial Class Sys
         btnColorCustomization.ShadowDecoration.CustomizableEdges = CustomizableEdges7
         btnColorCustomization.Size = New Size(320, 120)
         btnColorCustomization.TabIndex = 2
-        btnColorCustomization.Text = "🎨 Color Customization" & vbCrLf & "Customize app colors & theme"
+        btnColorCustomization.Text = "?? Color Customization" & vbCrLf & "Customize app colors & theme"
         btnColorCustomization.TextAlign = HorizontalAlignment.Left
         btnColorCustomization.Visible = False
         ' 
@@ -189,7 +189,7 @@ Partial Class Sys
         btnDatabaseBackup.ShadowDecoration.CustomizableEdges = CustomizableEdges9
         btnDatabaseBackup.Size = New Size(320, 120)
         btnDatabaseBackup.TabIndex = 1
-        btnDatabaseBackup.Text = "💾 Database Backup" & vbCrLf & "Backup & restore database"
+        btnDatabaseBackup.Text = "?? Database Backup" & vbCrLf & "Backup & restore database"
         btnDatabaseBackup.TextAlign = HorizontalAlignment.Left
         ' 
         ' btnCompanySettings
@@ -210,7 +210,7 @@ Partial Class Sys
         btnCompanySettings.ShadowDecoration.CustomizableEdges = CustomizableEdges11
         btnCompanySettings.Size = New Size(320, 120)
         btnCompanySettings.TabIndex = 0
-        btnCompanySettings.Text = "🏢 Company Settings" & vbCrLf & "Configure business information"
+        btnCompanySettings.Text = "?? Company Settings" & vbCrLf & "Configure business information"
         btnCompanySettings.TextAlign = HorizontalAlignment.Left
         ' 
         ' HeaderPanel

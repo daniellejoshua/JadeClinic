@@ -1,8 +1,8 @@
-﻿Imports System.Globalization
+Imports System.Globalization
 Imports System.IO
 Imports System.Linq
 Imports Guna.UI2.WinForms
-Imports Microsoft.Data.SqlClient
+Imports System.Data.Common
 Imports QuestPDF.Fluent
 Imports QuestPDF.Helpers
 Imports QuestPDF.Infrastructure
@@ -125,7 +125,7 @@ Public Class SalesRecord
         ' Clear existing columns
         Guna2DataGridView1.Columns.Clear()
 
-        ' Configure DataGridView appearance — light theme matching InventoryLog
+        ' Configure DataGridView appearance � light theme matching InventoryLog
         Guna2DataGridView1.BackgroundColor = PanelFill
         Guna2DataGridView1.GridColor = System.Drawing.Color.FromArgb(220, 220, 220)
         Guna2DataGridView1.DefaultCellStyle.BackColor = White
@@ -277,9 +277,7 @@ Public Class SalesRecord
             DataGridViewHelper.HideNoRecordsMessage()
 
             Dim query As String = "SELECT s.SaleID, u.Username, s.SaleDate, s.PaymentMethod, s.TotalAmount, s.AmountPaid, " &
-                          "(s.AmountPaid - s.TotalAmount) AS Change, " &
-                          "ISNULL(JSON_VALUE(s.SalesData, '$.payment.discount.type'), '') AS DiscountType, " &
-                          "ISNULL(TRY_CONVERT(decimal(18,2), JSON_VALUE(s.SalesData, '$.payment.discount.amount')), 0) AS DiscountAmount " &
+                          "(s.AmountPaid - s.TotalAmount) AS Change, s.SalesData " &
                           "FROM Sales s LEFT JOIN Users u ON s.UserID = u.UserID"
 
             Dim parameters As New List(Of SqlParameter)()
@@ -307,7 +305,7 @@ Public Class SalesRecord
             End Select
 
             ' Replace the inner part of the reader loop in LoadOrderRecordsData with this (keeps behavior but sets PaymentMethod cell color)
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters.ToArray())
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters.ToArray())
                 While reader.Read()
                     Dim saleId As Integer = If(IsDBNull(reader("SaleID")), 0, Convert.ToInt32(reader("SaleID")))
                     Dim username As String = If(IsDBNull(reader("Username")), "Unknown", reader("Username").ToString())
@@ -316,8 +314,18 @@ Public Class SalesRecord
                     Dim totalAmount As Decimal = If(IsDBNull(reader("TotalAmount")), 0D, Convert.ToDecimal(reader("TotalAmount")))
                     Dim amountPaid As Decimal = If(IsDBNull(reader("AmountPaid")), 0D, Convert.ToDecimal(reader("AmountPaid")))
                     Dim changeVal As Decimal = If(IsDBNull(reader("Change")), amountPaid - totalAmount, Convert.ToDecimal(reader("Change")))
-                    Dim discountType As String = If(IsDBNull(reader("DiscountType")), "", reader("DiscountType").ToString())
-                    Dim discountAmount As Decimal = If(IsDBNull(reader("DiscountAmount")), 0D, Convert.ToDecimal(reader("DiscountAmount")))
+                    Dim salesDataJson As String = If(IsDBNull(reader("SalesData")), "{}", reader("SalesData").ToString())
+                    Dim discountType As String = ""
+                    Dim discountAmount As Decimal = 0D
+                    Try
+                        Dim jObj = Newtonsoft.Json.Linq.JObject.Parse(salesDataJson)
+                        Dim discount = jObj.SelectToken("payment.discount")
+                        If discount IsNot Nothing Then
+                            discountType = If(discount("type") IsNot Nothing, discount("type").ToString(), "")
+                            discountAmount = If(discount("amount") IsNot Nothing, Convert.ToDecimal(discount("amount")), 0D)
+                        End If
+                    Catch
+                    End Try
 
                     Dim rowIndex As Integer = Guna2DataGridView1.Rows.Add()
 
@@ -330,12 +338,12 @@ Public Class SalesRecord
                     Dim pmColor As System.Drawing.Color = GetPaymentMethodColor(paymentMethod)
                     Guna2DataGridView1.Rows(rowIndex).Cells("PaymentMethod").Style.ForeColor = pmColor
 
-                    Guna2DataGridView1.Rows(rowIndex).Cells("TotalAmount").Value = "₱" & totalAmount.ToString("F2")
-                    Guna2DataGridView1.Rows(rowIndex).Cells("TotalReceived").Value = "₱" & amountPaid.ToString("F2")
-                    Guna2DataGridView1.Rows(rowIndex).Cells("Change").Value = "₱" & changeVal.ToString("F2")
+                    Guna2DataGridView1.Rows(rowIndex).Cells("TotalAmount").Value = ChrW(&H20B1) & totalAmount.ToString("F2")
+                    Guna2DataGridView1.Rows(rowIndex).Cells("TotalReceived").Value = ChrW(&H20B1) & amountPaid.ToString("F2")
+                    Guna2DataGridView1.Rows(rowIndex).Cells("Change").Value = ChrW(&H20B1) & changeVal.ToString("F2")
                     Guna2DataGridView1.Rows(rowIndex).Cells("DiscountType").Value = discountType
-                    Guna2DataGridView1.Rows(rowIndex).Cells("DiscountAmount").Value = "₱" & discountAmount.ToString("F2")
-                    Guna2DataGridView1.Rows(rowIndex).Cells("Action").Value = "👁️"
+                    Guna2DataGridView1.Rows(rowIndex).Cells("DiscountAmount").Value = ChrW(&H20B1) & discountAmount.ToString("F2")
+                    Guna2DataGridView1.Rows(rowIndex).Cells("Action").Value = Char.ConvertFromUtf32(&H1F50D)
 
                     ' store raw values for later use
                     Guna2DataGridView1.Rows(rowIndex).Tag = New Dictionary(Of String, Object) From {

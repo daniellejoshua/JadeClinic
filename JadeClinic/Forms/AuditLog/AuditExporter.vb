@@ -1,7 +1,7 @@
-﻿Imports System.Diagnostics
+Imports System.Diagnostics
 Imports System.IO
 Imports System.Linq
-Imports Microsoft.Data.SqlClient
+Imports System.Data.Common
 Imports QuestPDF.Fluent
 Imports QuestPDF.Helpers
 Imports QuestPDF.Infrastructure
@@ -22,7 +22,7 @@ Public Class AuditExporter
                 Directory.CreateDirectory(reportsPath)
             End If
 
-            Dim query As String = "SELECT a.AuditID, ISNULL(u.Username, '') AS Username, ISNULL(a.Action, '') AS Action, ISNULL(a.Details, '') AS Details, a.ActionTime " &
+            Dim query As String = "SELECT a.AuditID, IFNULL(u.Username, '') AS Username, IFNULL(a.Action, '') AS Action, IFNULL(a.Details, '') AS Details, a.ActionTime " &
                                   "FROM AuditLog a LEFT JOIN Users u ON a.UserID = u.UserID"
 
             Dim whereClauses As New List(Of String)()
@@ -57,7 +57,7 @@ Public Class AuditExporter
             End Select
 
             If filterDate.HasValue Then
-                whereClauses.Add("CAST(a.ActionTime AS DATE) = @FilterDate")
+                whereClauses.Add("DATE(a.ActionTime) = @FilterDate")
                 parameters.Add(New SqlParameter("@FilterDate", System.Data.SqlDbType.Date) With {.Value = filterDate.Value.Date})
             End If
 
@@ -77,7 +77,7 @@ Public Class AuditExporter
             End If
 
             Dim logs As New List(Of AuditLogReportData)()
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters.ToArray())
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters.ToArray())
                 While reader.Read()
                     logs.Add(New AuditLogReportData With {
                         .AuditID = If(IsDBNull(reader("AuditID")), 0, Convert.ToInt32(reader("AuditID"))),

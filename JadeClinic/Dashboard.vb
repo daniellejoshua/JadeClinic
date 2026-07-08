@@ -1,5 +1,5 @@
-﻿Imports Guna.UI2.WinForms
-Imports Microsoft.Data.SqlClient
+Imports Guna.UI2.WinForms
+Imports System.Data.Common
 Imports System.IO
 Imports LiveChartsCore
 Imports LiveChartsCore.SkiaSharpView
@@ -378,7 +378,7 @@ Public Class Dashboard
                 If TypeOf control Is Label Then
                     Dim lbl As Label = CType(control, Label)
 
-                    ' Skip icon labels on circle buttons (olive BackColor) — keep designer ForeColor
+                    ' Skip icon labels on circle buttons (olive BackColor) � keep designer ForeColor
                     If lbl.BackColor = Color.FromArgb(191, 155, 48) Then
                         Continue For
                     End If
@@ -399,9 +399,9 @@ Public Class Dashboard
                     Else
                         ' Keep specific colors for growth indicators
                         If htmlLbl.Text IsNot Nothing Then
-                            If htmlLbl.Text.Contains("↗") Then
+                            If htmlLbl.Text.Contains("?") Then
                                 htmlLbl.ForeColor = Color.FromArgb(16, 216, 98) ' Success Green
-                            ElseIf htmlLbl.Text.Contains("↘") Then
+                            ElseIf htmlLbl.Text.Contains("?") Then
                                 htmlLbl.ForeColor = Color.FromArgb(255, 71, 87) ' Alert Red
                             Else
                                 htmlLbl.ForeColor = Color.FromArgb(102, 102, 102) ' MediumText
@@ -414,7 +414,7 @@ Public Class Dashboard
                 ElseIf TypeOf control Is Guna2CircleButton Then
                     Dim circleBtn As Guna2CircleButton = CType(control, Guna2CircleButton)
 
-                    ' Update circle buttons with JadeOlive accent — no hover color change
+                    ' Update circle buttons with JadeOlive accent � no hover color change
                     circleBtn.FillColor = Color.FromArgb(191, 155, 48) ' JadeOlive
                     circleBtn.ForeColor = Color.White
                     circleBtn.BorderColor = Color.FromArgb(191, 155, 48) ' JadeOlive border
@@ -467,10 +467,10 @@ Public Class Dashboard
         Try
             Dim query As String = "
             SELECT
-                ISNULL((SELECT COUNT(*) FROM Sales), 0) AS TotalOrders,
-                ISNULL((SELECT SUM(CostPrice * CurrentStock) FROM Products WHERE IsActive = 1), 0) AS ActiveStockValue"
+                IFNULL((SELECT COUNT(*) FROM Sales), 0) AS TotalOrders,
+                IFNULL((SELECT SUM(CostPrice * CurrentStock) FROM Products WHERE IsActive = 1), 0) AS ActiveStockValue"
 
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, Nothing)
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, Nothing)
                 If reader.Read() Then
                     Dim totalOrders As Integer = Convert.ToInt32(reader("TotalOrders"))
                     Dim activeStockValue As Decimal = Convert.ToDecimal(reader("ActiveStockValue"))
@@ -481,7 +481,7 @@ Public Class Dashboard
                     lblDateDailySales.Text = "All Time"
 
                     ' Card 2: Stock Value (active products only)
-                    Guna2HtmlLabel12.Text = "₱" & activeStockValue.ToString("N0")
+                    Guna2HtmlLabel12.Text = ChrW(&H20B1) & activeStockValue.ToString("N0")
                     Guna2HtmlLabel14.Text = "Stock Value"
                     Guna2HtmlLabel11.Text = "Active products only"
                     Guna2HtmlLabel11.ForeColor = Color.FromArgb(102, 102, 102)
@@ -489,12 +489,12 @@ Public Class Dashboard
                     lastProductCount = totalOrders
                 Else
                     Guna2HtmlLabel3.Text = "0"
-                    Guna2HtmlLabel12.Text = "₱0"
+                    Guna2HtmlLabel12.Text = ChrW(&H20B1) & "0"
                 End If
             End Using
         Catch ex As Exception
             Guna2HtmlLabel3.Text = "0"
-            Guna2HtmlLabel12.Text = "₱0"
+            Guna2HtmlLabel12.Text = ChrW(&H20B1) & "0"
             Guna2HtmlLabel11.Text = "Active products only"
             Guna2HtmlLabel11.ForeColor = Color.FromArgb(102, 102, 102)
             Console.WriteLine($"Error loading dashboard card #1/#2 data: {ex.Message}")
@@ -504,10 +504,10 @@ Public Class Dashboard
     Private Sub LoadMonthlySalesData()
         Try
             Dim query As String = "
-        SELECT ISNULL(SUM(TotalAmount), 0) AS TotalRevenue
+        SELECT IFNULL(SUM(TotalAmount), 0) AS TotalRevenue
         FROM Sales"
 
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, Nothing)
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, Nothing)
                 If reader.Read() Then
                     Dim totalRevenue As Decimal = Convert.ToDecimal(reader("TotalRevenue"))
                     Dim pesoSign As String = ChrW(&H20B1)
@@ -705,13 +705,13 @@ Public Class Dashboard
 
             ' Query to get products ranked by sold quantity
             Dim query As String = "
-            SELECT TOP 20
+            SELECT
                 p.ProductID,
                 p.ProductCode,
                 p.ProductName,
                 p.Category,
                 p.SellingPrice,
-                ISNULL(SUM(si.Quantity), 0) AS TimesSold
+                IFNULL(SUM(si.Quantity), 0) AS TimesSold
             FROM Products p
             LEFT JOIN SaleItems si ON p.ProductID = si.ProductID
             WHERE p.IsActive = 1
@@ -722,7 +722,8 @@ Public Class Dashboard
                     OR p.Category LIKE @SearchLike
                   )
             GROUP BY p.ProductID, p.ProductCode, p.ProductName, p.Category, p.SellingPrice
-            ORDER BY ISNULL(SUM(si.Quantity), 0) DESC, p.ProductName"
+            ORDER BY IFNULL(SUM(si.Quantity), 0) DESC, p.ProductName
+            LIMIT 20"
 
             Dim rowIndex As Integer = 1
             Dim parameters As SqlParameter() = {
@@ -730,7 +731,7 @@ Public Class Dashboard
             New SqlParameter("@SearchLike", "%" & searchText & "%")
         }
 
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters)
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters)
                 While reader.Read()
                     Dim row As DataGridViewRow = New DataGridViewRow()
                     row.CreateCells(Guna2DataGridView1)
@@ -740,7 +741,7 @@ Public Class Dashboard
                     row.Cells(2).Value = reader("ProductName").ToString()
                     row.Cells(3).Value = reader("Category").ToString()
                     row.Cells(4).Value = Convert.ToInt32(reader("TimesSold")).ToString()
-                    row.Cells(5).Value = "₱" & Convert.ToDecimal(reader("SellingPrice")).ToString("F2")
+                    row.Cells(5).Value = ChrW(&H20B1) & Convert.ToDecimal(reader("SellingPrice")).ToString("F2")
 
                     Guna2DataGridView1.Rows.Add(row)
                     rowIndex += 1
@@ -782,7 +783,7 @@ Public Class Dashboard
 
             Guna2DataGridView1.ClearSelection()
 
-            txtProductSearch.PlaceholderText = "🔍 Search products..."
+            txtProductSearch.PlaceholderText = Char.ConvertFromUtf32(&H1F50D) & " Search products..."
             txtProductSearch.Font = New Font("Poppins", 10.0F)
             txtProductSearch.ForeColor = Color.FromArgb(51, 51, 51)
             txtProductSearch.BackColor = Color.FromArgb(245, 245, 245)
@@ -829,7 +830,7 @@ Public Class Dashboard
             Dim brlCount As Integer = 0
             Dim arlCount As Integer = 0
 
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, Nothing)
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, Nothing)
                 If reader.Read() Then
                     inactiveCount = Convert.ToInt32(reader("InactiveCount"))
                     noStockCount = Convert.ToInt32(reader("NoStockCount"))
@@ -947,7 +948,7 @@ Public Class Dashboard
 
             ' Sales legend on the left
             Dim salesLegend As New Label()
-            salesLegend.Text = "● Sales Tracking"
+            salesLegend.Text = Char.ConvertFromUtf32(&H1F4CA) & " Sales Tracking"
             salesLegend.Font = New Font("Poppins", 11, FontStyle.Bold)
             salesLegend.ForeColor = Color.FromArgb(254, 191, 16)
             salesLegend.AutoSize = True
@@ -1116,10 +1117,10 @@ Public Class Dashboard
                         .AnimationsSpeed = TimeSpan.FromMilliseconds(800),
                         .Labeler = Function(value)
                                        If isZeroData Then
-                                           If Math.Abs(value) < 0.001 Then Return "₱0"
+                                           If Math.Abs(value) < 0.001 Then Return ChrW(&H20B1) & "0"
                                            Return ""
                                        End If
-                                       Return $"₱{value:N0}"
+                                       Return ChrW(&H20B1) & $"{value:N0}"
                                    End Function
                     }
                 }
@@ -1149,7 +1150,7 @@ Public Class Dashboard
                 Dim fallbackLabel As New Label() With {
                 .Text = $"Chart Mode: {mode}" & vbCrLf &
                        $"Data Points: {salesData.Count}" & vbCrLf &
-                       $"Total Sales: ₱{If(salesData.Count > 0, salesData.Sum(), 0):N2}" & vbCrLf &
+                       $"Total Sales: ?{If(salesData.Count > 0, salesData.Sum(), 0):N2}" & vbCrLf &
                        "LiveCharts not available - using fallback display",
                 .Font = New Font("Poppins", 12, FontStyle.Regular),
                 .ForeColor = Color.FromArgb(51, 51, 51),
@@ -1173,130 +1174,148 @@ Public Class Dashboard
     Private Sub LoadMonthlyData(salesData As List(Of Double), revenueData As List(Of Double), labels As List(Of String))
         Dim currentYear As Integer = DateTime.Now.Year
 
+        ' Single query for all 12 months
+        Dim query As String = "
+            SELECT CAST(strftime('%m', SaleDate) AS INTEGER) AS MonthNum,
+                   IFNULL(SUM(TotalAmount), 0) AS Revenue
+            FROM Sales
+            WHERE CAST(strftime('%Y', SaleDate) AS INTEGER) = @Year
+            GROUP BY MonthNum
+            ORDER BY MonthNum"
+
+        Dim parameters As SqlParameter() = {
+            New SqlParameter("@Year", currentYear)
+        }
+
+        Dim monthlyData As New Dictionary(Of Integer, Double)()
+        For m As Integer = 1 To 12
+            monthlyData(m) = 0
+        Next
+
+        Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters)
+            While reader.Read()
+                Dim monthNum As Integer = Convert.ToInt32(reader("MonthNum"))
+                monthlyData(monthNum) = Convert.ToDouble(reader("Revenue"))
+            End While
+        End Using
+
         For month As Integer = 1 To 12
             labels.Add(GetMonthAbbreviation(month))
-
-            Dim query As String = "
-                SELECT 
-                    COUNT(SaleID) as SalesCount,
-                    ISNULL(SUM(TotalAmount), 0) as Revenue
-                FROM Sales
-                WHERE YEAR(SaleDate) = @Year AND MONTH(SaleDate) = @Month"
-
-            Dim parameters As SqlParameter() = {
-                New SqlParameter("@Year", currentYear),
-                New SqlParameter("@Month", month)
-            }
-
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters)
-                If reader.Read() Then
-                    salesData.Add(Convert.ToDouble(reader("Revenue")))
-                    revenueData.Add(Convert.ToDouble(reader("Revenue")))
-                Else
-                    salesData.Add(0)
-                    revenueData.Add(0)
-                End If
-            End Using
+            Dim rev As Double = monthlyData(month)
+            salesData.Add(rev)
+            revenueData.Add(rev)
         Next
     End Sub
 
     Private Sub LoadWeeklyData(salesData As List(Of Double), revenueData As List(Of Double), labels As List(Of String))
         Dim dayNames As String() = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"}
+        Dim startDate As DateTime = DateTime.Now.AddDays(-6).Date
+
+        ' Single query for last 7 days
+        Dim query As String = "
+            SELECT DATE(SaleDate) AS SaleDay,
+                   IFNULL(SUM(TotalAmount), 0) AS Revenue
+            FROM Sales
+            WHERE DATE(SaleDate) >= @StartDate
+            GROUP BY SaleDay
+            ORDER BY SaleDay"
+
+        Dim parameters As SqlParameter() = {
+            New SqlParameter("@StartDate", startDate)
+        }
+
+        Dim dailyData As New Dictionary(Of String, Double)()
+        Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters)
+            While reader.Read()
+                Dim day As String = Convert.ToDateTime(reader("SaleDay")).ToString("yyyy-MM-dd")
+                dailyData(day) = Convert.ToDouble(reader("Revenue"))
+            End While
+        End Using
 
         For i As Integer = 6 To 0 Step -1
             Dim targetDate As DateTime = DateTime.Now.AddDays(-i).Date
             labels.Add(dayNames(CInt(targetDate.DayOfWeek)))
-
-            Dim query As String = "
-                SELECT 
-                    COUNT(SaleID) as SalesCount,
-                    ISNULL(SUM(TotalAmount), 0) as Revenue
-                FROM Sales
-                WHERE CAST(SaleDate AS DATE) = @Date"
-
-            Dim parameters As SqlParameter() = {
-                New SqlParameter("@Date", targetDate)
-            }
-
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters)
-                If reader.Read() Then
-                    salesData.Add(Convert.ToDouble(reader("Revenue")))
-                    revenueData.Add(Convert.ToDouble(reader("Revenue")))
-                Else
-                    salesData.Add(0)
-                    revenueData.Add(0)
-                End If
-            End Using
+            Dim key As String = targetDate.ToString("yyyy-MM-dd")
+            Dim rev As Double = If(dailyData.ContainsKey(key), dailyData(key), 0)
+            salesData.Add(rev)
+            revenueData.Add(rev)
         Next
     End Sub
 
     Private Sub LoadDailyData(salesData As List(Of Double), revenueData As List(Of Double), labels As List(Of String))
         Dim startDate = DateTime.Today.AddDays(-11)
 
+        ' Single query for last 12 days
+        Dim query As String = "
+            SELECT DATE(SaleDate) AS SaleDay,
+                   IFNULL(SUM(TotalAmount), 0) AS Revenue
+            FROM Sales
+            WHERE DATE(SaleDate) >= @StartDate
+            GROUP BY SaleDay
+            ORDER BY SaleDay"
+
+        Dim parameters As SqlParameter() = {
+            New SqlParameter("@StartDate", startDate)
+        }
+
+        Dim dailyData As New Dictionary(Of String, Double)()
+        Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters)
+            While reader.Read()
+                Dim day As String = Convert.ToDateTime(reader("SaleDay")).ToString("yyyy-MM-dd")
+                dailyData(day) = Convert.ToDouble(reader("Revenue"))
+            End While
+        End Using
+
         For i As Integer = 0 To 11
             Dim targetDate As DateTime = startDate.AddDays(i)
             labels.Add(targetDate.ToString("dd MMM"))
-
-            Dim query As String = "
-                SELECT 
-                    COUNT(SaleID) as SalesCount,
-                    ISNULL(SUM(TotalAmount), 0) as Revenue
-                FROM Sales
-                WHERE CAST(SaleDate AS DATE) = @Date"
-
-            Dim parameters As SqlParameter() = {
-                New SqlParameter("@Date", targetDate)
-            }
-
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters)
-                If reader.Read() Then
-                    salesData.Add(Convert.ToDouble(reader("Revenue")))
-                    revenueData.Add(Convert.ToDouble(reader("Revenue")))
-                Else
-                    salesData.Add(0)
-                    revenueData.Add(0)
-                End If
-            End Using
+            Dim key As String = targetDate.ToString("yyyy-MM-dd")
+            Dim rev As Double = If(dailyData.ContainsKey(key), dailyData(key), 0)
+            salesData.Add(rev)
+            revenueData.Add(rev)
         Next
     End Sub
 
     Private Sub LoadYearlyData(salesData As List(Of Double), revenueData As List(Of Double), labels As List(Of String))
         Dim startYear As Integer = DateTime.Now.Year - 5
 
+        ' Single query for 6 years
+        Dim query As String = "
+            SELECT CAST(strftime('%Y', SaleDate) AS INTEGER) AS SaleYear,
+                   IFNULL(SUM(TotalAmount), 0) AS Revenue
+            FROM Sales
+            WHERE CAST(strftime('%Y', SaleDate) AS INTEGER) >= @StartYear
+            GROUP BY SaleYear
+            ORDER BY SaleYear"
+
+        Dim parameters As SqlParameter() = {
+            New SqlParameter("@StartYear", startYear)
+        }
+
+        Dim yearlyData As New Dictionary(Of Integer, Double)()
+        Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters)
+            While reader.Read()
+                Dim yr As Integer = Convert.ToInt32(reader("SaleYear"))
+                yearlyData(yr) = Convert.ToDouble(reader("Revenue"))
+            End While
+        End Using
+
         For year As Integer = startYear To DateTime.Now.Year
             labels.Add(year.ToString())
-
-            Dim query As String = "
-                SELECT 
-                    COUNT(SaleID) as SalesCount,
-                    ISNULL(SUM(TotalAmount), 0) as Revenue
-                FROM Sales
-                WHERE YEAR(SaleDate) = @Year"
-
-            Dim parameters As SqlParameter() = {
-                New SqlParameter("@Year", year)
-            }
-
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters)
-                If reader.Read() Then
-                    salesData.Add(Convert.ToDouble(reader("Revenue")))
-                    revenueData.Add(Convert.ToDouble(reader("Revenue")))
-                Else
-                    salesData.Add(0)
-                    revenueData.Add(0)
-                End If
-            End Using
+            Dim rev As Double = If(yearlyData.ContainsKey(year), yearlyData(year), 0)
+            salesData.Add(rev)
+            revenueData.Add(rev)
         Next
     End Sub
 
     Private Sub LoadAllTimeData(salesData As List(Of Double), revenueData As List(Of Double), labels As List(Of String))
         Dim query As String = "
-            SELECT YEAR(SaleDate) AS SaleYear, ISNULL(SUM(TotalAmount), 0) AS Revenue
+            SELECT CAST(strftime('%Y', SaleDate) AS INTEGER) AS SaleYear, IFNULL(SUM(TotalAmount), 0) AS Revenue
             FROM Sales
-            GROUP BY YEAR(SaleDate)
-            ORDER BY YEAR(SaleDate)"
+            GROUP BY SaleYear
+            ORDER BY SaleYear"
 
-        Using reader As SqlDataReader = Utilities.ExecuteReader(query, Nothing)
+        Using reader As DbDataReader = Utilities.ExecuteReader(query, Nothing)
             While reader.Read()
                 labels.Add(reader("SaleYear").ToString())
                 Dim revenue As Double = Convert.ToDouble(reader("Revenue"))
@@ -1362,8 +1381,29 @@ Public Class Dashboard
             endDateTime = endDateTime.AddDays(1)
         End If
 
-        Dim slotStart As DateTime = startDateTime
+        ' Single query grouped by hour
+        Dim query As String = "
+            SELECT CAST(strftime('%H', SaleDate) AS INTEGER) AS HourNum,
+                   IFNULL(SUM(TotalAmount), 0) AS Revenue
+            FROM Sales
+            WHERE SaleDate >= @StartDateTime AND SaleDate < @EndDateTime
+            GROUP BY HourNum
+            ORDER BY HourNum"
 
+        Dim parameters As SqlParameter() = {
+            New SqlParameter("@StartDateTime", startDateTime),
+            New SqlParameter("@EndDateTime", endDateTime)
+        }
+
+        Dim hourlyData As New Dictionary(Of Integer, Double)()
+        Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters)
+            While reader.Read()
+                Dim hr As Integer = Convert.ToInt32(reader("HourNum"))
+                hourlyData(hr) = Convert.ToDouble(reader("Revenue"))
+            End While
+        End Using
+
+        Dim slotStart As DateTime = startDateTime
         While slotStart < endDateTime
             Dim slotEnd As DateTime = slotStart.AddHours(1)
             If slotEnd > endDateTime Then
@@ -1371,27 +1411,10 @@ Public Class Dashboard
             End If
 
             labels.Add(slotStart.ToString("hh tt"))
-
-            Dim query As String = "
-                SELECT ISNULL(SUM(TotalAmount), 0) AS Revenue
-                FROM Sales
-                WHERE SaleDate >= @StartDateTime AND SaleDate < @EndDateTime"
-
-            Dim parameters As SqlParameter() = {
-                New SqlParameter("@StartDateTime", slotStart),
-                New SqlParameter("@EndDateTime", slotEnd)
-            }
-
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters)
-                If reader.Read() Then
-                    Dim revenue As Double = Convert.ToDouble(reader("Revenue"))
-                    salesData.Add(revenue)
-                    revenueData.Add(revenue)
-                Else
-                    salesData.Add(0)
-                    revenueData.Add(0)
-                End If
-            End Using
+            Dim hr As Integer = slotStart.Hour
+            Dim rev As Double = If(hourlyData.ContainsKey(hr), hourlyData(hr), 0)
+            salesData.Add(rev)
+            revenueData.Add(rev)
 
             slotStart = slotEnd
         End While
@@ -1651,7 +1674,7 @@ Public Class Dashboard
             txtProductSearch.BorderRadius = 10
             txtProductSearch.BackColor = Color.Transparent
             txtProductSearch.BorderThickness = 1
-            txtProductSearch.PlaceholderText = "🔍 Search products..."
+            txtProductSearch.PlaceholderText = Char.ConvertFromUtf32(&H1F50D) & " Search products..."
             txtProductSearch.Font = New Font("Poppins", 10.0F)
             txtProductSearch.ForeColor = Color.FromArgb(51, 51, 51)
             txtProductSearch.BackColor = Color.FromArgb(245, 245, 245)

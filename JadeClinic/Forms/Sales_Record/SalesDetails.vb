@@ -1,4 +1,4 @@
-﻿Imports Microsoft.Data.SqlClient
+Imports System.Data.Common
 Imports System.Text
 Imports System.Drawing.Printing
 
@@ -55,7 +55,7 @@ Public Class SalesDetails
 
         Dim saleQuery As String = "SELECT s.SaleID, s.SaleDate, s.CustomerName, s.CustomerTIN, s.TotalAmount, s.AmountPaid, s.PaymentMethod, s.Reference, s.SalesData, u.Username " &
                                   "FROM Sales s LEFT JOIN Users u ON s.UserID = u.UserID WHERE s.SaleID = @SaleID"
-        Using reader As SqlDataReader = Utilities.ExecuteReader(saleQuery, New SqlParameter("@SaleID", saleId))
+        Using reader As DbDataReader = Utilities.ExecuteReader(saleQuery, New SqlParameter("@SaleID", saleId))
             If reader.Read() Then
                 saleRecord = New Dictionary(Of String, Object) From {
                     {"SaleID", If(IsDBNull(reader("SaleID")), saleId, reader("SaleID"))},
@@ -74,9 +74,9 @@ Public Class SalesDetails
 
         If saleRecord Is Nothing Then Return
 
-        Dim itemsQuery As String = "SELECT si.SaleItemID, si.ProductID, ISNULL(p.ProductName, 'Unknown') AS ProductName, si.Quantity, si.UnitPrice " &
+        Dim itemsQuery As String = "SELECT si.SaleItemID, si.ProductID, IFNULL(p.ProductName, 'Unknown') AS ProductName, si.Quantity, si.UnitPrice " &
                                    "FROM SaleItems si LEFT JOIN Products p ON si.ProductID = p.ProductID WHERE si.SaleID = @SaleID ORDER BY si.SaleItemID"
-        Using reader As SqlDataReader = Utilities.ExecuteReader(itemsQuery, New SqlParameter("@SaleID", saleId))
+        Using reader As DbDataReader = Utilities.ExecuteReader(itemsQuery, New SqlParameter("@SaleID", saleId))
             While reader.Read()
                 Dim it As New Dictionary(Of String, Object) From {
                     {"SaleItemID", If(IsDBNull(reader("SaleItemID")), 0, Convert.ToInt32(reader("SaleItemID")))},
@@ -226,8 +226,8 @@ Public Class SalesDetails
 
                 e.Graphics.DrawString($"{quantity}x {itemName}", regularFont, brush, marginLeft, yPosition)
                 yPosition += 12
-                e.Graphics.DrawString($"@ ₱{unitVatInc:F2}", regularFont, brush, marginLeft + 8, yPosition)
-                e.Graphics.DrawString($"₱{lineTotal:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"₱{lineTotal:F2}", regularFont).Width), CSng(yPosition))
+                e.Graphics.DrawString($"@ ?{unitVatInc:F2}", regularFont, brush, marginLeft + 8, yPosition)
+                e.Graphics.DrawString($"?{lineTotal:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"?{lineTotal:F2}", regularFont).Width), CSng(yPosition))
                 yPosition += 15
             Next
 
@@ -269,28 +269,28 @@ Public Class SalesDetails
             Dim changeAmount As Decimal = Math.Round(amountReceived - totalDue, 2)
 
             e.Graphics.DrawString("SUBTOTAL (VAT-INC):", regularFont, brush, marginLeft, yPosition)
-            e.Graphics.DrawString($"₱{subtotalVatInclusive:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"₱{subtotalVatInclusive:F2}", regularFont).Width), CSng(yPosition))
+            e.Graphics.DrawString($"?{subtotalVatInclusive:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"?{subtotalVatInclusive:F2}", regularFont).Width), CSng(yPosition))
             yPosition += 12
 
             If discountAmt > 0D Then
                 e.Graphics.DrawString($"Less: Discount ({discountTypeText}):", regularFont, brush, marginLeft, yPosition)
-                e.Graphics.DrawString($"-₱{discountAmt:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"-₱{discountAmt:F2}", regularFont).Width), CSng(yPosition))
+                e.Graphics.DrawString($"-?{discountAmt:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"-?{discountAmt:F2}", regularFont).Width), CSng(yPosition))
                 yPosition += 12
             End If
 
             e.Graphics.DrawString("VATABLE SALES (NET):", regularFont, brush, marginLeft, yPosition)
-            e.Graphics.DrawString($"₱{vatableNet:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"₱{vatableNet:F2}", regularFont).Width), CSng(yPosition))
+            e.Graphics.DrawString($"?{vatableNet:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"?{vatableNet:F2}", regularFont).Width), CSng(yPosition))
             yPosition += 12
 
             e.Graphics.DrawString("VAT (12%):", regularFont, brush, marginLeft, yPosition)
-            e.Graphics.DrawString($"₱{vatAmt:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"₱{vatAmt:F2}", regularFont).Width), CSng(yPosition))
+            e.Graphics.DrawString($"?{vatAmt:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"?{vatAmt:F2}", regularFont).Width), CSng(yPosition))
             yPosition += 12
 
             e.Graphics.DrawString(New String("="c, Math.Min(36, CInt(contentWidth / 6))), regularFont, brush, marginLeft, yPosition)
             yPosition += 12
 
             e.Graphics.DrawString("TOTAL AMOUNT DUE:", boldFont, brush, marginLeft, yPosition)
-            e.Graphics.DrawString($"₱{totalDue:F2}", boldFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"₱{totalDue:F2}", boldFont).Width), CSng(yPosition))
+            e.Graphics.DrawString($"?{totalDue:F2}", boldFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"?{totalDue:F2}", boldFont).Width), CSng(yPosition))
             yPosition += 18
 
             e.Graphics.DrawString("PAYMENT INFORMATION", sectionHeaderFont, brush, marginLeft, yPosition)
@@ -301,9 +301,9 @@ Public Class SalesDetails
                 e.Graphics.DrawString($"Reference: {paymentReference}", regularFont, brush, marginLeft, yPosition)
                 yPosition += 12
             End If
-            e.Graphics.DrawString($"Amount Received: ₱{amountReceived:F2}", regularFont, brush, marginLeft, yPosition)
+            e.Graphics.DrawString($"Amount Received: ?{amountReceived:F2}", regularFont, brush, marginLeft, yPosition)
             yPosition += 12
-            e.Graphics.DrawString($"Change: ₱{changeAmount:F2}", regularFont, brush, marginLeft, yPosition)
+            e.Graphics.DrawString($"Change: ?{changeAmount:F2}", regularFont, brush, marginLeft, yPosition)
             yPosition += 14
 
             e.Graphics.DrawString(New String("="c, Math.Min(36, CInt(contentWidth / 6))), regularFont, brush, marginLeft, yPosition)
