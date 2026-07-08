@@ -121,8 +121,12 @@ Public Class Sales
     ' POS lock color control caches
     Private originalCategoryButtonFillColors As New Dictionary(Of Guna.UI2.WinForms.Guna2Button, Color)()
     Private originalCategoryOverlayColors As New Dictionary(Of Control, Color)()
+    Private originalCategoryOverlayParents As New Dictionary(Of Control, Control)()
+    Private originalCategoryOverlayLocations As New Dictionary(Of Control, Point)()
     Private posLockCategoryFillColor As Color = LightGray
     Private posLockLabelBackColor As Color = Color.Empty
+    Private _lockedReplacementLabels As New Dictionary(Of Guna.UI2.WinForms.Guna2HtmlLabel, Label)()
+    Private _originalLabelAutoSize As New Dictionary(Of Control, Boolean)()
 
 
 
@@ -156,13 +160,16 @@ Public Class Sales
             ' Overlay candidates (designer labels and runtime overlays)
             Dim overlayCandidates As Control() = {
                 Label1, Label2, Label3, Label4, Label5, Label6, Label7,
-                Guna2HtmlLabel1, Guna2HtmlLabel3, Guna2HtmlLabel5, Guna2HtmlLabel7,
-                Guna2HtmlLabel9, Guna2HtmlLabel11, Guna2HtmlLabel4, Guna2HtmlLabel6, Guna2HtmlLabel8, Guna2HtmlLabel10, Guna2HtmlLabel12
+                Guna2HtmlLabel1, Guna2HtmlLabel2, Guna2HtmlLabel3, Guna2HtmlLabel4,
+                Guna2HtmlLabel5, Guna2HtmlLabel6, Guna2HtmlLabel7, Guna2HtmlLabel8,
+                Guna2HtmlLabel9, Guna2HtmlLabel10, Guna2HtmlLabel11, Guna2HtmlLabel12
             }
 
             For Each c In overlayCandidates
                 If c IsNot Nothing Then
                     originalCategoryOverlayColors(c) = c.BackColor
+                    originalCategoryOverlayParents(c) = c.Parent
+                    originalCategoryOverlayLocations(c) = c.Location
                 End If
             Next
 
@@ -216,7 +223,7 @@ Public Class Sales
                 InitializeCategoryLockCaches()
             End If
 
-            ' Buttons: either apply configured lock color or restore original
+            ' Update button fill colors
             For Each kvp In originalCategoryButtonFillColors.ToList()
                 Dim btn = kvp.Key
                 Dim originalFill = kvp.Value
@@ -224,35 +231,59 @@ Public Class Sales
                 btn.FillColor = If(locked, posLockCategoryFillColor, originalFill)
             Next
 
-            ' Overlays: if locked, prefer explicit label override, else prefer the mapped button FillColor,
-            ' else fallback to posLockCategoryFillColor. When unlocking, restore original background.
-            For Each kvp In originalCategoryOverlayColors.ToList()
-                Dim ctrl = kvp.Key
-                Dim originalBack = kvp.Value
-                If ctrl Is Nothing OrElse ctrl.IsDisposed Then Continue For
-
-                If locked Then
-                    If posLockLabelBackColor <> Color.Empty Then
-                        ctrl.BackColor = posLockLabelBackColor
-                        Continue For
+            ' Simple behavior: when locked set all Label and Guna2HtmlLabel BackColor to LightGray; when unlocking restore original BackColor
+            If locked Then
+                Dim targetColor As Color = LightGray
+                ' Walk all controls under CategoryPanel (including nested) and set labels' BackColor
+                Dim stack As New Stack(Of Control)()
+                stack.Push(CategoryPanel)
+                While stack.Count > 0
+                    Dim c = stack.Pop()
+                    For Each child As Control In c.Controls
+                        If child Is Nothing OrElse child.IsDisposed Then Continue For
+                        stack.Push(child)
+                        If TypeOf child Is Label OrElse TypeOf child Is Guna.UI2.WinForms.Guna2HtmlLabel Then
+                            Try
+                                child.BackColor = targetColor
+                            Catch
+                                ' ignore
+                            End Try
+                        End If
+                    Next
+                End While
+            Else
+                ' Restore original overlay BackColor values we captured earlier
+                For Each kvp In originalCategoryOverlayColors.ToList()
+                    Dim ctrl = kvp.Key
+                    Dim originalBack = kvp.Value
+                    If ctrl Is Nothing OrElse ctrl.IsDisposed Then Continue For
+                    Try
+                        ctrl.BackColor = originalBack
+                    Catch
+                        ' ignore
+                    End Try
+                    ' Restore original parent and location if this control was reparented while locked
+                    If originalCategoryOverlayParents.ContainsKey(ctrl) Then
+                        Try
+                            Dim originalParent = originalCategoryOverlayParents(ctrl)
+                            If originalParent IsNot Nothing AndAlso Not originalParent.IsDisposed AndAlso ctrl.Parent IsNot originalParent Then
+                                ctrl.Parent = originalParent
+                            End If
+                        Catch
+                            ' ignore
+                        End Try
                     End If
-
-                    Dim mappedBtn As Guna.UI2.WinForms.Guna2Button = Nothing
-                    If overlayToButton.ContainsKey(ctrl) Then
-                        mappedBtn = overlayToButton(ctrl)
+                    If originalCategoryOverlayLocations.ContainsKey(ctrl) Then
+                        Try
+                            ctrl.Location = originalCategoryOverlayLocations(ctrl)
+                        Catch
+                            ' ignore
+                        End Try
                     End If
+                Next
+            End If
 
-                    If mappedBtn IsNot Nothing Then
-                        ctrl.BackColor = mappedBtn.FillColor
-                    Else
-                        ' Last fallback: use the manual posLockCategoryFillColor
-                        ctrl.BackColor = posLockCategoryFillColor
-                    End If
-                Else
-                    ' restore the original background
-                    ctrl.BackColor = originalBack
-                End If
-            Next
+            CategoryPanel.Invalidate()
         Catch ex As Exception
             Console.WriteLine($"ApplyPosLockColors error: {ex.Message}")
         End Try
@@ -444,7 +475,8 @@ Public Class Sales
                                       End Sub
 
             ' Update button colors to match Jade Clinic palette
-            kvp.Key.FillColor = JadeOlive
+            ' REMOVED: Keep buttons White until POS is locked
+            ' kvp.Key.FillColor = JadeOlive
             kvp.Key.ForeColor = Color.White
             kvp.Key.BackColor = Color.Transparent
             kvp.Key.BorderColor = Color.FromArgb(212, 190, 123)
@@ -3801,11 +3833,18 @@ Public Class Sales
                                 Dim unitPrice As Decimal = Convert.ToDecimal(item("Price"))
 
                                 ' Insert SaleItem
-                                Using cmdItem As New SqlCommand("INSERT INTO SaleItems (SaleID, ProductID, Quantity, UnitPrice) VALUES (@SaleID, @ProductID, @Quantity, @UnitPrice)", conn, tran)
+                                Dim origPrice As Object = Nothing
+                                If item.ContainsKey("OriginalUnitPrice") Then
+                                    origPrice = Convert.ToDecimal(item("OriginalUnitPrice"))
+                                Else
+                                    origPrice = unitPrice
+                                End If
+                                Using cmdItem As New SqlCommand("INSERT INTO SaleItems (SaleID, ProductID, Quantity, UnitPrice, OriginalUnitPrice) VALUES (@SaleID, @ProductID, @Quantity, @UnitPrice, @OriginalUnitPrice)", conn, tran)
                                     cmdItem.Parameters.AddWithValue("@SaleID", saleId)
                                     cmdItem.Parameters.AddWithValue("@ProductID", prodId)
                                     cmdItem.Parameters.AddWithValue("@Quantity", qty)
                                     cmdItem.Parameters.AddWithValue("@UnitPrice", unitPrice)
+                                    cmdItem.Parameters.AddWithValue("@OriginalUnitPrice", origPrice)
                                     cmdItem.ExecuteNonQuery()
                                 End Using
 

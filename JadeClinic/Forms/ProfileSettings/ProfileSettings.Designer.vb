@@ -113,7 +113,7 @@ Partial Class ProfileSettings
         ' 
         LabelTitle.AutoSize = True
         LabelTitle.Font = New Font("Poppins Medium", 16.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        LabelTitle.ForeColor = Color.White
+        LabelTitle.ForeColor = Color.FromArgb(CByte(42), CByte(42), CByte(42))
         LabelTitle.Location = New Point(262, 20)
         LabelTitle.Name = "LabelTitle"
         LabelTitle.Size = New Size(229, 50)
@@ -296,9 +296,10 @@ Partial Class ProfileSettings
         ' 
         ' Guna2Panel1
         ' 
-        Guna2Panel1.BackColor = Color.FromArgb(CByte(30), CByte(30), CByte(30))
-        Guna2Panel1.BorderColor = Color.White
+        Guna2Panel1.BackColor = Color.Transparent
+        Guna2Panel1.BorderColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
         Guna2Panel1.BorderRadius = 10
+        Guna2Panel1.BorderThickness = 2
         Guna2Panel1.Controls.Add(Guna2CheckBox1)
         Guna2Panel1.Controls.Add(lblpasskey3)
         Guna2Panel1.Controls.Add(lblpasskey2)
@@ -320,23 +321,23 @@ Partial Class ProfileSettings
         Guna2Panel1.Controls.Add(Guna2HtmlLabel2)
         Guna2Panel1.Controls.Add(txtNewPassword)
         Guna2Panel1.CustomizableEdges = CustomizableEdges26
-        Guna2Panel1.FillColor = Color.FromArgb(CByte(41), CByte(40), CByte(45))
-        Guna2Panel1.Location = New Point(613, 84)
+        Guna2Panel1.FillColor = Color.FromArgb(CByte(250), CByte(249), CByte(246))
+        Guna2Panel1.Location = New Point(614, 84)
         Guna2Panel1.Name = "Guna2Panel1"
         Guna2Panel1.ShadowDecoration.CustomizableEdges = CustomizableEdges27
-        Guna2Panel1.Size = New Size(862, 753)
+        Guna2Panel1.Size = New Size(960, 753)
         Guna2Panel1.TabIndex = 41
         ' 
         ' Guna2CheckBox1
         ' 
         Guna2CheckBox1.AutoSize = True
-        Guna2CheckBox1.BackColor = Color.FromArgb(CByte(41), CByte(40), CByte(45))
+        Guna2CheckBox1.BackColor = Color.Transparent
         Guna2CheckBox1.CheckedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         Guna2CheckBox1.CheckedState.BorderRadius = 0
         Guna2CheckBox1.CheckedState.BorderThickness = 0
         Guna2CheckBox1.CheckedState.FillColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         Guna2CheckBox1.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2CheckBox1.ForeColor = Color.White
+        Guna2CheckBox1.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
         Guna2CheckBox1.Location = New Point(694, 192)
         Guna2CheckBox1.Name = "Guna2CheckBox1"
         Guna2CheckBox1.Size = New Size(148, 30)
@@ -352,7 +353,7 @@ Partial Class ProfileSettings
         ' 
         lblpasskey3.BackColor = Color.Transparent
         lblpasskey3.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblpasskey3.ForeColor = Color.White
+        lblpasskey3.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
         lblpasskey3.Location = New Point(711, 140)
         lblpasskey3.Name = "lblpasskey3"
         lblpasskey3.Size = New Size(81, 28)
@@ -364,7 +365,7 @@ Partial Class ProfileSettings
         ' 
         lblpasskey2.BackColor = Color.Transparent
         lblpasskey2.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblpasskey2.ForeColor = Color.White
+        lblpasskey2.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
         lblpasskey2.Location = New Point(573, 140)
         lblpasskey2.Name = "lblpasskey2"
         lblpasskey2.Size = New Size(81, 28)
@@ -376,7 +377,7 @@ Partial Class ProfileSettings
         ' 
         lblpasskey1.BackColor = Color.Transparent
         lblpasskey1.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblpasskey1.ForeColor = Color.White
+        lblpasskey1.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
         lblpasskey1.Location = New Point(443, 140)
         lblpasskey1.Name = "lblpasskey1"
         lblpasskey1.Size = New Size(81, 28)
@@ -388,7 +389,7 @@ Partial Class ProfileSettings
         ' 
         Guna2HtmlLabel8.BackColor = Color.Transparent
         Guna2HtmlLabel8.Font = New Font("Poppins", 12F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel8.ForeColor = Color.White
+        Guna2HtmlLabel8.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
         Guna2HtmlLabel8.Location = New Point(564, 96)
         Guna2HtmlLabel8.Name = "Guna2HtmlLabel8"
         Guna2HtmlLabel8.Size = New Size(90, 38)
@@ -400,7 +401,7 @@ Partial Class ProfileSettings
         ' 
         lblRole.BackColor = Color.Transparent
         lblRole.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblRole.ForeColor = Color.Orange
+        lblRole.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
         lblRole.Location = New Point(202, 140)
         lblRole.Name = "lblRole"
         lblRole.Size = New Size(81, 28)
@@ -412,7 +413,7 @@ Partial Class ProfileSettings
         ' 
         lblUsername.BackColor = Color.Transparent
         lblUsername.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblUsername.ForeColor = Color.White
+        lblUsername.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
         lblUsername.Location = New Point(202, 106)
         lblUsername.Name = "lblUsername"
         lblUsername.Size = New Size(81, 28)
@@ -424,7 +425,7 @@ Partial Class ProfileSettings
         ' 
         Guna2HtmlLabel7.BackColor = Color.Transparent
         Guna2HtmlLabel7.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel7.ForeColor = Color.White
+        Guna2HtmlLabel7.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
         Guna2HtmlLabel7.Location = New Point(458, 346)
         Guna2HtmlLabel7.Name = "Guna2HtmlLabel7"
         Guna2HtmlLabel7.Size = New Size(51, 28)
@@ -434,18 +435,17 @@ Partial Class ProfileSettings
         ' txtPhone
         ' 
         txtPhone.BackColor = Color.Transparent
+        txtPhone.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
         txtPhone.BorderRadius = 10
-        txtPhone.BorderThickness = 0
         txtPhone.CustomizableEdges = CustomizableEdges13
         txtPhone.DefaultText = ""
         txtPhone.DisabledState.BorderColor = Color.FromArgb(CByte(208), CByte(208), CByte(208))
         txtPhone.DisabledState.FillColor = Color.FromArgb(CByte(226), CByte(226), CByte(226))
         txtPhone.DisabledState.ForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtPhone.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
-        txtPhone.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
         txtPhone.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtPhone.Font = New Font("Segoe UI", 9F)
-        txtPhone.ForeColor = Color.White
+        txtPhone.ForeColor = Color.Black
         txtPhone.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtPhone.Location = New Point(458, 381)
         txtPhone.Margin = New Padding(3, 4, 3, 4)
@@ -454,14 +454,14 @@ Partial Class ProfileSettings
         txtPhone.PlaceholderText = "Phone"
         txtPhone.SelectedText = ""
         txtPhone.ShadowDecoration.CustomizableEdges = CustomizableEdges14
-        txtPhone.Size = New Size(345, 42)
+        txtPhone.Size = New Size(456, 42)
         txtPhone.TabIndex = 50
         ' 
         ' Guna2HtmlLabel6
         ' 
         Guna2HtmlLabel6.BackColor = Color.Transparent
         Guna2HtmlLabel6.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel6.ForeColor = Color.White
+        Guna2HtmlLabel6.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
         Guna2HtmlLabel6.Location = New Point(458, 457)
         Guna2HtmlLabel6.Name = "Guna2HtmlLabel6"
         Guna2HtmlLabel6.Size = New Size(143, 28)
@@ -471,18 +471,17 @@ Partial Class ProfileSettings
         ' txtConfirmPassword
         ' 
         txtConfirmPassword.BackColor = Color.Transparent
+        txtConfirmPassword.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
         txtConfirmPassword.BorderRadius = 10
-        txtConfirmPassword.BorderThickness = 0
         txtConfirmPassword.CustomizableEdges = CustomizableEdges15
         txtConfirmPassword.DefaultText = ""
         txtConfirmPassword.DisabledState.BorderColor = Color.FromArgb(CByte(208), CByte(208), CByte(208))
         txtConfirmPassword.DisabledState.FillColor = Color.FromArgb(CByte(226), CByte(226), CByte(226))
         txtConfirmPassword.DisabledState.ForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtConfirmPassword.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
-        txtConfirmPassword.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
         txtConfirmPassword.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtConfirmPassword.Font = New Font("Segoe UI", 9F)
-        txtConfirmPassword.ForeColor = Color.White
+        txtConfirmPassword.ForeColor = Color.Black
         txtConfirmPassword.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtConfirmPassword.Location = New Point(458, 492)
         txtConfirmPassword.Margin = New Padding(3, 4, 3, 4)
@@ -491,14 +490,14 @@ Partial Class ProfileSettings
         txtConfirmPassword.PlaceholderText = "Confirm password"
         txtConfirmPassword.SelectedText = ""
         txtConfirmPassword.ShadowDecoration.CustomizableEdges = CustomizableEdges16
-        txtConfirmPassword.Size = New Size(345, 42)
+        txtConfirmPassword.Size = New Size(456, 42)
         txtConfirmPassword.TabIndex = 48
         ' 
         ' Guna2HtmlLabel5
         ' 
         Guna2HtmlLabel5.BackColor = Color.Transparent
         Guna2HtmlLabel5.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel5.ForeColor = Color.White
+        Guna2HtmlLabel5.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
         Guna2HtmlLabel5.Location = New Point(46, 346)
         Guna2HtmlLabel5.Name = "Guna2HtmlLabel5"
         Guna2HtmlLabel5.Size = New Size(45, 28)
@@ -508,18 +507,17 @@ Partial Class ProfileSettings
         ' txtEmail
         ' 
         txtEmail.BackColor = Color.Transparent
+        txtEmail.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
         txtEmail.BorderRadius = 10
-        txtEmail.BorderThickness = 0
         txtEmail.CustomizableEdges = CustomizableEdges17
         txtEmail.DefaultText = ""
         txtEmail.DisabledState.BorderColor = Color.FromArgb(CByte(208), CByte(208), CByte(208))
         txtEmail.DisabledState.FillColor = Color.FromArgb(CByte(226), CByte(226), CByte(226))
         txtEmail.DisabledState.ForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtEmail.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
-        txtEmail.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
         txtEmail.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtEmail.Font = New Font("Segoe UI", 9F)
-        txtEmail.ForeColor = Color.White
+        txtEmail.ForeColor = Color.Black
         txtEmail.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtEmail.Location = New Point(46, 381)
         txtEmail.Margin = New Padding(3, 4, 3, 4)
@@ -528,14 +526,14 @@ Partial Class ProfileSettings
         txtEmail.PlaceholderText = "Enter your email"
         txtEmail.SelectedText = ""
         txtEmail.ShadowDecoration.CustomizableEdges = CustomizableEdges18
-        txtEmail.Size = New Size(378, 42)
+        txtEmail.Size = New Size(390, 42)
         txtEmail.TabIndex = 46
         ' 
         ' Guna2HtmlLabel4
         ' 
         Guna2HtmlLabel4.BackColor = Color.Transparent
         Guna2HtmlLabel4.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel4.ForeColor = Color.White
+        Guna2HtmlLabel4.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
         Guna2HtmlLabel4.Location = New Point(46, 249)
         Guna2HtmlLabel4.Name = "Guna2HtmlLabel4"
         Guna2HtmlLabel4.Size = New Size(81, 28)
@@ -545,7 +543,8 @@ Partial Class ProfileSettings
         ' 
         ' Guna2CirclePictureBox7
         ' 
-        Guna2CirclePictureBox7.BackColor = Color.FromArgb(CByte(41), CByte(40), CByte(45))
+        Guna2CirclePictureBox7.BackColor = Color.Transparent
+        Guna2CirclePictureBox7.FillColor = Color.Silver
         Guna2CirclePictureBox7.ImageRotate = 0F
         Guna2CirclePictureBox7.Location = New Point(46, 60)
         Guna2CirclePictureBox7.Name = "Guna2CirclePictureBox7"
@@ -557,16 +556,17 @@ Partial Class ProfileSettings
         ' 
         ' btnSave
         ' 
+        btnSave.BackColor = Color.Transparent
         btnSave.BorderRadius = 10
         btnSave.CustomizableEdges = CustomizableEdges20
         btnSave.DisabledState.BorderColor = Color.DarkGray
         btnSave.DisabledState.CustomBorderColor = Color.DarkGray
         btnSave.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         btnSave.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        btnSave.FillColor = Color.FromArgb(CByte(246), CByte(245), CByte(255))
+        btnSave.FillColor = Color.FromArgb(CByte(191), CByte(155), CByte(48))
         btnSave.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        btnSave.ForeColor = Color.Black
-        btnSave.Location = New Point(684, 608)
+        btnSave.ForeColor = Color.White
+        btnSave.Location = New Point(771, 608)
         btnSave.Name = "btnSave"
         btnSave.ShadowDecoration.CustomizableEdges = CustomizableEdges21
         btnSave.Size = New Size(143, 57)
@@ -577,7 +577,7 @@ Partial Class ProfileSettings
         ' 
         Guna2HtmlLabel3.BackColor = Color.Transparent
         Guna2HtmlLabel3.Font = New Font("Poppins", 13.8F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel3.ForeColor = Color.White
+        Guna2HtmlLabel3.ForeColor = Color.FromArgb(CByte(42), CByte(42), CByte(42))
         Guna2HtmlLabel3.Location = New Point(19, 12)
         Guna2HtmlLabel3.Name = "Guna2HtmlLabel3"
         Guna2HtmlLabel3.Size = New Size(242, 42)
@@ -587,18 +587,17 @@ Partial Class ProfileSettings
         ' txtUserName
         ' 
         txtUserName.BackColor = Color.Transparent
+        txtUserName.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
         txtUserName.BorderRadius = 10
-        txtUserName.BorderThickness = 0
         txtUserName.CustomizableEdges = CustomizableEdges22
         txtUserName.DefaultText = ""
         txtUserName.DisabledState.BorderColor = Color.FromArgb(CByte(208), CByte(208), CByte(208))
         txtUserName.DisabledState.FillColor = Color.FromArgb(CByte(226), CByte(226), CByte(226))
         txtUserName.DisabledState.ForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtUserName.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
-        txtUserName.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
         txtUserName.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtUserName.Font = New Font("Segoe UI", 9F)
-        txtUserName.ForeColor = Color.White
+        txtUserName.ForeColor = Color.Black
         txtUserName.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtUserName.Location = New Point(46, 284)
         txtUserName.Margin = New Padding(3, 4, 3, 4)
@@ -607,14 +606,14 @@ Partial Class ProfileSettings
         txtUserName.PlaceholderText = "Enter your username"
         txtUserName.SelectedText = ""
         txtUserName.ShadowDecoration.CustomizableEdges = CustomizableEdges23
-        txtUserName.Size = New Size(757, 42)
+        txtUserName.Size = New Size(868, 42)
         txtUserName.TabIndex = 0
         ' 
         ' Guna2HtmlLabel2
         ' 
         Guna2HtmlLabel2.BackColor = Color.Transparent
         Guna2HtmlLabel2.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel2.ForeColor = Color.White
+        Guna2HtmlLabel2.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
         Guna2HtmlLabel2.Location = New Point(46, 457)
         Guna2HtmlLabel2.Name = "Guna2HtmlLabel2"
         Guna2HtmlLabel2.Size = New Size(114, 28)
@@ -624,18 +623,17 @@ Partial Class ProfileSettings
         ' txtNewPassword
         ' 
         txtNewPassword.BackColor = Color.Transparent
+        txtNewPassword.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
         txtNewPassword.BorderRadius = 10
-        txtNewPassword.BorderThickness = 0
         txtNewPassword.CustomizableEdges = CustomizableEdges24
         txtNewPassword.DefaultText = ""
         txtNewPassword.DisabledState.BorderColor = Color.FromArgb(CByte(208), CByte(208), CByte(208))
         txtNewPassword.DisabledState.FillColor = Color.FromArgb(CByte(226), CByte(226), CByte(226))
         txtNewPassword.DisabledState.ForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         txtNewPassword.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
-        txtNewPassword.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
         txtNewPassword.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtNewPassword.Font = New Font("Segoe UI", 9F)
-        txtNewPassword.ForeColor = Color.White
+        txtNewPassword.ForeColor = Color.Black
         txtNewPassword.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtNewPassword.Location = New Point(46, 492)
         txtNewPassword.Margin = New Padding(3, 4, 3, 4)
@@ -644,19 +642,20 @@ Partial Class ProfileSettings
         txtNewPassword.PlaceholderText = "Enter your new password"
         txtNewPassword.SelectedText = ""
         txtNewPassword.ShadowDecoration.CustomizableEdges = CustomizableEdges25
-        txtNewPassword.Size = New Size(378, 42)
+        txtNewPassword.Size = New Size(390, 42)
         txtNewPassword.TabIndex = 1
         ' 
         ' Guna2Panel2
         ' 
-        Guna2Panel2.BackColor = Color.FromArgb(CByte(30), CByte(30), CByte(30))
-        Guna2Panel2.BorderColor = Color.White
+        Guna2Panel2.BackColor = Color.Transparent
+        Guna2Panel2.BorderColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
         Guna2Panel2.BorderRadius = 10
+        Guna2Panel2.BorderThickness = 2
         Guna2Panel2.Controls.Add(lblLogout)
         Guna2Panel2.Controls.Add(lblChangePin)
         Guna2Panel2.Controls.Add(lblProfileSettings)
         Guna2Panel2.CustomizableEdges = CustomizableEdges28
-        Guna2Panel2.FillColor = Color.FromArgb(CByte(41), CByte(40), CByte(45))
+        Guna2Panel2.FillColor = Color.FromArgb(CByte(250), CByte(249), CByte(246))
         Guna2Panel2.Location = New Point(262, 87)
         Guna2Panel2.Name = "Guna2Panel2"
         Guna2Panel2.ShadowDecoration.CustomizableEdges = CustomizableEdges29
@@ -666,9 +665,9 @@ Partial Class ProfileSettings
         ' lblLogout
         ' 
         lblLogout.AutoSize = True
-        lblLogout.BackColor = Color.FromArgb(CByte(41), CByte(40), CByte(45))
+        lblLogout.BackColor = Color.Transparent
         lblLogout.Font = New Font("Poppins", 12F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblLogout.ForeColor = Color.White
+        lblLogout.ForeColor = Color.FromArgb(CByte(42), CByte(42), CByte(42))
         lblLogout.Location = New Point(33, 174)
         lblLogout.Name = "lblLogout"
         lblLogout.Size = New Size(115, 36)
@@ -678,9 +677,9 @@ Partial Class ProfileSettings
         ' lblChangePin
         ' 
         lblChangePin.AutoSize = True
-        lblChangePin.BackColor = Color.FromArgb(CByte(41), CByte(40), CByte(45))
+        lblChangePin.BackColor = Color.Transparent
         lblChangePin.Font = New Font("Poppins", 12F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblChangePin.ForeColor = Color.White
+        lblChangePin.ForeColor = Color.FromArgb(CByte(42), CByte(42), CByte(42))
         lblChangePin.Location = New Point(32, 103)
         lblChangePin.Name = "lblChangePin"
         lblChangePin.Size = New Size(162, 36)
@@ -690,9 +689,9 @@ Partial Class ProfileSettings
         ' lblProfileSettings
         ' 
         lblProfileSettings.AutoSize = True
-        lblProfileSettings.BackColor = Color.FromArgb(CByte(41), CByte(40), CByte(45))
+        lblProfileSettings.BackColor = Color.Transparent
         lblProfileSettings.Font = New Font("Poppins", 12F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblProfileSettings.ForeColor = Color.White
+        lblProfileSettings.ForeColor = Color.FromArgb(CByte(42), CByte(42), CByte(42))
         lblProfileSettings.Location = New Point(32, 29)
         lblProfileSettings.Name = "lblProfileSettings"
         lblProfileSettings.Size = New Size(193, 36)
@@ -701,7 +700,9 @@ Partial Class ProfileSettings
         ' 
         ' DashboardPanel
         ' 
-        DashboardPanel.BorderRadius = 30
+        DashboardPanel.BorderColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
+        DashboardPanel.BorderRadius = 10
+        DashboardPanel.BorderThickness = 2
         DashboardPanel.Controls.Add(PictureBox9)
         DashboardPanel.CustomizableEdges = CustomizableEdges30
         DashboardPanel.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
@@ -725,7 +726,7 @@ Partial Class ProfileSettings
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
-        BackColor = Color.FromArgb(CByte(30), CByte(30), CByte(30))
+        BackColor = Color.White
         ClientSize = New Size(1609, 875)
         Controls.Add(DashboardPanel)
         Controls.Add(Guna2Panel2)

@@ -161,7 +161,9 @@ Public Class NavigationHelper
     ''' </summary>
     Private Shared Sub SetupNavigationPanelStyling(navigationPanel As Guna2Panel)
         navigationPanel.FillColor = Color.White
-        navigationPanel.BorderRadius = 0 ' Keep clean edges for navigation
+        navigationPanel.BorderColor = Color.FromArgb(246, 245, 242)
+        navigationPanel.BorderRadius = 10
+        navigationPanel.BorderThickness = 2
     End Sub
 
     ''' <summary>

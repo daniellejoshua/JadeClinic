@@ -17,7 +17,7 @@ Public Class IdleTimeoutManager
 
     ' Timer and settings
     Private WithEvents idleTimer As Timer
-    Private ReadOnly IDLE_TIMEOUT_SECONDS As Integer = 5 ' 5 minutes
+    Private ReadOnly IDLE_TIMEOUT_SECONDS As Integer = 300 ' 5 minutes
     Private isTimerEnabled As Boolean = True
     Private currentForm As Form
     Private overlay As Panel

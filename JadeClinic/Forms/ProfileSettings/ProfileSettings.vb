@@ -26,16 +26,17 @@ Public Class ProfileSettings
     Private isNavigating As Boolean = False
 
     ' Dental Clinic Color Palette Constants
-    Private ReadOnly GoldenYellow As Color = Color.FromArgb(254, 191, 16)      ' #FECF10 - Primary brand color
-    Private ReadOnly RichOlive As Color = Color.FromArgb(190, 154, 48)         ' #BE9A30 - Secondary accent
-    Private ReadOnly DeepCharcoal As Color = Color.FromArgb(26, 29, 31)        ' #1A1D1F - Primary dark
-    Private ReadOnly DarkSlate As Color = Color.FromArgb(43, 47, 50)           ' #2B2F32 - Secondary dark
-    Private ReadOnly Graphite As Color = Color.FromArgb(61, 65, 69)            ' #3D4145 - Card background
-    Private ReadOnly SteelGray As Color = Color.FromArgb(74, 79, 84)           ' #4A4F54 - Interactive elements
-    Private ReadOnly PureWhite As Color = Color.FromArgb(255, 255, 255)        ' #FFFFFF - Text on dark
-    Private ReadOnly LightSilver As Color = Color.FromArgb(225, 229, 233)      ' #E1E5E9 - Secondary text
-    Private ReadOnly SuccessGreen As Color = Color.FromArgb(16, 216, 98)       ' #10D862 - Success states
-    Private ReadOnly AlertRed As Color = Color.FromArgb(255, 71, 87)
+    Private ReadOnly WarmBeige As Color = Color.FromArgb(235, 228, 200)        '#EBE4C8 - Row selection / highlight
+    Private ReadOnly GoldenYellow As Color = Color.FromArgb(254, 191, 16)      '#FECF10 - Accent gold
+    Private ReadOnly RichOlive As Color = Color.FromArgb(191, 155, 48)         '#BF9B30 - Primary accent
+    Private ReadOnly DeepCharcoal As Color = Color.FromArgb(26, 29, 31)        '#1A1D1F - Primary text
+    Private ReadOnly DarkSlate As Color = Color.FromArgb(43, 47, 50)           '#2B2F32 - Secondary text
+    Private ReadOnly Graphite As Color = Color.FromArgb(61, 65, 69)            '#3D4145 - Interactive
+    Private ReadOnly SteelGray As Color = Color.FromArgb(74, 79, 84)           '#4A4F54 - Muted text
+    Private ReadOnly PureWhite As Color = Color.FromArgb(255, 255, 255)        '#FFFFFF - White
+    Private ReadOnly LightSilver As Color = Color.FromArgb(225, 229, 233)      '#E1E5E9 - Subtle bg
+    Private ReadOnly SuccessGreen As Color = Color.FromArgb(16, 216, 98)       '#10D862 - Success
+    Private ReadOnly AlertRed As Color = Color.FromArgb(255, 71, 87)           '#FF4757 - Error
 
     Private Sub ProfileSettings_Load(sender As Object, e As EventArgs) Handles MyBase.Load
 
@@ -293,14 +294,14 @@ Public Class ProfileSettings
             pinDialog.Text = "PIN Confirmation"
             pinDialog.Size = New Size(320, 180)
             pinDialog.StartPosition = FormStartPosition.CenterParent
-            pinDialog.BackColor = System.Drawing.Color.FromArgb(41, 44, 45)
+            pinDialog.BackColor = Color.White
             pinDialog.FormBorderStyle = FormBorderStyle.FixedDialog
             pinDialog.MaximizeBox = False
             pinDialog.MinimizeBox = False
 
             Dim lblPrompt As New Label()
             lblPrompt.Text = "Enter your PIN to view passkeys:"
-            lblPrompt.ForeColor = Color.White
+            lblPrompt.ForeColor = Color.FromArgb(51, 51, 51)
             lblPrompt.Font = New Font("Poppins", 10)
             lblPrompt.AutoSize = True
             lblPrompt.Location = New Point(20, 20)
@@ -310,16 +311,16 @@ Public Class ProfileSettings
             txtPin.MaxLength = 4
             txtPin.Location = New Point(20, 50)
             txtPin.Size = New Size(260, 30)
-            txtPin.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
-            txtPin.ForeColor = Color.White
+            txtPin.BackColor = Color.White
+            txtPin.ForeColor = Color.FromArgb(51, 51, 51)
             txtPin.Font = New Font("Poppins", 12)
 
             Dim btnConfirm As New Button()
             btnConfirm.Text = "Confirm"
             btnConfirm.Location = New Point(20, 90)
             btnConfirm.Size = New Size(100, 32)
-            btnConfirm.BackColor = System.Drawing.Color.FromArgb(255, 204, 77)
-            btnConfirm.ForeColor = Color.Black
+            btnConfirm.BackColor = Color.FromArgb(191, 155, 48)
+            btnConfirm.ForeColor = Color.White
             btnConfirm.Font = New Font("Poppins", 10)
             btnConfirm.FlatStyle = FlatStyle.Flat
 
@@ -327,8 +328,8 @@ Public Class ProfileSettings
             btnCancel.Text = "Cancel"
             btnCancel.Location = New Point(140, 90)
             btnCancel.Size = New Size(100, 32)
-            btnCancel.BackColor = Color.Gray
-            btnCancel.ForeColor = Color.White
+            btnCancel.BackColor = Color.FromArgb(225, 229, 233)
+            btnCancel.ForeColor = Color.FromArgb(51, 51, 51)
             btnCancel.Font = New Font("Poppins", 10)
             btnCancel.FlatStyle = FlatStyle.Flat
 
@@ -442,14 +443,14 @@ Public Class ProfileSettings
         pinDialog.Text = "PIN Confirmation"
         pinDialog.Size = New Size(320, 220)
         pinDialog.StartPosition = FormStartPosition.CenterParent
-        pinDialog.BackColor = System.Drawing.Color.FromArgb(41, 44, 45)
+        pinDialog.BackColor = Color.White
         pinDialog.FormBorderStyle = FormBorderStyle.FixedDialog
         pinDialog.MaximizeBox = False
         pinDialog.MinimizeBox = False
 
         Dim lblPrompt As New Label()
         lblPrompt.Text = "Enter your PIN to confirm changes:"
-        lblPrompt.ForeColor = Color.White
+        lblPrompt.ForeColor = Color.FromArgb(51, 51, 51)
         lblPrompt.Font = New Font("Poppins", 10)
         lblPrompt.AutoSize = True
         lblPrompt.Location = New Point(20, 20)
@@ -459,16 +460,16 @@ Public Class ProfileSettings
         txtPin.MaxLength = 4
         txtPin.Location = New Point(20, 50)
         txtPin.Size = New Size(260, 30)
-        txtPin.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
-        txtPin.ForeColor = Color.White
+        txtPin.BackColor = Color.White
+        txtPin.ForeColor = Color.FromArgb(51, 51, 51)
         txtPin.Font = New Font("Poppins", 12)
 
         Dim btnConfirm As New Button()
         btnConfirm.Text = "Confirm"
         btnConfirm.Location = New Point(20, 100)
         btnConfirm.Size = New Size(100, 35)
-        btnConfirm.BackColor = System.Drawing.Color.FromArgb(255, 204, 77)
-        btnConfirm.ForeColor = Color.Black
+        btnConfirm.BackColor = Color.FromArgb(191, 155, 48)
+        btnConfirm.ForeColor = Color.White
         btnConfirm.Font = New Font("Poppins", 10)
         btnConfirm.FlatStyle = FlatStyle.Flat
 
@@ -476,8 +477,8 @@ Public Class ProfileSettings
         btnCancel.Text = "Cancel"
         btnCancel.Location = New Point(140, 100)
         btnCancel.Size = New Size(100, 35)
-        btnCancel.BackColor = Color.Gray
-        btnCancel.ForeColor = Color.White
+        btnCancel.BackColor = Color.FromArgb(225, 229, 233)
+        btnCancel.ForeColor = Color.FromArgb(51, 51, 51)
         btnCancel.Font = New Font("Poppins", 10)
         btnCancel.FlatStyle = FlatStyle.Flat
 
@@ -637,19 +638,19 @@ Public Class ProfileSettings
         Dim lblTitle As New Guna.UI2.WinForms.Guna2HtmlLabel()
         lblTitle.Text = promptText
         lblTitle.Font = New Font("Poppins", 16.0F, FontStyle.Regular)
-        lblTitle.ForeColor = Color.White
+        lblTitle.ForeColor = Color.FromArgb(49, 49, 49)
         lblTitle.AutoSize = True
         lblTitle.Location = New Point((Guna2Panel1.Width - 400) / 2, 50)
         Guna2Panel1.Controls.Add(lblTitle)
 
-        ' Back button with improved functionality
+        ' Back button
         Dim btnBack As New Guna.UI2.WinForms.Guna2CircleButton()
         btnBack.Text = "←"
         btnBack.Font = New Font("Poppins", 16.0F, FontStyle.Bold)
         btnBack.Size = New Size(50, 50)
-        btnBack.FillColor = System.Drawing.Color.FromArgb(61, 65, 66)
-        btnBack.BackColor = Color.FromArgb(41, 40, 45)
-        btnBack.ForeColor = Color.White
+        btnBack.FillColor = WarmBeige
+        btnBack.BackColor = Color.Transparent
+        btnBack.ForeColor = Color.FromArgb(49, 49, 49)
         btnBack.Location = New Point(30, 30)
         AddHandler btnBack.Click, Sub() RestorePanel1Controls()
         Guna2Panel1.Controls.Add(btnBack)
@@ -663,9 +664,9 @@ Public Class ProfileSettings
         For i = 0 To 3
             Dim indicator As New Guna.UI2.WinForms.Guna2CircleButton()
             indicator.Size = New Size(indicatorSize, indicatorSize)
-            indicator.FillColor = System.Drawing.Color.FromArgb(61, 65, 66)
+            indicator.FillColor = Color.FromArgb(200, 200, 200)
             indicator.Location = New Point(indicatorStartX + i * (indicatorSize + indicatorSpacing), 150)
-            indicator.BackColor = Color.FromArgb(41, 40, 45)
+            indicator.BackColor = Color.Transparent
             pinIndicators.Add(indicator)
             Guna2Panel1.Controls.Add(indicator)
         Next
@@ -683,11 +684,11 @@ Public Class ProfileSettings
             Dim button As New Guna.UI2.WinForms.Guna2Button()
             button.Size = New Size(buttonSize, buttonSize)
             button.BorderRadius = 15
-            button.FillColor = System.Drawing.Color.FromArgb(61, 65, 66)
-            button.ForeColor = Color.White
+            button.FillColor = WarmBeige
+            button.ForeColor = Color.FromArgb(49, 49, 49)
             button.Font = New Font("Poppins", 16.0F, FontStyle.Bold)
             button.Text = buttonLabels(i)
-            button.BackColor = Color.FromArgb(41, 40, 45)
+            button.BackColor = Color.Transparent
             Dim row = i \ 3
             Dim col = i Mod 3
             button.Location = New Point(buttonStartX + col * (buttonSize + buttonSpacing),
@@ -695,9 +696,11 @@ Public Class ProfileSettings
 
             ' Special colors for special buttons
             If button.Text = "×" Then
-                button.FillColor = System.Drawing.Color.FromArgb(255, 100, 100)
+                button.FillColor = AlertRed
+                button.ForeColor = Color.White
             ElseIf button.Text = "✓" Then
-                button.FillColor = System.Drawing.Color.FromArgb(100, 255, 100)
+                button.FillColor = SuccessGreen
+                button.ForeColor = Color.White
             End If
 
             ' Add click handler
@@ -722,7 +725,7 @@ Public Class ProfileSettings
                 lblStep.Text = "Step 3 of 3: Confirm New PIN"
         End Select
         lblStep.Font = New Font("Poppins", 10.0F, FontStyle.Regular)
-        lblStep.ForeColor = Color.Gray
+        lblStep.ForeColor = Color.FromArgb(153, 153, 153)
         lblStep.AutoSize = True
         lblStep.Location = New Point((Guna2Panel1.Width - 200) / 2, 110)
         Guna2Panel1.Controls.Add(lblStep)
@@ -734,7 +737,7 @@ Public Class ProfileSettings
                 ' Backspace
                 If pinInput.Length > 0 Then
                     pinInput = pinInput.Substring(0, pinInput.Length - 1)
-                    pinIndicators(pinInput.Length).FillColor = System.Drawing.Color.FromArgb(61, 65, 66)
+                    pinIndicators(pinInput.Length).FillColor = Color.FromArgb(200, 200, 200)
                 End If
 
             Case "✓"
@@ -747,7 +750,7 @@ Public Class ProfileSettings
                 ' Numeric input
                 If pinInput.Length < 4 AndAlso Char.IsDigit(buttonText(0)) Then
                     pinInput &= buttonText
-                    pinIndicators(pinInput.Length - 1).FillColor = System.Drawing.Color.FromArgb(255, 204, 77)
+                    pinIndicators(pinInput.Length - 1).FillColor = RichOlive
                 End If
         End Select
     End Sub
@@ -1023,7 +1026,7 @@ Public Class ProfileSettings
         AddHoverEffect(lblLogout)
 
         ' Set initial visual state - Profile Settings should be highlighted by default
-        lblProfileSettings.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
+        lblProfileSettings.BackColor = WarmBeige
         lblChangePin.BackColor = System.Drawing.Color.Transparent
         lblLogout.BackColor = System.Drawing.Color.Transparent
     End Sub
@@ -1031,13 +1034,13 @@ Public Class ProfileSettings
     Private Sub AddHoverEffect(lbl As Label)
         AddHandler lbl.MouseEnter, Sub()
                                        If Not (lbl Is lblProfileSettings AndAlso Not pinPanelActive) Then
-                                           lbl.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
+                                           lbl.BackColor = WarmBeige
                                        End If
                                    End Sub
         AddHandler lbl.MouseLeave, Sub()
                                        ' Keep Profile Settings highlighted when in profile mode
                                        If lbl Is lblProfileSettings AndAlso Not pinPanelActive Then
-                                           lbl.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
+                                           lbl.BackColor = WarmBeige
                                        ElseIf lbl IsNot lblProfileSettings Then
                                            lbl.BackColor = System.Drawing.Color.Transparent
                                        Else

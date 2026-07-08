@@ -19,6 +19,9 @@ Public NotInheritable Class NavigationBuilder
             Next
 
             dashboardPanel.FillColor = Color.White
+            dashboardPanel.BorderColor = Color.FromArgb(246, 245, 242)
+            dashboardPanel.BorderRadius = 10
+            dashboardPanel.BorderThickness = 2
 
             ' Render company logo into existing PictureBox9 if present
             Dim logoCtrl() As Control = dashboardPanel.Controls.Find("PictureBox9", True)

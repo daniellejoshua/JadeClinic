@@ -99,7 +99,9 @@ Partial Class Sys
         ' DashboardPanel
         ' 
         DashboardPanel.BackColor = Color.White
-        DashboardPanel.BorderRadius = 30
+        DashboardPanel.BorderColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
+        DashboardPanel.BorderRadius = 10
+        DashboardPanel.BorderThickness = 2
         DashboardPanel.Controls.Add(PictureBox9)
         DashboardPanel.CustomizableEdges = CustomizableEdges4
         DashboardPanel.Dock = DockStyle.Left

@@ -14,16 +14,16 @@ Public Class SalesRecord
     ' Sort selection variable
     Private selectedDate As DateTime? = Nothing
 
-    Private ReadOnly GoldenYellow As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 254, 191, 16)
-    Private ReadOnly RichOlive As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 190, 154, 48)
-    Private ReadOnly DeepCharcoal As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 26, 29, 31)
-    Private ReadOnly DarkSlate As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 43, 47, 50)
-    Private ReadOnly Graphite As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 61, 65, 69)
-    Private ReadOnly SteelGray As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 74, 79, 84)
-    Private ReadOnly PureWhite As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 255, 255, 255)
-    Private ReadOnly LightSilver As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 225, 229, 233)
-    Private ReadOnly SuccessGreen As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 16, 216, 98)
-    Private ReadOnly AlertRed As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 255, 71, 87)
+    Private ReadOnly GoldenYellow As System.Drawing.Color = System.Drawing.Color.FromArgb(254, 191, 16)
+    Private ReadOnly JadeOlive As System.Drawing.Color = System.Drawing.Color.FromArgb(191, 155, 48)
+    Private ReadOnly DarkText As System.Drawing.Color = System.Drawing.Color.FromArgb(51, 51, 51)
+    Private ReadOnly MediumText As System.Drawing.Color = System.Drawing.Color.FromArgb(102, 102, 102)
+    Private ReadOnly PanelFill As System.Drawing.Color = System.Drawing.Color.FromArgb(250, 250, 249)
+    Private ReadOnly LightGray As System.Drawing.Color = System.Drawing.Color.FromArgb(237, 237, 237)
+    Private ReadOnly SuccessGreen As System.Drawing.Color = System.Drawing.Color.FromArgb(80, 160, 80)
+    Private ReadOnly AlertRed As System.Drawing.Color = System.Drawing.Color.FromArgb(220, 80, 70)
+    Private ReadOnly OliveSelection As System.Drawing.Color = System.Drawing.Color.FromArgb(235, 228, 200)
+    Private ReadOnly White As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 255, 255)
 
     Private Sub SalesRecord_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         ' Initialize QuestPDF
@@ -125,22 +125,23 @@ Public Class SalesRecord
         ' Clear existing columns
         Guna2DataGridView1.Columns.Clear()
 
-        ' Configure DataGridView appearance
-        Guna2DataGridView1.BackgroundColor = System.Drawing.Color.FromArgb(41, 44, 45)
-        Guna2DataGridView1.GridColor = System.Drawing.Color.White
-        Guna2DataGridView1.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
-        Guna2DataGridView1.AlternatingRowsDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
-        Guna2DataGridView1.DefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
-        Guna2DataGridView1.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(255, 204, 77)
-        Guna2DataGridView1.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
+        ' Configure DataGridView appearance — light theme matching InventoryLog
+        Guna2DataGridView1.BackgroundColor = PanelFill
+        Guna2DataGridView1.GridColor = System.Drawing.Color.FromArgb(220, 220, 220)
+        Guna2DataGridView1.DefaultCellStyle.BackColor = White
+        Guna2DataGridView1.AlternatingRowsDefaultCellStyle.BackColor = PanelFill
+        Guna2DataGridView1.DefaultCellStyle.ForeColor = DarkText
+        Guna2DataGridView1.DefaultCellStyle.SelectionBackColor = OliveSelection
+        Guna2DataGridView1.DefaultCellStyle.SelectionForeColor = DarkText
         Guna2DataGridView1.DefaultCellStyle.Font = New System.Drawing.Font("Poppins", 9.0F, System.Drawing.FontStyle.Regular)
         Guna2DataGridView1.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
 
         ' Configure header style
-        Guna2DataGridView1.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(30, 30, 30)
-        Guna2DataGridView1.ColumnHeadersDefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
-        Guna2DataGridView1.ColumnHeadersDefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(30, 30, 30)
-        Guna2DataGridView1.ColumnHeadersDefaultCellStyle.Font = New System.Drawing.Font("Poppins SemiBold", 10.0F, System.Drawing.FontStyle.Regular)
+        Guna2DataGridView1.ColumnHeadersDefaultCellStyle.BackColor = PanelFill
+        Guna2DataGridView1.ColumnHeadersDefaultCellStyle.ForeColor = DarkText
+        Guna2DataGridView1.ColumnHeadersDefaultCellStyle.SelectionBackColor = PanelFill
+        Guna2DataGridView1.ColumnHeadersDefaultCellStyle.SelectionForeColor = DarkText
+        Guna2DataGridView1.ColumnHeadersDefaultCellStyle.Font = New System.Drawing.Font("Poppins SemiBold", 10.5F, System.Drawing.FontStyle.Bold)
         Guna2DataGridView1.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
         Guna2DataGridView1.ColumnHeadersHeight = 50
         Guna2DataGridView1.RowTemplate.Height = 50
@@ -223,7 +224,7 @@ Public Class SalesRecord
         actionCol.DefaultCellStyle = New DataGridViewCellStyle() With {
             .Alignment = DataGridViewContentAlignment.MiddleCenter,
             .Font = New Font("Segoe UI Emoji", 12, FontStyle.Regular),
-            .ForeColor = System.Drawing.Color.LightGray
+            .ForeColor = DarkText
         }
         actionCol.Width = 60
         Guna2DataGridView1.Columns.Add(actionCol)
@@ -434,28 +435,28 @@ Public Class SalesRecord
     ' Add this helper after the ReadOnly color declarations (near top of the class)
     Private Function GetPaymentMethodColor(method As String) As System.Drawing.Color
         If String.IsNullOrWhiteSpace(method) Then
-            Return LightSilver
+            Return DarkText
         End If
 
         Dim m As String = method.ToLowerInvariant()
 
         ' GCash -> Blue
         If m.Contains("gcash") Then
-            Return System.Drawing.Color.FromArgb(255, 66, 133, 244) ' Blue
+            Return System.Drawing.Color.FromArgb(66, 133, 244)
         End If
 
-        ' Card / Credit / Debit -> Golden yellow (use existing GoldenYellow)
+        ' Card / Credit / Debit -> Golden yellow
         If m.Contains("card") OrElse m.Contains("credit") OrElse m.Contains("debit") Then
             Return GoldenYellow
         End If
 
-        ' Cash -> Green (use existing SuccessGreen)
+        ' Cash -> Green
         If m.Contains("cash") Then
             Return SuccessGreen
         End If
 
         ' Default
-        Return LightSilver
+        Return DarkText
     End Function
     Private Sub Exportbtn_Click(sender As Object, e As EventArgs) Handles Exportbtn.Click
         Try
@@ -503,28 +504,28 @@ Public Class SalesRecord
         btn.Font = New Font("Poppins", 10, FontStyle.Regular)
         btn.TextAlign = HorizontalAlignment.Left
 
-        btn.FillColor = If(isActive, System.Drawing.Color.FromArgb(254, 191, 16), System.Drawing.Color.Transparent)
-        btn.ForeColor = If(isActive, System.Drawing.Color.FromArgb(26, 29, 31), System.Drawing.Color.White)
+        btn.FillColor = If(isActive, GoldenYellow, System.Drawing.Color.Transparent)
+        btn.ForeColor = If(isActive, DarkText, DarkText)
         btn.BorderThickness = If(isActive, 0, 1)
-        btn.BorderColor = If(isActive, System.Drawing.Color.Transparent, System.Drawing.Color.FromArgb(80, 80, 80))
+        btn.BorderColor = If(isActive, System.Drawing.Color.Transparent, System.Drawing.Color.FromArgb(200, 200, 200))
         btn.BackColor = System.Drawing.Color.Transparent
         btn.Cursor = Cursors.Hand
 
         btn.ShadowDecoration.Enabled = True
-        btn.ShadowDecoration.Color = System.Drawing.Color.FromArgb(30, 30, 30)
+        btn.ShadowDecoration.Color = System.Drawing.Color.FromArgb(200, 200, 200)
         btn.ShadowDecoration.Depth = 4
 
         AddHandler btn.MouseEnter, Sub()
                                        If Not isActive Then
-                                           btn.FillColor = System.Drawing.Color.FromArgb(48, 52, 54)
-                                           btn.BorderColor = System.Drawing.Color.FromArgb(254, 191, 16)
+                                           btn.FillColor = LightGray
+                                           btn.BorderColor = GoldenYellow
                                            btn.Font = New Font("Poppins", 9, FontStyle.Bold)
                                        End If
                                    End Sub
         AddHandler btn.MouseLeave, Sub()
                                        If Not isActive Then
                                            btn.FillColor = System.Drawing.Color.Transparent
-                                           btn.BorderColor = System.Drawing.Color.FromArgb(80, 80, 80)
+                                           btn.BorderColor = System.Drawing.Color.FromArgb(200, 200, 200)
                                            btn.Font = New Font("Poppins", 10, FontStyle.Regular)
                                        End If
                                    End Sub

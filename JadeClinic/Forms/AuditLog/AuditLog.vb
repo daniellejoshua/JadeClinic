@@ -7,12 +7,21 @@ Imports Microsoft.Data.SqlClient
 Public Class AuditLog
     Private overlayPanel As Panel
     Private isNavigating As Boolean = False
-    ' Add these near the other private fields at the top of the class
-    ' Profile managed by ProfileManager
+
+    Private ReadOnly GoldenYellow As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 254, 191, 16)
+    Private ReadOnly RichOlive As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 190, 154, 48)
+    Private ReadOnly DeepCharcoal As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 26, 29, 31)
+    Private ReadOnly DarkSlate As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 43, 47, 50)
+    Private ReadOnly Graphite As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 61, 65, 69)
+    Private ReadOnly SteelGray As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 74, 79, 84)
+    Private ReadOnly PureWhite As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 255, 255, 255)
+    Private ReadOnly LightSilver As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 225, 229, 233)
+    Private ReadOnly SuccessGreen As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 16, 216, 98)
+    Private ReadOnly AlertRed As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 255, 71, 87)
+
     Private Async Sub AuditLog_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         ' Stop idle timeout monitoring
-        IdleTimeoutManager.Instance.StartMonitoring(Me) ' Ensure form background is set (designer has BackColor)
-        Me.BackColor = Color.FromArgb(30, 30, 30)
+        IdleTimeoutManager.Instance.StartMonitoring(Me)
         Me.FormBorderStyle = FormBorderStyle.None
         Me.TopMost = True
         Me.WindowState = FormWindowState.Normal
@@ -161,34 +170,51 @@ Public Class AuditLog
     End Function
 
     Private Sub InitializeDataGridView()
-        ' Clear existing columns
         InventoryLogDataGrid.Columns.Clear()
+        InventoryLogDataGrid.AutoGenerateColumns = False
+        InventoryLogDataGrid.AllowUserToAddRows = False
+        InventoryLogDataGrid.AllowUserToDeleteRows = False
+        InventoryLogDataGrid.ReadOnly = True
+        InventoryLogDataGrid.SelectionMode = DataGridViewSelectionMode.FullRowSelect
+        InventoryLogDataGrid.MultiSelect = False
+        InventoryLogDataGrid.ScrollBars = ScrollBars.Vertical
+        InventoryLogDataGrid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
+        InventoryLogDataGrid.RowHeadersVisible = False
+        InventoryLogDataGrid.EnableHeadersVisualStyles = False
 
-        ' Configure DataGridView appearance with consistent gray colors and white row separators
-        InventoryLogDataGrid.BackgroundColor = System.Drawing.Color.FromArgb(41, 44, 45)
-        InventoryLogDataGrid.GridColor = System.Drawing.Color.White
-        InventoryLogDataGrid.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
-        InventoryLogDataGrid.AlternatingRowsDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
-        InventoryLogDataGrid.DefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
-        InventoryLogDataGrid.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(255, 204, 77)
-        InventoryLogDataGrid.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
-        InventoryLogDataGrid.DefaultCellStyle.Font = New System.Drawing.Font("Poppins", 9.0F, System.Drawing.FontStyle.Regular)
-        InventoryLogDataGrid.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
-
-        ' Configure header style with gray colors and remove blue selection color
-        InventoryLogDataGrid.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(30, 30, 30)
-        InventoryLogDataGrid.ColumnHeadersDefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
-        InventoryLogDataGrid.ColumnHeadersDefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(30, 30, 30)
-        InventoryLogDataGrid.ColumnHeadersDefaultCellStyle.Font = New System.Drawing.Font("Poppins SemiBold", 10.0F, System.Drawing.FontStyle.Regular)
-        InventoryLogDataGrid.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
-        InventoryLogDataGrid.ColumnHeadersHeight = 50
-        InventoryLogDataGrid.RowTemplate.Height = 60
-
-        ' Ensure row borders are visible
+        ' Theme & general cell style
+        InventoryLogDataGrid.BackgroundColor = Color.FromArgb(250, 249, 246)
+        InventoryLogDataGrid.GridColor = Color.FromArgb(220, 220, 220)
         InventoryLogDataGrid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal
 
-        ' Set AutoSizeColumnsMode to Fill
-        InventoryLogDataGrid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
+        InventoryLogDataGrid.DefaultCellStyle = New DataGridViewCellStyle() With {
+        .BackColor = Color.White,
+        .ForeColor = Color.FromArgb(51, 51, 51),
+        .SelectionBackColor = Color.FromArgb(235, 228, 200),
+        .SelectionForeColor = Color.FromArgb(51, 51, 51),
+        .Font = New Font("Poppins", 9.0F, FontStyle.Regular),
+        .Alignment = DataGridViewContentAlignment.MiddleCenter,
+        .Padding = New Padding(8, 6, 8, 6)
+    }
+
+        InventoryLogDataGrid.AlternatingRowsDefaultCellStyle = New DataGridViewCellStyle() With {
+        .BackColor = Color.FromArgb(250, 249, 246)
+    }
+
+        InventoryLogDataGrid.ColumnHeadersDefaultCellStyle = New DataGridViewCellStyle() With {
+        .BackColor = Color.FromArgb(250, 249, 246),
+        .ForeColor = Color.FromArgb(51, 51, 51),
+        .SelectionBackColor = Color.FromArgb(250, 249, 246),
+        .Font = New Font("Poppins SemiBold", 10.5F, FontStyle.Bold),
+        .Alignment = DataGridViewContentAlignment.MiddleCenter
+    }
+        InventoryLogDataGrid.ColumnHeadersHeight = 50
+        InventoryLogDataGrid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing
+        InventoryLogDataGrid.RowTemplate.Height = 50
+
+        InventoryLogDataGrid.AllowUserToResizeColumns = False
+        InventoryLogDataGrid.AllowUserToResizeRows = False
+        InventoryLogDataGrid.RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing
 
         ' Add Audit ID column
         Dim colAuditID As New DataGridViewTextBoxColumn()
@@ -196,6 +222,7 @@ Public Class AuditLog
         colAuditID.HeaderText = "ID"
         colAuditID.ReadOnly = True
         colAuditID.DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
+        colAuditID.FillWeight = 6
         InventoryLogDataGrid.Columns.Add(colAuditID)
 
         ' Add Username column
@@ -203,7 +230,12 @@ Public Class AuditLog
         colUsername.Name = "Username"
         colUsername.HeaderText = "Username"
         colUsername.ReadOnly = True
-        colUsername.DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
+        colUsername.DefaultCellStyle = New DataGridViewCellStyle() With {
+        .Alignment = DataGridViewContentAlignment.MiddleCenter,
+        .Font = New Font("Poppins SemiBold", 9.0F, FontStyle.Regular),
+        .ForeColor = Color.FromArgb(51, 51, 51)
+    }
+        colUsername.FillWeight = 12
         InventoryLogDataGrid.Columns.Add(colUsername)
 
         ' Add Action column
@@ -212,6 +244,7 @@ Public Class AuditLog
         colAction.HeaderText = "Action"
         colAction.ReadOnly = True
         colAction.DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
+        colAction.FillWeight = 18
         InventoryLogDataGrid.Columns.Add(colAction)
 
         ' Add Details column
@@ -220,9 +253,11 @@ Public Class AuditLog
         colDetails.HeaderText = "Details"
         colDetails.ReadOnly = True
         colDetails.DefaultCellStyle = New DataGridViewCellStyle() With {
-        .Alignment = DataGridViewContentAlignment.MiddleCenter,
-        .WrapMode = DataGridViewTriState.True
+        .Alignment = DataGridViewContentAlignment.MiddleLeft,
+        .WrapMode = DataGridViewTriState.True,
+        .ForeColor = Color.FromArgb(102, 102, 102)
     }
+        colDetails.FillWeight = 30
         InventoryLogDataGrid.Columns.Add(colDetails)
 
         ' Add ActionTime column
@@ -231,6 +266,7 @@ Public Class AuditLog
         colActionTime.HeaderText = "Date & Time"
         colActionTime.ReadOnly = True
         colActionTime.DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
+        colActionTime.FillWeight = 18
         InventoryLogDataGrid.Columns.Add(colActionTime)
 
         ' Add Action Type indicator column
@@ -239,16 +275,8 @@ Public Class AuditLog
         colActionType.HeaderText = "Type"
         colActionType.ReadOnly = True
         colActionType.DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
+        colActionType.FillWeight = 10
         InventoryLogDataGrid.Columns.Add(colActionType)
-
-        ' Configure DataGridView properties
-        InventoryLogDataGrid.AllowUserToAddRows = False
-        InventoryLogDataGrid.AllowUserToDeleteRows = False
-        InventoryLogDataGrid.SelectionMode = DataGridViewSelectionMode.FullRowSelect
-        InventoryLogDataGrid.MultiSelect = False
-        InventoryLogDataGrid.ScrollBars = ScrollBars.Vertical
-
-        InventoryLogDataGrid.RowHeadersVisible = False
     End Sub
 
     Private Sub InitializeFilterTypeComboBox()
@@ -448,7 +476,7 @@ Public Class AuditLog
         ElseIf a.Contains("add") OrElse a.Contains("create") OrElse a.Contains("added") OrElse a.Contains("created") Then
             Return Color.FromArgb(46, 204, 113)      ' Green - Create
         ElseIf a.Contains("update") OrElse a.Contains("modify") OrElse a.Contains("edit") OrElse a.Contains("edited") Then
-            Return Color.FromArgb(241, 196, 15)      ' Yellow - Update
+            Return Color.FromArgb(212, 172, 13)      ' Dark gold - Update
         ElseIf a.Contains("delete") OrElse a.Contains("remove") OrElse a.Contains("deleted") Then
             Return Color.FromArgb(231, 76, 60)       ' Red - Delete
         ElseIf a.Contains("export") OrElse a.Contains("report") Then
@@ -462,7 +490,7 @@ Public Class AuditLog
         ElseIf a.Contains("session") OrElse a.Contains("pin") Then
             Return Color.FromArgb(142, 68, 173)      ' Deep purple - Session
         Else
-            Return Color.FromArgb(225, 229, 233)     ' Light gray - Info
+            Return Color.FromArgb(153, 153, 153)     ' Medium gray - Info
         End If
     End Function
 
@@ -653,7 +681,7 @@ Public Class AuditLog
             loadingLabel = New Label() With {
                 .Text = message,
                 .Font = New Font("Poppins", 11, FontStyle.Italic),
-                .ForeColor = Color.LightGray,
+                .ForeColor = Color.FromArgb(51, 51, 51),
                 .BackColor = Color.Transparent,
                 .AutoSize = True,
                 .Name = "loadingLabel"

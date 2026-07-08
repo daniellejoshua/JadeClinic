@@ -5,14 +5,22 @@ Imports System.Reflection
 Public Class Supplier
     Private isNavigating As Boolean = False
     ' Profile managed by ProfileManager
+    Private ReadOnly GoldenYellow As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 254, 191, 16)
+    Private ReadOnly RichOlive As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 190, 154, 48)
+    Private ReadOnly DeepCharcoal As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 26, 29, 31)
+    Private ReadOnly DarkSlate As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 43, 47, 50)
     Private ReadOnly Graphite As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 61, 65, 69)
+    Private ReadOnly SteelGray As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 74, 79, 84)
+    Private ReadOnly PureWhite As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 255, 255, 255)
+    Private ReadOnly LightSilver As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 225, 229, 233)
+    Private ReadOnly SuccessGreen As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 16, 216, 98)
+    Private ReadOnly AlertRed As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 255, 71, 87)
 
 
     Private Sub Supplier_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         DashboardPanel.Location = New Point(-10, 5)
         Try
             Me.KeyPreview = True
-            Me.BackColor = Color.FromArgb(30, 30, 30)
 
             ' Only set standalone form properties when not hosted in MainShell
             If Not IsHostedInMainShell() Then
@@ -130,46 +138,57 @@ Public Class Supplier
     Private Sub InitializeDataGridView()
         Try
             InventoryLogDataGrid.Columns.Clear()
-            InventoryLogDataGrid.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter ' center all cells by default
-
-            InventoryLogDataGrid.BackgroundColor = System.Drawing.Color.FromArgb(41, 44, 45)
-            InventoryLogDataGrid.GridColor = System.Drawing.Color.White
-            InventoryLogDataGrid.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
-            InventoryLogDataGrid.AlternatingRowsDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(61, 65, 66)
-            InventoryLogDataGrid.DefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
-            InventoryLogDataGrid.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(255, 204, 77)
-            InventoryLogDataGrid.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black
-            InventoryLogDataGrid.DefaultCellStyle.Font = New System.Drawing.Font("Poppins", 9.0F, System.Drawing.FontStyle.Regular)
-            InventoryLogDataGrid.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
-
-            InventoryLogDataGrid.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(30, 30, 30)
-            InventoryLogDataGrid.ColumnHeadersDefaultCellStyle.ForeColor = System.Drawing.Color.LightGray
-            InventoryLogDataGrid.ColumnHeadersDefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(30, 30, 30)
-            InventoryLogDataGrid.ColumnHeadersDefaultCellStyle.Font = New System.Drawing.Font("Poppins SemiBold", 10.0F, System.Drawing.FontStyle.Regular)
-            InventoryLogDataGrid.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
-            InventoryLogDataGrid.ColumnHeadersHeight = 50
-
-            ' slightly taller rows to avoid clipping and to allow center visually
-            InventoryLogDataGrid.RowTemplate.Height = 60
-
-            InventoryLogDataGrid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal
-            InventoryLogDataGrid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
+            InventoryLogDataGrid.AutoGenerateColumns = False
             InventoryLogDataGrid.AllowUserToAddRows = False
             InventoryLogDataGrid.AllowUserToDeleteRows = False
+            InventoryLogDataGrid.ReadOnly = True
             InventoryLogDataGrid.SelectionMode = DataGridViewSelectionMode.FullRowSelect
             InventoryLogDataGrid.MultiSelect = False
             InventoryLogDataGrid.ScrollBars = ScrollBars.Vertical
+            InventoryLogDataGrid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
             InventoryLogDataGrid.RowHeadersVisible = False
+            InventoryLogDataGrid.EnableHeadersVisualStyles = False
+
+            ' Theme & general cell style
+            InventoryLogDataGrid.BackgroundColor = Color.FromArgb(250, 249, 246)
+            InventoryLogDataGrid.GridColor = Color.FromArgb(220, 220, 220)
+            InventoryLogDataGrid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal
+
+            InventoryLogDataGrid.DefaultCellStyle = New DataGridViewCellStyle() With {
+            .BackColor = Color.White,
+            .ForeColor = Color.FromArgb(51, 51, 51),
+            .SelectionBackColor = Color.FromArgb(235, 228, 200),
+            .SelectionForeColor = Color.FromArgb(51, 51, 51),
+            .Font = New Font("Poppins", 9.0F, FontStyle.Regular),
+            .Alignment = DataGridViewContentAlignment.MiddleCenter,
+            .Padding = New Padding(8, 6, 8, 6)
+        }
+
+            InventoryLogDataGrid.AlternatingRowsDefaultCellStyle = New DataGridViewCellStyle() With {
+            .BackColor = Color.FromArgb(250, 249, 246)
+        }
+
+            InventoryLogDataGrid.ColumnHeadersDefaultCellStyle = New DataGridViewCellStyle() With {
+            .BackColor = Color.FromArgb(250, 249, 246),
+            .ForeColor = Color.FromArgb(51, 51, 51),
+            .SelectionBackColor = Color.FromArgb(250, 249, 246),
+            .Font = New Font("Poppins SemiBold", 10.5F, FontStyle.Bold),
+            .Alignment = DataGridViewContentAlignment.MiddleCenter
+        }
+            InventoryLogDataGrid.ColumnHeadersHeight = 50
+            InventoryLogDataGrid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing
+            InventoryLogDataGrid.RowTemplate.Height = 50
+
+            InventoryLogDataGrid.AllowUserToResizeColumns = False
+            InventoryLogDataGrid.AllowUserToResizeRows = False
+            InventoryLogDataGrid.RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing
 
             ' ID - small fixed-ish width (FillWeight low)
             InventoryLogDataGrid.Columns.Add(New DataGridViewTextBoxColumn() With {
             .Name = "SupplierID",
             .HeaderText = "ID",
             .ReadOnly = True,
-            .DefaultCellStyle = New DataGridViewCellStyle() With {
-                .Alignment = DataGridViewContentAlignment.MiddleCenter,
-                .Padding = New Padding(2, 0, 2, 0)
-            },
+            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter},
             .FillWeight = 5
         })
 
@@ -178,21 +197,20 @@ Public Class Supplier
             .Name = "SupplierCode",
             .HeaderText = "Code",
             .ReadOnly = True,
-            .DefaultCellStyle = New DataGridViewCellStyle() With {
-                .Alignment = DataGridViewContentAlignment.MiddleCenter,
-                .Padding = New Padding(4, 0, 4, 0)
-            },
+            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter},
             .FillWeight = 8
         })
 
-            ' Supplier Name - CENTERED and minimal padding to avoid perceived left offset
+            ' Supplier Name
             InventoryLogDataGrid.Columns.Add(New DataGridViewTextBoxColumn() With {
             .Name = "SupplierName",
             .HeaderText = "Supplier Name",
             .ReadOnly = True,
             .DefaultCellStyle = New DataGridViewCellStyle() With {
                 .Alignment = DataGridViewContentAlignment.MiddleCenter,
-                .Padding = New Padding(2, 0, 2, 0),
+                .Padding = New Padding(10, 6, 10, 6),
+                .Font = New Font("Poppins SemiBold", 9.0F, FontStyle.Regular),
+                .ForeColor = Color.FromArgb(51, 51, 51),
                 .WrapMode = DataGridViewTriState.False
             },
             .FillWeight = 36
@@ -203,10 +221,7 @@ Public Class Supplier
             .Name = "ContactPerson",
             .HeaderText = "Contact Person",
             .ReadOnly = True,
-            .DefaultCellStyle = New DataGridViewCellStyle() With {
-                .Alignment = DataGridViewContentAlignment.MiddleCenter,
-                .Padding = New Padding(4, 0, 4, 0)
-            },
+            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter},
             .FillWeight = 18
         })
 
@@ -215,10 +230,7 @@ Public Class Supplier
             .Name = "Phone",
             .HeaderText = "Phone",
             .ReadOnly = True,
-            .DefaultCellStyle = New DataGridViewCellStyle() With {
-                .Alignment = DataGridViewContentAlignment.MiddleCenter,
-                .Padding = New Padding(4, 0, 4, 0)
-            },
+            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter},
             .FillWeight = 10
         })
 
@@ -229,7 +241,6 @@ Public Class Supplier
             .ReadOnly = True,
             .DefaultCellStyle = New DataGridViewCellStyle() With {
                 .Alignment = DataGridViewContentAlignment.MiddleCenter,
-                .Padding = New Padding(4, 0, 4, 0),
                 .WrapMode = DataGridViewTriState.False
             },
             .FillWeight = 18
@@ -240,9 +251,7 @@ Public Class Supplier
             .Name = "StockIns",
             .HeaderText = "Stock In Count",
             .ReadOnly = True,
-            .DefaultCellStyle = New DataGridViewCellStyle() With {
-                .Alignment = DataGridViewContentAlignment.MiddleCenter
-            },
+            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter},
             .FillWeight = 8
         })
 
@@ -254,17 +263,10 @@ Public Class Supplier
             actionCol.DefaultCellStyle = New DataGridViewCellStyle() With {
             .Alignment = DataGridViewContentAlignment.MiddleCenter,
             .Font = New Font("Segoe UI Emoji", 12, FontStyle.Regular),
-            .ForeColor = System.Drawing.Color.LightGray
+            .ForeColor = Color.FromArgb(51, 51, 51)
         }
             actionCol.FillWeight = 5
             InventoryLogDataGrid.Columns.Add(actionCol)
-
-            ' Enforce centered header alignment
-            For Each col As DataGridViewColumn In InventoryLogDataGrid.Columns
-                col.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter
-                If col.DefaultCellStyle Is Nothing Then col.DefaultCellStyle = New DataGridViewCellStyle()
-                col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
-            Next
 
             ' Wire events
             RemoveHandler InventoryLogDataGrid.CellClick, AddressOf InventoryLogDataGrid_CellClick
@@ -287,10 +289,9 @@ Public Class Supplier
                 Dim colName = InventoryLogDataGrid.Columns(e.ColumnIndex).Name
                 If colName = "Action" Then
                     InventoryLogDataGrid.Cursor = Cursors.Hand
-                    ' subtle hover styling for the action cell
                     Dim cell = InventoryLogDataGrid.Rows(e.RowIndex).Cells(e.ColumnIndex)
-                    cell.Style.BackColor = System.Drawing.Color.FromArgb(81, 85, 86)
-                    cell.Style.ForeColor = System.Drawing.Color.White
+                    cell.Style.BackColor = Color.FromArgb(235, 228, 200)
+                    cell.Style.ForeColor = Color.FromArgb(51, 51, 51)
                 End If
             End If
         Catch
@@ -305,7 +306,6 @@ Public Class Supplier
                 Dim colName = InventoryLogDataGrid.Columns(e.ColumnIndex).Name
                 If colName = "Action" Then
                     InventoryLogDataGrid.Cursor = Cursors.Default
-                    ' restore default style for the action cell
                     Dim cell = InventoryLogDataGrid.Rows(e.RowIndex).Cells(e.ColumnIndex)
                     cell.Style.BackColor = InventoryLogDataGrid.DefaultCellStyle.BackColor
                     cell.Style.ForeColor = InventoryLogDataGrid.DefaultCellStyle.ForeColor
@@ -471,14 +471,14 @@ Public Class Supplier
                 .Size = New Size(520, 300),
                 .StartPosition = FormStartPosition.CenterParent,
                 .FormBorderStyle = FormBorderStyle.FixedDialog,
-                .BackColor = Color.FromArgb(41, 44, 45)
+                .BackColor = Color.White
             }
 
             Dim y As Integer = 18
             Dim AddRow = Sub(labelText As String, valueText As String)
                              Dim lbl As New Label() With {
                                  .Text = labelText,
-                                 .ForeColor = Color.LightGray,
+                                 .ForeColor = Color.FromArgb(51, 51, 51),
                                  .Font = New Font("Poppins", 10, FontStyle.Regular),
                                  .Location = New Point(20, y),
                                  .Size = New Size(140, 28),
@@ -492,7 +492,7 @@ Public Class Supplier
                                  .Location = New Point(170, y),
                                  .Size = New Size(320, 28),
                                  .BackColor = Color.White,
-                                 .ForeColor = Color.Black,
+                                 .ForeColor = Color.FromArgb(51, 51, 51),
                                  .BorderStyle = BorderStyle.FixedSingle
                              }
                              detailForm.Controls.Add(val)
@@ -508,9 +508,10 @@ Public Class Supplier
                 .Text = "Close",
                 .Size = New Size(100, 36),
                 .Location = New Point((detailForm.ClientSize.Width - 100) \ 2, y + 10),
-                .BackColor = Color.FromArgb(255, 204, 77),
-                .ForeColor = Color.Black,
-                .Font = New Font("Poppins", 10, FontStyle.Regular)
+                .BackColor = GoldenYellow,
+                .ForeColor = DeepCharcoal,
+                .Font = New Font("Poppins", 10, FontStyle.Regular),
+                .FlatStyle = FlatStyle.Flat
             }
             AddHandler btnClose.Click, Sub() detailForm.Close()
             detailForm.Controls.Add(btnClose)
@@ -537,11 +538,11 @@ Public Class Supplier
             .Size = New Size(900, 560),
             .StartPosition = FormStartPosition.CenterParent,
             .FormBorderStyle = FormBorderStyle.FixedDialog,
-            .BackColor = Color.FromArgb(41, 44, 45)
+            .BackColor = Color.White
         }
 
             Dim padLeft As Integer = 20
-            Dim leftColW As Integer = 460
+            Dim leftColW As Integer = 320
             Dim rightColX As Integer = padLeft + leftColW + 24
             Dim y As Integer = 18
             Dim labelW As Integer = 120
@@ -552,7 +553,7 @@ Public Class Supplier
             Dim header As New Label() With {
             .Text = $"Edit Supplier — {supplierName}",
             .Font = New Font("Poppins SemiBold", 14, FontStyle.Bold),
-            .ForeColor = Color.FromArgb(254, 191, 16),
+            .ForeColor = GoldenYellow,
             .AutoSize = False,
             .Size = New Size(editForm.ClientSize.Width - 40, 36),
             .Location = New Point(padLeft, 8),
@@ -565,7 +566,7 @@ Public Class Supplier
             Dim AddLabel = Function(text As String, top As Integer) As Label
                                Dim l As New Label() With {
                                .Text = text,
-                               .ForeColor = Color.LightGray,
+                               .ForeColor = Color.FromArgb(51, 51, 51),
                                .Font = New Font("Poppins", 10),
                                .Location = New Point(padLeft, top),
                                .Size = New Size(labelW, h),
@@ -581,7 +582,7 @@ Public Class Supplier
                                  .Location = New Point(padLeft + labelW + 10, top),
                                  .Size = New Size(controlW, h),
                                  .BackColor = Color.White,
-                                 .ForeColor = Color.Black,
+                                 .ForeColor = Color.FromArgb(51, 51, 51),
                                  .BorderStyle = BorderStyle.FixedSingle
                              }
                                  editForm.Controls.Add(t)
@@ -621,13 +622,13 @@ Public Class Supplier
             .Size = New Size(20, 20),
             .Checked = isActive,
             .BackColor = Color.Transparent,
-            .ForeColor = Color.White
+            .ForeColor = Color.FromArgb(51, 51, 51)
         }
             editForm.Controls.Add(chkActive)
 
             Dim lblStatusText As New Label() With {
             .Text = If(isActive, "Active", "Inactive"),
-            .ForeColor = Color.LightGray,
+            .ForeColor = Color.FromArgb(51, 51, 51),
             .Font = New Font("Poppins", 9),
             .Location = New Point(padLeft + labelW + 36, y - 2),
             .Size = New Size(100, 24),
@@ -646,15 +647,46 @@ Public Class Supplier
             .AllowUserToDeleteRows = False,
             .RowHeadersVisible = False,
             .AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
-            .BackgroundColor = Color.FromArgb(41, 44, 45),
-            .DefaultCellStyle = New DataGridViewCellStyle() With {.BackColor = Color.FromArgb(61, 65, 66), .ForeColor = Color.LightGray, .SelectionBackColor = Color.FromArgb(255, 204, 77), .SelectionForeColor = Color.Black}
+            .BackgroundColor = Color.FromArgb(250, 249, 246),
+            .BorderStyle = BorderStyle.None,
+            .DefaultCellStyle = New DataGridViewCellStyle() With {
+                .BackColor = Color.White,
+                .ForeColor = Color.FromArgb(51, 51, 51),
+                .SelectionBackColor = Color.FromArgb(235, 228, 200),
+                .SelectionForeColor = Color.FromArgb(51, 51, 51)
+            }
         }
             editForm.Controls.Add(dgvRecent)
 
-            dgvRecent.Columns.Add(New DataGridViewTextBoxColumn() With {.Name = "CreatedAt", .HeaderText = "Date", .FillWeight = 30})
-            dgvRecent.Columns.Add(New DataGridViewTextBoxColumn() With {.Name = "Product", .HeaderText = "Product", .FillWeight = 45})
-            dgvRecent.Columns.Add(New DataGridViewTextBoxColumn() With {.Name = "Quantity", .HeaderText = "Qty", .FillWeight = 12})
-            dgvRecent.Columns.Add(New DataGridViewTextBoxColumn() With {.Name = "Reference", .HeaderText = "Reference", .FillWeight = 25})
+            dgvRecent.Columns.Add(New DataGridViewTextBoxColumn() With {
+            .Name = "CreatedAt", .HeaderText = "Date",
+            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter},
+            .FillWeight = 30
+        })
+            dgvRecent.Columns.Add(New DataGridViewTextBoxColumn() With {
+            .Name = "Product", .HeaderText = "Product",
+            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter, .Font = New Font("Poppins SemiBold", 9)},
+            .FillWeight = 45
+        })
+            dgvRecent.Columns.Add(New DataGridViewTextBoxColumn() With {
+            .Name = "Quantity", .HeaderText = "Qty",
+            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter},
+            .FillWeight = 12
+        })
+            dgvRecent.Columns.Add(New DataGridViewTextBoxColumn() With {
+            .Name = "Reference", .HeaderText = "Reference",
+            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter},
+            .FillWeight = 25
+        })
+
+            dgvRecent.EnableHeadersVisualStyles = False
+            dgvRecent.ColumnHeadersDefaultCellStyle = New DataGridViewCellStyle() With {
+            .BackColor = Color.FromArgb(250, 249, 246),
+            .ForeColor = Color.FromArgb(51, 51, 51),
+            .Font = New Font("Poppins SemiBold", 10),
+            .Alignment = DataGridViewContentAlignment.MiddleCenter
+        }
+            dgvRecent.ColumnHeadersHeight = 40
 
             ' Load last 12 stock-in entries for this supplier
             Try
@@ -681,7 +713,7 @@ Public Class Supplier
             .Text = "Save",
             .Size = New Size(120, 36),
             .Location = New Point(editForm.ClientSize.Width - 380, editForm.ClientSize.Height - 70),
-            .BackColor = Color.FromArgb(16, 216, 98),
+            .BackColor = SuccessGreen,
             .ForeColor = Color.White,
             .FlatStyle = FlatStyle.Flat,
             .Font = New Font("Poppins", 10, FontStyle.Regular)
@@ -691,7 +723,7 @@ Public Class Supplier
             .Text = "Export",
             .Size = New Size(120, 36),
             .Location = New Point(editForm.ClientSize.Width - 255, editForm.ClientSize.Height - 70),
-            .BackColor = Color.FromArgb(74, 79, 84),
+            .BackColor = SteelGray,
             .ForeColor = Color.White,
             .FlatStyle = FlatStyle.Flat,
             .Font = New Font("Poppins", 10, FontStyle.Regular)
@@ -701,8 +733,8 @@ Public Class Supplier
             .Text = "Cancel",
             .Size = New Size(120, 36),
             .Location = New Point(editForm.ClientSize.Width - 130, editForm.ClientSize.Height - 70),
-            .BackColor = Color.FromArgb(255, 204, 77),
-            .ForeColor = Color.Black,
+            .BackColor = GoldenYellow,
+            .ForeColor = DeepCharcoal,
             .FlatStyle = FlatStyle.Flat,
             .Font = New Font("Poppins", 10, FontStyle.Regular)
         }
