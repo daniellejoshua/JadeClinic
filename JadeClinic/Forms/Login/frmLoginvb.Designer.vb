@@ -44,8 +44,6 @@ Partial Class frmLoginvb
         txtPassword = New Guna.UI2.WinForms.Guna2TextBox()
         PictureBox1 = New PictureBox()
         SqlCommand1 = New Microsoft.Data.SqlClient.SqlCommand()
-        exitApplicationLbl = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        minimizeLbl = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2Panel1.SuspendLayout()
         CType(PictureBox1, ComponentModel.ISupportInitialize).BeginInit()
         SuspendLayout()
@@ -247,36 +245,12 @@ Partial Class frmLoginvb
         SqlCommand1.CommandTimeout = 30
         SqlCommand1.EnableOptimizedParameterBinding = False
         ' 
-        ' exitApplicationLbl
-        ' 
-        exitApplicationLbl.BackColor = Color.Transparent
-        exitApplicationLbl.Font = New Font("Poppins Medium", 16.2F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
-        exitApplicationLbl.ForeColor = Color.FromArgb(CByte(51), CByte(51), CByte(51))
-        exitApplicationLbl.Location = New Point(1869, 12)
-        exitApplicationLbl.Name = "exitApplicationLbl"
-        exitApplicationLbl.Size = New Size(21, 50)
-        exitApplicationLbl.TabIndex = 12
-        exitApplicationLbl.Text = "X"
-        ' 
-        ' minimizeLbl
-        ' 
-        minimizeLbl.BackColor = Color.Transparent
-        minimizeLbl.Font = New Font("Poppins Medium", 16.2F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
-        minimizeLbl.ForeColor = Color.FromArgb(CByte(51), CByte(51), CByte(51))
-        minimizeLbl.Location = New Point(1827, 12)
-        minimizeLbl.Name = "minimizeLbl"
-        minimizeLbl.Size = New Size(18, 50)
-        minimizeLbl.TabIndex = 13
-        minimizeLbl.Text = "-"
-        ' 
         ' frmLoginvb
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
         BackColor = Color.White
         ClientSize = New Size(1902, 1033)
-        Controls.Add(minimizeLbl)
-        Controls.Add(exitApplicationLbl)
         Controls.Add(Guna2Panel1)
         Controls.Add(PictureBox1)
         FormBorderStyle = FormBorderStyle.None
@@ -289,7 +263,6 @@ Partial Class frmLoginvb
         Guna2Panel1.PerformLayout()
         CType(PictureBox1, ComponentModel.ISupportInitialize).EndInit()
         ResumeLayout(False)
-        PerformLayout()
     End Sub
 
     Friend WithEvents Guna2Panel1 As Guna.UI2.WinForms.Guna2Panel
@@ -305,6 +278,4 @@ Partial Class frmLoginvb
     Friend WithEvents Guna2CheckBox1 As Guna.UI2.WinForms.Guna2CheckBox
     Friend WithEvents Guna2HtmlLabel5 As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents SqlCommand1 As Microsoft.Data.SqlClient.SqlCommand
-    Friend WithEvents exitApplicationLbl As Guna.UI2.WinForms.Guna2HtmlLabel
-    Friend WithEvents minimizeLbl As Guna.UI2.WinForms.Guna2HtmlLabel
 End Class

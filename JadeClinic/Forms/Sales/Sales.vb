@@ -412,6 +412,7 @@ Public Class Sales
         ' Stop idle timeout monitoring
         ' Start idle timeout monitoring
         IdleTimeoutManager.Instance.StartMonitoring(Me)
+        IdleTimeoutManager.Instance.OnBeforeLogout = AddressOf PersistCartState
         Me.KeyPreview = True
         originalCategoryPanelControls = New List(Of Control)(CategoryPanel.Controls.Cast(Of Control)())
 
@@ -421,9 +422,6 @@ Public Class Sales
         Me.WindowState = FormWindowState.Normal
         Me.Bounds = Screen.PrimaryScreen.Bounds
         Me.WindowState = FormWindowState.Maximized
-        ' Add near the end of Sales_Load, after labels are initialized:
-        RestoreCartState()
-
         ArrangeCategoryButtonsFlexWrap()
         ' Cache original colors and mapping so overlays follow their buttons
         InitializeCategoryLockCaches()
@@ -551,6 +549,9 @@ Public Class Sales
         If taxLbl IsNot Nothing Then taxLbl.Text = "0.00"
         If totalLbl IsNot Nothing Then totalLbl.Text = "0.00"
         If totalRLbl IsNot Nothing Then totalRLbl.Text = "0.00"
+
+        ' Restore persisted cart state after labels are initialized/reset
+        RestoreCartState()
 
         UpdateCategoryItemCounts()
 
@@ -2236,6 +2237,7 @@ Public Class Sales
         ' Save draft cart on any close/navigation/app exit
         PersistCartState()
 
+        IdleTimeoutManager.Instance.OnBeforeLogout = Nothing
         IdleTimeoutManager.Instance.StopMonitoring(Me)
 
         If isNavigating Then

@@ -20,6 +20,7 @@ Public Class IdleTimeoutManager
     Private ReadOnly IDLE_TIMEOUT_SECONDS As Integer = 300 ' 5 minutes
     Private isTimerEnabled As Boolean = True
     Private currentForm As Form
+    Public Property OnBeforeLogout As Action
     Private overlay As Panel
     Private passwordDialog As Form
     Private logoutPending As Boolean = False
@@ -549,6 +550,11 @@ Public Class IdleTimeoutManager
     ' Only sets the flag and closes dialog; actual form cleanup happens after ShowDialog returns
     Private Sub LogoutUser(dialog As Form)
         Try
+            ' Allow the active form to persist state before logout
+            If OnBeforeLogout IsNot Nothing Then
+                OnBeforeLogout.Invoke()
+            End If
+
             ' Log the logout action
             If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
                 Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Session Timeout Logout", "User logged out due to idle timeout")

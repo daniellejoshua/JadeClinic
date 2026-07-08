@@ -33,6 +33,7 @@ Partial Class Supplier
         Dim CustomizableEdges9 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges10 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges11 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(Supplier))
         LabelTitle = New Label()
         DashboardPanel = New Guna.UI2.WinForms.Guna2Panel()
         PictureBox9 = New PictureBox()
@@ -264,6 +265,7 @@ Partial Class Supplier
         Controls.Add(DashboardPanel)
         Controls.Add(LabelTitle)
         Controls.Add(Guna2Panel1)
+        Icon = CType(resources.GetObject("$this.Icon"), Icon)
         Name = "Supplier"
         SizeGripStyle = SizeGripStyle.Hide
         StartPosition = FormStartPosition.CenterScreen

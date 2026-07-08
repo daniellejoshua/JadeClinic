@@ -51,6 +51,7 @@ Public Class frmLoginvb
         End If
     End Sub
     Private Sub frmLoginvb_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        Me.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath)
         Guna2Panel1.BorderRadius = 50
         Me.MaximizeBox = False
         Me.WindowState = FormWindowState.Maximized

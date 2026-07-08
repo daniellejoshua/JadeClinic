@@ -7,6 +7,7 @@ Public Class MainShell
 
     Public Sub New()
         InitializeComponent()
+        Me.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath)
         Me.FormBorderStyle = FormBorderStyle.None
         Me.WindowState = FormWindowState.Normal
         Me.Bounds = Screen.PrimaryScreen.Bounds
@@ -23,7 +24,7 @@ Public Class MainShell
         If pageType Is Nothing Then Return
 
         If _currentPage IsNot Nothing Then
-            _currentPage.Dispose()
+            _currentPage.Close()
             _currentPage = Nothing
         End If
 
