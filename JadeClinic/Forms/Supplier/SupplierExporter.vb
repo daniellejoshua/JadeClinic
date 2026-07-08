@@ -1,6 +1,6 @@
-﻿Imports System.IO
+Imports System.IO
 Imports System.Linq
-Imports Microsoft.Data.SqlClient
+Imports System.Data.Common
 Imports QuestPDF.Fluent
 Imports QuestPDF.Helpers
 Imports QuestPDF.Infrastructure
@@ -19,13 +19,13 @@ Public Class SupplierExporter
             End If
 
             Dim query As String = "SELECT s.SupplierID, s.SupplierCode, s.SupplierName, s.ContactPerson, s.Phone, s.Email, s.IsActive, " &
-                                  "ISNULL((SELECT COUNT(1) FROM InventoryLog il WHERE il.SupplierID = s.SupplierID " &
+                                  "IFNULL((SELECT COUNT(1) FROM InventoryLog il WHERE il.SupplierID = s.SupplierID " &
                                   "AND (LOWER(il.TransactionType) = 'in' OR il.TransactionType IN ('IN','INBOUND','Stock In','stock in'))" &
-                                  If(filterDate.HasValue, " AND CAST(il.CreatedAt AS DATE) = @FilterDate", "") &
+                                  If(filterDate.HasValue, " AND DATE(il.CreatedAt) = @FilterDate", "") &
                                   "), 0) AS StockInCount, " &
                                   "(SELECT MAX(il.CreatedAt) FROM InventoryLog il WHERE il.SupplierID = s.SupplierID " &
                                   "AND (LOWER(il.TransactionType) = 'in' OR il.TransactionType IN ('IN','INBOUND','Stock In','stock in'))" &
-                                  If(filterDate.HasValue, " AND CAST(il.CreatedAt AS DATE) = @FilterDate", "") &
+                                  If(filterDate.HasValue, " AND DATE(il.CreatedAt) = @FilterDate", "") &
                                   ") AS LastStockInDate " &
                                   "FROM Suppliers s"
 
@@ -33,17 +33,17 @@ Public Class SupplierExporter
 
             Select Case filterType
                 Case "Active Suppliers"
-                    whereClauses.Add("ISNULL(s.IsActive, 1) = 1")
+                    whereClauses.Add("IFNULL(s.IsActive, 1) = 1")
                 Case "Inactive Suppliers"
-                    whereClauses.Add("ISNULL(s.IsActive, 1) = 0")
+                    whereClauses.Add("IFNULL(s.IsActive, 1) = 0")
                 Case "With Stock In"
                     whereClauses.Add("EXISTS (SELECT 1 FROM InventoryLog il WHERE il.SupplierID = s.SupplierID " &
                                      "AND (LOWER(il.TransactionType) = 'in' OR il.TransactionType IN ('IN','INBOUND','Stock In','stock in'))" &
-                                     If(filterDate.HasValue, " AND CAST(il.CreatedAt AS DATE) = @FilterDate", "") & ")")
+                                     If(filterDate.HasValue, " AND DATE(il.CreatedAt) = @FilterDate", "") & ")")
                 Case "Without Stock In"
                     whereClauses.Add("NOT EXISTS (SELECT 1 FROM InventoryLog il WHERE il.SupplierID = s.SupplierID " &
                                      "AND (LOWER(il.TransactionType) = 'in' OR il.TransactionType IN ('IN','INBOUND','Stock In','stock in'))" &
-                                     If(filterDate.HasValue, " AND CAST(il.CreatedAt AS DATE) = @FilterDate", "") & ")")
+                                     If(filterDate.HasValue, " AND DATE(il.CreatedAt) = @FilterDate", "") & ")")
                 Case Else
                     ' All Suppliers
             End Select
@@ -73,7 +73,7 @@ Public Class SupplierExporter
                 parameters.Add(New SqlParameter("@FilterDate", filterDate.Value.Date))
             End If
 
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters.ToArray())
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters.ToArray())
                 While reader.Read()
                     Dim supplierData As New SupplierReportData() With {
                         .SupplierID = If(IsDBNull(reader("SupplierID")), 0, Convert.ToInt32(reader("SupplierID"))),

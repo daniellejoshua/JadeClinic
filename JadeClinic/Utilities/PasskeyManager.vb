@@ -1,4 +1,4 @@
-Imports Microsoft.Data.SqlClient
+Imports System.Data.Common
 Imports System.Text
 
 ''' <summary>
@@ -115,7 +115,7 @@ Public Class PasskeyManager
             
             Dim passkeys As New List(Of String)()
             
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters)
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters)
                 If reader.Read() Then
                     For i As Integer = 0 To 2
                         Dim fieldName As String = $"Passkey{i + 1}"
@@ -147,7 +147,7 @@ Public Class PasskeyManager
                 New SqlParameter("@Username", username.Trim())
             }
             
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters)
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters)
                 If reader.Read() Then
                     Dim emailValue As String = ""
                     If Not IsDBNull(reader("Email")) Then

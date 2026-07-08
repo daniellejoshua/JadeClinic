@@ -1,4 +1,4 @@
-﻿<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
+<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
 Partial Class frmLoginvb
     Inherits System.Windows.Forms.Form
 
@@ -43,7 +43,7 @@ Partial Class frmLoginvb
         Guna2HtmlLabel1 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         txtPassword = New Guna.UI2.WinForms.Guna2TextBox()
         PictureBox1 = New PictureBox()
-        SqlCommand1 = New Microsoft.Data.SqlClient.SqlCommand()
+
         Guna2Panel1.SuspendLayout()
         CType(PictureBox1, ComponentModel.ISupportInitialize).BeginInit()
         SuspendLayout()
@@ -240,11 +240,6 @@ Partial Class frmLoginvb
         PictureBox1.TabIndex = 1
         PictureBox1.TabStop = False
         ' 
-        ' SqlCommand1
-        ' 
-        SqlCommand1.CommandTimeout = 30
-        SqlCommand1.EnableOptimizedParameterBinding = False
-        ' 
         ' frmLoginvb
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
@@ -277,5 +272,5 @@ Partial Class frmLoginvb
     Friend WithEvents BtnLogin As Guna.UI2.WinForms.Guna2Button
     Friend WithEvents Guna2CheckBox1 As Guna.UI2.WinForms.Guna2CheckBox
     Friend WithEvents Guna2HtmlLabel5 As Guna.UI2.WinForms.Guna2HtmlLabel
-    Friend WithEvents SqlCommand1 As Microsoft.Data.SqlClient.SqlCommand
+
 End Class

@@ -1,5 +1,5 @@
-﻿Imports System.IO
-Imports Microsoft.Data.SqlClient
+Imports System.IO
+Imports System.Data.Common
 Imports QuestPDF.Fluent
 Imports QuestPDF.Helpers
 Imports QuestPDF.Infrastructure
@@ -32,7 +32,7 @@ Public Class InventoryExporter
             If product.ContainsKey("CostPrice") Then cost = ParseDecimal(product("CostPrice"))
 
             ' Status: prefer explicit status or IsActive flag; otherwise use stock/reorder rules
-            ' Determine status: no "IN STOCK" — use OUT OF STOCK, B.R.L (<= reorder), A.R.L (> reorder), INACTIVE, DISCONTINUED
+            ' Determine status: no "IN STOCK" � use OUT OF STOCK, B.R.L (<= reorder), A.R.L (> reorder), INACTIVE, DISCONTINUED
             Dim statusText As String = String.Empty
 
             Dim explicitStatus As String = String.Empty
@@ -166,7 +166,7 @@ Public Class InventoryExporter
                 If p.ProductID > 0 Then
                     Try
                         Dim sql As String = "SELECT CurrentStock, ReorderLevel, SellingPrice, CostPrice, IsActive, Unit, Category, ProductName FROM Products WHERE ProductID = @ProductID"
-                        Using rdr As SqlDataReader = DatabaseHelper.ExecuteReader(sql, New SqlParameter() {New SqlParameter("@ProductID", p.ProductID)})
+                        Using rdr As DbDataReader = DatabaseHelper.ExecuteReader(sql, New SqlParameter() {New SqlParameter("@ProductID", p.ProductID)})
                             If rdr.Read() Then
                                 If Not IsDBNull(rdr("CurrentStock")) Then p.StockQty = Convert.ToInt32(rdr("CurrentStock"))
                                 If Not IsDBNull(rdr("ReorderLevel")) Then p.ReorderLevel = Convert.ToInt32(rdr("ReorderLevel"))
@@ -298,8 +298,8 @@ Public Class InventoryExporter
                                                                                                                                        table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(product.ProductName).FontSize(7).SemiBold()
                                                                                                                                        table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(product.Category).FontSize(7).AlignCenter()
                                                                                                                                        table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(product.Sizing).FontSize(7).AlignCenter()
-                                                                                                                                       table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text($"₱{product.CostPrice:F2}").FontSize(7).AlignCenter()
-                                                                                                                                       table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text($"₱{product.Price:F2}").FontSize(7).AlignCenter().SemiBold()
+                                                                                                                                       table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text($"?{product.CostPrice:F2}").FontSize(7).AlignCenter()
+                                                                                                                                       table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text($"?{product.Price:F2}").FontSize(7).AlignCenter().SemiBold()
                                                                                                                                        table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(4).Text(product.ReorderLevel.ToString()).FontSize(7).AlignCenter()
 
                                                                                                                                        ' Replace the two table cells for STOCK and STATUS with colored text
@@ -330,8 +330,8 @@ Public Class InventoryExporter
                                                                                                                                                                                                                              summaryColumn.Item().PaddingTop(10).Row(Sub(summaryRow)
                                                                                                                                                                                                                                                                          summaryRow.RelativeItem().Column(Sub(statsColumn)
                                                                                                                                                                                                                                                                                                               statsColumn.Item().Text($"Total Products: {totalProducts} items").FontSize(9)
-                                                                                                                                                                                                                                                                                                              statsColumn.Item().Text($"Total Inventory Value (Selling): ₱{totalValueSelling:N2}").FontSize(9).SemiBold()
-                                                                                                                                                                                                                                                                                                              statsColumn.Item().Text($"Total Inventory Cost: ₱{totalValueCost:N2}").FontSize(9)
+                                                                                                                                                                                                                                                                                                              statsColumn.Item().Text($"Total Inventory Value (Selling): ?{totalValueSelling:N2}").FontSize(9).SemiBold()
+                                                                                                                                                                                                                                                                                                              statsColumn.Item().Text($"Total Inventory Cost: ?{totalValueCost:N2}").FontSize(9)
                                                                                                                                                                                                                                                                                                               statsColumn.Item().Text($"Total Stock Quantity: {totalStockQty} units").FontSize(9)
                                                                                                                                                                                                                                                                                                               statsColumn.Item().Text($"Above Reorder Level: {aboveReorderProducts} products").FontSize(9).FontColor(Colors.Green.Lighten2)
                                                                                                                                                                                                                                                                                                               statsColumn.Item().Text($"Inactive: {inactiveProducts} products").FontSize(9).FontColor(Colors.Grey.Medium)

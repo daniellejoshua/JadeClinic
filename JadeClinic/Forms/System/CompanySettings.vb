@@ -1,9 +1,9 @@
-﻿Imports System.Drawing
+Imports System.Drawing
 Imports System.Drawing.Printing
 Imports System.IO
 Imports System.Windows.Forms
 Imports Guna.UI2.WinForms
-Imports Microsoft.Data.SqlClient
+Imports System.Data.Common
 Imports System.Linq
 
 Public Class CompanySettings
@@ -147,7 +147,7 @@ Public Class CompanySettings
     Private Sub LoadCompanySettings()
         Try
             Dim query As String = "SELECT * FROM CompanySettings WHERE IsActive = 1 ORDER BY DateCreated DESC"
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
                 If reader.Read() Then
                     ' Store current data
                     currentCompanyData = New Dictionary(Of String, Object)
@@ -493,36 +493,36 @@ Public Class CompanySettings
             y += lineH
             g.DrawString("1x Applicator tip", regularFont, brush, leftX, y)
             y += lineH
-            DrawLeftRightLine(g, "@ ₱150.00", "₱150.00", regularFont, brush, leftX + 10, rightX, y)
+            DrawLeftRightLine(g, "@ ?150.00", "?150.00", regularFont, brush, leftX + 10, rightX, y)
             y += lineH
             g.DrawString("1x Alginate (hygedent)", regularFont, brush, leftX, y)
             y += lineH
-            DrawLeftRightLine(g, "@ ₱280.00", "₱280.00", regularFont, brush, leftX + 10, rightX, y)
+            DrawLeftRightLine(g, "@ ?280.00", "?280.00", regularFont, brush, leftX + 10, rightX, y)
             y += lineH
 
             g.DrawString(sep, regularFont, brush, leftX, y)
             y += lineH
-            DrawLeftRightLine(g, "SUBTOTAL (VAT-INC):", "₱430.00", regularFont, brush, leftX, rightX, y)
+            DrawLeftRightLine(g, "SUBTOTAL (VAT-INC):", "?430.00", regularFont, brush, leftX, rightX, y)
             y += lineH
-            DrawLeftRightLine(g, "Less: Discount (Fixed):", "-₱100.00", regularFont, brush, leftX, rightX, y)
+            DrawLeftRightLine(g, "Less: Discount (Fixed):", "-?100.00", regularFont, brush, leftX, rightX, y)
             y += lineH
-            DrawLeftRightLine(g, "VATABLE SALES (NET):", "₱294.64", regularFont, brush, leftX, rightX, y)
+            DrawLeftRightLine(g, "VATABLE SALES (NET):", "?294.64", regularFont, brush, leftX, rightX, y)
             y += lineH
-            DrawLeftRightLine(g, "VAT (12%):", "₱35.36", regularFont, brush, leftX, rightX, y)
+            DrawLeftRightLine(g, "VAT (12%):", "?35.36", regularFont, brush, leftX, rightX, y)
             y += lineH
 
             g.DrawString(sep, regularFont, brush, leftX, y)
             y += lineH
-            DrawLeftRightLine(g, "TOTAL AMOUNT DUE:", "₱330.00", totalFont, brush, leftX, rightX, y)
+            DrawLeftRightLine(g, "TOTAL AMOUNT DUE:", "?330.00", totalFont, brush, leftX, rightX, y)
             y += 28
 
             g.DrawString("PAYMENT INFORMATION", sectionFont, brush, leftX, y)
             y += lineH
             g.DrawString("Payment Method: Cash", regularFont, brush, leftX, y)
             y += lineH
-            g.DrawString("Amount Received: ₱330.00", regularFont, brush, leftX, y)
+            g.DrawString("Amount Received: ?330.00", regularFont, brush, leftX, y)
             y += lineH
-            g.DrawString("Change: ₱0.00", regularFont, brush, leftX, y)
+            g.DrawString("Change: ?0.00", regularFont, brush, leftX, y)
             y += lineH
 
             g.DrawString(sep, regularFont, brush, leftX, y)
@@ -659,7 +659,8 @@ Public Class CompanySettings
 
             ' Handle logo data - ensure parameter is typed as VarBinary and save resource logo when user removed
             If logoChanged OrElse Not isUpdate Then
-                Dim pLogo As New SqlParameter("@Logo", SqlDbType.VarBinary, -1)
+                Dim pLogo As New SqlParameter()
+                pLogo.ParameterName = "@Logo"
                 Dim bytesToSave As Byte() = logoData
 
                 ' If user removed logo (logoData is Nothing), store the embedded resource default logo bytes

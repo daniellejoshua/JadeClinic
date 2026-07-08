@@ -1,4 +1,4 @@
-﻿Imports Microsoft.Data.SqlClient
+Imports System.Data.Common
 Imports System.IO
 Imports System.Text.RegularExpressions
 Imports System.Security.Cryptography
@@ -65,7 +65,7 @@ Public Class frmLoginvb
         AddHandler Me.KeyDown, AddressOf frmLoginvb_KeyDown
 
         ' Set password char to bullet on form load
-        txtPassword.PasswordChar = "•"c
+        txtPassword.PasswordChar = "�"c
 
         ' Initialize database on form load - CRITICAL FIX!
         InitializeDatabaseOnStartup()
@@ -117,9 +117,9 @@ Public Class frmLoginvb
             ' Production-safe startup check:
             ' do NOT run schema initialization from login screen on every client.
             If Connection.TestConnection() Then
-                Console.WriteLine("✅ Database connection is ready for login.")
+                Console.WriteLine("? Database connection is ready for login.")
             Else
-                Console.WriteLine("❌ Database connection failed.")
+                Console.WriteLine("? Database connection failed.")
                 MessageBox.Show("Unable to connect to the database server. Please check network and SQL settings.",
                                 "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
             End If
@@ -296,7 +296,7 @@ Public Class frmLoginvb
             Dim query As String = "SELECT UserID, FullName FROM Users WHERE Username = @Username AND IsActive = 1"
             Dim parameters As SqlParameter() = {New SqlParameter("@Username", username)}
 
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters)
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters)
                 If reader.Read() Then
                     Dim userId As Integer = Convert.ToInt32(reader("UserID"))
                     Dim fullName As String = If(IsDBNull(reader("FullName")), username, reader("FullName").ToString())
@@ -373,10 +373,10 @@ Public Class frmLoginvb
         qrScannerEnabled = Not qrScannerEnabled
 
         If qrScannerEnabled Then
-            Guna2HtmlLabel5.Text = "🔍 Scan QR Code"
+            Guna2HtmlLabel5.Text = "?? Scan QR Code"
             Guna2HtmlLabel5.ForeColor = Color.White
         Else
-            Guna2HtmlLabel5.Text = "🚫 QR Scanner Disabled"
+            Guna2HtmlLabel5.Text = "?? QR Scanner Disabled"
             Guna2HtmlLabel5.ForeColor = Color.Gray
         End If
     End Sub
@@ -800,7 +800,7 @@ Public Class frmLoginvb
             Dim userRole As String = String.Empty
             Dim fullName As String = String.Empty
 
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters)
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters)
                 If reader.Read() Then
                     username = If(IsDBNull(reader("Username")), Nothing, reader("Username").ToString())
                     pinValue = If(IsDBNull(reader("pin")), Nothing, reader("pin").ToString())
@@ -937,7 +937,7 @@ Public Class frmLoginvb
             New SqlParameter("@Username", txtUserName.Text.Trim())
         }
 
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters)
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters)
                 If reader.Read() Then
                     Dim isActiveObj = reader("IsActive")
                     Dim isActive As Boolean = True
@@ -1524,7 +1524,7 @@ Public Class frmLoginvb
             Dim query As String = "SELECT Passkeys FROM Users WHERE Username = @Username AND IsActive = 1"
             Dim stored As New List(Of String)()
 
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, {New SqlParameter("@Username", targetUsername)})
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, {New SqlParameter("@Username", targetUsername)})
                 If reader.Read() Then
                     If IsDBNull(reader("Passkeys")) Then Return False
                     Dim raw As String = reader("Passkeys").ToString()
@@ -1685,7 +1685,7 @@ Public Class frmLoginvb
                 txtPassword.PasswordChar = ChrW(0)
             Else
                 ' Hide password (use bullet as on form load)
-                txtPassword.PasswordChar = "•"c
+                txtPassword.PasswordChar = "�"c
             End If
         Catch ex As Exception
             Console.WriteLine($"Show/hide password toggle failed: {ex.Message}")

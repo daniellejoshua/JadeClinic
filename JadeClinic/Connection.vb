@@ -1,89 +1,67 @@
-﻿Imports Microsoft.Data.SqlClient
+Imports Microsoft.Data.Sqlite
 Imports System.Configuration
+Imports System.IO
 
 Module Connection
 
-    Public Function GetConnectionString() As String
-        Dim conn = ConfigurationManager.ConnectionStrings("JadeDentalConnection")?.ConnectionString
-        If String.IsNullOrWhiteSpace(conn) Then
-            Throw New InvalidOperationException("Connection string 'JadeDentalConnection' is missing.")
+    Private Function GetDefaultDatabasePath() As String
+        Dim dataDir As String = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "JadeClinic")
+        If Not Directory.Exists(dataDir) Then
+            Directory.CreateDirectory(dataDir)
         End If
+        Return Path.Combine(dataDir, "jadeclinic.db")
+    End Function
 
-        Return conn
+    Public Function GetConnectionString() As String
+        ' Single-file SQLite DB placed in local app data for zero-install
+        Dim dbPath As String = GetDefaultDatabasePath()
+        Return $"Data Source={dbPath};Cache=Shared;Mode=ReadWriteCreate"
     End Function
 
     Public Function TestConnection(Optional serverName As String = "") As Boolean
         Try
-            Dim connStr As String = If(String.IsNullOrWhiteSpace(serverName), GetConnectionString(), BuildConnectionString(serverName))
-
-            Using conn As New SqlConnection(connStr)
+            Dim connStr As String = GetConnectionString()
+            Using conn As New SqliteConnection(connStr)
                 conn.Open()
-                Console.WriteLine($"✅ Connected to: {conn.Database} on {conn.DataSource}")
+                Console.WriteLine($"? Connected to SQLite DB: {conn.DataSource}")
                 Return True
             End Using
         Catch ex As Exception
-            Console.WriteLine($"❌ Connection test failed: {ex.Message}")
+            Console.WriteLine($"? Connection test failed: {ex.Message}")
             Return False
         End Try
     End Function
 
     Public Function CreateDatabaseIfNotExists() As Boolean
-        ' Production LAN mode: database should already exist on server.
+        ' For SQLite the file will be created automatically when opened with Mode=ReadWriteCreate
         Return TestConnection()
     End Function
 
     Public Sub SaveConnectionString(Optional serverName As String = "")
-        Try
-            Dim config As Configuration = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None)
-
-            If Not String.IsNullOrWhiteSpace(serverName) Then
-                config.ConnectionStrings.ConnectionStrings("JadeDentalConnection").ConnectionString = BuildConnectionString(serverName)
-            End If
-
-            If config.AppSettings.Settings("IsFirstRun") IsNot Nothing Then
-                config.AppSettings.Settings("IsFirstRun").Value = "false"
-            End If
-
-            config.Save(ConfigurationSaveMode.Modified)
-            ConfigurationManager.RefreshSection("connectionStrings")
-            ConfigurationManager.RefreshSection("appSettings")
-
-            Console.WriteLine("✅ Connection string saved successfully!")
-        Catch ex As Exception
-            Console.WriteLine($"❌ Error saving connection string: {ex.Message}")
-        End Try
+        ' No-op for SQLite (we use a local file) but keep method for compatibility
+        Console.WriteLine("SaveConnectionString: SQLite uses local file; no action taken.")
     End Sub
-
-    Public Function BuildConnectionString(Optional server As String = "") As String
-        Dim builder As New SqlConnectionStringBuilder(GetConnectionString())
-
-        If Not String.IsNullOrWhiteSpace(server) Then
-            builder.DataSource = server
-        End If
-
-        Return builder.ConnectionString
-    End Function
 
     Public Function InitializeDatabase() As Boolean
         Try
-            Using conn As New SqlConnection(GetConnectionString())
+            Using conn As New SqliteConnection(GetConnectionString())
                 conn.Open()
 
-                Dim checkTablesQuery As String = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'"
-                Using cmd As New SqlCommand(checkTablesQuery, conn)
-                    Dim tableCount As Integer = CInt(cmd.ExecuteScalar())
+                Dim checkTablesQuery As String = "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
+                Using cmd As New SqliteCommand(checkTablesQuery, conn)
+                    Dim tableCount As Integer = Convert.ToInt32(cmd.ExecuteScalar())
 
                     If tableCount = 0 Then
                         Console.WriteLine("No tables found. Creating database schema...")
                         DatabaseInitializer.CreateDatabaseSchema()
-                        Console.WriteLine("✅ Database schema initialized successfully!")
+                        Console.WriteLine("? Database schema initialized successfully!")
                     End If
                 End Using
             End Using
 
             Return True
         Catch ex As Exception
-            Console.WriteLine($"❌ Database initialization failed: {ex.Message}")
+            Console.WriteLine($"? Database initialization failed: {ex.Message}")
             Return False
         End Try
     End Function
@@ -99,9 +77,9 @@ Module Connection
 
     Public Function GetDatabaseInfo() As String
         Try
-            Using conn As New SqlConnection(GetConnectionString())
+            Using conn As New SqliteConnection(GetConnectionString())
                 conn.Open()
-                Return $"Database: {conn.Database} | Server: {conn.DataSource} | State: Connected"
+                Return $"Database file: {conn.DataSource} | State: Connected"
             End Using
         Catch ex As Exception
             Return $"Database: Disconnected | Error: {ex.Message}"

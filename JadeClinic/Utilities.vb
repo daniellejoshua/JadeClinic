@@ -1,5 +1,6 @@
-Imports Microsoft.Data.SqlClient
 Imports System.Data
+Imports System.Data.Common
+Imports Microsoft.Data.Sqlite
 Imports System.Security.Cryptography
 Imports System.Text
 
@@ -45,7 +46,7 @@ Module Utilities
 
                 Dim query As String =
                 "SELECT UserID FROM Users " &
-                "WHERE IsActive = 1 AND (',' + ISNULL(Passkeys, '') + ',') LIKE '%,' + @Passkey + ',%'"
+                "WHERE IsActive = 1 AND (',' + IFNULL(Passkeys, '') + ',') LIKE '%,' + @Passkey + ',%'"
 
                 Dim parameters() As SqlParameter = {
                 New SqlParameter("@Passkey", cleanPasskey)
@@ -168,16 +169,18 @@ Module Utilities
         End Function
 
     End Class
-    ' Execute a SELECT query and return a SqlDataReader
-    Public Function ExecuteReader(query As String, ParamArray parameters As SqlParameter()) As SqlDataReader
+    ' Execute a SELECT query and return a DbDataReader
+    Public Function ExecuteReader(query As String, ParamArray parameters As SqlParameter()) As DbDataReader
         Try
             Dim connStr As String = Connection.GetConnectionString()
-            Dim conn As New SqlConnection(connStr)
+            Dim conn As DbConnection = DbProvider.CreateConnection(connStr)
             conn.Open()
 
-            Dim cmd As New SqlCommand(query, conn)
+            Dim cmd As DbCommand = conn.CreateCommand()
+            cmd.CommandText = query
             If parameters IsNot Nothing Then
-                cmd.Parameters.AddRange(parameters)
+                Dim dbParams = DbProvider.ConvertSqlParameters(parameters)
+                cmd.Parameters.AddRange(dbParams)
             End If
 
             Return cmd.ExecuteReader(CommandBehavior.CloseConnection)
@@ -190,12 +193,14 @@ Module Utilities
     Public Function ExecuteNonQuery(query As String, ParamArray parameters As SqlParameter()) As Integer
         Try
             Dim connStr As String = Connection.GetConnectionString()
-            Using conn As New SqlConnection(connStr)
-                conn.Open()
-                Using cmd As New SqlCommand(query, conn)
+            Using conn As DbConnection = DbProvider.CreateConnection(connStr)
+                Using cmd As DbCommand = conn.CreateCommand()
+                    cmd.CommandText = query
                     If parameters IsNot Nothing Then
-                        cmd.Parameters.AddRange(parameters)
+                        Dim dbParams = DbProvider.ConvertSqlParameters(parameters)
+                        cmd.Parameters.AddRange(dbParams)
                     End If
+                    conn.Open()
                     Return cmd.ExecuteNonQuery()
                 End Using
             End Using
@@ -208,12 +213,14 @@ Module Utilities
     Public Function ExecuteScalar(query As String, ParamArray parameters As SqlParameter()) As Object
         Try
             Dim connStr As String = Connection.GetConnectionString()
-            Using conn As New SqlConnection(connStr)
-                conn.Open()
-                Using cmd As New SqlCommand(query, conn)
+            Using conn As DbConnection = DbProvider.CreateConnection(connStr)
+                Using cmd As DbCommand = conn.CreateCommand()
+                    cmd.CommandText = query
                     If parameters IsNot Nothing Then
-                        cmd.Parameters.AddRange(parameters)
+                        Dim dbParams = DbProvider.ConvertSqlParameters(parameters)
+                        cmd.Parameters.AddRange(dbParams)
                     End If
+                    conn.Open()
                     Return cmd.ExecuteScalar()
                 End Using
             End Using
@@ -331,12 +338,16 @@ Module Utilities
     Public Function GetExistingImageId(imageHash As String) As Integer?
         Try
             Dim connStr As String = Connection.GetConnectionString()
-            Using conn As New SqlConnection(connStr)
+            Using conn As DbConnection = DbProvider.CreateConnection(connStr)
                 conn.Open()
 
-                Dim query As String = "SELECT TOP 1 ImageID FROM ProductImages WHERE ImageHash = @ImageHash"
-                Using cmd As New SqlCommand(query, conn)
-                    cmd.Parameters.AddWithValue("@ImageHash", imageHash)
+                Dim query As String = "SELECT ImageID FROM ProductImages WHERE ImageHash = @ImageHash LIMIT 1"
+                Using cmd As DbCommand = conn.CreateCommand()
+                    cmd.CommandText = query
+                    Dim param As DbParameter = cmd.CreateParameter()
+                    param.ParameterName = "@ImageHash"
+                    param.Value = imageHash
+                    cmd.Parameters.Add(param)
                     Dim result = cmd.ExecuteScalar()
 
                     If result IsNot Nothing AndAlso Not IsDBNull(result) Then

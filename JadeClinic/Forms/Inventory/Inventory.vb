@@ -1,4 +1,5 @@
-﻿Imports Microsoft.Data.SqlClient
+Imports Microsoft.Data.Sqlite
+Imports System.Data.Common
 Imports System.Data
 Imports System.IO
 Imports System.Threading.Tasks
@@ -10,6 +11,7 @@ Public Class Inventory
     Private visibleItemCount As Integer = 15 ' Number of visible items
     Private itemHeight As Integer = 80 ' Height of each product panel
     Private loadingOverlay As Panel
+    Private _cachedLogo As Image = Nothing
 
     ' Navigation flag to prevent exit confirmation on programmatic close
     Private isNavigating As Boolean = False
@@ -25,10 +27,14 @@ Public Class Inventory
     Private statusFilter As Nullable(Of Boolean) = Nothing ' Nothing = All, True = Active, False = Inactive
 
     Private Async Sub Inventory_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        ' Enable double buffering for smooth scrolling
+        btnActive.BorderRadius = 10
+        btnAll.BorderRadius = 10
+        btnInactive.BorderRadius = 10
+
+        ' Enable double buffering for smooth scrollinga
         SetDoubleBuffered(Guna2DataGridView1)
         ' ... inside Inventory_Load, after CreateNavigationMenu() and InitializeProfileSection()
-        ' Apply the new visual palette (non-destructive — overrides colors at runtime)
+        ' Apply the new visual palette (non-destructive � overrides colors at runtime)
         ' Initialize custom tooltip system
         InitializeCustomTooltip()
         ' Stop idle timeout monitoring
@@ -291,7 +297,7 @@ Public Class Inventory
     Private Sub LoadProductsFromDatabase()
         Try
             Dim connStr As String = Connection.GetConnectionString()
-            Using conn As New SqlConnection(connStr)
+            Using conn As New SqliteConnection(connStr)
                 conn.Open()
 
                 Dim query As String = "SELECT p.ProductID, p.ProductCode, p.ProductName, p.Category, " &
@@ -302,8 +308,8 @@ Public Class Inventory
                       "LEFT JOIN ProductImages pi ON pim.ImageID = pi.ImageID " &
                       "ORDER BY p.ProductName"
 
-                Using cmd As New SqlCommand(query, conn)
-                    Using reader As SqlDataReader = cmd.ExecuteReader()
+                Using cmd As New SqliteCommand(query, conn)
+                    Using reader As DbDataReader = cmd.ExecuteReader()
                         allProducts.Clear()
 
                         While reader.Read()
@@ -433,13 +439,13 @@ Public Class Inventory
     Private Sub LoadCategoriesForFilter()
         Try
             Dim connStr As String = Connection.GetConnectionString()
-            Using conn As New SqlConnection(connStr)
+            Using conn As New SqliteConnection(connStr)
                 conn.Open()
 
                 ' Get distinct categories from existing products
                 Dim query As String = "SELECT DISTINCT Category FROM Products WHERE Category IS NOT NULL AND IsActive = 1 ORDER BY Category"
-                Using cmd As New SqlCommand(query, conn)
-                    Using reader As SqlDataReader = cmd.ExecuteReader()
+                Using cmd As New SqliteCommand(query, conn)
+                    Using reader As DbDataReader = cmd.ExecuteReader()
                         Guna2ComboBox1.Items.Clear()
                         Guna2ComboBox1.Items.Add("All Categories") ' Add default option
 
@@ -642,7 +648,7 @@ Public Class Inventory
             colActions.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
 
             ' Show a default edit marker when cell value is null/empty
-            colActions.DefaultCellStyle.NullValue = "✏️"
+            colActions.DefaultCellStyle.NullValue = ChrW(&H270F)
             productDataGrid.Columns.Add(colActions)
 
             ' Wire up events and painting (preserve existing handlers)
@@ -724,7 +730,7 @@ Public Class Inventory
                 "₱" & Convert.ToDecimal(productData("CostPrice")).ToString("N2"),    ' CostPrice
                 "₱" & Convert.ToDecimal(productData("SellingPrice")).ToString("N2"), ' SellingPrice
                 statusDisplay, ' Status
-                "✏️"  ' Actions - simple text
+                ChrW(&H270F)  ' ✏ pencil icon for Actions
             )
 
                     ' Store product data in row tag for edit functionality
@@ -811,7 +817,7 @@ Public Class Inventory
             .ShowInTaskbar = False,
             .StartPosition = FormStartPosition.Manual,
             .BackColor = Color.Black,
-            .Opacity = 0.55,  ' ✅ Semi-transparent - lets background show through!
+            .Opacity = 0.55,  ' ? Semi-transparent - lets background show through!
             .TopMost = False
         }
         overlay.Bounds = Me.Bounds
@@ -850,6 +856,13 @@ Public Class Inventory
             End If
         End Try
     End Sub
+
+    Private Function GetCachedLogo() As Image
+        If _cachedLogo Is Nothing Then
+            _cachedLogo = CompanySettingsManager.Instance.GetCompanyLogo()
+        End If
+        Return _cachedLogo
+    End Function
 
     Private Sub ProductDataGrid_CellPainting(sender As Object, e As DataGridViewCellPaintingEventArgs)
         Try
@@ -897,25 +910,31 @@ Public Class Inventory
                                     End Using
                                 End Using
                             Else
-                                ' Draw professional placeholder with gray theme
-                                Using bgBrush As New SolidBrush(Color.FromArgb(245, 245, 245))
-                                    e.Graphics.FillRectangle(bgBrush, imageRect)
-                                End Using
-
-                                Using borderPen As New Pen(LightGray, 1)
-                                    e.Graphics.DrawRectangle(borderPen, imageRect)
-                                End Using
-
-                                ' Draw camera icon placeholder
-                                Using placeholderFont As New Font("Segoe UI", 8, FontStyle.Regular)
-                                    Using placeholderBrush As New SolidBrush(MediumGray)
-                                        Dim placeholderFormat As New StringFormat() With {
-                                        .Alignment = StringAlignment.Center,
-                                        .LineAlignment = StringAlignment.Center
-                                    }
-                                        e.Graphics.DrawString("📷", placeholderFont, placeholderBrush, imageRect, placeholderFormat)
+                                Dim logo As Image = GetCachedLogo()
+                                If logo IsNot Nothing Then
+                                    e.Graphics.DrawImage(logo, imageRect)
+                                    Using borderPen As New Pen(LightGray, 1)
+                                        e.Graphics.DrawRectangle(borderPen, imageRect)
                                     End Using
-                                End Using
+                                Else
+                                    ' Draw professional placeholder with gray theme
+                                    Using bgBrush As New SolidBrush(Color.FromArgb(245, 245, 245))
+                                        e.Graphics.FillRectangle(bgBrush, imageRect)
+                                    End Using
+                                    Using borderPen As New Pen(LightGray, 1)
+                                        e.Graphics.DrawRectangle(borderPen, imageRect)
+                                    End Using
+                                    ' Draw camera icon placeholder
+                                    Using placeholderFont As New Font("Segoe UI", 8, FontStyle.Regular)
+                                        Using placeholderBrush As New SolidBrush(MediumGray)
+                                            Dim placeholderFormat As New StringFormat() With {
+                                            .Alignment = StringAlignment.Center,
+                                            .LineAlignment = StringAlignment.Center
+                                        }
+                                            e.Graphics.DrawString(Char.ConvertFromUtf32(&H1F4F7), placeholderFont, placeholderBrush, imageRect, placeholderFormat)
+                                        End Using
+                                    End Using
+                                End If
                             End If
                         Catch
                             ' Fallback placeholder on image error with gray theme
@@ -1215,6 +1234,11 @@ Public Class Inventory
         If customTooltip IsNot Nothing Then
             customTooltip.Dispose()
             customTooltip = Nothing
+        End If
+
+        If _cachedLogo IsNot Nothing Then
+            _cachedLogo.Dispose()
+            _cachedLogo = Nothing
         End If
 
         currentTooltipCell = Nothing

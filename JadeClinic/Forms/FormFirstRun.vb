@@ -1,4 +1,4 @@
-﻿Imports Microsoft.Data.SqlClient
+Imports System.Data.Common
 Imports System.Configuration
 
 Public Class FormFirstRun
@@ -59,17 +59,17 @@ Public Class FormFirstRun
     Private Sub TestDatabaseConnection()
         Try
             If Connection.TestConnection() Then
-                lblStatus.Text = "✅ Database connection successful!"
+                lblStatus.Text = "? Database connection successful!"
                 lblStatus.ForeColor = Color.Green
                 btnSave.Enabled = True
             Else
-                lblStatus.Text = "❌ Database connection failed"
+                lblStatus.Text = "? Database connection failed"
                 lblStatus.ForeColor = Color.Red
                 btnSave.Enabled = False
             End If
 
         Catch ex As Exception
-            lblStatus.Text = $"❌ Error: {ex.Message}"
+            lblStatus.Text = $"? Error: {ex.Message}"
             lblStatus.ForeColor = Color.Red
             btnSave.Enabled = False
         End Try

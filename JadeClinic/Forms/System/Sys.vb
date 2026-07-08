@@ -1,9 +1,10 @@
-﻿Imports System.Drawing
+Imports System.Drawing
 Imports System.Drawing.Drawing2D
 Imports System.Windows.Forms
 Imports System.Linq
 Imports Guna.UI2.WinForms
-Imports Microsoft.Data.SqlClient
+Imports Microsoft.Data.Sqlite
+Imports System.Data.Common
 Imports System.IO
 
 Public Class Sys
@@ -206,7 +207,7 @@ Public Class Sys
         backupForm.Controls.Add(lblBackupDesc)
 
         Dim btnBackup As New Guna.UI2.WinForms.Guna2Button()
-        btnBackup.Text = "💾 Create Backup"
+        btnBackup.Text = "?? Create Backup"
         btnBackup.Size = New Size(200, 40)
         btnBackup.Location = New Point(20, 125)
         btnBackup.BorderRadius = 8
@@ -234,7 +235,7 @@ Public Class Sys
         backupForm.Controls.Add(lblRestoreDesc)
 
         Dim btnRestore As New Guna.UI2.WinForms.Guna2Button()
-        btnRestore.Text = "📁 Restore Backup"
+        btnRestore.Text = "?? Restore Backup"
         btnRestore.Size = New Size(200, 40)
         btnRestore.Location = New Point(20, 245)
         btnRestore.BorderRadius = 8
@@ -278,24 +279,15 @@ Public Class Sys
                     Directory.CreateDirectory(backupDir)
                 End If
 
-                Dim connBuilder As New SqlConnectionStringBuilder(Connection.GetConnectionString())
-                Dim databaseName As String = If(String.IsNullOrWhiteSpace(connBuilder.InitialCatalog), "JadeDentalSupply", connBuilder.InitialCatalog)
-                Dim escapedPath As String = backupPath.Replace("'", "''")
-
-                Dim backupSql As String =
-                    $"BACKUP DATABASE [{databaseName}] TO DISK = N'{escapedPath}' WITH INIT, FORMAT, STATS = 10;"
-
-                Using conn As New SqlConnection(Connection.GetConnectionString())
-                    conn.Open()
-                    Using cmd As New SqlCommand(backupSql, conn)
-                        cmd.CommandTimeout = 0
-                        cmd.ExecuteNonQuery()
-                    End Using
-                End Using
-
-                MessageBox.Show($"Database backup created successfully!{vbCrLf}Location: {backupPath}", "Backup Complete", MessageBoxButtons.OK, MessageBoxIcon.Information)
-
-                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Database Backup", $"Database backed up to: {backupPath}")
+                Dim connBuilder As New SqliteConnectionStringBuilder(Connection.GetConnectionString())
+                Dim dbPath As String = connBuilder.DataSource
+                If Not String.IsNullOrWhiteSpace(dbPath) AndAlso File.Exists(dbPath) Then
+                    File.Copy(dbPath, backupPath, overwrite:=True)
+                    MessageBox.Show($"Database backup created successfully!{vbCrLf}Location: {backupPath}", "Backup Complete", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                    Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Database Backup", $"Database backed up to: {backupPath}")
+                Else
+                    MessageBox.Show("Database file not found.", "Backup Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                End If
             End If
         Catch ex As Exception
             MessageBox.Show($"Error creating backup: {ex.Message}", "Backup Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
@@ -319,23 +311,11 @@ Public Class Sys
                         Throw New FileNotFoundException("Selected backup file was not found.")
                     End If
 
-                    Dim connBuilder As New SqlConnectionStringBuilder(Connection.GetConnectionString())
-                    Dim databaseName As String = If(String.IsNullOrWhiteSpace(connBuilder.InitialCatalog), "JadeDentalSupply", connBuilder.InitialCatalog)
-                    Dim escapedPath As String = backupPath.Replace("'", "''")
-                    Dim masterConnStr As String = "Server=(localdb)\MSSQLLocalDB;Database=master;Integrated Security=true;TrustServerCertificate=True;"
-
-                    Dim restoreSql As String =
-                        $"ALTER DATABASE [{databaseName}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;" &
-                        $"RESTORE DATABASE [{databaseName}] FROM DISK = N'{escapedPath}' WITH REPLACE, RECOVERY;" &
-                        $"ALTER DATABASE [{databaseName}] SET MULTI_USER;"
-
-                    Using conn As New SqlConnection(masterConnStr)
-                        conn.Open()
-                        Using cmd As New SqlCommand(restoreSql, conn)
-                            cmd.CommandTimeout = 0
-                            cmd.ExecuteNonQuery()
-                        End Using
-                    End Using
+                    Dim connBuilder As New SqliteConnectionStringBuilder(Connection.GetConnectionString())
+                    Dim dbPath As String = connBuilder.DataSource
+                    If Not String.IsNullOrWhiteSpace(dbPath) Then
+                        File.Copy(backupPath, dbPath, overwrite:=True)
+                    End If
 
                     MessageBox.Show("Database restored successfully! The application will now close.", "Restore Complete", MessageBoxButtons.OK, MessageBoxIcon.Information)
 

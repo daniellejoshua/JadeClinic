@@ -1,4 +1,4 @@
-﻿<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
+<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
 Partial Class CompanySettings
     Inherits System.Windows.Forms.Form
 
@@ -191,7 +191,7 @@ Partial Class CompanySettings
         btnRemoveLogo.ShadowDecoration.CustomizableEdges = CustomizableEdges2
         btnRemoveLogo.Size = New Size(200, 35)
         btnRemoveLogo.TabIndex = 2
-        btnRemoveLogo.Text = "🗑️ Remove Logo"
+        btnRemoveLogo.Text = "??? Remove Logo"
         ' 
         ' btnChangeLogo
         ' 
@@ -209,7 +209,7 @@ Partial Class CompanySettings
         btnChangeLogo.ShadowDecoration.CustomizableEdges = CustomizableEdges4
         btnChangeLogo.Size = New Size(200, 35)
         btnChangeLogo.TabIndex = 1
-        btnChangeLogo.Text = "📁 Change Logo"
+        btnChangeLogo.Text = "?? Change Logo"
         ' 
         ' picLogo
         ' 
@@ -657,7 +657,7 @@ Partial Class CompanySettings
         btnCancel.ShadowDecoration.CustomizableEdges = CustomizableEdges28
         btnCancel.Size = New Size(120, 45)
         btnCancel.TabIndex = 1
-        btnCancel.Text = "❌ Cancel"
+        btnCancel.Text = "? Cancel"
         ' 
         ' btnSave
         ' 
@@ -675,7 +675,7 @@ Partial Class CompanySettings
         btnSave.ShadowDecoration.CustomizableEdges = CustomizableEdges30
         btnSave.Size = New Size(120, 45)
         btnSave.TabIndex = 0
-        btnSave.Text = "💾 Save"
+        btnSave.Text = "?? Save"
         ' 
         ' HeaderPanel
         ' 

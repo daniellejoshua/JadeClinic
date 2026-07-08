@@ -7,6 +7,10 @@
 		<UseWindowsForms>true</UseWindowsForms>
 		<MyType>WindowsForms</MyType>
 		<ApplicationIcon>favicon(2).ico</ApplicationIcon>
+		<RuntimeIdentifier>win-x64</RuntimeIdentifier>
+		<SelfContained>true</SelfContained>
+		<PublishSingleFile>true</PublishSingleFile>
+		<IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -24,11 +28,10 @@
 	<ItemGroup>
 		<PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
 		<PackageReference Include="Guna.UI2.WinForms" Version="2.0.4.7" />
+		<PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.0" />
 		<PackageReference Include="LiveChartsCore" Version="2.0.0-rc5.4" />
 		<PackageReference Include="LiveChartsCore.SkiaSharpView" Version="2.0.0-rc5.4" />
 		<PackageReference Include="LiveChartsCore.SkiaSharpView.WinForms" Version="2.0.0-rc5.4" />
-		<PackageReference Include="MessagingToolkit.Barcode" Version="1.7.0.2" />
-		<PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.4" />
 		<PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
 		<PackageReference Include="QuestPDF" Version="2025.12.3" />
 		<PackageReference Include="SkiaSharp" Version="3.119.0" />
@@ -55,15 +58,18 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<Folder Include="Data\" />
 		<Folder Include="Models\" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<Reference Include="MessagingToolkit.Barcode">
-			<HintPath>..\..\ProjectPreFinals\ProjectPreFinals\bin\Debug\net8.0-windows\MessagingToolkit.Barcode.dll</HintPath>
+			<HintPath>Lib\MessagingToolkit.Barcode.dll</HintPath>
+			<CopyLocal>True</CopyLocal>
 		</Reference>
 		<Reference Include="MessagingToolkit.QRCode">
-			<HintPath>..\..\QrCode\QrCode\bin\Debug\net8.0-windows\MessagingToolkit.QRCode.dll</HintPath>
+			<HintPath>Lib\MessagingToolkit.QRCode.dll</HintPath>
+			<CopyLocal>True</CopyLocal>
 		</Reference>
 	</ItemGroup>
 

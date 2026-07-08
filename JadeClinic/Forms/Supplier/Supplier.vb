@@ -1,4 +1,4 @@
-﻿Imports Microsoft.Data.SqlClient
+Imports System.Data.Common
 Imports System.Linq
 Imports System.Reflection
 
@@ -352,7 +352,7 @@ Public Class Supplier
                     query += " ORDER BY SupplierName ASC"
             End Select
 
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
                 Dim count As Integer = 0
                 While reader.Read()
                     Dim supplierId As Integer = Convert.ToInt32(reader("SupplierID"))
@@ -371,7 +371,7 @@ Public Class Supplier
                     End If
 
                     ' Show pencil for edit
-                    InventoryLogDataGrid.Rows(rowIndex).Cells("Action").Value = "✏️"
+                    InventoryLogDataGrid.Rows(rowIndex).Cells("Action").Value = ChrW(&H270F)
 
                     ' Store full data in Tag including status
                     InventoryLogDataGrid.Rows(rowIndex).Tag = New Dictionary(Of String, Object) From {
@@ -388,7 +388,7 @@ Public Class Supplier
                     count += 1
                 End While
 
-                ' DO NOT modify lblUsername here — keep it showing the logged-in username.
+                ' DO NOT modify lblUsername here � keep it showing the logged-in username.
                 ' (Removed previous lblUsername = "{count} Items" update.)
             End Using
 
@@ -534,7 +534,7 @@ Public Class Supplier
 
             ' Larger, cleaner modal with two-column layout and recent stock-in grid
             Dim editForm As New Form() With {
-            .Text = $"Edit Supplier — {supplierName}",
+            .Text = $"Edit Supplier � {supplierName}",
             .Size = New Size(900, 560),
             .StartPosition = FormStartPosition.CenterParent,
             .FormBorderStyle = FormBorderStyle.FixedDialog,
@@ -551,7 +551,7 @@ Public Class Supplier
 
             ' Header
             Dim header As New Label() With {
-            .Text = $"Edit Supplier — {supplierName}",
+            .Text = $"Edit Supplier � {supplierName}",
             .Font = New Font("Poppins SemiBold", 14, FontStyle.Bold),
             .ForeColor = GoldenYellow,
             .AutoSize = False,
@@ -690,11 +690,11 @@ Public Class Supplier
 
             ' Load last 12 stock-in entries for this supplier
             Try
-                Dim stockQuery As String = "SELECT TOP 12 il.CreatedAt, ISNULL(p.ProductName, '') AS ProductName, il.Quantity, ISNULL(il.Reference, '') AS Reference " &
+                Dim stockQuery As String = "SELECT il.CreatedAt, IFNULL(p.ProductName, '') AS ProductName, il.Quantity, IFNULL(il.Reference, '') AS Reference " &
                                        "FROM InventoryLog il LEFT JOIN Products p ON il.ProductID = p.ProductID " &
                                        "WHERE il.SupplierID = @SupplierID AND (LOWER(il.TransactionType) = 'in' OR il.TransactionType IN ('IN','INBOUND','Stock In','stock in')) " &
-                                       "ORDER BY il.CreatedAt DESC"
-                Using reader As SqlDataReader = Utilities.ExecuteReader(stockQuery, New SqlParameter() {New SqlParameter("@SupplierID", supplierId)})
+                                       "ORDER BY il.CreatedAt DESC LIMIT 12"
+                Using reader As DbDataReader = Utilities.ExecuteReader(stockQuery, New SqlParameter() {New SqlParameter("@SupplierID", supplierId)})
                     While reader.Read()
                         Dim dt As DateTime = If(IsDBNull(reader("CreatedAt")), DateTime.MinValue, Convert.ToDateTime(reader("CreatedAt")))
                         Dim prod As String = If(IsDBNull(reader("ProductName")), "", reader("ProductName").ToString())

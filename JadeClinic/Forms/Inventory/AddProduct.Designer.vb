@@ -1,4 +1,4 @@
-﻿<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
+<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
 Partial Class AddProduct
     Inherits System.Windows.Forms.Form
 
@@ -73,7 +73,6 @@ Partial Class AddProduct
         Guna2HtmlLabel15 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         UnitCmbBox = New Guna.UI2.WinForms.Guna2ComboBox()
         Guna2HtmlLabel11 = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        exitDialoglbl = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2Panel2.SuspendLayout()
         CType(BarcodeImage, ComponentModel.ISupportInitialize).BeginInit()
         CType(ProductImage, ComponentModel.ISupportInitialize).BeginInit()
@@ -297,11 +296,11 @@ Partial Class AddProduct
         lblProductPicturetrigger.BackColor = Color.Transparent
         lblProductPicturetrigger.Font = New Font("Poppins", 9F, FontStyle.Underline, GraphicsUnit.Point, CByte(0))
         lblProductPicturetrigger.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
-        lblProductPicturetrigger.Location = New Point(15, 209)
+        lblProductPicturetrigger.Location = New Point(51, 197)
         lblProductPicturetrigger.Name = "lblProductPicturetrigger"
-        lblProductPicturetrigger.Size = New Size(184, 28)
+        lblProductPicturetrigger.Size = New Size(118, 28)
         lblProductPicturetrigger.TabIndex = 99
-        lblProductPicturetrigger.Text = "Change Product Picture"
+        lblProductPicturetrigger.Text = "Add Thumbnail"
         ' 
         ' ProductImage
         ' 
@@ -476,24 +475,12 @@ Partial Class AddProduct
         Guna2HtmlLabel11.TabIndex = 96
         Guna2HtmlLabel11.Text = "Unit"
         ' 
-        ' exitDialoglbl
-        ' 
-        exitDialoglbl.BackColor = Color.Transparent
-        exitDialoglbl.Font = New Font("Poppins Medium", 16.2F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
-        exitDialoglbl.ForeColor = Color.FromArgb(CByte(51), CByte(51), CByte(51))
-        exitDialoglbl.Location = New Point(648, 3)
-        exitDialoglbl.Name = "exitDialoglbl"
-        exitDialoglbl.Size = New Size(21, 50)
-        exitDialoglbl.TabIndex = 121
-        exitDialoglbl.Text = "X"
-        ' 
         ' AddProduct
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
         BackColor = Color.White
         ClientSize = New Size(688, 691)
-        Controls.Add(exitDialoglbl)
         Controls.Add(Guna2Panel2)
         Controls.Add(Guna2Panel1)
         Controls.Add(Guna2HtmlLabel6)

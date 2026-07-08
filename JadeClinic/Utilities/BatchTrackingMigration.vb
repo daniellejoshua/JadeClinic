@@ -1,4 +1,5 @@
-Imports Microsoft.Data.SqlClient
+Imports System.Data.Common
+Imports Microsoft.Data.Sqlite
 
 Public Class BatchTrackingMigration
     ''' <summary>
@@ -10,49 +11,37 @@ Public Class BatchTrackingMigration
             Console.WriteLine("?? Checking database for batch tracking support...")
             
             Dim connStr As String = Connection.GetConnectionString()
-            Using conn As New SqlConnection(connStr)
+            Using conn As DbConnection = DbProvider.CreateConnection(connStr)
                 conn.Open()
-                
-                ' Check if BatchNumber column exists in InventoryLog table
-                Dim checkBatchColumnQuery As String = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS " &
-                    "WHERE TABLE_NAME = 'InventoryLog' AND COLUMN_NAME = 'BatchNumber'"
-                
-                Dim batchColumnExists As Integer
-                Using cmd As New SqlCommand(checkBatchColumnQuery, conn)
-                    batchColumnExists = Convert.ToInt32(cmd.ExecuteScalar())
-                End Using
-                
+
+                ' Check if BatchNumber column exists in InventoryLog table (SQLite uses pragma_table_info)
+                Dim checkBatchColumnQuery As String = "SELECT COUNT(*) FROM pragma_table_info('InventoryLog') WHERE name = 'BatchNumber'"
+
+                Dim batchColumnExists As Integer = Convert.ToInt32(DatabaseHelper.ExecuteScalar(checkBatchColumnQuery, Nothing))
+
                 ' Check if ExpiryDate column exists in InventoryLog table
-                Dim checkExpiryColumnQuery As String = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS " &
-                    "WHERE TABLE_NAME = 'InventoryLog' AND COLUMN_NAME = 'ExpiryDate'"
-                
-                Dim expiryColumnExists As Integer
-                Using cmd As New SqlCommand(checkExpiryColumnQuery, conn)
-                    expiryColumnExists = Convert.ToInt32(cmd.ExecuteScalar())
-                End Using
-                
+                Dim checkExpiryColumnQuery As String = "SELECT COUNT(*) FROM pragma_table_info('InventoryLog') WHERE name = 'ExpiryDate'"
+
+                Dim expiryColumnExists As Integer = Convert.ToInt32(DatabaseHelper.ExecuteScalar(checkExpiryColumnQuery, Nothing))
+
                 Dim needsUpdate As Boolean = False
-                
+
                 ' Add BatchNumber column if it doesn't exist
                 If batchColumnExists = 0 Then
                     Console.WriteLine("?? Adding BatchNumber column to InventoryLog table...")
-                    Dim addBatchQuery As String = "ALTER TABLE InventoryLog ADD BatchNumber nvarchar(50) NULL"
-                    Using cmd As New SqlCommand(addBatchQuery, conn)
-                        cmd.ExecuteNonQuery()
-                    End Using
+                    Dim addBatchQuery As String = "ALTER TABLE InventoryLog ADD COLUMN BatchNumber TEXT NULL"
+                    DatabaseHelper.ExecuteNonQuery(addBatchQuery, Nothing)
                     needsUpdate = True
                 End If
-                
+
                 ' Add ExpiryDate column if it doesn't exist
                 If expiryColumnExists = 0 Then
                     Console.WriteLine("?? Adding ExpiryDate column to InventoryLog table...")
-                    Dim addExpiryQuery As String = "ALTER TABLE InventoryLog ADD ExpiryDate date NULL"
-                    Using cmd As New SqlCommand(addExpiryQuery, conn)
-                        cmd.ExecuteNonQuery()
-                    End Using
+                    Dim addExpiryQuery As String = "ALTER TABLE InventoryLog ADD COLUMN ExpiryDate TEXT NULL"
+                    DatabaseHelper.ExecuteNonQuery(addExpiryQuery, Nothing)
                     needsUpdate = True
                 End If
-                
+
                 ' Create indexes if columns were added
                 If needsUpdate Then
                     CreateBatchTrackingIndexes(conn)
@@ -60,7 +49,7 @@ Public Class BatchTrackingMigration
                 Else
                     Console.WriteLine("? Database already supports batch tracking!")
                 End If
-                
+
             End Using
             
         Catch ex As Exception
@@ -69,23 +58,15 @@ Public Class BatchTrackingMigration
         End Try
     End Sub
     
-    Private Shared Sub CreateBatchTrackingIndexes(conn As SqlConnection)
+    Private Shared Sub CreateBatchTrackingIndexes(conn As DbConnection)
         Try
             ' Create index for BatchNumber
-            Dim batchIndexQuery As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_InventoryLog_Batch') " &
-                "CREATE NONCLUSTERED INDEX IX_InventoryLog_Batch ON InventoryLog (BatchNumber ASC) WHERE BatchNumber IS NOT NULL"
-            
-            Using cmd As New SqlCommand(batchIndexQuery, conn)
-                cmd.ExecuteNonQuery()
-            End Using
+            Dim batchIndexQuery As String = "CREATE INDEX IF NOT EXISTS IX_InventoryLog_Batch ON InventoryLog (BatchNumber)"
+            DatabaseHelper.ExecuteNonQuery(batchIndexQuery, Nothing)
             
             ' Create index for ExpiryDate
-            Dim expiryIndexQuery As String = "IF NOT EXISTS (SELECT * FROM sys.indexes WHERE name = 'IX_InventoryLog_Expiry') " &
-                "CREATE NONCLUSTERED INDEX IX_InventoryLog_Expiry ON InventoryLog (ExpiryDate ASC) WHERE ExpiryDate IS NOT NULL"
-            
-            Using cmd As New SqlCommand(expiryIndexQuery, conn)
-                cmd.ExecuteNonQuery()
-            End Using
+            Dim expiryIndexQuery As String = "CREATE INDEX IF NOT EXISTS IX_InventoryLog_Expiry ON InventoryLog (ExpiryDate)"
+            DatabaseHelper.ExecuteNonQuery(expiryIndexQuery, Nothing)
             
             Console.WriteLine("?? Created batch tracking indexes successfully!")
             
@@ -103,28 +84,31 @@ Public Class BatchTrackingMigration
             Console.WriteLine("?? Generating sample batch data for testing...")
             
             Dim connStr As String = Connection.GetConnectionString()
-            Using conn As New SqlConnection(connStr)
-                conn.Open()
-                
-                ' Find ENDO products to create sample batch data
-                Dim findEndoQuery As String = "SELECT TOP 3 ProductID, ProductName FROM Products WHERE Category = 'ENDO' AND IsActive = 1"
-                
-                Using cmd As New SqlCommand(findEndoQuery, conn)
-                    Using reader As SqlDataReader = cmd.ExecuteReader()
-                        Dim endoProducts As New List(Of (ProductID As Integer, ProductName As String))
-                        
-                        While reader.Read()
-                            endoProducts.Add((reader("ProductID"), reader("ProductName").ToString()))
-                        End While
-                        
-                        reader.Close()
-                        
-                        ' Create sample batch entries for each ENDO product
-                        For Each product In endoProducts
-                            CreateSampleBatchEntry(conn, product.ProductID, product.ProductName)
-                        Next
-                    End Using
-                End Using
+            ' Use DatabaseHelper and provider-agnostic readers
+            Dim findEndoQuery As String = "SELECT ProductID, ProductName FROM Products WHERE Category = 'ENDO' AND IsActive = 1 LIMIT 3"
+            Using reader As DbDataReader = DatabaseHelper.ExecuteReader(findEndoQuery, Nothing)
+                Dim endoProducts As New List(Of (ProductID As Integer, ProductName As String))
+                While reader.Read()
+                    endoProducts.Add((Convert.ToInt32(reader("ProductID")), reader("ProductName").ToString()))
+                End While
+                reader.Close()
+
+                ' Create sample batch entries for each ENDO product
+                For Each product In endoProducts
+                    ' open a connection per entry to reuse existing helper methods
+                    Dim insertQuery As String = "INSERT INTO InventoryLog (ProductID, TransactionType, Quantity, PreviousStock, NewStock, BatchNumber, ExpiryDate, UserID, Notes, CreatedAt) VALUES (@ProductID, 'IN', 10, 0, 10, @BatchNumber, @ExpiryDate, 1, @Notes, datetime('now'))"
+                    Dim parameters() As SqlParameter = {
+                        New SqlParameter("@ProductID", product.ProductID),
+                        New SqlParameter("@BatchNumber", $"ENDO-BATCH-{DateTime.Now:yyyyMMdd}-001"),
+                        New SqlParameter("@ExpiryDate", DateTime.Now.AddYears(2).ToString("yyyy-MM-dd")),
+                        New SqlParameter("@Notes", $"Sample batch entry for {product.ProductName} - Testing batch tracking system")
+                    }
+                    DatabaseHelper.ExecuteNonQuery(insertQuery, parameters)
+
+                    Dim updateStockQuery As String = "UPDATE Products SET CurrentStock = 10 WHERE ProductID = @ProductID"
+                    Dim updateParams() As SqlParameter = {New SqlParameter("@ProductID", product.ProductID)}
+                    DatabaseHelper.ExecuteNonQuery(updateStockQuery, updateParams)
+                Next
             End Using
             
             Console.WriteLine("? Sample batch data generated successfully!")
@@ -134,7 +118,7 @@ Public Class BatchTrackingMigration
         End Try
     End Sub
     
-    Private Shared Sub CreateSampleBatchEntry(conn As SqlConnection, productId As Integer, productName As String)
+    Private Shared Sub CreateSampleBatchEntry(conn As SqliteConnection, productId As Integer, productName As String)
         Try
             ' Create a sample inventory log entry with batch information
             Dim batchNumber As String = $"ENDO-BATCH-{DateTime.Now:yyyyMMdd}-001"
@@ -142,9 +126,9 @@ Public Class BatchTrackingMigration
             
             Dim insertQuery As String = "INSERT INTO InventoryLog (ProductID, TransactionType, Quantity, PreviousStock, NewStock, " &
                 "BatchNumber, ExpiryDate, UserID, Notes, CreatedAt) " &
-                "VALUES (@ProductID, 'IN', 10, 0, 10, @BatchNumber, @ExpiryDate, 1, @Notes, GETDATE())"
+                "VALUES (@ProductID, 'IN', 10, 0, 10, @BatchNumber, @ExpiryDate, 1, @Notes, datetime('now'))"
             
-            Using cmd As New SqlCommand(insertQuery, conn)
+            Using cmd As New SqliteCommand(insertQuery, conn)
                 cmd.Parameters.AddWithValue("@ProductID", productId)
                 cmd.Parameters.AddWithValue("@BatchNumber", batchNumber)
                 cmd.Parameters.AddWithValue("@ExpiryDate", expiryDate)
@@ -155,7 +139,7 @@ Public Class BatchTrackingMigration
             
             ' Update product stock
             Dim updateStockQuery As String = "UPDATE Products SET CurrentStock = 10 WHERE ProductID = @ProductID"
-            Using cmd As New SqlCommand(updateStockQuery, conn)
+            Using cmd As New SqliteCommand(updateStockQuery, conn)
                 cmd.Parameters.AddWithValue("@ProductID", productId)
                 cmd.ExecuteNonQuery()
             End Using
@@ -173,29 +157,34 @@ Public Class BatchTrackingMigration
     Public Shared Function GetExpiringBatches(daysAhead As Integer) As DataTable
         Try
             Dim connStr As String = Connection.GetConnectionString()
-            Using conn As New SqlConnection(connStr)
+            Using conn As DbConnection = DbProvider.CreateConnection(connStr)
                 conn.Open()
-                
+
                 Dim query As String = "SELECT il.BatchNumber, p.ProductName, p.Category, il.ExpiryDate, " &
-                    "DATEDIFF(day, GETDATE(), il.ExpiryDate) AS DaysUntilExpiry, " &
+                    "CAST(julianday(il.ExpiryDate) - julianday('now') AS INTEGER) AS DaysUntilExpiry, " &
                     "il.Quantity, il.CreatedAt " &
                     "FROM InventoryLog il " &
                     "INNER JOIN Products p ON il.ProductID = p.ProductID " &
                     "WHERE il.ExpiryDate IS NOT NULL " &
-                    "AND il.ExpiryDate BETWEEN GETDATE() AND DATEADD(day, @DaysAhead, GETDATE()) " &
+                    "AND il.ExpiryDate BETWEEN datetime('now') AND datetime('now', '+' || @DaysAhead || ' days') " &
                     "ORDER BY il.ExpiryDate ASC"
-                
-                Using cmd As New SqlCommand(query, conn)
-                    cmd.Parameters.AddWithValue("@DaysAhead", daysAhead)
-                    
-                    Dim adapter As New SqlDataAdapter(cmd)
+
+                Using cmd As DbCommand = conn.CreateCommand()
+                    cmd.CommandText = query
+                    Dim param As DbParameter = cmd.CreateParameter()
+                    param.ParameterName = "@DaysAhead"
+                    param.Value = daysAhead
+                    cmd.Parameters.Add(param)
+
                     Dim table As New DataTable()
-                    adapter.Fill(table)
-                    
+                    Using reader As DbDataReader = cmd.ExecuteReader()
+                        table.Load(reader)
+                    End Using
+
                     Return table
                 End Using
             End Using
-            
+
         Catch ex As Exception
             Console.WriteLine($"?? Error getting expiring batches: {ex.Message}")
             Return New DataTable() ' Return empty table on error

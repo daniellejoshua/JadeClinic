@@ -5,7 +5,8 @@ Imports System.IO
 Imports System.Text.RegularExpressions
 Imports System.Windows.Forms
 Imports Guna.UI2.WinForms
-Imports Microsoft.Data.SqlClient
+Imports Microsoft.Data.Sqlite
+Imports System.Data.Common
 Imports Newtonsoft.Json
 
 
@@ -372,7 +373,7 @@ Public Class Sales
             Dim query As String = "SELECT ProductID, ProductName, SellingPrice, ProductCode, CurrentStock, Category FROM Products WHERE ProductCode = @ProductCode AND IsActive = 1"
             Dim param As New SqlParameter("@ProductCode", barcode)
 
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, {param})
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, {param})
                 If reader.Read() Then
                     Console.WriteLine($"Product found: {reader("ProductName")}")
 
@@ -531,8 +532,8 @@ Public Class Sales
         ' Show next possible Sale ID in lblOrderId
         Dim nextSaleId As Integer = 1
         Try
-            Dim query As String = "SELECT ISNULL(MAX(SaleID), 0) + 1 AS NextSaleID FROM Sales"
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
+            Dim query As String = "SELECT IFNULL(MAX(SaleID), 0) + 1 AS NextSaleID FROM Sales"
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
                 If reader.Read() Then
                     nextSaleId = Convert.ToInt32(reader("NextSaleID"))
                 End If
@@ -609,7 +610,7 @@ Public Class Sales
         ' Query products from database where Category matches - Always get fresh data
         Dim query As String = "SELECT ProductID, ProductName, SellingPrice, ProductCode, ReorderLevel, CurrentStock, Category FROM Products WHERE Category = @Category AND IsActive = 1"
         Dim param As New SqlParameter("@Category", categoryName)
-        Using reader As SqlDataReader = Utilities.ExecuteReader(query, {param})
+        Using reader As DbDataReader = Utilities.ExecuteReader(query, {param})
             Dim cardWidth As Integer = 230
             Dim cardHeight As Integer = 220
             Dim marginX As Integer = 28
@@ -1108,7 +1109,7 @@ Public Class Sales
         ' Query the database to get the count of distinct products for each category
         Try
             Dim query As String = "SELECT Category, COUNT(*) AS TotalProducts FROM Products WHERE IsActive = 1 GROUP BY Category"
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
                 While reader.Read()
                     Dim category As String = reader("Category").ToString().ToUpper()
                     Dim totalProducts As Integer = Convert.ToInt32(reader("TotalProducts"))
@@ -1135,7 +1136,7 @@ Public Class Sales
     Private Sub AddNewCategoryButtonsFromDB()
         ' Get all categories from DB
         Dim query As String = "SELECT DISTINCT Category FROM Products WHERE Category IS NOT NULL AND Category <> '' AND IsActive = 1"
-        Using reader As SqlDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
+        Using reader As DbDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
             While reader.Read()
                 Dim catName As String = reader("Category").ToString().ToUpper()
                 ' Skip if category is a main category (normalize)
@@ -1339,12 +1340,11 @@ Public Class Sales
 
     Private Sub EnsureDailyOpeningCapitalTable()
         Dim sql As String =
-        "IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='DailyOpeningCapital' AND xtype='U') " &
-        "CREATE TABLE DailyOpeningCapital (" &
-        "CashDate date PRIMARY KEY, " &
-        "OpeningAmount decimal(18,2) NOT NULL, " &
-        "SetByUserID int NULL, " &
-        "SetAt datetime2 NOT NULL DEFAULT GETDATE())"
+        "CREATE TABLE IF NOT EXISTS DailyOpeningCapital (" &
+        "CashDate TEXT PRIMARY KEY, " &
+        "OpeningAmount REAL NOT NULL, " &
+        "SetByUserID INTEGER NULL, " &
+        "SetAt TEXT NOT NULL DEFAULT (datetime('now')))"
         Utilities.ExecuteNonQuery(sql, New SqlParameter() {})
     End Sub
 
@@ -1365,14 +1365,10 @@ Public Class Sales
 
     Private Sub UpsertTodayOpeningCapital(amount As Decimal)
         Dim sql As String =
-        "IF EXISTS (SELECT 1 FROM DailyOpeningCapital WHERE CashDate = @CashDate) " &
-        "BEGIN " &
-        "   UPDATE DailyOpeningCapital SET OpeningAmount = @OpeningAmount, SetByUserID = @SetByUserID, SetAt = GETDATE() WHERE CashDate = @CashDate " &
-        "END " &
-        "ELSE " &
-        "BEGIN " &
-        "   INSERT INTO DailyOpeningCapital (CashDate, OpeningAmount, SetByUserID, SetAt) VALUES (@CashDate, @OpeningAmount, @SetByUserID, GETDATE()) " &
-        "END"
+        "INSERT INTO DailyOpeningCapital (CashDate, OpeningAmount, SetByUserID, SetAt) " &
+        "VALUES (@CashDate, @OpeningAmount, @SetByUserID, datetime('now')) " &
+        "ON CONFLICT(CashDate) DO UPDATE SET " &
+        "OpeningAmount = @OpeningAmount, SetByUserID = @SetByUserID, SetAt = datetime('now')"
 
         Utilities.ExecuteNonQuery(sql, New SqlParameter() {
         New SqlParameter("@CashDate", Date.Today),
@@ -3774,13 +3770,13 @@ Public Class Sales
                 Throw New Exception("Database connection string is not configured.")
             End If
 
-            Using conn As New SqlConnection(connStr)
+            Using conn As New SqliteConnection(connStr)
                 conn.Open()
                 Using tran = conn.BeginTransaction()
                     Try
                         ' Resolve UserID inside the transaction (ensure non-NULL value for InventoryLog.UserID)
                         Dim userIdToUse As Object = DBNull.Value
-                        Using cmdUserCheck As New SqlCommand("SELECT UserID FROM Users WHERE Username = @Username", conn, tran)
+                        Using cmdUserCheck As New SqliteCommand("SELECT UserID FROM Users WHERE Username = @Username", conn, tran)
                             cmdUserCheck.Parameters.AddWithValue("@Username", frmLoginvb.LoggedInUsername)
                             Dim uidObj = cmdUserCheck.ExecuteScalar()
                             If uidObj IsNot Nothing AndAlso Not IsDBNull(uidObj) Then
@@ -3790,7 +3786,7 @@ Public Class Sales
 
                         ' If still not found, fallback to any existing user (first row)
                         If userIdToUse Is DBNull.Value Then
-                            Using cmdFb As New SqlCommand("SELECT TOP 1 UserID FROM Users ORDER BY UserID", conn, tran)
+                            Using cmdFb As New SqliteCommand("SELECT * LIMIT 1 UserID FROM Users ORDER BY UserID", conn, tran)
                                 Dim fb = cmdFb.ExecuteScalar()
                                 If fb IsNot Nothing AndAlso Not IsDBNull(fb) Then
                                     userIdToUse = Convert.ToInt32(fb)
@@ -3805,9 +3801,9 @@ Public Class Sales
                         ' Insert Sale and get SaleID
                         Dim insertSaleQuery As String =
                     "INSERT INTO Sales (SaleDate, CustomerName, CustomerTIN, TotalAmount, AmountPaid, PaymentMethod, Reference, DiscountAmount, DiscountType, SalesData, UserID) " &
-                    "VALUES (@SaleDate, @CustomerName, @CustomerTIN, @TotalAmount, @AmountPaid, @PaymentMethod, @Reference, @DiscountAmount, @DiscountType, @SalesData, @UserID); SELECT CAST(SCOPE_IDENTITY() AS int);"
+                    "VALUES (@SaleDate, @CustomerName, @CustomerTIN, @TotalAmount, @AmountPaid, @PaymentMethod, @Reference, @DiscountAmount, @DiscountType, @SalesData, @UserID); SELECT last_insert_rowid();"
 
-                        Using cmdSale As New SqlCommand(insertSaleQuery, conn, tran)
+                        Using cmdSale As New SqliteCommand(insertSaleQuery, conn, tran)
                             cmdSale.Parameters.AddWithValue("@SaleDate", DateTime.Now)
                             cmdSale.Parameters.AddWithValue("@CustomerName", If(String.IsNullOrWhiteSpace(selectedCustomerName), CType(DBNull.Value, Object), CType(selectedCustomerName, Object)))
                             cmdSale.Parameters.AddWithValue("@CustomerTIN", If(String.IsNullOrWhiteSpace(selectedCustomerTIN), CType(DBNull.Value, Object), CType(selectedCustomerTIN, Object)))
@@ -3841,7 +3837,7 @@ Public Class Sales
                                 Else
                                     origPrice = unitPrice
                                 End If
-                                Using cmdItem As New SqlCommand("INSERT INTO SaleItems (SaleID, ProductID, Quantity, UnitPrice, OriginalUnitPrice) VALUES (@SaleID, @ProductID, @Quantity, @UnitPrice, @OriginalUnitPrice)", conn, tran)
+                                Using cmdItem As New SqliteCommand("INSERT INTO SaleItems (SaleID, ProductID, Quantity, UnitPrice, OriginalUnitPrice) VALUES (@SaleID, @ProductID, @Quantity, @UnitPrice, @OriginalUnitPrice)", conn, tran)
                                     cmdItem.Parameters.AddWithValue("@SaleID", saleId)
                                     cmdItem.Parameters.AddWithValue("@ProductID", prodId)
                                     cmdItem.Parameters.AddWithValue("@Quantity", qty)
@@ -3852,7 +3848,7 @@ Public Class Sales
 
                                 ' Read previous stock (source of truth)
                                 Dim previousStock As Integer = 0
-                                Using cmdPrev As New SqlCommand("SELECT ISNULL(CurrentStock, 0) FROM Products WHERE ProductID = @ProductID", conn, tran)
+                                Using cmdPrev As New SqliteCommand("SELECT IFNULL(CurrentStock, 0) FROM Products WHERE ProductID = @ProductID", conn, tran)
                                     cmdPrev.Parameters.AddWithValue("@ProductID", prodId)
                                     Dim prevObj = cmdPrev.ExecuteScalar()
                                     If prevObj IsNot Nothing AndAlso Not IsDBNull(prevObj) Then
@@ -3862,7 +3858,7 @@ Public Class Sales
 
                                 ' Decrease stock (avoid negative values by enforcing calculation)
                                 Dim newStock As Integer = Math.Max(0, previousStock - qty)
-                                Using cmdUpdate As New SqlCommand("UPDATE Products SET CurrentStock = @NewStock WHERE ProductID = @ProductID", conn, tran)
+                                Using cmdUpdate As New SqliteCommand("UPDATE Products SET CurrentStock = @NewStock WHERE ProductID = @ProductID", conn, tran)
                                     cmdUpdate.Parameters.AddWithValue("@NewStock", newStock)
                                     cmdUpdate.Parameters.AddWithValue("@ProductID", prodId)
                                     cmdUpdate.ExecuteNonQuery()
@@ -3872,7 +3868,7 @@ Public Class Sales
                                 Dim insertLogQuery As String =
                             "INSERT INTO InventoryLog (ProductID, TransactionType, Quantity, PreviousStock, NewStock, SupplierID, Reference, Notes, UserID, CreatedAt) " &
                             "VALUES (@ProductID, @TransactionType, @Quantity, @PreviousStock, @NewStock, @SupplierID, @Reference, @Notes, @UserID, @CreatedAt)"
-                                Using cmdLog As New SqlCommand(insertLogQuery, conn, tran)
+                                Using cmdLog As New SqliteCommand(insertLogQuery, conn, tran)
                                     cmdLog.Parameters.AddWithValue("@ProductID", prodId)
                                     ' IMPORTANT: use 'OUT' (not 'Stock Out') to conform to InventoryLog CHECK constraint
                                     cmdLog.Parameters.AddWithValue("@TransactionType", "OUT")
@@ -4046,8 +4042,8 @@ Public Class Sales
     Private Sub InitializeOrderId()
         Try
             Dim nextOrderId As Integer = 1
-            Dim query As String = "SELECT ISNULL(MAX(SaleID), 0) + 1 AS NextOrderID FROM Sales"
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
+            Dim query As String = "SELECT IFNULL(MAX(SaleID), 0) + 1 AS NextOrderID FROM Sales"
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
                 If reader.Read() Then
                     nextOrderId = Convert.ToInt32(reader("NextOrderID"))
                 End If
@@ -4857,11 +4853,11 @@ Public Class Sales
     End Sub
     Private Function GetPrimaryImageBytes(productId As Integer) As Byte()
         Try
-            Dim query As String = "SELECT TOP 1 pi.ImageData FROM ProductImageMapping pim " &
+            Dim query As String = "SELECT pi.ImageData FROM ProductImageMapping pim " &
                                   "JOIN ProductImages pi ON pim.ImageID = pi.ImageID " &
-                                  "WHERE pim.ProductID = @ProductID AND pi.ImageData IS NOT NULL"
+                                  "WHERE pim.ProductID = @ProductID AND pi.ImageData IS NOT NULL LIMIT 1"
             Dim param As New SqlParameter("@ProductID", productId)
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, {param})
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, {param})
                 If reader.Read() Then
                     If Not IsDBNull(reader("ImageData")) Then
                         Return CType(reader("ImageData"), Byte())
@@ -4926,7 +4922,7 @@ Public Class Sales
 
         Dim query As String = "SELECT ProductID, ProductName, SellingPrice, ProductCode, ReorderLevel, CurrentStock, Category FROM Products WHERE ProductID = @ProductID AND IsActive = 1"
         Dim param As New SqlParameter("@ProductID", productId)
-        Using reader As SqlDataReader = Utilities.ExecuteReader(query, {param})
+        Using reader As DbDataReader = Utilities.ExecuteReader(query, {param})
             If reader.Read() Then
                 Dim cardWidth As Integer = 230
                 Dim cardHeight As Integer = 220
@@ -5109,13 +5105,13 @@ Public Class Sales
                            End If
 
                            Try
-                               Dim query As String = "SELECT TOP 1 ProductID, ProductName, Category FROM Products WHERE IsActive = 1 AND (ProductCode = @term OR ProductName LIKE @like) ORDER BY CASE WHEN ProductCode = @term THEN 0 ELSE 1 END, ProductName"
+                               Dim query As String = "SELECT * LIMIT 1 ProductID, ProductName, Category FROM Products WHERE IsActive = 1 AND (ProductCode = @term OR ProductName LIKE @like) ORDER BY CASE WHEN ProductCode = @term THEN 0 ELSE 1 END, ProductName"
                                Dim parameters As SqlParameter() = {
                                    New SqlParameter("@term", term),
                                    New SqlParameter("@like", "%" & term & "%")
                                }
 
-                               Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters)
+                               Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters)
                                    If reader.Read() Then
                                        Dim productId As Integer = Convert.ToInt32(reader("ProductID"))
                                        Dim productName As String = reader("ProductName").ToString()
@@ -5574,8 +5570,8 @@ Public Class Sales
         Dim token As String = ExtractManagerQrToken(qrRaw)
         If String.IsNullOrWhiteSpace(token) Then Return False
 
-        Dim sql As String = "SELECT TOP 1 Username, UserRole, IsActive FROM Users WHERE QRCode = @QRCode"
-        Using reader As SqlDataReader = Utilities.ExecuteReader(sql, New SqlParameter("@QRCode", token))
+        Dim sql As String = "SELECT * LIMIT 1 Username, UserRole, IsActive FROM Users WHERE QRCode = @QRCode"
+        Using reader As DbDataReader = Utilities.ExecuteReader(sql, New SqlParameter("@QRCode", token))
             If reader.Read() Then
                 Dim userName As String = If(IsDBNull(reader("Username")), "", reader("Username").ToString())
                 Dim role As String = If(IsDBNull(reader("UserRole")), "", reader("UserRole").ToString())
@@ -5595,8 +5591,8 @@ Public Class Sales
         approverUsername = ""
         If String.IsNullOrWhiteSpace(managerUsername) OrElse String.IsNullOrWhiteSpace(managerPassword) Then Return False
 
-        Dim sql As String = "SELECT TOP 1 Username, UserRole, IsActive, PasswordHash FROM Users WHERE Username = @Username"
-        Using reader As SqlDataReader = Utilities.ExecuteReader(sql, New SqlParameter("@Username", managerUsername))
+        Dim sql As String = "SELECT * LIMIT 1 Username, UserRole, IsActive, PasswordHash FROM Users WHERE Username = @Username"
+        Using reader As DbDataReader = Utilities.ExecuteReader(sql, New SqlParameter("@Username", managerUsername))
             If reader.Read() Then
                 Dim role As String = If(IsDBNull(reader("UserRole")), "", reader("UserRole").ToString())
                 Dim active As Boolean = If(IsDBNull(reader("IsActive")), False, Convert.ToBoolean(reader("IsActive")))

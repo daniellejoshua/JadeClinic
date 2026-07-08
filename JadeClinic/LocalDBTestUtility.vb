@@ -1,4 +1,4 @@
-Imports Microsoft.Data.SqlClient
+Imports Microsoft.Data.Sqlite
 Imports System.Configuration
 
 Public Class LocalDBTestUtility
@@ -48,7 +48,7 @@ Public Class LocalDBTestUtility
         Console.WriteLine("?? Database Information...")
         
         Try
-            Using conn As New SqlConnection(Connection.GetConnectionString())
+            Using conn As New SqliteConnection(Connection.GetConnectionString())
                 conn.Open()
                 
                 ' Get database name and server
@@ -57,7 +57,7 @@ Public Class LocalDBTestUtility
                 Console.WriteLine($"   Connection String: {Connection.GetConnectionString()}")
                 
                 ' Get SQL Server version
-                Using cmd As New SqlCommand("SELECT @@VERSION", conn)
+                Using cmd As New SqliteCommand("SELECT @@VERSION", conn)
                     Dim version As String = cmd.ExecuteScalar().ToString()
                     Console.WriteLine($"   Version: {version.Split(vbCrLf)(0)}")
                 End Using

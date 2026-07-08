@@ -1,8 +1,8 @@
-﻿Imports System.Globalization
+Imports System.Globalization
 Imports System.IO
 Imports System.Linq
 Imports Guna.UI2.WinForms
-Imports Microsoft.Data.SqlClient
+Imports System.Data.Common
 
 Public Class AuditLog
     Private overlayPanel As Panel
@@ -84,7 +84,7 @@ Public Class AuditLog
             cmbAccounts.Items.Add("All Accounts")
 
             Dim query As String = "SELECT Username FROM Users WHERE Username IS NOT NULL AND Username <> '' ORDER BY Username"
-            Using rdr As SqlDataReader = Utilities.ExecuteReader(query)
+            Using rdr As DbDataReader = Utilities.ExecuteReader(query)
                 While rdr.Read()
                     If Not IsDBNull(rdr("Username")) Then
                         cmbAccounts.Items.Add(rdr("Username").ToString())
@@ -333,7 +333,7 @@ Public Class AuditLog
 
                                   ' Date filter
                                   If filterDate.HasValue Then
-                                      whereClauses.Add("CAST(a.ActionTime AS DATE) = @FilterDate")
+                                      whereClauses.Add("DATE(a.ActionTime) = @FilterDate")
                                       parameters.Add(New SqlParameter("@FilterDate", System.Data.SqlDbType.Date) With {.Value = filterDate.Value.Date})
                                   End If
 
@@ -350,7 +350,7 @@ Public Class AuditLog
                                   ' Fixed sort (newest first)
                                   query += " ORDER BY a.ActionTime DESC"
 
-                                  Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters.ToArray())
+                                  Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters.ToArray())
                                       While reader.Read()
                                           Dim auditData As New Dictionary(Of String, Object) From {
                                           {"AuditID", Convert.ToInt32(reader("AuditID"))},
@@ -442,27 +442,27 @@ Public Class AuditLog
     Private Function GetActionType(action As String) As String
         Dim a As String = If(action, "").ToLowerInvariant()
         If a.Contains("login") OrElse a.Contains("logout") OrElse a.Contains("logged") Then
-            Return "🔐 AUTH"
+            Return Char.ConvertFromUtf32(&H1F511) & " AUTH"
         ElseIf a.Contains("navigation") OrElse a.Contains("access") OrElse a.Contains("view") Then
-            Return "🧭 NAV"
+            Return Char.ConvertFromUtf32(&H1F9ED) & " NAV"
         ElseIf a.Contains("add") OrElse a.Contains("create") OrElse a.Contains("added") OrElse a.Contains("created") Then
-            Return "➕ CREATE"
+            Return ChrW(&H2795) & " CREATE"
         ElseIf a.Contains("update") OrElse a.Contains("modify") OrElse a.Contains("edit") OrElse a.Contains("edited") Then
-            Return "📝 UPDATE"
+            Return Char.ConvertFromUtf32(&H1F504) & " UPDATE"
         ElseIf a.Contains("delete") OrElse a.Contains("remove") OrElse a.Contains("deleted") Then
-            Return "🗑️ DELETE"
+            Return Char.ConvertFromUtf32(&H1F5D1) & " DELETE"
         ElseIf a.Contains("export") OrElse a.Contains("report") Then
-            Return "📄 EXPORT"
+            Return Char.ConvertFromUtf32(&H1F4E4) & " EXPORT"
         ElseIf a.Contains("error") OrElse a.Contains("failed") Then
-            Return "❌ ERROR"
+            Return ChrW(&H26A0) & " ERROR"
         ElseIf a.Contains("security") OrElse a.Contains("unauthorized") Then
-            Return "🛡️ SECURITY"
+            Return Char.ConvertFromUtf32(&H1F6E1) & " SECURITY"
         ElseIf a.Contains("product") OrElse a.Contains("inventory") Then
-            Return "📦 INVENTORY"
+            Return Char.ConvertFromUtf32(&H1F4E6) & " INVENTORY"
         ElseIf a.Contains("session") OrElse a.Contains("pin") Then
-            Return "🔑 SESSION"
+            Return ChrW(&H23F1) & " SESSION"
         Else
-            Return "ℹ️ INFO"
+            Return ChrW(&H2139) & " INFO"
         End If
     End Function
 

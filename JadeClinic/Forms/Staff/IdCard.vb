@@ -1,7 +1,7 @@
-﻿Imports System.IO
+Imports System.IO
 Imports System.Drawing.Imaging
 Imports MessagingToolkit.QRCode.Codec
-Imports Microsoft.Data.SqlClient
+Imports System.Data.Common
 Imports System.Drawing.Printing
 
 Public Class IdCard
@@ -10,6 +10,14 @@ Public Class IdCard
         IdleTimeoutManager.Instance.StartMonitoring(Me) ' Wire up buttons if not done in designer
         AddHandler btnClose.Click, Sub() Me.Close()
         AddHandler btnPrint.Click, AddressOf OnPrintClicked
+        ' Ensure info labels render on top of Guna2Panel1
+        lblRole.BringToFront()
+        lblEmail.BringToFront()
+        lblEmailTitle.BringToFront()
+        lblPhone.BringToFront()
+        lblPhoneTitle.BringToFront()
+        lblUserID.BringToFront()
+        Guna2HtmlLabel1.BringToFront()
     End Sub
 
     ' Populate the ID card from a user dictionary (keys: UserID, Username, FullName, UserRole, Email, Phone, Photo (byte()), QRCode)
@@ -84,7 +92,7 @@ Public Class IdCard
             ' If photo or QR not provided in dictionary, try fetching from DB using UserID
             If (Not photoSet OrElse String.IsNullOrWhiteSpace(qrText)) AndAlso Not String.IsNullOrWhiteSpace(userId) Then
                 Try
-                    Using rdr As SqlDataReader = Utilities.ExecuteReader("SELECT Photo, QRCode FROM Users WHERE UserID = @UserID", New SqlParameter("@UserID", userId))
+                    Using rdr As DbDataReader = Utilities.ExecuteReader("SELECT Photo, QRCode FROM Users WHERE UserID = @UserID", New SqlParameter("@UserID", userId))
                         If rdr.Read() Then
                             If (Not photoSet) AndAlso Not IsDBNull(rdr("Photo")) Then
                                 Dim dbPhoto = CType(rdr("Photo"), Byte())
@@ -144,7 +152,7 @@ Public Class IdCard
                 encoder.QRCodeBackgroundColor = Color.White
                 encoder.QRCodeForegroundColor = Color.Black
             Catch
-                ' Older versions may not expose color properties — ignore if not available
+                ' Older versions may not expose color properties � ignore if not available
             End Try
 
             Dim bmp As Bitmap = encoder.Encode(content)

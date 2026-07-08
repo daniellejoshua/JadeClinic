@@ -1,4 +1,5 @@
-﻿Imports Microsoft.Data.SqlClient
+Imports Microsoft.Data.Sqlite
+Imports System.Data.Common
 Imports System.IO
 Imports System.Drawing.Imaging
 Imports MessagingToolkit.Barcode
@@ -155,11 +156,11 @@ Public Class AddProduct
     Public Function UpdateProductStatus(productId As Integer, isActive As Boolean) As Boolean
         Try
             Dim connStr As String = Connection.GetConnectionString()
-            Using conn As New SqlConnection(connStr)
+            Using conn As New SqliteConnection(connStr)
                 conn.Open()
 
-                Dim updateQuery As String = "UPDATE Products SET IsActive = @IsActive, UpdatedAt = GETDATE() WHERE ProductID = @ProductID"
-                Using cmd As New SqlCommand(updateQuery, conn)
+                Dim updateQuery As String = "UPDATE Products SET IsActive = @IsActive, UpdatedAt = datetime('now') WHERE ProductID = @ProductID"
+                Using cmd As New SqliteCommand(updateQuery, conn)
                     cmd.Parameters.AddWithValue("@IsActive", If(isActive, 1, 0))
                     cmd.Parameters.AddWithValue("@ProductID", productId)
 
@@ -242,8 +243,8 @@ Public Class AddProduct
         ' Validate price relationship
         If sellingPrice <= costPrice Then
             MessageBox.Show("Selling price must be higher than cost price!" & Environment.NewLine &
-                          $"Cost Price: ₱{costPrice:N2}" & Environment.NewLine &
-                          $"Selling Price: ₱{sellingPrice:N2}", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                          $"Cost Price: ?{costPrice:N2}" & Environment.NewLine &
+                          $"Selling Price: ?{sellingPrice:N2}", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
             SellingPriceTextBox.Focus()
             Return False
         End If
@@ -259,16 +260,16 @@ Public Class AddProduct
 
             If wholesalePrice < costPrice Then
                 MessageBox.Show("Wholesale price cannot be lower than cost price!" & Environment.NewLine &
-                              $"Cost Price: ₱{costPrice:N2}" & Environment.NewLine &
-                              $"Wholesale Price: ₱{wholesalePrice:N2}", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                              $"Cost Price: ?{costPrice:N2}" & Environment.NewLine &
+                              $"Wholesale Price: ?{wholesalePrice:N2}", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
                 WholeSaleTextbox.Focus()
                 Return False
             End If
 
             If wholesalePrice >= sellingPrice Then
                 MessageBox.Show("Wholesale price must be lower than selling price!" & Environment.NewLine &
-                              $"Wholesale Price: ₱{wholesalePrice:N2}" & Environment.NewLine &
-                              $"Selling Price: ₱{sellingPrice:N2}", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                              $"Wholesale Price: ?{wholesalePrice:N2}" & Environment.NewLine &
+                              $"Selling Price: ?{sellingPrice:N2}", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
                 WholeSaleTextbox.Focus()
                 Return False
             End If
@@ -280,9 +281,9 @@ Public Class AddProduct
     Private Function SaveProduct() As Boolean
         Try
             Dim connStr As String = Connection.GetConnectionString()
-            Using conn As New SqlConnection(connStr)
+            Using conn As New SqliteConnection(connStr)
                 conn.Open()
-                Using transaction As SqlTransaction = conn.BeginTransaction()
+                Using transaction As SqliteTransaction = conn.BeginTransaction()
                     Try
                         Dim selectedCategory As String = cmbCategory.SelectedItem.ToString()
 
@@ -291,11 +292,11 @@ Public Class AddProduct
                                                    "IsActive, Created, UpdatedAt) " &
                                                    "VALUES (@ProductCode, @ProductName, @Category, @Unit, " &
                                                    "@CurrentStock, @ReorderLevel, @CostPrice, @SellingPrice, @WholesalePrice, " &
-                                                   "1, GETDATE(), GETDATE()); SELECT SCOPE_IDENTITY()"
+                                                    "1, datetime('now'), datetime('now')); SELECT last_insert_rowid()"
 
                         Dim productId As Integer
 
-                        Using cmd As New SqlCommand(insertQuery, conn, transaction)
+                        Using cmd As New SqliteCommand(insertQuery, conn, transaction)
                             cmd.Parameters.AddWithValue("@ProductCode", "TEMP_CODE")
                             cmd.Parameters.AddWithValue("@ProductName", txtProductName.Text.Trim())
                             cmd.Parameters.AddWithValue("@Category", selectedCategory)
@@ -313,7 +314,7 @@ Public Class AddProduct
                         Dim finalProductCode As String = Utilities.GenerateProductCode(productId)
 
                         Dim updateQuery As String = "UPDATE Products SET ProductCode = @ProductCode WHERE ProductID = @ProductID"
-                        Using cmdUpdate As New SqlCommand(updateQuery, conn, transaction)
+                        Using cmdUpdate As New SqliteCommand(updateQuery, conn, transaction)
                             cmdUpdate.Parameters.AddWithValue("@ProductCode", finalProductCode)
                             cmdUpdate.Parameters.AddWithValue("@ProductID", productId)
                             cmdUpdate.ExecuteNonQuery()
@@ -342,17 +343,17 @@ Public Class AddProduct
     Private Function UpdateProduct() As Boolean
         Try
             Dim connStr As String = Connection.GetConnectionString()
-            Using conn As New SqlConnection(connStr)
+            Using conn As New SqliteConnection(connStr)
                 conn.Open()
-                Using transaction As SqlTransaction = conn.BeginTransaction()
+                Using transaction As SqliteTransaction = conn.BeginTransaction()
                     Try
                         Dim selectedCategory As String = cmbCategory.SelectedItem.ToString()
 
                         Dim updateQuery As String = "UPDATE Products SET ProductName = @ProductName, Category = @Category, Unit = @Unit, " &
                                                "ReorderLevel = @ReorderLevel, CostPrice = @CostPrice, SellingPrice = @SellingPrice, " &
-                                               "WholesalePrice = @WholesalePrice, IsActive = @IsActive, UpdatedAt = GETDATE() WHERE ProductID = @ProductID"
+                                                "WholesalePrice = @WholesalePrice, IsActive = @IsActive, UpdatedAt = datetime('now') WHERE ProductID = @ProductID"
 
-                        Using cmd As New SqlCommand(updateQuery, conn, transaction)
+                        Using cmd As New SqliteCommand(updateQuery, conn, transaction)
                             cmd.Parameters.AddWithValue("@ProductName", txtProductName.Text.Trim())
                             cmd.Parameters.AddWithValue("@Category", selectedCategory)
                             cmd.Parameters.AddWithValue("@Unit", If(UnitCmbBox.SelectedItem IsNot Nothing, UnitCmbBox.SelectedItem.ToString(), "PCS"))
@@ -375,7 +376,7 @@ Public Class AddProduct
 
                         If Not String.IsNullOrWhiteSpace(selectedImagePath) AndAlso IO.File.Exists(selectedImagePath) Then
                             Dim deleteMappingQuery As String = "DELETE FROM ProductImageMapping WHERE ProductID = @ProductID"
-                            Using cmdDelete As New SqlCommand(deleteMappingQuery, conn, transaction)
+                            Using cmdDelete As New SqliteCommand(deleteMappingQuery, conn, transaction)
                                 cmdDelete.Parameters.AddWithValue("@ProductID", editProductId)
                                 cmdDelete.ExecuteNonQuery()
                             End Using
@@ -391,7 +392,7 @@ Public Class AddProduct
                         End If
 
                         Dim getCodeQuery As String = "SELECT ProductCode FROM Products WHERE ProductID = @ProductID"
-                        Using getCodeCmd As New SqlCommand(getCodeQuery, conn)
+                        Using getCodeCmd As New SqliteCommand(getCodeQuery, conn)
                             getCodeCmd.Parameters.AddWithValue("@ProductID", editProductId)
                             Dim existingProductCode As String = getCodeCmd.ExecuteScalar()?.ToString()
                             If Not String.IsNullOrEmpty(existingProductCode) Then
@@ -413,14 +414,14 @@ Public Class AddProduct
         End Try
     End Function
 
-    Private Sub SaveProductImage(conn As SqlConnection, transaction As SqlTransaction, productId As Integer, imagePath As String)
+    Private Sub SaveProductImage(conn As SqliteConnection, transaction As SqliteTransaction, productId As Integer, imagePath As String)
         Try
             Dim imageData As Byte() = File.ReadAllBytes(imagePath)
             Dim imageHash As String = Convert.ToBase64String(System.Security.Cryptography.SHA256.Create().ComputeHash(imageData))
 
             Dim existingImageId As Object = Nothing
             Dim checkImageQuery As String = "SELECT ImageID FROM ProductImages WHERE ImageHash = @ImageHash"
-            Using checkCmd As New SqlCommand(checkImageQuery, conn, transaction)
+            Using checkCmd As New SqliteCommand(checkImageQuery, conn, transaction)
                 checkCmd.Parameters.AddWithValue("@ImageHash", imageHash)
                 existingImageId = checkCmd.ExecuteScalar()
             End Using
@@ -430,8 +431,8 @@ Public Class AddProduct
             If existingImageId IsNot Nothing Then
                 imageId = Convert.ToInt32(existingImageId)
             Else
-                Dim insertImageQuery As String = "INSERT INTO ProductImages (ImageHash, ImageType, ImageData, CreatedAt, UpdatedAt) VALUES (@ImageHash, @ImageType, @ImageData, GETDATE(), GETDATE()); SELECT SCOPE_IDENTITY()"
-                Using cmdImage As New SqlCommand(insertImageQuery, conn, transaction)
+                Dim insertImageQuery As String = "INSERT INTO ProductImages (ImageHash, ImageType, ImageData, CreatedAt, UpdatedAt) VALUES (@ImageHash, @ImageType, @ImageData, datetime('now'), datetime('now')); SELECT last_insert_rowid()"
+                Using cmdImage As New SqliteCommand(insertImageQuery, conn, transaction)
                     cmdImage.Parameters.AddWithValue("@ImageHash", imageHash)
                     cmdImage.Parameters.AddWithValue("@ImageType", "thumb")
                     cmdImage.Parameters.AddWithValue("@ImageData", imageData)
@@ -440,8 +441,8 @@ Public Class AddProduct
                 End Using
             End If
 
-            Dim insertMappingQuery As String = "INSERT INTO ProductImageMapping (ProductID, ImageID, CreatedAt) VALUES (@ProductID, @ImageID, GETDATE())"
-            Using cmdMapping As New SqlCommand(insertMappingQuery, conn, transaction)
+            Dim insertMappingQuery As String = "INSERT INTO ProductImageMapping (ProductID, ImageID, CreatedAt) VALUES (@ProductID, @ImageID, datetime('now'))"
+            Using cmdMapping As New SqliteCommand(insertMappingQuery, conn, transaction)
                 cmdMapping.Parameters.AddWithValue("@ProductID", productId)
                 cmdMapping.Parameters.AddWithValue("@ImageID", imageId)
                 cmdMapping.ExecuteNonQuery()
@@ -494,7 +495,7 @@ Public Class AddProduct
     Private Sub LoadProductData()
         Try
             Dim connStr As String = Connection.GetConnectionString()
-            Using conn As New SqlConnection(connStr)
+            Using conn As New SqliteConnection(connStr)
                 conn.Open()
 
                 Dim query As String = "SELECT p.*, pi.ImageData AS ProductImage " &
@@ -503,10 +504,10 @@ Public Class AddProduct
                                  "LEFT JOIN ProductImages pi ON pim.ImageID = pi.ImageID " &
                                  "WHERE p.ProductID = @ProductID"
 
-                Using cmd As New SqlCommand(query, conn)
+                Using cmd As New SqliteCommand(query, conn)
                     cmd.Parameters.AddWithValue("@ProductID", editProductId)
 
-                    Using reader As SqlDataReader = cmd.ExecuteReader()
+                    Using reader As DbDataReader = cmd.ExecuteReader()
                         If reader.Read() Then
                             txtProductName.Text = reader("ProductName").ToString()
 
@@ -596,14 +597,14 @@ Public Class AddProduct
     Private Sub LoadAdditionalCategories()
         Try
             Dim connStr As String = Connection.GetConnectionString()
-            Using conn As New SqlConnection(connStr)
+            Using conn As New SqliteConnection(connStr)
                 conn.Open()
 
                 Dim mainCategoriesString As String = "'ORTHO','CONSUMABLES','SURGERY','RESTO','ENDO','COSMETIC'"
                 Dim query As String = $"SELECT DISTINCT Category FROM Products WHERE Category IS NOT NULL AND IsActive = 1 AND Category NOT IN ({mainCategoriesString}) ORDER BY Category"
 
-                Using cmd As New SqlCommand(query, conn)
-                    Using reader As SqlDataReader = cmd.ExecuteReader()
+                Using cmd As New SqliteCommand(query, conn)
+                    Using reader As DbDataReader = cmd.ExecuteReader()
                         While reader.Read()
                             If Not IsDBNull(reader("Category")) Then
                                 Dim category As String = reader("Category").ToString()
@@ -701,13 +702,13 @@ Public Class AddProduct
     Private Sub CleanupOrphanedImages()
         Try
             Dim connStr As String = Connection.GetConnectionString()
-            Using cleanupConn As New SqlConnection(connStr)
+            Using cleanupConn As New SqliteConnection(connStr)
                 cleanupConn.Open()
 
                 Dim countQuery As String = "SELECT COUNT(*) FROM ProductImages WHERE ImageID NOT IN (SELECT DISTINCT ImageID FROM ProductImageMapping)"
                 Dim orphanCount As Integer
 
-                Using countCmd As New SqlCommand(countQuery, cleanupConn)
+                Using countCmd As New SqliteCommand(countQuery, cleanupConn)
                     orphanCount = Convert.ToInt32(countCmd.ExecuteScalar())
                 End Using
 
@@ -715,21 +716,21 @@ Public Class AddProduct
                     Dim deleteQuery As String = "DELETE FROM ProductImages WHERE ImageID NOT IN (SELECT DISTINCT ImageID FROM ProductImageMapping)"
                     Dim deletedCount As Integer
 
-                    Using deleteCmd As New SqlCommand(deleteQuery, cleanupConn)
+                    Using deleteCmd As New SqliteCommand(deleteQuery, cleanupConn)
                         deletedCount = deleteCmd.ExecuteNonQuery()
                     End Using
 
-                    Console.WriteLine($"🗑️ Cleaned up {deletedCount} orphaned image(s) during product update")
+                    Console.WriteLine($"??? Cleaned up {deletedCount} orphaned image(s) during product update")
 
                     Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Image Cleanup",
                                      $"Cleaned up {deletedCount} orphaned product images during product update")
                 Else
-                    Console.WriteLine("✅ No orphaned images found - database optimized")
+                    Console.WriteLine("? No orphaned images found - database optimized")
                 End If
             End Using
 
         Catch ex As Exception
-            Console.WriteLine($"⚠️ Image cleanup warning: {ex.Message}")
+            Console.WriteLine($"?? Image cleanup warning: {ex.Message}")
         End Try
     End Sub
 

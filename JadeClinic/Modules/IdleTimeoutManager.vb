@@ -1,5 +1,5 @@
-﻿Imports System.Windows.Forms
-Imports Microsoft.Data.SqlClient
+Imports System.Windows.Forms
+Imports System.Data.Common
 Imports BCrypt.Net
 Imports System.Threading.Tasks
 
@@ -320,7 +320,7 @@ Public Class IdleTimeoutManager
 
             ' Title label with Golden Yellow
             Dim lblTitle As New Label()
-            lblTitle.Text = "🔒 Session Timeout"
+            lblTitle.Text = "?? Session Timeout"
             lblTitle.Font = New Font("Segoe UI", 18, FontStyle.Bold)
             lblTitle.ForeColor = System.Drawing.Color.FromArgb(254, 191, 16)
             lblTitle.BackColor = System.Drawing.Color.Transparent
@@ -364,7 +364,7 @@ Public Class IdleTimeoutManager
 
             ' Password textbox
             Dim txtPassword As New TextBox()
-            txtPassword.PasswordChar = "•"c
+            txtPassword.PasswordChar = "�"c
             txtPassword.Font = New Font("Segoe UI", 12, FontStyle.Regular)
             txtPassword.BackColor = System.Drawing.Color.FromArgb(237, 237, 237)
             txtPassword.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51)
@@ -490,7 +490,7 @@ Public Class IdleTimeoutManager
                 New SqlParameter("@Username", frmLoginvb.LoggedInUsername)
             }
 
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters)
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters)
                 If reader.Read() Then
                     Dim storedPasswordHash As String = reader("PasswordHash").ToString()
                     Dim isPasswordValid As Boolean = False

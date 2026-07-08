@@ -1,4 +1,4 @@
-﻿<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()> _
+<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()> _
 Partial Class EscForm
     Inherits System.Windows.Forms.Form
 
@@ -79,7 +79,7 @@ Partial Class EscForm
         btnClose.ShadowDecoration.CustomizableEdges = CustomizableEdges2
         btnClose.Size = New Size(34, 34)
         btnClose.TabIndex = 0
-        btnClose.Text = "✕"
+        btnClose.Text = ChrW(&H2715)
         ' 
         ' lblTitle
         ' 

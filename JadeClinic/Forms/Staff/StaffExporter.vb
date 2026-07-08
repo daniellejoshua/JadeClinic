@@ -1,6 +1,6 @@
-﻿Imports System.IO
+Imports System.IO
 Imports System.Linq
-Imports Microsoft.Data.SqlClient
+Imports System.Data.Common
 Imports QuestPDF.Fluent
 Imports QuestPDF.Helpers
 Imports QuestPDF.Infrastructure
@@ -33,13 +33,13 @@ Public Class StaffExporter
                 Case "Staff Only"
                     whereClauses.Add("UserRole = 'Staff'")
                 Case "Recently Added (Last 30 Days)"
-                    whereClauses.Add("CreatedAt >= DATEADD(day, -30, GETDATE())")
+                    whereClauses.Add("CreatedAt >= datetime('now', '-30 days')")
                 Case Else
                     ' All Staff
             End Select
 
             If filterDate.HasValue Then
-                whereClauses.Add("CAST(CreatedAt AS DATE) = @FilterDate")
+                whereClauses.Add("DATE(CreatedAt) = @FilterDate")
             End If
 
             If whereClauses.Count > 0 Then
@@ -77,7 +77,7 @@ Public Class StaffExporter
                 parameters.Add(New SqlParameter("@FilterDate", filterDate.Value.Date))
             End If
 
-            Using reader As SqlDataReader = Utilities.ExecuteReader(query, parameters.ToArray())
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters.ToArray())
                 While reader.Read()
                     Dim staffData As New StaffReportData() With {
                         .UserID = If(IsDBNull(reader("UserID")), 0, Convert.ToInt32(reader("UserID"))),
