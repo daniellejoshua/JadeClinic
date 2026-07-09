@@ -69,9 +69,18 @@ Public Class Sys
             ' Set focus to form so ESC key works immediately
             Me.Activate()
             Me.Focus()
+
+            SetupTabIndex()
         Catch ex As Exception
             MessageBox.Show($"Sys_Load error: {ex.Message}", "Sys Load Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
+    End Sub
+
+    Private Sub SetupTabIndex()
+        btnCompanySettings.TabIndex = 0
+        btnDatabaseBackup.TabIndex = 1
+        btnColorCustomization.TabIndex = 2
+        Utilities.ApplyInputFocusEffects(Me)
     End Sub
 
     Private Sub InitializeButtons()

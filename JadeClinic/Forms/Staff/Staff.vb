@@ -206,7 +206,11 @@ Public Class Staff
         .HeaderText = "Photo",
         .ImageLayout = DataGridViewImageCellLayout.Zoom,
         .ReadOnly = True,
-        .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
+        .Width = 90,
+        .AutoSizeMode = DataGridViewAutoSizeColumnMode.None,
+        .Resizable = DataGridViewTriState.False,
+        .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter,
+                                                              .Padding = New Padding(0)}
     }
         Guna2DataGridView1.Columns.Add(photoCol)
 

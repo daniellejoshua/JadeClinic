@@ -218,6 +218,8 @@ Public Class Dashboard
             ' Start idle timeout monitoring
             IdleTimeoutManager.Instance.StartMonitoring(Me)
 
+            SetupTabIndex()
+
         Catch ex As Exception
             Console.WriteLine($"Error in Dashboard_Load: {ex.Message}")
             Console.WriteLine($"Stack trace: {ex.StackTrace}")
@@ -229,6 +231,15 @@ Public Class Dashboard
                           "Dashboard Load Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
         End Try
     End Sub
+
+    Private Sub SetupTabIndex()
+        txtProductSearch.TabIndex = 0
+        Guna2CircleButton5.TabIndex = 1
+        Guna2CircleButton6.TabIndex = 2
+        Guna2CircleButton7.TabIndex = 3
+        Utilities.ApplyInputFocusEffects(Me)
+    End Sub
+
     Private Sub UpdateMonthlyStockTrend()
         ' Placeholder for monthly trend updates
         ' This can be expanded later when LiveCharts is properly configured

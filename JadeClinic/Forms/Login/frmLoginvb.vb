@@ -65,7 +65,7 @@ Public Class frmLoginvb
         AddHandler Me.KeyDown, AddressOf frmLoginvb_KeyDown
 
         ' Set password char to bullet on form load
-        txtPassword.PasswordChar = "•"c
+        txtPassword.PasswordChar = "â€¢"c
 
         ' Initialize database on form load - CRITICAL FIX!
         InitializeDatabaseOnStartup()
@@ -95,6 +95,16 @@ Public Class frmLoginvb
         AddHandler txtPassword.KeyPress, AddressOf ProtectFromQRInput
         AddHandler txtUserName.TextChanged, AddressOf ValidateInputForQRCodes
         AddHandler txtPassword.TextChanged, AddressOf ValidateInputForQRCodes
+
+        SetupTabIndex()
+    End Sub
+
+    Private Sub SetupTabIndex()
+        txtUserName.TabIndex = 0
+        txtPassword.TabIndex = 1
+        Guna2CheckBox1.TabIndex = 2
+        BtnLogin.TabIndex = 3
+        Utilities.ApplyInputFocusEffects(Me)
     End Sub
 
     Private Sub CenterLoginLayout()
@@ -1685,10 +1695,14 @@ Public Class frmLoginvb
                 txtPassword.PasswordChar = ChrW(0)
             Else
                 ' Hide password (use bullet as on form load)
-                txtPassword.PasswordChar = "•"c
+                txtPassword.PasswordChar = "â€¢"c
             End If
         Catch ex As Exception
             Console.WriteLine($"Show/hide password toggle failed: {ex.Message}")
         End Try
+    End Sub
+
+    Private Sub txtPassword_TextChanged(sender As Object, e As EventArgs) Handles txtPassword.TextChanged
+
     End Sub
 End Class

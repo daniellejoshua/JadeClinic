@@ -55,7 +55,7 @@ Public Class AuditLog
         ' Fix DateTimePicker dropdown for hosted forms
         AddHandler Guna2DateTimePicker1.DropDown, AddressOf DateTimePicker_DropDown
 
-        ' Default date filter to Today and enable the checkbox so filter is active on start
+        ' Default date filter to Today on start
         Try
             Guna2DateTimePicker1.ShowCheckBox = True
             Guna2DateTimePicker1.Value = Date.Today
@@ -66,6 +66,16 @@ Public Class AuditLog
 
         ' Load data (with today's date filter active by default)
         Await LoadAuditLogsAsync()
+
+        SetupTabIndex()
+    End Sub
+
+    Private Sub SetupTabIndex()
+        Guna2DateTimePicker1.TabIndex = 0
+        filtertype.TabIndex = 1
+        cmbAccounts.TabIndex = 2
+        Exportbtn.TabIndex = 3
+        Utilities.ApplyInputFocusEffects(Me)
     End Sub
 
     Private Sub DateTimePicker_DropDown(sender As Object, e As EventArgs)
@@ -334,7 +344,7 @@ Public Class AuditLog
                                   ' Date filter
                                   If filterDate.HasValue Then
                                       whereClauses.Add("DATE(a.ActionTime) = @FilterDate")
-                                      parameters.Add(New SqlParameter("@FilterDate", System.Data.SqlDbType.Date) With {.Value = filterDate.Value.Date})
+                                      parameters.Add(New SqlParameter("@FilterDate", filterDate.Value.Date.ToString("yyyy-MM-dd")))
                                   End If
 
                                   ' User filter

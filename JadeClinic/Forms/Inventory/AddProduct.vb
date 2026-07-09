@@ -26,6 +26,7 @@ Public Class AddProduct
             InitializeUI()
             LoadCategories()
             SetupFormDefaults()
+            SetDefaultProductImage()
             SetupNumericInputValidation()
 
             ' Load product data if in edit mode
@@ -37,9 +38,26 @@ Public Class AddProduct
                 HideBarcodeSection()
             End If
 
+            SetupTabIndex()
+
         Catch ex As Exception
             MessageBox.Show($"Error initializing form: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
+    End Sub
+
+    Private Sub SetupTabIndex()
+        txtProductName.TabIndex = 0
+        cmbCategory.TabIndex = 1
+        UnitCmbBox.TabIndex = 2
+        CostPriceTextBox.TabIndex = 4
+        SellingPriceTextBox.TabIndex = 5
+        WholeSaleTextbox.TabIndex = 6
+        ReOrderLevelTextBox.TabIndex = 3
+        lblProductPicturetrigger.TabIndex = 7
+        cmbStatus.TabIndex = 8
+        PrintBarcodeTextBox.TabIndex = 9
+        btnAddStock.TabIndex = 10
+        Utilities.ApplyInputFocusEffects(Me)
     End Sub
 
     Private Sub InitializeUI()
@@ -541,8 +559,10 @@ Public Class AddProduct
                                         ProductImage.Image = Image.FromStream(ms)
                                     End Using
                                 Catch
-                                    ProductImage.Image = Nothing
+                                    SetDefaultProductImage()
                                 End Try
+                            Else
+                                SetDefaultProductImage()
                             End If
 
                             If Not IsDBNull(reader("ProductCode")) Then
@@ -565,6 +585,10 @@ Public Class AddProduct
         End Try
     End Sub
 
+    Private Sub SetDefaultProductImage()
+        ProductImage.Image = CompanySettingsManager.Instance.GetCompanyLogo()
+    End Sub
+
     Private Sub ClearForm()
         txtProductName.Clear()
         cmbCategory.SelectedIndex = -1
@@ -572,7 +596,7 @@ Public Class AddProduct
         SellingPriceTextBox.Clear()
         WholeSaleTextbox.Clear()
         ReOrderLevelTextBox.Clear()
-        ProductImage.Image = Nothing
+        SetDefaultProductImage()
         selectedImagePath = ""
     End Sub
 

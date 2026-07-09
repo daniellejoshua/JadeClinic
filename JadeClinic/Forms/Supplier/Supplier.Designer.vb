@@ -33,6 +33,8 @@ Partial Class Supplier
         Dim CustomizableEdges9 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges10 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges11 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges12 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges13 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(Supplier))
         LabelTitle = New Label()
         DashboardPanel = New Guna.UI2.WinForms.Guna2Panel()
@@ -45,6 +47,8 @@ Partial Class Supplier
         lblUsername = New Guna.UI2.WinForms.Guna2HtmlLabel()
         AddInventoryLog = New Guna.UI2.WinForms.Guna2Button()
         Guna2Panel1 = New Guna.UI2.WinForms.Guna2Panel()
+        txtSearchSupplier = New Guna.UI2.WinForms.Guna2TextBox()
+        Guna2HtmlLabel1 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         DashboardPanel.SuspendLayout()
         CType(PictureBox9, ComponentModel.ISupportInitialize).BeginInit()
         CType(Guna2CirclePictureBox5, ComponentModel.ISupportInitialize).BeginInit()
@@ -170,11 +174,12 @@ Partial Class Supplier
         SortBy.Font = New Font("Poppins Light", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         SortBy.ForeColor = Color.FromArgb(CByte(51), CByte(51), CByte(51))
         SortBy.ItemHeight = 40
-        SortBy.Location = New Point(318, 96)
+        SortBy.Location = New Point(663, 96)
         SortBy.Name = "SortBy"
         SortBy.ShadowDecoration.CustomizableEdges = CustomizableEdges5
         SortBy.Size = New Size(309, 46)
         SortBy.TabIndex = 65
+        SortBy.Visible = False
         ' 
         ' Exportbtn
         ' 
@@ -200,11 +205,12 @@ Partial Class Supplier
         Guna2HtmlLabel3.BackColor = Color.Transparent
         Guna2HtmlLabel3.Font = New Font("Poppins", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel3.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
-        Guna2HtmlLabel3.Location = New Point(238, 104)
+        Guna2HtmlLabel3.Location = New Point(592, 102)
         Guna2HtmlLabel3.Name = "Guna2HtmlLabel3"
         Guna2HtmlLabel3.Size = New Size(65, 32)
         Guna2HtmlLabel3.TabIndex = 68
         Guna2HtmlLabel3.Text = "Sort by:"
+        Guna2HtmlLabel3.Visible = False
         ' 
         ' lblUsername
         ' 
@@ -250,12 +256,48 @@ Partial Class Supplier
         Guna2Panel1.Size = New Size(1657, 861)
         Guna2Panel1.TabIndex = 80
         ' 
+        ' txtSearchSupplier
+        ' 
+        txtSearchSupplier.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
+        txtSearchSupplier.BorderRadius = 10
+        txtSearchSupplier.CustomizableEdges = CustomizableEdges12
+        txtSearchSupplier.DefaultText = ""
+        txtSearchSupplier.DisabledState.BorderColor = Color.FromArgb(CByte(208), CByte(208), CByte(208))
+        txtSearchSupplier.DisabledState.FillColor = Color.FromArgb(CByte(226), CByte(226), CByte(226))
+        txtSearchSupplier.DisabledState.ForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
+        txtSearchSupplier.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
+        txtSearchSupplier.FocusedState.BorderColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
+        txtSearchSupplier.Font = New Font("Segoe UI", 9F)
+        txtSearchSupplier.ForeColor = Color.FromArgb(CByte(51), CByte(51), CByte(51))
+        txtSearchSupplier.HoverState.BorderColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
+        txtSearchSupplier.Location = New Point(312, 96)
+        txtSearchSupplier.Margin = New Padding(3, 4, 3, 4)
+        txtSearchSupplier.Name = "txtSearchSupplier"
+        txtSearchSupplier.PlaceholderText = ""
+        txtSearchSupplier.SelectedText = ""
+        txtSearchSupplier.ShadowDecoration.CustomizableEdges = CustomizableEdges13
+        txtSearchSupplier.Size = New Size(250, 46)
+        txtSearchSupplier.TabIndex = 96
+        ' 
+        ' Guna2HtmlLabel1
+        ' 
+        Guna2HtmlLabel1.BackColor = Color.Transparent
+        Guna2HtmlLabel1.Font = New Font("Poppins", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Guna2HtmlLabel1.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
+        Guna2HtmlLabel1.Location = New Point(241, 102)
+        Guna2HtmlLabel1.Name = "Guna2HtmlLabel1"
+        Guna2HtmlLabel1.Size = New Size(65, 32)
+        Guna2HtmlLabel1.TabIndex = 97
+        Guna2HtmlLabel1.Text = "Sort by:"
+        ' 
         ' Supplier
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
         BackColor = Color.White
         ClientSize = New Size(1902, 1033)
+        Controls.Add(Guna2HtmlLabel1)
+        Controls.Add(txtSearchSupplier)
         Controls.Add(AddInventoryLog)
         Controls.Add(lblUsername)
         Controls.Add(Guna2HtmlLabel3)
@@ -292,4 +334,6 @@ Partial Class Supplier
     Friend WithEvents lblUsername As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents AddInventoryLog As Guna.UI2.WinForms.Guna2Button
     Friend WithEvents Guna2Panel1 As Guna.UI2.WinForms.Guna2Panel
+    Friend WithEvents txtSearchSupplier As Guna.UI2.WinForms.Guna2TextBox
+    Friend WithEvents Guna2HtmlLabel1 As Guna.UI2.WinForms.Guna2HtmlLabel
 End Class

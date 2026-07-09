@@ -34,6 +34,18 @@ Public Class AddInventoryLogForm
 
         ' Setup controls
         SetupControls()
+
+        SetupTabIndex()
+    End Sub
+
+    Private Sub SetupTabIndex()
+        cmbProduct.TabIndex = 0
+        cmbTransactionType.TabIndex = 1
+        txtQuantity.TabIndex = 2
+        cmbSupplier.TabIndex = 3
+        txtReference.TabIndex = 4
+        txtNotes.TabIndex = 5
+        Utilities.ApplyInputFocusEffects(Me)
     End Sub
 
     Private Sub SetupForm()
@@ -238,6 +250,7 @@ Public Class AddInventoryLogForm
         txtBatchNumber.BorderStyle = BorderStyle.FixedSingle
         txtBatchNumber.PlaceholderText = "e.g., BATCH-001"
         txtBatchNumber.Name = "txtBatchNumber"
+        txtBatchNumber.TabIndex = 6
         Me.Controls.Add(txtBatchNumber)
 
         ' Expiry Date (for ENDO products and Stock IN operations)
@@ -259,6 +272,7 @@ Public Class AddInventoryLogForm
         dtpExpiryDate.Format = DateTimePickerFormat.Short
         dtpExpiryDate.Value = DateTime.Now.AddYears(1) ' Default to 1 year from now
         dtpExpiryDate.Name = "dtpExpiryDate"
+        dtpExpiryDate.TabIndex = 7
         Me.Controls.Add(dtpExpiryDate)
 
         ' Initially hide batch fields
@@ -360,6 +374,7 @@ Public Class AddInventoryLogForm
         btnCancel.FlatStyle = FlatStyle.Flat
         btnCancel.FlatAppearance.BorderSize = 0
         btnCancel.Cursor = Cursors.Hand
+        btnCancel.TabIndex = 8
         AddHandler btnCancel.Click, Sub(s, ev) Me.Close()
         Me.Controls.Add(btnCancel)
         belowBatchControls.Add(btnCancel)
@@ -374,6 +389,7 @@ Public Class AddInventoryLogForm
         btnSave.FlatStyle = FlatStyle.Flat
         btnSave.FlatAppearance.BorderSize = 0
         btnSave.Cursor = Cursors.Hand
+        btnSave.TabIndex = 9
         AddHandler btnSave.Click, AddressOf SaveInventoryLog
         Me.Controls.Add(btnSave)
         belowBatchControls.Add(btnSave)

@@ -43,7 +43,6 @@ Partial Class frmLoginvb
         Guna2HtmlLabel1 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         txtPassword = New Guna.UI2.WinForms.Guna2TextBox()
         PictureBox1 = New PictureBox()
-
         Guna2Panel1.SuspendLayout()
         CType(PictureBox1, ComponentModel.ISupportInitialize).BeginInit()
         SuspendLayout()

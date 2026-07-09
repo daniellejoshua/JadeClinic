@@ -76,6 +76,19 @@ Public Class ProfileSettings
 
         ' Set focus to form to ensure keyboard events are captured
         Me.Focus()
+
+        SetupTabIndex()
+    End Sub
+
+    Private Sub SetupTabIndex()
+        txtUserName.TabIndex = 0
+        txtEmail.TabIndex = 1
+        txtPhone.TabIndex = 2
+        txtNewPassword.TabIndex = 3
+        txtConfirmPassword.TabIndex = 4
+        Guna2CheckBox1.TabIndex = 5
+        btnSave.TabIndex = 6
+        Utilities.ApplyInputFocusEffects(Me)
     End Sub
 
     ' Helper method to validate user session

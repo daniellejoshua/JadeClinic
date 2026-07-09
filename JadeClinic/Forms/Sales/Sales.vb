@@ -567,8 +567,24 @@ Public Class Sales
             btnPayment.ForeColor = DarkText
         End If
 
+        SetupTabIndex()
+
         ' ... rest of the method ...
         ' Add keyboard instructions for users
+    End Sub
+
+    Private Sub SetupTabIndex()
+        OrthoCatBtn.TabIndex = 0
+        ConsumablesCatBtn.TabIndex = 1
+        SurgeryCatBtn.TabIndex = 2
+        EndoCatBtn.TabIndex = 3
+        CosmeticCatBtn.TabIndex = 4
+        RestoCatBtn.TabIndex = 5
+        backCategory.TabIndex = 6
+        btnDiscount.TabIndex = 7
+        btnPayment.TabIndex = 8
+        confirmBtn.TabIndex = 9
+        Utilities.ApplyInputFocusEffects(Me)
     End Sub
 
     ' Returns true if there are any sales records for today.
@@ -5105,7 +5121,7 @@ Public Class Sales
                            End If
 
                            Try
-                               Dim query As String = "SELECT * LIMIT 1 ProductID, ProductName, Category FROM Products WHERE IsActive = 1 AND (ProductCode = @term OR ProductName LIKE @like) ORDER BY CASE WHEN ProductCode = @term THEN 0 ELSE 1 END, ProductName"
+                                Dim query As String = "SELECT ProductID, ProductName, Category FROM Products WHERE IsActive = 1 AND (ProductCode = @term OR ProductName LIKE @like) ORDER BY CASE WHEN ProductCode = @term THEN 0 ELSE 1 END, ProductName"
                                Dim parameters As SqlParameter() = {
                                    New SqlParameter("@term", term),
                                    New SqlParameter("@like", "%" & term & "%")
