@@ -25,6 +25,7 @@ Public Class InventoryLog
     Private ReadOnly PureWhite As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 255, 255, 255)
     Private ReadOnly LightSilver As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 225, 229, 233)
     Private ReadOnly SuccessGreen As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 16, 216, 98)
+
     Private ReadOnly AlertRed As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 255, 71, 87)
 
 
@@ -110,6 +111,8 @@ Public Class InventoryLog
             ' Start idle timeout monitoring
             IdleTimeoutManager.Instance.StartMonitoring(Me)
 
+            SetupTabIndex()
+
         Catch ex As Exception
             ' Hide loading panel in case of error
             If loadingPanel IsNot Nothing Then
@@ -117,6 +120,14 @@ Public Class InventoryLog
             End If
             MessageBox.Show($"Error initializing InventoryLog form: {ex.Message}{vbCrLf}{vbCrLf}Stack Trace: {ex.StackTrace}", "Initialization Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
+    End Sub
+
+    Private Sub SetupTabIndex()
+        Guna2DateTimePicker1.TabIndex = 0
+        SortBy.TabIndex = 1
+        Exportbtn.TabIndex = 2
+        AddInventoryLog.TabIndex = 3
+        Utilities.ApplyInputFocusEffects(Me)
     End Sub
 
     Private Sub SetupForm()
@@ -142,20 +153,22 @@ Public Class InventoryLog
 
     Private Sub SetupControls()
         Try
-            ' Setup Sort ComboBox - check if control exists first
+            ' Setup Sort ComboBox as transaction type filter
             If SortBy IsNot Nothing Then
                 SortBy.Items.Clear()
-                SortBy.Items.AddRange(New String() {"Date (Newest First)", "Date (Oldest First)", "Product (A-Z)", "Product (Z-A)", "Transaction Type", "Quantity (High to Low)", "Quantity (Low to High)"})
+                SortBy.Items.AddRange(New String() {"All Types", "IN", "OUT"})
                 SortBy.SelectedIndex = 0
             End If
 
             ' Setup DataGrid
             SetupDataGrid()
 
-            ' Setup date filter - default to no filter, user can select a date
+            ' Setup date filter - default to today, user can uncheck to see all
             If Guna2DateTimePicker1 IsNot Nothing Then
                 Guna2DateTimePicker1.Value = DateTime.Now.Date
-                selectedDate = Nothing
+                Guna2DateTimePicker1.ShowCheckBox = True
+                Guna2DateTimePicker1.Checked = True
+                selectedDate = DateTime.Now.Date
 
                 ' Ensure date change handler is wired so the filter actually works
                 RemoveHandler Guna2DateTimePicker1.ValueChanged, AddressOf Guna2DateTimePicker1_ValueChanged
@@ -676,7 +689,7 @@ Public Class InventoryLog
         ' Add date filter if provided
         If filterDate.HasValue Then
             whereClauses.Add("DATE(il.CreatedAt) = @FilterDate")
-            parameters.Add(New SqlParameter("@FilterDate", filterDate.Value.Date))
+            parameters.Add(New SqlParameter("@FilterDate", filterDate.Value.Date.ToString("yyyy-MM-dd")))
         End If
 
         ' Build WHERE clause
@@ -684,25 +697,18 @@ Public Class InventoryLog
             query += " WHERE " & String.Join(" AND ", whereClauses)
         End If
 
-        ' Add sorting based on sort selection
-        Select Case sortOrder
-            Case "Date (Newest First)"
-                query += " ORDER BY il.CreatedAt DESC"
-            Case "Date (Oldest First)"
-                query += " ORDER BY il.CreatedAt ASC"
-            Case "Product (A-Z)"
-                query += " ORDER BY p.ProductName ASC, il.CreatedAt DESC"
-            Case "Product (Z-A)"
-                query += " ORDER BY p.ProductName DESC, il.CreatedAt DESC"
-            Case "Transaction Type"
-                query += " ORDER BY il.TransactionType ASC, il.CreatedAt DESC"
-            Case "Quantity (High to Low)"
-                query += " ORDER BY il.Quantity DESC, il.CreatedAt DESC"
-            Case "Quantity (Low to High)"
-                query += " ORDER BY il.Quantity ASC, il.CreatedAt DESC"
-            Case Else
-                query += " ORDER BY il.CreatedAt DESC" ' Default sorting
-        End Select
+        ' Add transaction type filter via SortBy (repurposed as type filter)
+        If sortOrder <> "All Types" Then
+            If whereClauses.Count > 0 Then
+                query += " AND il.TransactionType = @TransType"
+            Else
+                query += " WHERE il.TransactionType = @TransType"
+            End If
+            parameters.Add(New SqlParameter("@TransType", sortOrder))
+        End If
+
+        ' Default ordering - users sort via column header clicks
+        query += " ORDER BY il.CreatedAt DESC"
 
         Try
             Dim connStr As String = Connection.GetConnectionString()
@@ -1199,13 +1205,12 @@ Public Class InventoryLog
 
     Private Sub Exportbtn_Click(sender As Object, e As EventArgs)
         Try
-            ' Get current sort order and filter settings
-            Dim sortOrder As String = If(SortBy?.SelectedItem?.ToString(), "Date (Newest First)")
-            Dim filterType As String = "All Logs" ' You can expand this to match actual filter types
+            ' Get current filter settings
+            Dim filterType As String = If(SortBy?.SelectedItem?.ToString(), "All Types")
             Dim filterDate As DateTime? = selectedDate
 
-            ' Call the inventory log exporter
-            InventoryLogExporter.ExportInventoryLogsReport(sortOrder, filterType, filterDate)
+            ' Call the inventory log exporter (sort by date newest first for export)
+            InventoryLogExporter.ExportInventoryLogsReport("Date (Newest First)", filterType, filterDate)
         Catch ex As Exception
             MessageBox.Show($"Export failed: {ex.Message}", "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
@@ -1239,13 +1244,12 @@ Public Class InventoryLog
 
     Private Sub Exportbtn_Click_1(sender As Object, e As EventArgs) Handles Exportbtn.Click
         Try
-            ' Get current sort order and filter settings
-            Dim sortOrder As String = If(SortBy?.SelectedItem?.ToString(), "Date (Newest First)")
-            Dim filterType As String = "All Logs" ' You can expand this to match actual filter types
+            ' Get current filter settings
+            Dim filterType As String = If(SortBy?.SelectedItem?.ToString(), "All Types")
             Dim filterDate As DateTime? = selectedDate
 
-            ' Call the inventory log exporter
-            InventoryLogExporter.ExportInventoryLogsReport(sortOrder, filterType, filterDate)
+            ' Call the inventory log exporter (sort by date newest first for export)
+            InventoryLogExporter.ExportInventoryLogsReport("Date (Newest First)", filterType, filterDate)
         Catch ex As Exception
             MessageBox.Show($"Export failed: {ex.Message}", "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try

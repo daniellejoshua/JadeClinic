@@ -79,7 +79,7 @@ Public Class InventoryLogExporter
             Dim inventoryDataList As New List(Of InventoryLogReportData)()
             Dim parameters As New List(Of SqlParameter)()
             If filterDate.HasValue Then
-                parameters.Add(New SqlParameter("@FilterDate", filterDate.Value.Date))
+                parameters.Add(New SqlParameter("@FilterDate", filterDate.Value.Date.ToString("yyyy-MM-dd")))
             End If
 
             Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters.ToArray())

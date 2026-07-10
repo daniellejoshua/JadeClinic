@@ -40,6 +40,8 @@ Public Class AddStaff
 
         ' Add Shown event handler for edit mode image refresh
         AddHandler Me.Shown, AddressOf AddStaff_Shown
+
+        SetupTabIndex()
     End Sub
 
     Private Sub AddStaff_Shown(sender As Object, e As EventArgs)
@@ -57,6 +59,19 @@ Public Class AddStaff
         Catch ex As Exception
             Console.WriteLine($"Error in AddStaff_Shown: {ex.Message}")
         End Try
+    End Sub
+
+    Private Sub SetupTabIndex()
+        txtUsername.TabIndex = 0
+        txtPassword.TabIndex = 1
+        txtEmail.TabIndex = 2
+        txtPhone.TabIndex = 3
+        txtPin.TabIndex = 4
+        cmbRole.TabIndex = 5
+        Guna2ComboBox1.TabIndex = 6
+        lblStaffPicture.TabIndex = 7
+        btnAddStock.TabIndex = 8
+        Utilities.ApplyInputFocusEffects(Me)
     End Sub
 
     Private Sub SetupForm()

@@ -227,6 +227,7 @@ Partial Class SalesRecord
         Guna2HtmlLabel3.Size = New Size(65, 32)
         Guna2HtmlLabel3.TabIndex = 85
         Guna2HtmlLabel3.Text = "Sort by:"
+        Guna2HtmlLabel3.Visible = False
         ' 
         ' SortBy
         ' 
@@ -246,6 +247,7 @@ Partial Class SalesRecord
         SortBy.ShadowDecoration.CustomizableEdges = CustomizableEdges9
         SortBy.Size = New Size(309, 46)
         SortBy.TabIndex = 84
+        SortBy.Visible = False
         ' 
         ' Guna2Panel1
         ' 

@@ -37,6 +37,31 @@ Public Class CompanySettings
 
         ' Store original values for change detection
         StoreOriginalValues()
+
+        SetupTabIndex()
+    End Sub
+
+    Private Sub SetupTabIndex()
+        TabControl1.TabIndex = 0
+        txtCompanyName.TabIndex = 1
+        txtTIN.TabIndex = 2
+        txtAddress.TabIndex = 3
+        txtPhone.TabIndex = 4
+        txtEmail.TabIndex = 5
+        txtWebsite.TabIndex = 6
+        txtBIRAuth.TabIndex = 7
+        txtPTUNumber.TabIndex = 8
+        nudValidityYears.TabIndex = 9
+        txtReceiptFooter.TabIndex = 10
+        dtOpeningTime.TabIndex = 11
+        dtClosingTime.TabIndex = 12
+        clbClosedDays.TabIndex = 13
+        btnChangeLogo.TabIndex = 14
+        btnRemoveLogo.TabIndex = 15
+        btnPreviewReceipt.TabIndex = 16
+        btnSave.TabIndex = 17
+        btnCancel.TabIndex = 18
+        Utilities.ApplyInputFocusEffects(Me)
     End Sub
 
     Private Sub StoreOriginalValues()

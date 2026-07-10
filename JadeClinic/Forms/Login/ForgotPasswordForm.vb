@@ -332,7 +332,20 @@ Public Class ForgotPasswordForm
     End Sub
 
     Private Sub ForgotPasswordForm_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        SetupTabIndex()
+    End Sub
 
+    Private Sub SetupTabIndex()
+        txtInput.TabIndex = 0
+        txtPasskey1.TabIndex = 1
+        txtPasskey2.TabIndex = 2
+        txtPasskey3.TabIndex = 3
+        txtNewPassword.TabIndex = 4
+        txtConfirmPassword.TabIndex = 5
+        btnNext.TabIndex = 6
+        btnBack.TabIndex = 7
+        btnCancel.TabIndex = 8
+        Utilities.ApplyInputFocusEffects(Me)
     End Sub
 
     ' KeyDown handler: Enter => Next, Esc => Cancel, B => Back

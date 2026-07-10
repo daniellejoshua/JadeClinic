@@ -361,4 +361,35 @@ Module Utilities
             Return Nothing ' If error occurs, proceed with saving new image
         End Try
     End Function
+
+    Private _focusBlue As Color = Color.FromArgb(94, 148, 255)
+    Private _focusLightBack As Color = Color.FromArgb(240, 248, 255)
+    Private _normalBack As Color = Color.White
+
+    Public Sub ApplyInputFocusEffects(parent As Control)
+        For Each ctrl As Control In parent.Controls
+            If TypeOf ctrl Is Guna.UI2.WinForms.Guna2TextBox Then
+                Dim tb = CType(ctrl, Guna.UI2.WinForms.Guna2TextBox)
+                tb.FocusedState.BorderColor = _focusBlue
+            ElseIf TypeOf ctrl Is Guna.UI2.WinForms.Guna2ComboBox Then
+                Dim cb = CType(ctrl, Guna.UI2.WinForms.Guna2ComboBox)
+                cb.FocusedState.BorderColor = _focusBlue
+            ElseIf TypeOf ctrl Is TextBox Then
+                Dim tb = CType(ctrl, TextBox)
+                If Not tb.ReadOnly Then
+                    AddHandler tb.Enter, Sub(s, e) CType(s, TextBox).BackColor = _focusLightBack
+                    AddHandler tb.Leave, Sub(s, e) CType(s, TextBox).BackColor = _normalBack
+                End If
+            ElseIf TypeOf ctrl Is ComboBox Then
+                Dim cb = CType(ctrl, ComboBox)
+                If cb.DropDownStyle <> ComboBoxStyle.DropDownList Then
+                    AddHandler cb.Enter, Sub(s, e) CType(s, ComboBox).BackColor = _focusLightBack
+                    AddHandler cb.Leave, Sub(s, e) CType(s, ComboBox).BackColor = _normalBack
+                End If
+            End If
+            If ctrl.HasChildren Then
+                ApplyInputFocusEffects(ctrl)
+            End If
+        Next
+    End Sub
 End Module

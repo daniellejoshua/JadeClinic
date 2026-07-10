@@ -15,6 +15,7 @@ Public Class Supplier
     Private ReadOnly LightSilver As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 225, 229, 233)
     Private ReadOnly SuccessGreen As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 16, 216, 98)
     Private ReadOnly AlertRed As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 255, 71, 87)
+    Private _supplierSearchTimer As Timer
 
 
     Private Sub Supplier_Load(sender As Object, e As EventArgs) Handles MyBase.Load
@@ -58,6 +59,14 @@ Public Class Supplier
             ' Wire events
             AddHandler SortBy.SelectedIndexChanged, AddressOf SortBy_SelectedIndexChanged
             AddHandler Exportbtn.Click, AddressOf Exportbtn_Click
+
+            ' Wire supplier search with debounce
+            _supplierSearchTimer = New Timer()
+            _supplierSearchTimer.Interval = 400
+            _supplierSearchTimer.Enabled = False
+            AddHandler txtSearchSupplier.TextChanged, AddressOf TxtSearchSupplier_TextChanged
+            AddHandler _supplierSearchTimer.Tick, AddressOf SupplierSearchTimer_Tick
+
             ' Load data on UI thread to avoid cross-thread control access
             LoadSuppliersData()
 
@@ -67,9 +76,18 @@ Public Class Supplier
 
             ' Align DataGridView bottom with DashboardPanel bottom
             AlignDataGridViewToPanel()
+
+            SetupTabIndex()
         Catch ex As Exception
             MessageBox.Show($"Error initializing Suppliers page: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
+    End Sub
+
+    Private Sub SetupTabIndex()
+        txtSearchSupplier.TabIndex = 0
+        SortBy.TabIndex = 1
+        Exportbtn.TabIndex = 2
+        Utilities.ApplyInputFocusEffects(Me)
     End Sub
 
     Private Sub AlignDataGridViewToPanel()
@@ -325,17 +343,33 @@ Public Class Supplier
         SortBy.SelectedIndex = 0
     End Sub
 
+    Private Sub TxtSearchSupplier_TextChanged(sender As Object, e As EventArgs)
+        _supplierSearchTimer.Stop()
+        _supplierSearchTimer.Start()
+    End Sub
+
+    Private Sub SupplierSearchTimer_Tick(sender As Object, e As EventArgs)
+        _supplierSearchTimer.Stop()
+        LoadSuppliersData(If(SortBy.SelectedItem IsNot Nothing, SortBy.SelectedItem.ToString(), ""), txtSearchSupplier.Text.Trim())
+    End Sub
+
     Private Sub SortBy_SelectedIndexChanged(sender As Object, e As EventArgs)
         If SortBy.SelectedItem IsNot Nothing Then
-            LoadSuppliersData(SortBy.SelectedItem.ToString())
+            LoadSuppliersData(SortBy.SelectedItem.ToString(), txtSearchSupplier.Text.Trim())
         End If
     End Sub
 
-    Private Sub LoadSuppliersData(Optional sortOrder As String = "")
+    Private Sub LoadSuppliersData(Optional sortOrder As String = "", Optional searchText As String = "")
         Try
             InventoryLogDataGrid.Rows.Clear()
 
             Dim query As String = "SELECT SupplierID, SupplierCode, SupplierName, ContactPerson, Phone, Email, IsActive FROM Suppliers"
+            Dim params As New List(Of SqlParameter)()
+
+            If Not String.IsNullOrWhiteSpace(searchText) Then
+                query += " WHERE SupplierName LIKE @SearchText OR ContactPerson LIKE @SearchText OR SupplierCode LIKE @SearchText"
+                params.Add(New SqlParameter("@SearchText", "%" & searchText & "%"))
+            End If
 
             Select Case sortOrder
                 Case "Name (A-Z)"
@@ -352,7 +386,7 @@ Public Class Supplier
                     query += " ORDER BY SupplierName ASC"
             End Select
 
-            Using reader As DbDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, params.ToArray())
                 Dim count As Integer = 0
                 While reader.Read()
                     Dim supplierId As Integer = Convert.ToInt32(reader("SupplierID"))

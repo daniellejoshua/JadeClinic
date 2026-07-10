@@ -60,18 +60,27 @@ Public Class SalesRecord
         ' Initialize Sort ComboBox
         InitializeSortComboBox()
 
-        ' Ensure date filter defaults to Today on form start and apply filters
+        ' Date filter defaults to Today on form start
         Guna2DateTimePicker1.Value = Date.Today
-        If Guna2DateTimePicker1.ShowCheckBox Then
-            Guna2DateTimePicker1.Checked = True
-        End If
+        Guna2DateTimePicker1.ShowCheckBox = True
+        Guna2DateTimePicker1.Checked = True
 
         ' Load sales records data with today's date filter active by default
         ApplyFilters()
 
         ' Update form title to show logged-in user
         Me.Text = $"Sales Records - {frmLoginvb.LoggedInUsername}"
+
+        SetupTabIndex()
     End Sub
+
+    Private Sub SetupTabIndex()
+        Guna2DateTimePicker1.TabIndex = 0
+        SortBy.TabIndex = 1
+        Exportbtn.TabIndex = 2
+        Utilities.ApplyInputFocusEffects(Me)
+    End Sub
+
     Private Sub NavProfileSettings_Click(sender As Object, e As EventArgs)
 
     End Sub
@@ -283,8 +292,8 @@ Public Class SalesRecord
             Dim parameters As New List(Of SqlParameter)()
 
             If filterDate.HasValue Then
-                query &= " WHERE CAST(s.SaleDate AS date) = @FilterDate"
-                parameters.Add(New SqlParameter("@FilterDate", filterDate.Value.Date))
+                query &= " WHERE DATE(s.SaleDate) = @FilterDate"
+                parameters.Add(New SqlParameter("@FilterDate", filterDate.Value.Date.ToString("yyyy-MM-dd")))
             End If
 
             Select Case sortOrder

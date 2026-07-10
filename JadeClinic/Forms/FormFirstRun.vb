@@ -21,6 +21,18 @@ Public Class FormFirstRun
         btnSave.Enabled = True
         btnTest.Text = "Test Database"
         btnSave.Text = "Initialize Database"
+
+        SetupTabIndex()
+    End Sub
+
+    Private Sub SetupTabIndex()
+        rbLocal.TabIndex = 0
+        rbNetwork.TabIndex = 1
+        txtServer.TabIndex = 2
+        btnTest.TabIndex = 3
+        btnSave.TabIndex = 4
+        btnCancel.TabIndex = 5
+        Utilities.ApplyInputFocusEffects(Me)
     End Sub
 
     Private Sub btnTest_Click(sender As Object, e As EventArgs) Handles btnTest.Click
