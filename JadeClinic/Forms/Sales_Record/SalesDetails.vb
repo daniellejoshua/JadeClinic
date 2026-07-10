@@ -226,8 +226,8 @@ Public Class SalesDetails
 
                 e.Graphics.DrawString($"{quantity}x {itemName}", regularFont, brush, marginLeft, yPosition)
                 yPosition += 12
-                e.Graphics.DrawString($"@ ?{unitVatInc:F2}", regularFont, brush, marginLeft + 8, yPosition)
-                e.Graphics.DrawString($"?{lineTotal:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"?{lineTotal:F2}", regularFont).Width), CSng(yPosition))
+                e.Graphics.DrawString($"@ {ChrW(&H20B1)}{unitVatInc:F2}", regularFont, brush, marginLeft + 8, yPosition)
+                e.Graphics.DrawString($"{ChrW(&H20B1)}{lineTotal:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"{ChrW(&H20B1)}{lineTotal:F2}", regularFont).Width), CSng(yPosition))
                 yPosition += 15
             Next
 
@@ -269,28 +269,28 @@ Public Class SalesDetails
             Dim changeAmount As Decimal = Math.Round(amountReceived - totalDue, 2)
 
             e.Graphics.DrawString("SUBTOTAL (VAT-INC):", regularFont, brush, marginLeft, yPosition)
-            e.Graphics.DrawString($"?{subtotalVatInclusive:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"?{subtotalVatInclusive:F2}", regularFont).Width), CSng(yPosition))
+            e.Graphics.DrawString($"{ChrW(&H20B1)}{subtotalVatInclusive:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"{ChrW(&H20B1)}{subtotalVatInclusive:F2}", regularFont).Width), CSng(yPosition))
             yPosition += 12
 
             If discountAmt > 0D Then
                 e.Graphics.DrawString($"Less: Discount ({discountTypeText}):", regularFont, brush, marginLeft, yPosition)
-                e.Graphics.DrawString($"-?{discountAmt:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"-?{discountAmt:F2}", regularFont).Width), CSng(yPosition))
+                e.Graphics.DrawString($"-{ChrW(&H20B1)}{discountAmt:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"-{ChrW(&H20B1)}{discountAmt:F2}", regularFont).Width), CSng(yPosition))
                 yPosition += 12
             End If
 
             e.Graphics.DrawString("VATABLE SALES (NET):", regularFont, brush, marginLeft, yPosition)
-            e.Graphics.DrawString($"?{vatableNet:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"?{vatableNet:F2}", regularFont).Width), CSng(yPosition))
+            e.Graphics.DrawString($"{ChrW(&H20B1)}{vatableNet:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"{ChrW(&H20B1)}{vatableNet:F2}", regularFont).Width), CSng(yPosition))
             yPosition += 12
 
             e.Graphics.DrawString("VAT (12%):", regularFont, brush, marginLeft, yPosition)
-            e.Graphics.DrawString($"?{vatAmt:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"?{vatAmt:F2}", regularFont).Width), CSng(yPosition))
+            e.Graphics.DrawString($"{ChrW(&H20B1)}{vatAmt:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"{ChrW(&H20B1)}{vatAmt:F2}", regularFont).Width), CSng(yPosition))
             yPosition += 12
 
             e.Graphics.DrawString(New String("="c, Math.Min(36, CInt(contentWidth / 6))), regularFont, brush, marginLeft, yPosition)
             yPosition += 12
 
             e.Graphics.DrawString("TOTAL AMOUNT DUE:", boldFont, brush, marginLeft, yPosition)
-            e.Graphics.DrawString($"?{totalDue:F2}", boldFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"?{totalDue:F2}", boldFont).Width), CSng(yPosition))
+            e.Graphics.DrawString($"{ChrW(&H20B1)}{totalDue:F2}", boldFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"{ChrW(&H20B1)}{totalDue:F2}", boldFont).Width), CSng(yPosition))
             yPosition += 18
 
             e.Graphics.DrawString("PAYMENT INFORMATION", sectionHeaderFont, brush, marginLeft, yPosition)
@@ -301,9 +301,9 @@ Public Class SalesDetails
                 e.Graphics.DrawString($"Reference: {paymentReference}", regularFont, brush, marginLeft, yPosition)
                 yPosition += 12
             End If
-            e.Graphics.DrawString($"Amount Received: ?{amountReceived:F2}", regularFont, brush, marginLeft, yPosition)
+            e.Graphics.DrawString($"Amount Received: {ChrW(&H20B1)}{amountReceived:F2}", regularFont, brush, marginLeft, yPosition)
             yPosition += 12
-            e.Graphics.DrawString($"Change: ?{changeAmount:F2}", regularFont, brush, marginLeft, yPosition)
+            e.Graphics.DrawString($"Change: {ChrW(&H20B1)}{changeAmount:F2}", regularFont, brush, marginLeft, yPosition)
             yPosition += 14
 
             e.Graphics.DrawString(New String("="c, Math.Min(36, CInt(contentWidth / 6))), regularFont, brush, marginLeft, yPosition)

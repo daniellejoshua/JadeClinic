@@ -42,9 +42,10 @@ Public Class Sales
     Private totalPanelActive As Boolean = False
 
     Private enteredAmount As String = ""
-    Private lblAmountDisplay As Guna.UI2.WinForms.Guna2HtmlLabel
+    Private lblAmountDisplay As Label
 
     Private productCardControls As New List(Of Control)()
+    Private productDbStock As New Dictionary(Of String, Integer)()
 
     ' Receipt printing variables
     Private printDocument As PrintDocument
@@ -620,19 +621,24 @@ Public Class Sales
         ' Clear the CategoryPanel
         CategoryPanel.Controls.Clear()
         productCardControls.Clear()
+        productDbStock.Clear()
         backCategory.Visible = True
         LabelTitle.Text = categoryName
+
+        ' Use FlowLayoutPanel for responsive card layout
+        Dim flowPanel As New FlowLayoutPanel()
+        flowPanel.Dock = DockStyle.Fill
+        flowPanel.AutoScroll = True
+        flowPanel.BackColor = Color.Transparent
+        flowPanel.Padding = New Padding(14)
+        CategoryPanel.Controls.Add(flowPanel)
 
         ' Query products from database where Category matches - Always get fresh data
         Dim query As String = "SELECT ProductID, ProductName, SellingPrice, ProductCode, ReorderLevel, CurrentStock, Category FROM Products WHERE Category = @Category AND IsActive = 1"
         Dim param As New SqlParameter("@Category", categoryName)
         Using reader As DbDataReader = Utilities.ExecuteReader(query, {param})
-            Dim cardWidth As Integer = 230
-            Dim cardHeight As Integer = 220
-            Dim marginX As Integer = 28
-            Dim marginY As Integer = 18
-            Dim currentX As Integer = marginX
-            Dim currentY As Integer = marginY
+            Dim cardWidth As Integer = 220
+            Dim cardHeight As Integer = 210
 
             While reader.Read()
                 ' Create a new panel for the product card - Updated colors
@@ -642,17 +648,10 @@ Public Class Sales
                 productCard.FillColor = OffWhite ' Updated to match clinic theme
                 productCard.BorderColor = JadeOlive ' Golden accent border
                 productCard.BorderThickness = 1
+                productCard.Margin = New Padding(10)
 
                 ' Set the Tag property to the ProductID for UpdateStockLabel method
                 productCard.Tag = reader("ProductID").ToString()
-
-                ' Check if the card exceeds the width of the CategoryPanel
-                If currentX + cardWidth > CategoryPanel.Width Then
-                    currentX = marginX ' Reset X position
-                    currentY += cardHeight + marginY ' Move to the next row
-                End If
-                productCard.Location = New Point(currentX, currentY)
-                currentX += cardWidth + marginX ' Update X position for the next card
 
                 ' Add product image placeholder
                 Dim productImage As New Guna.UI2.WinForms.Guna2PictureBox()
@@ -753,6 +752,7 @@ Public Class Sales
                 {"Category", reader("Category")},
                 {"CurrentStock", stock}
             }
+                productDbStock(reader("ProductID").ToString()) = stock
 
                 ' Add click handler
                 AddHandler productCard.Click, Sub(sender2, e2)
@@ -763,8 +763,8 @@ Public Class Sales
                 ' Add to tracking list
                 productCardControls.Add(productCard)
 
-                ' ADD TO CATEGORY PANEL - This was missing!
-                CategoryPanel.Controls.Add(productCard)
+                ' ADD TO FLOW PANEL
+                flowPanel.Controls.Add(productCard)
 
             End While
         End Using
@@ -786,8 +786,17 @@ Public Class Sales
             Return
         End If
 
-        ' Check stock availability
-        If productData.ContainsKey("CurrentStock") AndAlso CInt(productData("CurrentStock")) = 0 Then
+        ' Check stock availability (DB stock minus what's already reserved in cart)
+        Dim prodIdForCheck As String = productData("ProductID").ToString()
+        Dim rawDbStock As Integer = If(productDbStock.ContainsKey(prodIdForCheck), productDbStock(prodIdForCheck), If(productData.ContainsKey("CurrentStock"), CInt(productData("CurrentStock")), 0))
+        Dim reservedInCart As Integer = 0
+        For Each item In currentOrderList
+            If item("ProductID").ToString() = prodIdForCheck Then
+                reservedInCart += CInt(item("Quantity"))
+            End If
+        Next
+        Dim effectiveStock As Integer = Math.Max(0, rawDbStock - reservedInCart)
+        If effectiveStock = 0 Then
             If isFromBarcode Then
                 ShowBarcodeNotFoundNotification("Out of Stock")
             Else
@@ -892,8 +901,16 @@ Public Class Sales
             Return ' Exit without adding to order
         End If
 
-        ' Check if the product stock is 0
-        If productData.ContainsKey("CurrentStock") AndAlso CInt(productData("CurrentStock")) = 0 Then
+        ' Check if the product has stock available (DB stock minus reserved in cart)
+        Dim spProdId As String = productData("ProductID").ToString()
+        Dim spDbStock As Integer = If(productDbStock.ContainsKey(spProdId), productDbStock(spProdId), If(productData.ContainsKey("CurrentStock"), CInt(productData("CurrentStock")), 0))
+        Dim spReserved As Integer = 0
+        For Each item In currentOrderList
+            If item("ProductID").ToString() = spProdId Then
+                spReserved += CInt(item("Quantity"))
+            End If
+        Next
+        If Math.Max(0, spDbStock - spReserved) = 0 Then
             MessageBox.Show("This product is out of stock and cannot be added to the order.", "Out of Stock", MessageBoxButtons.OK, MessageBoxIcon.Warning)
             Return ' Exit without adding to order
         End If
@@ -912,18 +929,19 @@ Public Class Sales
         If foundIndex <> -1 Then
             ' Check if we have enough stock for the increase
             Dim currentQuantity As Integer = CInt(currentOrderList(foundIndex)("Quantity"))
-            Dim availableStock As Integer = CInt(productData("CurrentStock"))
+            Dim prodId As String = productData("ProductID").ToString()
+            Dim dbStock As Integer = If(productDbStock.ContainsKey(prodId), productDbStock(prodId), If(productData.ContainsKey("CurrentStock"), CInt(productData("CurrentStock")), 0))
 
             ' Get already reserved quantity in order
             Dim reservedQuantity As Integer = 0
             For Each item In currentOrderList
-                If item("ProductID").ToString() = productData("ProductID").ToString() Then
+                If item("ProductID").ToString() = prodId Then
                     reservedQuantity = CInt(item("Quantity"))
                     Exit For
                 End If
             Next
 
-            If reservedQuantity >= availableStock Then
+            If reservedQuantity >= dbStock Then
                 MessageBox.Show("Cannot add more items. Not enough stock available.", "Insufficient Stock", MessageBoxButtons.OK, MessageBoxIcon.Warning)
                 Return
             End If
@@ -937,11 +955,8 @@ Public Class Sales
             currentOrderList.Add(productData)
         End If
 
-        ' ONLY deduct stock from UI display, NOT from database yet
-        productData("CurrentStock") = CInt(productData("CurrentStock")) - 1
-
-        ' Update lblStock for the product
-        UpdateStockLabel(productData("ProductID").ToString(), CInt(productData("CurrentStock")))
+        ' Update stock label using DB stock minus reserved in cart
+        UpdateStockLabelFromDbStock(productData("ProductID").ToString())
 
         ' Refresh the order display
         RefreshOrderDisplay()
@@ -977,15 +992,6 @@ Public Class Sales
                     Return
                 End If
 
-                ' Restore UI stock (add back the entire quantity) if CurrentStock exists
-                Try
-                    If currentOrderList(itemIndex).ContainsKey("CurrentStock") Then
-                        currentOrderList(itemIndex)("CurrentStock") = CInt(currentOrderList(itemIndex)("CurrentStock")) + currentQuantity
-                    End If
-                Catch
-                    ' ignore stock restoration errors
-                End Try
-
                 ' Remove the item line
                 Dim removedProductId As String = currentOrderList(itemIndex)("ProductID").ToString()
                 currentOrderList.RemoveAt(itemIndex)
@@ -993,7 +999,7 @@ Public Class Sales
                 ' Update UI and counts
                 RefreshOrderDisplay()
                 UpdateCategoryItemCounts()
-                UpdateStockLabel(removedProductId, 0) ' let UpdateStockLabel find the real display or show 0
+                UpdateStockLabelFromDbStock(removedProductId)
 
                 Utilities.LogAudit(frmLoginvb.LoggedInUsername, "POS Line Voided", $"Product: {productName}, Qty: {currentQuantity}, AuthorizedBy: {approver}")
                 ShowVoidSuccessNotification(productName & $" (x{currentQuantity})", approver)
@@ -1008,15 +1014,7 @@ Public Class Sales
         If currentQuantity > 1 Then
             currentOrderList(itemIndex)("Quantity") = currentQuantity - 1
 
-            ' Return stock to UI display
-            Try
-                If currentOrderList(itemIndex).ContainsKey("CurrentStock") Then
-                    currentOrderList(itemIndex)("CurrentStock") = CInt(currentOrderList(itemIndex)("CurrentStock")) + 1
-                    UpdateStockLabel(productId, CInt(currentOrderList(itemIndex)("CurrentStock")))
-                End If
-            Catch
-                ' ignore update errors
-            End Try
+            UpdateStockLabelFromDbStock(productId)
 
             RefreshOrderDisplay()
             UpdateCategoryItemCounts()
@@ -1029,17 +1027,9 @@ Public Class Sales
             Return
         End If
 
-        ' Restore stock UI and remove line
-        Try
-            If currentOrderList(itemIndex).ContainsKey("CurrentStock") Then
-                currentOrderList(itemIndex)("CurrentStock") = CInt(currentOrderList(itemIndex)("CurrentStock")) + 1
-                UpdateStockLabel(productId, CInt(currentOrderList(itemIndex)("CurrentStock")))
-            End If
-        Catch
-            ' ignore errors
-        End Try
-
+        Dim removedId As String = currentOrderList(itemIndex)("ProductID").ToString()
         currentOrderList.RemoveAt(itemIndex)
+        UpdateStockLabelFromDbStock(removedId)
         RefreshOrderDisplay()
         UpdateCategoryItemCounts()
 
@@ -1051,7 +1041,7 @@ Public Class Sales
         Dim notificationLabel As New Label()
         notificationLabel.Text = $"Item Voided: {productName}"
         If Not String.IsNullOrWhiteSpace(approver) Then
-            notificationLabel.Text &= $"  �  By: {approver}"
+            notificationLabel.Text &= $"  •  By: {approver}"
         End If
         notificationLabel.Font = New Font("Poppins", 11, FontStyle.Bold)
         notificationLabel.ForeColor = PureWhite
@@ -1109,6 +1099,31 @@ Public Class Sales
                 End If
             End If
         Next
+    End Sub
+
+    Private Sub UpdateStockLabelFromDbStock(productId As String)
+        If Not productDbStock.ContainsKey(productId) Then
+            Dim card = productCardControls.OfType(Of Guna.UI2.WinForms.Guna2Panel)().FirstOrDefault(Function(p) p.Tag IsNot Nothing AndAlso p.Tag.ToString() = productId)
+            If card IsNot Nothing Then
+                Dim lbl As Label = card.Controls.OfType(Of Label)().FirstOrDefault(Function(l) l.Text.StartsWith("Stock:"))
+                If lbl IsNot Nothing Then
+                    Dim parts() As String = lbl.Text.Replace("Stock:", "").Trim().Split(" "c)
+                    Dim current As Integer = 0
+                    If parts.Length > 0 AndAlso Integer.TryParse(parts(0), current) Then
+                        productDbStock(productId) = current
+                    End If
+                End If
+            End If
+        End If
+        If Not productDbStock.ContainsKey(productId) Then Return
+        Dim dbStock As Integer = productDbStock(productId)
+        Dim reservedQty As Integer = 0
+        For Each item In currentOrderList
+            If item("ProductID").ToString() = productId Then
+                reservedQty += CInt(item("Quantity"))
+            End If
+        Next
+        UpdateStockLabel(productId, Math.Max(0, dbStock - reservedQty))
     End Sub
 
     Private Sub UpdateCategoryItemCounts()
@@ -2939,6 +2954,7 @@ Public Class Sales
         cashForm.Text = "Cash Payment"
         cashForm.Size = New Size(520, 800) ' INCREASED height from 750 to 800 for better spacing
         cashForm.StartPosition = FormStartPosition.CenterParent
+        cashForm.AutoScaleMode = AutoScaleMode.Dpi
         cashForm.FormBorderStyle = FormBorderStyle.FixedDialog
         cashForm.MaximizeBox = False
         cashForm.MinimizeBox = False
@@ -2996,10 +3012,10 @@ Public Class Sales
         separator.BackColor = JadeOlive
         cashForm.Controls.Add(separator)
 
-        ' Amount display section with improved spacing - ADJUSTED Y position
+        ' Amount display section - uses full form width for proper centering
         Dim amountSection As New Panel()
         amountSection.Size = New Size(480, 120)
-        amountSection.Location = New Point(20, 180) ' Moved down from 170
+        amountSection.Location = New Point(20, 180)
         amountSection.BackColor = Color.Transparent
         cashForm.Controls.Add(amountSection)
 
@@ -3008,19 +3024,20 @@ Public Class Sales
         lblAmountReceived.Text = "Amount Received"
         lblAmountReceived.Font = New Font("Poppins", 12, FontStyle.Regular)
         lblAmountReceived.ForeColor = Color.FromArgb(95, 95, 95)
-        lblAmountReceived.Location = New Point(0, 0)
-        lblAmountReceived.Size = New Size(480, 25)
+        lblAmountReceived.Dock = DockStyle.Top
+        lblAmountReceived.Height = 25
         lblAmountReceived.TextAlign = ContentAlignment.MiddleCenter
         amountSection.Controls.Add(lblAmountReceived)
 
-        ' Amount display
+        ' Amount display - use regular Label with Dock/TextAlign for automatic centering
         enteredAmount = "" ' Reset amount
-        lblAmountDisplay = New Guna.UI2.WinForms.Guna2HtmlLabel()
+        lblAmountDisplay = New Label()
         lblAmountDisplay.Text = "₱0.00"
         lblAmountDisplay.Font = New Font("Segoe UI", 28, FontStyle.Bold)
         lblAmountDisplay.ForeColor = Color.FromArgb(95, 95, 95)
-        lblAmountDisplay.AutoSize = True
-        lblAmountDisplay.Location = New Point((480 - 150) / 2, 30)
+        lblAmountDisplay.AutoSize = False
+        lblAmountDisplay.Dock = DockStyle.Fill
+        lblAmountDisplay.TextAlign = ContentAlignment.MiddleCenter
         amountSection.Controls.Add(lblAmountDisplay)
 
         ' Input hint label
@@ -3028,39 +3045,47 @@ Public Class Sales
         lblInputHint.Text = "Type amount or use keypad below"
         lblInputHint.Font = New Font("Poppins", 9, FontStyle.Italic)
         lblInputHint.ForeColor = BorderGray
-        lblInputHint.Location = New Point(0, 90)
-        lblInputHint.Size = New Size(480, 20)
+        lblInputHint.Dock = DockStyle.Bottom
+        lblInputHint.Height = 20
         lblInputHint.TextAlign = ContentAlignment.MiddleCenter
         amountSection.Controls.Add(lblInputHint)
 
-        ' Change display with better layout - ADJUSTED Y position
+        ' Change display centered in form
         Dim changeSection As New Panel()
         changeSection.Size = New Size(480, 40)
-        changeSection.Location = New Point(20, 320) ' Moved down from 300
+        changeSection.Location = New Point(20, 320)
         changeSection.BackColor = Color.Transparent
         cashForm.Controls.Add(changeSection)
+
+        Dim innerChangeTable As New TableLayoutPanel()
+        innerChangeTable.ColumnCount = 2
+        innerChangeTable.RowCount = 1
+        innerChangeTable.Dock = DockStyle.Fill
+        innerChangeTable.BackColor = Color.Transparent
+        innerChangeTable.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 50.0F))
+        innerChangeTable.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 50.0F))
+        changeSection.Controls.Add(innerChangeTable)
 
         Dim lblChangeLabel As New Label()
         lblChangeLabel.Text = "Change:"
         lblChangeLabel.Font = New Font("Poppins", 12, FontStyle.Regular)
         lblChangeLabel.ForeColor = Color.FromArgb(95, 95, 95)
-        lblChangeLabel.Location = New Point(140, 5)
-        lblChangeLabel.Size = New Size(120, 35)
-        changeSection.Controls.Add(lblChangeLabel)
+        lblChangeLabel.Dock = DockStyle.Fill
+        lblChangeLabel.TextAlign = ContentAlignment.MiddleRight
+        lblChangeLabel.Padding = New Padding(0, 0, 5, 0)
+        innerChangeTable.Controls.Add(lblChangeLabel, 0, 0)
 
         Dim lblChangeAmount As New Label()
         lblChangeAmount.Text = "₱0.00"
         lblChangeAmount.Font = New Font("Poppins", 12, FontStyle.Bold)
         lblChangeAmount.ForeColor = SuccessGreen
-        lblChangeAmount.Location = New Point(250, 5)
-        lblChangeAmount.Size = New Size(120, 40)
-        changeSection.Controls.Add(lblChangeAmount)
+        lblChangeAmount.Dock = DockStyle.Fill
+        lblChangeAmount.TextAlign = ContentAlignment.MiddleLeft
+        lblChangeAmount.Padding = New Padding(5, 0, 0, 0)
+        innerChangeTable.Controls.Add(lblChangeAmount, 1, 0)
 
-        ' ENHANCED: Update amount display function with better decimal handling
-        ' Inside ShowCashAmountInputModal: replace the local UpdateCashAmountDisplay and the exact-button assignment to use 1 decimal place
-        ' (This is the local UpdateCashAmountDisplay defined inside ShowCashAmountInputModal)
+        ' Update amount display with automatic centering (Dock + TextAlign handles position)
         Dim UpdateCashAmountDisplay = Sub()
-                                          ' Format as decimal with 1 place
                                           Dim displayValue As Decimal = 0D
                                           Dim amountText As String = enteredAmount
 
@@ -3068,11 +3093,9 @@ Public Class Sales
                                               displayValue = 0D
                                               lblAmountDisplay.Text = "₱0.0"
                                           ElseIf amountText.Contains(".") Then
-                                              ' User entered a decimal point - parse directly
                                               If Decimal.TryParse(amountText, displayValue) Then
                                                   lblAmountDisplay.Text = $"₱{displayValue:F1}"
                                               Else
-                                                  ' Handle incomplete decimal input (like "123.")
                                                   If amountText.EndsWith(".") AndAlso amountText.Length > 1 Then
                                                       Dim wholePart As String = amountText.Substring(0, amountText.Length - 1)
                                                       If Decimal.TryParse(wholePart, displayValue) Then
@@ -3085,16 +3108,12 @@ Public Class Sales
                                                   End If
                                               End If
                                           Else
-                                              ' No decimal point, treat entered text as whole currency units
                                               If Decimal.TryParse(amountText, displayValue) Then
                                                   lblAmountDisplay.Text = $"₱{displayValue:F1}"
                                               Else
                                                   lblAmountDisplay.Text = "₱0.0"
                                               End If
                                           End If
-
-                                          ' Center the amount display
-                                          lblAmountDisplay.Location = New Point((480 - lblAmountDisplay.Width) / 2, 30)
 
                                           ' Update change calculation
                                           Dim changeVal As Decimal = 0D
@@ -4539,8 +4558,16 @@ Public Class Sales
             MessageBox.Show("POS is locked. Manager/Admin must set opening capital first.", "POS Locked", MessageBoxButtons.OK, MessageBoxIcon.Warning)
             Return
         End If
-        ' Check if the product stock is 0
-        If productData.ContainsKey("CurrentStock") AndAlso CInt(productData("CurrentStock")) = 0 Then
+        ' Check if the product stock is 0 (DB stock minus reserved in cart)
+        Dim qtyProdId As String = productData("ProductID").ToString()
+        Dim qtyDbStock As Integer = If(productDbStock.ContainsKey(qtyProdId), productDbStock(qtyProdId), If(productData.ContainsKey("CurrentStock"), CInt(productData("CurrentStock")), 0))
+        Dim qtyReserved As Integer = 0
+        For Each item In currentOrderList
+            If item("ProductID").ToString() = qtyProdId Then
+                qtyReserved += CInt(item("Quantity"))
+            End If
+        Next
+        If Math.Max(0, qtyDbStock - qtyReserved) = 0 Then
             MessageBox.Show("This product is out of stock and cannot be added to the order.", "Out of Stock", MessageBoxButtons.OK, MessageBoxIcon.Warning)
             Return ' Exit without showing selector
         End If
@@ -4577,8 +4604,16 @@ Public Class Sales
         lblPrice.TextAlign = ContentAlignment.MiddleCenter
         quantityForm.Controls.Add(lblPrice)
 
-        ' Stock information - WIDER
-        Dim availableStock As Integer = CInt(productData("CurrentStock"))
+        ' Stock information - WIDER (DB stock minus what's already in cart)
+        Dim qtyId As String = productData("ProductID").ToString()
+        Dim qtyRawStock As Integer = If(productDbStock.ContainsKey(qtyId), productDbStock(qtyId), If(productData.ContainsKey("CurrentStock"), CInt(productData("CurrentStock")), 0))
+        Dim qtyAlreadyReserved As Integer = 0
+        For Each item In currentOrderList
+            If item("ProductID").ToString() = qtyId Then
+                qtyAlreadyReserved += CInt(item("Quantity"))
+            End If
+        Next
+        Dim availableStock As Integer = Math.Max(0, qtyRawStock - qtyAlreadyReserved)
         Dim lblStock As New Label()
         lblStock.Text = $"Available Stock: {availableStock}"
         lblStock.Font = New Font("Poppins", 12, FontStyle.Regular) ' Increased font size
@@ -4829,18 +4864,19 @@ Public Class Sales
         If foundIndex <> -1 Then
             ' Check if we have enough stock for the increase
             Dim currentQuantity As Integer = CInt(currentOrderList(foundIndex)("Quantity"))
-            Dim availableStock As Integer = CInt(productData("CurrentStock"))
+            Dim apProdId As String = productData("ProductID").ToString()
+            Dim apDbStock As Integer = If(productDbStock.ContainsKey(apProdId), productDbStock(apProdId), If(productData.ContainsKey("CurrentStock"), CInt(productData("CurrentStock")), 0))
 
             ' Get already reserved quantity in order
             Dim reservedQuantity As Integer = 0
             For Each item In currentOrderList
-                If item("ProductID").ToString() = productData("ProductID").ToString() Then
+                If item("ProductID").ToString() = apProdId Then
                     reservedQuantity = CInt(item("Quantity"))
                     Exit For
                 End If
             Next
 
-            If reservedQuantity + quantity > availableStock Then
+            If reservedQuantity + quantity > apDbStock Then
                 MessageBox.Show("Cannot add more items. Not enough stock available.", "Insufficient Stock", MessageBoxButtons.OK, MessageBoxIcon.Warning)
                 Return
             End If
@@ -4854,9 +4890,8 @@ Public Class Sales
             currentOrderList.Add(productData)
         End If
 
-        ' Update stock display (deduct the quantity added)
-        productData("CurrentStock") = CInt(productData("CurrentStock")) - quantity
-        UpdateStockLabel(productData("ProductID").ToString(), CInt(productData("CurrentStock")))
+        ' Update stock display using DB stock minus reserved in cart
+        UpdateStockLabelFromDbStock(productData("ProductID").ToString())
 
         ' Refresh the order display
         RefreshOrderDisplay()
@@ -4933,6 +4968,7 @@ Public Class Sales
     Private Sub ShowSingleProductCard(productId As Integer, productName As String, category As String)
         CategoryPanel.Controls.Clear()
         productCardControls.Clear()
+        productDbStock.Clear()
         backCategory.Visible = True
         LabelTitle.Text = $"Search: {productName}"
 
@@ -5035,6 +5071,7 @@ Public Class Sales
                     {"Category", reader("Category")},
                     {"CurrentStock", stock}
                 }
+                productDbStock(reader("ProductID").ToString()) = stock
 
                 AddHandler productCard.Click, Sub(sender2, e2)
                                                   HandleProductInteraction(productData, False)
@@ -5121,7 +5158,7 @@ Public Class Sales
                            End If
 
                            Try
-                                Dim query As String = "SELECT ProductID, ProductName, Category FROM Products WHERE IsActive = 1 AND (ProductCode = @term OR ProductName LIKE @like) ORDER BY CASE WHEN ProductCode = @term THEN 0 ELSE 1 END, ProductName"
+                               Dim query As String = "SELECT ProductID, ProductName, Category FROM Products WHERE IsActive = 1 AND (ProductCode = @term OR ProductName LIKE @like) ORDER BY CASE WHEN ProductCode = @term THEN 0 ELSE 1 END, ProductName"
                                Dim parameters As SqlParameter() = {
                                    New SqlParameter("@term", term),
                                    New SqlParameter("@like", "%" & term & "%")
@@ -5266,7 +5303,7 @@ Public Class Sales
             Dim lblTitle As New Label With {
             .Text = "VOID AUTHORIZATION",
             .Font = New Font("Poppins", 16, FontStyle.Bold),
-            .ForeColor = PureWhite,
+            .ForeColor = Color.Black,
             .AutoSize = False,
             .Size = New Size(520, 34),
             .Location = New Point(20, 16),
@@ -5586,7 +5623,7 @@ Public Class Sales
         Dim token As String = ExtractManagerQrToken(qrRaw)
         If String.IsNullOrWhiteSpace(token) Then Return False
 
-        Dim sql As String = "SELECT * LIMIT 1 Username, UserRole, IsActive FROM Users WHERE QRCode = @QRCode"
+        Dim sql As String = "SELECT Username, UserRole, IsActive FROM Users WHERE QRCode = @QRCode LIMIT 1"
         Using reader As DbDataReader = Utilities.ExecuteReader(sql, New SqlParameter("@QRCode", token))
             If reader.Read() Then
                 Dim userName As String = If(IsDBNull(reader("Username")), "", reader("Username").ToString())
@@ -5607,7 +5644,7 @@ Public Class Sales
         approverUsername = ""
         If String.IsNullOrWhiteSpace(managerUsername) OrElse String.IsNullOrWhiteSpace(managerPassword) Then Return False
 
-        Dim sql As String = "SELECT * LIMIT 1 Username, UserRole, IsActive, PasswordHash FROM Users WHERE Username = @Username"
+        Dim sql As String = "SELECT Username, UserRole, IsActive, PasswordHash FROM Users WHERE Username = @Username LIMIT 1"
         Using reader As DbDataReader = Utilities.ExecuteReader(sql, New SqlParameter("@Username", managerUsername))
             If reader.Read() Then
                 Dim role As String = If(IsDBNull(reader("UserRole")), "", reader("UserRole").ToString())

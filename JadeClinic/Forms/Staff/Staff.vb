@@ -147,10 +147,6 @@ Public Class Staff
         SortBy.Items.Add("Admins Only")
         SortBy.Items.Add("Managers Only")
         SortBy.Items.Add("Staff Only")
-        SortBy.Items.Add("Sort by Username (A-Z)")
-        SortBy.Items.Add("Sort by Username (Z-A)")
-        SortBy.Items.Add("Sort by User ID (Ascending)")
-        SortBy.Items.Add("Sort by User ID (Descending)")
         SortBy.SelectedIndex = 0
     End Sub
 
@@ -204,7 +200,7 @@ Public Class Staff
         Dim photoCol As New DataGridViewImageColumn() With {
         .Name = "Photo",
         .HeaderText = "Photo",
-        .ImageLayout = DataGridViewImageCellLayout.Zoom,
+        .ImageLayout = DataGridViewImageCellLayout.Stretch,
         .ReadOnly = True,
         .Width = 90,
         .AutoSizeMode = DataGridViewAutoSizeColumnMode.None,
@@ -295,20 +291,7 @@ Public Class Staff
                 query += whereClause
             End If
 
-            Select Case sortOrder
-                Case "Sort by Username (A-Z)"
-                    query += " ORDER BY Username ASC"
-                Case "Sort by Username (Z-A)"
-                    query += " ORDER BY Username DESC"
-                Case "Sort by User ID (Ascending)"
-                    query += " ORDER BY UserID ASC"
-                Case "Sort by User ID (Descending)"
-                    query += " ORDER BY UserID DESC"
-                Case Else
-                    If Not (sortOrder = "Admins Only" Or sortOrder = "Managers Only" Or sortOrder = "Staff Only") Then
-                        query += " ORDER BY UserID ASC" ' Default sorting
-                    End If
-            End Select
+            query += " ORDER BY UserID ASC"
 
             Using reader As DbDataReader = Utilities.ExecuteReader(query, Nothing)
                 While reader.Read()
@@ -320,15 +303,16 @@ Public Class Staff
                     Dim userRole As String = If(IsDBNull(reader("UserRole")), "Staff", reader("UserRole").ToString())
                     Dim isActive As Boolean = If(IsDBNull(reader("IsActive")), True, Convert.ToBoolean(reader("IsActive")))
 
-                    ' Handle photo
+                    ' Handle photo — always resize to cell dimensions
                     Dim userPhoto As System.Drawing.Image = Nothing
                     If Not IsDBNull(reader("Photo")) Then
                         Dim photoBytes As Byte() = CType(reader("Photo"), Byte())
                         Using ms As New MemoryStream(photoBytes)
-                            userPhoto = System.Drawing.Image.FromStream(ms)
+                            Using original As System.Drawing.Image = System.Drawing.Image.FromStream(ms)
+                                userPhoto = ResizeForCell(original)
+                            End Using
                         End Using
                     Else
-                        ' Create default avatar with initials
                         userPhoto = CreateDefaultAvatar(username)
                     End If
 
@@ -378,12 +362,13 @@ Public Class Staff
         End Try
     End Sub
     Private Function CreateDefaultAvatar(username As String) As System.Drawing.Image
-        Dim bitmap As New Bitmap(45, 45)  ' Slightly larger for photo column
+        Const w As Integer = 90
+        Const h As Integer = 60
+        Dim bitmap As New Bitmap(w, h)
         Using g As Graphics = Graphics.FromImage(bitmap)
-            ' Enable anti-aliasing for smooth circles
             g.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias
+            g.InterpolationMode = Drawing2D.InterpolationMode.HighQualityBicubic
 
-            ' Fill background with a color based on username
             Dim colors() As System.Drawing.Color = {
                 System.Drawing.Color.FromArgb(255, 107, 107),
                 System.Drawing.Color.FromArgb(78, 205, 196),
@@ -392,9 +377,11 @@ Public Class Staff
                 System.Drawing.Color.FromArgb(116, 185, 255)
             }
             Dim colorIndex As Integer = Math.Abs(username.GetHashCode()) Mod colors.Length
-            g.FillEllipse(New SolidBrush(colors(colorIndex)), 0, 0, 45, 45)
 
-            ' Draw initials
+            Using br As New SolidBrush(colors(colorIndex))
+                g.FillEllipse(br, 7, 2, 56, 56)
+            End Using
+
             Dim initials As String = ""
             If username.Length > 0 Then
                 initials = username.Substring(0, 1).ToUpper()
@@ -410,13 +397,25 @@ Public Class Staff
                 End If
             End If
 
-            Using font As New System.Drawing.Font("Poppins", 12, System.Drawing.FontStyle.Bold)  ' Slightly larger font
+            Using font As New System.Drawing.Font("Poppins", 14, System.Drawing.FontStyle.Bold)
                 Dim textSize = g.MeasureString(initials, font)
                 g.DrawString(initials, font, Brushes.White,
-                    (45 - textSize.Width) / 2, (45 - textSize.Height) / 2)
+                    CInt((w - textSize.Width) / 2), CInt((h - textSize.Height) / 2))
             End Using
         End Using
         Return bitmap
+    End Function
+
+    Private Function ResizeForCell(img As SD.Image) As SD.Image
+        Const cellW As Integer = 90
+        Const cellH As Integer = 60
+        If img.Width = cellW AndAlso img.Height = cellH Then Return img
+        Dim bmp As New Bitmap(cellW, cellH)
+        Using g As Graphics = Graphics.FromImage(bmp)
+            g.InterpolationMode = Drawing2D.InterpolationMode.HighQualityBicubic
+            g.DrawImage(img, 0, 0, cellW, cellH)
+        End Using
+        Return bmp
     End Function
 
     Private Sub SortBy_SelectedIndexChanged(sender As Object, e As EventArgs) Handles SortBy.SelectedIndexChanged

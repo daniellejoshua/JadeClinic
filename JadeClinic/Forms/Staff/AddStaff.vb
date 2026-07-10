@@ -468,6 +468,20 @@ Public Class AddStaff
                 End If
             End If
 
+            If isValid AndAlso Not String.IsNullOrWhiteSpace(email) Then
+                If Not isEditMode AndAlso CheckDuplicateEmail(email) Then
+                    isValid = False
+                    errorMessage = "Email already exists."
+                End If
+            End If
+
+            If isValid AndAlso Not String.IsNullOrWhiteSpace(phone) Then
+                If Not isEditMode AndAlso CheckDuplicatePhone(phone) Then
+                    isValid = False
+                    errorMessage = "Phone number already exists."
+                End If
+            End If
+
             btnAddStock.Enabled = isValid
 
             ' Show validation message at top-right label (Guna2HtmlLabel15)
@@ -541,7 +555,35 @@ Public Class AddStaff
             Return count > 0
         Catch ex As Exception
             Console.WriteLine($"Error checking duplicate username: {ex.Message}")
-            Return False ' Assume no duplicate if error occurs
+            Return False
+        End Try
+    End Function
+
+    Private Function CheckDuplicateEmail(email As String) As Boolean
+        Try
+            Dim query As String = "SELECT COUNT(*) FROM Users WHERE Email = @Email"
+            Dim parameters() As SqlParameter = {
+                New SqlParameter("@Email", email)
+            }
+            Dim count As Integer = CInt(Utilities.ExecuteScalar(query, parameters))
+            Return count > 0
+        Catch ex As Exception
+            Console.WriteLine($"Error checking duplicate email: {ex.Message}")
+            Return False
+        End Try
+    End Function
+
+    Private Function CheckDuplicatePhone(phone As String) As Boolean
+        Try
+            Dim query As String = "SELECT COUNT(*) FROM Users WHERE Phone = @Phone"
+            Dim parameters() As SqlParameter = {
+                New SqlParameter("@Phone", phone)
+            }
+            Dim count As Integer = CInt(Utilities.ExecuteScalar(query, parameters))
+            Return count > 0
+        Catch ex As Exception
+            Console.WriteLine($"Error checking duplicate phone: {ex.Message}")
+            Return False
         End Try
     End Function
 
