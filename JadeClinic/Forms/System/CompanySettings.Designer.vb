@@ -639,7 +639,7 @@ Partial Class CompanySettings
         btnPreviewReceipt.ShadowDecoration.CustomizableEdges = CustomizableEdges26
         btnPreviewReceipt.Size = New Size(180, 45)
         btnPreviewReceipt.TabIndex = 2
-        btnPreviewReceipt.Text = ChrW(55358) & ChrW(56830) & " Preview Receipt"
+        btnPreviewReceipt.Text = "Preview Receipt"
         ' 
         ' btnCancel
         ' 

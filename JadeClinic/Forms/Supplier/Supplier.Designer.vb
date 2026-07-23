@@ -286,14 +286,15 @@ Partial Class Supplier
         Guna2HtmlLabel1.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
         Guna2HtmlLabel1.Location = New Point(241, 102)
         Guna2HtmlLabel1.Name = "Guna2HtmlLabel1"
-        Guna2HtmlLabel1.Size = New Size(65, 32)
+        Guna2HtmlLabel1.Size = New Size(67, 32)
         Guna2HtmlLabel1.TabIndex = 97
-        Guna2HtmlLabel1.Text = "Sort by:"
+        Guna2HtmlLabel1.Text = "Search:"
         ' 
         ' Supplier
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
+        AutoScroll = True
         BackColor = Color.White
         ClientSize = New Size(1902, 1033)
         Controls.Add(Guna2HtmlLabel1)

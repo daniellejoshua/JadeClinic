@@ -3,6 +3,8 @@ Imports System.IO
 Imports System.Text.RegularExpressions
 Imports System.Security.Cryptography
 Imports System.Text
+Imports System.Threading.Tasks
+Imports System.Configuration
 Imports BCrypt.Net
 
 Public Class frmLoginvb
@@ -61,6 +63,7 @@ Public Class frmLoginvb
         pictureBoxTopSpacing = Math.Max(20, Guna2Panel1.Top - (PictureBox1.Top + PictureBox1.Height))
         CenterLoginLayout()
         EnableTitleBarHover()
+        AddHandler Me.Resize, Sub() CenterLoginLayout()
 
         AddHandler Me.KeyDown, AddressOf frmLoginvb_KeyDown
 
@@ -97,6 +100,39 @@ Public Class frmLoginvb
         AddHandler txtPassword.TextChanged, AddressOf ValidateInputForQRCodes
 
         SetupTabIndex()
+    End Sub
+
+    Private Sub CheckForUpdateInternal()
+        Try
+            ' Only Admin/Manager can trigger updates
+            Dim role As String = If(LoggedInRole, "").ToUpper()
+            If role <> "ADMIN" AndAlso role <> "MANAGER" Then Return
+
+            Dim updatePath As String = ConfigurationManager.AppSettings("UpdatePath")
+            If String.IsNullOrWhiteSpace(updatePath) OrElse Not Directory.Exists(updatePath) Then Return
+
+            Dim remoteVersion As Version = AutoUpdater.CheckForUpdate(updatePath)
+            If remoteVersion Is Nothing Then Return
+
+            Dim localVersion As Version = AutoUpdater.GetCurrentVersion()
+            Me.Invoke(Sub()
+                          Dim result As DialogResult = MessageBox.Show(
+                              $"New version {remoteVersion} available (current: {localVersion}). Update now?" & vbCrLf &
+                              "The application will restart after update.",
+                              "Update Available", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
+                          If result = DialogResult.Yes Then
+                              Dim updateDir As String = Path.Combine(
+                                  Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                                  "JadeClinic", "Update")
+                              If Directory.Exists(updateDir) Then Directory.Delete(updateDir, True)
+                              AutoUpdater.DownloadUpdate(updatePath, updateDir)
+                              Dim appDir As String = AppDomain.CurrentDomain.BaseDirectory
+                              AutoUpdater.ApplyUpdateAndRestart(updateDir, appDir)
+                          End If
+                      End Sub)
+        Catch ex As Exception
+            Console.WriteLine($"Update check failed: {ex.Message}")
+        End Try
     End Sub
 
     Private Sub SetupTabIndex()
@@ -1598,6 +1634,9 @@ Public Class frmLoginvb
                 Dim shell As New MainShell()
                 shell.Show()
                 shell.ShowInitialPage()
+
+                ' Check for updates in background (Admin/Manager only)
+                Task.Run(Sub() CheckForUpdateInternal())
 
             Catch ex As Exception
                 Console.WriteLine($"Error showing target form: {ex.Message}")

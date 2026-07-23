@@ -28,7 +28,9 @@ Partial Class ForgotPasswordForm
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
+        AutoScroll = True
         ClientSize = New Size(800, 450)
+        MinimumSize = New Size(460, 380)
         Name = "ForgotPasswordForm"
         Text = "ForgotPasswordForm"
         ResumeLayout(False)

@@ -23,15 +23,18 @@ Public Class ForgotPasswordForm
     Public Sub New()
         Me.Text = "Forgot Password"
         Me.Size = New Drawing.Size(520, 420)
-        Me.FormBorderStyle = FormBorderStyle.FixedDialog
+        Me.MinimumSize = New Drawing.Size(460, 380)
+        Me.FormBorderStyle = FormBorderStyle.Sizable
         Me.MaximizeBox = False
         Me.MinimizeBox = False
         Me.StartPosition = FormStartPosition.CenterParent
         Me.BackColor = Drawing.Color.White
+        Me.AutoScroll = True
         InitializeStepControls()
         ShowStep(1)
         Me.KeyPreview = True
         AddHandler Me.KeyDown, AddressOf ForgotPasswordForm_KeyDown
+        AddHandler Me.Resize, Sub() RepositionControls()
 
     End Sub
 
@@ -173,6 +176,64 @@ Public Class ForgotPasswordForm
         Me.Controls.Add(btnNext)
         Me.Controls.Add(btnBack)
         Me.Controls.Add(btnCancel)
+        RepositionControls()
+    End Sub
+
+    Private Sub RepositionControls()
+        Dim clientW As Integer = Me.ClientSize.Width
+        Dim marginX As Integer = Math.Max(30, (clientW - 440) \ 2)
+        Dim controlWidth As Integer = Math.Min(440, clientW - marginX * 2)
+        Dim buttonWidth As Integer = 110
+        Dim buttonHeight As Integer = 40
+        Dim buttonSpacing As Integer = 20
+        Dim buttonY As Integer = Me.ClientSize.Height - 60
+
+        If lblStep IsNot Nothing Then lblStep.Location = New Drawing.Point(marginX, 30)
+        If lblInstruction IsNot Nothing Then lblInstruction.Location = New Drawing.Point(marginX, 80)
+
+        Dim controlY As Integer = 125
+        If txtInput IsNot Nothing Then
+            txtInput.Location = New Drawing.Point(marginX, controlY)
+            txtInput.Width = controlWidth
+        End If
+        If txtPasskey1 IsNot Nothing Then
+            txtPasskey1.Location = New Drawing.Point(marginX, controlY)
+            txtPasskey1.Width = controlWidth
+        End If
+        If txtPasskey2 IsNot Nothing Then
+            txtPasskey2.Location = New Drawing.Point(marginX, controlY + 45)
+            txtPasskey2.Width = controlWidth
+        End If
+        If txtPasskey3 IsNot Nothing Then
+            txtPasskey3.Location = New Drawing.Point(marginX, controlY + 90)
+            txtPasskey3.Width = controlWidth
+        End If
+        If txtNewPassword IsNot Nothing Then
+            txtNewPassword.Location = New Drawing.Point(marginX, controlY)
+            txtNewPassword.Width = controlWidth
+        End If
+        If txtConfirmPassword IsNot Nothing Then
+            txtConfirmPassword.Location = New Drawing.Point(marginX, controlY + 50)
+            txtConfirmPassword.Width = controlWidth
+        End If
+
+        Dim totalBtnWidth As Integer = buttonWidth * 3 + buttonSpacing * 2
+        Dim btnStartX As Integer = Math.Max(marginX, (clientW - totalBtnWidth) \ 2)
+        If btnBack IsNot Nothing Then
+            btnBack.Location = New Drawing.Point(btnStartX, buttonY)
+            btnBack.Width = buttonWidth
+            btnBack.Height = buttonHeight
+        End If
+        If btnNext IsNot Nothing Then
+            btnNext.Location = New Drawing.Point(btnStartX + buttonWidth + buttonSpacing, buttonY)
+            btnNext.Width = buttonWidth
+            btnNext.Height = buttonHeight
+        End If
+        If btnCancel IsNot Nothing Then
+            btnCancel.Location = New Drawing.Point(btnStartX + 2 * (buttonWidth + buttonSpacing), buttonY)
+            btnCancel.Width = buttonWidth
+            btnCancel.Height = buttonHeight
+        End If
     End Sub
 
     Private Sub ShowStep(stepNum As Integer)

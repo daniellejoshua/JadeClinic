@@ -240,6 +240,7 @@ Partial Class Sys
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
+        AutoScroll = True
         BackColor = Color.FromArgb(CByte(26), CByte(29), CByte(31))
         ClientSize = New Size(1400, 885)
         Controls.Add(MainContentPanel)

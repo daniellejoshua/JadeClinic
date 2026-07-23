@@ -249,6 +249,7 @@ Partial Class Staff
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
+        AutoScroll = True
         BackColor = Color.White
         ClientSize = New Size(1902, 1033)
         Controls.Add(Guna2Panel1)

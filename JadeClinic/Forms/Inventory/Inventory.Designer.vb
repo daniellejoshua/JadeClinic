@@ -480,6 +480,7 @@ Partial Class Inventory
         ' 
         resources.ApplyResources(Me, "$this")
         AutoScaleMode = AutoScaleMode.Font
+        AutoScroll = True
         BackColor = Color.White
         Controls.Add(Guna2Panel1)
         Controls.Add(lblUsername)

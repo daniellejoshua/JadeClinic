@@ -352,7 +352,7 @@ Public Class SalesRecord
                     Guna2DataGridView1.Rows(rowIndex).Cells("Change").Value = ChrW(&H20B1) & changeVal.ToString("F2")
                     Guna2DataGridView1.Rows(rowIndex).Cells("DiscountType").Value = discountType
                     Guna2DataGridView1.Rows(rowIndex).Cells("DiscountAmount").Value = ChrW(&H20B1) & discountAmount.ToString("F2")
-                    Guna2DataGridView1.Rows(rowIndex).Cells("Action").Value = Char.ConvertFromUtf32(&H1F50D)
+                    Guna2DataGridView1.Rows(rowIndex).Cells("Action").Value = "👁️"
 
                     ' store raw values for later use
                     Guna2DataGridView1.Rows(rowIndex).Tag = New Dictionary(Of String, Object) From {

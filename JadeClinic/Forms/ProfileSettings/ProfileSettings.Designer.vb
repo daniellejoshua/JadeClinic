@@ -726,6 +726,7 @@ Partial Class ProfileSettings
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
+        AutoScroll = True
         BackColor = Color.White
         ClientSize = New Size(1609, 875)
         Controls.Add(DashboardPanel)
