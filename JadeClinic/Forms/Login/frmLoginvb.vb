@@ -63,6 +63,7 @@ Public Class frmLoginvb
         pictureBoxTopSpacing = Math.Max(20, Guna2Panel1.Top - (PictureBox1.Top + PictureBox1.Height))
         CenterLoginLayout()
         EnableTitleBarHover()
+        AddHandler Me.Resize, Sub() CenterLoginLayout()
 
         AddHandler Me.KeyDown, AddressOf frmLoginvb_KeyDown
 

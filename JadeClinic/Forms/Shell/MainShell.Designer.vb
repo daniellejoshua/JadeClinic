@@ -38,6 +38,7 @@ Partial Class MainShell
         ClientSize = New Size(1463, 960)
         Controls.Add(ContentPanel)
         FormBorderStyle = FormBorderStyle.None
+        MinimumSize = New Size(1024, 600)
         Margin = New Padding(3, 4, 3, 4)
         Name = "MainShell"
         StartPosition = FormStartPosition.CenterScreen

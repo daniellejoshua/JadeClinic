@@ -49,6 +49,8 @@ Partial Class Sales
         Dim CustomizableEdges28 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         LabelTitle = New Label()
         CategoryPanel = New Guna.UI2.WinForms.Guna2Panel()
+        Label9 = New Label()
+        Label8 = New Label()
         Label7 = New Label()
         Label6 = New Label()
         Guna2HtmlLabel11 = New Guna.UI2.WinForms.Guna2HtmlLabel()
@@ -97,8 +99,6 @@ Partial Class Sales
         Guna2CirclePictureBox5 = New Guna.UI2.WinForms.Guna2CirclePictureBox()
         lblUsername = New Guna.UI2.WinForms.Guna2HtmlLabel()
         lblSearchProduct = New Label()
-        Label8 = New Label()
-        Label9 = New Label()
         CategoryPanel.SuspendLayout()
         totalPanel.SuspendLayout()
         DashboardPanel.SuspendLayout()
@@ -159,6 +159,30 @@ Partial Class Sales
         CategoryPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges14
         CategoryPanel.Size = New Size(1027, 938)
         CategoryPanel.TabIndex = 2
+        ' 
+        ' Label9
+        ' 
+        Label9.AutoSize = True
+        Label9.BackColor = Color.White
+        Label9.Font = New Font("Segoe UI", 22.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Label9.ForeColor = Color.FromArgb(CByte(191), CByte(156), CByte(50))
+        Label9.Location = New Point(146, 29)
+        Label9.Name = "Label9"
+        Label9.Size = New Size(73, 50)
+        Label9.TabIndex = 82
+        Label9.Text = ChrW(55358) & ChrW(56759)
+        ' 
+        ' Label8
+        ' 
+        Label8.AutoSize = True
+        Label8.BackColor = Color.White
+        Label8.Font = New Font("Segoe UI", 22.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Label8.ForeColor = Color.FromArgb(CByte(191), CByte(156), CByte(50))
+        Label8.Location = New Point(399, 29)
+        Label8.Name = "Label8"
+        Label8.Size = New Size(73, 50)
+        Label8.TabIndex = 81
+        Label8.Text = ChrW(55358) & ChrW(56827)
         ' 
         ' Label7
         ' 
@@ -795,34 +819,11 @@ Partial Class Sales
         lblSearchProduct.TabIndex = 81
         lblSearchProduct.Text = "🔍 Search Product"
         ' 
-        ' Label8
-        ' 
-        Label8.AutoSize = True
-        Label8.BackColor = Color.White
-        Label8.Font = New Font("Segoe UI", 22.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Label8.ForeColor = Color.FromArgb(CByte(191), CByte(156), CByte(50))
-        Label8.Location = New Point(399, 29)
-        Label8.Name = "Label8"
-        Label8.Size = New Size(73, 50)
-        Label8.TabIndex = 81
-        Label8.Text = ChrW(55358) & ChrW(56827)
-        ' 
-        ' Label9
-        ' 
-        Label9.AutoSize = True
-        Label9.BackColor = Color.White
-        Label9.Font = New Font("Segoe UI", 22.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Label9.ForeColor = Color.FromArgb(CByte(191), CByte(156), CByte(50))
-        Label9.Location = New Point(146, 29)
-        Label9.Name = "Label9"
-        Label9.Size = New Size(73, 50)
-        Label9.TabIndex = 82
-        Label9.Text = ChrW(55358) & ChrW(56759)
-        ' 
         ' Sales
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
+        AutoScroll = True
         BackColor = Color.White
         ClientSize = New Size(1902, 1033)
         Controls.Add(lblSearchProduct)

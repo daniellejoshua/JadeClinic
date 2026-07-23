@@ -78,6 +78,7 @@ Partial Class FormFirstRun
         ' 
         ' txtServer
         ' 
+        txtServer.Anchor = AnchorStyles.Top Or AnchorStyles.Left Or AnchorStyles.Right
         txtServer.CustomizableEdges = CustomizableEdges9
         txtServer.DefaultText = ""
         txtServer.DisabledState.BorderColor = Color.FromArgb(CByte(208), CByte(208), CByte(208))
@@ -98,6 +99,7 @@ Partial Class FormFirstRun
         ' 
         ' btnTest
         ' 
+        btnTest.Anchor = AnchorStyles.Bottom Or AnchorStyles.Right
         btnTest.CustomizableEdges = CustomizableEdges11
         btnTest.DisabledState.BorderColor = Color.DarkGray
         btnTest.DisabledState.CustomBorderColor = Color.DarkGray
@@ -114,6 +116,7 @@ Partial Class FormFirstRun
         ' 
         ' btnSave
         ' 
+        btnSave.Anchor = AnchorStyles.Bottom Or AnchorStyles.Left
         btnSave.CustomizableEdges = CustomizableEdges13
         btnSave.DisabledState.BorderColor = Color.DarkGray
         btnSave.DisabledState.CustomBorderColor = Color.DarkGray
@@ -130,6 +133,7 @@ Partial Class FormFirstRun
         ' 
         ' lblStatus
         ' 
+        lblStatus.Anchor = AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
         lblStatus.BackColor = Color.Transparent
         lblStatus.Location = New Point(300, 331)
         lblStatus.Name = "lblStatus"
@@ -139,6 +143,7 @@ Partial Class FormFirstRun
         ' 
         ' btnCancel
         ' 
+        btnCancel.Anchor = AnchorStyles.Bottom Or AnchorStyles.Right
         btnCancel.CustomizableEdges = CustomizableEdges15
         btnCancel.DisabledState.BorderColor = Color.DarkGray
         btnCancel.DisabledState.CustomBorderColor = Color.DarkGray
@@ -155,6 +160,7 @@ Partial Class FormFirstRun
         ' 
         ' lblComputerName
         ' 
+        lblComputerName.Anchor = AnchorStyles.Top Or AnchorStyles.Left Or AnchorStyles.Right
         lblComputerName.BackColor = Color.Transparent
         lblComputerName.Location = New Point(339, 214)
         lblComputerName.Name = "lblComputerName"
@@ -166,7 +172,9 @@ Partial Class FormFirstRun
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
+        AutoScroll = True
         ClientSize = New Size(800, 450)
+        MinimumSize = New Size(600, 400)
         Controls.Add(lblComputerName)
         Controls.Add(btnCancel)
         Controls.Add(lblStatus)
