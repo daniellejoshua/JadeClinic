@@ -9,6 +9,7 @@ Public Class MainShell
     Private _isMaximized As Boolean = False
     Private _wasMaximizedBeforeMinimize As Boolean = False
     Private _isShowingPage As Boolean = False
+    Private _lastReloadTick As Integer = 0
     Private WithEvents _hoverTimer As New Timer() With {.Interval = 100}
     Private WithEvents _resizeDebounceTimer As New Timer() With {.Interval = 300, .Enabled = False}
 
@@ -44,11 +45,14 @@ Public Class MainShell
     End Sub
 
     Private Sub CreateTitleBar()
+        Dim btnWidth As Integer = 46
+        Dim btnCount As Integer = 3
         titleBarPanel = New Guna.UI2.WinForms.Guna2Panel() With {
-            .Dock = DockStyle.Top,
             .Height = 35,
+            .Width = btnWidth * btnCount,
             .FillColor = Color.White,
-            .Visible = False
+            .Visible = False,
+            .Anchor = AnchorStyles.Top Or AnchorStyles.Right
         }
 
         btnCloseTitle = New Guna.UI2.WinForms.Guna2Button() With {
@@ -91,11 +95,11 @@ Public Class MainShell
         AddHandler btnMaximize.Click, Sub()
                                           If Me.WindowState = FormWindowState.Maximized Then
                                               Me.WindowState = FormWindowState.Normal
-                                              Me.Bounds = New Rectangle(
-                                                  CInt(Screen.PrimaryScreen.WorkingArea.Width * 0.1),
-                                                  CInt(Screen.PrimaryScreen.WorkingArea.Height * 0.1),
-                                                  CInt(Screen.PrimaryScreen.WorkingArea.Width * 0.8),
-                                                  CInt(Screen.PrimaryScreen.WorkingArea.Height * 0.8))
+                                              Dim w As Integer = CInt(Screen.PrimaryScreen.WorkingArea.Width * 0.8)
+                                              Dim h As Integer = CInt(Screen.PrimaryScreen.WorkingArea.Height * 0.85)
+                                              Dim x As Integer = CInt((Screen.PrimaryScreen.WorkingArea.Width - w) / 2)
+                                              Dim y As Integer = CInt((Screen.PrimaryScreen.WorkingArea.Height - h) / 2)
+                                              Me.Bounds = New Rectangle(x, y, w, h)
                                               _isMaximized = False
                                               btnMaximize.Text = ChrW(&H25A1)
                                           Else
@@ -132,11 +136,12 @@ Public Class MainShell
                                                btnMinimize.FillColor = Color.Transparent
                                            End Sub
 
-        titleBarPanel.Controls.Add(btnCloseTitle)
-        titleBarPanel.Controls.Add(btnMaximize)
         titleBarPanel.Controls.Add(btnMinimize)
+        titleBarPanel.Controls.Add(btnMaximize)
+        titleBarPanel.Controls.Add(btnCloseTitle)
 
         Me.Controls.Add(titleBarPanel)
+        titleBarPanel.Location = New Point(Me.ClientSize.Width - titleBarPanel.Width, 0)
         titleBarPanel.BringToFront()
     End Sub
 
@@ -162,36 +167,25 @@ Public Class MainShell
     Protected Overrides Sub WndProc(ByRef m As Message)
         If m.Msg = WM_NCHITTEST AndAlso Me.WindowState = FormWindowState.Normal Then
             Dim mp As Point = Me.PointToClient(Cursor.Position)
+            Dim cw As Integer = Me.ClientSize.Width
+            Dim ch As Integer = Me.ClientSize.Height
 
-            Dim onLeft As Boolean = mp.X < BORDERWIDTH
-            Dim onRight As Boolean = mp.X > Me.ClientSize.Width - BORDERWIDTH
-            Dim onTop As Boolean = mp.Y < BORDERWIDTH
-            Dim onBottom As Boolean = mp.Y > Me.ClientSize.Height - BORDERWIDTH
-
-            If onTop AndAlso onLeft Then
-                m.Result = HTTOPLEFT
-                Return
-            ElseIf onTop AndAlso onRight Then
-                m.Result = HTTOPRIGHT
-                Return
-            ElseIf onBottom AndAlso onLeft Then
-                m.Result = HTBOTTOMLEFT
-                Return
-            ElseIf onBottom AndAlso onRight Then
-                m.Result = HTBOTTOMRIGHT
-                Return
-            ElseIf onTop Then
-                m.Result = HTTOP
-                Return
-            ElseIf onBottom Then
-                m.Result = HTBOTTOM
-                Return
-            ElseIf onLeft Then
-                m.Result = HTLEFT
-                Return
-            ElseIf onRight Then
-                m.Result = HTRIGHT
-                Return
+            If mp.X <= BORDERWIDTH AndAlso mp.Y <= BORDERWIDTH Then
+                m.Result = HTTOPLEFT : Return
+            ElseIf mp.X >= cw - BORDERWIDTH AndAlso mp.Y <= BORDERWIDTH Then
+                m.Result = HTTOPRIGHT : Return
+            ElseIf mp.X <= BORDERWIDTH AndAlso mp.Y >= ch - BORDERWIDTH Then
+                m.Result = HTBOTTOMLEFT : Return
+            ElseIf mp.X >= cw - BORDERWIDTH AndAlso mp.Y >= ch - BORDERWIDTH Then
+                m.Result = HTBOTTOMRIGHT : Return
+            ElseIf mp.X <= BORDERWIDTH Then
+                m.Result = HTLEFT : Return
+            ElseIf mp.X >= cw - BORDERWIDTH Then
+                m.Result = HTRIGHT : Return
+            ElseIf mp.Y <= BORDERWIDTH Then
+                m.Result = HTTOP : Return
+            ElseIf mp.Y >= ch - BORDERWIDTH Then
+                m.Result = HTBOTTOM : Return
             End If
         End If
 
@@ -233,6 +227,7 @@ Public Class MainShell
 
     Private Sub ContentPanel_Resize(sender As Object, e As EventArgs)
         If _isShowingPage OrElse _currentPageType Is Nothing Then Return
+        If Environment.TickCount - _lastReloadTick < 1000 Then Return
         _resizeDebounceTimer.Stop()
         _resizeDebounceTimer.Start()
     End Sub
@@ -240,6 +235,7 @@ Public Class MainShell
     Private Sub _resizeDebounceTimer_Tick(sender As Object, e As EventArgs) Handles _resizeDebounceTimer.Tick
         _resizeDebounceTimer.Stop()
         If _currentPageType IsNot Nothing AndAlso Me.WindowState <> FormWindowState.Minimized Then
+            _lastReloadTick = Environment.TickCount
             ShowPage(_currentPageType)
         End If
     End Sub
