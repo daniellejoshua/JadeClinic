@@ -4,9 +4,13 @@ Imports System.Runtime.InteropServices
 
 Public Class MainShell
     Private _currentPage As Form
+    Private _currentPageType As Type
     Private ReadOnly _loadingOverlay As Panel
     Private _isMaximized As Boolean = False
+    Private _wasMaximizedBeforeMinimize As Boolean = False
+    Private _isShowingPage As Boolean = False
     Private WithEvents _hoverTimer As New Timer() With {.Interval = 100}
+    Private WithEvents _resizeDebounceTimer As New Timer() With {.Interval = 300, .Enabled = False}
 
     Private titleBarPanel As Guna.UI2.WinForms.Guna2Panel
     Private btnMinimize As Guna.UI2.WinForms.Guna2Button
@@ -35,6 +39,7 @@ Public Class MainShell
             .Visible = False
         }
         CreateTitleBar()
+        AddHandler ContentPanel.Resize, AddressOf ContentPanel_Resize
         _hoverTimer.Start()
     End Sub
 
@@ -64,9 +69,9 @@ Public Class MainShell
                                             End If
                                         End Sub
         AddHandler btnCloseTitle.MouseEnter, Sub()
-                                                btnCloseTitle.FillColor = Color.FromArgb(220, 80, 70)
-                                                btnCloseTitle.ForeColor = Color.White
-                                            End Sub
+                                                 btnCloseTitle.FillColor = Color.FromArgb(220, 80, 70)
+                                                 btnCloseTitle.ForeColor = Color.White
+                                             End Sub
         AddHandler btnCloseTitle.MouseLeave, Sub()
                                                  btnCloseTitle.FillColor = Color.Transparent
                                                  btnCloseTitle.ForeColor = Color.FromArgb(42, 42, 42)
@@ -194,6 +199,23 @@ Public Class MainShell
     End Sub
 
     Private Sub MainShell_Resize(sender As Object, e As EventArgs) Handles Me.Resize
+        If Me.WindowState = FormWindowState.Minimized Then
+            _wasMaximizedBeforeMinimize = _isMaximized
+            titleBarPanel.Visible = False
+            Return
+        End If
+
+        If _wasMaximizedBeforeMinimize AndAlso Me.WindowState <> FormWindowState.Minimized Then
+            _wasMaximizedBeforeMinimize = False
+            If Not _isMaximized Then
+                _isMaximized = True
+                Me.FormBorderStyle = FormBorderStyle.None
+                Me.Bounds = Screen.PrimaryScreen.Bounds
+                btnMaximize.Text = ChrW(&H2752)
+            End If
+            Return
+        End If
+
         If Me.WindowState = FormWindowState.Maximized Then
             If Not _isMaximized Then
                 _isMaximized = True
@@ -201,37 +223,35 @@ Public Class MainShell
                 Me.Bounds = Screen.PrimaryScreen.Bounds
                 btnMaximize.Text = ChrW(&H2752)
             End If
-            RefreshChildFormScrollbars()
         ElseIf Me.WindowState = FormWindowState.Normal Then
             If _isMaximized Then
                 _isMaximized = False
                 btnMaximize.Text = ChrW(&H25A1)
             End If
-            RefreshChildFormScrollbars()
-        ElseIf Me.WindowState = FormWindowState.Minimized Then
-            titleBarPanel.Visible = False
         End If
     End Sub
 
-    Private Sub RefreshChildFormScrollbars()
-        If Not Me.IsHandleCreated Then Return
-        Me.BeginInvoke(Sub()
-                           If _currentPage IsNot Nothing AndAlso Not _currentPage.IsDisposed AndAlso _currentPage.IsHandleCreated Then
-                               Dim w = _currentPage.ClientSize.Width
-                               Dim h = _currentPage.ClientSize.Height
-                               If h > 1 Then
-                                   _currentPage.ClientSize = New Size(w, h - 1)
-                                   _currentPage.ClientSize = New Size(w, h)
-                               End If
-                           End If
-                       End Sub)
+    Private Sub ContentPanel_Resize(sender As Object, e As EventArgs)
+        If _isShowingPage OrElse _currentPageType Is Nothing Then Return
+        _resizeDebounceTimer.Stop()
+        _resizeDebounceTimer.Start()
+    End Sub
+
+    Private Sub _resizeDebounceTimer_Tick(sender As Object, e As EventArgs) Handles _resizeDebounceTimer.Tick
+        _resizeDebounceTimer.Stop()
+        If _currentPageType IsNot Nothing AndAlso Me.WindowState <> FormWindowState.Minimized Then
+            ShowPage(_currentPageType)
+        End If
     End Sub
 
     Public Sub ShowPage(pageType As Type)
         If pageType Is Nothing Then Return
+        _isShowingPage = True
 
         If _currentPage IsNot Nothing Then
-            _currentPage.Close()
+            ContentPanel.Controls.Remove(_currentPage)
+            _currentPage.Hide()
+            _currentPage.Dispose()
             _currentPage = Nothing
         End If
 
@@ -247,6 +267,8 @@ Public Class MainShell
         page.Focus()
 
         _currentPage = page
+        _currentPageType = pageType
+        _isShowingPage = False
     End Sub
 
     Private Sub ShowOverlay(visible As Boolean)
