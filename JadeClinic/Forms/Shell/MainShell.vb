@@ -19,6 +19,7 @@ Public Class MainShell
     Private btnCloseTitle As Guna.UI2.WinForms.Guna2Button
 
     Private Const WM_NCHITTEST As Integer = &H84
+    Private Const WM_NCLBUTTONDOWN As Integer = &HA1
     Private Const HTLEFT As Integer = 10
     Private Const HTRIGHT As Integer = 11
     Private Const HTTOP As Integer = 12
@@ -28,12 +29,22 @@ Public Class MainShell
     Private Const HTBOTTOMLEFT As Integer = 16
     Private Const HTBOTTOMRIGHT As Integer = 17
     Private Const HTCAPTION As Integer = 2
-    Private Const BORDERWIDTH As Integer = 6
+    Private Const BORDERWIDTH As Integer = 8
+    Private _pendingResizeEdge As Integer = 0
+
+    <DllImport("user32.dll")>
+    Private Shared Function ReleaseCapture() As Boolean
+    End Function
+
+    <DllImport("user32.dll")>
+    Private Shared Function SendMessage(hWnd As IntPtr, msg As Integer, wParam As Integer, lParam As Integer) As Integer
+    End Function
+
+    Private _childFormHook As NativeWindow = Nothing
 
     Public Sub New()
         InitializeComponent()
         Me.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath)
-        ContentPanel.BackColor = Color.FromArgb(26, 29, 31)
         _loadingOverlay = New Panel() With {
             .Dock = DockStyle.Fill,
             .BackColor = Color.FromArgb(26, 29, 31),
@@ -58,7 +69,7 @@ Public Class MainShell
         btnCloseTitle = New Guna.UI2.WinForms.Guna2Button() With {
             .Dock = DockStyle.Right,
             .Width = 46,
-            .FillColor = Color.Transparent,
+            .FillColor = Color.White,
             .ForeColor = Color.FromArgb(42, 42, 42),
             .Font = New Font("Segoe UI", 10),
             .Text = ChrW(&H2715),
@@ -77,14 +88,14 @@ Public Class MainShell
                                                  btnCloseTitle.ForeColor = Color.White
                                              End Sub
         AddHandler btnCloseTitle.MouseLeave, Sub()
-                                                 btnCloseTitle.FillColor = Color.Transparent
-                                                 btnCloseTitle.ForeColor = Color.FromArgb(42, 42, 42)
-                                             End Sub
+                                                  btnCloseTitle.FillColor = Color.White
+                                                  btnCloseTitle.ForeColor = Color.FromArgb(42, 42, 42)
+                                              End Sub
 
         btnMaximize = New Guna.UI2.WinForms.Guna2Button() With {
             .Dock = DockStyle.Right,
             .Width = 46,
-            .FillColor = Color.Transparent,
+            .FillColor = Color.White,
             .ForeColor = Color.FromArgb(42, 42, 42),
             .Font = New Font("Segoe UI", 10),
             .Text = ChrW(&H25A1),
@@ -112,13 +123,13 @@ Public Class MainShell
                                                btnMaximize.FillColor = Color.FromArgb(230, 230, 230)
                                            End Sub
         AddHandler btnMaximize.MouseLeave, Sub()
-                                               btnMaximize.FillColor = Color.Transparent
-                                           End Sub
+                                                btnMaximize.FillColor = Color.White
+                                            End Sub
 
         btnMinimize = New Guna.UI2.WinForms.Guna2Button() With {
             .Dock = DockStyle.Right,
             .Width = 46,
-            .FillColor = Color.Transparent,
+            .FillColor = Color.White,
             .ForeColor = Color.FromArgb(42, 42, 42),
             .Font = New Font("Segoe UI", 10),
             .Text = ChrW(&H2013),
@@ -133,16 +144,21 @@ Public Class MainShell
                                                btnMinimize.FillColor = Color.FromArgb(230, 230, 230)
                                            End Sub
         AddHandler btnMinimize.MouseLeave, Sub()
-                                               btnMinimize.FillColor = Color.Transparent
-                                           End Sub
+                                                btnMinimize.FillColor = Color.White
+                                            End Sub
 
         titleBarPanel.Controls.Add(btnMinimize)
         titleBarPanel.Controls.Add(btnMaximize)
         titleBarPanel.Controls.Add(btnCloseTitle)
 
         Me.Controls.Add(titleBarPanel)
-        titleBarPanel.Location = New Point(Me.ClientSize.Width - titleBarPanel.Width, 0)
         titleBarPanel.BringToFront()
+        PositionTitleBar()
+    End Sub
+
+    Private Sub PositionTitleBar()
+        If titleBarPanel Is Nothing Then Return
+        titleBarPanel.Location = New Point(Me.ClientSize.Width - titleBarPanel.Width, 0)
     End Sub
 
     Private Sub _hoverTimer_Tick(sender As Object, e As EventArgs) Handles _hoverTimer.Tick
@@ -151,6 +167,7 @@ Public Class MainShell
 
         If _isMaximized Then
             If Not titleBarPanel.Visible AndAlso screenY <= screenBounds.Top + 4 Then
+                PositionTitleBar()
                 titleBarPanel.Visible = True
                 titleBarPanel.BringToFront()
             ElseIf titleBarPanel.Visible AndAlso screenY > screenBounds.Top + titleBarPanel.Height + 10 Then
@@ -158,41 +175,45 @@ Public Class MainShell
             End If
         Else
             If Not titleBarPanel.Visible Then
+                PositionTitleBar()
                 titleBarPanel.Visible = True
                 titleBarPanel.BringToFront()
             End If
         End If
     End Sub
 
-    Protected Overrides Sub WndProc(ByRef m As Message)
-        If m.Msg = WM_NCHITTEST AndAlso Me.WindowState = FormWindowState.Normal Then
-            Dim mp As Point = Me.PointToClient(Cursor.Position)
-            Dim cw As Integer = Me.ClientSize.Width
-            Dim ch As Integer = Me.ClientSize.Height
+    Friend Function GetEdgeHit(screenPos As Point) As Integer
+        If _isMaximized Then Return 0
 
-            If mp.X <= BORDERWIDTH AndAlso mp.Y <= BORDERWIDTH Then
-                m.Result = HTTOPLEFT : Return
-            ElseIf mp.X >= cw - BORDERWIDTH AndAlso mp.Y <= BORDERWIDTH Then
-                m.Result = HTTOPRIGHT : Return
-            ElseIf mp.X <= BORDERWIDTH AndAlso mp.Y >= ch - BORDERWIDTH Then
-                m.Result = HTBOTTOMLEFT : Return
-            ElseIf mp.X >= cw - BORDERWIDTH AndAlso mp.Y >= ch - BORDERWIDTH Then
-                m.Result = HTBOTTOMRIGHT : Return
-            ElseIf mp.X <= BORDERWIDTH Then
-                m.Result = HTLEFT : Return
-            ElseIf mp.X >= cw - BORDERWIDTH Then
-                m.Result = HTRIGHT : Return
-            ElseIf mp.Y <= BORDERWIDTH Then
-                m.Result = HTTOP : Return
-            ElseIf mp.Y >= ch - BORDERWIDTH Then
-                m.Result = HTBOTTOM : Return
-            End If
-        End If
+        Dim mp As Point = Me.PointToClient(screenPos)
+        Dim cw As Integer = Me.ClientSize.Width
+        Dim ch As Integer = Me.ClientSize.Height
 
-        MyBase.WndProc(m)
+        Dim hitLeft As Boolean = mp.X <= BORDERWIDTH
+        Dim hitRight As Boolean = mp.X >= cw - BORDERWIDTH
+        Dim hitTop As Boolean = mp.Y <= BORDERWIDTH
+        Dim hitBottom As Boolean = mp.Y >= ch - BORDERWIDTH
+
+        If hitLeft AndAlso hitTop Then Return HTTOPLEFT
+        If hitRight AndAlso hitTop Then Return HTTOPRIGHT
+        If hitLeft AndAlso hitBottom Then Return HTBOTTOMLEFT
+        If hitRight AndAlso hitBottom Then Return HTBOTTOMRIGHT
+        If hitLeft Then Return HTLEFT
+        If hitRight Then Return HTRIGHT
+        If hitTop Then Return HTTOP
+        If hitBottom Then Return HTBOTTOM
+
+        Return 0
+    End Function
+
+    Friend Sub BeginEdgeResize(edge As Integer)
+        ReleaseCapture()
+        SendMessage(Me.Handle, WM_NCLBUTTONDOWN, edge, 0)
     End Sub
 
     Private Sub MainShell_Resize(sender As Object, e As EventArgs) Handles Me.Resize
+        PositionTitleBar()
+
         If Me.WindowState = FormWindowState.Minimized Then
             _wasMaximizedBeforeMinimize = _isMaximized
             titleBarPanel.Visible = False
@@ -245,6 +266,10 @@ Public Class MainShell
         _isShowingPage = True
 
         If _currentPage IsNot Nothing Then
+            If _childFormHook IsNot Nothing Then
+                _childFormHook.ReleaseHandle()
+                _childFormHook = Nothing
+            End If
             ContentPanel.Controls.Remove(_currentPage)
             _currentPage.Hide()
             _currentPage.Dispose()
@@ -265,6 +290,8 @@ Public Class MainShell
         _currentPage = page
         _currentPageType = pageType
         _isShowingPage = False
+
+        _childFormHook = New EdgeHitHook(Me, page)
     End Sub
 
     Private Sub ShowOverlay(visible As Boolean)
@@ -279,5 +306,38 @@ Public Class MainShell
         Dim role As String = If(frmLoginvb.LoggedInRole, String.Empty).ToUpperInvariant()
         Dim startType As Type = If(role = "STAFF", GetType(Sales), GetType(Dashboard))
         ShowPage(startType)
+    End Sub
+End Class
+
+Friend Class EdgeHitHook
+    Inherits NativeWindow
+
+    Private Const WM_NCHITTEST As Integer = &H84
+    Private Const WM_NCLBUTTONDOWN As Integer = &HA1
+
+    Private ReadOnly _shell As MainShell
+
+    Public Sub New(shell As MainShell, childForm As Form)
+        _shell = shell
+        If childForm.Handle <> IntPtr.Zero Then
+            Me.AssignHandle(childForm.Handle)
+        End If
+    End Sub
+
+    Protected Overrides Sub WndProc(ByRef m As Message)
+        If m.Msg = WM_NCHITTEST Then
+            Dim hit As Integer = _shell.GetEdgeHit(Cursor.Position)
+            If hit <> 0 Then
+                m.Result = New IntPtr(hit)
+                Return
+            End If
+        ElseIf m.Msg = WM_NCLBUTTONDOWN Then
+            Dim hit As Integer = _shell.GetEdgeHit(Cursor.Position)
+            If hit <> 0 Then
+                _shell.BeginEdgeResize(hit)
+                Return
+            End If
+        End If
+        MyBase.WndProc(m)
     End Sub
 End Class
