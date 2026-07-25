@@ -88,9 +88,9 @@ Public Class MainShell
                                                  btnCloseTitle.ForeColor = Color.White
                                              End Sub
         AddHandler btnCloseTitle.MouseLeave, Sub()
-                                                  btnCloseTitle.FillColor = Color.White
-                                                  btnCloseTitle.ForeColor = Color.FromArgb(42, 42, 42)
-                                              End Sub
+                                                 btnCloseTitle.FillColor = Color.White
+                                                 btnCloseTitle.ForeColor = Color.FromArgb(42, 42, 42)
+                                             End Sub
 
         btnMaximize = New Guna.UI2.WinForms.Guna2Button() With {
             .Dock = DockStyle.Right,
@@ -123,8 +123,8 @@ Public Class MainShell
                                                btnMaximize.FillColor = Color.FromArgb(230, 230, 230)
                                            End Sub
         AddHandler btnMaximize.MouseLeave, Sub()
-                                                btnMaximize.FillColor = Color.White
-                                            End Sub
+                                               btnMaximize.FillColor = Color.White
+                                           End Sub
 
         btnMinimize = New Guna.UI2.WinForms.Guna2Button() With {
             .Dock = DockStyle.Right,
@@ -144,8 +144,8 @@ Public Class MainShell
                                                btnMinimize.FillColor = Color.FromArgb(230, 230, 230)
                                            End Sub
         AddHandler btnMinimize.MouseLeave, Sub()
-                                                btnMinimize.FillColor = Color.White
-                                            End Sub
+                                               btnMinimize.FillColor = Color.White
+                                           End Sub
 
         titleBarPanel.Controls.Add(btnMinimize)
         titleBarPanel.Controls.Add(btnMaximize)
@@ -213,6 +213,8 @@ Public Class MainShell
 
     Private Sub MainShell_Resize(sender As Object, e As EventArgs) Handles Me.Resize
         PositionTitleBar()
+
+        If btnMaximize Is Nothing Then Return
 
         If Me.WindowState = FormWindowState.Minimized Then
             _wasMaximizedBeforeMinimize = _isMaximized
