@@ -122,25 +122,19 @@ Public Class CompanySettingsManager
         Return Color.Black
     End Function
 
-    ''' <summary>
-    ''' Get company logo as Image - ENHANCED to use Jade Dental Logo resource as fallback
-    ''' </summary>
     Public Function GetCompanyLogo() As Image
         Try
-            Dim logoData = GetSetting("Logo")
-            If logoData IsNot Nothing AndAlso TypeOf logoData Is Byte() Then
-                Dim logoBytes As Byte() = CType(logoData, Byte())
-                If logoBytes.Length > 0 Then
-                    Using ms As New MemoryStream(logoBytes)
-                        Return Image.FromStream(ms)
-                    End Using
+            Dim logoPath = GetSetting("LogoPath")
+            If logoPath IsNot Nothing AndAlso Not String.IsNullOrEmpty(logoPath.ToString()) Then
+                Dim fullPath As String = Path.Combine(Connection.GetImagesFolder("company"), logoPath.ToString())
+                If File.Exists(fullPath) Then
+                    Return Image.FromFile(fullPath)
                 End If
             End If
         Catch ex As Exception
             Console.WriteLine($"Error loading company logo: {ex.Message}")
         End Try
-        
-        ' Return Jade Dental Logo from resources as default fallback
+
         Return CreateDefaultJadeLogo()
     End Function
 

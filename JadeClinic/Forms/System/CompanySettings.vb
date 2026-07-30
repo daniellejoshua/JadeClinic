@@ -214,20 +214,19 @@ Public Class CompanySettings
         ' Company hours (structured)
         ApplyCompanyHoursFromStoredValue(GetSettingValue("CompanyHours", ""))
 
-        ' Load logo if available
-        If currentCompanyData.ContainsKey("Logo") AndAlso currentCompanyData("Logo") IsNot Nothing Then
+        Dim logoPath As String = GetSettingValue("LogoPath", "")
+        If Not String.IsNullOrEmpty(logoPath) Then
             Try
-                Dim logoBytes As Byte() = CType(currentCompanyData("Logo"), Byte())
-                If logoBytes.Length > 0 Then
-                    Using ms As New MemoryStream(logoBytes)
-                        picLogo.Image = Image.FromStream(ms)
-                    End Using
+                Dim fullPath As String = Path.Combine(Connection.GetImagesFolder("company"), logoPath)
+                If IO.File.Exists(fullPath) Then
+                    picLogo.Image = Image.FromFile(fullPath)
+                Else
+                    SetDefaultLogoPlaceholder()
                 End If
-            Catch ex As Exception
-                ' Ignore logo loading errors
+            Catch
+                SetDefaultLogoPlaceholder()
             End Try
         Else
-            ' Set default logo placeholder
             SetDefaultLogoPlaceholder()
         End If
     End Sub
@@ -378,15 +377,14 @@ Public Class CompanySettings
             openFileDialog.Title = "Select Company Logo"
 
             If openFileDialog.ShowDialog() = DialogResult.OK Then
-                ' Load and display the image
                 Dim image As Image = Image.FromFile(openFileDialog.FileName)
                 picLogo.Image = image
 
-                ' Convert to byte array for database storage
-                Using ms As New MemoryStream()
-                    image.Save(ms, System.Drawing.Imaging.ImageFormat.Png)
-                    logoData = ms.ToArray()
-                End Using
+                Dim imageBytes As Byte() = File.ReadAllBytes(openFileDialog.FileName)
+                Dim compressed As Byte() = ImageCompression.CompressImage(imageBytes, 80)
+                Dim destDir As String = Connection.GetImagesFolder("company")
+                Dim destPath As String = Path.Combine(destDir, "logo.jpg")
+                File.WriteAllBytes(destPath, compressed)
 
                 logoChanged = True
                 MessageBox.Show("Logo updated! Click Save to apply changes.", "Logo Changed", MessageBoxButtons.OK, MessageBoxIcon.Information)
@@ -401,7 +399,6 @@ Public Class CompanySettings
 
         If result = DialogResult.Yes Then
             SetDefaultLogoPlaceholder()
-            logoData = Nothing
             logoChanged = True
             MessageBox.Show("Logo removed! Click Save to apply changes.", "Logo Removed", MessageBoxButtons.OK, MessageBoxIcon.Information)
         End If
@@ -587,34 +584,28 @@ Public Class CompanySettings
 
     Private Sub btnSave_Click(sender As Object, e As EventArgs) Handles btnSave.Click
         Try
-            ' Validate required fields
             If String.IsNullOrWhiteSpace(txtCompanyName.Text) Then
                 MessageBox.Show("Company name is required.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
                 txtCompanyName.Focus()
                 Return
             End If
 
-            ' Save company settings
             SaveCompanySettings()
 
-            ' CRITICAL FIX: Refresh the CompanySettingsManager cache
             CompanySettingsManager.Instance.RefreshCache()
 
             MessageBox.Show("Company settings saved successfully!", "Settings Saved", MessageBoxButtons.OK, MessageBoxIcon.Information)
 
-            ' Log the action
             Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Company Settings Updated", "Company settings configuration changed")
 
-            ' Reset the changed flags
             logoChanged = False
-            StoreOriginalValues() ' Update original values
+            StoreOriginalValues()
 
             Me.DialogResult = DialogResult.OK
             Me.Close()
 
         Catch ex As Exception
             MessageBox.Show($"Error saving company settings: {ex.Message}", "Save Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-            ' Log the error for debugging
             Console.WriteLine($"Save Error Details: {ex.ToString()}")
         End Try
     End Sub
@@ -633,8 +624,22 @@ Public Class CompanySettings
             Dim sql As String
             Dim parameters As New List(Of SqlParameter)()
 
+            If logoChanged Then
+                Dim destDir As String = Connection.GetImagesFolder("company")
+                Dim destPath As String = Path.Combine(destDir, "logo.jpg")
+                If Not IO.File.Exists(destPath) Then
+                    Try
+                        Dim resImg As Image = My.Resources.FinalLogoOfJAde
+                        If resImg IsNot Nothing Then
+                            Dim compressed As Byte() = ImageCompression.CompressImage(resImg, 80, 400, 300)
+                            File.WriteAllBytes(destPath, compressed)
+                        End If
+                    Catch
+                    End Try
+                End If
+            End If
+
             If isUpdate Then
-                ' Update existing record
                 sql = "UPDATE CompanySettings SET " &
                   "CompanyName = @CompanyName, " &
                   "TIN = @TIN, " &
@@ -646,29 +651,27 @@ Public Class CompanySettings
                   "PTUNumber = @PTUNumber, " &
                   "ValidityYears = @ValidityYears, " &
                   "ReceiptFooter = @ReceiptFooter, " &
-                  "CompanyHours = @CompanyHours, " &         ' <-- update column
+                  "CompanyHours = @CompanyHours, " &
                   "LastModified = @LastModified"
 
                 If logoChanged Then
-                    sql += ", Logo = @Logo"
+                    sql += ", LogoPath = @LogoPath"
                 End If
 
                 sql += " WHERE IsActive = 1"
             Else
-                ' Insert new record
                 sql = "INSERT INTO CompanySettings " &
-                  "(CompanyName, TIN, Address, Phone, Email, Website, Logo, " &
+                  "(CompanyName, TIN, Address, Phone, Email, Website, LogoPath, " &
                   "BIRAuthNumber, PTUNumber, ValidityYears, ReceiptFooter, CompanyHours, " &
                   "IsActive, DateCreated, LastModified) " &
                   "VALUES " &
-                  "(@CompanyName, @TIN, @Address, @Phone, @Email, @Website, @Logo, " &
+                  "(@CompanyName, @TIN, @Address, @Phone, @Email, @Website, @LogoPath, " &
                   "@BIRAuthNumber, @PTUNumber, @ValidityYears, @ReceiptFooter, @CompanyHours, " &
                   "1, @DateCreated, @LastModified)"
 
                 parameters.Add(New SqlParameter("@DateCreated", DateTime.Now))
             End If
 
-            ' Add common parameters
             parameters.Add(New SqlParameter("@CompanyName", If(String.IsNullOrWhiteSpace(txtCompanyName.Text), "JADE CLINIC", txtCompanyName.Text.Trim())))
             parameters.Add(New SqlParameter("@TIN", If(txtTIN.Text, "").Trim()))
             parameters.Add(New SqlParameter("@Address", If(txtAddress.Text, "").Trim()))
@@ -679,46 +682,29 @@ Public Class CompanySettings
             parameters.Add(New SqlParameter("@PTUNumber", If(txtPTUNumber.Text, "PTU-2024-001").Trim()))
             parameters.Add(New SqlParameter("@ValidityYears", CInt(nudValidityYears.Value)))
             parameters.Add(New SqlParameter("@ReceiptFooter", If(txtReceiptFooter.Text, "Thank you for your business!").Trim()))
-            parameters.Add(New SqlParameter("@CompanyHours", If(txtCompanyHours.Text, "").Trim())) ' <-- new parameter
+            parameters.Add(New SqlParameter("@CompanyHours", If(txtCompanyHours.Text, "").Trim()))
             parameters.Add(New SqlParameter("@LastModified", DateTime.Now))
 
-            ' Handle logo data - ensure parameter is typed as VarBinary and save resource logo when user removed
             If logoChanged OrElse Not isUpdate Then
-                Dim pLogo As New SqlParameter()
-                pLogo.ParameterName = "@Logo"
-                Dim bytesToSave As Byte() = logoData
-
-                ' If user removed logo (logoData is Nothing), store the embedded resource default logo bytes
-                If bytesToSave Is Nothing Then
-                    Try
-                        bytesToSave = GetDefaultLogoBytes()
-                    Catch
-                        bytesToSave = Nothing
-                    End Try
+                Dim logoPathValue As Object = DBNull.Value
+                Dim destPath As String = Path.Combine(Connection.GetImagesFolder("company"), "logo.jpg")
+                If IO.File.Exists(destPath) Then
+                    logoPathValue = "logo.jpg"
                 End If
-
-                If bytesToSave IsNot Nothing Then
-                    pLogo.Value = bytesToSave
-                Else
-                    pLogo.Value = DBNull.Value
-                End If
-
-                parameters.Add(pLogo)
+                parameters.Add(New SqlParameter("@LogoPath", logoPathValue))
             End If
 
-            ' Execute the query
             Dim rowsAffected As Integer = Utilities.ExecuteNonQuery(sql, parameters.ToArray())
 
             If rowsAffected = 0 Then
                 Throw New Exception("No rows were affected by the save operation. Please check the database connection.")
             End If
 
-            ' DEBUG: Log successful save
             Console.WriteLine($"CompanySettings saved successfully. Rows affected: {rowsAffected}")
 
         Catch ex As Exception
             Console.WriteLine($"SaveCompanySettings Error: {ex.ToString()}")
-            Throw ' Re-throw to be handled by calling method
+            Throw
         End Try
     End Sub
     Private Sub btnCancel_Click(sender As Object, e As EventArgs) Handles btnCancel.Click

@@ -274,8 +274,7 @@ Public Class Staff
             ' Hide any existing "No records" message
             DataGridViewHelper.HideNoRecordsMessage()
 
-            ' Build query including Email and Phone
-            Dim query As String = "SELECT UserID, Username, PIN, Email, Phone, UserRole, Photo, IsActive FROM Users"
+            Dim query As String = "SELECT UserID, Username, PIN, Email, Phone, UserRole, PhotoPath, IsActive FROM Users"
             Dim whereClause As String = ""
 
             Select Case sortOrder
@@ -303,16 +302,17 @@ Public Class Staff
                     Dim userRole As String = If(IsDBNull(reader("UserRole")), "Staff", reader("UserRole").ToString())
                     Dim isActive As Boolean = If(IsDBNull(reader("IsActive")), True, Convert.ToBoolean(reader("IsActive")))
 
-                    ' Handle photo — always resize to cell dimensions
                     Dim userPhoto As System.Drawing.Image = Nothing
-                    If Not IsDBNull(reader("Photo")) Then
-                        Dim photoBytes As Byte() = CType(reader("Photo"), Byte())
-                        Using ms As New MemoryStream(photoBytes)
-                            Using original As System.Drawing.Image = System.Drawing.Image.FromStream(ms)
+                    Dim photoFileName As String = If(Not IsDBNull(reader("PhotoPath")), reader("PhotoPath").ToString(), Nothing)
+                    If Not String.IsNullOrEmpty(photoFileName) Then
+                        Dim fullPath As String = System.IO.Path.Combine(Connection.GetImagesFolder("users"), photoFileName)
+                        If System.IO.File.Exists(fullPath) Then
+                            Using original As System.Drawing.Image = System.Drawing.Image.FromFile(fullPath)
                                 userPhoto = ResizeForCell(original)
                             End Using
-                        End Using
-                    Else
+                        End If
+                    End If
+                    If userPhoto Is Nothing Then
                         userPhoto = CreateDefaultAvatar(username)
                     End If
 
@@ -341,7 +341,7 @@ Public Class Staff
                     {"Email", email},
                     {"Phone", phone},
                     {"UserRole", userRole},
-                    {"Photo", If(Not IsDBNull(reader("Photo")), reader("Photo"), Nothing)},
+                    {"PhotoPath", photoFileName},
                     {"IsActive", isActive}
                 }
                 End While
@@ -485,22 +485,17 @@ Public Class Staff
                 userData("UserID") = userData("ID")
             End If
 
-            ' If Photo/QRCode/Email/Phone missing, fetch from DB using UserID
-            Dim needsPhoto As Boolean = Not userData.ContainsKey("Photo") OrElse userData("Photo") Is Nothing
             Dim needsQr As Boolean = Not userData.ContainsKey("QRCode") OrElse String.IsNullOrWhiteSpace(If(userData("QRCode"), String.Empty).ToString())
             Dim needsEmail As Boolean = Not userData.ContainsKey("Email") OrElse String.IsNullOrWhiteSpace(If(userData("Email"), String.Empty).ToString())
             Dim needsPhone As Boolean = Not userData.ContainsKey("Phone") OrElse String.IsNullOrWhiteSpace(If(userData("Phone"), String.Empty).ToString())
 
-            If (needsPhoto Or needsQr Or needsEmail Or needsPhone) AndAlso userData.ContainsKey("UserID") Then
+            If (needsQr Or needsEmail Or needsPhone) AndAlso userData.ContainsKey("UserID") Then
                 Try
                     Dim userId As Integer = Convert.ToInt32(userData("UserID"))
                     Using reader As DbDataReader = Utilities.ExecuteReader(
-                    "SELECT Photo, QRCode, Email, Phone FROM Users WHERE UserID = @UserID",
+                    "SELECT QRCode, Email, Phone FROM Users WHERE UserID = @UserID",
                     New SqlParameter("@UserID", userId))
                         If reader.Read() Then
-                            If needsPhoto AndAlso Not IsDBNull(reader("Photo")) Then
-                                userData("Photo") = CType(reader("Photo"), Byte())
-                            End If
                             If needsQr AndAlso Not IsDBNull(reader("QRCode")) Then
                                 userData("QRCode") = reader("QRCode").ToString()
                             End If
@@ -513,8 +508,7 @@ Public Class Staff
                         End If
                     End Using
                 Catch ex As Exception
-                    ' Non-fatal: if DB fetch fails we'll still show the card with whatever we have
-                    Console.WriteLine($"Error fetching Photo/QRCode/Email/Phone from DB: {ex.Message}")
+                    Console.WriteLine($"Error fetching QRCode/Email/Phone from DB: {ex.Message}")
                 End Try
             End If
 
@@ -851,24 +845,19 @@ Public Class Staff
                 rowTag("UserID") = rowTag("ID")
             End If
 
-            ' If Photo or QRCode not provided, attempt DB fetch
-            If (Not rowTag.ContainsKey("Photo") OrElse rowTag("Photo") Is Nothing) OrElse (Not rowTag.ContainsKey("QRCode") OrElse String.IsNullOrWhiteSpace(If(rowTag("QRCode"), String.Empty).ToString())) Then
+            If Not rowTag.ContainsKey("QRCode") OrElse String.IsNullOrWhiteSpace(If(rowTag("QRCode"), String.Empty).ToString()) Then
                 If rowTag.ContainsKey("UserID") Then
                     Try
                         Dim userId As Integer = Convert.ToInt32(rowTag("UserID"))
-                        Using reader As DbDataReader = Utilities.ExecuteReader("SELECT Photo, QRCode FROM Users WHERE UserID = @UserID", New SqlParameter("@UserID", userId))
+                        Using reader As DbDataReader = Utilities.ExecuteReader("SELECT QRCode FROM Users WHERE UserID = @UserID", New SqlParameter("@UserID", userId))
                             If reader.Read() Then
-                                If Not IsDBNull(reader("Photo")) Then
-                                    rowTag("Photo") = CType(reader("Photo"), Byte())
-                                End If
                                 If Not IsDBNull(reader("QRCode")) Then
                                     rowTag("QRCode") = reader("QRCode").ToString()
                                 End If
                             End If
                         End Using
                     Catch ex As Exception
-                        ' ignore DB errors, proceed with whatever we have
-                        Console.WriteLine($"Error fetching photo/qr from DB: {ex.Message}")
+                        Console.WriteLine($"Error fetching QRCode from DB: {ex.Message}")
                     End Try
                 End If
             End If

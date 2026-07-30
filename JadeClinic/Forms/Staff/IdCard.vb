@@ -69,39 +69,41 @@ Public Class IdCard
                 Console.WriteLine($"Company logo rendering failed: {ex.Message}")
             End Try
 
-            ' Photo handling - prefer supplied byte[] in dictionary
+            Dim usersFolder As String = Connection.GetImagesFolder("users")
             Dim photoSet As Boolean = False
-            If userData.ContainsKey("Photo") AndAlso userData("Photo") IsNot Nothing Then
-                Dim photoBytes = TryCast(userData("Photo"), Byte())
-                If photoBytes IsNot Nothing AndAlso photoBytes.Length > 0 Then
-                    Using ms As New MemoryStream(photoBytes)
+            If userData.ContainsKey("PhotoPath") AndAlso userData("PhotoPath") IsNot Nothing Then
+                Dim fileName = userData("PhotoPath").ToString()
+                If Not String.IsNullOrEmpty(fileName) Then
+                    Dim fullPath As String = System.IO.Path.Combine(usersFolder, fileName)
+                    If System.IO.File.Exists(fullPath) Then
                         DisposePictureBoxImage(picStaffPhoto)
-                        picStaffPhoto.Image = Image.FromStream(ms)
+                        picStaffPhoto.Image = Image.FromFile(fullPath)
                         picStaffPhoto.SizeMode = PictureBoxSizeMode.Zoom
                         photoSet = True
-                    End Using
+                    End If
                 End If
             End If
 
-            ' QR handling - prefer supplied text in dictionary
             Dim qrText As String = Nothing
             If userData.ContainsKey("QRCode") AndAlso userData("QRCode") IsNot Nothing Then
                 qrText = userData("QRCode").ToString().Trim()
             End If
 
-            ' If photo or QR not provided in dictionary, try fetching from DB using UserID
             If (Not photoSet OrElse String.IsNullOrWhiteSpace(qrText)) AndAlso Not String.IsNullOrWhiteSpace(userId) Then
                 Try
-                    Using rdr As DbDataReader = Utilities.ExecuteReader("SELECT Photo, QRCode FROM Users WHERE UserID = @UserID", New SqlParameter("@UserID", userId))
+                    Using rdr As DbDataReader = Utilities.ExecuteReader("SELECT PhotoPath, QRCode FROM Users WHERE UserID = @UserID", New SqlParameter("@UserID", userId))
                         If rdr.Read() Then
-                            If (Not photoSet) AndAlso Not IsDBNull(rdr("Photo")) Then
-                                Dim dbPhoto = CType(rdr("Photo"), Byte())
-                                Using ms As New MemoryStream(dbPhoto)
-                                    DisposePictureBoxImage(picStaffPhoto)
-                                    picStaffPhoto.Image = Image.FromStream(ms)
-                                    picStaffPhoto.SizeMode = PictureBoxSizeMode.Zoom
-                                    photoSet = True
-                                End Using
+                            If (Not photoSet) AndAlso Not IsDBNull(rdr("PhotoPath")) Then
+                                Dim dbFileName = rdr("PhotoPath").ToString()
+                                If Not String.IsNullOrEmpty(dbFileName) Then
+                                    Dim fullPath As String = System.IO.Path.Combine(usersFolder, dbFileName)
+                                    If System.IO.File.Exists(fullPath) Then
+                                        DisposePictureBoxImage(picStaffPhoto)
+                                        picStaffPhoto.Image = Image.FromFile(fullPath)
+                                        picStaffPhoto.SizeMode = PictureBoxSizeMode.Zoom
+                                        photoSet = True
+                                    End If
+                                End If
                             End If
 
                             If String.IsNullOrWhiteSpace(qrText) AndAlso Not IsDBNull(rdr("QRCode")) Then

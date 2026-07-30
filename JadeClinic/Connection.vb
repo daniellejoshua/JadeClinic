@@ -13,9 +13,23 @@ Module Connection
     End Function
 
     Public Function GetConnectionString() As String
-        ' Single-file SQLite DB placed in local app data for zero-install
         Dim dbPath As String = GetDefaultDatabasePath()
         Return $"Data Source={dbPath};Cache=Shared;Mode=ReadWriteCreate"
+    End Function
+
+    Public Function GetDatabaseFolder() As String
+        Return Path.GetDirectoryName(GetDefaultDatabasePath())
+    End Function
+
+    Public Function GetImagesFolder(Optional subfolder As String = "") As String
+        Dim folder As String = Path.Combine(GetDatabaseFolder(), "Images")
+        If Not String.IsNullOrEmpty(subfolder) Then
+            folder = Path.Combine(folder, subfolder)
+        End If
+        If Not Directory.Exists(folder) Then
+            Directory.CreateDirectory(folder)
+        End If
+        Return folder
     End Function
 
     Public Function TestConnection(Optional serverName As String = "") As Boolean
@@ -33,12 +47,10 @@ Module Connection
     End Function
 
     Public Function CreateDatabaseIfNotExists() As Boolean
-        ' For SQLite the file will be created automatically when opened with Mode=ReadWriteCreate
         Return TestConnection()
     End Function
 
     Public Sub SaveConnectionString(Optional serverName As String = "")
-        ' No-op for SQLite (we use a local file) but keep method for compatibility
         Console.WriteLine("SaveConnectionString: SQLite uses local file; no action taken.")
     End Sub
 

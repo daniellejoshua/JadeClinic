@@ -7,7 +7,7 @@ Imports Guna.UI2.WinForms
 Imports System.Data.Common
 
 Public Class AddStaff
-    Private staffPhotoBytes As Byte() = Nothing
+    Private staffPhotoPath As String = Nothing
     Private isEditMode As Boolean = False
     Private editingStaffId As Integer = 0
     Private originalImagePath As String = ""
@@ -238,18 +238,15 @@ Public Class AddStaff
             ProductImage.Image = placeholder
             ProductImage.SizeMode = PictureBoxSizeMode.CenterImage
 
-            ' Reset photo bytes if this is called during add-mode reset
             If Not isEditMode Then
-                staffPhotoBytes = Nothing
-                ' label instructs user in add mode
+                staffPhotoPath = Nothing
                 Try
                     lblStaffPicture.Text = "Click to Upload"
                 Catch
                 End Try
             Else
-                ' In edit mode, if there is no photo show a neutral label (but SetEditMode may override)
                 Try
-                    If staffPhotoBytes Is Nothing OrElse staffPhotoBytes.Length = 0 Then
+                    If String.IsNullOrEmpty(staffPhotoPath) Then
                         lblStaffPicture.Text = "No Photo"
                     Else
                         lblStaffPicture.Text = "Photo Loaded"
@@ -301,8 +298,7 @@ Public Class AddStaff
                     MessageBox.Show("You cannot change the staff photo while viewing/editing an existing account here.", "Read-Only", MessageBoxButtons.OK, MessageBoxIcon.Information)
                 End If
 
-                ' Ensure placeholder shows "No Photo" when no photo exists (match add-mode messaging style).
-                If staffPhotoBytes Is Nothing OrElse staffPhotoBytes.Length = 0 Then
+                If String.IsNullOrEmpty(staffPhotoPath) Then
                     Try
                         SetDefaultImage()
                         lblStaffPicture.Text = "No Photo"
@@ -346,21 +342,14 @@ Public Class AddStaff
                       MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
-    ' Replace the existing ProcessAndCompressImage method with this version.
-    ' - Creates a scaled display bitmap that fills the PictureBox (prevents Zoom-like cropping).
-    ' - Stores a compressed bytes copy for DB (quality + max size).
-    ' - Ensures PictureBox shows stretched/full image.
     Private Sub ProcessAndCompressImage(imagePath As String)
         Try
-            ' Show processing indicator
             lblStaffPicture.Text = "Processing..."
             Application.DoEvents()
 
-            ' Load original image from file
             Using originalImage As Image = Image.FromFile(imagePath)
                 originalImagePath = imagePath
 
-                ' Create a display bitmap sized to the PictureBox to avoid "zoom" appearance.
                 Dim displayW As Integer = Math.Max(1, ProductImage.Width)
                 Dim displayH As Integer = Math.Max(1, ProductImage.Height)
                 Dim displayBitmap As New Bitmap(displayW, displayH)
@@ -369,30 +358,36 @@ Public Class AddStaff
                     g.Clear(Color.Transparent)
                     g.InterpolationMode = Drawing.Drawing2D.InterpolationMode.HighQualityBicubic
                     g.SmoothingMode = Drawing.Drawing2D.SmoothingMode.HighQuality
-                    ' Draw the original image stretched to fill the control (will behave like StretchImage)
                     g.DrawImage(originalImage, New Rectangle(0, 0, displayW, displayH))
                 End Using
 
-                ' Replace PictureBox image safely
                 If ProductImage.Image IsNot Nothing Then
                     ProductImage.Image.Dispose()
                 End If
                 ProductImage.Image = displayBitmap
                 ProductImage.SizeMode = PictureBoxSizeMode.Normal
 
-                ' Compress image for database storage (quality 70, max 400x400) - kept as before
-                staffPhotoBytes = ImageCompression.CompressImage(originalImage, 70, 400, 400)
+                Dim imagesFolder As String = Connection.GetImagesFolder("users")
+                If Not System.IO.Directory.Exists(imagesFolder) Then
+                    System.IO.Directory.CreateDirectory(imagesFolder)
+                End If
 
-                ' Show compression results
+                Dim hash As String = ImageCompression.ComputeHash(imagePath)
+                Dim fileName As String = hash & ".jpg"
+                Dim outputPath As String = System.IO.Path.Combine(imagesFolder, fileName)
+
+                ImageCompression.CompressImageToFile(imagePath, outputPath, 70, 400, 400)
+
+                staffPhotoPath = fileName
+
                 Dim originalSize As Long = New FileInfo(imagePath).Length
-                Dim compressedSize As Long = If(staffPhotoBytes IsNot Nothing, staffPhotoBytes.Length, 0)
+                Dim compressedSize As Long = New FileInfo(outputPath).Length
                 Dim compressionRatio As Double = If(originalSize > 0, (1 - (CDbl(compressedSize) / originalSize)) * 100, 0)
 
                 lblStaffPicture.Text = $"Optimized ({ImageCompression.FormatFileSize(compressedSize)}, {compressionRatio:F0}% smaller)"
                 Console.WriteLine($"Image compressed: {ImageCompression.FormatFileSize(originalSize)} ? {ImageCompression.FormatFileSize(compressedSize)} ({compressionRatio:F1}% reduction)")
             End Using
 
-            ' Re-validate form after image upload
             ValidateForm()
 
         Catch ex As Exception
@@ -664,8 +659,7 @@ Public Class AddStaff
         ' Generate and save passkeys for forgot password functionality
         Dim passkeys As String() = GenerateUserPasskeys(newUserId)
 
-        ' Save staff photo if uploaded (to the Photo field in Users table)
-        If staffPhotoBytes IsNot Nothing AndAlso staffPhotoBytes.Length > 0 Then
+        If Not String.IsNullOrEmpty(staffPhotoPath) Then
             SaveStaffPhoto(newUserId)
         End If
 
@@ -1032,8 +1026,7 @@ Public Class AddStaff
         Dim rowsAffected As Integer = Utilities.ExecuteNonQuery(updateQuery, parameters.ToArray())
 
         If rowsAffected > 0 Then
-            ' Save staff photo if uploaded
-            If staffPhotoBytes IsNot Nothing AndAlso staffPhotoBytes.Length > 0 Then
+            If Not String.IsNullOrEmpty(staffPhotoPath) Then
                 SaveStaffPhoto(editingStaffId)
             End If
 
@@ -1165,20 +1158,18 @@ Public Class AddStaff
 
     Private Sub SaveStaffPhoto(userId As Integer)
         Try
-            ' Save photo directly to the Photo field in Users table (matching your schema)
-            Dim updatePhotoQuery As String = "UPDATE Users SET Photo = @PhotoData WHERE UserID = @UserID"
+            Dim updatePhotoQuery As String = "UPDATE Users SET PhotoPath = @PhotoPath WHERE UserID = @UserID"
 
             Dim photoParams() As SqlParameter = {
                 New SqlParameter("@UserID", userId),
-                New SqlParameter("@PhotoData", staffPhotoBytes)
+                New SqlParameter("@PhotoPath", If(staffPhotoPath, CObj(DBNull.Value)))
             }
 
             Utilities.ExecuteNonQuery(updatePhotoQuery, photoParams)
-            Console.WriteLine($"Staff photo saved for user ID: {userId}")
+            Console.WriteLine($"Staff photo path saved for user ID: {userId}")
 
         Catch ex As Exception
-            Console.WriteLine($"Error saving staff photo: {ex.Message}")
-            ' Don't throw exception here as the staff member was already created
+            Console.WriteLine($"Error saving staff photo path: {ex.Message}")
         End Try
     End Sub
 
@@ -1195,9 +1186,8 @@ Public Class AddStaff
         ' Reset combo box
         cmbRole.SelectedIndex = 0
 
-        ' Reset image
         SetDefaultImage()
-        staffPhotoBytes = Nothing
+        staffPhotoPath = Nothing
         originalImagePath = ""
         lblStaffPicture.Text = "Upload"
 
@@ -1281,11 +1271,9 @@ Public Class AddStaff
             ' Populate visible fields
             PopulateFormWithUserData(userData)
 
-            ' Ensure image placeholder reflects edit-mode semantics:
-            ' if no photo is present, show "No Photo" instead of "Click to Upload".
             Try
                 If isEditMode Then
-                    If staffPhotoBytes Is Nothing OrElse staffPhotoBytes.Length = 0 Then
+                    If String.IsNullOrEmpty(staffPhotoPath) Then
                         lblStaffPicture.Text = "No Photo"
                     Else
                         lblStaffPicture.Text = "Photo Loaded"
@@ -1422,49 +1410,51 @@ Public Class AddStaff
                 Next
             End If
 
-            ' Load photo if provided in dictionary or fetch from DB
-            If userData.ContainsKey("Photo") AndAlso userData("Photo") IsNot Nothing Then
-                Dim bytes = TryCast(userData("Photo"), Byte())
-                If bytes IsNot Nothing AndAlso bytes.Length > 0 Then
-                    Using ms As New MemoryStream(bytes)
+            Dim loaded As Boolean = False
+            Dim usersFolder As String = Connection.GetImagesFolder("users")
+            If userData.ContainsKey("PhotoPath") AndAlso userData("PhotoPath") IsNot Nothing Then
+                Dim fileName = userData("PhotoPath").ToString()
+                If Not String.IsNullOrEmpty(fileName) Then
+                    Dim fullPath As String = System.IO.Path.Combine(usersFolder, fileName)
+                    If System.IO.File.Exists(fullPath) Then
                         If ProductImage.Image IsNot Nothing Then
                             ProductImage.Image.Dispose()
                         End If
-                        ProductImage.Image = Image.FromStream(ms)
-                        ' Use scaled rendering consistent with display code
+                        ProductImage.Image = Image.FromFile(fullPath)
                         ProductImage.SizeMode = PictureBoxSizeMode.Normal
-                    End Using
-                    staffPhotoBytes = bytes
-                    lblStaffPicture.Text = "Photo Loaded"
-                Else
-                    SetDefaultImage()
+                        staffPhotoPath = fileName
+                        lblStaffPicture.Text = "Photo Loaded"
+                        loaded = True
+                    End If
                 End If
-            ElseIf userData.ContainsKey("UserID") Then
-                ' Defensive DB fetch for photo only
+            End If
+            If Not loaded AndAlso userData.ContainsKey("UserID") Then
                 Try
-                    Dim query As String = "SELECT Photo FROM Users WHERE UserID = @UserID"
+                    Dim query As String = "SELECT PhotoPath FROM Users WHERE UserID = @UserID"
                     Dim parameters() As SqlParameter = {New SqlParameter("@UserID", CInt(userData("UserID")))}
                     Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters)
-                        If reader.Read() AndAlso Not IsDBNull(reader("Photo")) Then
-                            Dim dbBytes = CType(reader("Photo"), Byte())
-                            Using ms As New MemoryStream(dbBytes)
-                                If ProductImage.Image IsNot Nothing Then
-                                    ProductImage.Image.Dispose()
+                        If reader.Read() AndAlso Not IsDBNull(reader("PhotoPath")) Then
+                            Dim dbFileName = reader("PhotoPath").ToString()
+                            If Not String.IsNullOrEmpty(dbFileName) Then
+                                Dim fullPath As String = System.IO.Path.Combine(usersFolder, dbFileName)
+                                If System.IO.File.Exists(fullPath) Then
+                                    If ProductImage.Image IsNot Nothing Then
+                                        ProductImage.Image.Dispose()
+                                    End If
+                                    ProductImage.Image = Image.FromFile(fullPath)
+                                    ProductImage.SizeMode = PictureBoxSizeMode.Normal
+                                    staffPhotoPath = dbFileName
+                                    lblStaffPicture.Text = "Photo Loaded"
+                                    loaded = True
                                 End If
-                                ProductImage.Image = Image.FromStream(ms)
-                                ProductImage.SizeMode = PictureBoxSizeMode.Normal
-                            End Using
-                            staffPhotoBytes = dbBytes
-                            lblStaffPicture.Text = "Photo Loaded"
-                        Else
-                            SetDefaultImage()
+                            End If
                         End If
                     End Using
                 Catch ex As Exception
-                    Console.WriteLine($"Error fetching photo in PopulateFormWithUserData: {ex.Message}")
-                    SetDefaultImage()
+                    Console.WriteLine($"Error fetching photo path in PopulateFormWithUserData: {ex.Message}")
                 End Try
-            Else
+            End If
+            If Not loaded Then
                 SetDefaultImage()
             End If
 
@@ -1479,58 +1469,14 @@ Public Class AddStaff
     ' Replace LoadExistingPhoto contents (the portion that creates display image) with this to render stored photos stretched to control.
     Private Sub LoadExistingPhoto(reader As DbDataReader)
         Try
-            If Not IsDBNull(reader("Photo")) Then
-                Dim photoBytes As Byte() = CType(reader("Photo"), Byte())
+            If Not IsDBNull(reader("PhotoPath")) Then
+                Dim fileName As String = reader("PhotoPath").ToString()
+                Dim usersFolder As String = Connection.GetImagesFolder("users")
+                Dim fullPath As String = System.IO.Path.Combine(usersFolder, fileName)
+                If Not String.IsNullOrEmpty(fileName) AndAlso System.IO.File.Exists(fullPath) Then
+                    staffPhotoPath = fileName
 
-                If photoBytes IsNot Nothing AndAlso photoBytes.Length > 0 Then
-                    staffPhotoBytes = photoBytes
-
-                    Using ms As New IO.MemoryStream(photoBytes)
-                        ms.Seek(0, SeekOrigin.Begin)
-                        Using originalImage As Image = Image.FromStream(ms, True, False)
-                            ' Create scaled display image sized to the PictureBox
-                            Dim displayW As Integer = Math.Max(1, ProductImage.Width)
-                            Dim displayH As Integer = Math.Max(1, ProductImage.Height)
-                            Dim displayImage As New Bitmap(displayW, displayH)
-
-                            Using g As Graphics = Graphics.FromImage(displayImage)
-                                g.Clear(Color.Transparent)
-                                g.InterpolationMode = Drawing.Drawing2D.InterpolationMode.HighQualityBicubic
-                                g.SmoothingMode = Drawing.Drawing2D.SmoothingMode.HighQuality
-                                g.DrawImage(originalImage, New Rectangle(0, 0, displayW, displayH))
-                            End Using
-
-                            If ProductImage.Image IsNot Nothing Then
-                                ProductImage.Image.Dispose()
-                            End If
-
-                            ProductImage.Image = displayImage
-                            ProductImage.SizeMode = PictureBoxSizeMode.Normal
-                            lblStaffPicture.Text = "Photo Loaded"
-                        End Using
-                    End Using
-                Else
-                    SetDefaultImage()
-                    lblStaffPicture.Text = "Upload"
-                End If
-            Else
-                SetDefaultImage()
-                lblStaffPicture.Text = "Upload"
-            End If
-        Catch ex As Exception
-            Console.WriteLine($"Error loading existing photo: {ex.Message}")
-            SetDefaultImage()
-            lblStaffPicture.Text = "Upload"
-        End Try
-    End Sub
-    ' Method to refresh image display - can be called after form is shown
-    ' Replace RefreshImageDisplay with this to use the same scaled rendering (prevents perceived zoom)
-    Public Sub RefreshImageDisplay()
-        Try
-            If isEditMode AndAlso staffPhotoBytes IsNot Nothing AndAlso staffPhotoBytes.Length > 0 Then
-                Using ms As New IO.MemoryStream(staffPhotoBytes)
-                    ms.Seek(0, SeekOrigin.Begin)
-                    Using originalImage As Image = Image.FromStream(ms, True, False)
+                    Using originalImage As Image = Image.FromFile(fullPath)
                         Dim displayW As Integer = Math.Max(1, ProductImage.Width)
                         Dim displayH As Integer = Math.Max(1, ProductImage.Height)
                         Dim displayImage As New Bitmap(displayW, displayH)
@@ -1548,10 +1494,49 @@ Public Class AddStaff
 
                         ProductImage.Image = displayImage
                         ProductImage.SizeMode = PictureBoxSizeMode.Normal
-                        ProductImage.Refresh()
-
                         lblStaffPicture.Text = "Photo Loaded"
                     End Using
+                Else
+                    SetDefaultImage()
+                    lblStaffPicture.Text = "Upload"
+                End If
+            Else
+                SetDefaultImage()
+                lblStaffPicture.Text = "Upload"
+            End If
+        Catch ex As Exception
+            Console.WriteLine($"Error loading existing photo: {ex.Message}")
+            SetDefaultImage()
+            lblStaffPicture.Text = "Upload"
+        End Try
+    End Sub
+
+    Public Sub RefreshImageDisplay()
+        Try
+            Dim usersFolder As String = Connection.GetImagesFolder("users")
+            Dim fullPath As String = System.IO.Path.Combine(usersFolder, staffPhotoPath)
+            If isEditMode AndAlso Not String.IsNullOrEmpty(staffPhotoPath) AndAlso System.IO.File.Exists(fullPath) Then
+                Using originalImage As Image = Image.FromFile(fullPath)
+                    Dim displayW As Integer = Math.Max(1, ProductImage.Width)
+                    Dim displayH As Integer = Math.Max(1, ProductImage.Height)
+                    Dim displayImage As New Bitmap(displayW, displayH)
+
+                    Using g As Graphics = Graphics.FromImage(displayImage)
+                        g.Clear(Color.Transparent)
+                        g.InterpolationMode = Drawing.Drawing2D.InterpolationMode.HighQualityBicubic
+                        g.SmoothingMode = Drawing.Drawing2D.SmoothingMode.HighQuality
+                        g.DrawImage(originalImage, New Rectangle(0, 0, displayW, displayH))
+                    End Using
+
+                    If ProductImage.Image IsNot Nothing Then
+                        ProductImage.Image.Dispose()
+                    End If
+
+                    ProductImage.Image = displayImage
+                    ProductImage.SizeMode = PictureBoxSizeMode.Normal
+                    ProductImage.Refresh()
+
+                    lblStaffPicture.Text = "Photo Loaded"
                 End Using
             End If
         Catch ex As Exception
