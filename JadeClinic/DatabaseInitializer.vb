@@ -370,12 +370,11 @@ Public Class DatabaseInitializer
                 Dim logoPath As Object = DBNull.Value
                 Try
                     Dim imagesDir As String = Connection.GetImagesFolder("company")
-                    Dim destPath As String = Path.Combine(imagesDir, "logo.jpg")
-                    Using logoImage As System.Drawing.Image = My.Resources.FinalLogoOfJAde
+                    Dim destPath As String = Path.Combine(imagesDir, "logo.png")
+                    Using logoImage As System.Drawing.Image = My.Resources.CleanJadeLogo_1_
                         If logoImage IsNot Nothing Then
-                            Dim compressed As Byte() = ImageCompression.CompressImage(logoImage, 80, 400, 300)
-                            File.WriteAllBytes(destPath, compressed)
-                            logoPath = "logo.jpg"
+                            logoImage.Save(destPath, System.Drawing.Imaging.ImageFormat.Png)
+                            logoPath = "logo.png"
                         End If
                     End Using
                 Catch logoEx As Exception

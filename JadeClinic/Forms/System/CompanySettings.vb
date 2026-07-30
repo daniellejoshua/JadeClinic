@@ -380,11 +380,9 @@ Public Class CompanySettings
                 Dim image As Image = Image.FromFile(openFileDialog.FileName)
                 picLogo.Image = image
 
-                Dim imageBytes As Byte() = File.ReadAllBytes(openFileDialog.FileName)
-                Dim compressed As Byte() = ImageCompression.CompressImage(imageBytes, 80)
                 Dim destDir As String = Connection.GetImagesFolder("company")
-                Dim destPath As String = Path.Combine(destDir, "logo.jpg")
-                File.WriteAllBytes(destPath, compressed)
+                Dim destPath As String = Path.Combine(destDir, "logo.png")
+                image.Save(destPath, System.Drawing.Imaging.ImageFormat.Png)
 
                 logoChanged = True
                 MessageBox.Show("Logo updated! Click Save to apply changes.", "Logo Changed", MessageBoxButtons.OK, MessageBoxIcon.Information)
@@ -626,14 +624,14 @@ Public Class CompanySettings
 
             If logoChanged Then
                 Dim destDir As String = Connection.GetImagesFolder("company")
-                Dim destPath As String = Path.Combine(destDir, "logo.jpg")
+                Dim destPath As String = Path.Combine(destDir, "logo.png")
                 If Not IO.File.Exists(destPath) Then
                     Try
-                        Dim resImg As Image = My.Resources.FinalLogoOfJAde
-                        If resImg IsNot Nothing Then
-                            Dim compressed As Byte() = ImageCompression.CompressImage(resImg, 80, 400, 300)
-                            File.WriteAllBytes(destPath, compressed)
-                        End If
+                        Using resImg As Image = My.Resources.CleanJadeLogo_1_
+                            If resImg IsNot Nothing Then
+                                resImg.Save(destPath, System.Drawing.Imaging.ImageFormat.Png)
+                            End If
+                        End Using
                     Catch
                     End Try
                 End If
@@ -687,9 +685,9 @@ Public Class CompanySettings
 
             If logoChanged OrElse Not isUpdate Then
                 Dim logoPathValue As Object = DBNull.Value
-                Dim destPath As String = Path.Combine(Connection.GetImagesFolder("company"), "logo.jpg")
+                Dim destPath As String = Path.Combine(Connection.GetImagesFolder("company"), "logo.png")
                 If IO.File.Exists(destPath) Then
-                    logoPathValue = "logo.jpg"
+                    logoPathValue = "logo.png"
                 End If
                 parameters.Add(New SqlParameter("@LogoPath", logoPathValue))
             End If

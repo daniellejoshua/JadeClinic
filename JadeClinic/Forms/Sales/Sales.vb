@@ -5892,4 +5892,7 @@ Public Class Sales
         Return bmp
     End Function
 
+    Private Sub PictureBox9_Click(sender As Object, e As EventArgs) Handles PictureBox9.Click
+
+    End Sub
 End Class

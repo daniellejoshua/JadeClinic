@@ -94,6 +94,16 @@ Public Class InventoryLog
             ' Initialize profile section
             InitializeProfileSection()
 
+            ' Load company logo dynamically
+            Try
+                Dim companyLogo As Image = CompanySettingsManager.Instance.GetCompanyLogo()
+                If PictureBox9 IsNot Nothing AndAlso companyLogo IsNot Nothing Then
+                    PictureBox9.Image = companyLogo
+                    PictureBox9.SizeMode = PictureBoxSizeMode.StretchImage
+                End If
+            Catch
+            End Try
+
             ' Setup controls
             SetupControls()
 
