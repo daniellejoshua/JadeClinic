@@ -17,9 +17,6 @@ Public Class ProfileSettings
     Private pinIndicators As List(Of Guna.UI2.WinForms.Guna2CircleButton)
     Private currentUserData As Dictionary(Of String, Object)
 
-    ' Store the pending profile picture change
-    Private pendingProfileImage As Image = Nothing
-    Private pendingProfileImageBytes As Byte() = Nothing
     Private hasProfileImageChanged As Boolean = False
 
     ' Navigation flag to prevent modal dialogs during programmatic navigation
@@ -108,7 +105,7 @@ Public Class ProfileSettings
                 ' Query to get the logged-in user's details - updated to match current schema
                 ' NOTE: passkeys are stored in a single column named "Passkeys" in our schema.
                 Dim query As String =
-                "SELECT UserID, Username, FullName, Email, Phone, Photo, PasswordHash, pin, Passkeys, UserRole " &
+                "SELECT UserID, Username, FullName, Email, Phone, PhotoPath, PasswordHash, pin, Passkeys, UserRole " &
                 "FROM Users WHERE Username = @Username AND IsActive = 1"
 
                 Dim parameters As SqlParameter() = {
@@ -129,7 +126,7 @@ Public Class ProfileSettings
                         {"Email", If(IsDBNull(reader("Email")), "", reader("Email").ToString())},
                         {"Phone", If(IsDBNull(reader("Phone")), "", reader("Phone").ToString())},
                         {"Passkeys", passkeysCombined},
-                        {"Photo", If(Not IsDBNull(reader("Photo")), reader("Photo"), Nothing)},
+                        {"PhotoPath", If(Not IsDBNull(reader("PhotoPath")), reader("PhotoPath").ToString(), Nothing)},
                         {"Role", If(IsDBNull(reader("UserRole")), "", reader("UserRole").ToString())}
                     }
 
@@ -142,7 +139,7 @@ Public Class ProfileSettings
             ' If the selected column name doesn't exist for some reason, fall back to a safe query
             If ex.Message.Contains("Invalid column name") Then
                 Try
-                    Dim fallbackQuery As String = "SELECT UserID, Username, FullName, Email, Phone, Photo, PasswordHash, pin, UserRole FROM Users WHERE Username = @Username AND IsActive = 1"
+                    Dim fallbackQuery As String = "SELECT UserID, Username, FullName, Email, Phone, PhotoPath, PasswordHash, pin, UserRole FROM Users WHERE Username = @Username AND IsActive = 1"
                     Dim parameters As SqlParameter() = {
                     New SqlParameter("@Username", frmLoginvb.LoggedInUsername)
                 }
@@ -156,8 +153,8 @@ Public Class ProfileSettings
                             {"PIN", If(IsDBNull(reader("pin")), "", reader("pin").ToString())},
                             {"Email", If(IsDBNull(reader("Email")), "", reader("Email").ToString())},
                             {"Phone", If(IsDBNull(reader("Phone")), "", reader("Phone").ToString())},
-                            {"Passkeys", ""}, ' no passkeys column available
-                            {"Photo", If(Not IsDBNull(reader("Photo")), reader("Photo"), Nothing)},
+                            {"Passkeys", ""},
+                            {"PhotoPath", If(Not IsDBNull(reader("PhotoPath")), reader("PhotoPath").ToString(), Nothing)},
                             {"Role", If(IsDBNull(reader("UserRole")), "", reader("UserRole").ToString())}
                         }
                             PopulateFormFields()
@@ -204,14 +201,15 @@ Public Class ProfileSettings
                     PictureBox9.SizeMode = PictureBoxSizeMode.StretchImage
                 End If
 
-                ' Put user avatar into the Guna circle picture box (nav avatar).
                 Dim userImage As Image = Nothing
-                If currentUserData IsNot Nothing AndAlso currentUserData("Photo") IsNot Nothing Then
-                    Dim photoBytes As Byte() = CType(currentUserData("Photo"), Byte())
-                    Using ms As New MemoryStream(photoBytes)
-                        userImage = Image.FromStream(ms)
-                    End Using
-                Else
+                If currentUserData IsNot Nothing AndAlso currentUserData("PhotoPath") IsNot Nothing Then
+                    Dim photoPath As String = currentUserData("PhotoPath").ToString()
+                    Dim fullPath As String = Path.Combine(Connection.GetImagesFolder("users"), photoPath)
+                    If IO.File.Exists(fullPath) Then
+                        userImage = Image.FromFile(fullPath)
+                    End If
+                End If
+                If userImage Is Nothing Then
                     userImage = CreateDefaultAvatar(currentUserData("Username").ToString())
                 End If
 
@@ -230,18 +228,21 @@ Public Class ProfileSettings
 
     Private Sub LoadProfilePicture()
         Try
-            If currentUserData("Photo") IsNot Nothing Then
-                Dim photoBytes As Byte() = CType(currentUserData("Photo"), Byte())
-                Using ms As New MemoryStream(photoBytes)
-                    Guna2CirclePictureBox7.Image = System.Drawing.Image.FromStream(ms)
-                    Guna2CirclePictureBox7.SizeMode = PictureBoxSizeMode.Zoom
-                End Using
+            Dim img As Image = Nothing
+            If currentUserData("PhotoPath") IsNot Nothing Then
+                Dim photoPath As String = currentUserData("PhotoPath").ToString()
+                Dim fullPath As String = Path.Combine(Connection.GetImagesFolder("users"), photoPath)
+                If IO.File.Exists(fullPath) Then
+                    img = Image.FromFile(fullPath)
+                End If
+            End If
+            If img IsNot Nothing Then
+                Guna2CirclePictureBox7.Image = img
+                Guna2CirclePictureBox7.SizeMode = PictureBoxSizeMode.Zoom
             Else
-                ' Create default avatar
                 Guna2CirclePictureBox7.Image = CreateDefaultAvatar(currentUserData("Username").ToString())
             End If
         Catch ex As Exception
-            ' Set default avatar on error
             Guna2CirclePictureBox7.Image = CreateDefaultAvatar(currentUserData("Username").ToString())
         End Try
     End Sub
@@ -554,10 +555,11 @@ Public Class ProfileSettings
                 changedFields.Add("Password updated")
             End If
 
-            ' Add profile picture update if changed
-            If hasProfileImageChanged AndAlso pendingProfileImageBytes IsNot Nothing Then
-                updates.Add("Photo = @Photo")
-                parameters.Add(New SqlParameter("@Photo", pendingProfileImageBytes))
+            If hasProfileImageChanged Then
+                Dim userId As Integer = Convert.ToInt32(currentUserData("UserID"))
+                Dim fileName As String = $"user_{userId}.jpg"
+                updates.Add("PhotoPath = @PhotoPath")
+                parameters.Add(New SqlParameter("@PhotoPath", fileName))
                 changedFields.Add("Profile picture updated")
             End If
 
@@ -587,15 +589,12 @@ Public Class ProfileSettings
                     frmLoginvb.LoggedInUsername = txtUserName.Text
                 End If
 
-                ' Update current user data with new photo if changed
-                If hasProfileImageChanged AndAlso pendingProfileImageBytes IsNot Nothing Then
-                    currentUserData("Photo") = pendingProfileImageBytes
+                If hasProfileImageChanged Then
+                    Dim userId As Integer = Convert.ToInt32(currentUserData("UserID"))
+                    currentUserData("PhotoPath") = $"user_{userId}.jpg"
                 End If
 
-                ' Reset pending changes
                 hasProfileImageChanged = False
-                pendingProfileImage = Nothing
-                pendingProfileImageBytes = Nothing
 
                 ' Reload user data
                 LoadCurrentUserData()
@@ -1078,33 +1077,28 @@ Public Class ProfileSettings
         MyBase.OnFormClosing(e)
     End Sub
 
-    ' Modified profile picture click handler - now only selects image, doesn't save
     Private Sub Guna2CirclePictureBox7_Click(sender As Object, e As EventArgs) Handles Guna2CirclePictureBox7.Click
         Try
-            ' Open file dialog to select an image
             Using openFileDialog As New OpenFileDialog()
                 openFileDialog.Filter = "Image Files|*.jpg;*.jpeg;*.png;*.bmp"
                 openFileDialog.Title = "Select Profile Picture"
 
                 If openFileDialog.ShowDialog() = DialogResult.OK Then
-                    ' Load the selected image
                     Dim selectedImage As Image = Image.FromFile(openFileDialog.FileName)
-
-                    ' Convert the image to a byte array for storage
-                    Using ms As New MemoryStream()
-                        selectedImage.Save(ms, ImageFormat.Png)
-                        pendingProfileImageBytes = ms.ToArray()
-                    End Using
-
-                    ' Update the display immediately but don't save to database yet
                     Guna2CirclePictureBox7.Image = selectedImage
                     Guna2CirclePictureBox7.SizeMode = PictureBoxSizeMode.Zoom
 
-                    ' Store the image and mark as changed
-                    pendingProfileImage = selectedImage
+                    Dim userId As Integer = Convert.ToInt32(currentUserData("UserID"))
+                    Dim fileName As String = $"user_{userId}.jpg"
+                    Dim destDir As String = Connection.GetImagesFolder("users")
+                    Dim destPath As String = Path.Combine(destDir, fileName)
+
+                    Dim imageBytes As Byte() = File.ReadAllBytes(openFileDialog.FileName)
+                    Dim compressed As Byte() = ImageCompression.CompressImage(imageBytes, 80, 300, 300)
+                    File.WriteAllBytes(destPath, compressed)
+
                     hasProfileImageChanged = True
 
-                    ' Show a message to inform the user
                     MessageBox.Show("Profile picture selected. Click 'Save Changes' to save your new profile picture.", "Image Selected", MessageBoxButtons.OK, MessageBoxIcon.Information)
                 End If
             End Using
@@ -1283,12 +1277,14 @@ Public Class ProfileSettings
                     LoadCurrentUserData()
                 End If
 
-                If currentUserData IsNot Nothing AndAlso currentUserData("Photo") IsNot Nothing Then
-                    Dim photoBytes As Byte() = CType(currentUserData("Photo"), Byte())
-                    Using ms As New MemoryStream(photoBytes)
-                        userImg = Image.FromStream(ms)
-                    End Using
-                Else
+                If currentUserData IsNot Nothing AndAlso currentUserData("PhotoPath") IsNot Nothing Then
+                    Dim photoPath As String = currentUserData("PhotoPath").ToString()
+                    Dim fullPath As String = Path.Combine(Connection.GetImagesFolder("users"), photoPath)
+                    If IO.File.Exists(fullPath) Then
+                        userImg = Image.FromFile(fullPath)
+                    End If
+                End If
+                If userImg Is Nothing Then
                     userImg = CreateDefaultAvatar(If(currentUserData IsNot Nothing, currentUserData("Username").ToString(), frmLoginvb.LoggedInUsername))
                 End If
 

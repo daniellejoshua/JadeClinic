@@ -1704,13 +1704,13 @@ Public Class frmLoginvb
         Try
             ' Open the dedicated ForgotPasswordForm so the user can recover/reset credentials.
             ' If the login username field is populated, attempt to prefill it on the forgot form (best-effort).
-            Dim forgotForm As New ForgotPasswordForm()
+            Dim forgotForm As New ForgotPasswordForm
 
             Try
-                Dim initialUsername = txtUserName.Text.Trim()
+                Dim initialUsername = txtUserName.Text.Trim
                 If Not String.IsNullOrEmpty(initialUsername) Then
                     ' Best-effort: if the ForgotPasswordForm exposes a public property named InitialUsername, set it.
-                    Dim prop = forgotForm.GetType().GetProperty("InitialUsername")
+                    Dim prop = forgotForm.GetType.GetProperty("InitialUsername")
                     If prop IsNot Nothing AndAlso prop.CanWrite Then
                         prop.SetValue(forgotForm, initialUsername)
                     End If

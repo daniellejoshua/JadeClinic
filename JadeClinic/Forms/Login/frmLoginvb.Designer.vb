@@ -248,9 +248,9 @@ Partial Class frmLoginvb
         Controls.Add(Guna2Panel1)
         Controls.Add(PictureBox1)
         FormBorderStyle = FormBorderStyle.None
-        MinimumSize = New Size(1024, 700)
         MaximizeBox = False
         MinimizeBox = False
+        MinimumSize = New Size(1024, 700)
         Name = "frmLoginvb"
         StartPosition = FormStartPosition.CenterScreen
         Text = "Login"

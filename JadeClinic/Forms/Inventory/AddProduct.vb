@@ -434,8 +434,8 @@ Public Class AddProduct
 
     Private Sub SaveProductImage(conn As SqliteConnection, transaction As SqliteTransaction, productId As Integer, imagePath As String)
         Try
-            Dim imageData As Byte() = File.ReadAllBytes(imagePath)
-            Dim imageHash As String = Convert.ToBase64String(System.Security.Cryptography.SHA256.Create().ComputeHash(imageData))
+            Dim imageBytes As Byte() = File.ReadAllBytes(imagePath)
+            Dim imageHash As String = Convert.ToBase64String(System.Security.Cryptography.SHA256.Create().ComputeHash(imageBytes))
 
             Dim existingImageId As Object = Nothing
             Dim checkImageQuery As String = "SELECT ImageID FROM ProductImages WHERE ImageHash = @ImageHash"
@@ -449,13 +449,25 @@ Public Class AddProduct
             If existingImageId IsNot Nothing Then
                 imageId = Convert.ToInt32(existingImageId)
             Else
-                Dim insertImageQuery As String = "INSERT INTO ProductImages (ImageHash, ImageType, ImageData, CreatedAt, UpdatedAt) VALUES (@ImageHash, @ImageType, @ImageData, datetime('now'), datetime('now')); SELECT last_insert_rowid()"
+                Dim insertImageQuery As String = "INSERT INTO ProductImages (ImageHash, ImageType, FilePath, CreatedAt, UpdatedAt) VALUES (@ImageHash, @ImageType, '', datetime('now'), datetime('now')); SELECT last_insert_rowid()"
                 Using cmdImage As New SqliteCommand(insertImageQuery, conn, transaction)
                     cmdImage.Parameters.AddWithValue("@ImageHash", imageHash)
                     cmdImage.Parameters.AddWithValue("@ImageType", "thumb")
-                    cmdImage.Parameters.AddWithValue("@ImageData", imageData)
-
                     imageId = Convert.ToInt32(cmdImage.ExecuteScalar())
+                End Using
+
+                Dim fileName As String = $"img_{imageId}.jpg"
+                Dim destDir As String = Connection.GetImagesFolder("products")
+                Dim destPath As String = Path.Combine(destDir, fileName)
+
+                Dim compressed As Byte() = ImageCompression.CompressImage(imageBytes, 80)
+                File.WriteAllBytes(destPath, compressed)
+
+                Dim updatePathQuery As String = "UPDATE ProductImages SET FilePath = @FilePath WHERE ImageID = @ImageID"
+                Using cmdUpdate As New SqliteCommand(updatePathQuery, conn, transaction)
+                    cmdUpdate.Parameters.AddWithValue("@FilePath", fileName)
+                    cmdUpdate.Parameters.AddWithValue("@ImageID", imageId)
+                    cmdUpdate.ExecuteNonQuery()
                 End Using
             End If
 
@@ -466,49 +478,10 @@ Public Class AddProduct
                 cmdMapping.ExecuteNonQuery()
             End Using
 
-            OptimizeImage(imagePath)
-
         Catch ex As Exception
             Throw New Exception("Error saving product image: " & ex.Message, ex)
         End Try
     End Sub
-
-    Private Sub OptimizeImage(imagePath As String)
-        Try
-            Using testImage As Image = Image.FromFile(imagePath)
-                Console.WriteLine($"Image loaded successfully: {testImage.Width}x{testImage.Height}")
-            End Using
-        Catch ex As Exception
-            Console.WriteLine($"Warning: Image optimization skipped: {ex.Message}")
-        End Try
-    End Sub
-
-    Private Function ResizeImage(originalImage As Image, maxWidth As Integer, maxHeight As Integer) As Image
-        Dim ratioX As Double = maxWidth / originalImage.Width
-        Dim ratioY As Double = maxHeight / originalImage.Height
-        Dim ratio As Double = Math.Min(ratioX, ratioY)
-
-        Dim newWidth As Integer = CInt(originalImage.Width * ratio)
-        Dim newHeight As Integer = CInt(originalImage.Height * ratio)
-
-        Dim newImage As New Bitmap(newWidth, newHeight)
-        Using g As Graphics = Graphics.FromImage(newImage)
-            g.InterpolationMode = Drawing2D.InterpolationMode.HighQualityBicubic
-            g.DrawImage(originalImage, 0, 0, newWidth, newHeight)
-        End Using
-
-        Return newImage
-    End Function
-
-    Private Function GetEncoderInfo(mimeType As String) As ImageCodecInfo
-        Dim codecs As ImageCodecInfo() = ImageCodecInfo.GetImageDecoders()
-        For Each c As ImageCodecInfo In codecs
-            If c.MimeType = mimeType Then
-                Return c
-            End If
-        Next
-        Return Nothing
-    End Function
 
     Private Sub LoadProductData()
         Try
@@ -516,11 +489,11 @@ Public Class AddProduct
             Using conn As New SqliteConnection(connStr)
                 conn.Open()
 
-                Dim query As String = "SELECT p.*, pi.ImageData AS ProductImage " &
-                                 "FROM Products p " &
-                                 "LEFT JOIN ProductImageMapping pim ON p.ProductID = pim.ProductID " &
-                                 "LEFT JOIN ProductImages pi ON pim.ImageID = pi.ImageID " &
-                                 "WHERE p.ProductID = @ProductID"
+                Dim query As String = "SELECT p.*, pi.FilePath AS ProductImage " &
+                                  "FROM Products p " &
+                                  "LEFT JOIN ProductImageMapping pim ON p.ProductID = pim.ProductID " &
+                                  "LEFT JOIN ProductImages pi ON pim.ImageID = pi.ImageID " &
+                                  "WHERE p.ProductID = @ProductID"
 
                 Using cmd As New SqliteCommand(query, conn)
                     cmd.Parameters.AddWithValue("@ProductID", editProductId)
@@ -554,10 +527,17 @@ Public Class AddProduct
 
                             If Not IsDBNull(reader("ProductImage")) Then
                                 Try
-                                    Dim imgBytes As Byte() = CType(reader("ProductImage"), Byte())
-                                    Using ms As New MemoryStream(imgBytes)
-                                        ProductImage.Image = Image.FromStream(ms)
-                                    End Using
+                                    Dim filePath As String = reader("ProductImage").ToString()
+                                    If Not String.IsNullOrEmpty(filePath) Then
+                                        Dim fullPath As String = Path.Combine(Connection.GetImagesFolder("products"), filePath)
+                                        If IO.File.Exists(fullPath) Then
+                                            ProductImage.Image = Image.FromFile(fullPath)
+                                        Else
+                                            SetDefaultProductImage()
+                                        End If
+                                    Else
+                                        SetDefaultProductImage()
+                                    End If
                                 Catch
                                     SetDefaultProductImage()
                                 End Try
@@ -729,9 +709,20 @@ Public Class AddProduct
             Using cleanupConn As New SqliteConnection(connStr)
                 cleanupConn.Open()
 
+                Dim orphanQuery As String = "SELECT FilePath FROM ProductImages WHERE ImageID NOT IN (SELECT DISTINCT ImageID FROM ProductImageMapping)"
+                Dim orphanFiles As New List(Of String)
+                Using orphanCmd As New SqliteCommand(orphanQuery, cleanupConn)
+                    Using reader As DbDataReader = orphanCmd.ExecuteReader()
+                        While reader.Read()
+                            If Not IsDBNull(reader("FilePath")) Then
+                                orphanFiles.Add(reader("FilePath").ToString())
+                            End If
+                        End While
+                    End Using
+                End Using
+
                 Dim countQuery As String = "SELECT COUNT(*) FROM ProductImages WHERE ImageID NOT IN (SELECT DISTINCT ImageID FROM ProductImageMapping)"
                 Dim orphanCount As Integer
-
                 Using countCmd As New SqliteCommand(countQuery, cleanupConn)
                     orphanCount = Convert.ToInt32(countCmd.ExecuteScalar())
                 End Using
@@ -739,13 +730,21 @@ Public Class AddProduct
                 If orphanCount > 0 Then
                     Dim deleteQuery As String = "DELETE FROM ProductImages WHERE ImageID NOT IN (SELECT DISTINCT ImageID FROM ProductImageMapping)"
                     Dim deletedCount As Integer
-
                     Using deleteCmd As New SqliteCommand(deleteQuery, cleanupConn)
                         deletedCount = deleteCmd.ExecuteNonQuery()
                     End Using
 
-                    Console.WriteLine($"??? Cleaned up {deletedCount} orphaned image(s) during product update")
+                    For Each filePath As String In orphanFiles
+                        Try
+                            Dim fullPath As String = Path.Combine(Connection.GetImagesFolder("products"), filePath)
+                            If IO.File.Exists(fullPath) Then
+                                IO.File.Delete(fullPath)
+                            End If
+                        Catch
+                        End Try
+                    Next
 
+                    Console.WriteLine($"??? Cleaned up {deletedCount} orphaned image(s) during product update")
                     Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Image Cleanup",
                                      $"Cleaned up {deletedCount} orphaned product images during product update")
                 Else

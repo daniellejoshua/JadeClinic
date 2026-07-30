@@ -2,6 +2,7 @@ Imports System.Drawing
 Imports System.Drawing.Drawing2D
 Imports System.Drawing.Imaging
 Imports System.IO
+Imports System.Security.Cryptography
 
 Public Class ImageCompression
     ''' <summary>
@@ -205,7 +206,45 @@ Public Class ImageCompression
         Return $"{size:F1} {sizes(order)}"
     End Function
 
-    ' Compress image to specified quality (1-100)
+    Public Shared Function ComputeHash(filePath As String) As String
+        Try
+            Using sha As SHA256 = SHA256.Create()
+                Using fs As FileStream = File.OpenRead(filePath)
+                    Dim hashBytes As Byte() = sha.ComputeHash(fs)
+                    Dim sb As New System.Text.StringBuilder()
+                    For Each b As Byte In hashBytes
+                        sb.Append(b.ToString("x2"))
+                    Next
+                    Return sb.ToString()
+                End Using
+            End Using
+        Catch ex As Exception
+            Return Guid.NewGuid().ToString("N")
+        End Try
+    End Function
+
+    Public Shared Sub CompressImageToFile(sourcePath As String, destPath As String, Optional quality As Integer = 75, Optional maxWidth As Integer = 800, Optional maxHeight As Integer = 600)
+        Using originalImage As Image = Image.FromFile(sourcePath)
+            Dim newSize As Size = CalculateNewSize(originalImage.Size, maxWidth, maxHeight)
+            Using resizedImage As New Bitmap(newSize.Width, newSize.Height)
+                Using g As Graphics = Graphics.FromImage(resizedImage)
+                    g.CompositingMode = CompositingMode.SourceCopy
+                    g.CompositingQuality = CompositingQuality.HighQuality
+                    g.InterpolationMode = InterpolationMode.HighQualityBicubic
+                    g.SmoothingMode = SmoothingMode.HighQuality
+                    g.PixelOffsetMode = PixelOffsetMode.HighQuality
+                    g.DrawImage(originalImage, 0, 0, newSize.Width, newSize.Height)
+                End Using
+
+                Dim jpegCodec As ImageCodecInfo = GetEncoderInfo(ImageFormat.Jpeg)
+                Dim encoderParams As New EncoderParameters(1)
+                encoderParams.Param(0) = New EncoderParameter(Encoder.Quality, CLng(quality))
+
+                resizedImage.Save(destPath, jpegCodec, encoderParams)
+            End Using
+        End Using
+    End Sub
+
     Public Shared Function CompressImage(imageBytes As Byte(), quality As Integer) As Byte()
         Try
             Using originalStream As New MemoryStream(imageBytes)
@@ -247,6 +286,19 @@ Public Class ImageCompression
             Return Nothing
         Catch ex As Exception
             Return Nothing
+        End Try
+    End Function
+
+    Public Shared Function CompressImage(imageBytes As Byte(), quality As Integer, maxWidth As Integer, maxHeight As Integer) As Byte()
+        Try
+            Using originalStream As New MemoryStream(imageBytes)
+                Using originalImage As Image = Image.FromStream(originalStream)
+                    Return CompressImage(originalImage, quality, maxWidth, maxHeight)
+                End Using
+            End Using
+        Catch ex As Exception
+            Console.WriteLine($"Image compression failed: {ex.Message}")
+            Return imageBytes
         End Try
     End Function
 

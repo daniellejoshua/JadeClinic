@@ -4902,54 +4902,51 @@ Public Class Sales
         AuditLog.Show()
         Me.Close()
     End Sub
-    Private Function GetPrimaryImageBytes(productId As Integer) As Byte()
+    Private Function GetPrimaryImagePath(productId As Integer) As String
         Try
-            Dim query As String = "SELECT pi.ImageData FROM ProductImageMapping pim " &
+            Dim query As String = "SELECT pi.FilePath FROM ProductImageMapping pim " &
                                   "JOIN ProductImages pi ON pim.ImageID = pi.ImageID " &
-                                  "WHERE pim.ProductID = @ProductID AND pi.ImageData IS NOT NULL LIMIT 1"
+                                  "WHERE pim.ProductID = @ProductID AND pi.FilePath IS NOT NULL AND pi.FilePath != '' LIMIT 1"
             Dim param As New SqlParameter("@ProductID", productId)
             Using reader As DbDataReader = Utilities.ExecuteReader(query, {param})
                 If reader.Read() Then
-                    If Not IsDBNull(reader("ImageData")) Then
-                        Return CType(reader("ImageData"), Byte())
+                    If Not IsDBNull(reader("FilePath")) Then
+                        Dim filePath As String = reader("FilePath").ToString()
+                        Dim fullPath As String = Path.Combine(Connection.GetImagesFolder("products"), filePath)
+                        If IO.File.Exists(fullPath) Then
+                            Return fullPath
+                        End If
                     End If
                 End If
             End Using
         Catch ex As Exception
-            ' Log or ignore; fallback handled by caller
-            Console.WriteLine($"GetPrimaryImageBytes error for ProductID {productId}: {ex.Message}")
+            Console.WriteLine($"GetPrimaryImagePath error for ProductID {productId}: {ex.Message}")
         End Try
         Return Nothing
     End Function
 
-    ' Helper: load and resize product image (returns fallback resource on failure)
     Private Function LoadProductImage(productId As Integer, desiredWidth As Integer, desiredHeight As Integer) As Image
         Try
-            Dim imgBytes As Byte() = GetPrimaryImageBytes(productId)
-            If imgBytes IsNot Nothing AndAlso imgBytes.Length > 0 Then
-                Using ms As New IO.MemoryStream(imgBytes)
-                    Using src As Image = Image.FromStream(ms)
-                        ' Resize with aspect-ratio preserved and return a bitmap of desired size
-                        Dim bmp As New Bitmap(desiredWidth, desiredHeight)
-                        Using g As Graphics = Graphics.FromImage(bmp)
-                            g.InterpolationMode = Drawing2D.InterpolationMode.HighQualityBicubic
-                            g.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias
-                            g.Clear(Color.Transparent)
-                            g.DrawImage(src, New Rectangle(0, 0, desiredWidth, desiredHeight))
-                        End Using
-                        Return bmp
+            Dim filePath As String = GetPrimaryImagePath(productId)
+            If Not String.IsNullOrEmpty(filePath) AndAlso IO.File.Exists(filePath) Then
+                Using src As Image = Image.FromFile(filePath)
+                    Dim bmp As New Bitmap(desiredWidth, desiredHeight)
+                    Using g As Graphics = Graphics.FromImage(bmp)
+                        g.InterpolationMode = Drawing2D.InterpolationMode.HighQualityBicubic
+                        g.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias
+                        g.Clear(Color.Transparent)
+                        g.DrawImage(src, New Rectangle(0, 0, desiredWidth, desiredHeight))
                     End Using
+                    Return bmp
                 End Using
             End If
         Catch ex As Exception
             Console.WriteLine($"LoadProductImage error for ProductID {productId}: {ex.Message}")
         End Try
 
-        ' Fallback: use embedded resource or a simple placeholder
         Try
             Return My.Resources.Jade_Dental_Logo
         Catch
-            ' As a last resort create a plain placeholder bitmap
             Dim placeholder As New Bitmap(desiredWidth, desiredHeight)
             Using g As Graphics = Graphics.FromImage(placeholder)
                 g.Clear(LightGray)

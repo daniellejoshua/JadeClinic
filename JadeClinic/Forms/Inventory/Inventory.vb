@@ -302,7 +302,7 @@ Public Class Inventory
 
                 Dim query As String = "SELECT p.ProductID, p.ProductCode, p.ProductName, p.Category, " &
                       "p.Unit, p.CurrentStock, p.ReorderLevel, p.CostPrice, p.SellingPrice, p.IsActive, " &
-                      "pi.ImageData AS ProductImage " &
+                      "pi.FilePath AS ProductImage " &
                       "FROM Products p " &
                       "LEFT JOIN ProductImageMapping pim ON p.ProductID = pim.ProductID " &
                       "LEFT JOIN ProductImages pi ON pim.ImageID = pi.ImageID " &
@@ -894,20 +894,22 @@ Public Class Inventory
                         e.CellBounds.Top + ((e.CellBounds.Height - imageSize) \ 2),
                         imageSize, imageSize)
 
-                        ' Draw product image with improved placeholder styling
                         Try
+                            Dim img As Image = Nothing
                             If productData("ProductImage") IsNot Nothing Then
-                                Dim imgBytes As Byte() = CType(productData("ProductImage"), Byte())
-                                Using ms As New MemoryStream(imgBytes)
-                                    Using img As Image = Image.FromStream(ms)
-                                        ' Draw image with simple rectangle
-                                        e.Graphics.DrawImage(img, imageRect)
+                                Dim filePath As String = productData("ProductImage").ToString()
+                                If Not String.IsNullOrEmpty(filePath) Then
+                                    Dim fullPath As String = Path.Combine(Connection.GetImagesFolder("products"), filePath)
+                                    If IO.File.Exists(fullPath) Then
+                                        img = Image.FromFile(fullPath)
+                                    End If
+                                End If
+                            End If
 
-                                        ' Draw subtle border around image
-                                        Using borderPen As New Pen(LightGray, 1)
-                                            e.Graphics.DrawRectangle(borderPen, imageRect)
-                                        End Using
-                                    End Using
+                            If img IsNot Nothing Then
+                                e.Graphics.DrawImage(img, imageRect)
+                                Using borderPen As New Pen(LightGray, 1)
+                                    e.Graphics.DrawRectangle(borderPen, imageRect)
                                 End Using
                             Else
                                 Dim logo As Image = GetCachedLogo()
@@ -917,14 +919,12 @@ Public Class Inventory
                                         e.Graphics.DrawRectangle(borderPen, imageRect)
                                     End Using
                                 Else
-                                    ' Draw professional placeholder with gray theme
                                     Using bgBrush As New SolidBrush(Color.FromArgb(245, 245, 245))
                                         e.Graphics.FillRectangle(bgBrush, imageRect)
                                     End Using
                                     Using borderPen As New Pen(LightGray, 1)
                                         e.Graphics.DrawRectangle(borderPen, imageRect)
                                     End Using
-                                    ' Draw camera icon placeholder
                                     Using placeholderFont As New Font("Segoe UI", 8, FontStyle.Regular)
                                         Using placeholderBrush As New SolidBrush(MediumGray)
                                             Dim placeholderFormat As New StringFormat() With {
@@ -936,16 +936,14 @@ Public Class Inventory
                                     End Using
                                 End If
                             End If
+                            If img IsNot Nothing Then img.Dispose()
                         Catch
-                            ' Fallback placeholder on image error with gray theme
                             Using bgBrush As New SolidBrush(Color.FromArgb(245, 245, 245))
                                 e.Graphics.FillRectangle(bgBrush, imageRect)
                             End Using
                             Using borderPen As New Pen(JadeOlive, 1)
                                 e.Graphics.DrawRectangle(borderPen, imageRect)
                             End Using
-
-                            ' Add "No Image" text
                             Using noImageFont As New Font("Poppins", 7, FontStyle.Regular)
                                 Using noImageBrush As New SolidBrush(MediumGray)
                                     Dim noImageFormat As New StringFormat() With {

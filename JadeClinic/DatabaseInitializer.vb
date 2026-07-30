@@ -46,7 +46,7 @@ Public Class DatabaseInitializer
             "CreatedAt DATETIME DEFAULT (CURRENT_TIMESTAMP), " &
             "UpdatedAt DATETIME DEFAULT (CURRENT_TIMESTAMP), " &
             "pin INTEGER NULL, " &
-            "Photo BLOB NULL, " &
+            "PhotoPath TEXT NULL, " &
             "QRCode TEXT NULL, " &
             "Email TEXT NULL, " &
             "Phone TEXT NULL, " &
@@ -152,7 +152,7 @@ Public Class DatabaseInitializer
             "ImageID INTEGER PRIMARY KEY AUTOINCREMENT, " &
             "ImageHash TEXT NOT NULL UNIQUE, " &
             "ImageType TEXT DEFAULT 'thumb', " &
-            "ImageData BLOB NOT NULL, " &
+            "FilePath TEXT NOT NULL, " &
             "CreatedAt DATETIME DEFAULT (CURRENT_TIMESTAMP), " &
             "UpdatedAt DATETIME DEFAULT (CURRENT_TIMESTAMP)" &
             ")"
@@ -347,7 +347,7 @@ Public Class DatabaseInitializer
         "Phone TEXT NULL, " &
         "Email TEXT NULL, " &
         "Website TEXT NULL, " &
-        "Logo BLOB NULL, " &
+        "LogoPath TEXT NULL, " &
         "BIRAuthNumber TEXT NULL, " &
         "PTUNumber TEXT NULL, " &
         "ValidityYears INTEGER NOT NULL DEFAULT 5, " &
@@ -367,22 +367,22 @@ Public Class DatabaseInitializer
             Dim settingsCount = Utilities.ExecuteScalar(checkSql, Nothing)
 
             If Convert.ToInt32(settingsCount) = 0 Then
-                ' Convert Jade Dental Logo resource to byte array
-                Dim logoBytes As Byte() = Nothing
+                Dim logoPath As Object = DBNull.Value
                 Try
+                    Dim imagesDir As String = Connection.GetImagesFolder("company")
+                    Dim destPath As String = Path.Combine(imagesDir, "logo.jpg")
                     Using logoImage As System.Drawing.Image = My.Resources.FinalLogoOfJAde
                         If logoImage IsNot Nothing Then
-                            Using ms As New MemoryStream()
-                                logoImage.Save(ms, System.Drawing.Imaging.ImageFormat.Png)
-                                logoBytes = ms.ToArray()
-                            End Using
+                            Dim compressed As Byte() = ImageCompression.CompressImage(logoImage, 80, 400, 300)
+                            File.WriteAllBytes(destPath, compressed)
+                            logoPath = "logo.jpg"
                         End If
                     End Using
                 Catch logoEx As Exception
                     Console.WriteLine($"Note: Could not load Jade Dental Logo from resources: {logoEx.Message}")
                 End Try
 
-                Dim sql As String = "INSERT INTO CompanySettings (CompanyName, TIN, Address, Phone, Email, Website, Logo, BIRAuthNumber, PTUNumber, ReceiptFooter, CompanyHours) VALUES (@CompanyName, @TIN, @Address, @Phone, @Email, @Website, @Logo, @BIRAuthNumber, @PTUNumber, @ReceiptFooter, @CompanyHours)"
+                Dim sql As String = "INSERT INTO CompanySettings (CompanyName, TIN, Address, Phone, Email, Website, LogoPath, BIRAuthNumber, PTUNumber, ReceiptFooter, CompanyHours) VALUES (@CompanyName, @TIN, @Address, @Phone, @Email, @Website, @LogoPath, @BIRAuthNumber, @PTUNumber, @ReceiptFooter, @CompanyHours)"
                 Dim params As SqlParameter() = {
                 New SqlParameter("@CompanyName", "JADE CLINIC"),
                 New SqlParameter("@TIN", "123-456-789-000"),
@@ -390,7 +390,7 @@ Public Class DatabaseInitializer
                 New SqlParameter("@Phone", "(02) 8123-4567"),
                 New SqlParameter("@Email", "admin@jadeclinic.com"),
                 New SqlParameter("@Website", "www.jadeclinic.com"),
-                New SqlParameter("@Logo", If(logoBytes, DBNull.Value)),
+                New SqlParameter("@LogoPath", logoPath),
                 New SqlParameter("@BIRAuthNumber", "ATP-2024-000001"),
                 New SqlParameter("@PTUNumber", "PTU-2024-001"),
                 New SqlParameter("@ReceiptFooter", "Thank you for your business!" & vbCrLf & "Have a great day!"),
