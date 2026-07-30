@@ -73,7 +73,7 @@ Partial Class InventoryLog
         DashboardPanel.BorderThickness = 2
         DashboardPanel.Controls.Add(PictureBox9)
         DashboardPanel.CustomizableEdges = CustomizableEdges1
-        DashboardPanel.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
+        DashboardPanel.FillColor = Color.White
         DashboardPanel.Location = New Point(-10, 5)
         DashboardPanel.Name = "DashboardPanel"
         DashboardPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges2
@@ -82,7 +82,7 @@ Partial Class InventoryLog
         ' 
         ' PictureBox9
         ' 
-        PictureBox9.BackColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
+        PictureBox9.BackColor = Color.White
         PictureBox9.Image = My.Resources.Resources.FinalLogoOfJAde
         PictureBox9.Location = New Point(63, 7)
         PictureBox9.Name = "PictureBox9"
