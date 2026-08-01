@@ -1,0 +1,10 @@
+{
+  "supabaseConnectionString": "Host=aws-0-<region>.pooler.supabase.com;Port=6543;Database=postgres;Username=postgres.<project-ref>;Password=<db-password>;SSL Mode=Require",
+  "s3": {
+    "endpoint": "https://<project-ref>.storage.supabase.co/storage/v1/s3",
+    "accessKeyId": "<s3-access-key-id>",
+    "secretAccessKey": "<s3-secret-access-key>",
+    "region": "us-east-1",
+    "bucket": "Jade_Web_Bucket"
+  }
+}

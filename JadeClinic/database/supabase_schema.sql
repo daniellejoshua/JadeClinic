@@ -51,6 +51,8 @@ CREATE TABLE products (
     unit            TEXT DEFAULT 'PCS',
     current_stock   INTEGER DEFAULT 0,
     reorder_level   INTEGER DEFAULT 10,
+    has_expiry      BOOLEAN DEFAULT FALSE,
+    expiry_date     TEXT,
     cost_price      DECIMAL(10,2) NOT NULL,
     selling_price   DECIMAL(10,2) NOT NULL,
     wholesale_price DECIMAL(10,2),
@@ -80,10 +82,12 @@ CREATE TABLE sales (
     total_amount    DECIMAL(10,2) DEFAULT 0,
     amount_paid     DECIMAL(10,2) DEFAULT 0,
     payment_method  TEXT DEFAULT 'Cash',
+    reference       TEXT,
     is_void         BOOLEAN DEFAULT FALSE,
     status          TEXT DEFAULT 'Completed',
     discount_type   TEXT,
     discount_amount DECIMAL(10,2) DEFAULT 0,
+    sales_data      JSONB,
     created_at      TIMESTAMPTZ DEFAULT NOW(),
     synced_at       TIMESTAMPTZ
 );

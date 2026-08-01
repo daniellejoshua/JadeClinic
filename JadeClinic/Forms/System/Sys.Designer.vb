@@ -49,6 +49,8 @@ Partial Class Sys
         btnColorCustomization = New Guna.UI2.WinForms.Guna2Button()
         btnDatabaseBackup = New Guna.UI2.WinForms.Guna2Button()
         btnCompanySettings = New Guna.UI2.WinForms.Guna2Button()
+        btnSyncCloud = New Guna.UI2.WinForms.Guna2Button()
+        lblSyncStatus = New Guna.UI2.WinForms.Guna2HtmlLabel()
         HeaderPanel = New Guna.UI2.WinForms.Guna2Panel()
         lblPageTitle = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2Panel1.SuspendLayout()
@@ -141,6 +143,8 @@ Partial Class Sys
         ContentAreaPanel.Controls.Add(btnColorCustomization)
         ContentAreaPanel.Controls.Add(btnDatabaseBackup)
         ContentAreaPanel.Controls.Add(btnCompanySettings)
+        ContentAreaPanel.Controls.Add(btnSyncCloud)
+        ContentAreaPanel.Controls.Add(lblSyncStatus)
         ContentAreaPanel.CustomizableEdges = CustomizableEdges12
         ContentAreaPanel.Dock = DockStyle.Fill
         ContentAreaPanel.Location = New Point(20, 80)
@@ -213,6 +217,39 @@ Partial Class Sys
         btnCompanySettings.Text = "?? Company Settings" & vbCrLf & "Configure business information"
         btnCompanySettings.TextAlign = HorizontalAlignment.Left
         ' 
+        ' btnSyncCloud
+        ' 
+        btnSyncCloud.BorderRadius = 15
+        btnSyncCloud.CustomizableEdges = CustomizableEdges10
+        btnSyncCloud.DisabledState.BorderColor = Color.DarkGray
+        btnSyncCloud.DisabledState.CustomBorderColor = Color.DarkGray
+        btnSyncCloud.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
+        btnSyncCloud.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
+        btnSyncCloud.FillColor = Color.FromArgb(CByte(43), CByte(47), CByte(50))
+        btnSyncCloud.Font = New Font("Poppins", 14F, FontStyle.Bold)
+        btnSyncCloud.ForeColor = Color.White
+        btnSyncCloud.ImageAlign = HorizontalAlignment.Left
+        btnSyncCloud.ImageSize = New Size(40, 40)
+        btnSyncCloud.Location = New Point(50, 190)
+        btnSyncCloud.Name = "btnSyncCloud"
+        btnSyncCloud.ShadowDecoration.CustomizableEdges = CustomizableEdges10
+        btnSyncCloud.Size = New Size(320, 120)
+        btnSyncCloud.TabIndex = 3
+        btnSyncCloud.Text = "?? Sync to Cloud" & vbCrLf & "Push data to Supabase"
+        btnSyncCloud.TextAlign = HorizontalAlignment.Left
+        ' 
+        ' lblSyncStatus
+        ' 
+        lblSyncStatus.AutoSize = False
+        lblSyncStatus.BackColor = Color.Transparent
+        lblSyncStatus.Font = New Font("Poppins", 11F)
+        lblSyncStatus.ForeColor = Color.FromArgb(CByte(225), CByte(229), CByte(233))
+        lblSyncStatus.Location = New Point(50, 325)
+        lblSyncStatus.Name = "lblSyncStatus"
+        lblSyncStatus.Size = New Size(1024, 80)
+        lblSyncStatus.TabIndex = 4
+        lblSyncStatus.Text = "Not synced yet."
+        ' 
         ' HeaderPanel
         ' 
         HeaderPanel.BackColor = Color.Transparent
@@ -275,6 +312,8 @@ Partial Class Sys
     Friend WithEvents btnCompanySettings As Guna.UI2.WinForms.Guna2Button
     Friend WithEvents btnDatabaseBackup As Guna.UI2.WinForms.Guna2Button
     Friend WithEvents btnColorCustomization As Guna.UI2.WinForms.Guna2Button
+    Friend WithEvents btnSyncCloud As Guna.UI2.WinForms.Guna2Button
+    Friend WithEvents lblSyncStatus As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents lblUsername As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents Guna2CirclePictureBox1 As Guna.UI2.WinForms.Guna2CirclePictureBox
 End Class

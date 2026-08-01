@@ -2,6 +2,7 @@ Imports System.Drawing
 Imports System.Drawing.Drawing2D
 Imports System.Windows.Forms
 Imports System.Linq
+Imports System.Threading.Tasks
 Imports Guna.UI2.WinForms
 Imports Microsoft.Data.Sqlite
 Imports System.Data.Common
@@ -80,6 +81,7 @@ Public Class Sys
         btnCompanySettings.TabIndex = 0
         btnDatabaseBackup.TabIndex = 1
         btnColorCustomization.TabIndex = 2
+        btnSyncCloud.TabIndex = 3
         Utilities.ApplyInputFocusEffects(Me)
     End Sub
 
@@ -115,6 +117,22 @@ Public Class Sys
                                                      btnDatabaseBackup.FillColor = DarkSlate
                                                      btnDatabaseBackup.BorderThickness = 0
                                                  End Sub
+
+        ' Sync to Cloud button
+        btnSyncCloud.BorderRadius = 15
+        btnSyncCloud.ShadowDecoration.Enabled = True
+        btnSyncCloud.ShadowDecoration.Depth = 8
+        btnSyncCloud.FillColor = DarkSlate
+
+        AddHandler btnSyncCloud.MouseEnter, Sub()
+                                                btnSyncCloud.FillColor = SteelGray
+                                                btnSyncCloud.BorderThickness = 2
+                                                btnSyncCloud.BorderColor = GoldenYellow
+                                            End Sub
+        AddHandler btnSyncCloud.MouseLeave, Sub()
+                                                btnSyncCloud.FillColor = DarkSlate
+                                                btnSyncCloud.BorderThickness = 0
+                                            End Sub
 
 
     End Sub
@@ -174,6 +192,29 @@ Public Class Sys
             ShowDatabaseBackupDialog()
         Catch ex As Exception
             MessageBox.Show($"Error accessing database backup: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
+
+    Private Async Sub btnSyncCloud_Click(sender As Object, e As EventArgs) Handles btnSyncCloud.Click
+        btnSyncCloud.Enabled = False
+        lblSyncStatus.Text = "Syncing to Supabase... (this may take a few seconds)"
+        lblSyncStatus.ForeColor = LightSilver
+
+        Try
+            Dim result As SyncResult = Await Task.Run(Function() SupabaseSync.RunFullSync())
+
+            If result.Success Then
+                lblSyncStatus.Text = "Sync complete:" & vbCrLf & String.Join(vbCrLf, result.Summary)
+                lblSyncStatus.ForeColor = SuccessGreen
+            Else
+                lblSyncStatus.Text = "Sync failed: " & result.ErrorMessage
+                lblSyncStatus.ForeColor = AlertRed
+            End If
+        Catch ex As Exception
+            lblSyncStatus.Text = "Sync failed: " & ex.Message
+            lblSyncStatus.ForeColor = AlertRed
+        Finally
+            btnSyncCloud.Enabled = True
         End Try
     End Sub
 
