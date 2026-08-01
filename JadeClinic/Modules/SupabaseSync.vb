@@ -164,38 +164,117 @@ Public Module SupabaseSync
     ' ------------------------------------------------------------
     Public Function RunFullSync() As SyncResult
         Dim result As New SyncResult()
+        Dim pg As NpgsqlConnection = Nothing
+        Dim logId As Integer = 0
+        Dim totalRows As Integer = 0
         Try
             Dim cs As String = GetSupabaseConnectionString()
             Dim localConnStr As String = Connection.GetConnectionString()
 
-            Using pg As New NpgsqlConnection(cs)
-                pg.Open()
+            pg = New NpgsqlConnection(cs)
+            pg.Open()
 
-                Using local As New SqliteConnection(localConnStr)
-                    local.Open()
-
-                    Dim supplierIdMap As New Dictionary(Of Integer, Integer)()   ' LAN SupplierID -> supabase id
-                    Dim userIdMap As New Dictionary(Of Integer, Integer)()       ' LAN UserID -> supabase id
-                    Dim productIdMap As New Dictionary(Of Integer, Integer)()    ' LAN ProductID -> supabase id
-                    Dim saleIdMap As New Dictionary(Of Integer, Integer)()       ' LAN SaleID -> supabase id
-
-                    result.Summary.Add($"suppliers: {SyncSuppliers(local, pg, supplierIdMap)}")
-                    result.Summary.Add($"users: {SyncUsers(local, pg, userIdMap)}")
-                    result.Summary.Add($"products: {SyncProducts(local, pg, supplierIdMap, productIdMap)}")
-                    result.Summary.Add($"sales: {SyncSales(local, pg, userIdMap, saleIdMap)}")
-                    result.Summary.Add($"sale_items: {SyncSaleItems(local, pg, saleIdMap, productIdMap)}")
-                    result.Summary.Add($"inventory_logs: {SyncInventoryLogs(local, pg, productIdMap, supplierIdMap, userIdMap)}")
-                    result.Summary.Add($"audit_logs: {SyncAuditLogs(local, pg, userIdMap)}")
-                    result.Summary.Add($"company_settings: {SyncCompanySettings(local, pg)}")
-                End Using
+            ' Record the start of this sync run
+            Using logCmd As New NpgsqlCommand(
+                "INSERT INTO sync_log (started_at, status) VALUES (NOW(), 'running') RETURNING id", pg)
+                logId = Convert.ToInt32(logCmd.ExecuteScalar())
             End Using
 
+            Using local As New SqliteConnection(localConnStr)
+                local.Open()
+
+                Dim supplierIdMap As New Dictionary(Of Integer, Integer)()   ' LAN SupplierID -> supabase id
+                Dim userIdMap As New Dictionary(Of Integer, Integer)()       ' LAN UserID -> supabase id
+                Dim productIdMap As New Dictionary(Of Integer, Integer)()    ' LAN ProductID -> supabase id
+                Dim saleIdMap As New Dictionary(Of Integer, Integer)()       ' LAN SaleID -> supabase id
+
+                Dim nSuppliers As Integer = SyncSuppliers(local, pg, supplierIdMap)
+                Dim nUsers As Integer = SyncUsers(local, pg, userIdMap)
+                Dim nProducts As Integer = SyncProducts(local, pg, supplierIdMap, productIdMap)
+                Dim nSales As Integer = SyncSales(local, pg, userIdMap, saleIdMap)
+                Dim nSaleItems As Integer = SyncSaleItems(local, pg, saleIdMap, productIdMap)
+                Dim nInvLogs As Integer = SyncInventoryLogs(local, pg, productIdMap, supplierIdMap, userIdMap)
+                Dim nAuditLogs As Integer = SyncAuditLogs(local, pg, userIdMap)
+                Dim nCompanySettings As Integer = SyncCompanySettings(local, pg)
+                Dim nWebAdmins As Integer = SyncAuthUsers(local, pg)
+                totalRows = nSuppliers + nUsers + nProducts + nSales + nSaleItems + nInvLogs + nAuditLogs + nCompanySettings + nWebAdmins
+
+                result.Summary.Add($"suppliers: {nSuppliers}")
+                result.Summary.Add($"users: {nUsers}")
+                result.Summary.Add($"products: {nProducts}")
+                result.Summary.Add($"sales: {nSales}")
+                result.Summary.Add($"sale_items: {nSaleItems}")
+                result.Summary.Add($"inventory_logs: {nInvLogs}")
+                result.Summary.Add($"audit_logs: {nAuditLogs}")
+                result.Summary.Add($"company_settings: {nCompanySettings}")
+                result.Summary.Add($"web_admins: {nWebAdmins}")
+            End Using
+
+            ' Mark the run as successful
+            Using logCmd As New NpgsqlCommand(
+                "UPDATE sync_log SET completed_at = NOW(), rows_synced = @rows, status = 'success' WHERE id = @id", pg)
+                AddParam(logCmd, "@rows", totalRows, NpgsqlDbType.Integer)
+                AddParam(logCmd, "@id", logId, NpgsqlDbType.Integer)
+                logCmd.ExecuteNonQuery()
+            End Using
+
+            result.Summary.Add($"sync_log id: {logId}")
             result.Success = True
         Catch ex As Exception
             result.ErrorMessage = ex.Message
             Console.WriteLine($"Sync error: {ex}")
+
+            ' Record the failure (best-effort, never masks the original error)
+            If pg IsNot Nothing AndAlso pg.State = System.Data.ConnectionState.Open AndAlso logId > 0 Then
+                Try
+                    Using logCmd As New NpgsqlCommand(
+                        "UPDATE sync_log SET completed_at = NOW(), status = 'failed', error = @err WHERE id = @id", pg)
+                        AddParam(logCmd, "@err", ex.Message, NpgsqlDbType.Text)
+                        AddParam(logCmd, "@id", logId, NpgsqlDbType.Integer)
+                        logCmd.ExecuteNonQuery()
+                    End Using
+                Catch logEx As Exception
+                    Console.WriteLine($"Could not update sync_log: {logEx.Message}")
+                End Try
+            End If
+        Finally
+            If pg IsNot Nothing Then
+                pg.Dispose()
+            End If
         End Try
         Return result
+    End Function
+
+    Public Function GetRecentSyncLogs(limit As Integer) As List(Of String)
+        Dim lines As New List(Of String)()
+        Try
+            Dim cs As String = GetSupabaseConnectionString()
+            Using pg As New NpgsqlConnection(cs)
+                pg.Open()
+                Using cmd As New NpgsqlCommand(
+                    "SELECT id, started_at, completed_at, rows_synced, status, error " &
+                    "FROM sync_log ORDER BY id DESC LIMIT @limit", pg)
+                    AddParam(cmd, "@limit", limit, NpgsqlDbType.Integer)
+                    Using reader As NpgsqlDataReader = cmd.ExecuteReader()
+                        While reader.Read()
+                            Dim status As String = Convert.ToString(reader("status"))
+                            Dim when As String = Convert.ToString(reader("started_at"))
+                            Dim rows As Object = reader("rows_synced")
+                            Dim rowText As String = If(IsDBNull(rows), "0", rows.ToString())
+                            Dim statusIcon As String = If(status = "success", "[OK]", If(status = "failed", "[FAIL]", "[...]"))
+                            Dim line As String = $"{statusIcon} {when}  {rowText} rows  {status}"
+                            If status = "failed" AndAlso Not IsDBNull(reader("error")) Then
+                                line &= "  - " & Convert.ToString(reader("error"))
+                            End If
+                            lines.Add(line)
+                        End While
+                    End Using
+                End Using
+            End Using
+        Catch ex As Exception
+            lines.Add($"Could not load sync history: {ex.Message}")
+        End Try
+        Return lines
     End Function
 
     ' ------------------------------------------------------------
@@ -287,6 +366,99 @@ Public Module SupabaseSync
             End Using
         End Using
         Return count
+    End Function
+
+    ' ------------------------------------------------------------
+    ' Web auth seeding (Supabase Auth / GoTrue auth.users)
+    ' Only active Admin accounts with a BCrypt hash + email become web logins.
+    ' PasswordHash is stored ONLY in auth.users.encrypted_password — never in
+    ' the synced public.users table. OAuth links to the same account by email.
+    ' ------------------------------------------------------------
+    Private Function SyncAuthUsers(local As SqliteConnection, pg As NpgsqlConnection) As Integer
+        Dim count As Integer = 0
+        Using cmd As New SqliteCommand(
+            "SELECT UserID, Username, FullName, UserRole, IsActive, Email, PasswordHash FROM Users", local)
+            Using reader As SqliteDataReader = cmd.ExecuteReader()
+                While reader.Read()
+                    Dim role As String = If(IsDBNull(reader("UserRole")), "Staff", reader("UserRole").ToString())
+                    If Not role.Equals("Admin", StringComparison.OrdinalIgnoreCase) Then Continue While
+
+                    Dim active As Boolean = Convert.ToInt32(reader("IsActive")) <> 0
+                    If Not active Then Continue While
+
+                    Dim emailRaw = GetStr(reader, "Email")
+                    If IsDBNull(emailRaw) Then Continue While
+                    Dim email As String = emailRaw.ToString().Trim().ToLowerInvariant()
+                    If String.IsNullOrWhiteSpace(email) Then Continue While
+
+                    Dim pwhashRaw = GetStr(reader, "PasswordHash")
+                    If IsDBNull(pwhashRaw) Then Continue While
+                    Dim pwhash As String = pwhashRaw.ToString()
+                    If Not IsBcryptHash(pwhash) Then Continue While
+
+                    Dim fullName As Object = GetStr(reader, "FullName")
+                    Dim localId As Integer = Convert.ToInt32(reader("UserID"))
+                    Dim appMeta As String = "{""provider"": ""email"", ""providers"": [""email""]}"
+                    Dim userMeta As String = "{""full_name"": " & JsonStr(fullName) & ", ""role"": ""Admin"", ""local_id"": " & localId & "}"
+
+                    ' Upsert auth.users (partial unique index: email WHERE is_sso_user = false)
+                    Using pgCmd As New NpgsqlCommand(
+                        "INSERT INTO auth.users " &
+                        "(instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, " &
+                        " raw_app_meta_data, raw_user_meta_data, created_at, updated_at, " &
+                        " confirmation_token, recovery_token, email_change_token_new, email_change, " &
+                        " phone_change, phone_change_token, email_change_token_current, email_change_confirm_status, " &
+                        " reauthentication_token, is_sso_user, is_anonymous) " &
+                        "VALUES ('00000000-0000-0000-0000-000000000000', gen_random_uuid(), 'authenticated', 'authenticated', @email, @hash, NOW(), " &
+                        " @appmeta::jsonb, @usermeta::jsonb, NOW(), NOW(), " &
+                        " '', '', '', '', '', '', '', 0, '', FALSE, FALSE) " &
+                        "ON CONFLICT (email) WHERE is_sso_user = false " &
+                        "DO UPDATE SET encrypted_password = EXCLUDED.encrypted_password, " &
+                        " raw_user_meta_data = EXCLUDED.raw_user_meta_data, updated_at = NOW() " &
+                        "RETURNING id", pg)
+
+                        AddParam(pgCmd, "@email", email, NpgsqlDbType.Text)
+                        AddParam(pgCmd, "@hash", pwhash, NpgsqlDbType.Text)
+                        AddParam(pgCmd, "@appmeta", appMeta, NpgsqlDbType.Jsonb)
+                        AddParam(pgCmd, "@usermeta", userMeta, NpgsqlDbType.Jsonb)
+
+                        Dim uid As Object = pgCmd.ExecuteScalar()
+                        If uid Is Nothing OrElse IsDBNull(uid) Then Continue While
+
+                        ' Upsert auth.identities (email/password provider) so GoTrue links the login
+                        Using idCmd As New NpgsqlCommand(
+                            "INSERT INTO auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at, id) " &
+                            "VALUES (@pid, @uid, @idata::jsonb, 'email', NOW(), NOW(), NOW(), gen_random_uuid()) " &
+                            "ON CONFLICT (provider_id, provider) DO UPDATE SET " &
+                            "identity_data = EXCLUDED.identity_data, updated_at = NOW()", pg)
+
+                            Dim identityData As String = "{""sub"": " & JsonStr(uid.ToString()) & ", ""email"": " & JsonStr(email) & ", ""email_verified"": true, ""phone_verified"": false}"
+                            AddParam(idCmd, "@pid", email, NpgsqlDbType.Text)
+                            AddParam(idCmd, "@uid", uid, NpgsqlDbType.Uuid)
+                            AddParam(idCmd, "@idata", identityData, NpgsqlDbType.Jsonb)
+                            idCmd.ExecuteNonQuery()
+                        End Using
+
+                        count += 1
+                    End Using
+                End While
+            End Using
+        End Using
+        Return count
+    End Function
+
+    Private Function IsBcryptHash(value As String) As Boolean
+        If String.IsNullOrWhiteSpace(value) Then Return False
+        Return value.StartsWith("$2a$", StringComparison.Ordinal) OrElse
+               value.StartsWith("$2b$", StringComparison.Ordinal)
+    End Function
+
+    Private Function JsonStr(value As Object) As String
+        If value Is Nothing OrElse IsDBNull(value) Then
+            Return "null"
+        End If
+        Dim s As String = value.ToString().Replace("\", "\\").Replace("""", "\""")
+        Return """" & s & """"
     End Function
 
     Private Function SyncProducts(local As SqliteConnection, pg As NpgsqlConnection,

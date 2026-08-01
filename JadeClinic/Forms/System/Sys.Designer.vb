@@ -51,6 +51,7 @@ Partial Class Sys
         btnCompanySettings = New Guna.UI2.WinForms.Guna2Button()
         btnSyncCloud = New Guna.UI2.WinForms.Guna2Button()
         lblSyncStatus = New Guna.UI2.WinForms.Guna2HtmlLabel()
+        lblSyncLogs = New Guna.UI2.WinForms.Guna2HtmlLabel()
         HeaderPanel = New Guna.UI2.WinForms.Guna2Panel()
         lblPageTitle = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2Panel1.SuspendLayout()
@@ -145,6 +146,7 @@ Partial Class Sys
         ContentAreaPanel.Controls.Add(btnCompanySettings)
         ContentAreaPanel.Controls.Add(btnSyncCloud)
         ContentAreaPanel.Controls.Add(lblSyncStatus)
+        ContentAreaPanel.Controls.Add(lblSyncLogs)
         ContentAreaPanel.CustomizableEdges = CustomizableEdges12
         ContentAreaPanel.Dock = DockStyle.Fill
         ContentAreaPanel.Location = New Point(20, 80)
@@ -246,9 +248,21 @@ Partial Class Sys
         lblSyncStatus.ForeColor = Color.FromArgb(CByte(225), CByte(229), CByte(233))
         lblSyncStatus.Location = New Point(50, 325)
         lblSyncStatus.Name = "lblSyncStatus"
-        lblSyncStatus.Size = New Size(1024, 80)
+        lblSyncStatus.Size = New Size(1024, 200)
         lblSyncStatus.TabIndex = 4
         lblSyncStatus.Text = "Not synced yet."
+        ' 
+        ' lblSyncLogs
+        ' 
+        lblSyncLogs.AutoSize = False
+        lblSyncLogs.BackColor = Color.Transparent
+        lblSyncLogs.Font = New Font("Poppins", 9F)
+        lblSyncLogs.ForeColor = Color.FromArgb(CByte(160), CByte(170), CByte(180))
+        lblSyncLogs.Location = New Point(50, 540)
+        lblSyncLogs.Name = "lblSyncLogs"
+        lblSyncLogs.Size = New Size(1024, 150)
+        lblSyncLogs.TabIndex = 5
+        lblSyncLogs.Text = "Sync history: (none yet)"
         ' 
         ' HeaderPanel
         ' 
@@ -314,6 +328,7 @@ Partial Class Sys
     Friend WithEvents btnColorCustomization As Guna.UI2.WinForms.Guna2Button
     Friend WithEvents btnSyncCloud As Guna.UI2.WinForms.Guna2Button
     Friend WithEvents lblSyncStatus As Guna.UI2.WinForms.Guna2HtmlLabel
+    Friend WithEvents lblSyncLogs As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents lblUsername As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents Guna2CirclePictureBox1 As Guna.UI2.WinForms.Guna2CirclePictureBox
 End Class

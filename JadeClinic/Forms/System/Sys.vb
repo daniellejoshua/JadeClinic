@@ -72,6 +72,9 @@ Public Class Sys
             Me.Focus()
 
             SetupTabIndex()
+
+            ' Load recent sync history in the background
+            LoadSyncLogsAsync()
         Catch ex As Exception
             MessageBox.Show($"Sys_Load error: {ex.Message}", "Sys Load Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
@@ -210,12 +213,31 @@ Public Class Sys
                 lblSyncStatus.Text = "Sync failed: " & result.ErrorMessage
                 lblSyncStatus.ForeColor = AlertRed
             End If
+
+            LoadSyncLogsAsync()
         Catch ex As Exception
             lblSyncStatus.Text = "Sync failed: " & ex.Message
             lblSyncStatus.ForeColor = AlertRed
         Finally
             btnSyncCloud.Enabled = True
         End Try
+    End Sub
+
+    Private Sub LoadSyncLogsAsync()
+        Task.Run(Sub()
+                     Dim lines As List(Of String) = SupabaseSync.GetRecentSyncLogs(8)
+                     If Not IsDisposed Then
+                         BeginInvoke(New Action(Sub() DisplaySyncLogs(lines)))
+                     End If
+                 End Sub)
+    End Sub
+
+    Private Sub DisplaySyncLogs(lines As List(Of String))
+        If lines Is Nothing OrElse lines.Count = 0 Then
+            lblSyncLogs.Text = "Sync history: (none yet)"
+        Else
+            lblSyncLogs.Text = "Recent syncs:" & vbCrLf & String.Join(vbCrLf, lines)
+        End If
     End Sub
 
 
