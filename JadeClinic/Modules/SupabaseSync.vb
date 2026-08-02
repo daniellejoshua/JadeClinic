@@ -32,7 +32,7 @@ Public Module SupabaseSync
         ' 1. Environment variable override
         Dim envDsn As String = Environment.GetEnvironmentVariable("JADECLINIC_SUPABASE_DSN")
         If Not String.IsNullOrWhiteSpace(envDsn) Then
-            Return envDsn
+            Return WithDefaultTimeout(envDsn)
         End If
 
         ' 2. Local config file next to the database
@@ -43,7 +43,7 @@ Public Module SupabaseSync
                 Dim doc As Newtonsoft.Json.Linq.JObject = Newtonsoft.Json.Linq.JObject.Parse(json)
                 Dim cs As String = doc("supabaseConnectionString")?.ToString()
                 If Not String.IsNullOrWhiteSpace(cs) Then
-                    Return cs
+                    Return WithDefaultTimeout(cs)
                 End If
             End If
         Catch ex As Exception
@@ -53,13 +53,46 @@ Public Module SupabaseSync
         ' 3. app.config fallback (placeholder, normally empty)
         Dim configCs As String = ConfigurationManager.AppSettings("SupabaseConnectionString")
         If Not String.IsNullOrWhiteSpace(configCs) Then
-            Return configCs
+            Return WithDefaultTimeout(configCs)
         End If
 
         Throw New InvalidOperationException(
             "Supabase is not configured. Set the JADECLINIC_SUPABASE_DSN environment variable " &
             "or create the file: " & GetConfigPath())
     End Function
+
+    Private Function WithDefaultTimeout(connString As String) As String
+        Try
+            Dim builder As New NpgsqlConnectionStringBuilder(connString)
+            If builder.CommandTimeout < 300 Then
+                builder.CommandTimeout = 300
+            End If
+            If builder.KeepAlive <= 0 Then
+                builder.KeepAlive = 30
+            End If
+            If builder.Timeout < 60 Then
+                builder.Timeout = 60
+            End If
+            Return builder.ConnectionString
+        Catch ex As Exception
+            Console.WriteLine($"Note: Could not parse connection string, keeping as-is: {ex.Message}")
+            Return connString
+        End Try
+    End Function
+
+    Private Function GetFullErrorMessage(ex As Exception) As String
+        Dim parts As New List(Of String)()
+        Dim cur As Exception = ex
+        While cur IsNot Nothing
+            Dim msg As String = cur.Message
+            If Not String.IsNullOrWhiteSpace(msg) AndAlso Not parts.Contains(msg) Then
+                parts.Add(msg)
+            End If
+            cur = cur.InnerException
+        End While
+        Return String.Join(" | ", parts)
+    End Function
+
 
     ' ------------------------------------------------------------
     ' S3 image upload (Supabase Storage, S3-compatible API)
@@ -87,7 +120,7 @@ Public Module SupabaseSync
     End Function
 
     Private Function GetContentType(path As String) As String
-        Dim ext As String = Path.GetExtension(path).ToLowerInvariant()
+        Dim ext As String = System.IO.Path.GetExtension(path).ToLowerInvariant()
         Select Case ext
             Case ".jpg", ".jpeg" : Return "image/jpeg"
             Case ".png" : Return "image/png"
@@ -138,7 +171,7 @@ Public Module SupabaseSync
                 req.Key = key
                 req.FilePath = localFile
                 req.ContentType = GetContentType(localFile)
-                client.PutObject(req)
+                client.PutObjectAsync(req).GetAwaiter().GetResult()
             End Using
 
             Return BuildPublicUrl(cfg("endpoint"), cfg("bucket"), key)
@@ -221,7 +254,7 @@ Public Module SupabaseSync
             result.Summary.Add($"sync_log id: {logId}")
             result.Success = True
         Catch ex As Exception
-            result.ErrorMessage = ex.Message
+            result.ErrorMessage = GetFullErrorMessage(ex)
             Console.WriteLine($"Sync error: {ex}")
 
             ' Record the failure (best-effort, never masks the original error)
@@ -229,7 +262,7 @@ Public Module SupabaseSync
                 Try
                     Using logCmd As New NpgsqlCommand(
                         "UPDATE sync_log SET completed_at = NOW(), status = 'failed', error = @err WHERE id = @id", pg)
-                        AddParam(logCmd, "@err", ex.Message, NpgsqlDbType.Text)
+                        AddParam(logCmd, "@err", GetFullErrorMessage(ex), NpgsqlDbType.Text)
                         AddParam(logCmd, "@id", logId, NpgsqlDbType.Integer)
                         logCmd.ExecuteNonQuery()
                     End Using
@@ -258,11 +291,11 @@ Public Module SupabaseSync
                     Using reader As NpgsqlDataReader = cmd.ExecuteReader()
                         While reader.Read()
                             Dim status As String = Convert.ToString(reader("status"))
-                            Dim when As String = Convert.ToString(reader("started_at"))
+                            Dim startedAtText As String = Convert.ToString(reader("started_at"))
                             Dim rows As Object = reader("rows_synced")
                             Dim rowText As String = If(IsDBNull(rows), "0", rows.ToString())
                             Dim statusIcon As String = If(status = "success", "[OK]", If(status = "failed", "[FAIL]", "[...]"))
-                            Dim line As String = $"{statusIcon} {when}  {rowText} rows  {status}"
+                            Dim line As String = $"{statusIcon} {startedAtText}  {rowText} rows  {status}"
                             If status = "failed" AndAlso Not IsDBNull(reader("error")) Then
                                 line &= "  - " & Convert.ToString(reader("error"))
                             End If
@@ -644,7 +677,7 @@ Public Module SupabaseSync
                         AddParam(pgCmd, "@linedisc", GetDecimalDb(reader, "LineDiscountAmount"), NpgsqlDbType.Numeric)
                         AddParam(pgCmd, "@subtotal", GetDecimalDb(reader, "SubTotal"), NpgsqlDbType.Numeric)
 
-                        idMap(localId) = Convert.ToInt32(pgCmd.ExecuteScalar())
+                        pgCmd.ExecuteNonQuery()
                         count += 1
                     End Using
                 End While
@@ -695,7 +728,7 @@ Public Module SupabaseSync
                         AddParam(pgCmd, "@notes", GetStr(reader, "Notes"), NpgsqlDbType.Text)
                         AddParam(pgCmd, "@created", GetDateDb(reader, "CreatedAt"), NpgsqlDbType.TimestampTz)
 
-                        idMap(localId) = Convert.ToInt32(pgCmd.ExecuteScalar())
+                        pgCmd.ExecuteNonQuery()
                         count += 1
                     End Using
                 End While
@@ -834,7 +867,21 @@ Public Module SupabaseSync
 
     Private Sub AddParam(cmd As NpgsqlCommand, name As String, value As Object, dbType As NpgsqlDbType)
         Dim p As NpgsqlParameter = cmd.Parameters.Add(name, dbType)
-        p.Value = If(value Is Nothing OrElse IsDBNull(value), DBNull.Value, value)
+        If value Is Nothing OrElse IsDBNull(value) Then
+            p.Value = DBNull.Value
+            Return
+        End If
+        If dbType = NpgsqlDbType.TimestampTz AndAlso TypeOf value Is DateTime Then
+            Dim dt As DateTime = CType(value, DateTime)
+            If dt.Kind = DateTimeKind.Unspecified Then
+                dt = DateTime.SpecifyKind(dt, DateTimeKind.Utc)
+            ElseIf dt.Kind = DateTimeKind.Local Then
+                dt = dt.ToUniversalTime()
+            End If
+            p.Value = dt
+        Else
+            p.Value = value
+        End If
     End Sub
 
     Private Function GetValue(reader As SqliteDataReader, name As String) As Object
