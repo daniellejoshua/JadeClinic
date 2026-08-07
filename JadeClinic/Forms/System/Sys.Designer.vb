@@ -50,6 +50,7 @@ Partial Class Sys
         btnDatabaseBackup = New Guna.UI2.WinForms.Guna2Button()
         btnCompanySettings = New Guna.UI2.WinForms.Guna2Button()
         btnSyncCloud = New Guna.UI2.WinForms.Guna2Button()
+        btnLoadDemoData = New Guna.UI2.WinForms.Guna2Button()
         lblSyncStatus = New Guna.UI2.WinForms.Guna2HtmlLabel()
         lblSyncLogs = New Guna.UI2.WinForms.Guna2HtmlLabel()
         HeaderPanel = New Guna.UI2.WinForms.Guna2Panel()
@@ -145,6 +146,7 @@ Partial Class Sys
         ContentAreaPanel.Controls.Add(btnDatabaseBackup)
         ContentAreaPanel.Controls.Add(btnCompanySettings)
         ContentAreaPanel.Controls.Add(btnSyncCloud)
+        ContentAreaPanel.Controls.Add(btnLoadDemoData)
         ContentAreaPanel.Controls.Add(lblSyncStatus)
         ContentAreaPanel.Controls.Add(lblSyncLogs)
         ContentAreaPanel.CustomizableEdges = CustomizableEdges12
@@ -240,6 +242,27 @@ Partial Class Sys
         btnSyncCloud.Text = "?? Sync to Cloud" & vbCrLf & "Push data to Supabase"
         btnSyncCloud.TextAlign = HorizontalAlignment.Left
         ' 
+        ' btnLoadDemoData
+        ' 
+        btnLoadDemoData.BorderRadius = 15
+        btnLoadDemoData.CustomizableEdges = CustomizableEdges10
+        btnLoadDemoData.DisabledState.BorderColor = Color.DarkGray
+        btnLoadDemoData.DisabledState.CustomBorderColor = Color.DarkGray
+        btnLoadDemoData.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
+        btnLoadDemoData.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
+        btnLoadDemoData.FillColor = Color.FromArgb(CByte(43), CByte(47), CByte(50))
+        btnLoadDemoData.Font = New Font("Poppins", 14F, FontStyle.Bold)
+        btnLoadDemoData.ForeColor = Color.White
+        btnLoadDemoData.ImageAlign = HorizontalAlignment.Left
+        btnLoadDemoData.ImageSize = New Size(40, 40)
+        btnLoadDemoData.Location = New Point(400, 190)
+        btnLoadDemoData.Name = "btnLoadDemoData"
+        btnLoadDemoData.ShadowDecoration.CustomizableEdges = CustomizableEdges10
+        btnLoadDemoData.Size = New Size(320, 120)
+        btnLoadDemoData.TabIndex = 6
+        btnLoadDemoData.Text = "?? Load Demo Data" & vbCrLf & "Wipe & seed sample data"
+        btnLoadDemoData.TextAlign = HorizontalAlignment.Left
+        ' 
         ' lblSyncStatus
         ' 
         lblSyncStatus.AutoSize = False
@@ -327,6 +350,7 @@ Partial Class Sys
     Friend WithEvents btnDatabaseBackup As Guna.UI2.WinForms.Guna2Button
     Friend WithEvents btnColorCustomization As Guna.UI2.WinForms.Guna2Button
     Friend WithEvents btnSyncCloud As Guna.UI2.WinForms.Guna2Button
+    Friend WithEvents btnLoadDemoData As Guna.UI2.WinForms.Guna2Button
     Friend WithEvents lblSyncStatus As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents lblSyncLogs As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents lblUsername As Guna.UI2.WinForms.Guna2HtmlLabel

@@ -409,6 +409,8 @@ Public Module SupabaseSync
     ' ------------------------------------------------------------
     Private Function SyncAuthUsers(local As SqliteConnection, pg As NpgsqlConnection) As Integer
         Dim count As Integer = 0
+        Dim activeLocalIds As New HashSet(Of Integer)()
+
         Using cmd As New SqliteCommand(
             "SELECT UserID, Username, FullName, UserRole, IsActive, Email, PasswordHash FROM Users", local)
             Using reader As SqliteDataReader = cmd.ExecuteReader()
@@ -431,54 +433,152 @@ Public Module SupabaseSync
 
                     Dim fullName As Object = GetStr(reader, "FullName")
                     Dim localId As Integer = Convert.ToInt32(reader("UserID"))
+                    activeLocalIds.Add(localId)
+
                     Dim appMeta As String = "{""provider"": ""email"", ""providers"": [""email""]}"
                     Dim userMeta As String = "{""full_name"": " & JsonStr(fullName) & ", ""role"": ""Admin"", ""local_id"": " & localId & "}"
 
-                    ' Upsert auth.users (partial unique index: email WHERE is_sso_user = false)
-                    Using pgCmd As New NpgsqlCommand(
-                        "INSERT INTO auth.users " &
-                        "(instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, " &
-                        " raw_app_meta_data, raw_user_meta_data, created_at, updated_at, " &
-                        " confirmation_token, recovery_token, email_change_token_new, email_change, " &
-                        " phone_change, phone_change_token, email_change_token_current, email_change_confirm_status, " &
-                        " reauthentication_token, is_sso_user, is_anonymous) " &
-                        "VALUES ('00000000-0000-0000-0000-000000000000', gen_random_uuid(), 'authenticated', 'authenticated', @email, @hash, NOW(), " &
-                        " @appmeta::jsonb, @usermeta::jsonb, NOW(), NOW(), " &
-                        " '', '', '', '', '', '', '', 0, '', FALSE, FALSE) " &
-                        "ON CONFLICT (email) WHERE is_sso_user = false " &
-                        "DO UPDATE SET encrypted_password = EXCLUDED.encrypted_password, " &
-                        " raw_user_meta_data = EXCLUDED.raw_user_meta_data, updated_at = NOW() " &
-                        "RETURNING id", pg)
+                    ' Match by local_id first (stable across email changes), else by email
+                    Dim uid As Object = FindAuthUserIdByLocalId(pg, localId)
+                    If uid Is Nothing OrElse IsDBNull(uid) Then
+                        uid = FindAuthUserIdByEmail(pg, email)
+                    End If
 
-                        AddParam(pgCmd, "@email", email, NpgsqlDbType.Text)
-                        AddParam(pgCmd, "@hash", pwhash, NpgsqlDbType.Text)
-                        AddParam(pgCmd, "@appmeta", appMeta, NpgsqlDbType.Jsonb)
-                        AddParam(pgCmd, "@usermeta", userMeta, NpgsqlDbType.Jsonb)
+                    If uid Is Nothing OrElse IsDBNull(uid) Then
+                        uid = InsertAuthUser(pg, email, pwhash, appMeta, userMeta)
+                    Else
+                        UpdateAuthUser(pg, uid, email, pwhash, userMeta)
+                    End If
 
-                        Dim uid As Object = pgCmd.ExecuteScalar()
-                        If uid Is Nothing OrElse IsDBNull(uid) Then Continue While
+                    If uid Is Nothing OrElse IsDBNull(uid) Then Continue While
 
-                        ' Upsert auth.identities (email/password provider) so GoTrue links the login
-                        Using idCmd As New NpgsqlCommand(
-                            "INSERT INTO auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at, id) " &
-                            "VALUES (@pid, @uid, @idata::jsonb, 'email', NOW(), NOW(), NOW(), gen_random_uuid()) " &
-                            "ON CONFLICT (provider_id, provider) DO UPDATE SET " &
-                            "identity_data = EXCLUDED.identity_data, updated_at = NOW()", pg)
-
-                            Dim identityData As String = "{""sub"": " & JsonStr(uid.ToString()) & ", ""email"": " & JsonStr(email) & ", ""email_verified"": true, ""phone_verified"": false}"
-                            AddParam(idCmd, "@pid", email, NpgsqlDbType.Text)
-                            AddParam(idCmd, "@uid", uid, NpgsqlDbType.Uuid)
-                            AddParam(idCmd, "@idata", identityData, NpgsqlDbType.Jsonb)
-                            idCmd.ExecuteNonQuery()
-                        End Using
-
-                        count += 1
-                    End Using
+                    SyncAuthIdentity(pg, uid, email)
+                    count += 1
                 End While
             End Using
         End Using
+
+        ' Revoke web access for accounts whose POS user is no longer an active admin
+        RevokeInactiveAuthUsers(pg, activeLocalIds)
+
         Return count
     End Function
+
+    Private Function FindAuthUserIdByLocalId(pg As NpgsqlConnection, localId As Integer) As Object
+        Using cmd As New NpgsqlCommand(
+            "SELECT id FROM auth.users WHERE raw_user_meta_data ->> 'local_id' = @lid LIMIT 1", pg)
+            AddParam(cmd, "@lid", localId.ToString(), NpgsqlDbType.Text)
+            Dim res As Object = cmd.ExecuteScalar()
+            If res Is Nothing Then Return DBNull.Value
+            Return res
+        End Using
+    End Function
+
+    Private Function FindAuthUserIdByEmail(pg As NpgsqlConnection, email As String) As Object
+        Using cmd As New NpgsqlCommand(
+            "SELECT id FROM auth.users WHERE email = @em AND is_sso_user = false LIMIT 1", pg)
+            AddParam(cmd, "@em", email, NpgsqlDbType.Text)
+            Dim res As Object = cmd.ExecuteScalar()
+            If res Is Nothing Then Return DBNull.Value
+            Return res
+        End Using
+    End Function
+
+    Private Function InsertAuthUser(pg As NpgsqlConnection, email As String, pwhash As String,
+                                    appMeta As String, userMeta As String) As Object
+        Using pgCmd As New NpgsqlCommand(
+            "INSERT INTO auth.users " &
+            "(instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, " &
+            " raw_app_meta_data, raw_user_meta_data, created_at, updated_at, " &
+            " confirmation_token, recovery_token, email_change_token_new, email_change, " &
+            " phone_change, phone_change_token, email_change_token_current, email_change_confirm_status, " &
+            " reauthentication_token, is_sso_user, is_anonymous) " &
+            "VALUES ('00000000-0000-0000-0000-000000000000', gen_random_uuid(), 'authenticated', 'authenticated', @email, @hash, NOW(), " &
+            " @appmeta::jsonb, @usermeta::jsonb, NOW(), NOW(), " &
+            " '', '', '', '', '', '', '', 0, '', FALSE, FALSE) " &
+            "ON CONFLICT (email) WHERE is_sso_user = false " &
+            "DO UPDATE SET encrypted_password = EXCLUDED.encrypted_password, " &
+            " raw_user_meta_data = EXCLUDED.raw_user_meta_data, banned_until = NULL, deleted_at = NULL, updated_at = NOW() " &
+            "RETURNING id", pg)
+
+            AddParam(pgCmd, "@email", email, NpgsqlDbType.Text)
+            AddParam(pgCmd, "@hash", pwhash, NpgsqlDbType.Text)
+            AddParam(pgCmd, "@appmeta", appMeta, NpgsqlDbType.Jsonb)
+            AddParam(pgCmd, "@usermeta", userMeta, NpgsqlDbType.Jsonb)
+
+            Dim res As Object = pgCmd.ExecuteScalar()
+            If res Is Nothing Then Return DBNull.Value
+            Return res
+        End Using
+    End Function
+
+    Private Sub UpdateAuthUser(pg As NpgsqlConnection, uid As Object, email As String, pwhash As String,
+                               userMeta As String)
+        Using pgCmd As New NpgsqlCommand(
+            "UPDATE auth.users SET email = @email, encrypted_password = @hash, " &
+            " email_confirmed_at = COALESCE(email_confirmed_at, NOW()), " &
+            " raw_user_meta_data = @usermeta, banned_until = NULL, deleted_at = NULL, updated_at = NOW() " &
+            "WHERE id = @uid", pg)
+
+            AddParam(pgCmd, "@email", email, NpgsqlDbType.Text)
+            AddParam(pgCmd, "@hash", pwhash, NpgsqlDbType.Text)
+            AddParam(pgCmd, "@usermeta", userMeta, NpgsqlDbType.Jsonb)
+            AddParam(pgCmd, "@uid", uid, NpgsqlDbType.Uuid)
+            pgCmd.ExecuteNonQuery()
+        End Using
+    End Sub
+
+    Private Sub SyncAuthIdentity(pg As NpgsqlConnection, uid As Object, email As String)
+        Dim uidText As String = uid.ToString()
+
+        ' Remove legacy email-keyed identities (old provider_id = email convention)
+        Using delCmd As New NpgsqlCommand(
+            "DELETE FROM auth.identities WHERE user_id = @uid AND provider = 'email' AND provider_id <> @pid", pg)
+            AddParam(delCmd, "@uid", uid, NpgsqlDbType.Uuid)
+            AddParam(delCmd, "@pid", uidText, NpgsqlDbType.Text)
+            delCmd.ExecuteNonQuery()
+        End Using
+
+        Dim identityData As String = "{""sub"": " & JsonStr(uidText) & ", ""email"": " & JsonStr(email) & ", ""email_verified"": true, ""phone_verified"": false}"
+        Using idCmd As New NpgsqlCommand(
+            "INSERT INTO auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at) " &
+            "VALUES (@pid, @uid, @idata::jsonb, 'email', NOW(), NOW(), NOW()) " &
+            "ON CONFLICT (provider_id, provider) DO UPDATE SET " &
+            "identity_data = EXCLUDED.identity_data, updated_at = NOW()", pg)
+
+            AddParam(idCmd, "@pid", uidText, NpgsqlDbType.Text)
+            AddParam(idCmd, "@uid", uid, NpgsqlDbType.Uuid)
+            AddParam(idCmd, "@idata", identityData, NpgsqlDbType.Jsonb)
+            idCmd.ExecuteNonQuery()
+        End Using
+    End Sub
+
+    Private Sub RevokeInactiveAuthUsers(pg As NpgsqlConnection, activeLocalIds As HashSet(Of Integer))
+        Dim toBan As New List(Of Object)()
+        Using cmd As New NpgsqlCommand(
+            "SELECT id, raw_user_meta_data ->> 'local_id' AS lid FROM auth.users " &
+            "WHERE raw_user_meta_data ->> 'local_id' IS NOT NULL", pg)
+            Using reader As NpgsqlDataReader = cmd.ExecuteReader()
+                While reader.Read()
+                    Dim lidRaw = reader("lid")
+                    If IsDBNull(lidRaw) Then Continue While
+                    Dim lid As Integer
+                    If Not Integer.TryParse(lidRaw.ToString(), lid) Then Continue While
+                    If Not activeLocalIds.Contains(lid) Then
+                        toBan.Add(reader("id"))
+                    End If
+                End While
+            End Using
+        End Using
+
+        For Each id As Object In toBan
+            Using up As New NpgsqlCommand(
+                "UPDATE auth.users SET banned_until = NOW() + interval '100 years', updated_at = NOW() WHERE id = @uid", pg)
+                AddParam(up, "@uid", id, NpgsqlDbType.Uuid)
+                up.ExecuteNonQuery()
+            End Using
+        Next
+    End Sub
 
     Private Function IsBcryptHash(value As String) As Boolean
         If String.IsNullOrWhiteSpace(value) Then Return False

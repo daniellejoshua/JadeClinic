@@ -161,7 +161,7 @@ Public Class Sales
 
             ' Overlay candidates (designer labels and runtime overlays)
             Dim overlayCandidates As Control() = {
-                Label1, Label2, Label3, Label4, Label5, Label6, Label7,
+                Label1, Label2, Label3, Label4, Label5, Label6, Label7, Label8, Label9,
                 Guna2HtmlLabel1, Guna2HtmlLabel2, Guna2HtmlLabel3, Guna2HtmlLabel4,
                 Guna2HtmlLabel5, Guna2HtmlLabel6, Guna2HtmlLabel7, Guna2HtmlLabel8,
                 Guna2HtmlLabel9, Guna2HtmlLabel10, Guna2HtmlLabel11, Guna2HtmlLabel12

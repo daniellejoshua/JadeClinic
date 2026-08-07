@@ -137,6 +137,21 @@ Public Class Sys
                                                 btnSyncCloud.BorderThickness = 0
                                             End Sub
 
+        ' Load Demo Data button
+        btnLoadDemoData.BorderRadius = 15
+        btnLoadDemoData.ShadowDecoration.Enabled = True
+        btnLoadDemoData.ShadowDecoration.Depth = 8
+        btnLoadDemoData.FillColor = DarkSlate
+
+        AddHandler btnLoadDemoData.MouseEnter, Sub()
+                                                   btnLoadDemoData.FillColor = SteelGray
+                                                   btnLoadDemoData.BorderThickness = 2
+                                                   btnLoadDemoData.BorderColor = GoldenYellow
+                                               End Sub
+        AddHandler btnLoadDemoData.MouseLeave, Sub()
+                                                   btnLoadDemoData.FillColor = DarkSlate
+                                                   btnLoadDemoData.BorderThickness = 0
+                                               End Sub
 
     End Sub
 
@@ -220,6 +235,53 @@ Public Class Sys
             lblSyncStatus.ForeColor = AlertRed
         Finally
             btnSyncCloud.Enabled = True
+        End Try
+    End Sub
+
+    Private Sub btnLoadDemoData_Click(sender As Object, e As EventArgs) Handles btnLoadDemoData.Click
+        Try
+            Dim result As DialogResult = MessageBox.Show(
+                "Load demo data?" & vbCrLf & vbCrLf &
+                "This will DELETE all products, suppliers, sales, sale items, inventory logs, and audit logs " &
+                "and replace them with realistic sample data." & vbCrLf & vbCrLf &
+                "Your admin account and company settings will NOT be affected." & vbCrLf & vbCrLf &
+                "Are you sure you want to continue?",
+                "Load Demo Data", MessageBoxButtons.YesNo, MessageBoxIcon.Warning)
+
+            If result <> DialogResult.Yes Then
+                Return
+            End If
+
+            btnLoadDemoData.Enabled = False
+            lblSyncStatus.Text = "Loading demo data... (this may take a few seconds)"
+            lblSyncStatus.ForeColor = LightSilver
+
+            Dim summary As String = ""
+            Dim errorMsg As String = ""
+
+            Task.Run(Sub()
+                         Try
+                             summary = DemoDataSeeder.SeedDemoData()
+                         Catch ex As Exception
+                             errorMsg = ex.Message
+                         End Try
+                     End Sub).Wait()
+
+            If Not String.IsNullOrEmpty(errorMsg) Then
+                lblSyncStatus.Text = "Demo data load failed: " & errorMsg
+                lblSyncStatus.ForeColor = AlertRed
+                MessageBox.Show($"Demo data load failed: {errorMsg}", "Demo Data Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            Else
+                lblSyncStatus.Text = summary
+                lblSyncStatus.ForeColor = SuccessGreen
+                MessageBox.Show(summary, "Demo Data Loaded", MessageBoxButtons.OK, MessageBoxIcon.Information)
+            End If
+        Catch ex As Exception
+            lblSyncStatus.Text = "Demo data load failed: " & ex.Message
+            lblSyncStatus.ForeColor = AlertRed
+            MessageBox.Show($"Demo data load failed: {ex.Message}", "Demo Data Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        Finally
+            btnLoadDemoData.Enabled = True
         End Try
     End Sub
 
