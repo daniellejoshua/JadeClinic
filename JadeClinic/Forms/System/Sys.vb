@@ -281,7 +281,21 @@ Public Class Sys
 
     Private Sub LoadSyncLogsAsync()
         Task.Run(Sub()
-                     Dim lines As List(Of String) = SupabaseSync.GetRecentSyncLogs(8)
+                     Dim lines As New List(Of String)
+                     Dim dt As DataTable = LocalSyncLog.GetEvents(8)
+                     For Each row As DataRow In dt.Rows
+                         Dim status As String = Convert.ToString(row("Status"))
+                         Dim statusIcon As String = If(status = "success", "[OK]", If(status = "failed", "[FAIL]", "[...]"))
+                         Dim mode As String = Convert.ToString(row("Mode"))
+                         If String.IsNullOrEmpty(mode) Then mode = "delta"
+                         Dim line As String = $"{statusIcon} {row("Started")}  {row("Rows")} rows  mode: {mode}"
+                         Dim deleted As Integer = Convert.ToInt32(row("Deleted"))
+                         If deleted > 0 Then line &= $"  deleted: {deleted}"
+                         If Convert.ToString(row("Snap Local")) = "Yes" Then line &= "  snapshot: yes"
+                         Dim err As String = Convert.ToString(row("Error"))
+                         If err <> "" Then line &= "  - " & err
+                         lines.Add(line)
+                     Next
                      If Not IsDisposed Then
                          BeginInvoke(New Action(Sub() DisplaySyncLogs(lines)))
                      End If

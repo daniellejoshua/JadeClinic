@@ -14,6 +14,10 @@ Namespace My
 
             If Not AutoInitializeDatabase() Then
                 e.Cancel = True
+            Else
+                ' Sync/backup history lives in the local DB - prepare the table
+                ' and mark any crashed runs as failed before the UI starts.
+                LocalSyncLog.Initialize()
             End If
         End Sub
 

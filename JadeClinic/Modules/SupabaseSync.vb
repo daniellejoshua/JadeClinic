@@ -279,12 +279,7 @@ Public Module SupabaseSync
         Dim key As String = $"images/{remoteSubfolder}/{remoteName}"
 
         Try
-            Dim s3Config As New AmazonS3Config()
-            s3Config.ServiceURL = cfg("endpoint")
-            s3Config.ForcePathStyle = True
-            s3Config.AuthenticationRegion = cfg("region")
-
-            Using client As New AmazonS3Client(accessKey, secretKey, s3Config)
+            Using client As New AmazonS3Client(accessKey, secretKey, BuildS3Config(cfg))
                 Dim req As New PutObjectRequest()
                 req.BucketName = cfg("bucket")
                 req.Key = key
@@ -297,6 +292,86 @@ Public Module SupabaseSync
         Catch ex As Exception
             Console.WriteLine($"Image upload failed for {key}: {ex.Message}")
             Return Nothing
+        End Try
+    End Function
+
+    Public Structure S3ObjectInfo
+        Public Key As String
+        Public LastModified As DateTime
+    End Structure
+
+    Private Function BuildS3Config(cfg As Dictionary(Of String, String)) As AmazonS3Config
+        Dim s3Config As New AmazonS3Config()
+        s3Config.ServiceURL = cfg("endpoint")
+        s3Config.ForcePathStyle = True
+        s3Config.AuthenticationRegion = cfg("region")
+        Return s3Config
+    End Function
+
+    ' Generic S3 upload (used for snapshot/backup files, keyed under backups/...).
+    Public Function UploadFileToBucket(localFile As String, remoteKey As String,
+                                       Optional contentType As String = "application/octet-stream") As Boolean
+        Dim cfg As Dictionary(Of String, String) = GetS3Config()
+        If cfg Is Nothing Then Return False
+        Dim accessKey As String = cfg("accessKeyId")
+        Dim secretKey As String = cfg("secretAccessKey")
+        If String.IsNullOrWhiteSpace(accessKey) OrElse String.IsNullOrWhiteSpace(secretKey) Then
+            Console.WriteLine("Note: S3 keys not configured - skipping upload.")
+            Return False
+        End If
+        Try
+            Using client As New AmazonS3Client(accessKey, secretKey, BuildS3Config(cfg))
+                Dim req As New PutObjectRequest()
+                req.BucketName = cfg("bucket")
+                req.Key = remoteKey
+                req.FilePath = localFile
+                req.ContentType = contentType
+                client.PutObjectAsync(req).GetAwaiter().GetResult()
+            End Using
+            Return True
+        Catch ex As Exception
+            Console.WriteLine($"S3 upload failed for {remoteKey}: {ex.Message}")
+            Return False
+        End Try
+    End Function
+
+    Public Function ListBucketObjects(prefix As String) As List(Of S3ObjectInfo)
+        Dim result As New List(Of S3ObjectInfo)()
+        Dim cfg As Dictionary(Of String, String) = GetS3Config()
+        If cfg Is Nothing Then Return result
+        Dim accessKey As String = cfg("accessKeyId")
+        Dim secretKey As String = cfg("secretAccessKey")
+        If String.IsNullOrWhiteSpace(accessKey) OrElse String.IsNullOrWhiteSpace(secretKey) Then Return result
+        Try
+            Using client As New AmazonS3Client(accessKey, secretKey, BuildS3Config(cfg))
+                Dim req As New ListObjectsV2Request()
+                req.BucketName = cfg("bucket")
+                req.Prefix = prefix
+                Dim resp As ListObjectsV2Response = client.ListObjectsV2Async(req).GetAwaiter().GetResult()
+                For Each obj As Amazon.S3.Model.S3Object In resp.S3Objects
+                    result.Add(New S3ObjectInfo With {.Key = obj.Key, .LastModified = obj.LastModified})
+                Next
+            End Using
+        Catch ex As Exception
+            Console.WriteLine($"S3 list failed for {prefix}: {ex.Message}")
+        End Try
+        Return result
+    End Function
+
+    Public Function DeleteBucketObject(key As String) As Boolean
+        Dim cfg As Dictionary(Of String, String) = GetS3Config()
+        If cfg Is Nothing Then Return False
+        Dim accessKey As String = cfg("accessKeyId")
+        Dim secretKey As String = cfg("secretAccessKey")
+        If String.IsNullOrWhiteSpace(accessKey) OrElse String.IsNullOrWhiteSpace(secretKey) Then Return False
+        Try
+            Using client As New AmazonS3Client(accessKey, secretKey, BuildS3Config(cfg))
+                client.DeleteObjectAsync(cfg("bucket"), key).GetAwaiter().GetResult()
+            End Using
+            Return True
+        Catch ex As Exception
+            Console.WriteLine($"S3 delete failed for {key}: {ex.Message}")
+            Return False
         End Try
     End Function
 
@@ -322,11 +397,18 @@ Public Module SupabaseSync
     ' ------------------------------------------------------------
     Public Function RunFullSync(Optional progress As Action(Of String) = Nothing,
                                 Optional full As Boolean = False,
-                                Optional resolveBaseline As Boolean = False) As SyncResult
+                                Optional resolveBaseline As Boolean = False,
+                                Optional reconcile As Boolean = True,
+                                Optional mode As String = "auto") As SyncResult
         Dim result As New SyncResult()
         Dim pg As NpgsqlConnection = Nothing
         Dim logId As Integer = 0
+        Dim localLogId As Integer = 0
         Dim totalRows As Integer = 0
+        Dim deletedRows As Integer = 0
+        Dim snapLocal As Boolean = False
+        Dim snapCloud As Boolean = False
+        Dim snapBytes As Long = 0
         Try
             Dim cs As String = GetSupabaseConnectionString()
             Dim localConnStr As String = Connection.GetConnectionString()
@@ -359,6 +441,27 @@ Public Module SupabaseSync
             Using local As New SqliteConnection(localConnStr)
                 local.Open()
 
+                ' Local audit trail for this run
+                localLogId = LocalSyncLog.StartEvent("sync", mode, If(full, "full", mode), reconcile)
+
+                ' Rolling snapshot + monthly permanent backup BEFORE the upload
+                ' (best-effort - a snapshot failure never aborts the sync).
+                Try
+                    Dim snap As DatabaseSnapshot.SnapshotOutcome = DatabaseSnapshot.EnsureRollingSnapshot(False)
+                    snapLocal = snap.CreatedLocal
+                    snapCloud = snap.UploadedCloud
+                    snapBytes = snap.SizeBytes
+                    If Not String.IsNullOrEmpty(snap.FileName) Then
+                        result.Summary.Add($"snapshot: {snap.FileName}")
+                    End If
+                    Dim monthly As DatabaseSnapshot.BackupOutcome = DatabaseSnapshot.CreateMonthlyBackupIfDue()
+                    If monthly.CreatedLocal Then
+                        result.Summary.Add($"monthly backup: {monthly.FileName}")
+                    End If
+                Catch snapEx As Exception
+                    ReportProgress(progress, "Snapshot skipped: " & snapEx.Message)
+                End Try
+
                 Dim supplierIdMap As New Dictionary(Of Integer, Integer)()   ' LAN SupplierID -> supabase id
                 Dim userIdMap As New Dictionary(Of Integer, Integer)()       ' LAN UserID -> supabase id
                 Dim productIdMap As New Dictionary(Of Integer, Integer)()    ' LAN ProductID -> supabase id
@@ -386,8 +489,22 @@ Public Module SupabaseSync
                 result.Summary.Add($"audit_logs: {nAuditLogs}")
                 result.Summary.Add($"company_settings: {nCompanySettings}")
                 result.Summary.Add($"web_admins: {nWebAdmins}")
+
+                ' 1:1 mirror: delete any cloud rows that no longer exist locally
+                ' (delete propagation). Silent - single syncing machine, exact copy.
+                If reconcile Then
+                    ReportProgress(progress, "Reconciling cloud to match local (deleting removed rows)...")
+                    deletedRows = ReconcileCloudToLocal(local, pg, progress)
+                    result.Summary.Add($"reconcile_deleted: {deletedRows}")
+                End If
+
                 ReportProgress(progress, "Sync finished (delta: " & (Not full).ToString() & ")")
             End Using
+
+            ' Close the local event as successful
+            If localLogId > 0 Then
+                LocalSyncLog.CompleteEvent(localLogId, "success", totalRows, "", snapLocal, snapCloud, snapBytes, deletedRows)
+            End If
 
             ' Mark the run as successful
             Using logCmd As New NpgsqlCommand(
@@ -402,6 +519,11 @@ Public Module SupabaseSync
         Catch ex As Exception
             result.ErrorMessage = GetFullErrorMessage(ex)
             Console.WriteLine($"Sync error: {ex}")
+
+            ' Close the local event as failed (best-effort, never masks the original error)
+            If localLogId > 0 Then
+                LocalSyncLog.CompleteEvent(localLogId, "failed", 0, GetFullErrorMessage(ex), snapLocal, snapCloud, snapBytes, deletedRows)
+            End If
 
             ' Record the failure (best-effort, never masks the original error)
             If pg IsNot Nothing AndAlso pg.State = System.Data.ConnectionState.Open AndAlso logId > 0 Then
@@ -1193,6 +1315,132 @@ Public Module SupabaseSync
             Console.WriteLine($"Could not reconcile stale sync_log: {ex.Message}")
         End Try
     End Sub
+
+    ' ------------------------------------------------------------
+    ' 1:1 mirror reconcile (delete propagation).
+    ' Deletes cloud rows whose local_id no longer exists locally, so the cloud
+    ' becomes an exact copy of the LAN database. Safe because only the admin
+    ' PC (holding the DB) writes to the cloud. Runs silently on every sync.
+    ' Order is child-first to satisfy FK constraints.
+    ' ------------------------------------------------------------
+    Private Function ReconcileCloudToLocal(local As SqliteConnection, pg As NpgsqlConnection,
+                                           progress As Action(Of String)) As Integer
+        Dim total As Integer = 0
+        ReconcileSimpleTable(local, pg, "sale_items", "SaleItemID", progress, total, Nothing)
+        ReconcileSimpleTable(local, pg, "inventory_logs", "LogID", progress, total, Nothing)
+        ReconcileSimpleTable(local, pg, "audit_logs", "AuditID", progress, total, Nothing)
+        ReconcileSimpleTable(local, pg, "sales", "SaleID", progress, total, Nothing)
+        ReconcileCompanySettings(local, pg, total)
+        ReconcileSimpleTable(local, pg, "products", "ProductID", progress, total,
+            New String() {"sale_items/product_id", "inventory_logs/product_id"})
+        ReconcileSimpleTable(local, pg, "suppliers", "SupplierID", progress, total,
+            New String() {"products/supplier_id"})
+        ReconcileSimpleTable(local, pg, "users", "UserID", progress, total,
+            New String() {"sales/user_id", "inventory_logs/user_id", "audit_logs/user_id"})
+        Return total
+    End Function
+
+    Private Sub ReconcileSimpleTable(local As SqliteConnection, pg As NpgsqlConnection,
+                                     cloudTable As String, localIdColumn As String,
+                                     progress As Action(Of String), ByRef total As Integer,
+                                     guardRefs As String())
+        Dim cloudIds As New HashSet(Of Integer)()
+        Using cmd As New NpgsqlCommand("SELECT local_id FROM " & cloudTable, pg)
+            Using rdr As NpgsqlDataReader = cmd.ExecuteReader()
+                While rdr.Read()
+                    If Not rdr.IsDBNull(0) Then cloudIds.Add(Convert.ToInt32(rdr(0)))
+                End While
+            End Using
+        End Using
+        If cloudIds.Count = 0 Then Return
+
+        Dim localIds As New HashSet(Of Integer)()
+        Using cmd As New SqliteCommand("SELECT " & localIdColumn & " FROM " & GetLocalTableName(cloudTable), local)
+            Using rdr As SqliteDataReader = cmd.ExecuteReader()
+                While rdr.Read()
+                    If Not rdr.IsDBNull(0) Then localIds.Add(Convert.ToInt32(rdr(0)))
+                End While
+            End Using
+        End Using
+
+        Dim toDelete As New List(Of Integer)()
+        For Each cid As Integer In cloudIds
+            If Not localIds.Contains(cid) Then toDelete.Add(cid)
+        Next
+        If toDelete.Count = 0 Then Return
+
+        ' FK guards: null-out references from surviving local rows so the
+        ' parent can be deleted without a foreign key violation.
+        If guardRefs IsNot Nothing Then
+            For Each ref As String In guardRefs
+                Dim parts As String() = ref.Split("/"c)
+                NullOutReferences(pg, parts(0), parts(1), cloudTable, toDelete)
+            Next
+        End If
+
+        Dim actuallyDeleted As Integer = 0
+        For i As Integer = 0 To toDelete.Count - 1 Step ChunkSize
+            Dim n As Integer = Math.Min(ChunkSize, toDelete.Count - i)
+            Dim ids As Integer() = toDelete.GetRange(i, n).ToArray()
+            Using cmd As New NpgsqlCommand("DELETE FROM " & cloudTable & " WHERE local_id = ANY(@ids)", pg)
+                cmd.Parameters.Add("@ids", NpgsqlDbType.Array Or NpgsqlDbType.Integer).Value = ids
+                actuallyDeleted += cmd.ExecuteNonQuery()
+            End Using
+        Next
+        total += actuallyDeleted
+        ReportProgress(progress, $"{cloudTable}: reconcile - deleted {actuallyDeleted} row(s) removed locally")
+    End Sub
+
+    Private Sub ReconcileCompanySettings(local As SqliteConnection, pg As NpgsqlConnection, ByRef total As Integer)
+        Dim activeId As Integer = -1
+        Using cmd As New SqliteCommand(
+            "SELECT SettingID FROM CompanySettings WHERE IsActive = 1 ORDER BY DateCreated DESC LIMIT 1", local)
+            Dim res As Object = cmd.ExecuteScalar()
+            If res IsNot Nothing AndAlso Not IsDBNull(res) Then activeId = Convert.ToInt32(res)
+        End Using
+        If activeId < 0 Then
+            Using cmd As New NpgsqlCommand("DELETE FROM company_settings", pg)
+                total += cmd.ExecuteNonQuery()
+            End Using
+            Return
+        End If
+        ' Only the active settings row is mirrored; drop stale ones.
+        Using cmd As New NpgsqlCommand("DELETE FROM company_settings WHERE local_id <> @id", pg)
+            cmd.Parameters.Add("@id", NpgsqlDbType.Integer).Value = activeId
+            total += cmd.ExecuteNonQuery()
+        End Using
+    End Sub
+
+    Private Sub NullOutReferences(pg As NpgsqlConnection, childTable As String, fkColumn As String,
+                                  parentTable As String, ids As List(Of Integer))
+        For i As Integer = 0 To ids.Count - 1 Step ChunkSize
+            Dim n As Integer = Math.Min(ChunkSize, ids.Count - i)
+            Dim idArr As Integer() = ids.GetRange(i, n).ToArray()
+            Try
+                Using cmd As New NpgsqlCommand(
+                    "UPDATE " & childTable & " SET " & fkColumn & " = NULL WHERE " & fkColumn &
+                    " IN (SELECT id FROM " & parentTable & " WHERE local_id = ANY(@ids))", pg)
+                    cmd.Parameters.Add("@ids", NpgsqlDbType.Array Or NpgsqlDbType.Integer).Value = idArr
+                    cmd.ExecuteNonQuery()
+                End Using
+            Catch ex As Exception
+                Console.WriteLine($"Note: could not null {childTable}.{fkColumn}: {ex.Message}")
+            End Try
+        Next
+    End Sub
+
+    Private Function GetLocalTableName(cloudTable As String) As String
+        Select Case cloudTable
+            Case "sale_items" : Return "SaleItems"
+            Case "inventory_logs" : Return "InventoryLog"
+            Case "audit_logs" : Return "AuditLog"
+            Case "sales" : Return "Sales"
+            Case "products" : Return "Products"
+            Case "suppliers" : Return "Suppliers"
+            Case "users" : Return "Users"
+            Case Else : Return "CompanySettings"
+        End Select
+    End Function
 
     ' Recreate any missing cloud tables so a wiped/dropped schema self-heals.
     ' Runs before each sync. Also grants the dashboard (authenticated role) read

@@ -28,10 +28,13 @@ Public Class SyncQueue
 
     ' A sync job. Smart = resolve the baseline inside the worker (full upload
     ' until the cloud has any sales rows, then delta). ForceFull bypasses the
-    ' baseline check and uploads everything.
+    ' baseline check and uploads everything. Mode labels the caller (auto vs
+    ' manual) so the sync log records who triggered the run.
     Public Structure SyncJob
         Public Smart As Boolean
         Public ForceFull As Boolean
+        Public Reconcile As Boolean
+        Public Mode As String
     End Structure
 
     Private ReadOnly _queue As New Queue(Of SyncJob)()
@@ -48,8 +51,8 @@ Public Class SyncQueue
         _debounceTimer.Interval = DebounceMs
         AddHandler _debounceTimer.Tick, Sub(s, e)
                                             Try
-                                                _debounceTimer.Stop()
-                                                Enqueue(full:=False)
+                                        _debounceTimer.Stop()
+                                        Enqueue(full:=False, mode:="auto")
                                             Catch ex As Exception
                                                 Console.WriteLine($"SyncQueue debounce error: {ex.Message}")
                                             End Try
@@ -60,7 +63,7 @@ Public Class SyncQueue
         AddHandler _scheduleTimer.Tick, Sub(s, e)
                                             Try
                                                 _scheduleTimer.Stop()
-                                                Enqueue(full:=False)
+                                                Enqueue(full:=False, mode:="auto")
                                                 _scheduleTimer.Start()
                                             Catch ex As Exception
                                                 Console.WriteLine($"SyncQueue schedule error: {ex.Message}")
@@ -115,15 +118,17 @@ Public Class SyncQueue
 
     ' Add a sync job. full = True forces a complete upsert of every table
     ' (legacy safety valve for callers that need a guaranteed full sync).
-    Public Sub Enqueue(full As Boolean)
-        EnqueueJob(New SyncJob() With {.Smart = False, .ForceFull = full})
+    ' mode labels the caller in the sync log; reconcile enables the 1:1
+    ' delete-propagation pass (default True).
+    Public Sub Enqueue(full As Boolean, Optional mode As String = "auto", Optional reconcile As Boolean = True)
+        EnqueueJob(New SyncJob() With {.Smart = False, .ForceFull = full, .Reconcile = reconcile, .Mode = mode})
     End Sub
 
     ' Add a smart sync job (used by the manual "Sync Cloud" button). Unless
     ' forceFull is set, the worker uploads everything only until the cloud
     ' has a baseline and then runs delta syncs.
-    Public Sub EnqueueSmart(forceFull As Boolean)
-        EnqueueJob(New SyncJob() With {.Smart = True, .ForceFull = forceFull})
+    Public Sub EnqueueSmart(forceFull As Boolean, Optional mode As String = "manual", Optional reconcile As Boolean = True)
+        EnqueueJob(New SyncJob() With {.Smart = True, .ForceFull = forceFull, .Reconcile = reconcile, .Mode = mode})
     End Sub
 
     Private Sub EnqueueJob(job As SyncJob)
@@ -154,9 +159,9 @@ Public Class SyncQueue
 
             Dim modeLabel As String = If(job.ForceFull, "full",
                                      If(job.Smart, "smart (delta unless no baseline yet)", "delta"))
-            RaiseProgress($"Cloud sync starting ({modeLabel})...")
+            RaiseProgress($"Cloud sync starting ({modeLabel}, mode: {job.Mode})...")
             Try
-                Dim result As SyncResult = SupabaseSync.RunFullSync(AddressOf OnSyncProgress, job.ForceFull, job.Smart)
+                Dim result As SyncResult = SupabaseSync.RunFullSync(AddressOf OnSyncProgress, job.ForceFull, job.Smart, job.Reconcile, job.Mode)
                 If result.Success Then
                     RaiseProgress("Cloud sync complete.")
                     RaiseEvent Completed(True, String.Join(Environment.NewLine, result.Summary))
