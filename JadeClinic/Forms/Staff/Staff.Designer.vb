@@ -90,6 +90,8 @@ Partial Class Staff
         ' 
         ' Guna2CirclePictureBox5
         ' 
+        Guna2CirclePictureBox5.FillColor = Color.Transparent
+        Guna2CirclePictureBox5.Image = My.Resources.Resources.avatar_default_svgrepo_com
         Guna2CirclePictureBox5.ImageRotate = 0F
         Guna2CirclePictureBox5.Location = New Point(1742, 26)
         Guna2CirclePictureBox5.Name = "Guna2CirclePictureBox5"

@@ -43,22 +43,31 @@ Public Class SalesDetails
             End If
 
             ShowReceiptPreviewLikeSalesForm()
-            Me.Text = $"Receipt - Sale #{_saleId}"
+            Me.Text = $"Receipt - Sale #{DisplaySaleNumber()}"
         Catch ex As Exception
             MessageBox.Show($"Error loading sale details: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
 
+    Private Function DisplaySaleNumber() As String
+        If saleRecord IsNot Nothing AndAlso saleRecord.ContainsKey("SaleNumber") Then
+            Dim num As String = Convert.ToString(saleRecord("SaleNumber"))
+            If Not String.IsNullOrWhiteSpace(num) Then Return num
+        End If
+        Return _saleId.ToString()
+    End Function
+
     Private Sub LoadSaleData(saleId As Integer)
         saleRecord = Nothing
         saleItems.Clear()
 
-        Dim saleQuery As String = "SELECT s.SaleID, s.SaleDate, s.CustomerName, s.CustomerTIN, s.TotalAmount, s.AmountPaid, s.PaymentMethod, s.Reference, s.SalesData, u.Username " &
+        Dim saleQuery As String = "SELECT s.SaleID, IFNULL(s.SaleNumber, '') AS SaleNumber, s.SaleDate, s.CustomerName, s.CustomerTIN, s.TotalAmount, s.AmountPaid, s.PaymentMethod, s.Reference, s.SalesData, u.Username " &
                                   "FROM Sales s LEFT JOIN Users u ON s.UserID = u.UserID WHERE s.SaleID = @SaleID"
         Using reader As DbDataReader = Utilities.ExecuteReader(saleQuery, New SqlParameter("@SaleID", saleId))
             If reader.Read() Then
                 saleRecord = New Dictionary(Of String, Object) From {
                     {"SaleID", If(IsDBNull(reader("SaleID")), saleId, reader("SaleID"))},
+                    {"SaleNumber", If(IsDBNull(reader("SaleNumber")), "", reader("SaleNumber").ToString())},
                     {"SaleDate", If(IsDBNull(reader("SaleDate")), DateTime.MinValue, Convert.ToDateTime(reader("SaleDate")))},
                     {"CustomerName", If(IsDBNull(reader("CustomerName")), "", reader("CustomerName").ToString())},
                     {"CustomerTIN", If(IsDBNull(reader("CustomerTIN")), "", reader("CustomerTIN").ToString())},
@@ -179,7 +188,7 @@ Public Class SalesDetails
 
             e.Graphics.DrawString("SALES INVOICE", boldFont, brush, CSng(centerX - (e.Graphics.MeasureString("SALES INVOICE", boldFont).Width / 2)), CSng(yPosition))
             yPosition += 22
-            e.Graphics.DrawString($"Receipt #: {saleRecord("SaleID")}", regularFont, brush, marginLeft, yPosition)
+            e.Graphics.DrawString($"Receipt #: {DisplaySaleNumber()}", regularFont, brush, marginLeft, yPosition)
             yPosition += 12
             e.Graphics.DrawString($"Date: {Convert.ToDateTime(saleRecord("SaleDate")):MM/dd/yyyy HH:mm:ss}", regularFont, brush, marginLeft, yPosition)
             yPosition += 12

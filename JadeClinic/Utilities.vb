@@ -274,6 +274,12 @@ Module Utilities
         End Try
     End Function
 
+    ' Generates a readable, numbers-only sale number from a SaleID.
+    ' Format: yyyyMMdd + 6-digit zero-padded SaleID (e.g. 20260808000123).
+    Public Function FormatSaleNumber(saleId As Integer) As String
+        Return Date.Now.ToString("yyyyMMdd") & saleId.ToString("D6")
+    End Function
+
     ' Log audit trail - Updated for new AuditLog structure (UserID only, no Username column)
     Public Sub LogAudit(username As String, action As String, details As String, Optional userID As Integer? = Nothing)
         Try

@@ -26,7 +26,15 @@ Public Class SyncQueue
     Public Event Completed(success As Boolean, summary As String)
     Public Event Failed(errorMessage As String)
 
-    Private ReadOnly _queue As New Queue(Of Boolean)()   ' True = full sync
+    ' A sync job. Smart = resolve the baseline inside the worker (full upload
+    ' until the cloud has any sales rows, then delta). ForceFull bypasses the
+    ' baseline check and uploads everything.
+    Public Structure SyncJob
+        Public Smart As Boolean
+        Public ForceFull As Boolean
+    End Structure
+
+    Private ReadOnly _queue As New Queue(Of SyncJob)()
     Private ReadOnly _lock As New Object()
     Private _running As Boolean = False
 
@@ -106,11 +114,22 @@ Public Class SyncQueue
     End Sub
 
     ' Add a sync job. full = True forces a complete upsert of every table
-    ' (used by the manual "Sync Cloud" button as the safety valve).
+    ' (legacy safety valve for callers that need a guaranteed full sync).
     Public Sub Enqueue(full As Boolean)
+        EnqueueJob(New SyncJob() With {.Smart = False, .ForceFull = full})
+    End Sub
+
+    ' Add a smart sync job (used by the manual "Sync Cloud" button). Unless
+    ' forceFull is set, the worker uploads everything only until the cloud
+    ' has a baseline and then runs delta syncs.
+    Public Sub EnqueueSmart(forceFull As Boolean)
+        EnqueueJob(New SyncJob() With {.Smart = True, .ForceFull = forceFull})
+    End Sub
+
+    Private Sub EnqueueJob(job As SyncJob)
         Dim startWorker As Boolean = False
         SyncLock _lock
-            _queue.Enqueue(full)
+            _queue.Enqueue(job)
             If Not _running Then
                 _running = True
                 startWorker = True
@@ -124,18 +143,20 @@ Public Class SyncQueue
 
     Private Sub ProcessQueue()
         While True
-            Dim full As Boolean = False
+            Dim job As SyncJob
             SyncLock _lock
                 If _queue.Count = 0 Then
                     _running = False
                     Exit While
                 End If
-                full = _queue.Dequeue()
+                job = _queue.Dequeue()
             End SyncLock
 
-            RaiseProgress(If(full, "Cloud sync starting (full)...", "Cloud sync starting (delta)..."))
+            Dim modeLabel As String = If(job.ForceFull, "full",
+                                     If(job.Smart, "smart (delta unless no baseline yet)", "delta"))
+            RaiseProgress($"Cloud sync starting ({modeLabel})...")
             Try
-                Dim result As SyncResult = SupabaseSync.RunFullSync(AddressOf OnSyncProgress, full)
+                Dim result As SyncResult = SupabaseSync.RunFullSync(AddressOf OnSyncProgress, job.ForceFull, job.Smart)
                 If result.Success Then
                     RaiseProgress("Cloud sync complete.")
                     RaiseEvent Completed(True, String.Join(Environment.NewLine, result.Summary))

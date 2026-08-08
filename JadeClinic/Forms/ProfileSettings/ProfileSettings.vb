@@ -210,7 +210,7 @@ Public Class ProfileSettings
                     End If
                 End If
                 If userImage Is Nothing Then
-                    userImage = CreateDefaultAvatar(currentUserData("Username").ToString())
+                    userImage = New Bitmap(My.Resources.avatar_default_svgrepo_com)
                 End If
 
                 If Guna2CirclePictureBox1 IsNot Nothing AndAlso userImage IsNot Nothing Then
@@ -240,39 +240,12 @@ Public Class ProfileSettings
                 Guna2CirclePictureBox7.Image = img
                 Guna2CirclePictureBox7.SizeMode = PictureBoxSizeMode.Zoom
             Else
-                Guna2CirclePictureBox7.Image = CreateDefaultAvatar(currentUserData("Username").ToString())
+                Guna2CirclePictureBox7.Image = New Bitmap(My.Resources.avatar_default_svgrepo_com)
             End If
         Catch ex As Exception
-            Guna2CirclePictureBox7.Image = CreateDefaultAvatar(currentUserData("Username").ToString())
+            Guna2CirclePictureBox7.Image = New Bitmap(My.Resources.avatar_default_svgrepo_com)
         End Try
     End Sub
-
-    Private Function CreateDefaultAvatar(username As String) As System.Drawing.Image
-        Dim bitmap As New Bitmap(100, 100)
-        Using g As Graphics = Graphics.FromImage(bitmap)
-            g.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias
-
-            ' Fill background with color based on username
-            Dim colors() As System.Drawing.Color = {
-                System.Drawing.Color.FromArgb(255, 107, 107),
-                System.Drawing.Color.FromArgb(78, 205, 196),
-                System.Drawing.Color.FromArgb(85, 98, 112),
-                System.Drawing.Color.FromArgb(129, 236, 236),
-                System.Drawing.Color.FromArgb(116, 185, 255)
-            }
-            Dim colorIndex As Integer = Math.Abs(username.GetHashCode()) Mod colors.Length
-            g.FillEllipse(New SolidBrush(colors(colorIndex)), 0, 0, 100, 100)
-
-            ' Draw initials
-            Dim initials As String = username.Substring(0, Math.Min(2, username.Length)).ToUpper()
-            Using font As New System.Drawing.Font("Poppins", 24, System.Drawing.FontStyle.Bold)
-                Dim textSize = g.MeasureString(initials, font)
-                g.DrawString(initials, font, Brushes.White,
-                    (100 - textSize.Width) / 2, (100 - textSize.Height) / 2)
-            End Using
-        End Using
-        Return bitmap
-    End Function
 
     Private Sub LoadPasskeys()
         Try
@@ -1285,7 +1258,7 @@ Public Class ProfileSettings
                     End If
                 End If
                 If userImg Is Nothing Then
-                    userImg = CreateDefaultAvatar(If(currentUserData IsNot Nothing, currentUserData("Username").ToString(), frmLoginvb.LoggedInUsername))
+                    userImg = New Bitmap(My.Resources.avatar_default_svgrepo_com)
                 End If
 
                 If Guna2CirclePictureBox1 IsNot Nothing AndAlso userImg IsNot Nothing Then

@@ -50,6 +50,8 @@ Partial Class Sys
         btnDatabaseBackup = New Guna.UI2.WinForms.Guna2Button()
         btnCompanySettings = New Guna.UI2.WinForms.Guna2Button()
         btnSyncCloud = New Guna.UI2.WinForms.Guna2Button()
+        chkForceFull = New Guna.UI2.WinForms.Guna2CheckBox()
+        lblSyncHint = New Guna.UI2.WinForms.Guna2HtmlLabel()
         btnLoadDemoData = New Guna.UI2.WinForms.Guna2Button()
         lblSyncStatus = New Guna.UI2.WinForms.Guna2HtmlLabel()
         lblSyncLogs = New Guna.UI2.WinForms.Guna2HtmlLabel()
@@ -146,6 +148,8 @@ Partial Class Sys
         ContentAreaPanel.Controls.Add(btnDatabaseBackup)
         ContentAreaPanel.Controls.Add(btnCompanySettings)
         ContentAreaPanel.Controls.Add(btnSyncCloud)
+        ContentAreaPanel.Controls.Add(chkForceFull)
+        ContentAreaPanel.Controls.Add(lblSyncHint)
         ContentAreaPanel.Controls.Add(btnLoadDemoData)
         ContentAreaPanel.Controls.Add(lblSyncStatus)
         ContentAreaPanel.Controls.Add(lblSyncLogs)
@@ -242,7 +246,41 @@ Partial Class Sys
         btnSyncCloud.Text = "?? Sync to Cloud" & vbCrLf & "Push data to Supabase"
         btnSyncCloud.TextAlign = HorizontalAlignment.Left
         ' 
-        ' btnLoadDemoData
+        ' chkForceFull
+        ' 
+        chkForceFull.AutoSize = True
+        chkForceFull.BackColor = Color.Transparent
+        chkForceFull.CheckedState.BorderColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
+        chkForceFull.CheckedState.BorderRadius = 0
+        chkForceFull.CheckedState.BorderThickness = 0
+        chkForceFull.CheckedState.FillColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
+        chkForceFull.CheckMarkColor = Color.Transparent
+        chkForceFull.Font = New Font("Poppins", 11F)
+        chkForceFull.ForeColor = Color.FromArgb(CByte(225), CByte(229), CByte(233))
+        chkForceFull.Location = New Point(740, 200)
+        chkForceFull.Name = "chkForceFull"
+        chkForceFull.Size = New Size(181, 31)
+        chkForceFull.TabIndex = 5
+        chkForceFull.Text = "Force full re-upload"
+        chkForceFull.UncheckedState.BorderColor = Color.FromArgb(CByte(125), CByte(137), CByte(149))
+        chkForceFull.UncheckedState.BorderRadius = 0
+        chkForceFull.UncheckedState.BorderThickness = 0
+        chkForceFull.UncheckedState.FillColor = Color.FromArgb(CByte(125), CByte(137), CByte(149))
+        chkForceFull.UseVisualStyleBackColor = False
+        ' 
+        ' lblSyncHint
+        ' 
+        lblSyncHint.AutoSize = False
+        lblSyncHint.BackColor = Color.Transparent
+        lblSyncHint.Font = New Font("Poppins", 9F)
+        lblSyncHint.ForeColor = Color.FromArgb(CByte(160), CByte(170), CByte(180))
+        lblSyncHint.Location = New Point(740, 240)
+        lblSyncHint.Name = "lblSyncHint"
+        lblSyncHint.Size = New Size(360, 45)
+        lblSyncHint.TabIndex = 7
+        lblSyncHint.Text = "First sync uploads everything; later syncs push only new/changed rows."
+        ' 
+        ' lblSyncStatus
         ' 
         btnLoadDemoData.BorderRadius = 15
         btnLoadDemoData.CustomizableEdges = CustomizableEdges10
@@ -350,6 +388,8 @@ Partial Class Sys
     Friend WithEvents btnDatabaseBackup As Guna.UI2.WinForms.Guna2Button
     Friend WithEvents btnColorCustomization As Guna.UI2.WinForms.Guna2Button
     Friend WithEvents btnSyncCloud As Guna.UI2.WinForms.Guna2Button
+    Friend WithEvents chkForceFull As Guna.UI2.WinForms.Guna2CheckBox
+    Friend WithEvents lblSyncHint As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents btnLoadDemoData As Guna.UI2.WinForms.Guna2Button
     Friend WithEvents lblSyncStatus As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents lblSyncLogs As Guna.UI2.WinForms.Guna2HtmlLabel

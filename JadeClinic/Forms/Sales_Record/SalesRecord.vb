@@ -164,7 +164,7 @@ Public Class SalesRecord
         ' Add columns dynamically
         Guna2DataGridView1.Columns.Add(New DataGridViewTextBoxColumn() With {
             .Name = "OrderID",
-            .HeaderText = "Sale ID",
+            .HeaderText = "Sale No",
             .ReadOnly = True,
             .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
         })
@@ -285,7 +285,7 @@ Public Class SalesRecord
             ' Hide any existing "No records" message
             DataGridViewHelper.HideNoRecordsMessage()
 
-            Dim query As String = "SELECT s.SaleID, u.Username, s.SaleDate, s.PaymentMethod, s.TotalAmount, s.AmountPaid, " &
+            Dim query As String = "SELECT s.SaleID, IFNULL(s.SaleNumber, '') AS SaleNumber, u.Username, s.SaleDate, s.PaymentMethod, s.TotalAmount, s.AmountPaid, " &
                           "(s.AmountPaid - s.TotalAmount) AS Change, s.SalesData " &
                           "FROM Sales s LEFT JOIN Users u ON s.UserID = u.UserID"
 
@@ -317,6 +317,8 @@ Public Class SalesRecord
             Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters.ToArray())
                 While reader.Read()
                     Dim saleId As Integer = If(IsDBNull(reader("SaleID")), 0, Convert.ToInt32(reader("SaleID")))
+                    Dim saleNumber As String = If(IsDBNull(reader("SaleNumber")), "", reader("SaleNumber").ToString())
+                    If String.IsNullOrWhiteSpace(saleNumber) Then saleNumber = saleId.ToString()
                     Dim username As String = If(IsDBNull(reader("Username")), "Unknown", reader("Username").ToString())
                     Dim saleDate As DateTime = If(IsDBNull(reader("SaleDate")), DateTime.MinValue, Convert.ToDateTime(reader("SaleDate")))
                     Dim paymentMethod As String = If(IsDBNull(reader("PaymentMethod")), "N/A", reader("PaymentMethod").ToString())
@@ -338,7 +340,7 @@ Public Class SalesRecord
 
                     Dim rowIndex As Integer = Guna2DataGridView1.Rows.Add()
 
-                    Guna2DataGridView1.Rows(rowIndex).Cells("OrderID").Value = saleId
+                    Guna2DataGridView1.Rows(rowIndex).Cells("OrderID").Value = saleNumber
                     Guna2DataGridView1.Rows(rowIndex).Cells("CreatedBy").Value = username
                     Guna2DataGridView1.Rows(rowIndex).Cells("OrderDate").Value = If(saleDate = DateTime.MinValue, "", saleDate.ToString("MM/dd/yyyy HH:mm"))
 
@@ -357,6 +359,7 @@ Public Class SalesRecord
                     ' store raw values for later use
                     Guna2DataGridView1.Rows(rowIndex).Tag = New Dictionary(Of String, Object) From {
             {"SaleID", saleId},
+            {"SaleNumber", saleNumber},
             {"Username", username},
             {"SaleDate", saleDate},
             {"PaymentMethod", paymentMethod},
@@ -553,9 +556,12 @@ Public Class SalesRecord
     Private Sub Guna2DataGridView1_CellClick(sender As Object, e As DataGridViewCellEventArgs) Handles Guna2DataGridView1.CellClick
         Try
             If e.RowIndex >= 0 AndAlso Guna2DataGridView1.Columns(e.ColumnIndex).Name = "Action" Then
-                Dim saleIdObj = Guna2DataGridView1.Rows(e.RowIndex).Cells("OrderID").Value
-                If saleIdObj IsNot Nothing AndAlso Integer.TryParse(saleIdObj.ToString(), Nothing) Then
-                    Dim saleId As Integer = Convert.ToInt32(saleIdObj)
+                Dim saleId As Integer = 0
+                Dim tag = TryCast(Guna2DataGridView1.Rows(e.RowIndex).Tag, Dictionary(Of String, Object))
+                If tag IsNot Nothing AndAlso tag.ContainsKey("SaleID") Then
+                    saleId = Convert.ToInt32(tag("SaleID"))
+                End If
+                If saleId > 0 Then
                     ' Open SalesDetails form as modal and pass the SaleID
                     Dim detailsForm As New SalesDetails(saleId)
                     detailsForm.StartPosition = FormStartPosition.CenterParent

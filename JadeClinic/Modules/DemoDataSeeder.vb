@@ -480,7 +480,7 @@ Public Class DemoDataSeeder
                 salesData("items") = orderItems
                 Dim salesDataJson As String = JsonConvert.SerializeObject(salesData)
 
-                Dim saleNumber As String = $"SALE-{saleDateTime:yyyyMMdd}-{(saleCount + 1).ToString("D5")}"
+                Dim saleNumber As String = $"{saleDateTime:yyyyMMdd}{(saleCount + 1).ToString("D6")}"
 
                 Using cmd As New SqliteCommand(
                     "INSERT INTO Sales (SaleNumber, SaleDate, CustomerName, CustomerTIN, UserID, TotalAmount, " &

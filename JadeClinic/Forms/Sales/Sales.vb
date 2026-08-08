@@ -1038,26 +1038,45 @@ Public Class Sales
     End Sub
     ' Non-blocking toast notification for void success
     Private Sub ShowVoidSuccessNotification(productName As String, approver As String)
-        Dim notificationLabel As New Label()
-        notificationLabel.Text = $"Item Voided: {productName}"
+        Dim extra As String = ""
         If Not String.IsNullOrWhiteSpace(approver) Then
-            notificationLabel.Text &= $"  •  By: {approver}"
+            extra = $"By: {approver}"
+        End If
+        ShowToastNotification($"Item Voided: {productName}", SuccessGreen, extra)
+    End Sub
+
+    ' Non-blocking toast notification shown after a sale is created
+    Private Sub ShowSaleCreatedNotification(saleNumber As String, total As Decimal)
+        ShowToastNotification("Sale Created", SuccessGreen, $"{saleNumber}  •  {ChrW(&H20B1)}{total:F2}")
+    End Sub
+
+    ' Shared auto-dismissing toast near the top of the form (fades out after ~1.8s)
+    Private Sub ShowToastNotification(text As String, accent As Color, Optional extra As String = "")
+        Dim notificationLabel As New Label()
+        notificationLabel.Text = text
+        If Not String.IsNullOrWhiteSpace(extra) Then
+            notificationLabel.Text &= $"  •  {extra}"
         End If
         notificationLabel.Font = New Font("Poppins", 11, FontStyle.Bold)
         notificationLabel.ForeColor = PureWhite
-        notificationLabel.BackColor = Color.FromArgb(220, SuccessGreen.R, SuccessGreen.G, SuccessGreen.B)
-        notificationLabel.AutoSize = True
+        notificationLabel.BackColor = Color.FromArgb(220, accent.R, accent.G, accent.B)
+        notificationLabel.AutoSize = False
         notificationLabel.Padding = New Padding(12, 8, 12, 8)
         notificationLabel.TextAlign = ContentAlignment.MiddleCenter
+
+        ' Measure the text first and place the toast at its final centered
+        ' position before adding it, so it never renders at the top-left and
+        ' then jumps to the middle.
+        Dim measured As Size = TextRenderer.MeasureText(notificationLabel.Text, notificationLabel.Font)
+        notificationLabel.Size = New Size(measured.Width + notificationLabel.Padding.Horizontal + 4,
+                                          measured.Height + notificationLabel.Padding.Vertical + 4)
+        Dim centerX As Integer = (Me.ClientSize.Width - notificationLabel.Width) / 2
+        notificationLabel.Location = New Point(Math.Max(centerX, 4), 20) ' centered at the top
 
         Me.Controls.Add(notificationLabel)
         notificationLabel.BringToFront()
 
-        Application.DoEvents() ' ensure label measured/sized
-        Dim centerX As Integer = (Me.ClientSize.Width - notificationLabel.Width) / 2
-        notificationLabel.Location = New Point(centerX, 20) ' 20px from top
-
-        ' Auto-remove after 2 seconds with fade out
+        ' Auto-remove after ~1.8s with fade out
         Dim removeTimer As New Timer() With {.Interval = 1800}
         Dim fadeTimer As New Timer() With {.Interval = 50}
         Dim fadeSteps As Integer = 10
@@ -1076,7 +1095,7 @@ Public Class Sales
                                                                             End If
                                                                             fadeTimer.Dispose()
                                                                         Else
-                                                                            notificationLabel.BackColor = Color.FromArgb(alpha, SuccessGreen.R, SuccessGreen.G, SuccessGreen.B)
+                                                                            notificationLabel.BackColor = Color.FromArgb(alpha, accent.R, accent.G, accent.B)
                                                                         End If
                                                                     End Sub
                                          fadeTimer.Start()
@@ -3217,6 +3236,28 @@ Public Class Sales
         Dim cardHover As Color = Color.FromArgb(240, 238, 232)
         Dim goldAccent As Color = Color.FromArgb(191, 155, 48)
 
+        ' Shared actions used by both the buttons and the keyboard shortcuts.
+        ' Calling the logic directly (instead of PerformClick) means Guna2Button
+        ' never steals focus, so Enter always confirms even right after E/C.
+        Dim applyExactAction As System.Action = Sub()
+                                                    enteredAmount = totalAmount.ToString("F2")
+                                                    UpdateCashAmountDisplay()
+                                                End Sub
+        Dim clearAmountAction As System.Action = Sub()
+                                                     enteredAmount = ""
+                                                     UpdateCashAmountDisplay()
+                                                 End Sub
+        Dim confirmPaymentAction As System.Action = Sub()
+                                                        Dim receivedAmount As Decimal = 0D
+                                                        Dim amountText As String = lblAmountDisplay.Text.Replace("₱", "")
+                                                        If Not Decimal.TryParse(amountText, receivedAmount) OrElse receivedAmount < totalAmount Then
+                                                            MessageBox.Show("Amount received must be greater than or equal to order total.", "Payment Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                                                            Return
+                                                        End If
+                                                        cashForm.DialogResult = DialogResult.OK
+                                                        cashForm.Close()
+                                                    End Sub
+
         Dim btnExact As New Guna.UI2.WinForms.Guna2Button()
         btnExact.Text = $"Exact"
         btnExact.Size = New Size(140, 40)
@@ -3227,17 +3268,11 @@ Public Class Sales
         btnExact.BorderThickness = 0
         btnExact.BorderRadius = 10
         btnExact.HoverState.FillColor = Color.FromArgb(67, 160, 71)
+        btnExact.TabStop = False ' keep focus on the form so E/Enter shortcuts always work
         AddHandler btnExact.Click, Sub()
-                                       ' Set the exact total amount directly
-                                       enteredAmount = totalAmount.ToString("F2")
-                                       UpdateCashAmountDisplay()
+                                       applyExactAction()
                                    End Sub
         quickAmountSection.Controls.Add(btnExact)
-        ' Also update the Exact quick button to set 1 decimal place:
-        AddHandler btnExact.Click, Sub()
-                                       enteredAmount = totalAmount.ToString("F1")
-                                       UpdateCashAmountDisplay()
-                                   End Sub
         ' Clear button
         Dim btnClear As New Guna.UI2.WinForms.Guna2Button()
         btnClear.Text = "Clear"
@@ -3250,9 +3285,9 @@ Public Class Sales
         btnClear.BorderThickness = 1
         btnClear.BorderRadius = 10
         btnClear.HoverState.FillColor = Color.FromArgb(240, 238, 232)
+        btnClear.TabStop = False
         AddHandler btnClear.Click, Sub()
-                                       enteredAmount = ""
-                                       UpdateCashAmountDisplay()
+                                       clearAmountAction()
                                    End Sub
         quickAmountSection.Controls.Add(btnClear)
 
@@ -3273,15 +3308,9 @@ Public Class Sales
         btnComplete.BorderThickness = 0
         btnComplete.BorderRadius = 12
         btnComplete.HoverState.FillColor = Color.FromArgb(67, 160, 71)
+        btnComplete.TabStop = False ' keep focus on the form so keyboard shortcuts always work
         AddHandler btnComplete.Click, Sub()
-                                          Dim receivedAmount As Decimal = 0D
-                                          Dim amountText As String = lblAmountDisplay.Text.Replace("₱", "")
-                                          If Not Decimal.TryParse(amountText, receivedAmount) OrElse receivedAmount < totalAmount Then
-                                              MessageBox.Show("Amount received must be greater than or equal to order total.", "Payment Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
-                                              Return
-                                          End If
-                                          cashForm.DialogResult = DialogResult.OK
-                                          cashForm.Close()
+                                          confirmPaymentAction()
                                       End Sub
         actionSection.Controls.Add(btnComplete)
 
@@ -3296,6 +3325,7 @@ Public Class Sales
         btnBack.BorderThickness = 1
         btnBack.BorderRadius = 12
         btnBack.HoverState.FillColor = Color.FromArgb(240, 238, 232)
+        btnBack.TabStop = False
         AddHandler btnBack.Click, Sub()
                                       cashForm.DialogResult = DialogResult.Cancel
                                       cashForm.Close()
@@ -3313,6 +3343,7 @@ Public Class Sales
         btnCancel.BorderThickness = 1
         btnCancel.BorderRadius = 12
         btnCancel.HoverState.FillColor = Color.FromArgb(255, 235, 235)
+        btnCancel.TabStop = False
         AddHandler btnCancel.Click, Sub()
                                         cashForm.DialogResult = DialogResult.Abort
                                         cashForm.Close()
@@ -3343,27 +3374,31 @@ Public Class Sales
                                              ProcessKeypadInputEnhanced("?", UpdateCashAmountDisplay)
                                              e.Handled = True
 
-                                             ' Handle Enter key to complete payment
-                                         ElseIf e.KeyCode = Keys.Enter Then
-                                             btnComplete.PerformClick()
-                                             e.Handled = True
+                                               ' Handle Enter key to complete payment
+                                           ElseIf e.KeyCode = Keys.Enter Then
+                                               confirmPaymentAction()
+                                               e.Handled = True
+                                               e.SuppressKeyPress = True
 
-                                             ' Handle Escape to cancel
-                                         ElseIf e.KeyCode = Keys.Escape Then
-                                             btnBack.PerformClick()
-                                             e.Handled = True
+                                               ' Handle Escape to cancel
+                                           ElseIf e.KeyCode = Keys.Escape Then
+                                               btnBack.PerformClick()
+                                               e.Handled = True
+                                               e.SuppressKeyPress = True
 
-                                             ' Handle C key for clear
-                                         ElseIf e.KeyCode = Keys.C Then
-                                             btnClear.PerformClick()
-                                             e.Handled = True
+                                               ' Handle C key for clear
+                                           ElseIf e.KeyCode = Keys.C Then
+                                               clearAmountAction()
+                                               e.Handled = True
+                                               e.SuppressKeyPress = True
 
-                                             ' Handle E key for exact amount
-                                         ElseIf e.KeyCode = Keys.E Then
-                                             btnExact.PerformClick()
-                                             e.Handled = True
+                                               ' Handle E key for exact amount
+                                           ElseIf e.KeyCode = Keys.E Then
+                                               applyExactAction()
+                                               e.Handled = True
+                                               e.SuppressKeyPress = True
 
-                                         End If
+                                          End If
                                      End Sub
 
         ' Initial amount display update
@@ -3859,6 +3894,14 @@ Public Class Sales
                                 Throw New Exception("Failed to create sale record.")
                             End If
 
+                            ' Generate a readable, numbers-only SaleNumber for this sale
+                            Dim generatedSaleNumber As String = Utilities.FormatSaleNumber(saleId)
+                            Using cmdNum As New SqliteCommand("UPDATE Sales SET SaleNumber = @SaleNumber WHERE SaleID = @SaleID", conn, tran)
+                                cmdNum.Parameters.AddWithValue("@SaleNumber", generatedSaleNumber)
+                                cmdNum.Parameters.AddWithValue("@SaleID", saleId)
+                                cmdNum.ExecuteNonQuery()
+                            End Using
+
                             ' For each ordered item: insert SaleItems, update product stock, insert InventoryLog (OUT)
                             For Each item In currentOrderList
                                 Dim prodId As Integer = Convert.ToInt32(item("ProductID"))
@@ -3933,7 +3976,7 @@ Public Class Sales
                             Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Sale Created", $"SaleID {saleId} created. Total ₱{orderTotal:F2}")
 
                             ' Prepare receipt data (use values computed by RefreshOrderDisplay)
-                            receiptOrderId = saleId.ToString()
+                            receiptOrderId = generatedSaleNumber
                             receiptCustomerName = If(String.IsNullOrWhiteSpace(selectedCustomerName), "", selectedCustomerName)
                             receiptTotalAmount = Me.receiptTotalAmount
                             receiptAmountReceived = receivedAmount
@@ -3942,6 +3985,9 @@ Public Class Sales
 
                             ' Print and finalize
                             PrintReceipt()
+
+                            ' Confirm the sale with an auto-dismissing toast
+                            ShowSaleCreatedNotification(generatedSaleNumber, orderTotal)
 
                             ' Reset for next transaction
                             ResetSale()

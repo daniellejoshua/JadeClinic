@@ -60,59 +60,20 @@ Public Module ProfileManager
                                 profilePic.Image = New Bitmap(loadedImage)
                                 loadedImage.Dispose()
                             Else
-                                profilePic.Image = CreateDefaultProfileAvatar(frmLoginvb.LoggedInUsername)
+                                profilePic.Image = New Bitmap(My.Resources.avatar_default_svgrepo_com)
                             End If
                         Else
-                            profilePic.Image = CreateDefaultProfileAvatar(frmLoginvb.LoggedInUsername)
+                            profilePic.Image = New Bitmap(My.Resources.avatar_default_svgrepo_com)
                         End If
                     End If
                 End Using
             End If
         Catch ex As Exception
             If profilePic IsNot Nothing Then
-                profilePic.Image = CreateDefaultProfileAvatar(If(frmLoginvb.LoggedInUsername, "User"))
+                profilePic.Image = New Bitmap(My.Resources.avatar_default_svgrepo_com)
             End If
         End Try
     End Sub
-
-    Public Function CreateDefaultProfileAvatar(username As String) As Image
-        Dim bitmap As New Bitmap(50, 50)
-        Using g As Graphics = Graphics.FromImage(bitmap)
-            g.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias
-
-            Dim colors() As Color = {
-                Color.FromArgb(255, 107, 107),
-                Color.FromArgb(78, 205, 196),
-                Color.FromArgb(85, 98, 112),
-                Color.FromArgb(129, 236, 236),
-                Color.FromArgb(116, 185, 255)
-            }
-            Dim colorIndex As Integer = Math.Abs(username.GetHashCode()) Mod colors.Length
-            g.FillEllipse(New SolidBrush(colors(colorIndex)), 0, 0, 50, 50)
-
-            Dim initials As String = ""
-            If username.Length > 0 Then
-                initials = username.Substring(0, 1).ToUpper()
-                If username.Length > 1 Then
-                    For i As Integer = 1 To username.Length - 1
-                        If Char.IsUpper(username(i)) OrElse username(i) = " "c Then
-                            If username(i) <> " "c Then
-                                initials += username(i).ToString().ToUpper()
-                                Exit For
-                            End If
-                        End If
-                    Next
-                End If
-            End If
-
-            Using font As New Font("Poppins", 14, FontStyle.Bold)
-                Dim textSize = g.MeasureString(initials, font)
-                g.DrawString(initials, font, Brushes.White,
-                    (50 - textSize.Width) / 2, (50 - textSize.Height) / 2)
-            End Using
-        End Using
-        Return bitmap
-    End Function
 
     Private Sub ToggleProfileDropdown(form As Form, profilePic As PictureBox)
         If isDropdownVisible.ContainsKey(form) AndAlso isDropdownVisible(form) Then

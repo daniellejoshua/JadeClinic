@@ -321,7 +321,8 @@ Public Module SupabaseSync
     ' so stock levels, prices and roles stay current.
     ' ------------------------------------------------------------
     Public Function RunFullSync(Optional progress As Action(Of String) = Nothing,
-                                Optional full As Boolean = False) As SyncResult
+                                Optional full As Boolean = False,
+                                Optional resolveBaseline As Boolean = False) As SyncResult
         Dim result As New SyncResult()
         Dim pg As NpgsqlConnection = Nothing
         Dim logId As Integer = 0
@@ -338,6 +339,16 @@ Public Module SupabaseSync
             EnsureCloudSchema(pg)
 
             ReconcileStaleSyncRuns(pg)
+
+            ' Smart runs (manual "Sync Cloud" button without "Force full
+            ' re-upload") upload everything only until the cloud has a
+            ' baseline; once any sales rows exist they run as a delta sync
+            ' so repeat clicks do not re-upload the whole history.
+            If Not full AndAlso resolveBaseline Then
+                Using countCmd As New NpgsqlCommand("SELECT COUNT(*) FROM sales", pg)
+                    full = Convert.ToInt32(countCmd.ExecuteScalar()) = 0
+                End Using
+            End If
 
             ' Record the start of this sync run
             Using logCmd As New NpgsqlCommand(

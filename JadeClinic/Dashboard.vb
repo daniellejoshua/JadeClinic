@@ -1487,45 +1487,10 @@ Public Class Dashboard
             .BackColor = Color.Transparent
         }
 
-            ' Create default initials avatar (inline, avoids external helper)
+            ' Create default avatar from shared resource
             Dim username As String = If(String.IsNullOrEmpty(frmLoginvb.LoggedInUsername), "U", frmLoginvb.LoggedInUsername)
             Try
-                Dim bmp As New Bitmap(avatarSize, avatarSize)
-                Using g As Graphics = Graphics.FromImage(bmp)
-                    g.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias
-
-                    ' color palette (kept small)
-                    Dim colors() As Color = {
-                    Color.FromArgb(255, 107, 107),
-                    Color.FromArgb(78, 205, 196),
-                    Color.FromArgb(85, 98, 112),
-                    Color.FromArgb(129, 236, 236),
-                    Color.FromArgb(116, 185, 255)
-                }
-                    Dim idx As Integer = Math.Abs(username.GetHashCode()) Mod colors.Length
-                    Using br As New SolidBrush(colors(idx))
-                        g.FillEllipse(br, 0, 0, avatarSize - 1, avatarSize - 1)
-                    End Using
-
-                    ' build initials (1 or 2 letters)
-                    Dim initials As String = username.Substring(0, 1).ToUpper()
-                    For i As Integer = 1 To username.Length - 1
-                        If Char.IsUpper(username(i)) OrElse username(i) = " "c Then
-                            If username(i) <> " "c Then
-                                initials &= username(i).ToString().ToUpper()
-                                Exit For
-                            End If
-                        End If
-                    Next
-
-                    Using font As New Font("Poppins", 10, FontStyle.Bold, GraphicsUnit.Point)
-                        Dim sf As New StringFormat() With {.Alignment = StringAlignment.Center, .LineAlignment = StringAlignment.Center}
-                        Using brushWhite As New SolidBrush(Color.White)
-                            g.DrawString(initials, font, brushWhite, New RectangleF(0, 0, avatarSize, avatarSize), sf)
-                        End Using
-                    End Using
-                End Using
-                avatar.Image = bmp
+                avatar.Image = New Bitmap(My.Resources.avatar_default_svgrepo_com)
             Catch
                 ' fallback: plain background
                 avatar.BackColor = Color.FromArgb(200, 200, 200)

@@ -313,7 +313,7 @@ Public Class Staff
                         End If
                     End If
                     If userPhoto Is Nothing Then
-                        userPhoto = CreateDefaultAvatar(username)
+                        userPhoto = CreateDefaultAvatarImage()
                     End If
 
                     ' Add row to DataGridView
@@ -361,49 +361,25 @@ Public Class Staff
             End If
         End Try
     End Sub
-    Private Function CreateDefaultAvatar(username As String) As System.Drawing.Image
+    Private Function CreateDefaultAvatarImage() As System.Drawing.Image
         Const w As Integer = 90
         Const h As Integer = 60
-        Dim bitmap As New Bitmap(w, h)
-        Using g As Graphics = Graphics.FromImage(bitmap)
+        Dim bmp As New Bitmap(w, h)
+        Using g As Graphics = Graphics.FromImage(bmp)
             g.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias
             g.InterpolationMode = Drawing2D.InterpolationMode.HighQualityBicubic
 
-            Dim colors() As System.Drawing.Color = {
-                System.Drawing.Color.FromArgb(255, 107, 107),
-                System.Drawing.Color.FromArgb(78, 205, 196),
-                System.Drawing.Color.FromArgb(85, 98, 112),
-                System.Drawing.Color.FromArgb(129, 236, 236),
-                System.Drawing.Color.FromArgb(116, 185, 255)
-            }
-            Dim colorIndex As Integer = Math.Abs(username.GetHashCode()) Mod colors.Length
+            ' Transparent background (grid renders no fill outside the avatar)
+            g.Clear(System.Drawing.Color.Transparent)
 
-            Using br As New SolidBrush(colors(colorIndex))
-                g.FillEllipse(br, 7, 2, 56, 56)
-            End Using
-
-            Dim initials As String = ""
-            If username.Length > 0 Then
-                initials = username.Substring(0, 1).ToUpper()
-                If username.Length > 1 Then
-                    For i As Integer = 1 To username.Length - 1
-                        If Char.IsUpper(username(i)) OrElse username(i) = " "c Then
-                            If username(i) <> " "c Then
-                                initials += username(i).ToString().ToUpper()
-                                Exit For
-                            End If
-                        End If
-                    Next
-                End If
-            End If
-
-            Using font As New System.Drawing.Font("Poppins", 14, System.Drawing.FontStyle.Bold)
-                Dim textSize = g.MeasureString(initials, font)
-                g.DrawString(initials, font, Brushes.White,
-                    CInt((w - textSize.Width) / 2), CInt((h - textSize.Height) / 2))
-            End Using
+            ' Draw the shared default avatar resource centered, preserving aspect ratio
+            Dim src As System.Drawing.Image = My.Resources.avatar_default_svgrepo_com
+            Dim scale As Single = Math.Min(w / src.Width, h / src.Height)
+            Dim dw As Integer = CInt(src.Width * scale)
+            Dim dh As Integer = CInt(src.Height * scale)
+            g.DrawImage(src, (w - dw) \ 2, (h - dh) \ 2, dw, dh)
         End Using
-        Return bitmap
+        Return bmp
     End Function
 
     Private Function ResizeForCell(img As SD.Image) As SD.Image

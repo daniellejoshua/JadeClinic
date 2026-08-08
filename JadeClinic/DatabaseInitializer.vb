@@ -221,6 +221,18 @@ Public Class DatabaseInitializer
             Console.WriteLine($"Note: Could not create CustomerTIN index on Sales: {ex.Message}")
         End Try
 
+        ' Backfill SaleNumber for rows that predate automatic generation so
+        ' every sale has a readable numbers-only reference
+        ' (yyyyMMdd + zero-padded SaleID, e.g. 20230201000001).
+        Try
+            DatabaseHelper.ExecuteNonQuery(
+                "UPDATE Sales SET SaleNumber = " &
+                "strftime('%Y%m%d', SaleDate) || substr('000000', 1, MAX(0, 6 - length(Cast(SaleID As Text)))) || Cast(SaleID As Text) " &
+                "WHERE SaleNumber IS NULL OR Trim(SaleNumber) = '' OR SaleNumber NOT GLOB '[0-9]*'", Nothing)
+        Catch ex As Exception
+            Console.WriteLine($"Note: Could not backfill SaleNumber on Sales: {ex.Message}")
+        End Try
+
         ' Additional indexes (SaleDate, DiscountAmount) can be created similarly if needed
     End Sub
 

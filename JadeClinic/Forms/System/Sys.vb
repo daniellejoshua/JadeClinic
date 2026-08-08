@@ -220,8 +220,10 @@ Public Class Sys
 
     Private Sub btnSyncCloud_Click(sender As Object, e As EventArgs) Handles btnSyncCloud.Click
         Try
-            SyncQueue.Instance.Enqueue(full:=True)
-            lblSyncStatus.Text = "Cloud sync queued (full) - running in the background..."
+            SyncQueue.Instance.EnqueueSmart(forceFull:=chkForceFull.Checked)
+            lblSyncStatus.Text = If(chkForceFull.Checked,
+                "Cloud sync queued (full) - running in the background...",
+                "Cloud sync queued - running in the background...")
             lblSyncStatus.ForeColor = LightSilver
         Catch ex As Exception
             lblSyncStatus.Text = "Could not start cloud sync: " & ex.Message
