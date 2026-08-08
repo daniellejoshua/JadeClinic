@@ -1330,4 +1330,8 @@ Public Class InventoryLog
             loadingLabel = Nothing
         End If
     End Sub
+
+    Private Sub Guna2CirclePictureBox5_Click(sender As Object, e As EventArgs) Handles Guna2CirclePictureBox5.Click
+
+    End Sub
 End Class

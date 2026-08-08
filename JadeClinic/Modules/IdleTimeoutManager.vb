@@ -30,7 +30,6 @@ Public Class IdleTimeoutManager
         ' Initialize the idle timer
         idleTimer = New Timer()
         idleTimer.Interval = IDLE_TIMEOUT_SECONDS * 1000 ' Convert to milliseconds
-        AddHandler idleTimer.Tick, AddressOf OnIdleTimeout
     End Sub
 
     ' Start monitoring idle time for a form
@@ -55,7 +54,6 @@ Public Class IdleTimeoutManager
                 Console.WriteLine("Creating new timer in StartMonitoring")
                 idleTimer = New Timer()
                 idleTimer.Interval = IDLE_TIMEOUT_SECONDS * 1000
-                AddHandler idleTimer.Tick, AddressOf OnIdleTimeout
             End If
 
             ' CRITICAL: Use delayed start to prevent immediate timeout
@@ -364,7 +362,7 @@ Public Class IdleTimeoutManager
 
             ' Password textbox
             Dim txtPassword As New TextBox()
-            txtPassword.PasswordChar = "•"c
+            txtPassword.PasswordChar = "ï¿½"c
             txtPassword.Font = New Font("Segoe UI", 12, FontStyle.Regular)
             txtPassword.BackColor = System.Drawing.Color.FromArgb(237, 237, 237)
             txtPassword.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51)
@@ -604,7 +602,6 @@ Public Class IdleTimeoutManager
             ' Stop and dispose timer
             If idleTimer IsNot Nothing Then
                 idleTimer.Stop()
-                RemoveHandler idleTimer.Tick, AddressOf OnIdleTimeout
                 idleTimer.Dispose()
                 idleTimer = Nothing
             End If
@@ -627,7 +624,6 @@ Public Class IdleTimeoutManager
             ' Recreate the timer for next login session
             idleTimer = New Timer()
             idleTimer.Interval = IDLE_TIMEOUT_SECONDS * 1000
-            AddHandler idleTimer.Tick, AddressOf OnIdleTimeout
 
             Console.WriteLine("IdleTimeoutManager state reset successfully")
 
@@ -655,7 +651,6 @@ Public Class IdleTimeoutManager
             ' Dispose and recreate timer
             If idleTimer IsNot Nothing Then
                 idleTimer.Stop()
-                RemoveHandler idleTimer.Tick, AddressOf OnIdleTimeout
                 idleTimer.Dispose()
                 idleTimer = Nothing
             End If
@@ -663,7 +658,6 @@ Public Class IdleTimeoutManager
             ' Create fresh timer
             idleTimer = New Timer()
             idleTimer.Interval = IDLE_TIMEOUT_SECONDS * 1000
-            AddHandler idleTimer.Tick, AddressOf OnIdleTimeout
 
             Console.WriteLine("IdleTimeoutManager completely reset for new session")
 

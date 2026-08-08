@@ -912,7 +912,7 @@ Public Class Inventory
                                     e.Graphics.DrawRectangle(borderPen, imageRect)
                                 End Using
                             Else
-                                Dim logo As Image = GetCachedLogo()
+                                Dim logo As Image = My.Resources.product_placeholder
                                 If logo IsNot Nothing Then
                                     e.Graphics.DrawImage(logo, imageRect)
                                     Using borderPen As New Pen(LightGray, 1)

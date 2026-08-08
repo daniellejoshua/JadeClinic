@@ -369,8 +369,8 @@ Public Class Staff
             g.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias
             g.InterpolationMode = Drawing2D.InterpolationMode.HighQualityBicubic
 
-            ' Transparent background (grid renders no fill outside the avatar)
-            g.Clear(System.Drawing.Color.Transparent)
+            ' Opaque background so transparent corners don't render black in the grid cell
+            g.Clear(System.Drawing.Color.White)
 
             ' Draw the shared default avatar resource centered, preserving aspect ratio
             Dim src As System.Drawing.Image = My.Resources.avatar_default_svgrepo_com

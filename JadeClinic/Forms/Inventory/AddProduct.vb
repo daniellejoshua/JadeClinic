@@ -566,7 +566,7 @@ Public Class AddProduct
     End Sub
 
     Private Sub SetDefaultProductImage()
-        ProductImage.Image = CompanySettingsManager.Instance.GetCompanyLogo()
+        ProductImage.Image = My.Resources.product_placeholder
     End Sub
 
     Private Sub ClearForm()

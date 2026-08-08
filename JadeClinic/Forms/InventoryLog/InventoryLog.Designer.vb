@@ -21,10 +21,10 @@ Partial Class InventoryLog
     Private Sub InitializeComponent()
         Dim CustomizableEdges1 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges2 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges3 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim DataGridViewCellStyle1 As DataGridViewCellStyle = New DataGridViewCellStyle()
         Dim DataGridViewCellStyle2 As DataGridViewCellStyle = New DataGridViewCellStyle()
         Dim DataGridViewCellStyle3 As DataGridViewCellStyle = New DataGridViewCellStyle()
+        Dim CustomizableEdges3 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges4 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges5 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges6 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
@@ -38,7 +38,6 @@ Partial Class InventoryLog
         LabelTitle = New Label()
         DashboardPanel = New Guna.UI2.WinForms.Guna2Panel()
         PictureBox9 = New PictureBox()
-        Guna2CirclePictureBox5 = New Guna.UI2.WinForms.Guna2CirclePictureBox()
         InventoryLogDataGrid = New Guna.UI2.WinForms.Guna2DataGridView()
         SortBy = New Guna.UI2.WinForms.Guna2ComboBox()
         Exportbtn = New Guna.UI2.WinForms.Guna2Button()
@@ -48,11 +47,12 @@ Partial Class InventoryLog
         Guna2HtmlLabel4 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         AddInventoryLog = New Guna.UI2.WinForms.Guna2Button()
         Guna2Panel1 = New Guna.UI2.WinForms.Guna2Panel()
+        Guna2CirclePictureBox5 = New Guna.UI2.WinForms.Guna2CirclePictureBox()
         DashboardPanel.SuspendLayout()
         CType(PictureBox9, ComponentModel.ISupportInitialize).BeginInit()
-        CType(Guna2CirclePictureBox5, ComponentModel.ISupportInitialize).BeginInit()
         CType(InventoryLogDataGrid, ComponentModel.ISupportInitialize).BeginInit()
         Guna2Panel1.SuspendLayout()
+        CType(Guna2CirclePictureBox5, ComponentModel.ISupportInitialize).BeginInit()
         SuspendLayout()
         ' 
         ' LabelTitle
@@ -90,17 +90,6 @@ Partial Class InventoryLog
         PictureBox9.SizeMode = PictureBoxSizeMode.StretchImage
         PictureBox9.TabIndex = 39
         PictureBox9.TabStop = False
-        ' 
-        ' Guna2CirclePictureBox5
-        ' 
-        Guna2CirclePictureBox5.ImageRotate = 0F
-        Guna2CirclePictureBox5.Location = New Point(1756, 20)
-        Guna2CirclePictureBox5.Name = "Guna2CirclePictureBox5"
-        Guna2CirclePictureBox5.ShadowDecoration.CustomizableEdges = CustomizableEdges3
-        Guna2CirclePictureBox5.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
-        Guna2CirclePictureBox5.Size = New Size(31, 28)
-        Guna2CirclePictureBox5.TabIndex = 40
-        Guna2CirclePictureBox5.TabStop = False
         ' 
         ' InventoryLogDataGrid
         ' 
@@ -164,7 +153,7 @@ Partial Class InventoryLog
         SortBy.BackColor = Color.Transparent
         SortBy.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
         SortBy.BorderRadius = 10
-        SortBy.CustomizableEdges = CustomizableEdges4
+        SortBy.CustomizableEdges = CustomizableEdges3
         SortBy.DrawMode = DrawMode.OwnerDrawFixed
         SortBy.DropDownStyle = ComboBoxStyle.DropDownList
         SortBy.FocusedColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
@@ -174,14 +163,14 @@ Partial Class InventoryLog
         SortBy.ItemHeight = 40
         SortBy.Location = New Point(621, 96)
         SortBy.Name = "SortBy"
-        SortBy.ShadowDecoration.CustomizableEdges = CustomizableEdges5
+        SortBy.ShadowDecoration.CustomizableEdges = CustomizableEdges4
         SortBy.Size = New Size(309, 46)
         SortBy.TabIndex = 65
         ' 
         ' Exportbtn
         ' 
         Exportbtn.BorderRadius = 10
-        Exportbtn.CustomizableEdges = CustomizableEdges6
+        Exportbtn.CustomizableEdges = CustomizableEdges5
         Exportbtn.DisabledState.BorderColor = Color.DarkGray
         Exportbtn.DisabledState.CustomBorderColor = Color.DarkGray
         Exportbtn.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
@@ -191,7 +180,7 @@ Partial Class InventoryLog
         Exportbtn.ForeColor = Color.White
         Exportbtn.Location = New Point(1779, 102)
         Exportbtn.Name = "Exportbtn"
-        Exportbtn.ShadowDecoration.CustomizableEdges = CustomizableEdges7
+        Exportbtn.ShadowDecoration.CustomizableEdges = CustomizableEdges6
         Exportbtn.Size = New Size(110, 40)
         Exportbtn.TabIndex = 66
         Exportbtn.Text = "Export"
@@ -224,7 +213,7 @@ Partial Class InventoryLog
         Guna2DateTimePicker1.BorderRadius = 10
         Guna2DateTimePicker1.BorderThickness = 1
         Guna2DateTimePicker1.Checked = True
-        Guna2DateTimePicker1.CustomizableEdges = CustomizableEdges8
+        Guna2DateTimePicker1.CustomizableEdges = CustomizableEdges7
         Guna2DateTimePicker1.FillColor = Color.White
         Guna2DateTimePicker1.Font = New Font("Poppins", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2DateTimePicker1.ForeColor = Color.Black
@@ -233,7 +222,7 @@ Partial Class InventoryLog
         Guna2DateTimePicker1.MaxDate = New Date(9998, 12, 31, 0, 0, 0, 0)
         Guna2DateTimePicker1.MinDate = New Date(1753, 1, 1, 0, 0, 0, 0)
         Guna2DateTimePicker1.Name = "Guna2DateTimePicker1"
-        Guna2DateTimePicker1.ShadowDecoration.CustomizableEdges = CustomizableEdges9
+        Guna2DateTimePicker1.ShadowDecoration.CustomizableEdges = CustomizableEdges8
         Guna2DateTimePicker1.Size = New Size(148, 40)
         Guna2DateTimePicker1.TabIndex = 76
         Guna2DateTimePicker1.Value = New Date(2025, 9, 27, 23, 48, 46, 373)
@@ -252,7 +241,7 @@ Partial Class InventoryLog
         ' AddInventoryLog
         ' 
         AddInventoryLog.BorderRadius = 10
-        AddInventoryLog.CustomizableEdges = CustomizableEdges10
+        AddInventoryLog.CustomizableEdges = CustomizableEdges9
         AddInventoryLog.DisabledState.BorderColor = Color.DarkGray
         AddInventoryLog.DisabledState.CustomBorderColor = Color.DarkGray
         AddInventoryLog.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
@@ -262,7 +251,7 @@ Partial Class InventoryLog
         AddInventoryLog.ForeColor = Color.White
         AddInventoryLog.Location = New Point(1578, 102)
         AddInventoryLog.Name = "AddInventoryLog"
-        AddInventoryLog.ShadowDecoration.CustomizableEdges = CustomizableEdges11
+        AddInventoryLog.ShadowDecoration.CustomizableEdges = CustomizableEdges10
         AddInventoryLog.Size = New Size(173, 40)
         AddInventoryLog.TabIndex = 78
         AddInventoryLog.Text = "Add Inventory Log"
@@ -273,13 +262,24 @@ Partial Class InventoryLog
         Guna2Panel1.BorderColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
         Guna2Panel1.BorderThickness = 2
         Guna2Panel1.Controls.Add(InventoryLogDataGrid)
-        Guna2Panel1.CustomizableEdges = CustomizableEdges12
+        Guna2Panel1.CustomizableEdges = CustomizableEdges11
         Guna2Panel1.FillColor = Color.FromArgb(CByte(250), CByte(249), CByte(246))
         Guna2Panel1.Location = New Point(235, 160)
         Guna2Panel1.Name = "Guna2Panel1"
-        Guna2Panel1.ShadowDecoration.CustomizableEdges = CustomizableEdges13
+        Guna2Panel1.ShadowDecoration.CustomizableEdges = CustomizableEdges12
         Guna2Panel1.Size = New Size(1657, 861)
         Guna2Panel1.TabIndex = 79
+        ' 
+        ' Guna2CirclePictureBox5
+        ' 
+        Guna2CirclePictureBox5.ImageRotate = 0F
+        Guna2CirclePictureBox5.Location = New Point(1742, 26)
+        Guna2CirclePictureBox5.Name = "Guna2CirclePictureBox5"
+        Guna2CirclePictureBox5.ShadowDecoration.CustomizableEdges = CustomizableEdges13
+        Guna2CirclePictureBox5.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
+        Guna2CirclePictureBox5.Size = New Size(31, 28)
+        Guna2CirclePictureBox5.TabIndex = 80
+        Guna2CirclePictureBox5.TabStop = False
         ' 
         ' InventoryLog
         ' 
@@ -288,6 +288,7 @@ Partial Class InventoryLog
         AutoScroll = True
         BackColor = Color.White
         ClientSize = New Size(1902, 1033)
+        Controls.Add(Guna2CirclePictureBox5)
         Controls.Add(Guna2Panel1)
         Controls.Add(AddInventoryLog)
         Controls.Add(Guna2HtmlLabel4)
@@ -296,7 +297,6 @@ Partial Class InventoryLog
         Controls.Add(Guna2HtmlLabel3)
         Controls.Add(Exportbtn)
         Controls.Add(SortBy)
-        Controls.Add(Guna2CirclePictureBox5)
         Controls.Add(DashboardPanel)
         Controls.Add(LabelTitle)
         Name = "InventoryLog"
@@ -305,9 +305,9 @@ Partial Class InventoryLog
         Text = "Orders"
         DashboardPanel.ResumeLayout(False)
         CType(PictureBox9, ComponentModel.ISupportInitialize).EndInit()
-        CType(Guna2CirclePictureBox5, ComponentModel.ISupportInitialize).EndInit()
         CType(InventoryLogDataGrid, ComponentModel.ISupportInitialize).EndInit()
         Guna2Panel1.ResumeLayout(False)
+        CType(Guna2CirclePictureBox5, ComponentModel.ISupportInitialize).EndInit()
         ResumeLayout(False)
         PerformLayout()
     End Sub
@@ -315,7 +315,6 @@ Partial Class InventoryLog
     Friend WithEvents LabelTitle As Label
     Friend WithEvents DashboardPanel As Guna.UI2.WinForms.Guna2Panel
     Friend WithEvents PictureBox9 As PictureBox
-    Friend WithEvents Guna2CirclePictureBox5 As Guna.UI2.WinForms.Guna2CirclePictureBox
     Friend WithEvents InventoryLogDataGrid As Guna.UI2.WinForms.Guna2DataGridView
     Friend WithEvents SortBy As Guna.UI2.WinForms.Guna2ComboBox
     Friend WithEvents Exportbtn As Guna.UI2.WinForms.Guna2Button
@@ -327,4 +326,5 @@ Partial Class InventoryLog
     Friend WithEvents Guna2HtmlLabel4 As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents AddInventoryLog As Guna.UI2.WinForms.Guna2Button
     Friend WithEvents Guna2Panel1 As Guna.UI2.WinForms.Guna2Panel
+    Friend WithEvents Guna2CirclePictureBox5 As Guna.UI2.WinForms.Guna2CirclePictureBox
 End Class

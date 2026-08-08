@@ -658,13 +658,13 @@ Public Class Sales
                 Try
                     ' Add product image (attempt DB load, fallback to resource)
                     Dim productIdInt As Integer = Convert.ToInt32(reader("ProductID"))
-                    Dim img As Image = LoadProductImage(productIdInt, 90, 90)
+                    Dim img As Image = LoadProductImage(productIdInt, 80, 80)
                     productImage.Image = img
                 Catch
-                    productImage.Image = My.Resources.Jade_Dental_Logo ' Use your dental logo as placeholder
+                    productImage.Image = My.Resources.product_placeholder
                 End Try
 
-                productImage.Size = New Size(90, 90)
+                productImage.Size = New Size(80, 80)
                 productImage.Location = New Point(cardWidth - productImage.Width - 10, 10)
                 productImage.SizeMode = PictureBoxSizeMode.StretchImage
                 productImage.BorderRadius = 10
@@ -4998,7 +4998,7 @@ Public Class Sales
         End Try
 
         Try
-            Return My.Resources.Jade_Dental_Logo
+            Return My.Resources.product_placeholder
         Catch
             Dim placeholder As New Bitmap(desiredWidth, desiredHeight)
             Using g As Graphics = Graphics.FromImage(placeholder)
@@ -5040,12 +5040,12 @@ Public Class Sales
 
                 Dim productImage As New Guna.UI2.WinForms.Guna2PictureBox()
                 Try
-                    Dim img As Image = LoadProductImage(productId, 90, 90)
+                    Dim img As Image = LoadProductImage(productId, 80, 80)
                     productImage.Image = img
                 Catch
-                    productImage.Image = My.Resources.Jade_Dental_Logo
+                    productImage.Image = My.Resources.product_placeholder
                 End Try
-                productImage.Size = New Size(90, 90)
+                productImage.Size = New Size(80, 80)
                 productImage.Location = New Point(cardWidth - productImage.Width - 10, 10)
                 productImage.SizeMode = PictureBoxSizeMode.StretchImage
                 productImage.BorderRadius = 10
