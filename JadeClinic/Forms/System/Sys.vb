@@ -75,6 +75,11 @@ Public Class Sys
 
             ' Load recent sync history in the background
             LoadSyncLogsAsync()
+
+            ' Listen for background sync progress from the queue
+            AddHandler SyncQueue.Instance.Progress, AddressOf OnSyncQueueProgress
+            AddHandler SyncQueue.Instance.Completed, AddressOf OnSyncQueueCompleted
+            AddHandler SyncQueue.Instance.Failed, AddressOf OnSyncQueueFailed
         Catch ex As Exception
             MessageBox.Show($"Sys_Load error: {ex.Message}", "Sys Load Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
@@ -213,28 +218,14 @@ Public Class Sys
         End Try
     End Sub
 
-    Private Async Sub btnSyncCloud_Click(sender As Object, e As EventArgs) Handles btnSyncCloud.Click
-        btnSyncCloud.Enabled = False
-        lblSyncStatus.Text = "Syncing to Supabase... (this may take a few seconds)"
-        lblSyncStatus.ForeColor = LightSilver
-
+    Private Sub btnSyncCloud_Click(sender As Object, e As EventArgs) Handles btnSyncCloud.Click
         Try
-            Dim result As SyncResult = Await Task.Run(Function() SupabaseSync.RunFullSync())
-
-            If result.Success Then
-                lblSyncStatus.Text = "Sync complete:" & vbCrLf & String.Join(vbCrLf, result.Summary)
-                lblSyncStatus.ForeColor = SuccessGreen
-            Else
-                lblSyncStatus.Text = "Sync failed: " & result.ErrorMessage
-                lblSyncStatus.ForeColor = AlertRed
-            End If
-
-            LoadSyncLogsAsync()
+            SyncQueue.Instance.Enqueue(full:=True)
+            lblSyncStatus.Text = "Cloud sync queued (full) - running in the background..."
+            lblSyncStatus.ForeColor = LightSilver
         Catch ex As Exception
-            lblSyncStatus.Text = "Sync failed: " & ex.Message
+            lblSyncStatus.Text = "Could not start cloud sync: " & ex.Message
             lblSyncStatus.ForeColor = AlertRed
-        Finally
-            btnSyncCloud.Enabled = True
         End Try
     End Sub
 
@@ -243,7 +234,8 @@ Public Class Sys
             Dim result As DialogResult = MessageBox.Show(
                 "Load demo data?" & vbCrLf & vbCrLf &
                 "This will DELETE all products, suppliers, sales, sale items, inventory logs, and audit logs " &
-                "and replace them with realistic sample data." & vbCrLf & vbCrLf &
+                "and replace them with realistic sample data spanning 3 years of history." & vbCrLf & vbCrLf &
+                "It will also ADD demo users (manager, 3 staff, and 1 inactive admin) if they don't already exist." & vbCrLf &
                 "Your admin account and company settings will NOT be affected." & vbCrLf & vbCrLf &
                 "Are you sure you want to continue?",
                 "Load Demo Data", MessageBoxButtons.YesNo, MessageBoxIcon.Warning)
@@ -253,7 +245,7 @@ Public Class Sys
             End If
 
             btnLoadDemoData.Enabled = False
-            lblSyncStatus.Text = "Loading demo data... (this may take a few seconds)"
+            lblSyncStatus.Text = "Loading demo data... (this may take a minute or two)"
             lblSyncStatus.ForeColor = LightSilver
 
             Dim summary As String = ""
@@ -300,6 +292,33 @@ Public Class Sys
         Else
             lblSyncLogs.Text = "Recent syncs:" & vbCrLf & String.Join(vbCrLf, lines)
         End If
+    End Sub
+
+    ' SyncQueue events fire on the worker thread - marshal to the UI thread.
+    Private Sub OnSyncQueueProgress(message As String)
+        If IsDisposed Then Return
+        BeginInvoke(New Action(Sub()
+                                   lblSyncStatus.Text = message
+                                   lblSyncStatus.ForeColor = LightSilver
+                               End Sub))
+    End Sub
+
+    Private Sub OnSyncQueueCompleted(success As Boolean, summary As String)
+        If IsDisposed Then Return
+        BeginInvoke(New Action(Sub()
+                                   lblSyncStatus.Text = "Sync complete:" & vbCrLf & summary
+                                   lblSyncStatus.ForeColor = SuccessGreen
+                                   LoadSyncLogsAsync()
+                               End Sub))
+    End Sub
+
+    Private Sub OnSyncQueueFailed(errorMessage As String)
+        If IsDisposed Then Return
+        BeginInvoke(New Action(Sub()
+                                   lblSyncStatus.Text = "Sync failed: " & errorMessage
+                                   lblSyncStatus.ForeColor = AlertRed
+                                   LoadSyncLogsAsync()
+                               End Sub))
     End Sub
 
 
@@ -468,6 +487,10 @@ Public Class Sys
 
     Private Sub Sys_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
         IdleTimeoutManager.Instance.StopMonitoring(Me)
+
+        RemoveHandler SyncQueue.Instance.Progress, AddressOf OnSyncQueueProgress
+        RemoveHandler SyncQueue.Instance.Completed, AddressOf OnSyncQueueCompleted
+        RemoveHandler SyncQueue.Instance.Failed, AddressOf OnSyncQueueFailed
 
         If isNavigating Then
             Return

@@ -218,6 +218,9 @@ Public Class Dashboard
             ' Start idle timeout monitoring
             IdleTimeoutManager.Instance.StartMonitoring(Me)
 
+            ' Start the background periodic cloud sync schedule
+            SyncQueue.Instance.StartScheduledSync()
+
             SetupTabIndex()
 
         Catch ex As Exception

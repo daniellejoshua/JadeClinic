@@ -3922,6 +3922,13 @@ Public Class Sales
                             ' Commit transaction after all items processed
                             tran.Commit()
 
+                            ' Notify the background sync queue that new data is available
+                            Try
+                                SyncQueue.Instance.MarkDataChanged()
+                            Catch syncEx As Exception
+                                Console.WriteLine($"Could not notify sync queue: {syncEx.Message}")
+                            End Try
+
                             ' Log audit (outside transaction is fine)
                             Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Sale Created", $"SaleID {saleId} created. Total ₱{orderTotal:F2}")
 
