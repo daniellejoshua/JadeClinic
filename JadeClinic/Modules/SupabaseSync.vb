@@ -834,13 +834,18 @@ Public Module SupabaseSync
                                full As Boolean) As Integer
         Dim count As Integer = 0
         Dim chunk As New List(Of List(Of SyncVal))()
+        Dim lastSyncedId As Long = 0
         Dim selectSql As String =
             "SELECT SaleID, SaleNumber, SaleDate, CustomerName, CustomerTIN, UserID, TotalAmount, AmountPaid, PaymentMethod, " &
             "IsVoid, Status, DiscountType, DiscountAmount, Reference, SalesData FROM Sales"
         If Not full Then
-            selectSql &= " WHERE SaleID > COALESCE((SELECT MAX(local_id) FROM sales), 0)"
+            lastSyncedId = GetCloudMaxLocalId(pg, "sales")
+            selectSql &= " WHERE SaleID > @lastSyncedId"
         End If
         Using cmd As New SqliteCommand(selectSql, local)
+            If Not full Then
+                cmd.Parameters.AddWithValue("@lastSyncedId", lastSyncedId)
+            End If
             Using reader As SqliteDataReader = cmd.ExecuteReader()
                 While reader.Read()
                     Dim localId As Integer = Convert.ToInt32(reader("SaleID"))
@@ -903,12 +908,17 @@ Public Module SupabaseSync
                                    full As Boolean) As Integer
         Dim count As Integer = 0
         Dim chunk As New List(Of List(Of SyncVal))()
+        Dim lastSyncedId As Long = 0
         Dim selectSql As String =
             "SELECT SaleItemID, SaleID, ProductID, Quantity, UnitPrice, OriginalUnitPrice, LineDiscountAmount, SubTotal FROM SaleItems"
         If Not full Then
-            selectSql &= " WHERE SaleItemID > COALESCE((SELECT MAX(local_id) FROM sale_items), 0)"
+            lastSyncedId = GetCloudMaxLocalId(pg, "sale_items")
+            selectSql &= " WHERE SaleItemID > @lastSyncedId"
         End If
         Using cmd As New SqliteCommand(selectSql, local)
+            If Not full Then
+                cmd.Parameters.AddWithValue("@lastSyncedId", lastSyncedId)
+            End If
             Using reader As SqliteDataReader = cmd.ExecuteReader()
                 While reader.Read()
                     Dim localId As Integer = Convert.ToInt32(reader("SaleItemID"))
@@ -967,13 +977,18 @@ Public Module SupabaseSync
                                        full As Boolean) As Integer
         Dim count As Integer = 0
         Dim chunk As New List(Of List(Of SyncVal))()
+        Dim lastSyncedId As Long = 0
         Dim selectSql As String =
             "SELECT LogID, ProductID, TransactionType, Quantity, PreviousStock, NewStock, BatchNumber, ExpiryDate, " &
             "SupplierID, UserID, Reference, Notes, CreatedAt FROM InventoryLog"
         If Not full Then
-            selectSql &= " WHERE LogID > COALESCE((SELECT MAX(local_id) FROM inventory_logs), 0)"
+            lastSyncedId = GetCloudMaxLocalId(pg, "inventory_logs")
+            selectSql &= " WHERE LogID > @lastSyncedId"
         End If
         Using cmd As New SqliteCommand(selectSql, local)
+            If Not full Then
+                cmd.Parameters.AddWithValue("@lastSyncedId", lastSyncedId)
+            End If
             Using reader As SqliteDataReader = cmd.ExecuteReader()
                 While reader.Read()
                     Dim localId As Integer = Convert.ToInt32(reader("LogID"))
@@ -1018,11 +1033,16 @@ Public Module SupabaseSync
                                    full As Boolean) As Integer
         Dim count As Integer = 0
         Dim chunk As New List(Of List(Of SyncVal))()
+        Dim lastSyncedId As Long = 0
         Dim selectSql As String = "SELECT AuditID, Action, Details, ActionTime, UserID FROM AuditLog"
         If Not full Then
-            selectSql &= " WHERE AuditID > COALESCE((SELECT MAX(local_id) FROM audit_logs), 0)"
+            lastSyncedId = GetCloudMaxLocalId(pg, "audit_logs")
+            selectSql &= " WHERE AuditID > @lastSyncedId"
         End If
         Using cmd As New SqliteCommand(selectSql, local)
+            If Not full Then
+                cmd.Parameters.AddWithValue("@lastSyncedId", lastSyncedId)
+            End If
             Using reader As SqliteDataReader = cmd.ExecuteReader()
                 While reader.Read()
                     Dim localId As Integer = Convert.ToInt32(reader("AuditID"))
@@ -1258,6 +1278,19 @@ Public Module SupabaseSync
             End If
         End Using
     End Sub
+
+    ' Read the highest local_id already uploaded to the cloud table. Used by
+    ' delta syncs so we only push local rows created after the last sync.
+    Private Function GetCloudMaxLocalId(pg As NpgsqlConnection, table As String) As Long
+        Try
+            Using cmd As New NpgsqlCommand("SELECT COALESCE(MAX(local_id), 0) FROM " & table, pg)
+                Return Convert.ToInt64(cmd.ExecuteScalar())
+            End Using
+        Catch ex As Exception
+            Console.WriteLine($"Could not read max local_id for {table}: {ex.Message}")
+            Return 0
+        End Try
+    End Function
 
     Private Function GetFirstProductImagePath(local As SqliteConnection, productId As Integer) As String
         Try
