@@ -2265,19 +2265,19 @@ Public Class Sales
     End Sub
     Private Sub PrintReceipt()
         Try
-            ' Native ESC/POS path for thermal/receipt printers: pixel-correct
-            ' 384-dot layout, prints directly without the preview dialog. If raw
-            ' printing fails for any reason we fall through to GDI + preview.
+            ' ESC/POS path for thermal/receipt printers: the preview renders the
+            ' exact thermal layout, and its Print button sends the raw stream.
+            ' If anything fails here we fall through to the GDI preview.
             Dim thermalName As String = FindReceiptPrinterName()
             If Not String.IsNullOrEmpty(thermalName) Then
                 Try
-                    If EscPosPrinter.PrintReceipt(thermalName, BuildReceiptLinesEscPos()) Then
-                        Console.WriteLine($"Receipt sent to thermal printer '{thermalName}' via ESC/POS")
-                        Return
-                    End If
-                    Console.WriteLine("ESC/POS print failed - falling back to GDI preview")
+                    Dim escLines As List(Of EscPosPrinter.EscLine) = BuildReceiptLinesEscPos()
+                    Using dlg As New EscPosPreviewForm(thermalName, escLines)
+                        dlg.ShowDialog(Me)
+                    End Using
+                    Return
                 Catch escEx As Exception
-                    Console.WriteLine($"ESC/POS print error: {escEx.Message}")
+                    Console.WriteLine($"ESC/POS preview error: {escEx.Message}")
                 End Try
             End If
 

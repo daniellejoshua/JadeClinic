@@ -143,18 +143,34 @@ Public Module EscPosPrinter
         Return False
     End Function
 
+    ' Render a line the way the thermal printer will print it (same width and
+    ' alignment), used by the on-screen receipt preview so it is WYSIWYG.
+    Public Function FormatForDisplay(line As EscLine) As String
+        Dim width As Integer = If(line.FontB, 42, 32)
+        Dim s As String = Sanitize(line.Text)
+        If s.Length > width Then s = s.Substring(0, width)
+        Select Case line.Align
+            Case 1 : s = s.PadLeft((width + s.Length) \ 2).PadRight(width)
+            Case 2 : s = s.PadLeft(width)
+            Case Else : s = s.PadRight(width)
+        End Select
+        Return s
+    End Function
+
     ' Convert a line to printable ASCII bytes. The peso sign is not in the
     ' standard ESC/POS character set, so it is written as "P". Text wider than
     ' the column is truncated; unknown characters become "?".
     Private Function EncodeText(text As String, width As Integer) As Byte()
+        Dim s As String = Sanitize(text)
+        If s.Length > width Then s = s.Substring(0, width)
+        Return Encoding.ASCII.GetBytes(s)
+    End Function
+
+    Private Function Sanitize(text As String) As String
         Dim sb As New StringBuilder()
         For Each ch As Char In text
             Dim c As Char = ch
-            If c = ChrW(&H20B1) Then
-                sb.Append("P")
-                Continue For
-            End If
-            If c = ChrW(&H20A6) Then
+            If c = ChrW(&H20B1) OrElse c = ChrW(&H20A6) Then
                 sb.Append("P")
                 Continue For
             End If
@@ -165,9 +181,7 @@ Public Module EscPosPrinter
                 sb.Append("?"c)
             End If
         Next
-        Dim s As String = sb.ToString()
-        If s.Length > width Then s = s.Substring(0, width)
-        Return Encoding.ASCII.GetBytes(s)
+        Return sb.ToString()
     End Function
 
 End Module
