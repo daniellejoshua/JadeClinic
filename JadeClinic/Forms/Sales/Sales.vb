@@ -2048,10 +2048,14 @@ Public Class Sales
     ' Replace OnPrintPage with this updated version that displays subtotal, discount, VATable sales, VAT and Total consistently
     Private Sub OnPrintPage(sender As Object, e As PrintPageEventArgs)
         Try
-            Dim regularFont As New Font("Arial", 8)
-            Dim boldFont As New Font("Arial", 10, FontStyle.Bold)
-            Dim headerFont As New Font("Arial", 12, FontStyle.Bold)
-            Dim sectionHeaderFont As New Font("Arial", 9, FontStyle.Bold)
+            ' Scale fonts down for narrow thermal rolls (e.g. 58mm) so the
+            ' receipt does not clip horizontally. No change on 80mm or wider.
+            Dim scale As Single = CSng(e.MarginBounds.Width / 280.0F)
+            scale = Math.Min(1.0F, Math.Max(0.55F, scale))
+            Dim regularFont As New Font("Arial", 8.0F * scale)
+            Dim boldFont As New Font("Arial", 10.0F * scale, FontStyle.Bold)
+            Dim headerFont As New Font("Arial", 12.0F * scale, FontStyle.Bold)
+            Dim sectionHeaderFont As New Font("Arial", 9.0F * scale, FontStyle.Bold)
             Dim brush As New SolidBrush(Color.Black)
             Dim pen As New Pen(Color.Black, 1.0F)
             Dim yPosition As Integer = 10
@@ -2261,10 +2265,48 @@ Public Class Sales
     End Sub
     Private Sub PrintReceipt()
         Try
+            ' Native ESC/POS path for thermal/receipt printers: pixel-correct
+            ' 384-dot layout, prints directly without the preview dialog. If raw
+            ' printing fails for any reason we fall through to GDI + preview.
+            Dim thermalName As String = FindReceiptPrinterName()
+            If Not String.IsNullOrEmpty(thermalName) Then
+                Try
+                    If EscPosPrinter.PrintReceipt(thermalName, BuildReceiptLinesEscPos()) Then
+                        Console.WriteLine($"Receipt sent to thermal printer '{thermalName}' via ESC/POS")
+                        Return
+                    End If
+                    Console.WriteLine("ESC/POS print failed - falling back to GDI preview")
+                Catch escEx As Exception
+                    Console.WriteLine($"ESC/POS print error: {escEx.Message}")
+                End Try
+            End If
+
             Dim companyName As String = CompanySettingsManager.Instance.GetSettingString("CompanyName", "JADE CLINIC")
 
             Dim printDoc As New PrintDocument()
-            printDoc.DefaultPageSettings.PaperSize = New PaperSize("Receipt", 300, 700)
+            ' Send the receipt to a thermal/receipt printer if one is installed
+            ' (otherwise it falls back to the Windows default printer).
+            Try
+                If Not String.IsNullOrEmpty(thermalName) Then
+                    Dim sel As New PrinterSettings()
+                    sel.PrinterName = thermalName
+                    If sel.IsValid Then printDoc.PrinterSettings = sel
+                End If
+            Catch prEx As Exception
+                Console.WriteLine($"Receipt printer selection: {prEx.Message}")
+            End Try
+
+            ' A hard-coded custom PaperSize (e.g. 300x700) is silently rejected
+            ' by many printer drivers - the job is sent but nothing comes out.
+            ' Use a paper size the selected printer actually supports instead:
+            ' prefer a receipt/thermal roll, otherwise the printer's default.
+            Try
+                Dim chosen As PaperSize = FindReceiptPaperSize(printDoc.PrinterSettings)
+                If chosen Is Nothing Then chosen = printDoc.PrinterSettings.DefaultPageSettings.PaperSize
+                printDoc.DefaultPageSettings.PaperSize = chosen
+            Catch paperEx As Exception
+                Console.WriteLine($"Receipt paper size fallback: {paperEx.Message}")
+            End Try
             printDoc.DefaultPageSettings.Margins = New Margins(10, 10, 10, 10)
 
             AddHandler printDoc.PrintPage, AddressOf OnPrintPage
@@ -2278,6 +2320,217 @@ Public Class Sales
             MessageBox.Show($"Error printing receipt: {ex.Message}", "Print Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
+
+    ' Build the ESC/POS receipt lines (58mm / 384-dot, 32 chars wide on Font A,
+    ' 42 on Font B). Mirrors the GDI layout in OnPrintPage.
+    Private Function BuildReceiptLinesEscPos() As List(Of EscPosPrinter.EscLine)
+        Dim lines As New List(Of EscPosPrinter.EscLine)()
+        Dim cm As CompanySettingsManager = CompanySettingsManager.Instance
+        Dim sep32 As String = New String("="c, 32)
+
+        ' Company header
+        Dim companyName As String = cm.GetSettingString("CompanyName", "JADE CLINIC")
+        Dim companyPhone As String = cm.GetSettingString("Phone", "(02) 8123-4567")
+        Dim companyAddress As String = cm.GetSettingString("Address", "")
+        Dim companyWebsite As String = cm.GetSettingString("Website", "")
+        Dim companyTIN As String = cm.GetSettingString("TIN", "123-456-789-000")
+        Dim birAuthNumber As String = cm.GetSettingString("BIRAuthNumber", "ATP-2024-000001")
+        Dim ptuNumber As String = cm.GetSettingString("PTUNumber", "PTU-2024-001")
+        Dim footerMessage As String = cm.GetSettingString("ReceiptFooter", "Thank you for your business!" & vbCrLf & "Have a great day!")
+
+        lines.Add(New EscPosPrinter.EscLine(companyName, 1, True, False, True))
+        lines.Add(New EscPosPrinter.EscLine("Dental Supply Management", 1))
+        If Not String.IsNullOrEmpty(companyTIN) Then
+            lines.Add(New EscPosPrinter.EscLine("TIN: " & companyTIN & " (VAT Reg)", 1))
+        End If
+        If Not String.IsNullOrEmpty(companyPhone) Then
+            lines.Add(New EscPosPrinter.EscLine("Tel: " & companyPhone, 1))
+        End If
+        If Not String.IsNullOrEmpty(companyAddress) Then
+            lines.Add(New EscPosPrinter.EscLine(companyAddress, 1))
+        End If
+        If Not String.IsNullOrEmpty(companyWebsite) Then
+            lines.Add(New EscPosPrinter.EscLine(companyWebsite, 1))
+        End If
+        lines.Add(New EscPosPrinter.EscLine(sep32, 0))
+
+        ' Document title and metadata
+        lines.Add(New EscPosPrinter.EscLine("SALES INVOICE", 1, True))
+        lines.Add(New EscPosPrinter.EscLine("Receipt #: " & receiptOrderId, 0))
+        lines.Add(New EscPosPrinter.EscLine("Date: " & DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss"), 0))
+        lines.Add(New EscPosPrinter.EscLine("Cashier: " & frmLoginvb.LoggedInUsername, 0))
+        lines.Add(New EscPosPrinter.EscLine("", 0))
+
+        ' Customer block
+        lines.Add(New EscPosPrinter.EscLine("Customer Details:", 0, True))
+        Dim printedName As String = If(Not String.IsNullOrWhiteSpace(receiptCustomerName), receiptCustomerName, If(Not String.IsNullOrWhiteSpace(selectedCustomerName), selectedCustomerName, "________________"))
+        Dim printedTIN As String = If(Not String.IsNullOrWhiteSpace(selectedCustomerTIN), selectedCustomerTIN, "________________")
+        Dim printedPhone As String = If(Not String.IsNullOrWhiteSpace(selectedCustomerPhone), selectedCustomerPhone, "________________")
+        Dim printedEmail As String = If(Not String.IsNullOrWhiteSpace(selectedCustomerEmail), selectedCustomerEmail, "________________")
+        lines.Add(New EscPosPrinter.EscLine("Name: " & printedName, 0))
+        lines.Add(New EscPosPrinter.EscLine("TIN: " & printedTIN, 0))
+        lines.Add(New EscPosPrinter.EscLine("Phone: " & printedPhone, 0))
+        lines.Add(New EscPosPrinter.EscLine("Email: " & printedEmail, 0))
+        lines.Add(New EscPosPrinter.EscLine(sep32, 0))
+
+        ' Items (small font B = 42 chars)
+        If receiptItems IsNot Nothing Then
+            For Each item In receiptItems
+                Dim itemName As String = item("ProductName").ToString()
+                Dim quantity As Integer = CInt(item("Quantity"))
+                Dim unitVatInc As Decimal = Convert.ToDecimal(If(item.ContainsKey("OriginalUnitPrice"), item("OriginalUnitPrice"), item("Price")))
+
+                If discountType <> "None" AndAlso discountedItemProductId IsNot Nothing AndAlso item.ContainsKey("ProductID") Then
+                    Try
+                        Dim itemPid As Integer = Convert.ToInt32(item("ProductID"))
+                        If itemPid = discountedItemProductId Then
+                            If discountType = "Percentage" Then
+                                Dim pct As Decimal = discountValue
+                                unitVatInc = Math.Round((unitVatInc / 1.12D) * (1 - (pct / 100D)) * 1.12D, 2)
+                            ElseIf discountType = "Fixed" Then
+                                Dim perUnitDiscountVatInc As Decimal = 0D
+                                If quantity > 0 Then perUnitDiscountVatInc = discountAmount / quantity
+                                Dim perUnitDiscountNet As Decimal = perUnitDiscountVatInc / 1.12D
+                                unitVatInc = Math.Round(((unitVatInc / 1.12D) - perUnitDiscountNet) * 1.12D, 2)
+                                If unitVatInc < 0D Then unitVatInc = 0D
+                            End If
+                        End If
+                    Catch
+                    End Try
+                End If
+
+                Dim lineTotal As Decimal = Math.Round(unitVatInc * quantity, 2)
+                Dim qtyName As String = $"{quantity}x {itemName}"
+                Dim nameW As Integer = 42 - 12
+                If qtyName.Length > nameW Then qtyName = qtyName.Substring(0, nameW)
+                lines.Add(New EscPosPrinter.EscLine(qtyName.PadRight(nameW) & FormatRight($"P{unitVatInc:F2} @", 12), 0, False, True))
+                lines.Add(New EscPosPrinter.EscLine("".PadRight(42 - 12) & FormatRight($"P{lineTotal:F2}", 12), 0, False, True))
+            Next
+        End If
+        lines.Add(New EscPosPrinter.EscLine(sep32, 0))
+
+        ' VAT / totals (same math as OnPrintPage)
+        Dim preDiscountVatInclusive As Decimal = Me.subtotalVatInclusive
+        If preDiscountVatInclusive = 0D Then
+            If receiptItems IsNot Nothing Then
+                For Each it In receiptItems
+                    Dim unitVatInc As Decimal = Convert.ToDecimal(If(it.ContainsKey("OriginalUnitPrice"), it("OriginalUnitPrice"), it("Price")))
+                    preDiscountVatInclusive += unitVatInc * CInt(it("Quantity"))
+                Next
+            End If
+            preDiscountVatInclusive = Math.Round(preDiscountVatInclusive, 2)
+        End If
+
+        Dim discountVatInclusive As Decimal = discountAmount
+        Dim remainingVatInclusive As Decimal = Math.Max(0D, preDiscountVatInclusive - discountVatInclusive)
+        Dim vatAmt As Decimal = Math.Round(remainingVatInclusive * (0.12D / 1.12D), 2)
+        Dim vatableNet As Decimal = Math.Round(remainingVatInclusive - vatAmt, 2)
+        Dim totalDue As Decimal = Math.Round(remainingVatInclusive, 2)
+
+        lines.Add(New EscPosPrinter.EscLine(Row("SUBTOTAL (VAT-INC):", $"P{preDiscountVatInclusive:F2}"), 0))
+        If discountVatInclusive > 0D Then
+            Dim discountLabel As String = "Less: Discount (" & discountType & ")"
+            If Not String.IsNullOrEmpty(discountedItemName) Then discountLabel &= " on " & discountedItemName
+            lines.Add(New EscPosPrinter.EscLine(Row(discountLabel & ":", $"-P{discountVatInclusive:F2}"), 0))
+        End If
+        lines.Add(New EscPosPrinter.EscLine(Row("VATABLE SALES (NET):", $"P{vatableNet:F2}"), 0))
+        lines.Add(New EscPosPrinter.EscLine(Row("VAT (12%):", $"P{vatAmt:F2}"), 0))
+        lines.Add(New EscPosPrinter.EscLine(sep32, 0))
+        lines.Add(New EscPosPrinter.EscLine(Row("TOTAL AMOUNT DUE:", $"P{totalDue:F2}"), 0, True, False, True))
+
+        lines.Add(New EscPosPrinter.EscLine("", 0))
+        lines.Add(New EscPosPrinter.EscLine("PAYMENT INFORMATION", 0, True))
+        lines.Add(New EscPosPrinter.EscLine("Payment Method: " & selectedPaymentMethod, 0))
+        If Not String.IsNullOrEmpty(paymentReference) Then
+            lines.Add(New EscPosPrinter.EscLine("Reference: " & paymentReference, 0))
+        End If
+        lines.Add(New EscPosPrinter.EscLine(Row("Amount Received:", $"P{receiptAmountReceived:F2}"), 0))
+        lines.Add(New EscPosPrinter.EscLine(Row("Change:", $"P{receiptChange:F2}"), 0))
+        lines.Add(New EscPosPrinter.EscLine(sep32, 0))
+
+        lines.Add(New EscPosPrinter.EscLine("BIR ATP No.: " & birAuthNumber, 0))
+        lines.Add(New EscPosPrinter.EscLine("PTU No.: " & ptuNumber, 0))
+        lines.Add(New EscPosPrinter.EscLine(sep32, 0))
+
+        Dim footerLines() As String = footerMessage.Split({vbCrLf, vbLf}, StringSplitOptions.RemoveEmptyEntries)
+        For Each line As String In footerLines
+            lines.Add(New EscPosPrinter.EscLine(line, 1))
+        Next
+
+        Return lines
+    End Function
+
+    ' Label + amount on one line, amount right-aligned at column 32 (Font A).
+    Private Function Row(label As String, amount As String) As String
+        Dim w As Integer = 32
+        If label.Length > w - amount.Length - 1 Then label = label.Substring(0, Math.Max(0, w - amount.Length - 1))
+        Return label.PadRight(w - amount.Length) & amount
+    End Function
+
+    ' Right-align text within the given width (used with Font B item rows).
+    Private Function FormatRight(text As String, width As Integer) As String
+        If text.Length > width Then text = text.Substring(0, width)
+        Return text.PadLeft(width)
+    End Function
+
+    ' Returns the name of an installed thermal/receipt printer (matched by
+    ' driver/name keywords). Returns Nothing if none is clearly identifiable,
+    ' letting the print go to the Windows default printer instead.
+    Private Function FindReceiptPrinterName() As String
+        Try
+            For Each p As String In PrinterSettings.InstalledPrinters
+                Dim n As String = p.ToLowerInvariant()
+                If n.Contains("thermal") OrElse n.Contains("receipt") OrElse n.Contains("reciept") OrElse
+                   n.Contains("escpos") OrElse n.Contains("esc/pos") OrElse n.Contains("esc pos") OrElse
+                   n.Contains("star") OrElse n.Contains("tm-") OrElse n.Contains("xp-") OrElse
+                   n.Contains("kp-") OrElse n.Contains("58mm") OrElse n.Contains("80mm") OrElse
+                   n.Contains("58.") OrElse n.Contains("e-z") OrElse n.Contains("ez10") OrElse
+                   n.Contains("z10") OrElse n.Contains("pos printer") OrElse n.Contains("pos-") OrElse
+                   n.Contains("gprinter") OrElse n.Contains("huasheng") Then
+                    Return p
+                End If
+            Next
+        Catch ex As Exception
+            Return Nothing
+        End Try
+        Return Nothing
+    End Function
+
+    ' Picks a printer-supported paper size that fits a thermal receipt roll
+    ' (58mm or 80mm). Prefers papers whose name suggests a receipt/thermal roll;
+    ' otherwise the supported paper whose width is closest to the receipt width.
+    ' Returns Nothing so the caller can fall back to the printer's default size.
+    Private Function FindReceiptPaperSize(settings As PrinterSettings) As PaperSize
+        Try
+            For Each ps As PaperSize In settings.PaperSizes
+                Dim n As String = ps.PaperName.ToLowerInvariant()
+                If n.Contains("receipt") OrElse n.Contains("thermal") OrElse
+                   n.Contains("80mm") OrElse n.Contains("80 mm") OrElse n.Contains("80x80") OrElse
+                   n.Contains("58mm") OrElse n.Contains("58 mm") OrElse n.Contains("57mm") OrElse
+                   n.Contains("57 mm") OrElse n.Contains("continuous") OrElse
+                   n.Contains("roll") OrElse n.Contains("kp") Then
+                    Return ps
+                End If
+            Next
+
+            ' Fall back by width: thermal receipt widths are ~58mm (228) or ~80mm
+            ' (315) in hundredths of an inch. Pick the closest match in that range.
+            Dim best As PaperSize = Nothing
+            Dim bestScore As Integer = Integer.MaxValue
+            For Each ps As PaperSize In settings.PaperSizes
+                If ps.Width >= 220 AndAlso ps.Width <= 340 AndAlso ps.Height >= 120 Then
+                    Dim score As Integer = Math.Abs(ps.Width - 228)
+                    If score < bestScore Then
+                        bestScore = score
+                        best = ps
+                    End If
+                End If
+            Next
+            Return best
+        Catch ex As Exception
+            Return Nothing
+        End Try
+    End Function
 
     Private Sub Sales_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
         ' Save draft cart on any close/navigation/app exit
