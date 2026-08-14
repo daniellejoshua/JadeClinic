@@ -11,14 +11,16 @@ Public Class EscPosPreviewForm
 
     Private ReadOnly _printerName As String
     Private ReadOnly _lines As List(Of EscPosPrinter.EscLine)
+    Private ReadOnly _data As ReceiptData
     Private _preview As PrintPreviewControl
     Private _doc As PrintDocument
     Private WithEvents btnPrint As Button
     Private WithEvents btnClose As Button
 
-    Public Sub New(printerName As String, lines As List(Of EscPosPrinter.EscLine))
+    Public Sub New(printerName As String, lines As List(Of EscPosPrinter.EscLine), data As ReceiptData)
         _printerName = printerName
         _lines = lines
+        _data = data
         InitializeUi()
     End Sub
 
@@ -74,13 +76,12 @@ Public Class EscPosPreviewForm
         Me.AcceptButton = btnPrint
         AddHandler Me.KeyDown, AddressOf OnPreviewFormKeyDown
 
-        ' Build the receipt page: 58mm (228 units) wide, height from the lines.
+        ' Build the receipt page the same way as the Sales Record eye view
+        ' (300x700 GDI page), so the preview looks identical on both forms.
         Try
-            Dim estHeight As Integer = 20 + (_lines.Count * 15)
-            If estHeight < 300 Then estHeight = 300
             _doc = New PrintDocument()
-            _doc.DefaultPageSettings.PaperSize = New PaperSize("Receipt", 228, estHeight)
-            _doc.DefaultPageSettings.Margins = New Margins(5, 5, 5, 5)
+            _doc.DefaultPageSettings.PaperSize = New PaperSize("Receipt", 300, 700)
+            _doc.DefaultPageSettings.Margins = New Margins(10, 10, 10, 10)
             AddHandler _doc.PrintPage, AddressOf RenderReceiptPage
             _preview.Document = _doc
             _preview.InvalidatePreview()
@@ -89,29 +90,11 @@ Public Class EscPosPreviewForm
         End Try
     End Sub
 
-    ' Draw the ESC/POS lines as a fixed-width receipt page (WYSIWYG with the
-    ' thermal output: 42 columns worst case, Courier New sized to fit).
+    ' Draw the receipt page with the shared GDI renderer (the exact same look
+    ' as the Sales Record "eye" view).
     Private Sub RenderReceiptPage(sender As Object, e As PrintPageEventArgs)
         Try
-            Dim bounds As RectangleF = e.MarginBounds
-            Dim printablePt As Single = (bounds.Width / 100.0F) * 72.0F
-            Dim fontSize As Single = printablePt / 42.0F / 0.6F
-            fontSize = Math.Min(11.0F, Math.Max(6.0F, fontSize))
-            Dim f As New Font("Courier New", fontSize)
-            Dim lineHeight As Single = fontSize * 1.5F
-            Dim y As Single = bounds.Top
-
-            For Each line As EscPosPrinter.EscLine In _lines
-                Dim text As String = EscPosPrinter.FormatForDisplay(line)
-                Dim sf As New StringFormat()
-                If line.Align = 1 Then sf.Alignment = StringAlignment.Center
-                If line.Align = 2 Then sf.Alignment = StringAlignment.Far
-                e.Graphics.DrawString(text, f, Brushes.Black,
-                                      New RectangleF(bounds.Left, y, bounds.Width, lineHeight), sf)
-                sf.Dispose()
-                y += lineHeight
-            Next
-            f.Dispose()
+            ReceiptRenderer.DrawReceipt(e.Graphics, e.MarginBounds, _data)
         Catch ex As Exception
             e.Graphics.DrawString($"Preview render error: {ex.Message}", New Font("Arial", 10), Brushes.Black, 10, 10)
         End Try

@@ -2272,7 +2272,8 @@ Public Class Sales
             If Not String.IsNullOrEmpty(thermalName) Then
                 Try
                     Dim escLines As List(Of EscPosPrinter.EscLine) = BuildReceiptLinesEscPos()
-                    Using dlg As New EscPosPreviewForm(thermalName, escLines)
+                    Dim previewData As ReceiptData = BuildReceiptData()
+                    Using dlg As New EscPosPreviewForm(thermalName, escLines, previewData)
                         dlg.ShowDialog(Me)
                     End Using
                     Return
@@ -2458,6 +2459,63 @@ Public Class Sales
         Next
 
         Return lines
+    End Function
+
+    ' Build the GDI preview data for the Sales form, mirroring the ESC/POS
+    ' math in BuildReceiptLinesEscPos so the preview matches the printed
+    ' receipt (same discount/VAT/totals).
+    Private Function BuildReceiptData() As ReceiptData
+        Dim data As New ReceiptData()
+        data.ReceiptNumber = receiptOrderId
+        data.SaleDate = DateTime.Now
+        data.Cashier = frmLoginvb.LoggedInUsername
+
+        data.CustomerName = If(Not String.IsNullOrWhiteSpace(receiptCustomerName), receiptCustomerName, If(Not String.IsNullOrWhiteSpace(selectedCustomerName), selectedCustomerName, "________________"))
+        data.CustomerTIN = If(Not String.IsNullOrWhiteSpace(selectedCustomerTIN), selectedCustomerTIN, "________________")
+        data.CustomerPhone = If(Not String.IsNullOrWhiteSpace(selectedCustomerPhone), selectedCustomerPhone, "________________")
+        data.CustomerEmail = If(Not String.IsNullOrWhiteSpace(selectedCustomerEmail), selectedCustomerEmail, "________________")
+
+        Dim preDiscountVatInclusive As Decimal = Me.subtotalVatInclusive
+        If preDiscountVatInclusive = 0D AndAlso receiptItems IsNot Nothing Then
+            For Each it In receiptItems
+                Dim unitVatInc As Decimal = Convert.ToDecimal(If(it.ContainsKey("OriginalUnitPrice"), it("OriginalUnitPrice"), it("Price")))
+                preDiscountVatInclusive += unitVatInc * CInt(it("Quantity"))
+            Next
+            preDiscountVatInclusive = Math.Round(preDiscountVatInclusive, 2)
+        End If
+        data.SubtotalVatInclusive = Math.Round(preDiscountVatInclusive, 2)
+
+        If receiptItems IsNot Nothing Then
+            For Each item In receiptItems
+                Dim itemName As String = item("ProductName").ToString()
+                Dim quantity As Integer = CInt(item("Quantity"))
+                Dim unitVatInc As Decimal = Convert.ToDecimal(If(item.ContainsKey("OriginalUnitPrice"), item("OriginalUnitPrice"), item("Price")))
+                Dim lineTotal As Decimal = Math.Round(unitVatInc * quantity, 2)
+                data.Items.Add(New ReceiptLineItem() With {
+                    .ProductName = itemName,
+                    .Quantity = quantity,
+                    .UnitVatInc = unitVatInc,
+                    .LineTotal = lineTotal
+                })
+            Next
+        End If
+
+        data.DiscountAmount = discountAmount
+        data.DiscountType = discountType
+        data.DiscountedItemName = discountedItemName
+
+        Dim discountVatInclusive As Decimal = discountAmount
+        Dim remainingVatInclusive As Decimal = Math.Max(0D, data.SubtotalVatInclusive - discountVatInclusive)
+        data.VatAmount = Math.Round(remainingVatInclusive * (0.12D / 1.12D), 2)
+        data.VatableNet = Math.Round(remainingVatInclusive - data.VatAmount, 2)
+        data.TotalDue = Math.Round(remainingVatInclusive, 2)
+
+        data.PaymentMethod = selectedPaymentMethod
+        data.PaymentReference = paymentReference
+        data.AmountReceived = receiptAmountReceived
+        data.Change = receiptChange
+
+        Return data
     End Function
 
     ' Label + amount on one line, amount right-aligned at column 32 (Font A).

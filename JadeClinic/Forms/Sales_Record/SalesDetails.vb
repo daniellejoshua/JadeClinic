@@ -126,6 +126,88 @@ Public Class SalesDetails
         receiptPreview.InvalidatePreview()
     End Sub
 
+    Private Function BuildReceiptData() As ReceiptData
+        Dim data As New ReceiptData()
+        If saleRecord Is Nothing Then Return data
+
+        data.ReceiptNumber = DisplaySaleNumber()
+        data.SaleDate = Convert.ToDateTime(saleRecord("SaleDate"))
+        data.Cashier = Convert.ToString(saleRecord("Cashier"))
+
+        data.CustomerName = If(String.IsNullOrWhiteSpace(Convert.ToString(saleRecord("CustomerName"))), "________________", Convert.ToString(saleRecord("CustomerName")))
+        data.CustomerTIN = If(String.IsNullOrWhiteSpace(Convert.ToString(saleRecord("CustomerTIN"))), "________________", Convert.ToString(saleRecord("CustomerTIN")))
+        data.CustomerPhone = "________________"
+        data.CustomerEmail = "________________"
+
+        Dim salesDataJson As String = Convert.ToString(saleRecord("SalesData"))
+        If Not String.IsNullOrWhiteSpace(salesDataJson) Then
+            Try
+                Dim j = Newtonsoft.Json.Linq.JObject.Parse(salesDataJson)
+                Dim p As String = j.SelectToken("customer.phone")?.ToString()
+                Dim m As String = j.SelectToken("customer.email")?.ToString()
+                If Not String.IsNullOrWhiteSpace(p) Then data.CustomerPhone = p
+                If Not String.IsNullOrWhiteSpace(m) Then data.CustomerEmail = m
+            Catch
+            End Try
+        End If
+
+        Dim subtotalVatInclusive As Decimal = 0D
+        For Each item In saleItems
+            Dim itemName As String = Convert.ToString(item("ProductName"))
+            Dim quantity As Integer = Convert.ToInt32(item("Quantity"))
+            Dim unitVatInc As Decimal = Convert.ToDecimal(item("UnitPrice"))
+            Dim lineTotal As Decimal = Math.Round(unitVatInc * quantity, 2)
+            subtotalVatInclusive += lineTotal
+
+            data.Items.Add(New ReceiptLineItem() With {
+                .ProductName = itemName,
+                .Quantity = quantity,
+                .UnitVatInc = unitVatInc,
+                .LineTotal = lineTotal
+            })
+        Next
+        data.SubtotalVatInclusive = Math.Round(subtotalVatInclusive, 2)
+
+        Dim discountAmt As Decimal = 0D
+        Dim discountTypeText As String = "None"
+        data.PaymentMethod = Convert.ToString(saleRecord("PaymentMethod"))
+        data.PaymentReference = Convert.ToString(saleRecord("Reference"))
+        data.AmountReceived = Convert.ToDecimal(saleRecord("AmountPaid"))
+
+        If Not String.IsNullOrWhiteSpace(salesDataJson) Then
+            Try
+                Dim j = Newtonsoft.Json.Linq.JObject.Parse(salesDataJson)
+                If j.SelectToken("payment.discount.amount") IsNot Nothing Then
+                    discountAmt = j.SelectToken("payment.discount.amount").ToObject(Of Decimal)()
+                End If
+                If j.SelectToken("payment.discount.type") IsNot Nothing Then
+                    discountTypeText = j.SelectToken("payment.discount.type").ToString()
+                End If
+                If j.SelectToken("payment.method") IsNot Nothing Then
+                    data.PaymentMethod = j.SelectToken("payment.method").ToString()
+                End If
+                If j.SelectToken("payment.reference") IsNot Nothing Then
+                    data.PaymentReference = j.SelectToken("payment.reference").ToString()
+                End If
+                If j.SelectToken("payment.received") IsNot Nothing Then
+                    data.AmountReceived = j.SelectToken("payment.received").ToObject(Of Decimal)()
+                End If
+            Catch
+            End Try
+        End If
+
+        data.DiscountAmount = discountAmt
+        data.DiscountType = discountTypeText
+
+        Dim remainingVatInclusive As Decimal = Math.Max(0D, data.SubtotalVatInclusive - discountAmt)
+        data.VatAmount = Math.Round(remainingVatInclusive * (0.12D / 1.12D), 2)
+        data.VatableNet = Math.Round(remainingVatInclusive - data.VatAmount, 2)
+        data.TotalDue = Math.Round(Convert.ToDecimal(saleRecord("TotalAmount")), 2)
+        data.Change = Math.Round(data.AmountReceived - data.TotalDue, 2)
+
+        Return data
+    End Function
+
     Private Sub ReceiptDocument_PrintPage(sender As Object, e As PrintPageEventArgs)
         Try
             If saleRecord Is Nothing Then
@@ -133,202 +215,7 @@ Public Class SalesDetails
                 Return
             End If
 
-            Dim regularFont As New Font("Arial", 8)
-            Dim boldFont As New Font("Arial", 10, FontStyle.Bold)
-            Dim headerFont As New Font("Arial", 12, FontStyle.Bold)
-            Dim sectionHeaderFont As New Font("Arial", 9, FontStyle.Bold)
-            Dim brush As New SolidBrush(Color.Black)
-            Dim yPosition As Integer = 10
-            Dim marginLeft As Integer = 10
-            Dim contentWidth As Integer = e.MarginBounds.Width - (marginLeft * 2)
-            Dim centerX As Integer = e.MarginBounds.Width \ 2
-            Dim colGap As Integer = 20
-            Dim colWidth As Integer = (contentWidth - colGap) \ 2
-            Dim leftColX As Integer = marginLeft
-            Dim rightColX As Integer = marginLeft + colWidth + colGap
-
-            Dim companyName As String = CompanySettingsManager.Instance.GetSettingString("CompanyName", "JADE CLINIC")
-            Dim companyPhone As String = CompanySettingsManager.Instance.GetSettingString("Phone", "")
-            Dim companyAddress As String = CompanySettingsManager.Instance.GetSettingString("Address", "")
-            Dim companyWebsite As String = CompanySettingsManager.Instance.GetSettingString("Website", "")
-            Dim companyTIN As String = CompanySettingsManager.Instance.GetSettingString("TIN", "")
-            Dim birAuthNumber As String = CompanySettingsManager.Instance.GetSettingString("BIRAuthNumber", "ATP-2024-000001")
-            Dim ptuNumber As String = CompanySettingsManager.Instance.GetSettingString("PTUNumber", "PTU-2024-001")
-            Dim footerMessage As String = CompanySettingsManager.Instance.GetSettingString("ReceiptFooter", "Thank you for your business!" & vbCrLf & "Have a great day!")
-
-            e.Graphics.DrawString(companyName, headerFont, brush, CSng(centerX - (e.Graphics.MeasureString(companyName, headerFont).Width / 2)), CSng(yPosition))
-            yPosition += 24
-            e.Graphics.DrawString("Dental Supply Management", regularFont, brush, CSng(centerX - (e.Graphics.MeasureString("Dental Supply Management", regularFont).Width / 2)), CSng(yPosition))
-            yPosition += 14
-
-            If Not String.IsNullOrEmpty(companyTIN) Then
-                Dim tinLine = $"TIN: {companyTIN} (VAT Registered)"
-                e.Graphics.DrawString(tinLine, regularFont, brush, CSng(centerX - (e.Graphics.MeasureString(tinLine, regularFont).Width / 2)), CSng(yPosition))
-                yPosition += 14
-            End If
-
-            If Not String.IsNullOrEmpty(companyPhone) Then
-                Dim telLine = $"Tel: {companyPhone}"
-                e.Graphics.DrawString(telLine, regularFont, brush, CSng(centerX - (e.Graphics.MeasureString(telLine, regularFont).Width / 2)), CSng(yPosition))
-                yPosition += 14
-            End If
-
-            If Not String.IsNullOrEmpty(companyAddress) Then
-                e.Graphics.DrawString(companyAddress, regularFont, brush, CSng(centerX - (e.Graphics.MeasureString(companyAddress, regularFont).Width / 2)), CSng(yPosition))
-                yPosition += 14
-            End If
-
-            If Not String.IsNullOrEmpty(companyWebsite) Then
-                e.Graphics.DrawString(companyWebsite, regularFont, brush, CSng(centerX - (e.Graphics.MeasureString(companyWebsite, regularFont).Width / 2)), CSng(yPosition))
-                yPosition += 14
-            End If
-
-            e.Graphics.DrawString(New String("="c, Math.Min(36, CInt(contentWidth / 6))), regularFont, brush, marginLeft, yPosition)
-            yPosition += 16
-
-            e.Graphics.DrawString("SALES INVOICE", boldFont, brush, CSng(centerX - (e.Graphics.MeasureString("SALES INVOICE", boldFont).Width / 2)), CSng(yPosition))
-            yPosition += 22
-            e.Graphics.DrawString($"Receipt #: {DisplaySaleNumber()}", regularFont, brush, marginLeft, yPosition)
-            yPosition += 12
-            e.Graphics.DrawString($"Date: {Convert.ToDateTime(saleRecord("SaleDate")):MM/dd/yyyy HH:mm:ss}", regularFont, brush, marginLeft, yPosition)
-            yPosition += 12
-            e.Graphics.DrawString($"Cashier: {saleRecord("Cashier")}", regularFont, brush, marginLeft, yPosition)
-            yPosition += 14
-
-            e.Graphics.DrawString("Customer Details:", regularFont, brush, marginLeft, yPosition)
-            yPosition += 12
-
-            Dim printedName As String = If(String.IsNullOrWhiteSpace(Convert.ToString(saleRecord("CustomerName"))), "________________", Convert.ToString(saleRecord("CustomerName")))
-            Dim printedTIN As String = If(String.IsNullOrWhiteSpace(Convert.ToString(saleRecord("CustomerTIN"))), "________________", Convert.ToString(saleRecord("CustomerTIN")))
-            Dim printedPhone As String = "________________"
-            Dim printedEmail As String = "________________"
-
-            Dim salesDataJson As String = Convert.ToString(saleRecord("SalesData"))
-            If Not String.IsNullOrWhiteSpace(salesDataJson) Then
-                Try
-                    Dim j = Newtonsoft.Json.Linq.JObject.Parse(salesDataJson)
-                    Dim p As String = j.SelectToken("customer.phone")?.ToString()
-                    Dim m As String = j.SelectToken("customer.email")?.ToString()
-                    If Not String.IsNullOrWhiteSpace(p) Then printedPhone = p
-                    If Not String.IsNullOrWhiteSpace(m) Then printedEmail = m
-                Catch
-                End Try
-            End If
-
-            e.Graphics.DrawString($"Name: {printedName}", regularFont, brush, leftColX, yPosition)
-            e.Graphics.DrawString($"TIN: {printedTIN}", regularFont, brush, rightColX, yPosition)
-            yPosition += 12
-            e.Graphics.DrawString($"Phone: {printedPhone}", regularFont, brush, leftColX, yPosition)
-            e.Graphics.DrawString($"Email: {printedEmail}", regularFont, brush, rightColX, yPosition)
-            yPosition += 14
-
-            e.Graphics.DrawString(New String("="c, Math.Min(36, CInt(contentWidth / 6))), regularFont, brush, marginLeft, yPosition)
-            yPosition += 14
-
-            Dim subtotalVatInclusive As Decimal = 0D
-            For Each item In saleItems
-                Dim itemName As String = Convert.ToString(item("ProductName"))
-                Dim quantity As Integer = Convert.ToInt32(item("Quantity"))
-                Dim unitVatInc As Decimal = Convert.ToDecimal(item("UnitPrice"))
-                Dim lineTotal As Decimal = Math.Round(unitVatInc * quantity, 2)
-                subtotalVatInclusive += lineTotal
-
-                e.Graphics.DrawString($"{quantity}x {itemName}", regularFont, brush, marginLeft, yPosition)
-                yPosition += 12
-                e.Graphics.DrawString($"@ {ChrW(&H20B1)}{unitVatInc:F2}", regularFont, brush, marginLeft + 8, yPosition)
-                e.Graphics.DrawString($"{ChrW(&H20B1)}{lineTotal:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"{ChrW(&H20B1)}{lineTotal:F2}", regularFont).Width), CSng(yPosition))
-                yPosition += 15
-            Next
-
-            e.Graphics.DrawString(New String("="c, Math.Min(36, CInt(contentWidth / 6))), regularFont, brush, marginLeft, yPosition)
-            yPosition += 14
-
-            Dim discountAmt As Decimal = 0D
-            Dim discountTypeText As String = "None"
-            Dim paymentMethod As String = Convert.ToString(saleRecord("PaymentMethod"))
-            Dim paymentReference As String = Convert.ToString(saleRecord("Reference"))
-            Dim amountReceived As Decimal = Convert.ToDecimal(saleRecord("AmountPaid"))
-
-            If Not String.IsNullOrWhiteSpace(salesDataJson) Then
-                Try
-                    Dim j = Newtonsoft.Json.Linq.JObject.Parse(salesDataJson)
-                    If j.SelectToken("payment.discount.amount") IsNot Nothing Then
-                        discountAmt = j.SelectToken("payment.discount.amount").ToObject(Of Decimal)()
-                    End If
-                    If j.SelectToken("payment.discount.type") IsNot Nothing Then
-                        discountTypeText = j.SelectToken("payment.discount.type").ToString()
-                    End If
-                    If j.SelectToken("payment.method") IsNot Nothing Then
-                        paymentMethod = j.SelectToken("payment.method").ToString()
-                    End If
-                    If j.SelectToken("payment.reference") IsNot Nothing Then
-                        paymentReference = j.SelectToken("payment.reference").ToString()
-                    End If
-                    If j.SelectToken("payment.received") IsNot Nothing Then
-                        amountReceived = j.SelectToken("payment.received").ToObject(Of Decimal)()
-                    End If
-                Catch
-                End Try
-            End If
-
-            Dim remainingVatInclusive As Decimal = Math.Max(0D, subtotalVatInclusive - discountAmt)
-            Dim vatAmt As Decimal = Math.Round(remainingVatInclusive * (0.12D / 1.12D), 2)
-            Dim vatableNet As Decimal = Math.Round(remainingVatInclusive - vatAmt, 2)
-            Dim totalDue As Decimal = Math.Round(Convert.ToDecimal(saleRecord("TotalAmount")), 2)
-            Dim changeAmount As Decimal = Math.Round(amountReceived - totalDue, 2)
-
-            e.Graphics.DrawString("SUBTOTAL (VAT-INC):", regularFont, brush, marginLeft, yPosition)
-            e.Graphics.DrawString($"{ChrW(&H20B1)}{subtotalVatInclusive:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"{ChrW(&H20B1)}{subtotalVatInclusive:F2}", regularFont).Width), CSng(yPosition))
-            yPosition += 12
-
-            If discountAmt > 0D Then
-                e.Graphics.DrawString($"Less: Discount ({discountTypeText}):", regularFont, brush, marginLeft, yPosition)
-                e.Graphics.DrawString($"-{ChrW(&H20B1)}{discountAmt:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"-{ChrW(&H20B1)}{discountAmt:F2}", regularFont).Width), CSng(yPosition))
-                yPosition += 12
-            End If
-
-            e.Graphics.DrawString("VATABLE SALES (NET):", regularFont, brush, marginLeft, yPosition)
-            e.Graphics.DrawString($"{ChrW(&H20B1)}{vatableNet:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"{ChrW(&H20B1)}{vatableNet:F2}", regularFont).Width), CSng(yPosition))
-            yPosition += 12
-
-            e.Graphics.DrawString("VAT (12%):", regularFont, brush, marginLeft, yPosition)
-            e.Graphics.DrawString($"{ChrW(&H20B1)}{vatAmt:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"{ChrW(&H20B1)}{vatAmt:F2}", regularFont).Width), CSng(yPosition))
-            yPosition += 12
-
-            e.Graphics.DrawString(New String("="c, Math.Min(36, CInt(contentWidth / 6))), regularFont, brush, marginLeft, yPosition)
-            yPosition += 12
-
-            e.Graphics.DrawString("TOTAL AMOUNT DUE:", boldFont, brush, marginLeft, yPosition)
-            e.Graphics.DrawString($"{ChrW(&H20B1)}{totalDue:F2}", boldFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"{ChrW(&H20B1)}{totalDue:F2}", boldFont).Width), CSng(yPosition))
-            yPosition += 18
-
-            e.Graphics.DrawString("PAYMENT INFORMATION", sectionHeaderFont, brush, marginLeft, yPosition)
-            yPosition += 14
-            e.Graphics.DrawString($"Payment Method: {If(String.IsNullOrWhiteSpace(paymentMethod), "N/A", paymentMethod)}", regularFont, brush, marginLeft, yPosition)
-            yPosition += 12
-            If Not String.IsNullOrWhiteSpace(paymentReference) Then
-                e.Graphics.DrawString($"Reference: {paymentReference}", regularFont, brush, marginLeft, yPosition)
-                yPosition += 12
-            End If
-            e.Graphics.DrawString($"Amount Received: {ChrW(&H20B1)}{amountReceived:F2}", regularFont, brush, marginLeft, yPosition)
-            yPosition += 12
-            e.Graphics.DrawString($"Change: {ChrW(&H20B1)}{changeAmount:F2}", regularFont, brush, marginLeft, yPosition)
-            yPosition += 14
-
-            e.Graphics.DrawString(New String("="c, Math.Min(36, CInt(contentWidth / 6))), regularFont, brush, marginLeft, yPosition)
-            yPosition += 12
-            e.Graphics.DrawString($"BIR Authority to Print No.: {birAuthNumber}", regularFont, brush, marginLeft, yPosition)
-            yPosition += 12
-            e.Graphics.DrawString($"PTU No.: {ptuNumber}", regularFont, brush, marginLeft, yPosition)
-            yPosition += 12
-            e.Graphics.DrawString(New String("="c, Math.Min(36, CInt(contentWidth / 6))), regularFont, brush, marginLeft, yPosition)
-            yPosition += 12
-
-            Dim footerLines() As String = footerMessage.Split({vbCrLf, vbLf}, StringSplitOptions.RemoveEmptyEntries)
-            For Each line As String In footerLines
-                e.Graphics.DrawString(line, regularFont, brush, CSng(centerX - (e.Graphics.MeasureString(line, regularFont).Width / 2)), CSng(yPosition))
-                yPosition += 12
-            Next
+            ReceiptRenderer.DrawReceipt(e.Graphics, e.MarginBounds, BuildReceiptData())
         Catch ex As Exception
             e.Graphics.DrawString($"Receipt render error: {ex.Message}", New Font("Arial", 10), Brushes.Black, 10, 10)
         End Try
