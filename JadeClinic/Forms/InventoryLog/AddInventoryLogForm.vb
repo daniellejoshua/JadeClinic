@@ -26,6 +26,11 @@ Public Class AddInventoryLogForm
     ' Field to prevent recursive TextChanged handling
     Private suppressProductTextChanged As Boolean = False
 
+    ' Set when Backspace is pressed so the next TextChanged skips the filter
+    ' rebuild (Backspace only narrows the search; rebuilding can make the combo
+    ' auto-complete the remaining text to a similar item's full name).
+    Private skipNextProductFilter As Boolean = False
+
     Private Const BatchSectionHeight As Integer = 90
     Private batchOffsetApplied As Boolean = False
     Private belowBatchControls As New List(Of Control)
@@ -1131,6 +1136,15 @@ Public Class AddInventoryLogForm
         Dim cb = CType(sender, ComboBox)
         Dim originalText As String = If(cb.Text, "")
 
+        ' Backspace only narrows the search — keep the current items and text as-is
+        If skipNextProductFilter Then
+            skipNextProductFilter = False
+            If Not String.IsNullOrWhiteSpace(originalText) Then
+                UpdateStockInfo()
+                Return
+            End If
+        End If
+
         ' If dropdown is open and text matches an item, it's arrow navigation — skip re-filtering
         If cb.DroppedDown AndAlso cb.Items.OfType(Of String)().Any(Function(s) s.Equals(originalText, StringComparison.OrdinalIgnoreCase)) Then
             Return
@@ -1163,11 +1177,19 @@ Public Class AddInventoryLogForm
             Next
             cb.EndUpdate()
 
-            ' Restore typed text and caret BEFORE opening the dropdown. While the
-            ' dropdown is open the combo's SelectionStart/SelectionLength getters
-            ' can report 0, which made the caret jump to the first character.
-            ' When typing, the caret belongs at the end of the text.
-            cb.Text = originalText
+            ' Restore caret BEFORE opening the dropdown. While the dropdown is
+            ' open the combo's SelectionStart/SelectionLength getters can report
+            ' 0, which made the caret jump to the first character. When typing,
+            ' the caret belongs at the end of the text.
+            '
+            ' Do NOT blindly re-assign cb.Text: its setter prefix-matches items
+            ' and auto-selects the first match, filling in the FULL product name
+            ' even when the user only typed a partial search (e.g. after a
+            ' Backspace). The edit already holds the correct text, so only
+            ' restore it if Items.Clear() actually wiped it.
+            If Not String.Equals(cb.Text, originalText, StringComparison.Ordinal) Then
+                cb.Text = originalText
+            End If
             cb.SelectionStart = Math.Min(originalText.Length, cb.Text.Length)
             cb.SelectionLength = 0
 
@@ -1191,6 +1213,10 @@ Public Class AddInventoryLogForm
             Select Case e.KeyCode
                 Case Keys.Escape
                     cb.DroppedDown = False
+                Case Keys.Back
+                    ' Backspace only narrows the search — don't rebuild the items list,
+                    ' or the open dropdown can show the full text of a similar item.
+                    skipNextProductFilter = (cb.Text.Length > 0)
                 Case Keys.Enter
                     If cb.Items.Count = 0 Then Exit Select
                     ' Determine the suggestion to accept (highlighted in dropdown or first)
