@@ -29,7 +29,6 @@ Public Class Sales
         Public Property SelectedPaymentMethod As String
         Public Property PaymentReference As String
     End Class
-    Private originalCategoryPanelControls As List(Of Control)
     Private originalOrderPanelControls As List(Of Control)
     Private originalTotalPanelControls As List(Of Control)
     ' Add near the top of the Sales class with other private fields
@@ -89,12 +88,11 @@ Public Class Sales
     Private isVoidDialogOpen As Boolean = False
 
 
-    ' List of normalized main categories for dental supplies
-    Private ReadOnly mainCategoryNames As New HashSet(Of String) From {
-        "ortho", "consumables", "surgery", "resto", "endo", "cosmetic"
-    }
     ' Map overlay label -> the category button it visually sits on
     Private overlayToButton As New Dictionary(Of Control, Guna.UI2.WinForms.Guna2Button)()
+    ' Code-generated category tiles (replaces the designer tile controls)
+    Private _categoryTileButtons As New List(Of Guna.UI2.WinForms.Guna2Button)()
+    Private _categoryCountLabels As New Dictionary(Of String, Guna.UI2.WinForms.Guna2HtmlLabel)()
     ' Add this new field near the other receipt fields (top of class)
     Private receiptVatableBeforeDiscount As Decimal = 0D
     Private WithEvents txtBarcodeInput As New TextBox With {.Visible = True, .TabIndex = 0}
@@ -111,6 +109,28 @@ Public Class Sales
     Private ReadOnly LightText As Color = Color.FromArgb(153, 153, 153)        ' #999999 - Tertiary text
     Private ReadOnly SuccessGreen As Color = Color.FromArgb(16, 216, 98)       ' #10D862 - Success states
     Private ReadOnly AlertRed As Color = Color.FromArgb(255, 71, 87)           ' #FF4757 - Error/Alert states
+    ' Category tile design: base accent #BE9A30, hover bg #FBF7EC, hover border #EEBC1B, text #222222, subtext #666666
+    Private ReadOnly CategoryHoverBg As Color = Color.FromArgb(251, 247, 236)  ' #FBF7EC - Category tile hover background
+    Private ReadOnly CategoryHoverBorder As Color = Color.FromArgb(238, 188, 27) ' #EEBC1B - Category tile hover border
+    Private ReadOnly CategoryText As Color = Color.FromArgb(34, 34, 34)        ' #222222 - Category tile text
+
+    ' === Code-generated category tiles (no designer controls) ===
+    Private ReadOnly _categoryTileSize As New Size(185, 243)                    ' Ortho-style tall tile
+    Private ReadOnly _categoryGridStart As New Point(41, 87)
+    Private Const _categoryGridCols As Integer = 4
+    Private Const _categoryGridGapX As Integer = 55
+    Private Const _categoryGridGapY As Integer = 20
+    Private ReadOnly _preferredCategoryOrder As New List(Of String) From {
+        "ORTHO", "ENDO", "CONSUMABLES", "SURGERY", "RESTO", "COSMETIC"
+    }
+    Private ReadOnly _categoryIconGlyphs As New Dictionary(Of String, String) From {
+        {"ORTHO", "🦷"},
+        {"ENDO", "💉"},
+        {"CONSUMABLES", "🧻"},
+        {"SURGERY", "🩺"},
+        {"RESTO", "🪥"},
+        {"COSMETIC", "💄"}
+    }
     Private selectedCustomerTIN As String = ""
 
     Private pinPanel As Guna.UI2.WinForms.Guna2Panel = Nothing ' Repurposed for customer selection
@@ -160,33 +180,23 @@ Public Class Sales
                 End If
             Next
 
-            ' Overlay candidates (designer labels and runtime overlays)
-            Dim overlayCandidates As Control() = {
-                Label1, Label2, Label3, Label4, Label5, Label6, Label7, Label8, Label9,
-                Guna2HtmlLabel1, Guna2HtmlLabel2, Guna2HtmlLabel3, Guna2HtmlLabel4,
-                Guna2HtmlLabel5, Guna2HtmlLabel6, Guna2HtmlLabel7, Guna2HtmlLabel8,
-                Guna2HtmlLabel9, Guna2HtmlLabel10, Guna2HtmlLabel11, Guna2HtmlLabel12
-            }
-
-            For Each c In overlayCandidates
-                If c IsNot Nothing Then
-                    originalCategoryOverlayColors(c) = c.BackColor
-                    originalCategoryOverlayParents(c) = c.Parent
-                    originalCategoryOverlayLocations(c) = c.Location
-                End If
-            Next
-
-            ' Include any children of category buttons (dynamic overlays)
-            For Each ctrl As Control In CategoryPanel.Controls
-                If TypeOf ctrl Is Guna.UI2.WinForms.Guna2Button Then
-                    Dim btn = CType(ctrl, Guna.UI2.WinForms.Guna2Button)
-                    For Each child As Control In btn.Controls
+            ' Cache all overlay labels (designer + runtime tiles) via a full tree walk of the panel
+            Dim stack As New Stack(Of Control)()
+            stack.Push(CategoryPanel)
+            While stack.Count > 0
+                Dim current = stack.Pop()
+                For Each child As Control In current.Controls
+                    If child Is Nothing OrElse child.IsDisposed Then Continue For
+                    stack.Push(child)
+                    If TypeOf child Is Label OrElse TypeOf child Is Guna.UI2.WinForms.Guna2HtmlLabel Then
                         If Not originalCategoryOverlayColors.ContainsKey(child) Then
                             originalCategoryOverlayColors(child) = child.BackColor
+                            originalCategoryOverlayParents(child) = child.Parent
+                            originalCategoryOverlayLocations(child) = child.Location
                         End If
-                    Next
-                End If
-            Next
+                    End If
+                Next
+            End While
 
             ' Build visual mapping from overlay controls -> the button beneath them (by screen coordinates)
             For Each kvp In originalCategoryOverlayColors.ToList()
@@ -290,6 +300,49 @@ Public Class Sales
         Catch ex As Exception
             Console.WriteLine($"ApplyPosLockColors error: {ex.Message}")
         End Try
+    End Sub
+
+    Private _categoryTileLabelMap As New Dictionary(Of Guna.UI2.WinForms.Guna2Button, List(Of Control))
+
+    ' Bind a category tile's child labels so they share the button's hover background (#FBF7EC)
+    Private Sub AttachCategoryTileHover(btn As Guna.UI2.WinForms.Guna2Button)
+        If btn Is Nothing OrElse btn.IsDisposed OrElse _categoryTileLabelMap.ContainsKey(btn) Then Return
+
+        Dim labels As New List(Of Control)
+        For Each child As Control In btn.Controls
+            labels.Add(child)
+        Next
+        _categoryTileLabelMap(btn) = labels
+
+        AddHandler btn.MouseEnter, Sub()
+                                       ApplyCategoryTileHover(btn, True)
+                                   End Sub
+        AddHandler btn.MouseLeave, Sub()
+                                       If Not CursorWithinButton(btn) Then
+                                           ApplyCategoryTileHover(btn, False)
+                                       End If
+                                   End Sub
+    End Sub
+
+    Private Function CursorWithinButton(btn As Guna.UI2.WinForms.Guna2Button) As Boolean
+        Try
+            Dim pt As Point = btn.PointToClient(Control.MousePosition)
+            Return btn.ClientRectangle.Contains(pt)
+        Catch ex As Exception
+            Return False
+        End Try
+    End Function
+
+    Private Sub ApplyCategoryTileHover(btn As Guna.UI2.WinForms.Guna2Button, hovering As Boolean)
+        If posLockedForCapital Then Return
+        Dim labels As List(Of Control) = Nothing
+        If Not _categoryTileLabelMap.TryGetValue(btn, labels) Then Return
+        Dim targetColor As Color = If(hovering, CategoryHoverBg, Color.White)
+        For Each ctrl As Control In labels
+            If ctrl IsNot Nothing AndAlso Not ctrl.IsDisposed Then
+                ctrl.BackColor = targetColor
+            End If
+        Next
     End Sub
     ' FIXED: Proper barcode key input handling
     ' FIXED: Remove Ctrl key, only use Shift for quantity selection
@@ -417,7 +470,6 @@ Public Class Sales
         IdleTimeoutManager.Instance.StartMonitoring(Me)
         IdleTimeoutManager.Instance.OnBeforeLogout = AddressOf PersistCartState
         Me.KeyPreview = True
-        originalCategoryPanelControls = New List(Of Control)(CategoryPanel.Controls.Cast(Of Control)())
 
         ' Make form full-screen and non-resizable; cover entire screen including taskbar
         Me.FormBorderStyle = FormBorderStyle.None
@@ -425,14 +477,6 @@ Public Class Sales
         Me.WindowState = FormWindowState.Normal
         Me.Bounds = Screen.PrimaryScreen.Bounds
         Me.WindowState = FormWindowState.Maximized
-        ArrangeCategoryButtonsFlexWrap()
-        ' Cache original colors and mapping so overlays follow their buttons
-        InitializeCategoryLockCaches()
-        ' Apply current lock state (in case POS is locked)
-        ApplyPosLockColors(posLockedForCapital)
-
-
-
 
         CategoryPanel.BorderRadius = 12 ' Rounded corners
 
@@ -459,76 +503,15 @@ Public Class Sales
         printDocument = New PrintDocument()
         AddHandler printDocument.PrintPage, AddressOf OnPrintPage
 
-        ' Add tooltip for all category buttons
-        Dim toolTip As New ToolTip()
-        Dim categoryButtons As New Dictionary(Of Guna.UI2.WinForms.Guna2Button, String) From {
-        {Me.OrthoCatBtn, "ORTHO"},
-        {Me.ConsumablesCatBtn, "CONSUMABLES"},
-        {Me.SurgeryCatBtn, "SURGERY"},
-        {RestoCatBtn, "RESTO"},
-        {Me.EndoCatBtn, "ENDO"},
-        {Me.CosmeticCatBtn, "COSMETIC"}
-        }
-        For Each kvp In categoryButtons
-            toolTip.SetToolTip(kvp.Key, $"Click to view {kvp.Value} products")
-            AddHandler kvp.Key.Click, Sub(senderBtn, eBtn)
-                                          ShowCategoryProducts(kvp.Value)
-                                      End Sub
+        ' Build category tiles from a single code template (main categories first, then any distinct DB categories)
+        BuildCategoryTiles()
+        ArrangeCategoryButtonsFlexWrap()
 
-            ' Update button colors to match Jade Clinic palette
-            ' REMOVED: Keep buttons White until POS is locked
-            ' kvp.Key.FillColor = JadeOlive
-            kvp.Key.ForeColor = Color.White
-            kvp.Key.BackColor = Color.Transparent
-            kvp.Key.BorderColor = Color.FromArgb(212, 190, 123)
-            kvp.Key.BorderThickness = 2
-
-            AddHandler kvp.Key.MouseDown, Sub()
-                                              kvp.Key.BorderColor = Color.White
-                                              kvp.Key.BorderThickness = 4
-                                          End Sub
-            AddHandler kvp.Key.MouseUp, Sub()
-                                            kvp.Key.BorderColor = Color.FromArgb(212, 190, 123)
-                                            kvp.Key.BorderThickness = 2
-                                        End Sub
-
-            AddHandler kvp.Key.MouseEnter, Sub(senderBtn, eBtn)
-                                               Dim btn = CType(senderBtn, Guna.UI2.WinForms.Guna2Button)
-                                               btn.HoverState.FillColor = btn.FillColor
-                                               btn.HoverState.BorderColor = JadeOlive
-                                               btn.BorderThickness = 2
-                                               btn.Cursor = Cursors.Hand
-                                           End Sub
-            AddHandler kvp.Key.MouseLeave, Sub(senderBtn, eBtn)
-                                               Dim btn = CType(senderBtn, Guna.UI2.WinForms.Guna2Button)
-                                               btn.BorderThickness = 2
-                                           End Sub
-        Next
-
-        ' Add hover effect to all category buttons in CategoryPanel (including dynamic)
-        For Each ctrl As Control In CategoryPanel.Controls
-            If TypeOf ctrl Is Guna.UI2.WinForms.Guna2Button Then
-                Dim btn = CType(ctrl, Guna.UI2.WinForms.Guna2Button)
-                AddHandler btn.MouseEnter, Sub(senderBtn, eBtn)
-                                               Dim b = CType(senderBtn, Guna.UI2.WinForms.Guna2Button)
-                                               b.HoverState.FillColor = b.FillColor
-                                               b.HoverState.BorderColor = JadeOlive
-                                               b.BorderThickness = 2
-                                               b.Cursor = Cursors.Hand
-                                           End Sub
-                AddHandler btn.MouseLeave, Sub(senderBtn, eBtn)
-                                               Dim b = CType(senderBtn, Guna.UI2.WinForms.Guna2Button)
-                                               b.BorderThickness = 2
-                                           End Sub
-            End If
-        Next
+        ' Cache lock colors AFTER tiles are built so the generated tiles and their child labels are captured
+        InitializeCategoryLockCaches()
+        ApplyPosLockColors(posLockedForCapital)
 
         backCategory.Visible = False
-
-        ' Add new category buttons from DB after designer buttons
-        AddNewCategoryButtonsFromDB()
-        ' Arrange buttons in flex-wrap style
-        ArrangeCategoryButtonsFlexWrap()
         ' Enforce daily opening capital when the form is shown to avoid blocking initial render
         AddHandler Me.Shown, Sub(shSender, shArgs) Me.BeginInvoke(Sub() EnsureCapitalBeforeUsingPOS())
         ' Show next possible Sale ID in lblOrderId
@@ -576,16 +559,18 @@ Public Class Sales
     End Sub
 
     Private Sub SetupTabIndex()
-        OrthoCatBtn.TabIndex = 0
-        ConsumablesCatBtn.TabIndex = 1
-        SurgeryCatBtn.TabIndex = 2
-        EndoCatBtn.TabIndex = 3
-        CosmeticCatBtn.TabIndex = 4
-        RestoCatBtn.TabIndex = 5
-        backCategory.TabIndex = 6
-        btnDiscount.TabIndex = 7
-        btnPayment.TabIndex = 8
-        confirmBtn.TabIndex = 9
+        Dim tabIndex As Integer = 0
+        For Each btn In _categoryTileButtons
+            btn.TabIndex = tabIndex
+            tabIndex += 1
+        Next
+        backCategory.TabIndex = tabIndex
+        tabIndex += 1
+        btnDiscount.TabIndex = tabIndex
+        tabIndex += 1
+        btnPayment.TabIndex = tabIndex
+        tabIndex += 1
+        confirmBtn.TabIndex = tabIndex
         Utilities.ApplyInputFocusEffects(Me)
     End Sub
 
@@ -663,8 +648,8 @@ Public Class Sales
                 productCard.Populate(productData, LoadProductImage(Convert.ToInt32(reader("ProductID")), 85, 78))
                 productCard.UpdateStock(Math.Max(0, stock - reservedQty))
                 AddHandler productCard.ProductClicked, Sub(sender2, e2)
-                                                          HandleProductInteraction(productData, False) ' False = manual click
-                                                      End Sub
+                                                           HandleProductInteraction(productData, False) ' False = manual click
+                                                       End Sub
 
                 productCardControls.Add(productCard)
                 flowPanel.Controls.Add(productCard)
@@ -1037,16 +1022,6 @@ Public Class Sales
     End Sub
 
     Private Sub UpdateCategoryItemCounts()
-        ' Dictionary to map category names to their respective labels
-        Dim categoryLabels As New Dictionary(Of String, Guna2HtmlLabel) From {
-            {"ORTHO", Guna2HtmlLabel5},
-            {"CONSUMABLES", Guna2HtmlLabel7},
-            {"SURGERY", Guna2HtmlLabel1},
-            {"RESTO", Guna2HtmlLabel3},
-            {"ENDO", Guna2HtmlLabel9},
-            {"COSMETIC", Guna2HtmlLabel11}
-        }
-
         ' Query the database to get the count of distinct products for each category
         Try
             Dim query As String = "SELECT Category, COUNT(*) AS TotalProducts FROM Products WHERE IsActive = 1 GROUP BY Category"
@@ -1055,10 +1030,9 @@ Public Class Sales
                     Dim category As String = reader("Category").ToString().ToUpper()
                     Dim totalProducts As Integer = Convert.ToInt32(reader("TotalProducts"))
 
-                    ' Update the corresponding label if it exists in the dictionary
-                    If categoryLabels.ContainsKey(category) Then
-                        Dim label As Guna2HtmlLabel = categoryLabels(category)
-                        label.Text = $"{totalProducts.ToString()} Items"
+                    ' Update the corresponding label if a tile exists for this category
+                    If _categoryCountLabels.ContainsKey(category) Then
+                        _categoryCountLabels(category).Text = $"{totalProducts.ToString()} Items"
                     End If
                 End While
             End Using
@@ -1067,117 +1041,175 @@ Public Class Sales
         End Try
 
         ' Set labels for categories with no products to "0"
-        For Each kvp In categoryLabels
+        For Each kvp In _categoryCountLabels
             If String.IsNullOrEmpty(kvp.Value.Text) OrElse kvp.Value.Text = "0 Items" Then
                 kvp.Value.Text = "0 Items"
             End If
         Next
     End Sub
 
-    Private Sub AddNewCategoryButtonsFromDB()
-        ' Get all categories from DB
-        Dim query As String = "SELECT DISTINCT Category FROM Products WHERE Category IS NOT NULL AND Category <> '' AND IsActive = 1"
-        Using reader As DbDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
-            While reader.Read()
-                Dim catName As String = reader("Category").ToString().ToUpper()
-                ' Skip if category is a main category (normalize)
-                If mainCategoryNames.Contains(NormalizeCategory(catName)) Then
-                    Continue While
-                End If
+    ' Build all category tiles in code: main categories first, then any distinct DB categories.
+    Private Sub BuildCategoryTiles()
+        ' Remove previously generated tiles (keep the designer search box)
+        For Each btn In _categoryTileButtons
+            If CategoryPanel.Controls.Contains(btn) Then
+                CategoryPanel.Controls.Remove(btn)
+            End If
+            btn.Dispose()
+        Next
+        _categoryTileButtons.Clear()
+        _categoryCountLabels.Clear()
+        _categoryTileLabelMap.Clear()
 
-                ' Check if a designer button already exists for this category
-                Dim exists As Boolean = False
-                For Each ctrl As Control In CategoryPanel.Controls
-                    If TypeOf ctrl Is Guna.UI2.WinForms.Guna2Button Then
-                        Dim btn = CType(ctrl, Guna.UI2.WinForms.Guna2Button)
-                        If NormalizeCategory(btn.Text) = NormalizeCategory(catName) Then
-                            exists = True
-                            Exit For
-                        End If
+        ' Build the category list: main categories first, then distinct DB categories
+        Dim categories As New List(Of String)(_preferredCategoryOrder)
+        Try
+            Dim query As String = "SELECT DISTINCT Category FROM Products WHERE Category IS NOT NULL AND Category <> '' AND IsActive = 1"
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
+                While reader.Read()
+                    Dim catName As String = reader("Category").ToString().ToUpper()
+                    If Not categories.Any(Function(c) NormalizeCategory(c) = NormalizeCategory(catName)) Then
+                        categories.Add(catName)
                     End If
-                Next
+                End While
+            End Using
+        Catch ex As Exception
+            Console.WriteLine($"Error loading categories: {ex.Message}")
+        End Try
 
-                If Not exists Then
-                    ' Create a new button with Jade Clinic color palette
-                    Dim btnCategory As New Guna.UI2.WinForms.Guna2Button()
-                    btnCategory.Text = catName
-                    btnCategory.Size = Me.OrthoCatBtn.Size
-                    btnCategory.BorderRadius = Me.OrthoCatBtn.BorderRadius
-                    btnCategory.FillColor = JadeOlive
-                    btnCategory.Font = New Font("Segoe UI", 12.0F)
-                    btnCategory.ForeColor = Color.White
-                    btnCategory.BackColor = Color.Transparent
-                    btnCategory.BorderColor = Color.FromArgb(212, 190, 123)
-                    btnCategory.BorderThickness = 2
+        ' Ensure the search box is present (BuildCategoryTiles also runs after the panel is cleared)
+        If Not CategoryPanel.Controls.Contains(TxtSearch) Then
+            CategoryPanel.Controls.Add(TxtSearch)
+        End If
 
-                    Dim toolTip As New ToolTip()
-                    toolTip.SetToolTip(btnCategory, $"Click to view {catName} products")
-                    AddHandler btnCategory.Click, Sub(senderBtn, eBtn)
-                                                      ShowCategoryProducts(catName)
-                                                  End Sub
-                    AddHandler btnCategory.Click, AddressOf Control_Click
-                    AddHandler btnCategory.MouseEnter, Sub(senderBtn, eBtn)
-                                                           Dim btn = CType(senderBtn, Guna.UI2.WinForms.Guna2Button)
-                                                           btn.HoverState.FillColor = btn.FillColor
-                                                           btn.HoverState.BorderColor = JadeOlive
-                                                           btn.BorderThickness = 2
-                                                           btn.Cursor = Cursors.Hand
-                                                       End Sub
-                    AddHandler btnCategory.MouseLeave, Sub(senderBtn, eBtn)
-                                                           Dim btn = CType(senderBtn, Guna.UI2.WinForms.Guna2Button)
-                                                           btn.BorderThickness = 2
-                                                       End Sub
-                    CategoryPanel.Controls.Add(btnCategory)
-                End If
-            End While
-        End Using
+        Dim template As Guna.UI2.WinForms.Guna2Button = CreateCategoryTileTemplate()
+        For Each catName In categories
+            CreateCategoryTile(catName, template)
+        Next
+        template.Dispose()
+
+        ' Refresh lock-state caches/colors so freshly built tiles reflect the current POS lock
+        InitializeCategoryLockCaches()
+        ApplyPosLockColors(posLockedForCapital)
     End Sub
 
-    ' Helper to arrange dynamic category buttons properly with the main buttons
-    Private Sub ArrangeCategoryButtonsFlexWrap()
-        Dim marginX As Integer = 20
-        Dim marginY As Integer = 20
-        Dim panelWidth As Integer = CategoryPanel.Width
+    ' Shared tile appearance for every category tile
+    Private Function CreateCategoryTileTemplate() As Guna.UI2.WinForms.Guna2Button
+        Dim tpl As New Guna.UI2.WinForms.Guna2Button()
+        tpl.Size = New Size(185, 243)
+        tpl.BorderRadius = 20
+        tpl.FillColor = Color.White
+        tpl.ForeColor = CategoryText
+        tpl.BackColor = Color.Transparent
+        tpl.BorderColor = JadeOlive
+        tpl.BorderThickness = 2
+        tpl.PressedColor = CategoryHoverBg
+        tpl.HoverState.FillColor = CategoryHoverBg
+        tpl.HoverState.BorderColor = CategoryHoverBorder
+        tpl.Text = ""
+        Return tpl
+    End Function
 
-        ' List of main category buttons with their intended positions
-        Dim mainButtons As New List(Of Guna.UI2.WinForms.Guna2Button) From {
-            Me.OrthoCatBtn, Me.ConsumablesCatBtn, Me.SurgeryCatBtn, RestoCatBtn, Me.EndoCatBtn, Me.CosmeticCatBtn
-        }
-        Dim catBtnSize As Size = Me.OrthoCatBtn.Size
+    ' Clone the template and attach the icon / name / count child labels plus wiring
+    Private Sub CreateCategoryTile(catName As String, template As Guna.UI2.WinForms.Guna2Button)
+        Dim btn As New Guna.UI2.WinForms.Guna2Button()
+        btn.Size = template.Size
+        btn.BorderRadius = template.BorderRadius
+        btn.FillColor = template.FillColor
+        btn.ForeColor = template.ForeColor
+        btn.BackColor = template.BackColor
+        btn.BorderColor = template.BorderColor
+        btn.BorderThickness = template.BorderThickness
+        btn.PressedColor = template.PressedColor
+        btn.HoverState.FillColor = template.HoverState.FillColor
+        btn.HoverState.BorderColor = template.HoverState.BorderColor
+        btn.Text = ""
 
-        ' Find the lowest Y position of main buttons to place dynamic ones below
-        Dim maxY As Integer = 0
-        For Each btn In mainButtons
-            If CategoryPanel.Controls.Contains(btn) Then
-                Dim bottomY = btn.Location.Y + btn.Height
-                If bottomY > maxY Then
-                    maxY = bottomY
-                End If
+        ' Icon label (top area)
+        Dim iconLbl As New Label()
+        iconLbl.Text = CategoryIcon(catName)
+        iconLbl.AutoSize = False
+        iconLbl.Size = New Size(185, 56)
+        iconLbl.Location = New Point(0, 20)
+        iconLbl.TextAlign = ContentAlignment.MiddleCenter
+        iconLbl.Font = New Font("Segoe UI", 22.2F)
+        iconLbl.ForeColor = JadeOlive
+        iconLbl.BackColor = Color.White
+        iconLbl.Name = "IconLbl"
+
+        ' Category name label
+        Dim nameLbl As New Label()
+        nameLbl.Text = catName
+        nameLbl.AutoSize = False
+        nameLbl.Size = New Size(185, 30)
+        nameLbl.Location = New Point(0, 88)
+        nameLbl.TextAlign = ContentAlignment.MiddleCenter
+        nameLbl.Font = New Font("Poppins", 9.0F, FontStyle.Bold)
+        nameLbl.ForeColor = CategoryText
+        nameLbl.BackColor = Color.White
+        nameLbl.Name = "NameLbl"
+
+        ' Item count label (subtext)
+        Dim countLbl As New Guna.UI2.WinForms.Guna2HtmlLabel()
+        countLbl.Text = "0 Items"
+        countLbl.AutoSize = False
+        countLbl.Size = New Size(185, 28)
+        countLbl.Location = New Point(0, 126)
+        countLbl.TextAlignment = ContentAlignment.MiddleCenter
+        countLbl.Font = New Font("Poppins", 8.0F)
+        countLbl.ForeColor = MediumText
+        countLbl.BackColor = Color.White
+        countLbl.Name = "CountLbl"
+
+        btn.Controls.Add(iconLbl)
+        btn.Controls.Add(nameLbl)
+        btn.Controls.Add(countLbl)
+
+        Dim toolTip As New ToolTip()
+        toolTip.SetToolTip(btn, $"Click to view {catName} products")
+        AddHandler btn.Click, Sub(senderBtn, eBtn)
+                                  ShowCategoryProducts(catName)
+                              End Sub
+        AddHandler btn.Click, Sub()
+                                  If ProfileManager.IsProfileDropdownVisible(Me) Then
+                                      ProfileManager.HideProfileDropdown(Me)
+                                  End If
+                                  FocusBarcodeInputIfAllowed()
+                              End Sub
+        AddHandler btn.MouseEnter, Sub(senderBtn, eBtn)
+                                       Dim b = CType(senderBtn, Guna.UI2.WinForms.Guna2Button)
+                                       b.Cursor = Cursors.Hand
+                                   End Sub
+        AddHandler btn.MouseLeave, Sub(senderBtn, eBtn)
+                                       Dim b = CType(senderBtn, Guna.UI2.WinForms.Guna2Button)
+                                       b.Cursor = Cursors.Default
+                                   End Sub
+        AttachCategoryTileHover(btn)
+
+        _categoryTileButtons.Add(btn)
+        _categoryCountLabels(catName) = countLbl
+
+        CategoryPanel.Controls.Add(btn)
+    End Sub
+
+    ' Emoji icon per category (falls back to a package box for unknown categories)
+    Private Function CategoryIcon(catName As String) As String
+        For Each kvp In _categoryIconGlyphs
+            If NormalizeCategory(kvp.Key) = NormalizeCategory(catName) Then
+                Return kvp.Value
             End If
         Next
+        Return "📦"
+    End Function
 
-        ' Start dynamic buttons below the main buttons
-        Dim startX As Integer = marginX
-        Dim startY As Integer = maxY + marginY + 20 ' Add some extra spacing
-        Dim currentX As Integer = startX
-        Dim currentY As Integer = startY
-
-        ' Arrange only dynamic buttons (not in mainButtons)
-        For Each ctrl As Control In CategoryPanel.Controls
-            If TypeOf ctrl Is Guna.UI2.WinForms.Guna2Button Then
-                Dim btn = CType(ctrl, Guna.UI2.WinForms.Guna2Button)
-                If Not mainButtons.Contains(btn) Then
-                    btn.Size = catBtnSize
-                    ' Check if button fits in current row
-                    If currentX + btn.Width > panelWidth - marginX AndAlso currentX > startX Then
-                        currentX = startX
-                        currentY += btn.Height + marginY
-                    End If
-
-                    btn.Location = New Point(currentX, currentY)
-                    currentX += btn.Width + marginX
-                End If
-            End If
+    ' Arrange the code-generated tiles in a fixed grid (4 columns, Ortho-style tall tiles)
+    Private Sub ArrangeCategoryButtonsFlexWrap()
+        For index As Integer = 0 To _categoryTileButtons.Count - 1
+            Dim btn = _categoryTileButtons(index)
+            Dim col As Integer = index Mod _categoryGridCols
+            Dim row As Integer = index \ _categoryGridCols
+            btn.Size = _categoryTileSize
+            btn.Location = New Point(_categoryGridStart.X + (col * (_categoryTileSize.Width + _categoryGridGapX)), _categoryGridStart.Y + (row * (_categoryTileSize.Height + _categoryGridGapY)))
         Next
 
         ' Ensure CategoryPanel can scroll if content exceeds visible area
@@ -1191,16 +1223,10 @@ Public Class Sales
         ' Clear the CategoryPanel
         CategoryPanel.Controls.Clear()
 
-        ' Restore the original designer controls
-        For Each control In originalCategoryPanelControls
-            CategoryPanel.Controls.Add(control)
-        Next
-
-        ' Add new category buttons from DB
-        AddNewCategoryButtonsFromDB()
-
-        ' Arrange buttons properly
+        ' Rebuild the code-generated category tiles
+        BuildCategoryTiles()
         ArrangeCategoryButtonsFlexWrap()
+        UpdateCategoryItemCounts()
 
         LabelTitle.Text = "Categories"
         backCategory.Visible = False
@@ -2535,9 +2561,6 @@ Public Class Sales
     End Sub
 
     Private Sub totalPanel_Paint(sender As Object, e As PaintEventArgs) Handles totalPanel.Paint
-    End Sub
-
-    Private Sub Guna2Button2_Click(sender As Object, e As EventArgs)
     End Sub
 
     ' Customer data variables (moved to top of class)
@@ -4256,11 +4279,9 @@ Public Class Sales
 
         ' Reset category panel to initial state
         CategoryPanel.Controls.Clear()
-        For Each control As Control In originalCategoryPanelControls
-            CategoryPanel.Controls.Add(control)
-        Next
-        AddNewCategoryButtonsFromDB()
+        BuildCategoryTiles()
         ArrangeCategoryButtonsFlexWrap()
+        UpdateCategoryItemCounts()
 
         ' CRITICAL: Clear the order summary panel and refresh display
         ' Remove all product items from order summary panel
