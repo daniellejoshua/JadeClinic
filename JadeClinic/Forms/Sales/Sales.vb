@@ -47,6 +47,18 @@ Public Class Sales
     Private productCardControls As New List(Of Control)()
     Private productDbStock As New Dictionary(Of String, Integer)()
 
+    ' Pagination for product / category listings (reuses one control across views)
+    Private Const ProductPageSize As Integer = 8
+    Private _pagination As PaginationControl
+    Private Enum PaginationContext
+        None
+        Category
+        Search
+    End Enum
+    Private _paginationContext As PaginationContext = PaginationContext.None
+    Private _paginationCategory As String = ""
+    Private _paginationSearchTerm As String = ""
+
     ' Receipt printing variables
     Private printDocument As PrintDocument
     Private receiptOrderId As String
@@ -485,7 +497,16 @@ Public Class Sales
             ShowBarcodeErrorNotification(ex.Message)
         End Try
     End Sub
+    Private Sub LogDiagnostic(message As String)
+        Try
+            Dim logPath As String = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "JadeClinic", "diag.log")
+            System.IO.File.AppendAllText(logPath, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} {message}{Environment.NewLine}")
+        Catch
+        End Try
+    End Sub
+
     Private Sub Sales_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        LogDiagnostic($"DIAG02 LOAD Sales form version={Me.GetType().Assembly.GetName().Version}")
         ' Stop idle timeout monitoring
         ' Start idle timeout monitoring
         IdleTimeoutManager.Instance.StartMonitoring(Me)
@@ -632,7 +653,8 @@ Public Class Sales
         backCategory.Visible = True
         LabelTitle.Text = categoryName
 
-        ' Use FlowLayoutPanel for responsive card layout
+        ' Use FlowLayoutPanel for responsive card layout (Dock Fill so it stays
+        ' inside the rounded border; add it before the footer so it fills above it)
         Dim flowPanel As New FlowLayoutPanel()
         flowPanel.Dock = DockStyle.Fill
         flowPanel.AutoScroll = True
@@ -640,40 +662,111 @@ Public Class Sales
         flowPanel.Padding = New Padding(14)
         CategoryPanel.Controls.Add(flowPanel)
 
-        ' Query products from database where Category matches - Always get fresh data
-        Dim query As String = "SELECT ProductID, ProductName, SellingPrice, ProductCode, ReorderLevel, CurrentStock, Category FROM Products WHERE Category = @Category AND IsActive = 1"
-        Dim param As New SqlParameter("@Category", categoryName)
-        Using reader As DbDataReader = Utilities.ExecuteReader(query, {param})
-            While reader.Read()
-                Dim stock As Integer = Convert.ToInt32(reader("CurrentStock"))
+        ' Count matching rows so the footer can show total pages
+        Dim totalItems As Integer = 0
+        Try
+            Dim countQuery As String = "SELECT COUNT(*) FROM Products WHERE Category = @Category AND IsActive = 1"
+            Dim countResult As Object = Utilities.ExecuteScalar(countQuery, {New SqlParameter("@Category", categoryName)})
+            LogDiagnostic($"CAT category='{categoryName}' countResult={If(countResult Is Nothing, "Nothing", countResult.ToString())} type={If(countResult Is Nothing, "-", countResult.GetType().Name)}")
+            If countResult IsNot Nothing Then
+                totalItems = Convert.ToInt32(countResult)
+            End If
+            LogDiagnostic($"CAT category='{categoryName}' totalItems={totalItems}")
+        Catch ex As Exception
+            LogDiagnostic($"CAT category='{categoryName}' EXCEPTION: {ex.ToString()}")
+            Console.WriteLine($"Category count error: {ex.Message}")
+            MessageBox.Show($"Category count failed: {ex.Message}")
+        End Try
 
-                Dim productData As New Dictionary(Of String, Object) From {
-                    {"ProductID", reader("ProductID")},
-                    {"ProductName", reader("ProductName")},
-                    {"Price", Convert.ToDecimal(reader("SellingPrice"))},
-                    {"ProductCode", reader("ProductCode")},
-                    {"Category", reader("Category")},
-                    {"CurrentStock", stock}
-                }
-                productDbStock(reader("ProductID").ToString()) = stock
+        ' Footer pagination bar (Dock Bottom)
+        Dim pagination As PaginationControl = GetPagination()
+        pagination.Dock = DockStyle.Bottom
+        pagination.Height = 62
+        CategoryPanel.Controls.Add(pagination)
+        pagination.Configure(totalItems, ProductPageSize, 1)
+        LogDiagnostic($"CAT category='{categoryName}' footer totalItems={totalItems} totalPages={pagination.TotalPages} instance={pagination.GetHashCode()}")
 
-                ' Show available stock (raw stock minus what is already reserved in the current order)
-                Dim reservedQty As Integer = 0
-                For Each orderItem In currentOrderList
-                    If orderItem("ProductID").ToString() = reader("ProductID").ToString() Then
-                        reservedQty += CInt(orderItem("Quantity"))
-                    End If
-                Next
-
-                Dim productCard = ProductCardBuilder.Create(productData, LoadProductImage(Convert.ToInt32(reader("ProductID")), 85, 78),
-                                                            Sub() HandleProductInteraction(productData, False))
-                ProductCardBuilder.UpdateStock(productCard, Math.Max(0, stock - reservedQty))
-
-                productCardControls.Add(productCard)
-                flowPanel.Controls.Add(productCard)
-            End While
-        End Using
+        _paginationCategory = categoryName
+        _paginationContext = PaginationContext.Category
+        LoadCategoryProductsPage(categoryName, 1)
     End Sub
+
+    ' Loads a single page of product cards for a category (raises no events)
+    Private Sub LoadCategoryProductsPage(categoryName As String, page As Integer)
+        Dim flowPanel As FlowLayoutPanel = CategoryPanel.Controls.OfType(Of FlowLayoutPanel)().FirstOrDefault()
+        If flowPanel Is Nothing Then Return
+        flowPanel.Controls.Clear()
+        flowPanel.SuspendLayout()
+        productCardControls.Clear()
+        productDbStock.Clear()
+
+        Dim offset As Integer = (page - 1) * ProductPageSize
+        ' ORDER BY keeps the paging stable across queries
+        Dim query As String = "SELECT ProductID, ProductName, SellingPrice, ProductCode, ReorderLevel, CurrentStock, Category FROM Products WHERE Category = @Category AND IsActive = 1 ORDER BY ProductName LIMIT @Limit OFFSET @Offset"
+        Dim parameters As SqlParameter() = {
+            New SqlParameter("@Category", categoryName),
+            New SqlParameter("@Limit", ProductPageSize),
+            New SqlParameter("@Offset", offset)
+        }
+        Try
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters)
+                While reader.Read()
+                    Dim stock As Integer = Convert.ToInt32(reader("CurrentStock"))
+
+                    Dim productData As New Dictionary(Of String, Object) From {
+                        {"ProductID", reader("ProductID")},
+                        {"ProductName", reader("ProductName")},
+                        {"Price", Convert.ToDecimal(reader("SellingPrice"))},
+                        {"ProductCode", reader("ProductCode")},
+                        {"Category", reader("Category")},
+                        {"CurrentStock", stock}
+                    }
+                    productDbStock(reader("ProductID").ToString()) = stock
+
+                    ' Show available stock (raw stock minus what is already reserved in the current order)
+                    Dim reservedQty As Integer = 0
+                    For Each orderItem In currentOrderList
+                        If orderItem("ProductID").ToString() = reader("ProductID").ToString() Then
+                            reservedQty += CInt(orderItem("Quantity"))
+                        End If
+                    Next
+
+                    Dim productCard = ProductCardBuilder.Create(productData, LoadProductImage(Convert.ToInt32(reader("ProductID")), 85, 78),
+                                                                Sub() HandleProductInteraction(productData, False))
+                    ProductCardBuilder.UpdateStock(productCard, Math.Max(0, stock - reservedQty))
+
+                    productCardControls.Add(productCard)
+                    flowPanel.Controls.Add(productCard)
+                End While
+            End Using
+        Catch ex As Exception
+            Console.WriteLine($"Category load error: {ex.Message}")
+        End Try
+
+        flowPanel.ResumeLayout(True)
+        flowPanel.AutoScrollPosition = New Point(0, 0)
+        LogDiagnostic($"CAT category='{categoryName}' page={page} cards={flowPanel.Controls.Count}")
+    End Sub
+
+    ' Lazily creates the shared pagination footer so it can be re-docked across views
+    Private Function GetPagination() As PaginationControl
+        If _pagination Is Nothing Then
+            _pagination = New PaginationControl()
+            AddHandler _pagination.PageChanged, AddressOf Pagination_PageChanged
+        End If
+        Return _pagination
+    End Function
+
+    ' Routes footer navigation back to the active listing (category or search)
+    Private Sub Pagination_PageChanged(page As Integer)
+        If _paginationContext = PaginationContext.Category AndAlso Not String.IsNullOrEmpty(_paginationCategory) Then
+            LoadCategoryProductsPage(_paginationCategory, page)
+        ElseIf _paginationContext = PaginationContext.Search AndAlso Not String.IsNullOrEmpty(_paginationSearchTerm) Then
+            LoadSearchProductsPage(_paginationSearchTerm, page)
+        End If
+        FocusBarcodeInputIfAllowed()
+    End Sub
+
     ' UNIFIED: Handle both manual clicks and barcode scans
     ' FIXED: Handle both manual clicks and barcode scans with better modifier detection
     ' FIXED: Handle both manual clicks and barcode scans with only Shift key
@@ -1276,6 +1369,7 @@ Public Class Sales
 
         LabelTitle.Text = "Categories"
         backCategory.Visible = False
+        _paginationContext = PaginationContext.None
 
         ' Reset scroll position to top
         CategoryPanel.AutoScrollPosition = New Point(0, 0)
@@ -4260,6 +4354,7 @@ Public Class Sales
 
         ' Reset category panel to initial state
         CategoryPanel.Controls.Clear()
+        _paginationContext = PaginationContext.None
         BuildCategoryTiles()
         ArrangeCategoryButtonsFlexWrap()
         UpdateCategoryItemCounts()
@@ -5256,6 +5351,7 @@ Public Class Sales
             UpdateCategoryItemCounts()
             LabelTitle.Text = "Categories"
             backCategory.Visible = False
+            _paginationContext = PaginationContext.None
         Else
             ShowSearchResults(term)
         End If
@@ -5274,23 +5370,66 @@ Public Class Sales
             CategoryPanel.Controls.Add(TxtSearch)
         End If
 
-        ' Inset by the CategoryPanel border thickness so the white results panel
-        ' stays inside the rounded border instead of covering it edge-to-edge
-        Dim borderInset As Integer = 2 ' CategoryPanel.BorderThickness
+        ' Flow panel fills the space above the footer; top padding reserves the
+        ' search box area so cards never slide underneath it (Dock Fill stays
+        ' inside the rounded border, no manual inset needed)
         Dim flowPanel As New FlowLayoutPanel()
-        flowPanel.Location = New Point(borderInset, 72 + borderInset)
-        flowPanel.Size = New Size(CategoryPanel.ClientSize.Width - borderInset * 2, Math.Max(0, CategoryPanel.ClientSize.Height - 72 - borderInset * 2))
-        flowPanel.Anchor = AnchorStyles.Top Or AnchorStyles.Left Or AnchorStyles.Right Or AnchorStyles.Bottom
+        flowPanel.Dock = DockStyle.Fill
         flowPanel.AutoScroll = True
         flowPanel.BackColor = Color.White
-        flowPanel.Padding = New Padding(14)
+        flowPanel.Padding = New Padding(14, 86, 14, 14)
         CategoryPanel.Controls.Add(flowPanel)
         TxtSearch.BringToFront()
 
-        Dim query As String = "SELECT ProductID, ProductName, SellingPrice, ProductCode, ReorderLevel, CurrentStock, Category FROM Products WHERE IsActive = 1 AND (ProductCode = @term OR ProductName LIKE @like) ORDER BY CASE WHEN ProductCode = @term THEN 0 ELSE 1 END, ProductName"
+        ' Count matching rows so the footer can show total pages
+        Dim totalItems As Integer = 0
+        Try
+            Dim countQuery As String = "SELECT COUNT(*) FROM Products WHERE IsActive = 1 AND (ProductCode = @term OR ProductName LIKE @like)"
+            Dim countParameters As SqlParameter() = {
+                New SqlParameter("@term", term),
+                New SqlParameter("@like", "%" & term & "%")
+            }
+            Dim countResult As Object = Utilities.ExecuteScalar(countQuery, countParameters)
+            LogDiagnostic($"SRCH term='{term}' countResult={If(countResult Is Nothing, "Nothing", countResult.ToString())} type={If(countResult Is Nothing, "-", countResult.GetType().Name)}")
+            If countResult IsNot Nothing Then
+                totalItems = Convert.ToInt32(countResult)
+            End If
+            LogDiagnostic($"SRCH term='{term}' totalItems={totalItems}")
+        Catch ex As Exception
+            LogDiagnostic($"SRCH term='{term}' EXCEPTION: {ex.ToString()}")
+            Console.WriteLine($"Search count error: {ex.Message}")
+            MessageBox.Show($"Search count failed: {ex.Message}")
+        End Try
+
+        ' Footer pagination bar (Dock Bottom)
+        Dim pagination As PaginationControl = GetPagination()
+        pagination.Dock = DockStyle.Bottom
+        pagination.Height = 62
+        CategoryPanel.Controls.Add(pagination)
+        pagination.Configure(totalItems, ProductPageSize, 1)
+        LogDiagnostic($"SRCH term='{term}' footer totalItems={totalItems} totalPages={pagination.TotalPages} instance={pagination.GetHashCode()}")
+
+        _paginationSearchTerm = term
+        _paginationContext = PaginationContext.Search
+        LoadSearchProductsPage(term, 1)
+    End Sub
+
+    ' Loads a single page of search results (raises no events)
+    Private Sub LoadSearchProductsPage(term As String, page As Integer)
+        Dim flowPanel As FlowLayoutPanel = CategoryPanel.Controls.OfType(Of FlowLayoutPanel)().FirstOrDefault()
+        If flowPanel Is Nothing Then Return
+        flowPanel.Controls.Clear()
+        flowPanel.SuspendLayout()
+        productCardControls.Clear()
+        productDbStock.Clear()
+
+        Dim offset As Integer = (page - 1) * ProductPageSize
+        Dim query As String = "SELECT ProductID, ProductName, SellingPrice, ProductCode, ReorderLevel, CurrentStock, Category FROM Products WHERE IsActive = 1 AND (ProductCode = @term OR ProductName LIKE @like) ORDER BY CASE WHEN ProductCode = @term THEN 0 ELSE 1 END, ProductName LIMIT @Limit OFFSET @Offset"
         Dim parameters As SqlParameter() = {
             New SqlParameter("@term", term),
-            New SqlParameter("@like", "%" & term & "%")
+            New SqlParameter("@like", "%" & term & "%"),
+            New SqlParameter("@Limit", ProductPageSize),
+            New SqlParameter("@Offset", offset)
         }
         Try
             Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters)
@@ -5337,11 +5476,16 @@ Public Class Sales
             }
             flowPanel.Controls.Add(noResults)
         End If
+
+        flowPanel.ResumeLayout(True)
+        flowPanel.AutoScrollPosition = New Point(0, 0)
+        LogDiagnostic($"SRCH term='{term}' page={page} cards={flowPanel.Controls.Count}")
     End Sub
 
     ' Show only the matching product card from search
     Private Sub ShowSingleProductCard(productId As Integer, productName As String, category As String)
         CategoryPanel.Controls.Clear()
+        _paginationContext = PaginationContext.None
         productCardControls.Clear()
         productDbStock.Clear()
         backCategory.Visible = True

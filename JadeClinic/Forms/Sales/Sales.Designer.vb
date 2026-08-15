@@ -76,9 +76,9 @@ Partial Class Sales
         LabelTitle.ForeColor = Color.FromArgb(CByte(42), CByte(42), CByte(42))
         LabelTitle.Location = New Point(262, 20)
         LabelTitle.Name = "LabelTitle"
-        LabelTitle.Size = New Size(177, 50)
+        LabelTitle.Size = New Size(86, 50)
         LabelTitle.TabIndex = 0
-        LabelTitle.Text = "Categories"
+        LabelTitle.Text = "P.O.S"
         ' 
         ' CategoryPanel
         ' 
