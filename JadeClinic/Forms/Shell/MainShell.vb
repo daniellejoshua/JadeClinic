@@ -308,6 +308,21 @@ Public Class MainShell
         _childFormHook = New EdgeHitHook(Me, page)
     End Sub
 
+    ' Persist the current page's draft (e.g. the POS cart) when the shell closes.
+    ' Pages are disposed without FormClosing (see IDraftPersistable comment above),
+    ' so the shell is the reliable place to save the live page state before exit.
+    Private Sub MainShell_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
+        Try
+            If _currentPage IsNot Nothing Then
+                Dim persistable As IDraftPersistable = TryCast(_currentPage, IDraftPersistable)
+                If persistable IsNot Nothing Then
+                    persistable.PersistDraft()
+                End If
+            End If
+        Catch
+        End Try
+    End Sub
+
     Private Sub ShowOverlay(visible As Boolean)
         If _loadingOverlay Is Nothing Then Return
         _loadingOverlay.Visible = visible

@@ -282,7 +282,7 @@ Partial Class Sales
         ' 
         totalLbl.BackColor = Color.Transparent
         totalLbl.Font = New Font("Poppins Medium", 12F, FontStyle.Bold)
-        totalLbl.ForeColor = Color.FromArgb(CByte(59), CByte(59), CByte(59))
+        totalLbl.ForeColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
         totalLbl.Location = New Point(473, 151)
         totalLbl.Name = "totalLbl"
         totalLbl.Size = New Size(47, 38)

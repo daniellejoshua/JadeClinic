@@ -101,6 +101,8 @@ Public Class Sales
     Private WithEvents txtBarcodeInput As New TextBox With {.Visible = True, .TabIndex = 0}
     ' Fixed non-resizable DataGridView that renders the order summary line items
     Private _orderSummaryGrid As DataGridView
+    ' Empty-cart state shown when the order has no items
+    Private _emptyCartPanel As Guna.UI2.WinForms.Guna2Panel
 
     ' Jade Clinic Color Palette Constants (from brand guide)
     Private ReadOnly GoldenYellow As Color = Color.FromArgb(254, 191, 16)      ' #FECF10 - Primary brand color
@@ -904,6 +906,10 @@ Public Class Sales
                 UpdateCategoryItemCounts()
                 UpdateStockLabelFromDbStock(removedProductId)
 
+                ' Keep the persisted draft cart in sync so a later exit never
+                ' restores a stale (pre-void) snapshot.
+                PersistCartState()
+
                 Utilities.LogAudit(frmLoginvb.LoggedInUsername, "POS Line Voided", $"Product: {productName}, Qty: {currentQuantity}, AuthorizedBy: {approver}")
                 ShowVoidSuccessNotification(productName & $" (x{currentQuantity})", approver)
             Finally
@@ -921,6 +927,7 @@ Public Class Sales
 
             RefreshOrderDisplay()
             UpdateCategoryItemCounts()
+            PersistCartState()
             Return
         End If
 
@@ -935,6 +942,7 @@ Public Class Sales
         UpdateStockLabelFromDbStock(removedId)
         RefreshOrderDisplay()
         UpdateCategoryItemCounts()
+        PersistCartState()
 
         Utilities.LogAudit(frmLoginvb.LoggedInUsername, "POS Item Voided", $"Product: {productName}, Qty: 1, AuthorizedBy: {approverLocal}")
         ShowVoidSuccessNotification(productName, approverLocal)
@@ -3830,9 +3838,20 @@ Public Class Sales
     Private Sub EnsureOrderSummaryGrid()
         If _orderSummaryGrid IsNot Nothing Then Return
         _orderSummaryGrid = OrderSummaryGridBuilder.BuildGrid()
+        ' Visible rounded gray frame around the table (the panel already has BorderRadius 10)
+        orderSummaryPanel.BorderColor = Color.FromArgb(232, 232, 232)
+        orderSummaryPanel.BorderThickness = 2
         orderSummaryPanel.Padding = New Padding(2)
         orderSummaryPanel.AutoScroll = False
         orderSummaryPanel.Controls.Add(_orderSummaryGrid)
+
+        ' Empty-cart state panel (sits under the grid, toggled by cart contents)
+        If _emptyCartPanel Is Nothing Then
+            _emptyCartPanel = EmptyCartStateBuilder.BuildEmptyCartState()
+            orderSummaryPanel.Controls.Add(_emptyCartPanel)
+        End If
+
+        UpdateOrderSummaryVisibility()
 
         ' Hover acts as selection: #FBF7EC row highlight follows the mouse
         AddHandler _orderSummaryGrid.CellMouseEnter, Sub(s, e)
@@ -3852,6 +3871,14 @@ Public Class Sales
                                                           If e.RowIndex < 0 Then Return
                                                           ReduceItemQuantity(e.RowIndex)
                                                       End Sub
+    End Sub
+
+    ' Show the empty-cart state when the order has no items, otherwise the grid.
+    Private Sub UpdateOrderSummaryVisibility()
+        If _orderSummaryGrid Is Nothing OrElse _emptyCartPanel Is Nothing Then Return
+        Dim hasItems As Boolean = currentOrderList.Count > 0
+        _orderSummaryGrid.Visible = hasItems
+        _emptyCartPanel.Visible = Not hasItems
     End Sub
 
     ' Refresh the order display in the order summary panel
@@ -3957,6 +3984,9 @@ Public Class Sales
         If lblSubTotal IsNot Nothing Then lblSubTotal.Text = vatableNet.ToString("N2")
         If taxLbl IsNot Nothing Then taxLbl.Text = vatAmount.ToString("N2")
         If totalLbl IsNot Nothing Then totalLbl.Text = totalAmountVatInc.ToString("N2")
+
+        ' Toggle empty-cart state vs grid based on whether there are items
+        UpdateOrderSummaryVisibility()
     End Sub
     ' FIXED: Enhanced receipt printing with correct VAT breakdown
     ' FIXED: Update the confirmBtn_Click method to set correct receipt values
@@ -5118,6 +5148,9 @@ Public Class Sales
 
         ' Refresh the order display
         RefreshOrderDisplay()
+
+        ' Keep the persisted draft cart in sync with the live order list
+        PersistCartState()
     End Sub
     ' Helper: fetch primary image bytes for a product
     Private Sub NavAuditLog_Click(sender As Object, e As EventArgs)
