@@ -2,6 +2,13 @@ Imports System.Linq
 Imports System.Reflection
 Imports System.Runtime.InteropServices
 
+' Any page that wants its draft state (e.g. the POS cart) saved before the
+' shell disposes it during navigation should implement this. Form.Dispose()
+' does not raise FormClosing, so pages cannot rely on that event.
+Public Interface IDraftPersistable
+    Sub PersistDraft()
+End Interface
+
 Public Class MainShell
     Private _currentPage As Form
     Private _currentPageType As Type
@@ -268,6 +275,11 @@ Public Class MainShell
         _isShowingPage = True
 
         If _currentPage IsNot Nothing Then
+            Dim persistable As IDraftPersistable = TryCast(_currentPage, IDraftPersistable)
+            If persistable IsNot Nothing Then
+                persistable.PersistDraft()
+            End If
+
             If _childFormHook IsNot Nothing Then
                 _childFormHook.ReleaseHandle()
                 _childFormHook = Nothing

@@ -11,6 +11,7 @@ Imports Newtonsoft.Json
 
 
 Public Class Sales
+    Implements IDraftPersistable
 
     Private Class CartStateSnapshot
         Public Property CurrentOrderList As List(Of Dictionary(Of String, Object))
@@ -629,7 +630,7 @@ Public Class Sales
         Dim flowPanel As New FlowLayoutPanel()
         flowPanel.Dock = DockStyle.Fill
         flowPanel.AutoScroll = True
-        flowPanel.BackColor = Color.Transparent
+        flowPanel.BackColor = Color.White
         flowPanel.Padding = New Padding(14)
         CategoryPanel.Controls.Add(flowPanel)
 
@@ -637,85 +638,20 @@ Public Class Sales
         Dim query As String = "SELECT ProductID, ProductName, SellingPrice, ProductCode, ReorderLevel, CurrentStock, Category FROM Products WHERE Category = @Category AND IsActive = 1"
         Dim param As New SqlParameter("@Category", categoryName)
         Using reader As DbDataReader = Utilities.ExecuteReader(query, {param})
-            Dim cardWidth As Integer = 220
-            Dim cardHeight As Integer = 210
-
             While reader.Read()
-                ' Create a new panel for the product card - Updated colors
-                Dim productCard As New Guna.UI2.WinForms.Guna2Panel()
-                productCard.Size = New Size(cardWidth, cardHeight)
-                productCard.BorderRadius = 10
-                productCard.FillColor = OffWhite ' Updated to match clinic theme
-                productCard.BorderColor = JadeOlive ' Golden accent border
-                productCard.BorderThickness = 1
-                productCard.Margin = New Padding(10)
-
-                ' Set the Tag property to the ProductID for UpdateStockLabel method
-                productCard.Tag = reader("ProductID").ToString()
-
-                ' Add product image placeholder
-                Dim productImage As New Guna.UI2.WinForms.Guna2PictureBox()
-                Try
-                    ' Add product image (attempt DB load, fallback to resource)
-                    Dim productIdInt As Integer = Convert.ToInt32(reader("ProductID"))
-                    Dim img As Image = LoadProductImage(productIdInt, 80, 80)
-                    productImage.Image = img
-                Catch
-                    productImage.Image = My.Resources.product_placeholder
-                End Try
-
-                productImage.Size = New Size(80, 80)
-                productImage.Location = New Point(cardWidth - productImage.Width - 10, 10)
-                productImage.SizeMode = PictureBoxSizeMode.StretchImage
-                productImage.BorderRadius = 10
-                productCard.Controls.Add(productImage)
-
-                ' Add product name - use limited size label with tooltip
-                Dim fullProductName As String = reader("ProductName").ToString()
-                Dim maxNameLength As Integer = 18
-                Dim displayName As String = If(fullProductName.Length > maxNameLength, fullProductName.Substring(0, maxNameLength) & "...", fullProductName)
-
-                Dim lblProductName As New Guna.UI2.WinForms.Guna2HtmlLabel()
-                lblProductName.Text = displayName
-                lblProductName.Font = New Font("Poppins Light", 9.0F, FontStyle.Regular)
-                lblProductName.ForeColor = DarkText
-                lblProductName.BackColor = Color.Transparent
-                lblProductName.Location = New Point(10, cardHeight - 120)
-                lblProductName.AutoSize = True
-                productCard.Controls.Add(lblProductName)
-
-                ' Add tooltip for full product name if truncated
-                If fullProductName.Length > maxNameLength Then
-                    Dim toolTip As New ToolTip()
-                    toolTip.SetToolTip(lblProductName, fullProductName)
-                End If
-
-                ' Add product price
-                Dim originalPrice As Decimal = Convert.ToDecimal(reader("SellingPrice"))
-                Dim lblProductPrice As New Label()
-                lblProductPrice.Text = $"Price: ₱{originalPrice:F2}"
-                lblProductPrice.ForeColor = DarkText
-                lblProductPrice.Font = New Font("Poppins Light", 9.0F, FontStyle.Regular)
-                lblProductPrice.BackColor = Color.Transparent
-                lblProductPrice.Location = New Point(10, cardHeight - 90)
-                lblProductPrice.AutoSize = True
-                productCard.Controls.Add(lblProductPrice)
-
-                ' Add product code
-                Dim lblProductCode As New Label()
-                lblProductCode.Text = $"Code: {reader("ProductCode").ToString()}"
-                lblProductCode.Font = New Font("Poppins", 7.5F, FontStyle.Regular)
-                lblProductCode.ForeColor = JadeOlive
-                lblProductCode.BackColor = Color.Transparent
-                lblProductCode.AutoSize = True
-                lblProductCode.Location = New Point(10, cardHeight - 70)
-                productCard.Controls.Add(lblProductCode)
-
-                ' Add available stock - Get CURRENT stock from database
-                Dim lblStock As New Label()
                 Dim stock As Integer = Convert.ToInt32(reader("CurrentStock"))
 
-                ' Check if this product is in current order and adjust display accordingly
+                Dim productData As New Dictionary(Of String, Object) From {
+                    {"ProductID", reader("ProductID")},
+                    {"ProductName", reader("ProductName")},
+                    {"Price", Convert.ToDecimal(reader("SellingPrice"))},
+                    {"ProductCode", reader("ProductCode")},
+                    {"Category", reader("Category")},
+                    {"CurrentStock", stock}
+                }
+                productDbStock(reader("ProductID").ToString()) = stock
+
+                ' Show available stock (raw stock minus what is already reserved in the current order)
                 Dim reservedQty As Integer = 0
                 For Each orderItem In currentOrderList
                     If orderItem("ProductID").ToString() = reader("ProductID").ToString() Then
@@ -723,49 +659,15 @@ Public Class Sales
                     End If
                 Next
 
-                Dim displayStock As Integer = Math.Max(0, stock - reservedQty)
-                lblStock.Text = $"Stock: {displayStock}"
-                lblStock.ForeColor = If(displayStock > 0, SuccessGreen, AlertRed)
-                lblStock.Font = New Font("Poppins Light", 9.0F, FontStyle.Regular)
-                lblStock.BackColor = Color.Transparent
-                lblStock.Location = New Point(10, cardHeight - 50)
-                lblStock.AutoSize = True
-                productCard.Controls.Add(lblStock)
+                Dim productCard As New ProductCard()
+                productCard.Populate(productData, LoadProductImage(Convert.ToInt32(reader("ProductID")), 85, 78))
+                productCard.UpdateStock(Math.Max(0, stock - reservedQty))
+                AddHandler productCard.ProductClicked, Sub(sender2, e2)
+                                                          HandleProductInteraction(productData, False) ' False = manual click
+                                                      End Sub
 
-                ' Add hover effect to product card
-                AddHandler productCard.MouseEnter, Sub()
-                                                       productCard.BorderThickness = 2
-                                                       productCard.BorderColor = GoldenYellow
-                                                       productCard.Cursor = Cursors.Hand
-                                                   End Sub
-                AddHandler productCard.MouseLeave, Sub()
-                                                       productCard.BorderThickness = 1
-                                                       productCard.BorderColor = JadeOlive
-                                                   End Sub
-
-                ' Save product data for details
-                Dim productData As New Dictionary(Of String, Object) From {
-                {"ProductID", reader("ProductID")},
-                {"ProductName", reader("ProductName")},
-                {"Price", originalPrice},
-                {"ProductCode", reader("ProductCode")},
-                {"Category", reader("Category")},
-                {"CurrentStock", stock}
-            }
-                productDbStock(reader("ProductID").ToString()) = stock
-
-                ' Add click handler
-                AddHandler productCard.Click, Sub(sender2, e2)
-                                                  HandleProductInteraction(productData, False) ' False = manual click
-                                              End Sub
-
-                ' ? ADD THESE MISSING LINES:
-                ' Add to tracking list
                 productCardControls.Add(productCard)
-
-                ' ADD TO FLOW PANEL
                 flowPanel.Controls.Add(productCard)
-
             End While
         End Using
     End Sub
@@ -1106,14 +1008,10 @@ Public Class Sales
     End Sub
     Private Sub UpdateStockLabel(productId As String, newStock As Integer)
         For Each productCard As Control In productCardControls
-            If TypeOf productCard Is Guna.UI2.WinForms.Guna2Panel AndAlso productCard.Tag IsNot Nothing Then
-                If productCard.Tag.ToString() = productId Then
-                    ' Find the stock label within this product card
-                    Dim lblStock As Label = productCard.Controls.OfType(Of Label)().FirstOrDefault(Function(lbl) lbl.Text.StartsWith("Stock:"))
-                    If lblStock IsNot Nothing Then
-                        lblStock.Text = $"Stock: {newStock}"
-                        lblStock.ForeColor = If(newStock > 0, SuccessGreen, AlertRed) ' Updated colors
-                    End If
+            If TypeOf productCard Is ProductCard Then
+                Dim card = CType(productCard, ProductCard)
+                If card.ProductId = productId Then
+                    card.UpdateStock(newStock)
                     Exit For
                 End If
             End If
@@ -1122,16 +1020,9 @@ Public Class Sales
 
     Private Sub UpdateStockLabelFromDbStock(productId As String)
         If Not productDbStock.ContainsKey(productId) Then
-            Dim card = productCardControls.OfType(Of Guna.UI2.WinForms.Guna2Panel)().FirstOrDefault(Function(p) p.Tag IsNot Nothing AndAlso p.Tag.ToString() = productId)
+            Dim card = productCardControls.OfType(Of ProductCard)().FirstOrDefault(Function(p) p.ProductId = productId)
             If card IsNot Nothing Then
-                Dim lbl As Label = card.Controls.OfType(Of Label)().FirstOrDefault(Function(l) l.Text.StartsWith("Stock:"))
-                If lbl IsNot Nothing Then
-                    Dim parts() As String = lbl.Text.Replace("Stock:", "").Trim().Split(" "c)
-                    Dim current As Integer = 0
-                    If parts.Length > 0 AndAlso Integer.TryParse(parts(0), current) Then
-                        productDbStock(productId) = current
-                    End If
-                End If
+                productDbStock(productId) = card.DisplayedStock
             End If
         End If
         If Not productDbStock.ContainsKey(productId) Then Return
@@ -3707,9 +3598,9 @@ Public Class Sales
                                            ElseIf e.KeyCode = Keys.E Then
                                                applyExactAction()
                                                e.Handled = True
-                                               e.SuppressKeyPress = True
+                                             e.SuppressKeyPress = True
 
-                                          End If
+                                         End If
                                      End Sub
 
         ' Initial amount display update
@@ -4245,12 +4136,16 @@ Public Class Sales
                                     End If
                                 End Using
 
-                                ' Decrease stock (avoid negative values by enforcing calculation)
-                                Dim newStock As Integer = Math.Max(0, previousStock - qty)
-                                Using cmdUpdate As New SqliteCommand("UPDATE Products SET CurrentStock = @NewStock WHERE ProductID = @ProductID", conn, tran)
-                                    cmdUpdate.Parameters.AddWithValue("@NewStock", newStock)
+                                ' Decrease stock atomically; block the sale when there is not enough stock
+                                ' so stock can never be driven negative by a stale cart or concurrent write.
+                                Dim newStock As Integer = previousStock - qty
+                                Using cmdUpdate As New SqliteCommand("UPDATE Products SET CurrentStock = CurrentStock - @Qty WHERE ProductID = @ProductID AND CurrentStock >= @Qty", conn, tran)
+                                    cmdUpdate.Parameters.AddWithValue("@Qty", qty)
                                     cmdUpdate.Parameters.AddWithValue("@ProductID", prodId)
-                                    cmdUpdate.ExecuteNonQuery()
+                                    If cmdUpdate.ExecuteNonQuery() = 0 Then
+                                        Dim productName As String = If(item.ContainsKey("ProductName"), item("ProductName").ToString(), "Product #" & prodId)
+                                        Throw New Exception($"Insufficient stock for ""{productName}"". Available: {previousStock}, requested: {qty}. The sale was not completed.")
+                                    End If
                                 End Using
 
                                 ' Insert InventoryLog entry (OUT) � use 'OUT' to satisfy CHECK constraint
@@ -5337,106 +5232,32 @@ Public Class Sales
         Dim param As New SqlParameter("@ProductID", productId)
         Using reader As DbDataReader = Utilities.ExecuteReader(query, {param})
             If reader.Read() Then
-                Dim cardWidth As Integer = 230
-                Dim cardHeight As Integer = 220
-
-                Dim productCard As New Guna.UI2.WinForms.Guna2Panel()
-                productCard.Size = New Size(cardWidth, cardHeight)
-                productCard.BorderRadius = 10
-                productCard.FillColor = OffWhite
-                productCard.BorderColor = GoldenYellow
-                productCard.BorderThickness = 2
-                productCard.Tag = reader("ProductID").ToString()
-                productCard.Location = New Point(28, 18)
-
-                Dim productImage As New Guna.UI2.WinForms.Guna2PictureBox()
-                Try
-                    Dim img As Image = LoadProductImage(productId, 80, 80)
-                    productImage.Image = img
-                Catch
-                    productImage.Image = My.Resources.product_placeholder
-                End Try
-                productImage.Size = New Size(80, 80)
-                productImage.Location = New Point(cardWidth - productImage.Width - 10, 10)
-                productImage.SizeMode = PictureBoxSizeMode.StretchImage
-                productImage.BorderRadius = 10
-                productCard.Controls.Add(productImage)
-
-                Dim fullProductName As String = reader("ProductName").ToString()
-                Dim maxNameLength As Integer = 18
-                Dim displayName As String = If(fullProductName.Length > maxNameLength, fullProductName.Substring(0, maxNameLength) & "...", fullProductName)
-                Dim lblProductName As New Guna.UI2.WinForms.Guna2HtmlLabel()
-                lblProductName.Text = displayName
-                lblProductName.Font = New Font("Poppins Light", 9.0F, FontStyle.Regular)
-                lblProductName.ForeColor = DarkText
-                lblProductName.BackColor = Color.Transparent
-                lblProductName.Location = New Point(10, cardHeight - 120)
-                lblProductName.AutoSize = True
-                productCard.Controls.Add(lblProductName)
-                If fullProductName.Length > maxNameLength Then
-                    Dim toolTip As New ToolTip()
-                    toolTip.SetToolTip(lblProductName, fullProductName)
-                End If
-
-                Dim originalPrice As Decimal = Convert.ToDecimal(reader("SellingPrice"))
-                Dim lblProductPrice As New Label()
-                lblProductPrice.Text = $"Price: ₱{originalPrice:F2}"
-                lblProductPrice.ForeColor = DarkText
-                lblProductPrice.Font = New Font("Poppins Light", 9.0F, FontStyle.Regular)
-                lblProductPrice.BackColor = Color.Transparent
-                lblProductPrice.Location = New Point(10, cardHeight - 90)
-                lblProductPrice.AutoSize = True
-                productCard.Controls.Add(lblProductPrice)
-
-                Dim lblProductCode As New Label()
-                lblProductCode.Text = $"Code: {reader("ProductCode").ToString()}"
-                lblProductCode.Font = New Font("Poppins", 7.5F, FontStyle.Regular)
-                lblProductCode.ForeColor = JadeOlive
-                lblProductCode.BackColor = Color.Transparent
-                lblProductCode.AutoSize = True
-                lblProductCode.Location = New Point(10, cardHeight - 70)
-                productCard.Controls.Add(lblProductCode)
-
-                Dim lblStock As New Label()
                 Dim stock As Integer = Convert.ToInt32(reader("CurrentStock"))
-                Dim reservedQty As Integer = 0
-                For Each orderItem In currentOrderList
-                    If orderItem("ProductID").ToString() = reader("ProductID").ToString() Then
-                        reservedQty += CInt(orderItem("Quantity"))
-                    End If
-                Next
-                Dim displayStock As Integer = Math.Max(0, stock - reservedQty)
-                lblStock.Text = $"Stock: {displayStock}"
-                lblStock.ForeColor = If(displayStock > 0, SuccessGreen, AlertRed)
-                lblStock.Font = New Font("Poppins Light", 9.0F, FontStyle.Regular)
-                lblStock.BackColor = Color.Transparent
-                lblStock.Location = New Point(10, cardHeight - 50)
-                lblStock.AutoSize = True
-                productCard.Controls.Add(lblStock)
-
-                AddHandler productCard.MouseEnter, Sub()
-                                                       productCard.BorderThickness = 3
-                                                       productCard.BorderColor = GoldenYellow
-                                                       productCard.Cursor = Cursors.Hand
-                                                   End Sub
-                AddHandler productCard.MouseLeave, Sub()
-                                                       productCard.BorderThickness = 2
-                                                       productCard.BorderColor = GoldenYellow
-                                                   End Sub
 
                 Dim productData As New Dictionary(Of String, Object) From {
                     {"ProductID", reader("ProductID")},
                     {"ProductName", reader("ProductName")},
-                    {"Price", originalPrice},
+                    {"Price", Convert.ToDecimal(reader("SellingPrice"))},
                     {"ProductCode", reader("ProductCode")},
                     {"Category", reader("Category")},
                     {"CurrentStock", stock}
                 }
                 productDbStock(reader("ProductID").ToString()) = stock
 
-                AddHandler productCard.Click, Sub(sender2, e2)
-                                                  HandleProductInteraction(productData, False)
-                                              End Sub
+                Dim reservedQty As Integer = 0
+                For Each orderItem In currentOrderList
+                    If orderItem("ProductID").ToString() = reader("ProductID").ToString() Then
+                        reservedQty += CInt(orderItem("Quantity"))
+                    End If
+                Next
+
+                Dim productCard As New ProductCard()
+                productCard.Location = New Point(28, 18)
+                productCard.Populate(productData, LoadProductImage(productId, 85, 78))
+                productCard.UpdateStock(Math.Max(0, stock - reservedQty))
+                AddHandler productCard.ProductClicked, Sub(sender2, e2)
+                                                          HandleProductInteraction(productData, False)
+                                                      End Sub
 
                 productCardControls.Add(productCard)
                 CategoryPanel.Controls.Add(productCard)
@@ -6111,7 +5932,7 @@ Public Class Sales
         Return Path.Combine(CartStateFolder, $"cart_{safeUsername}.json")
     End Function
 
-    Private Sub PersistCartState()
+    Public Sub PersistCartState() Implements IDraftPersistable.PersistDraft
         Try
             Dim filePath As String = GetCartStateFilePath(frmLoginvb.LoggedInUsername)
             If String.IsNullOrWhiteSpace(filePath) Then
