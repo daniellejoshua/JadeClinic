@@ -211,16 +211,7 @@ Public Module ProductCardBuilder
 
         ' Very subtle soft shadow: a single radial fade from near the face edge to
         ' fully transparent at the card boundary. No hard edges, no dark outline.
-        ' CenterColor ~8-11% opacity, slightly stronger on hover.
-        Dim shadowAlpha As Integer = If(hovering, 34, 26)
-        Using path = CreateRoundRectPath(New Rectangle(0, 0, CardWidth, CardHeight), CardRadius)
-            Using brush As New PathGradientBrush(path)
-                brush.CenterColor = Color.FromArgb(shadowAlpha, 0, 0, 0)
-                brush.SurroundColors = New Color() {Color.FromArgb(0, 0, 0, 0)}
-                brush.FocusScales = New PointF(0.9F, 0.92F)
-                e.Graphics.FillPath(brush, path)
-            End Using
-        End Using
+        PaintSoftShadow(e.Graphics, New Rectangle(0, 0, CardWidth, CardHeight), CardRadius, hovering)
 
         ' Card face (inset so the soft shadow stays visible on the right/bottom).
         Dim faceRect As New Rectangle(0, 0, FaceWidth, FaceHeight)
@@ -240,6 +231,50 @@ Public Module ProductCardBuilder
                 e.Graphics.DrawPath(pen, path)
             End Using
         End Using
+    End Sub
+
+    ' Shared soft drop shadow used by product cards and category tiles. Radial
+    ' fade from ~10% opacity near the face edge to fully transparent at the
+    ' control boundary. Slightly stronger on hover. Never a harsh dark edge.
+    Private Sub PaintSoftShadow(g As Graphics, bounds As Rectangle, radius As Integer, hovering As Boolean)
+        Dim alpha As Integer = If(hovering, 34, 26)
+        g.SmoothingMode = SmoothingMode.AntiAlias
+        Using path = CreateRoundRectPath(bounds, radius)
+            Using brush As New PathGradientBrush(path)
+                brush.CenterColor = Color.FromArgb(alpha, 0, 0, 0)
+                brush.SurroundColors = New Color() {Color.FromArgb(0, 0, 0, 0)}
+                brush.FocusScales = New PointF(0.9F, 0.92F)
+                g.FillPath(brush, path)
+            End Using
+        End Using
+    End Sub
+
+    ' Builds a shadow host for a category tile: a plain Panel that paints the
+    ' same soft radial shadow as the product cards. The tile face (a Guna2Button)
+    ' is added as a child on top, so the shadow peeks out on the right/bottom.
+    Public Function CreateSoftShadowHost(hostSize As Size, radius As Integer) As Panel
+        Dim host As New Panel()
+        host.Size = hostSize
+        host.BackColor = Color.White
+        host.Tag = New CategoryTileInfo()
+        AddHandler host.Paint, Sub(s As Object, ev As PaintEventArgs)
+                                   Dim h = TryCast(s, Panel)
+                                   If h Is Nothing Then Return
+                                   Dim info = TryCast(h.Tag, CategoryTileInfo)
+                                   Dim hovering As Boolean = info IsNot Nothing AndAlso info.IsHovered
+                                   PaintSoftShadow(ev.Graphics, New Rectangle(0, 0, h.Width, h.Height), radius, hovering)
+                               End Sub
+        Return host
+    End Function
+
+    ' Update the shadow strength on a tile host (called from tile hover handlers).
+    Public Sub SetSoftShadowHover(host As Control, hovering As Boolean)
+        Dim h = TryCast(host, Panel)
+        If h Is Nothing Then Return
+        Dim info = TryCast(h.Tag, CategoryTileInfo)
+        If info Is Nothing Then Return
+        info.IsHovered = hovering
+        h.Invalidate()
     End Sub
 
     Private Function CreateRoundRectPath(r As Rectangle, radius As Integer) As GraphicsPath
@@ -298,4 +333,10 @@ Public Class ProductCardInfo
             StockLabel.ForeColor = Color.FromArgb(16, 216, 98)
         End If
     End Sub
+End Class
+
+' Hover state attached to a category tile's shadow host so the soft shadow can
+' strengthen slightly on hover.
+Public Class CategoryTileInfo
+    Public IsHovered As Boolean
 End Class

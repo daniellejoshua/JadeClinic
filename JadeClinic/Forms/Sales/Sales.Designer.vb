@@ -107,7 +107,7 @@ Partial Class Sales
         TxtSearch.DisabledState.ForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         TxtSearch.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         TxtSearch.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
-        TxtSearch.Font = New Font("Segoe UI", 9.0F)
+        TxtSearch.Font = New Font("Segoe UI", 9F)
         TxtSearch.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         TxtSearch.Location = New Point(41, 18)
         TxtSearch.Margin = New Padding(3, 4, 3, 4)
@@ -186,7 +186,7 @@ Partial Class Sales
         confirmBtn.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         confirmBtn.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
         confirmBtn.FillColor = Color.White
-        confirmBtn.Font = New Font("Poppins Medium", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        confirmBtn.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         confirmBtn.ForeColor = Color.Black
         confirmBtn.Location = New Point(33, 416)
         confirmBtn.Name = "confirmBtn"
@@ -199,7 +199,7 @@ Partial Class Sales
         ' lblChange
         ' 
         lblChange.BackColor = Color.Transparent
-        lblChange.Font = New Font("Poppins", 12.0F)
+        lblChange.Font = New Font("Poppins", 12F)
         lblChange.ForeColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
         lblChange.Location = New Point(473, 230)
         lblChange.Name = "lblChange"
@@ -210,7 +210,7 @@ Partial Class Sales
         ' Guna2HtmlLabel17
         ' 
         Guna2HtmlLabel17.BackColor = Color.Transparent
-        Guna2HtmlLabel17.Font = New Font("Poppins", 12.0F)
+        Guna2HtmlLabel17.Font = New Font("Poppins", 12F)
         Guna2HtmlLabel17.ForeColor = Color.FromArgb(CByte(95), CByte(95), CByte(95))
         Guna2HtmlLabel17.Location = New Point(82, 230)
         Guna2HtmlLabel17.Name = "Guna2HtmlLabel17"
@@ -221,7 +221,7 @@ Partial Class Sales
         ' totalRLbl
         ' 
         totalRLbl.BackColor = Color.Transparent
-        totalRLbl.Font = New Font("Poppins", 12.0F)
+        totalRLbl.Font = New Font("Poppins", 12F)
         totalRLbl.ForeColor = Color.FromArgb(CByte(95), CByte(95), CByte(95))
         totalRLbl.Location = New Point(473, 196)
         totalRLbl.Name = "totalRLbl"
@@ -232,7 +232,7 @@ Partial Class Sales
         ' Guna2HtmlLabel32
         ' 
         Guna2HtmlLabel32.BackColor = Color.Transparent
-        Guna2HtmlLabel32.Font = New Font("Poppins", 12.0F)
+        Guna2HtmlLabel32.Font = New Font("Poppins", 12F)
         Guna2HtmlLabel32.ForeColor = Color.FromArgb(CByte(95), CByte(95), CByte(95))
         Guna2HtmlLabel32.Location = New Point(82, 196)
         Guna2HtmlLabel32.Name = "Guna2HtmlLabel32"
@@ -251,7 +251,7 @@ Partial Class Sales
         btnDiscount.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         btnDiscount.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
         btnDiscount.FillColor = Color.White
-        btnDiscount.Font = New Font("Poppins Medium", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        btnDiscount.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         btnDiscount.ForeColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
         btnDiscount.Location = New Point(370, 320)
         btnDiscount.Name = "btnDiscount"
@@ -269,7 +269,7 @@ Partial Class Sales
         btnPayment.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         btnPayment.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
         btnPayment.FillColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
-        btnPayment.Font = New Font("Poppins Medium", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        btnPayment.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         btnPayment.ForeColor = Color.White
         btnPayment.Location = New Point(70, 320)
         btnPayment.Name = "btnPayment"
@@ -281,7 +281,7 @@ Partial Class Sales
         ' totalLbl
         ' 
         totalLbl.BackColor = Color.Transparent
-        totalLbl.Font = New Font("Poppins Medium", 12.0F, FontStyle.Bold)
+        totalLbl.Font = New Font("Poppins Medium", 12F, FontStyle.Bold)
         totalLbl.ForeColor = Color.FromArgb(CByte(59), CByte(59), CByte(59))
         totalLbl.Location = New Point(473, 151)
         totalLbl.Name = "totalLbl"
@@ -292,7 +292,7 @@ Partial Class Sales
         ' lbl2
         ' 
         lbl2.BackColor = Color.Transparent
-        lbl2.Font = New Font("Poppins Medium", 12.0F, FontStyle.Bold)
+        lbl2.Font = New Font("Poppins Medium", 12F, FontStyle.Bold)
         lbl2.ForeColor = Color.FromArgb(CByte(59), CByte(59), CByte(59))
         lbl2.Location = New Point(82, 151)
         lbl2.Name = "lbl2"
@@ -303,7 +303,7 @@ Partial Class Sales
         ' Guna2HtmlLabel30
         ' 
         Guna2HtmlLabel30.BackColor = Color.Transparent
-        Guna2HtmlLabel30.Font = New Font("Poppins Light", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Guna2HtmlLabel30.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel30.ForeColor = Color.FromArgb(CByte(59), CByte(59), CByte(59))
         Guna2HtmlLabel30.Location = New Point(33, 103)
         Guna2HtmlLabel30.Name = "Guna2HtmlLabel30"
@@ -314,7 +314,7 @@ Partial Class Sales
         ' taxLbl
         ' 
         taxLbl.BackColor = Color.Transparent
-        taxLbl.Font = New Font("Poppins", 12.0F)
+        taxLbl.Font = New Font("Poppins", 12F)
         taxLbl.ForeColor = Color.FromArgb(CByte(95), CByte(95), CByte(95))
         taxLbl.Location = New Point(480, 59)
         taxLbl.Name = "taxLbl"
@@ -325,7 +325,7 @@ Partial Class Sales
         ' Guna2HtmlLabel29
         ' 
         Guna2HtmlLabel29.BackColor = Color.Transparent
-        Guna2HtmlLabel29.Font = New Font("Poppins", 12.0F)
+        Guna2HtmlLabel29.Font = New Font("Poppins", 12F)
         Guna2HtmlLabel29.ForeColor = Color.FromArgb(CByte(95), CByte(95), CByte(95))
         Guna2HtmlLabel29.Location = New Point(82, 59)
         Guna2HtmlLabel29.Name = "Guna2HtmlLabel29"
@@ -336,7 +336,7 @@ Partial Class Sales
         ' lblSubTotal
         ' 
         lblSubTotal.BackColor = Color.Transparent
-        lblSubTotal.Font = New Font("Poppins", 12.0F)
+        lblSubTotal.Font = New Font("Poppins", 12F)
         lblSubTotal.ForeColor = Color.FromArgb(CByte(95), CByte(95), CByte(95))
         lblSubTotal.Location = New Point(480, 25)
         lblSubTotal.Name = "lblSubTotal"
@@ -347,7 +347,7 @@ Partial Class Sales
         ' Guna2HtmlLabel26
         ' 
         Guna2HtmlLabel26.BackColor = Color.Transparent
-        Guna2HtmlLabel26.Font = New Font("Poppins", 12.0F)
+        Guna2HtmlLabel26.Font = New Font("Poppins", 12F)
         Guna2HtmlLabel26.ForeColor = Color.FromArgb(CByte(95), CByte(95), CByte(95))
         Guna2HtmlLabel26.Location = New Point(82, 25)
         Guna2HtmlLabel26.Name = "Guna2HtmlLabel26"
@@ -413,7 +413,7 @@ Partial Class Sales
         ' lblUsername
         ' 
         lblUsername.BackColor = Color.Transparent
-        lblUsername.Font = New Font("Poppins Light", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        lblUsername.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         lblUsername.ForeColor = Color.FromArgb(CByte(59), CByte(59), CByte(59))
         lblUsername.Location = New Point(1821, 20)
         lblUsername.Name = "lblUsername"
@@ -423,7 +423,7 @@ Partial Class Sales
         ' 
         ' Sales
         ' 
-        AutoScaleDimensions = New SizeF(8.0F, 20.0F)
+        AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
         AutoScroll = True
         BackColor = Color.FromArgb(CByte(254), CByte(254), CByte(254))

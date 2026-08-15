@@ -92,6 +92,8 @@ Public Class Sales
     Private overlayToButton As New Dictionary(Of Control, Guna.UI2.WinForms.Guna2Button)()
     ' Code-generated category tiles (replaces the designer tile controls)
     Private _categoryTileButtons As New List(Of Guna.UI2.WinForms.Guna2Button)()
+    ' Shadow hosts that wrap each category tile (same soft shadow as product cards)
+    Private _categoryTileHosts As New List(Of Panel)()
     Private _categoryCountLabels As New Dictionary(Of String, Guna.UI2.WinForms.Guna2HtmlLabel)()
     Private _searchTimer As Timer
     ' Add this new field near the other receipt fields (top of class)
@@ -171,12 +173,10 @@ Public Class Sales
             overlayToButton.Clear()
 
             ' Cache all category buttons currently in the panel
-            For Each ctrl As Control In CategoryPanel.Controls
-                If TypeOf ctrl Is Guna.UI2.WinForms.Guna2Button Then
-                    Dim btn = CType(ctrl, Guna.UI2.WinForms.Guna2Button)
-                    If Not originalCategoryButtonFillColors.ContainsKey(btn) Then
-                        originalCategoryButtonFillColors(btn) = btn.FillColor
-                    End If
+            For Each btn In _categoryTileButtons
+                If btn Is Nothing OrElse btn.IsDisposed Then Continue For
+                If Not originalCategoryButtonFillColors.ContainsKey(btn) Then
+                    originalCategoryButtonFillColors(btn) = btn.FillColor
                 End If
             Next
 
@@ -358,6 +358,8 @@ Public Class Sales
                 ctrl.BackColor = targetColor
             End If
         Next
+        ' Strengthen the soft shadow slightly on hover (same behavior as product cards)
+        ProductCardBuilder.SetSoftShadowHover(btn.Parent, hovering)
     End Sub
     ' FIXED: Proper barcode key input handling
     ' FIXED: Remove Ctrl key, only use Shift for quantity selection
@@ -1060,10 +1062,14 @@ Public Class Sales
     ' Build all category tiles in code: main categories first, then any distinct DB categories.
     Private Sub BuildCategoryTiles()
         ' Remove previously generated tiles (keep the designer search box)
-        For Each btn In _categoryTileButtons
-            If CategoryPanel.Controls.Contains(btn) Then
-                CategoryPanel.Controls.Remove(btn)
+        For Each host In _categoryTileHosts
+            If CategoryPanel.Controls.Contains(host) Then
+                CategoryPanel.Controls.Remove(host)
             End If
+            host.Dispose()
+        Next
+        _categoryTileHosts.Clear()
+        For Each btn In _categoryTileButtons
             btn.Dispose()
         Next
         _categoryTileButtons.Clear()
@@ -1122,7 +1128,8 @@ Public Class Sales
     ' Clone the template and attach the icon / name / count child labels plus wiring
     Private Sub CreateCategoryTile(catName As String, template As Guna.UI2.WinForms.Guna2Button)
         Dim btn As New Guna.UI2.WinForms.Guna2Button()
-        btn.Size = template.Size
+        ' The tile face is inset slightly so the host's soft shadow peeks out on the right/bottom
+        btn.Size = New Size(template.Size.Width - 10, template.Size.Height - 12)
         btn.BorderRadius = template.BorderRadius
         btn.FillColor = template.FillColor
         btn.ForeColor = template.ForeColor
@@ -1133,14 +1140,6 @@ Public Class Sales
         btn.HoverState.FillColor = template.HoverState.FillColor
         btn.HoverState.BorderColor = template.HoverState.BorderColor
         btn.Text = ""
-
-        ' Soft drop shadow that follows the tile's rounded corners
-        btn.ShadowDecoration.Enabled = True
-        btn.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Custom
-        btn.ShadowDecoration.BorderRadius = 20
-        btn.ShadowDecoration.Color = Color.FromArgb(70, 0, 0, 0)
-        btn.ShadowDecoration.Depth = 10
-        btn.ShadowDecoration.Shadow = New Padding(0, 3, 10, 10)
 
         ' Icon label (top area)
         Dim iconLbl As New Label()
@@ -1204,10 +1203,16 @@ Public Class Sales
                                    End Sub
         AttachCategoryTileHover(btn)
 
+        ' Wrap the tile face in a host that paints the same soft shadow as the
+        ' product cards (replaces the old Guna ShadowDecoration).
+        Dim host = ProductCardBuilder.CreateSoftShadowHost(template.Size, template.BorderRadius)
+        host.Controls.Add(btn)
+
         _categoryTileButtons.Add(btn)
+        _categoryTileHosts.Add(host)
         _categoryCountLabels(catName) = countLbl
 
-        CategoryPanel.Controls.Add(btn)
+        CategoryPanel.Controls.Add(host)
     End Sub
 
     ' Shared category-tile click behavior (button body or child labels)
@@ -1231,12 +1236,12 @@ Public Class Sales
 
     ' Arrange the code-generated tiles in a fixed grid (4 columns, Ortho-style tall tiles)
     Private Sub ArrangeCategoryButtonsFlexWrap()
-        For index As Integer = 0 To _categoryTileButtons.Count - 1
-            Dim btn = _categoryTileButtons(index)
+        For index As Integer = 0 To _categoryTileHosts.Count - 1
+            Dim host = _categoryTileHosts(index)
             Dim col As Integer = index Mod _categoryGridCols
             Dim row As Integer = index \ _categoryGridCols
-            btn.Size = _categoryTileSize
-            btn.Location = New Point(_categoryGridStart.X + (col * (_categoryTileSize.Width + _categoryGridGapX)), _categoryGridStart.Y + (row * (_categoryTileSize.Height + _categoryGridGapY)))
+            host.Size = _categoryTileSize
+            host.Location = New Point(_categoryGridStart.X + (col * (_categoryTileSize.Width + _categoryGridGapX)), _categoryGridStart.Y + (row * (_categoryTileSize.Height + _categoryGridGapY)))
         Next
 
         ' Ensure CategoryPanel can scroll if content exceeds visible area
