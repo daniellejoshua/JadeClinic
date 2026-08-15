@@ -99,6 +99,8 @@ Public Class Sales
     ' Add this new field near the other receipt fields (top of class)
     Private receiptVatableBeforeDiscount As Decimal = 0D
     Private WithEvents txtBarcodeInput As New TextBox With {.Visible = True, .TabIndex = 0}
+    ' Fixed non-resizable DataGridView that renders the order summary line items
+    Private _orderSummaryGrid As DataGridView
 
     ' Jade Clinic Color Palette Constants (from brand guide)
     Private ReadOnly GoldenYellow As Color = Color.FromArgb(254, 191, 16)      ' #FECF10 - Primary brand color
@@ -3823,6 +3825,35 @@ Public Class Sales
         End If
     End Sub
 
+    ' Create the order-summary grid once and wire its hover/selection/double-click
+    ' behavior. Row index maps 1:1 to the currentOrderList index (see PopulateGrid).
+    Private Sub EnsureOrderSummaryGrid()
+        If _orderSummaryGrid IsNot Nothing Then Return
+        _orderSummaryGrid = OrderSummaryGridBuilder.BuildGrid()
+        orderSummaryPanel.Padding = New Padding(2)
+        orderSummaryPanel.AutoScroll = False
+        orderSummaryPanel.Controls.Add(_orderSummaryGrid)
+
+        ' Hover acts as selection: #FBF7EC row highlight follows the mouse
+        AddHandler _orderSummaryGrid.CellMouseEnter, Sub(s, e)
+                                                         If e.RowIndex < 0 OrElse e.RowIndex >= _orderSummaryGrid.Rows.Count Then Return
+                                                         Dim current As DataGridViewCell = _orderSummaryGrid.CurrentCell
+                                                         If current Is Nothing OrElse current.RowIndex <> e.RowIndex Then
+                                                             _orderSummaryGrid.CurrentCell = _orderSummaryGrid.Rows(e.RowIndex).Cells(0)
+                                                         End If
+                                                     End Sub
+        AddHandler _orderSummaryGrid.MouseLeave, Sub(s, e)
+                                                     _orderSummaryGrid.ClearSelection()
+                                                 End Sub
+
+        ' Double-click = reduce qty by 1 (Shift+double-click = void line). The
+        ' modifier handling lives inside ReduceItemQuantity.
+        AddHandler _orderSummaryGrid.CellDoubleClick, Sub(s, e)
+                                                          If e.RowIndex < 0 Then Return
+                                                          ReduceItemQuantity(e.RowIndex)
+                                                      End Sub
+    End Sub
+
     ' Refresh the order display in the order summary panel
     ' FIXED: Refresh the order display with correct VAT calculations
     ' Refresh the order display in the order summary panel
@@ -3837,18 +3868,8 @@ Public Class Sales
             End If
         End If
 
-        ' Remove only product panels, keep Order ID and OrderName labels
-        For i = orderSummaryPanel.Controls.Count - 1 To 0 Step -1
-            Dim ctrl = orderSummaryPanel.Controls(i)
-            If TypeOf ctrl Is Guna.UI2.WinForms.Guna2Panel Then
-                orderSummaryPanel.Controls.RemoveAt(i)
-            End If
-        Next
-
-        Dim tt As New ToolTip()
-        Dim panelHeight As Integer = 48
-        Dim marginY As Integer = 8
-        Dim currentY As Integer = 40
+        EnsureOrderSummaryGrid()
+        Dim displayRows As New List(Of OrderSummaryGridBuilder.OrderSummaryRowInfo)()
 
         ' Ensure every product has an OriginalUnitPrice stored (store VAT-INCLUSIVE unit prices)
         For Each prod In currentOrderList
@@ -3895,134 +3916,28 @@ Public Class Sales
                 End Try
             End If
 
-            ' Build UI row (display uses VAT-INCLUSIVE prices, possibly discounted for the discounted item)
-            Dim orderPanel As New Guna.UI2.WinForms.Guna2Panel()
-            orderPanel.Size = New Size(orderSummaryPanel.Width - 40, panelHeight)
-            orderPanel.BorderRadius = 8
-            orderPanel.FillColor = Color.FromArgb(250, 249, 246)
-            orderPanel.BorderColor = BorderGray
-            orderPanel.BorderThickness = 1
-            orderPanel.Location = New Point(20, currentY)
-            currentY += panelHeight + marginY
-            orderPanel.Tag = i
-
-            ' Store original colors so hover can restore them
-            Dim origFill As Color = orderPanel.FillColor
-            Dim origBorderColor As Color = orderPanel.BorderColor
-            Dim origBorderThickness As Integer = orderPanel.BorderThickness
-
-            AddHandler orderPanel.DoubleClick, Sub(sender As Object, e As EventArgs)
-                                                   ReduceItemQuantity(CInt(orderPanel.Tag))
-                                               End Sub
-
-            ' Hover behavior: subtle gray highlight and hand cursor to indicate clickability
-            AddHandler orderPanel.MouseEnter, Sub()
-                                                  Try
-                                                      orderPanel.FillColor = LightGray
-                                                      orderPanel.BorderColor = JadeOlive
-                                                      orderPanel.BorderThickness = 2
-                                                      orderPanel.Cursor = Cursors.Hand
-
-                                                      ' also update child label colors for contrast
-                                                      For Each child As Control In orderPanel.Controls
-                                                          If TypeOf child Is Label OrElse TypeOf child Is Guna.UI2.WinForms.Guna2HtmlLabel Then
-                                                              child.ForeColor = DarkText
-                                                          End If
-                                                      Next
-                                                  Catch
-                                                  End Try
-                                              End Sub
-
-            AddHandler orderPanel.MouseLeave, Sub()
-                                                  Try
-                                                      orderPanel.FillColor = origFill
-                                                      orderPanel.BorderColor = origBorderColor
-                                                      orderPanel.BorderThickness = origBorderThickness
-                                                      orderPanel.Cursor = Cursors.Default
-
-                                                      For Each child As Control In orderPanel.Controls
-                                                          If TypeOf child Is Label OrElse TypeOf child Is Guna.UI2.WinForms.Guna2HtmlLabel Then
-                                                              child.ForeColor = DarkText
-                                                          End If
-                                                      Next
-                                                  Catch
-                                                  End Try
-                                              End Sub
-
-            ' Single-click gives a subtle feedback (does not remove item)
-            AddHandler orderPanel.MouseClick, Sub()
-                                                  Try
-                                                      Dim prev As Color = orderPanel.FillColor
-                                                      orderPanel.FillColor = BorderGray
-                                                      Dim t As New Timer() With {.Interval = 120}
-                                                      AddHandler t.Tick, Sub()
-                                                                             t.Stop()
-                                                                             orderPanel.FillColor = prev
-                                                                             t.Dispose()
-                                                                         End Sub
-                                                      t.Start()
-                                                  Catch
-                                                  End Try
-                                              End Sub
-
-            Dim baseY As Integer = 10
-
-            Dim lblOrderId As New Guna.UI2.WinForms.Guna2HtmlLabel()
-            lblOrderId.Text = (i + 1).ToString("D2")
-            lblOrderId.Font = New Font("Poppins Light", 9.0F, FontStyle.Regular)
-            lblOrderId.ForeColor = Color.FromArgb(95, 95, 95)
-            lblOrderId.Location = New Point(12, baseY)
-            lblOrderId.AutoSize = True
-
+            ' Build a display row for the grid (VAT-INCLUSIVE, possibly discounted)
             Dim fullProductName As String = prod("ProductName").ToString()
             Dim maxNameLength As Integer = 28
             Dim displayName As String = If(fullProductName.Length > maxNameLength, fullProductName.Substring(0, maxNameLength) & "...", fullProductName)
-
-            Dim lblCustomer As New Guna.UI2.WinForms.Guna2HtmlLabel()
-            lblCustomer.Text = displayName
-            lblCustomer.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
-            lblCustomer.ForeColor = Color.FromArgb(95, 95, 95)
-            lblCustomer.Location = New Point(lblOrderId.Right + 18, baseY)
-            lblCustomer.AutoSize = True
-
-            If fullProductName.Length > maxNameLength Then
-                tt.SetToolTip(lblCustomer, fullProductName)
-            End If
-
-            orderPanel.Controls.Add(lblCustomer)
-
-            Dim lblQuantity As New Guna.UI2.WinForms.Guna2HtmlLabel()
-            lblQuantity.Text = prod("Quantity").ToString() & "x"
-            lblQuantity.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
-            lblQuantity.ForeColor = Color.FromArgb(95, 95, 95)
-            lblQuantity.Location = New Point(320, baseY)
-            lblQuantity.AutoSize = True
-
-            ' Show line total using VAT-INCLUSIVE unit price for display (may be discounted for the selected item)
-            Dim lblTotal As New Guna.UI2.WinForms.Guna2HtmlLabel()
-            lblTotal.Text = lineTotalVatInclusive.ToString("N2")
-            lblTotal.Font = New Font("Poppins Regular", 9.0F)
-            lblTotal.ForeColor = Color.FromArgb(95, 95, 95)
-            lblTotal.Location = New Point(orderPanel.Width - 90, baseY)
-            lblTotal.AutoSize = True
 
             ' Tooltip: show original unit price and if discounted, the discounted unit price
             Dim tooltipText As String = $"Unit price (VAT inc): ₱{unitPriceVatInclusive:F2}"
             If displayUnitVatInc <> unitPriceVatInclusive Then
                 tooltipText &= $" ? Discounted: ₱{displayUnitVatInc:F2}"
             End If
-            tt.SetToolTip(lblTotal, tooltipText)
 
-            AddHandler lblOrderId.DoubleClick, Sub() ReduceItemQuantity(CInt(orderPanel.Tag))
-            AddHandler lblCustomer.DoubleClick, Sub() ReduceItemQuantity(CInt(orderPanel.Tag))
-            AddHandler lblQuantity.DoubleClick, Sub() ReduceItemQuantity(CInt(orderPanel.Tag))
-
-            orderPanel.Controls.Add(lblOrderId)
-            orderPanel.Controls.Add(lblQuantity)
-            orderPanel.Controls.Add(lblTotal)
-
-            orderSummaryPanel.Controls.Add(orderPanel)
+            Dim rowInfo As New OrderSummaryGridBuilder.OrderSummaryRowInfo()
+            rowInfo.Number = (i + 1).ToString("D2")
+            rowInfo.DisplayName = displayName
+            rowInfo.FullName = fullProductName
+            rowInfo.Qty = prod("Quantity").ToString() & "x"
+            rowInfo.LineTotal = lineTotalVatInclusive.ToString("N2")
+            rowInfo.AmountTooltip = tooltipText
+            displayRows.Add(rowInfo)
         Next
+
+        OrderSummaryGridBuilder.PopulateGrid(_orderSummaryGrid, displayRows)
 
         ' --- DISCOUNT-FIRST CALCULATION (VAT-INCLUSIVE) ---
         Dim discountVatInclusive As Decimal = discountAmount
@@ -4316,14 +4231,10 @@ Public Class Sales
         UpdateCategoryItemCounts()
 
         ' CRITICAL: Clear the order summary panel and refresh display
-        ' Remove all product items from order summary panel
-        For i = orderSummaryPanel.Controls.Count - 1 To 0 Step -1
-            Dim ctrl = orderSummaryPanel.Controls(i)
-            If TypeOf ctrl Is Guna.UI2.WinForms.Guna2Panel Then
-                orderSummaryPanel.Controls.RemoveAt(i)
-                ctrl.Dispose()
-            End If
-        Next
+        ' Clear the order summary grid (rows) before starting a new order
+        If _orderSummaryGrid IsNot Nothing Then
+            _orderSummaryGrid.Rows.Clear()
+        End If
 
         ' ENHANCED: Initialize next order ID and refresh order display
         InitializeOrderId()
