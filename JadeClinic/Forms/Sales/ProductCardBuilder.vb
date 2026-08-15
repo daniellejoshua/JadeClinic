@@ -13,6 +13,10 @@ Public Module ProductCardBuilder
     Private Const CardHeight As Integer = 340
     Private Const CardRadius As Integer = 12
 
+    ' The card face is inset slightly so a soft shadow can peek out bottom-right.
+    Private Const FaceWidth As Integer = CardWidth - 10
+    Private Const FaceHeight As Integer = CardHeight - 12
+
     Private ReadOnly ColorGoldenYellow As Color = Color.FromArgb(254, 191, 16)      ' #FECF10 - Primary brand gold
     Private ReadOnly ColorJadeOlive As Color = Color.FromArgb(190, 154, 48)         ' #BE9A30 - Secondary gold accent
     Private ReadOnly ColorDarkText As Color = Color.FromArgb(51, 51, 51)            ' #333333 - Primary text
@@ -22,7 +26,7 @@ Public Module ProductCardBuilder
     Private ReadOnly ColorAlertRed As Color = Color.FromArgb(255, 71, 87)           ' #FF4757 - Out of stock
     Private ReadOnly ColorCardBorder As Color = Color.FromArgb(233, 231, 226)       ' Light warm-gray border
     Private ReadOnly ColorHoverFill As Color = Color.FromArgb(253, 251, 243)        ' Warm gold tint on hover
-    Private ReadOnly ColorImageFill As Color = Color.FromArgb(246, 242, 228)        ' Yellowish-gray circle behind image
+    Private ReadOnly ColorImageFill As Color = Color.FromArgb(251, 247, 236)        ' #FBF7EC - Faint yellow circle behind image
 
     ' Build a product card control with the exact same layout as before, rendered
     ' entirely with plain controls. onProductClicked is raised when the card (or
@@ -56,7 +60,7 @@ Public Module ProductCardBuilder
         ' Circular product image (plain PictureBox clipped to an ellipse region).
         Dim pb As New PictureBox()
         pb.Size = New Size(100, 100)
-        pb.Location = New Point((card.Width - 100) \ 2, 28)
+        pb.Location = New Point((FaceWidth - 100) \ 2, 28)
         pb.SizeMode = PictureBoxSizeMode.Zoom
         pb.BackColor = ColorImageFill
         Try
@@ -80,7 +84,7 @@ Public Module ProductCardBuilder
 
         ' Product name (2 fixed lines, ellipsis)
         Dim lblName As New Label()
-        lblName.Location = New Point(20, 148)
+        lblName.Location = New Point(15, 148)
         lblName.Size = New Size(190, 40)
         lblName.Font = New Font(ResolveFontFamily({"Poppins SemiBold", "Poppins", "Segoe UI"}), 10.0F, FontStyle.Regular)
         lblName.ForeColor = ColorDarkText
@@ -94,7 +98,7 @@ Public Module ProductCardBuilder
 
         ' Price (gold, no label prefix)
         Dim lblPrice As New Label()
-        lblPrice.Location = New Point(20, 205)
+        lblPrice.Location = New Point(15, 205)
         lblPrice.AutoSize = True
         lblPrice.MaximumSize = New Size(190, 0)
         lblPrice.Font = New Font(ResolveFontFamily({"Poppins SemiBold", "Poppins", "Segoe UI"}), 12.0F, FontStyle.Regular)
@@ -113,7 +117,7 @@ Public Module ProductCardBuilder
 
         ' Product code (muted, truncated)
         Dim lblCode As New Label()
-        lblCode.Location = New Point(20, 240)
+        lblCode.Location = New Point(15, 240)
         lblCode.Size = New Size(190, 16)
         lblCode.Font = New Font(ResolveFontFamily({"Poppins", "Segoe UI"}), 8.0F, FontStyle.Regular)
         lblCode.ForeColor = ColorMutedText
@@ -130,7 +134,7 @@ Public Module ProductCardBuilder
 
         ' Subtle divider separating product info from the stock footer
         Dim divider As New Panel()
-        divider.Location = New Point(20, 264)
+        divider.Location = New Point(15, 264)
         divider.Size = New Size(190, 1)
         divider.BackColor = ColorCardBorder
         card.Controls.Add(divider)
@@ -138,7 +142,7 @@ Public Module ProductCardBuilder
 
         ' Stock (green default; amber low; red out) - color managed by ProductCardInfo.UpdateStock
         Dim lblStock As New Label()
-        lblStock.Location = New Point(20, 292)
+        lblStock.Location = New Point(15, 292)
         lblStock.AutoSize = True
         lblStock.Font = New Font(ResolveFontFamily({"Poppins SemiBold", "Poppins", "Segoe UI"}), 9.5F, FontStyle.Regular)
         lblStock.ForeColor = ColorSuccessGreen
@@ -203,10 +207,34 @@ Public Module ProductCardBuilder
         If card Is Nothing Then Return
         Dim info = TryCast(card.Tag, ProductCardInfo)
         Dim hovering As Boolean = info IsNot Nothing AndAlso info.IsHovered
+        e.Graphics.SmoothingMode = SmoothingMode.AntiAlias
+
+        ' Very subtle soft shadow: a single radial fade from near the face edge to
+        ' fully transparent at the card boundary. No hard edges, no dark outline.
+        ' CenterColor ~8-11% opacity, slightly stronger on hover.
+        Dim shadowAlpha As Integer = If(hovering, 34, 26)
+        Using path = CreateRoundRectPath(New Rectangle(0, 0, CardWidth, CardHeight), CardRadius)
+            Using brush As New PathGradientBrush(path)
+                brush.CenterColor = Color.FromArgb(shadowAlpha, 0, 0, 0)
+                brush.SurroundColors = New Color() {Color.FromArgb(0, 0, 0, 0)}
+                brush.FocusScales = New PointF(0.9F, 0.92F)
+                e.Graphics.FillPath(brush, path)
+            End Using
+        End Using
+
+        ' Card face (inset so the soft shadow stays visible on the right/bottom).
+        Dim faceRect As New Rectangle(0, 0, FaceWidth, FaceHeight)
+        Dim fillColor As Color = If(hovering, ColorHoverFill, Color.White)
+        Using path = CreateRoundRectPath(faceRect, CardRadius)
+            Using brush As New SolidBrush(fillColor)
+                e.Graphics.FillPath(brush, path)
+            End Using
+        End Using
+
+        ' Border
         Dim borderColor As Color = If(hovering, ColorGoldenYellow, ColorCardBorder)
         Dim thickness As Integer = If(hovering, 2, 1)
-        e.Graphics.SmoothingMode = SmoothingMode.AntiAlias
-        Using path = CreateRoundRectPath(New Rectangle(0, 0, card.Width - 1, card.Height - 1), CardRadius)
+        Using path = CreateRoundRectPath(faceRect, CardRadius)
             Using pen As New Pen(borderColor, thickness)
                 pen.Alignment = PenAlignment.Inset
                 e.Graphics.DrawPath(pen, path)
