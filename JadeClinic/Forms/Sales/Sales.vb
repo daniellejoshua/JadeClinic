@@ -93,6 +93,7 @@ Public Class Sales
     ' Code-generated category tiles (replaces the designer tile controls)
     Private _categoryTileButtons As New List(Of Guna.UI2.WinForms.Guna2Button)()
     Private _categoryCountLabels As New Dictionary(Of String, Guna.UI2.WinForms.Guna2HtmlLabel)()
+    Private _searchTimer As Timer
     ' Add this new field near the other receipt fields (top of class)
     Private receiptVatableBeforeDiscount As Decimal = 0D
     Private WithEvents txtBarcodeInput As New TextBox With {.Visible = True, .TabIndex = 0}
@@ -321,6 +322,19 @@ Public Class Sales
                                            ApplyCategoryTileHover(btn, False)
                                        End If
                                    End Sub
+
+        ' Hovering over a child label must light up the whole tile too
+        For Each child As Control In labels
+            AddHandler child.MouseEnter, Sub()
+                                             ApplyCategoryTileHover(btn, True)
+                                         End Sub
+            AddHandler child.MouseLeave, Sub()
+                                             If Not CursorWithinButton(btn) Then
+                                                 ApplyCategoryTileHover(btn, False)
+                                             End If
+                                         End Sub
+            child.Cursor = Cursors.Hand
+        Next
     End Sub
 
     Private Function CursorWithinButton(btn As Guna.UI2.WinForms.Guna2Button) As Boolean
@@ -337,6 +351,8 @@ Public Class Sales
         Dim labels As List(Of Control) = Nothing
         If Not _categoryTileLabelMap.TryGetValue(btn, labels) Then Return
         Dim targetColor As Color = If(hovering, CategoryHoverBg, Color.White)
+        btn.FillColor = targetColor
+        btn.BorderColor = If(hovering, Color.FromArgb(190, 190, 190), BorderGray)
         For Each ctrl As Control In labels
             If ctrl IsNot Nothing AndAlso Not ctrl.IsDisposed Then
                 ctrl.BackColor = targetColor
@@ -3606,28 +3622,28 @@ Public Class Sales
                                              ProcessKeypadInputEnhanced("?", UpdateCashAmountDisplay)
                                              e.Handled = True
 
-                                               ' Handle Enter key to complete payment
-                                           ElseIf e.KeyCode = Keys.Enter Then
-                                               confirmPaymentAction()
-                                               e.Handled = True
-                                               e.SuppressKeyPress = True
+                                             ' Handle Enter key to complete payment
+                                         ElseIf e.KeyCode = Keys.Enter Then
+                                             confirmPaymentAction()
+                                             e.Handled = True
+                                             e.SuppressKeyPress = True
 
-                                               ' Handle Escape to cancel
-                                           ElseIf e.KeyCode = Keys.Escape Then
-                                               btnBack.PerformClick()
-                                               e.Handled = True
-                                               e.SuppressKeyPress = True
+                                             ' Handle Escape to cancel
+                                         ElseIf e.KeyCode = Keys.Escape Then
+                                             btnBack.PerformClick()
+                                             e.Handled = True
+                                             e.SuppressKeyPress = True
 
-                                               ' Handle C key for clear
-                                           ElseIf e.KeyCode = Keys.C Then
-                                               clearAmountAction()
-                                               e.Handled = True
-                                               e.SuppressKeyPress = True
+                                             ' Handle C key for clear
+                                         ElseIf e.KeyCode = Keys.C Then
+                                             clearAmountAction()
+                                             e.Handled = True
+                                             e.SuppressKeyPress = True
 
-                                               ' Handle E key for exact amount
-                                           ElseIf e.KeyCode = Keys.E Then
-                                               applyExactAction()
-                                               e.Handled = True
+                                             ' Handle E key for exact amount
+                                         ElseIf e.KeyCode = Keys.E Then
+                                             applyExactAction()
+                                             e.Handled = True
                                              e.SuppressKeyPress = True
 
                                          End If
@@ -5246,6 +5262,124 @@ Public Class Sales
     End Function
     Private Sub lblSearchProduct_Click(sender As Object, e As EventArgs) Handles lblSearchProduct.Click
         ShowProductSearchModal()
+    End Sub
+
+    ' Live search via the TxtSearch box on the categories screen
+    Private Sub TxtSearch_TextChanged(sender As Object, e As EventArgs) Handles TxtSearch.TextChanged
+        If _searchTimer Is Nothing Then
+            _searchTimer = New Timer() With {.Interval = 350}
+            AddHandler _searchTimer.Tick, Sub()
+                                              _searchTimer.Stop()
+                                              ExecuteCategorySearch()
+                                          End Sub
+        End If
+        _searchTimer.Stop()
+        _searchTimer.Start()
+    End Sub
+
+    Private Sub TxtSearch_KeyDown(sender As Object, e As KeyEventArgs) Handles TxtSearch.KeyDown
+        If e.KeyCode = Keys.Enter Then
+            e.Handled = True
+            If _searchTimer IsNot Nothing Then _searchTimer.Stop()
+            ExecuteCategorySearch()
+        ElseIf e.KeyCode = Keys.Escape Then
+            e.Handled = True
+            TxtSearch.Text = ""
+        End If
+    End Sub
+
+    ' Run the search: empty restores the category grid, otherwise show matching products
+    Private Sub ExecuteCategorySearch()
+        If TxtSearch Is Nothing OrElse TxtSearch.IsDisposed Then Return
+        Dim term As String = TxtSearch.Text.Trim()
+        If String.IsNullOrWhiteSpace(term) Then
+            CategoryPanel.Controls.Clear()
+            BuildCategoryTiles()
+            ArrangeCategoryButtonsFlexWrap()
+            UpdateCategoryItemCounts()
+            LabelTitle.Text = "Categories"
+            backCategory.Visible = False
+        Else
+            ShowSearchResults(term)
+        End If
+    End Sub
+
+    ' Show all products matching the search term (barcode exact or name partial)
+    Private Sub ShowSearchResults(term As String)
+        CategoryPanel.Controls.Clear()
+        productCardControls.Clear()
+        productDbStock.Clear()
+        backCategory.Visible = True
+        LabelTitle.Text = $"Search: {term}"
+
+        ' Keep the search box on top so the query can be refined
+        If Not CategoryPanel.Controls.Contains(TxtSearch) Then
+            CategoryPanel.Controls.Add(TxtSearch)
+        End If
+
+        Dim flowPanel As New FlowLayoutPanel()
+        flowPanel.Location = New Point(0, 72)
+        flowPanel.Size = New Size(CategoryPanel.ClientSize.Width, Math.Max(0, CategoryPanel.ClientSize.Height - 72))
+        flowPanel.Anchor = AnchorStyles.Top Or AnchorStyles.Left Or AnchorStyles.Right Or AnchorStyles.Bottom
+        flowPanel.AutoScroll = True
+        flowPanel.BackColor = Color.White
+        flowPanel.Padding = New Padding(14)
+        CategoryPanel.Controls.Add(flowPanel)
+        TxtSearch.BringToFront()
+
+        Dim query As String = "SELECT ProductID, ProductName, SellingPrice, ProductCode, ReorderLevel, CurrentStock, Category FROM Products WHERE IsActive = 1 AND (ProductCode = @term OR ProductName LIKE @like) ORDER BY CASE WHEN ProductCode = @term THEN 0 ELSE 1 END, ProductName"
+        Dim parameters As SqlParameter() = {
+            New SqlParameter("@term", term),
+            New SqlParameter("@like", "%" & term & "%")
+        }
+        Try
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters)
+                While reader.Read()
+                    Dim stock As Integer = Convert.ToInt32(reader("CurrentStock"))
+
+                    Dim productData As New Dictionary(Of String, Object) From {
+                        {"ProductID", reader("ProductID")},
+                        {"ProductName", reader("ProductName")},
+                        {"Price", Convert.ToDecimal(reader("SellingPrice"))},
+                        {"ProductCode", reader("ProductCode")},
+                        {"Category", reader("Category")},
+                        {"CurrentStock", stock}
+                    }
+                    productDbStock(reader("ProductID").ToString()) = stock
+
+                    Dim reservedQty As Integer = 0
+                    For Each orderItem In currentOrderList
+                        If orderItem("ProductID").ToString() = reader("ProductID").ToString() Then
+                            reservedQty += CInt(orderItem("Quantity"))
+                        End If
+                    Next
+
+                    Dim productCard As New ProductCard()
+                    productCard.Populate(productData, LoadProductImage(Convert.ToInt32(reader("ProductID")), 85, 78))
+                    productCard.UpdateStock(Math.Max(0, stock - reservedQty))
+                    AddHandler productCard.ProductClicked, Sub(sender2, e2)
+                                                               HandleProductInteraction(productData, False)
+                                                           End Sub
+
+                    productCardControls.Add(productCard)
+                    flowPanel.Controls.Add(productCard)
+                End While
+            End Using
+        Catch ex As Exception
+            Console.WriteLine($"Search error: {ex.Message}")
+        End Try
+
+        ' Informational empty state when nothing matches
+        If flowPanel.Controls.Count = 0 Then
+            Dim noResults As New Label() With {
+                .Text = $"No products found for '{term}'.",
+                .AutoSize = True,
+                .Font = New Font("Poppins", 11.0F),
+                .ForeColor = MediumText,
+                .Location = New Point(30, 100)
+            }
+            flowPanel.Controls.Add(noResults)
+        End If
     End Sub
 
     ' Show only the matching product card from search

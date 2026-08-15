@@ -19,44 +19,24 @@ Partial Class Sales
 
     <System.Diagnostics.DebuggerStepThrough()>
     Private Sub InitializeComponent()
-        Dim CustomizableEdges95 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges96 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges77 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges78 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges79 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges80 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges81 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges82 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges83 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges84 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges85 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges86 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges87 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges88 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges89 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges90 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges91 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges92 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges93 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges94 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges97 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges98 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges99 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges100 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges101 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges102 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges109 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges110 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges103 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges104 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges105 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges106 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges107 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges108 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges111 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges112 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges113 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges114 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges3 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges4 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges1 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges2 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges5 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges6 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges13 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges14 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges7 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges8 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges9 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges10 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges11 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges12 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges15 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges16 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges17 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges18 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         LabelTitle = New Label()
         CategoryPanel = New Guna.UI2.WinForms.Guna2Panel()
         TxtSearch = New Guna.UI2.WinForms.Guna2TextBox()
@@ -108,23 +88,21 @@ Partial Class Sales
         CategoryPanel.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
         CategoryPanel.BorderRadius = 8
         CategoryPanel.BorderThickness = 2
-        ' Category tiles are built in code (BuildCategoryTiles) - only the search box is a designer control.
         CategoryPanel.Controls.Add(TxtSearch)
-        CategoryPanel.CustomizableEdges = CustomizableEdges95
+        CategoryPanel.CustomizableEdges = CustomizableEdges3
         CategoryPanel.FillColor = Color.White
         CategoryPanel.ForeColor = Color.White
         CategoryPanel.Location = New Point(231, 96)
         CategoryPanel.Name = "CategoryPanel"
-        CategoryPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges96
-        CategoryPanel.Size = New Size(1027, 938)
+        CategoryPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges4
+        CategoryPanel.Size = New Size(1039, 938)
         CategoryPanel.TabIndex = 2
-
         ' 
         ' TxtSearch
         ' 
         TxtSearch.BorderRadius = 10
-        TxtSearch.CustomizableEdges = CustomizableEdges83
-        TxtSearch.DefaultText = "🔍 Search Product..."
+        TxtSearch.CustomizableEdges = CustomizableEdges1
+        TxtSearch.DefaultText = ""
         TxtSearch.DisabledState.BorderColor = Color.FromArgb(CByte(208), CByte(208), CByte(208))
         TxtSearch.DisabledState.FillColor = Color.FromArgb(CByte(226), CByte(226), CByte(226))
         TxtSearch.DisabledState.ForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
@@ -135,12 +113,11 @@ Partial Class Sales
         TxtSearch.Location = New Point(41, 18)
         TxtSearch.Margin = New Padding(3, 4, 3, 4)
         TxtSearch.Name = "TxtSearch"
-        TxtSearch.PlaceholderText = ""
+        TxtSearch.PlaceholderText = "🔍 Search Product..."
         TxtSearch.SelectedText = ""
-        TxtSearch.ShadowDecoration.CustomizableEdges = CustomizableEdges84
+        TxtSearch.ShadowDecoration.CustomizableEdges = CustomizableEdges2
         TxtSearch.Size = New Size(326, 47)
         TxtSearch.TabIndex = 83
-
         ' 
         ' orderSummaryPanel
         ' 
@@ -149,11 +126,11 @@ Partial Class Sales
         orderSummaryPanel.BorderColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
         orderSummaryPanel.BorderRadius = 10
         orderSummaryPanel.BorderThickness = 2
-        orderSummaryPanel.CustomizableEdges = CustomizableEdges101
+        orderSummaryPanel.CustomizableEdges = CustomizableEdges5
         orderSummaryPanel.FillColor = Color.White
         orderSummaryPanel.Location = New Point(1276, 96)
         orderSummaryPanel.Name = "orderSummaryPanel"
-        orderSummaryPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges102
+        orderSummaryPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges6
         orderSummaryPanel.Size = New Size(614, 449)
         orderSummaryPanel.TabIndex = 3
         ' 
@@ -188,13 +165,13 @@ Partial Class Sales
         totalPanel.Controls.Add(Guna2HtmlLabel29)
         totalPanel.Controls.Add(lblSubTotal)
         totalPanel.Controls.Add(Guna2HtmlLabel26)
-        totalPanel.CustomizableEdges = CustomizableEdges109
+        totalPanel.CustomizableEdges = CustomizableEdges13
         totalPanel.FillColor = Color.White
         totalPanel.Font = New Font("Microsoft Sans Serif", 16.2F)
         totalPanel.ForeColor = Color.FromArgb(CByte(95), CByte(95), CByte(95))
         totalPanel.Location = New Point(1276, 551)
         totalPanel.Name = "totalPanel"
-        totalPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges110
+        totalPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges14
         totalPanel.Size = New Size(614, 453)
         totalPanel.TabIndex = 38
         ' 
@@ -204,7 +181,7 @@ Partial Class Sales
         confirmBtn.BorderColor = Color.White
         confirmBtn.BorderRadius = 1000
         confirmBtn.BorderThickness = 1
-        confirmBtn.CustomizableEdges = CustomizableEdges103
+        confirmBtn.CustomizableEdges = CustomizableEdges7
         confirmBtn.DisabledState.BorderColor = Color.DarkGray
         confirmBtn.DisabledState.CustomBorderColor = Color.DarkGray
         confirmBtn.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
@@ -214,7 +191,7 @@ Partial Class Sales
         confirmBtn.ForeColor = Color.Black
         confirmBtn.Location = New Point(33, 416)
         confirmBtn.Name = "confirmBtn"
-        confirmBtn.ShadowDecoration.CustomizableEdges = CustomizableEdges104
+        confirmBtn.ShadowDecoration.CustomizableEdges = CustomizableEdges8
         confirmBtn.Size = New Size(254, 40)
         confirmBtn.TabIndex = 62
         confirmBtn.Text = "Confirm Payment"
@@ -269,7 +246,7 @@ Partial Class Sales
         btnDiscount.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
         btnDiscount.BorderRadius = 10
         btnDiscount.BorderThickness = 1
-        btnDiscount.CustomizableEdges = CustomizableEdges105
+        btnDiscount.CustomizableEdges = CustomizableEdges9
         btnDiscount.DisabledState.BorderColor = Color.DarkGray
         btnDiscount.DisabledState.CustomBorderColor = Color.DarkGray
         btnDiscount.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
@@ -277,30 +254,30 @@ Partial Class Sales
         btnDiscount.FillColor = Color.White
         btnDiscount.Font = New Font("Poppins Medium", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         btnDiscount.ForeColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
-        btnDiscount.Location = New Point(370, 350)
+        btnDiscount.Location = New Point(370, 320)
         btnDiscount.Name = "btnDiscount"
-        btnDiscount.ShadowDecoration.CustomizableEdges = CustomizableEdges106
-        btnDiscount.Size = New Size(169, 40)
+        btnDiscount.ShadowDecoration.CustomizableEdges = CustomizableEdges10
+        btnDiscount.Size = New Size(169, 70)
         btnDiscount.TabIndex = 63
-        btnDiscount.Text = "Discount"
+        btnDiscount.Text = "🏷️ Discount"
         ' 
         ' btnPayment
         ' 
         btnPayment.BorderRadius = 10
-        btnPayment.CustomizableEdges = CustomizableEdges107
+        btnPayment.CustomizableEdges = CustomizableEdges11
         btnPayment.DisabledState.BorderColor = Color.DarkGray
         btnPayment.DisabledState.CustomBorderColor = Color.DarkGray
         btnPayment.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         btnPayment.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        btnPayment.FillColor = Color.FromArgb(CByte(191), CByte(155), CByte(48))
+        btnPayment.FillColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         btnPayment.Font = New Font("Poppins Medium", 9.0F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         btnPayment.ForeColor = Color.White
-        btnPayment.Location = New Point(70, 350)
+        btnPayment.Location = New Point(70, 320)
         btnPayment.Name = "btnPayment"
-        btnPayment.ShadowDecoration.CustomizableEdges = CustomizableEdges108
-        btnPayment.Size = New Size(271, 40)
+        btnPayment.ShadowDecoration.CustomizableEdges = CustomizableEdges12
+        btnPayment.Size = New Size(258, 70)
         btnPayment.TabIndex = 38
-        btnPayment.Text = "Payment"
+        btnPayment.Text = "💳 Payment"
         ' 
         ' totalLbl
         ' 
@@ -386,11 +363,11 @@ Partial Class Sales
         DashboardPanel.BorderRadius = 10
         DashboardPanel.BorderThickness = 2
         DashboardPanel.Controls.Add(PictureBox9)
-        DashboardPanel.CustomizableEdges = CustomizableEdges111
+        DashboardPanel.CustomizableEdges = CustomizableEdges15
         DashboardPanel.FillColor = Color.White
         DashboardPanel.Location = New Point(-10, 5)
         DashboardPanel.Name = "DashboardPanel"
-        DashboardPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges112
+        DashboardPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges16
         DashboardPanel.Size = New Size(236, 1029)
         DashboardPanel.TabIndex = 6
         ' 
@@ -417,7 +394,7 @@ Partial Class Sales
         backCategory.ForeColor = Color.White
         backCategory.Location = New Point(231, 28)
         backCategory.Name = "backCategory"
-        backCategory.ShadowDecoration.CustomizableEdges = CustomizableEdges113
+        backCategory.ShadowDecoration.CustomizableEdges = CustomizableEdges17
         backCategory.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
         backCategory.Size = New Size(34, 33)
         backCategory.TabIndex = 39
@@ -428,7 +405,7 @@ Partial Class Sales
         Guna2CirclePictureBox5.ImageRotate = 0F
         Guna2CirclePictureBox5.Location = New Point(1784, 20)
         Guna2CirclePictureBox5.Name = "Guna2CirclePictureBox5"
-        Guna2CirclePictureBox5.ShadowDecoration.CustomizableEdges = CustomizableEdges114
+        Guna2CirclePictureBox5.ShadowDecoration.CustomizableEdges = CustomizableEdges18
         Guna2CirclePictureBox5.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
         Guna2CirclePictureBox5.Size = New Size(31, 28)
         Guna2CirclePictureBox5.TabIndex = 40
@@ -479,7 +456,6 @@ Partial Class Sales
         StartPosition = FormStartPosition.CenterScreen
         Text = "d"
         CategoryPanel.ResumeLayout(False)
-        CategoryPanel.PerformLayout()
         totalPanel.ResumeLayout(False)
         totalPanel.PerformLayout()
         DashboardPanel.ResumeLayout(False)
