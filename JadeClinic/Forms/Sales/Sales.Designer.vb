@@ -108,6 +108,7 @@ Partial Class Sales
         TxtSearch.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
         TxtSearch.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         TxtSearch.Font = New Font("Segoe UI", 9F)
+        TxtSearch.ForeColor = Color.Black
         TxtSearch.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         TxtSearch.Location = New Point(41, 18)
         TxtSearch.Margin = New Padding(3, 4, 3, 4)
@@ -251,7 +252,7 @@ Partial Class Sales
         btnDiscount.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         btnDiscount.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
         btnDiscount.FillColor = Color.White
-        btnDiscount.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        btnDiscount.Font = New Font("Poppins", 10.2F)
         btnDiscount.ForeColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
         btnDiscount.Location = New Point(370, 320)
         btnDiscount.Name = "btnDiscount"
@@ -269,7 +270,7 @@ Partial Class Sales
         btnPayment.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         btnPayment.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
         btnPayment.FillColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
-        btnPayment.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        btnPayment.Font = New Font("Poppins", 10.2F)
         btnPayment.ForeColor = Color.White
         btnPayment.Location = New Point(70, 320)
         btnPayment.Name = "btnPayment"

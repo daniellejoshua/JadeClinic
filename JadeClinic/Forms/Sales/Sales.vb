@@ -1259,6 +1259,10 @@ Public Class Sales
     End Sub
 
     Private Sub backCategory_Click(sender As Object, e As EventArgs) Handles backCategory.Click
+        ' Going back to the categories grid resets the search box
+        If _searchTimer IsNot Nothing Then _searchTimer.Stop()
+        If TxtSearch IsNot Nothing Then TxtSearch.Text = ""
+
         ' Store the current state before clearing
         CategoryPanel.SuspendLayout()
 
@@ -5270,9 +5274,12 @@ Public Class Sales
             CategoryPanel.Controls.Add(TxtSearch)
         End If
 
+        ' Inset by the CategoryPanel border thickness so the white results panel
+        ' stays inside the rounded border instead of covering it edge-to-edge
+        Dim borderInset As Integer = 2 ' CategoryPanel.BorderThickness
         Dim flowPanel As New FlowLayoutPanel()
-        flowPanel.Location = New Point(0, 72)
-        flowPanel.Size = New Size(CategoryPanel.ClientSize.Width, Math.Max(0, CategoryPanel.ClientSize.Height - 72))
+        flowPanel.Location = New Point(borderInset, 72 + borderInset)
+        flowPanel.Size = New Size(CategoryPanel.ClientSize.Width - borderInset * 2, Math.Max(0, CategoryPanel.ClientSize.Height - 72 - borderInset * 2))
         flowPanel.Anchor = AnchorStyles.Top Or AnchorStyles.Left Or AnchorStyles.Right Or AnchorStyles.Bottom
         flowPanel.AutoScroll = True
         flowPanel.BackColor = Color.White
@@ -5516,6 +5523,12 @@ Public Class Sales
             Return
         End If
 
+        ' While typing in TxtSearch, suppress ALL shortcuts (including the global
+        ' D / Ctrl+Enter ones) so keys reach the search box as plain text
+        If Me.ActiveControl Is TxtSearch Then
+            Return
+        End If
+
         ' GLOBAL SHORTCUTS (only when no modal/customer/payment panels are active)
         If Not totalPanelActive AndAlso Not pinPanelActive AndAlso Not ProfileManager.IsProfileDropdownVisible(Me) Then
             ' Ctrl+Enter -> go to payment (explicit shortcut)
@@ -5536,11 +5549,6 @@ Public Class Sales
                 e.Handled = True
                 Return
             End If
-        End If
-
-        ' While typing in TxtSearch, let the search box receive keys instead of treating them as barcode input
-        If Me.ActiveControl Is TxtSearch Then
-            Return
         End If
 
         ' Existing barcode / payment logic
