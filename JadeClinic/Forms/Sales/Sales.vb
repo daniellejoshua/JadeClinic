@@ -564,7 +564,7 @@ Public Class Sales
         ' Set payment button to golden color
         If btnPayment IsNot Nothing Then
             btnPayment.FillColor = GoldenYellow
-            btnPayment.ForeColor = DarkText
+            btnPayment.ForeColor = Color.White
         End If
 
         SetupTabIndex()
@@ -659,12 +659,9 @@ Public Class Sales
                     End If
                 Next
 
-                Dim productCard As New ProductCard()
-                productCard.Populate(productData, LoadProductImage(Convert.ToInt32(reader("ProductID")), 85, 78))
-                productCard.UpdateStock(Math.Max(0, stock - reservedQty))
-                AddHandler productCard.ProductClicked, Sub(sender2, e2)
-                                                           HandleProductInteraction(productData, False) ' False = manual click
-                                                       End Sub
+                Dim productCard = ProductCardBuilder.Create(productData, LoadProductImage(Convert.ToInt32(reader("ProductID")), 85, 78),
+                                                            Sub() HandleProductInteraction(productData, False))
+                ProductCardBuilder.UpdateStock(productCard, Math.Max(0, stock - reservedQty))
 
                 productCardControls.Add(productCard)
                 flowPanel.Controls.Add(productCard)
@@ -1008,21 +1005,18 @@ Public Class Sales
     End Sub
     Private Sub UpdateStockLabel(productId As String, newStock As Integer)
         For Each productCard As Control In productCardControls
-            If TypeOf productCard Is ProductCard Then
-                Dim card = CType(productCard, ProductCard)
-                If card.ProductId = productId Then
-                    card.UpdateStock(newStock)
-                    Exit For
-                End If
+            If ProductCardBuilder.GetProductId(productCard) = productId Then
+                ProductCardBuilder.UpdateStock(productCard, newStock)
+                Exit For
             End If
         Next
     End Sub
 
     Private Sub UpdateStockLabelFromDbStock(productId As String)
         If Not productDbStock.ContainsKey(productId) Then
-            Dim card = productCardControls.OfType(Of ProductCard)().FirstOrDefault(Function(p) p.ProductId = productId)
+            Dim card = productCardControls.FirstOrDefault(Function(c) ProductCardBuilder.GetProductId(c) = productId)
             If card IsNot Nothing Then
-                productDbStock(productId) = card.DisplayedStock
+                productDbStock(productId) = ProductCardBuilder.GetDisplayedStock(card)
             End If
         End If
         If Not productDbStock.ContainsKey(productId) Then Return
@@ -1190,15 +1184,16 @@ Public Class Sales
 
         Dim toolTip As New ToolTip()
         toolTip.SetToolTip(btn, $"Click to view {catName} products")
+
+        ' Whole tile clickable: forward clicks from the child labels to the same handler
         AddHandler btn.Click, Sub(senderBtn, eBtn)
-                                  ShowCategoryProducts(catName)
+                                  TileClicked(catName)
                               End Sub
-        AddHandler btn.Click, Sub()
-                                  If ProfileManager.IsProfileDropdownVisible(Me) Then
-                                      ProfileManager.HideProfileDropdown(Me)
-                                  End If
-                                  FocusBarcodeInputIfAllowed()
-                              End Sub
+        For Each lbl As Control In {iconLbl, nameLbl, countLbl}
+            AddHandler lbl.Click, Sub(senderLbl, eLbl)
+                                      TileClicked(catName)
+                                  End Sub
+        Next
         AddHandler btn.MouseEnter, Sub(senderBtn, eBtn)
                                        Dim b = CType(senderBtn, Guna.UI2.WinForms.Guna2Button)
                                        b.Cursor = Cursors.Hand
@@ -1213,6 +1208,15 @@ Public Class Sales
         _categoryCountLabels(catName) = countLbl
 
         CategoryPanel.Controls.Add(btn)
+    End Sub
+
+    ' Shared category-tile click behavior (button body or child labels)
+    Private Sub TileClicked(catName As String)
+        ShowCategoryProducts(catName)
+        If ProfileManager.IsProfileDropdownVisible(Me) Then
+            ProfileManager.HideProfileDropdown(Me)
+        End If
+        FocusBarcodeInputIfAllowed()
     End Sub
 
     ' Emoji icon per category (falls back to a package box for unknown categories)
@@ -4294,7 +4298,7 @@ Public Class Sales
 
         ' Clear product cards
         For Each card In productCardControls
-            If TypeOf card Is Guna.UI2.WinForms.Guna2Panel Then
+            If card IsNot Nothing Then
                 card.Dispose()
             End If
         Next
@@ -5354,12 +5358,9 @@ Public Class Sales
                         End If
                     Next
 
-                    Dim productCard As New ProductCard()
-                    productCard.Populate(productData, LoadProductImage(Convert.ToInt32(reader("ProductID")), 85, 78))
-                    productCard.UpdateStock(Math.Max(0, stock - reservedQty))
-                    AddHandler productCard.ProductClicked, Sub(sender2, e2)
-                                                               HandleProductInteraction(productData, False)
-                                                           End Sub
+                    Dim productCard = ProductCardBuilder.Create(productData, LoadProductImage(Convert.ToInt32(reader("ProductID")), 85, 78),
+                                                                Sub() HandleProductInteraction(productData, False))
+                    ProductCardBuilder.UpdateStock(productCard, Math.Max(0, stock - reservedQty))
 
                     productCardControls.Add(productCard)
                     flowPanel.Controls.Add(productCard)
@@ -5413,13 +5414,10 @@ Public Class Sales
                     End If
                 Next
 
-                Dim productCard As New ProductCard()
+                Dim productCard = ProductCardBuilder.Create(productData, LoadProductImage(productId, 85, 78),
+                                                            Sub() HandleProductInteraction(productData, False))
                 productCard.Location = New Point(28, 18)
-                productCard.Populate(productData, LoadProductImage(productId, 85, 78))
-                productCard.UpdateStock(Math.Max(0, stock - reservedQty))
-                AddHandler productCard.ProductClicked, Sub(sender2, e2)
-                                                          HandleProductInteraction(productData, False)
-                                                      End Sub
+                ProductCardBuilder.UpdateStock(productCard, Math.Max(0, stock - reservedQty))
 
                 productCardControls.Add(productCard)
                 CategoryPanel.Controls.Add(productCard)
@@ -5589,6 +5587,11 @@ Public Class Sales
                 e.Handled = True
                 Return
             End If
+        End If
+
+        ' While typing in TxtSearch, let the search box receive keys instead of treating them as barcode input
+        If Me.ActiveControl Is TxtSearch Then
+            Return
         End If
 
         ' Existing barcode / payment logic
