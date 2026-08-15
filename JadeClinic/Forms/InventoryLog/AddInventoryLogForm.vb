@@ -13,6 +13,15 @@ Public Class AddInventoryLogForm
     Private cmbSupplier As ComboBox
     Private txtReference As TextBox
     Private txtNotes As TextBox
+    Private lblSupplier As Label
+    Private lblReference As Label
+    Private lblStockInfo As Label
+
+    ' Manual Stock OUT hides the Supplier + Reference rows (notes-only entry),
+    ' so the controls below them get shifted up to close the gap.
+    Private Const SupplierReferenceSectionHeight As Integer = 180
+    Private supplierRefOffsetApplied As Boolean = False
+    Private belowSupplierReferenceControls As New List(Of Control)
 
     ' Field to prevent recursive TextChanged handling
     Private suppressProductTextChanged As Boolean = False
@@ -185,6 +194,16 @@ Public Class AddInventoryLogForm
 
         Me.Controls.Add(cmbProduct)
 
+        ' Current stock readout for the selected product
+        lblStockInfo = New Label()
+        lblStockInfo.Font = New Font("Poppins", 9, FontStyle.Regular)
+        lblStockInfo.ForeColor = Color.FromArgb(120, 120, 120)
+        lblStockInfo.Location = New Point(32, 170)
+        lblStockInfo.AutoSize = True
+        lblStockInfo.Text = ""
+        lblStockInfo.Visible = False
+        Me.Controls.Add(lblStockInfo)
+
         yPos += 90
 
         ' Transaction Type
@@ -283,8 +302,8 @@ Public Class AddInventoryLogForm
 
         yPos += 90
 
-        ' Supplier (required)
-        Dim lblSupplier As New Label()
+        ' Supplier (required for Stock IN)
+        lblSupplier = New Label()
         lblSupplier.Text = "Supplier *"
         lblSupplier.Font = New Font("Poppins", 10, FontStyle.Bold)
         lblSupplier.ForeColor = Color.FromArgb(42, 42, 42)
@@ -316,8 +335,8 @@ Public Class AddInventoryLogForm
 
         yPos += 90
 
-        ' Reference (required)
-        Dim lblReference As New Label()
+        ' Reference (required for Stock IN)
+        lblReference = New Label()
         lblReference.Text = "Reference *"
         lblReference.Font = New Font("Poppins", 10, FontStyle.Bold)
         lblReference.ForeColor = Color.FromArgb(42, 42, 42)
@@ -348,6 +367,7 @@ Public Class AddInventoryLogForm
         lblNotes.AutoSize = True
         Me.Controls.Add(lblNotes)
         belowBatchControls.Add(lblNotes)
+        belowSupplierReferenceControls.Add(lblNotes)
 
         txtNotes = New TextBox()
         txtNotes.Font = New Font("Poppins", 10)
@@ -360,6 +380,7 @@ Public Class AddInventoryLogForm
         txtNotes.PlaceholderText = "Additional notes about this transaction..."
         Me.Controls.Add(txtNotes)
         belowBatchControls.Add(txtNotes)
+        belowSupplierReferenceControls.Add(txtNotes)
 
         yPos += 140
 
@@ -378,6 +399,7 @@ Public Class AddInventoryLogForm
         AddHandler btnCancel.Click, Sub(s, ev) Me.Close()
         Me.Controls.Add(btnCancel)
         belowBatchControls.Add(btnCancel)
+        belowSupplierReferenceControls.Add(btnCancel)
 
         Dim btnSave As New Button()
         btnSave.Text = "Save Log"
@@ -393,6 +415,7 @@ Public Class AddInventoryLogForm
         AddHandler btnSave.Click, AddressOf SaveInventoryLog
         Me.Controls.Add(btnSave)
         belowBatchControls.Add(btnSave)
+        belowSupplierReferenceControls.Add(btnSave)
     End Sub
 
     Private Sub ApplyBatchLayout(expanded As Boolean)
@@ -401,6 +424,43 @@ Public Class AddInventoryLogForm
             ctl.Top += delta
         Next
         batchOffsetApplied = expanded
+    End Sub
+
+    ' Shows the current on-hand stock of the product currently selected in the
+    ' product combo, so the user can see what's available before logging a change.
+    ' Matches by typed text so it updates live while filtering/typing.
+    Private Sub UpdateStockInfo()
+        Try
+            If lblStockInfo Is Nothing Then Return
+            Dim typed As String = If(cmbProduct.Text, "").Trim()
+            If String.IsNullOrEmpty(typed) Then
+                lblStockInfo.Text = ""
+                lblStockInfo.Visible = False
+                Return
+            End If
+            For Each p In products
+                If String.Equals(p("ProductName").ToString(), typed, StringComparison.OrdinalIgnoreCase) Then
+                    Dim stock As Integer = Convert.ToInt32(p("CurrentStock"))
+                    lblStockInfo.Text = "Current stock: " & stock.ToString()
+                    lblStockInfo.Visible = True
+                    Return
+                End If
+            Next
+            lblStockInfo.Text = ""
+            lblStockInfo.Visible = False
+        Catch
+        End Try
+    End Sub
+
+    ' Collapses/restores the space occupied by the Supplier + Reference rows when
+    ' a manual Stock OUT is selected (those fields are hidden, so Notes and the
+    ' buttons move up to close the gap).
+    Private Sub ApplySupplierReferenceLayout(hidden As Boolean)
+        Dim delta = If(hidden, -SupplierReferenceSectionHeight, SupplierReferenceSectionHeight)
+        For Each ctl In belowSupplierReferenceControls
+            ctl.Top += delta
+        Next
+        supplierRefOffsetApplied = hidden
     End Sub
 
     ' Helper to populate combo with full products list (keeps product order in sync)
@@ -414,8 +474,10 @@ Public Class AddInventoryLogForm
     End Sub
 
     Private Sub ComboBox_DrawItem(sender As Object, e As DrawItemEventArgs)
-        If e.Index < 0 Then Return
+        ' Guard against stale paint indexes while the combo is being re-filtered
+        ' (Items.Clear() can leave a draw with e.Index pointing past the list)
         Dim cb = CType(sender, ComboBox)
+        If e.Index < 0 OrElse e.Index >= cb.Items.Count Then Return
 
         e.Graphics.FillRectangle(New SolidBrush(cb.BackColor), e.Bounds)
 
@@ -461,6 +523,7 @@ Public Class AddInventoryLogForm
         End If
 
         UpdateBatchFieldsVisibility()
+        UpdateStockInfo()
     End Sub
 
     Private Sub cmbTransactionType_SelectedIndexChanged(sender As Object, e As EventArgs)
@@ -779,6 +842,27 @@ Public Class AddInventoryLogForm
             Dim lblExpiryDate As Label = Me.Controls.OfType(Of Label).FirstOrDefault(Function(c) c.Name = "lblExpiryDate")
             Dim dtpExpiryDate As DateTimePicker = Me.Controls.OfType(Of DateTimePicker).FirstOrDefault(Function(c) c.Name = "dtpExpiryDate")
 
+            ' Supplier & Reference apply only to Stock IN; a manual Stock OUT is a
+            ' notes-only entry (no supplier, no reference).
+            Dim isOut As Boolean = (cmbTransactionType.SelectedIndex >= 0 AndAlso cmbTransactionType.SelectedItem.ToString() = "OUT")
+
+            If lblSupplier IsNot Nothing Then lblSupplier.Visible = Not isOut
+            If cmbSupplier IsNot Nothing Then cmbSupplier.Visible = Not isOut
+            If lblReference IsNot Nothing Then lblReference.Visible = Not isOut
+            If txtReference IsNot Nothing Then txtReference.Visible = Not isOut
+
+            ' Collapse the space the hidden rows leave behind, and clear stale values
+            If isOut AndAlso Not supplierRefOffsetApplied Then
+                ApplySupplierReferenceLayout(True)
+            ElseIf Not isOut AndAlso supplierRefOffsetApplied Then
+                ApplySupplierReferenceLayout(False)
+            End If
+
+            If isOut Then
+                If cmbSupplier IsNot Nothing AndAlso cmbSupplier.SelectedIndex <> 0 Then cmbSupplier.SelectedIndex = 0
+                If txtReference IsNot Nothing Then txtReference.Text = ""
+            End If
+
             ' Show batch fields if:
             ' 1. Product is ENDO category AND
             ' 2. Transaction type is "IN" (Stock In)
@@ -889,18 +973,23 @@ Public Class AddInventoryLogForm
             Return False
         End If
 
-        ' Validate supplier selection (now required)
-        If cmbSupplier.SelectedIndex <= 0 OrElse cmbSupplier.SelectedItem.ToString() = "-- Select Supplier --" OrElse cmbSupplier.SelectedItem.ToString() = "Add New Supplier..." Then
-            MessageBox.Show("Please select a supplier!", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-            cmbSupplier.Focus()
-            Return False
-        End If
+        ' Manual Stock OUT is a notes-only entry: no supplier, no reference
+        Dim isOut As Boolean = (cmbTransactionType.SelectedIndex >= 0 AndAlso cmbTransactionType.SelectedItem.ToString() = "OUT")
 
-        ' Validate reference (required)
-        If String.IsNullOrWhiteSpace(txtReference.Text) Then
-            MessageBox.Show("Please enter a reference!", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-            txtReference.Focus()
-            Return False
+        If Not isOut Then
+            ' Validate supplier selection (now required)
+            If cmbSupplier.SelectedIndex <= 0 OrElse cmbSupplier.SelectedItem.ToString() = "-- Select Supplier --" OrElse cmbSupplier.SelectedItem.ToString() = "Add New Supplier..." Then
+                MessageBox.Show("Please select a supplier!", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                cmbSupplier.Focus()
+                Return False
+            End If
+
+            ' Validate reference (required)
+            If String.IsNullOrWhiteSpace(txtReference.Text) Then
+                MessageBox.Show("Please enter a reference!", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                txtReference.Focus()
+                Return False
+            End If
         End If
 
         ' Validate batch fields for ENDO products during Stock IN
@@ -958,9 +1047,10 @@ Public Class AddInventoryLogForm
                     newStock = quantity ' For adjustments, quantity is the new stock level
             End Select
 
-            ' Get supplier ID (now required)
+            ' Supplier is only recorded for Stock IN; manual Stock OUT is notes-only
+            Dim isOut As Boolean = (cmbTransactionType.SelectedItem.ToString() = "OUT")
             Dim supplierId As Object = DBNull.Value
-            If cmbSupplier.SelectedIndex > 0 AndAlso cmbSupplier.SelectedItem.ToString() <> "-- Select Supplier --" AndAlso cmbSupplier.SelectedItem.ToString() <> "Add New Supplier..." Then
+            If Not isOut AndAlso cmbSupplier.SelectedIndex > 0 AndAlso cmbSupplier.SelectedItem.ToString() <> "-- Select Supplier --" AndAlso cmbSupplier.SelectedItem.ToString() <> "Add New Supplier..." Then
                 supplierId = suppliers(cmbSupplier.SelectedIndex - 1)("SupplierID")
             End If
 
@@ -996,7 +1086,7 @@ Public Class AddInventoryLogForm
                             cmd.Parameters.AddWithValue("@ExpiryDate", If(expiryDate.HasValue, expiryDate.Value, DBNull.Value))
                             cmd.Parameters.AddWithValue("@SupplierID", supplierId)
                             cmd.Parameters.AddWithValue("@UserID", frmLoginvb.LoggedInUserID)
-                            cmd.Parameters.AddWithValue("@Reference", txtReference.Text.Trim())
+                            cmd.Parameters.AddWithValue("@Reference", If(isOut OrElse String.IsNullOrWhiteSpace(txtReference.Text), DBNull.Value, txtReference.Text.Trim()))
                             cmd.Parameters.AddWithValue("@Notes", If(String.IsNullOrWhiteSpace(txtNotes.Text), DBNull.Value, txtNotes.Text.Trim()))
                             cmd.ExecuteNonQuery()
                         End Using
@@ -1047,7 +1137,6 @@ Public Class AddInventoryLogForm
         End If
 
         Try
-            Dim caretPos As Integer = Math.Max(0, Math.Min(cb.SelectionStart, originalText.Length))
             Dim input = originalText.Trim()
 
             ' Build matches
@@ -1074,15 +1163,24 @@ Public Class AddInventoryLogForm
             Next
             cb.EndUpdate()
 
-            cb.DroppedDown = (matches.Count > 0)
-
-            ' Restore typed text and caret
+            ' Restore typed text and caret BEFORE opening the dropdown. While the
+            ' dropdown is open the combo's SelectionStart/SelectionLength getters
+            ' can report 0, which made the caret jump to the first character.
+            ' When typing, the caret belongs at the end of the text.
             cb.Text = originalText
-            cb.SelectionStart = Math.Min(caretPos, cb.Text.Length)
+            cb.SelectionStart = Math.Min(originalText.Length, cb.Text.Length)
             cb.SelectionLength = 0
+
+            cb.DroppedDown = (matches.Count > 0)
+        Catch
+            ' Swallow repaint/index races during filtering (e.g. clear then retype).
+            ' The filter is best-effort; the combo keeps its current state.
         Finally
             suppressProductTextChanged = False
         End Try
+
+        ' Update the stock readout live while the user types/filters
+        UpdateStockInfo()
     End Sub
 
     ' Update KeyDown to accept suggestion on Tab (or Enter) and set SelectedIndex to the true product index
@@ -1123,6 +1221,7 @@ Public Class AddInventoryLogForm
                             suppressProductTextChanged = False
 
                             UpdateBatchFieldsVisibility()
+                            UpdateStockInfo()
                             e.Handled = True
                             e.SuppressKeyPress = True
                         End If
@@ -1139,6 +1238,7 @@ Public Class AddInventoryLogForm
             Dim typed = If(cb.Text, "").Trim()
             If String.IsNullOrEmpty(typed) Then
                 cb.SelectedIndex = -1
+                UpdateStockInfo()
                 Return
             End If
 
@@ -1154,12 +1254,14 @@ Public Class AddInventoryLogForm
                         suppressProductTextChanged = False
                     End If
                     UpdateBatchFieldsVisibility()
+                    UpdateStockInfo()
                     Return
                 End If
             Next
 
             ' If not found, leave SelectedIndex as -1 so validation will catch it
             cb.SelectedIndex = -1
+            UpdateStockInfo()
         Catch
             ' ignore
         End Try
