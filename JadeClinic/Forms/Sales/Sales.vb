@@ -5260,7 +5260,7 @@ Public Class Sales
             Return placeholder
         End Try
     End Function
-    Private Sub lblSearchProduct_Click(sender As Object, e As EventArgs) Handles lblSearchProduct.Click
+    Private Sub lblSearchProduct_Click(sender As Object, e As EventArgs)
         ShowProductSearchModal()
     End Sub
 

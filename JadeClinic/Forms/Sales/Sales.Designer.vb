@@ -62,7 +62,6 @@ Partial Class Sales
         backCategory = New Guna.UI2.WinForms.Guna2CircleButton()
         Guna2CirclePictureBox5 = New Guna.UI2.WinForms.Guna2CirclePictureBox()
         lblUsername = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        lblSearchProduct = New Label()
         CategoryPanel.SuspendLayout()
         totalPanel.SuspendLayout()
         DashboardPanel.SuspendLayout()
@@ -422,18 +421,6 @@ Partial Class Sales
         lblUsername.TabIndex = 41
         lblUsername.Text = "20 Items"
         ' 
-        ' lblSearchProduct
-        ' 
-        lblSearchProduct.AutoSize = True
-        lblSearchProduct.BackColor = Color.Transparent
-        lblSearchProduct.Font = New Font("Poppins Medium", 9.0F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
-        lblSearchProduct.ForeColor = Color.FromArgb(CByte(42), CByte(42), CByte(42))
-        lblSearchProduct.Location = New Point(1076, 65)
-        lblSearchProduct.Name = "lblSearchProduct"
-        lblSearchProduct.Size = New Size(171, 26)
-        lblSearchProduct.TabIndex = 81
-        lblSearchProduct.Text = "🔍 Search Product"
-        ' 
         ' Sales
         ' 
         AutoScaleDimensions = New SizeF(8.0F, 20.0F)
@@ -441,7 +428,6 @@ Partial Class Sales
         AutoScroll = True
         BackColor = Color.FromArgb(CByte(254), CByte(254), CByte(254))
         ClientSize = New Size(1902, 1033)
-        Controls.Add(lblSearchProduct)
         Controls.Add(lblUsername)
         Controls.Add(Guna2CirclePictureBox5)
         Controls.Add(lblOrderId)
@@ -489,7 +475,6 @@ Partial Class Sales
     Friend WithEvents btnDiscount As Guna.UI2.WinForms.Guna2Button
     Friend WithEvents Guna2CirclePictureBox5 As Guna.UI2.WinForms.Guna2CirclePictureBox
     Friend WithEvents lblUsername As Guna.UI2.WinForms.Guna2HtmlLabel
-    Friend WithEvents lblSearchProduct As Label
     Friend WithEvents TxtSearch As Guna.UI2.WinForms.Guna2TextBox
 
 
