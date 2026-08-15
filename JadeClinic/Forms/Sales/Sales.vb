@@ -111,15 +111,14 @@ Public Class Sales
     Private ReadOnly AlertRed As Color = Color.FromArgb(255, 71, 87)           ' #FF4757 - Error/Alert states
     ' Category tile design: base accent #BE9A30, hover bg #FBF7EC, hover border #EEBC1B, text #222222, subtext #666666
     Private ReadOnly CategoryHoverBg As Color = Color.FromArgb(251, 247, 236)  ' #FBF7EC - Category tile hover background
-    Private ReadOnly CategoryHoverBorder As Color = Color.FromArgb(238, 188, 27) ' #EEBC1B - Category tile hover border
     Private ReadOnly CategoryText As Color = Color.FromArgb(34, 34, 34)        ' #222222 - Category tile text
 
     ' === Code-generated category tiles (no designer controls) ===
-    Private ReadOnly _categoryTileSize As New Size(185, 243)                    ' Ortho-style tall tile
+    Private ReadOnly _categoryTileSize As New Size(215, 285)                    ' Wide Ortho-style tall tile
     Private ReadOnly _categoryGridStart As New Point(41, 87)
     Private Const _categoryGridCols As Integer = 4
-    Private Const _categoryGridGapX As Integer = 55
-    Private Const _categoryGridGapY As Integer = 20
+    Private Const _categoryGridGapX As Integer = 38
+    Private Const _categoryGridGapY As Integer = 25
     Private ReadOnly _preferredCategoryOrder As New List(Of String) From {
         "ORTHO", "ENDO", "CONSUMABLES", "SURGERY", "RESTO", "COSMETIC"
     }
@@ -1096,16 +1095,16 @@ Public Class Sales
     ' Shared tile appearance for every category tile
     Private Function CreateCategoryTileTemplate() As Guna.UI2.WinForms.Guna2Button
         Dim tpl As New Guna.UI2.WinForms.Guna2Button()
-        tpl.Size = New Size(185, 243)
+        tpl.Size = _categoryTileSize
         tpl.BorderRadius = 20
         tpl.FillColor = Color.White
         tpl.ForeColor = CategoryText
         tpl.BackColor = Color.Transparent
-        tpl.BorderColor = JadeOlive
+        tpl.BorderColor = BorderGray
         tpl.BorderThickness = 2
         tpl.PressedColor = CategoryHoverBg
         tpl.HoverState.FillColor = CategoryHoverBg
-        tpl.HoverState.BorderColor = CategoryHoverBorder
+        tpl.HoverState.BorderColor = Color.FromArgb(190, 190, 190)
         tpl.Text = ""
         Return tpl
     End Function
@@ -1125,14 +1124,22 @@ Public Class Sales
         btn.HoverState.BorderColor = template.HoverState.BorderColor
         btn.Text = ""
 
+        ' Soft drop shadow that follows the tile's rounded corners
+        btn.ShadowDecoration.Enabled = True
+        btn.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Custom
+        btn.ShadowDecoration.BorderRadius = 20
+        btn.ShadowDecoration.Color = Color.FromArgb(70, 0, 0, 0)
+        btn.ShadowDecoration.Depth = 10
+        btn.ShadowDecoration.Shadow = New Padding(0, 3, 10, 10)
+
         ' Icon label (top area)
         Dim iconLbl As New Label()
         iconLbl.Text = CategoryIcon(catName)
         iconLbl.AutoSize = False
-        iconLbl.Size = New Size(185, 56)
-        iconLbl.Location = New Point(0, 20)
+        iconLbl.Size = New Size(190, 84)
+        iconLbl.Location = New Point(12, 30)
         iconLbl.TextAlign = ContentAlignment.MiddleCenter
-        iconLbl.Font = New Font("Segoe UI", 22.2F)
+        iconLbl.Font = New Font("Segoe UI", 36.0F)
         iconLbl.ForeColor = JadeOlive
         iconLbl.BackColor = Color.White
         iconLbl.Name = "IconLbl"
@@ -1141,10 +1148,10 @@ Public Class Sales
         Dim nameLbl As New Label()
         nameLbl.Text = catName
         nameLbl.AutoSize = False
-        nameLbl.Size = New Size(185, 30)
-        nameLbl.Location = New Point(0, 88)
+        nameLbl.Size = New Size(191, 38)
+        nameLbl.Location = New Point(12, 124)
         nameLbl.TextAlign = ContentAlignment.MiddleCenter
-        nameLbl.Font = New Font("Poppins", 9.0F, FontStyle.Bold)
+        nameLbl.Font = New Font("Poppins", 12.0F, FontStyle.Bold)
         nameLbl.ForeColor = CategoryText
         nameLbl.BackColor = Color.White
         nameLbl.Name = "NameLbl"
@@ -1153,10 +1160,10 @@ Public Class Sales
         Dim countLbl As New Guna.UI2.WinForms.Guna2HtmlLabel()
         countLbl.Text = "0 Items"
         countLbl.AutoSize = False
-        countLbl.Size = New Size(185, 28)
-        countLbl.Location = New Point(0, 126)
+        countLbl.Size = New Size(191, 30)
+        countLbl.Location = New Point(12, 170)
         countLbl.TextAlignment = ContentAlignment.MiddleCenter
-        countLbl.Font = New Font("Poppins", 8.0F)
+        countLbl.Font = New Font("Poppins", 9.0F)
         countLbl.ForeColor = MediumText
         countLbl.BackColor = Color.White
         countLbl.Name = "CountLbl"
