@@ -389,9 +389,7 @@ Partial Class Sales
         backCategory.DisabledState.CustomBorderColor = Color.DarkGray
         backCategory.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         backCategory.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        backCategory.FillColor = Color.FromArgb(CByte(238), CByte(188), CByte(27))
-        backCategory.HoverState.FillColor = Color.FromArgb(CByte(223), CByte(175), CByte(22))
-        backCategory.PressedColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
+        backCategory.FillColor = Color.FromArgb(CByte(191), CByte(155), CByte(48))
         backCategory.Font = New Font("Poppins", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         backCategory.ForeColor = Color.White
         backCategory.Location = New Point(231, 28)

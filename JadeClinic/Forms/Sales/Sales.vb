@@ -162,7 +162,6 @@ Public Class Sales
     ' POS lock color control caches
     Private originalCategoryButtonFillColors As New Dictionary(Of Guna.UI2.WinForms.Guna2Button, Color)()
     Private originalCategoryOverlayColors As New Dictionary(Of Control, Color)()
-    Private originalCategoryOverlayForeColors As New Dictionary(Of Control, Color)()
     Private originalCategoryOverlayParents As New Dictionary(Of Control, Control)()
     Private originalCategoryOverlayLocations As New Dictionary(Of Control, Point)()
     Private posLockCategoryFillColor As Color = LightGray
@@ -187,7 +186,6 @@ Public Class Sales
         Try
             originalCategoryButtonFillColors.Clear()
             originalCategoryOverlayColors.Clear()
-            originalCategoryOverlayForeColors.Clear()
             overlayToButton.Clear()
 
             ' Cache all category buttons currently in the panel
@@ -209,7 +207,6 @@ Public Class Sales
                     If TypeOf child Is Label OrElse TypeOf child Is Guna.UI2.WinForms.Guna2HtmlLabel Then
                         If Not originalCategoryOverlayColors.ContainsKey(child) Then
                             originalCategoryOverlayColors(child) = child.BackColor
-                            originalCategoryOverlayForeColors(child) = child.ForeColor
                             originalCategoryOverlayParents(child) = child.Parent
                             originalCategoryOverlayLocations(child) = child.Location
                         End If
@@ -263,11 +260,10 @@ Public Class Sales
                 btn.FillColor = If(locked, posLockCategoryFillColor, originalFill)
             Next
 
-            ' Simple behavior: when locked set all Label and Guna2HtmlLabel BackColor AND text color to the
-            ' button fill color so the labels blend into the grayed-out buttons; when unlocking restore originals
+            ' Simple behavior: when locked set all Label and Guna2HtmlLabel BackColor to LightGray; when unlocking restore original BackColor
             If locked Then
-                Dim targetColor As Color = posLockCategoryFillColor
-                ' Walk all controls under CategoryPanel (including nested) and set labels' colors
+                Dim targetColor As Color = LightGray
+                ' Walk all controls under CategoryPanel (including nested) and set labels' BackColor
                 Dim stack As New Stack(Of Control)()
                 stack.Push(CategoryPanel)
                 While stack.Count > 0
@@ -278,7 +274,6 @@ Public Class Sales
                         If TypeOf child Is Label OrElse TypeOf child Is Guna.UI2.WinForms.Guna2HtmlLabel Then
                             Try
                                 child.BackColor = targetColor
-                                child.ForeColor = targetColor
                             Catch
                                 ' ignore
                             End Try
@@ -296,13 +291,6 @@ Public Class Sales
                     Catch
                         ' ignore
                     End Try
-                    If originalCategoryOverlayForeColors.ContainsKey(ctrl) Then
-                        Try
-                            ctrl.ForeColor = originalCategoryOverlayForeColors(ctrl)
-                        Catch
-                            ' ignore
-                        End Try
-                    End If
                     ' Restore original parent and location if this control was reparented while locked
                     If originalCategoryOverlayParents.ContainsKey(ctrl) Then
                         Try
@@ -2067,8 +2055,8 @@ Public Class Sales
         btn.TextAlign = HorizontalAlignment.Left
 
         ' Apply color scheme for dark navigation panel (idle = transparent, text = white)
-        btn.FillColor = If(isActive, Color.FromArgb(238, 188, 27), System.Drawing.Color.Transparent) ' Gold for active
-        btn.ForeColor = PureWhite ' White text/icon on active and idle (dark nav)
+        btn.FillColor = If(isActive, GoldenYellow, System.Drawing.Color.Transparent) ' Golden for active
+        btn.ForeColor = If(isActive, DarkText, PureWhite) ' Dark text on active gold, white on dark background when inactive
         btn.BorderThickness = If(isActive, 0, 1)
         btn.BorderColor = If(isActive, System.Drawing.Color.Transparent, System.Drawing.Color.FromArgb(80, 80, 80)) ' subtle border on dark bg
         btn.BackColor = System.Drawing.Color.Transparent
@@ -2084,7 +2072,7 @@ Public Class Sales
         AddHandler btn.MouseEnter, Sub()
                                        If Not isActive Then
                                            btn.FillColor = System.Drawing.Color.FromArgb(48, 52, 54) ' slightly lighter than nav bg
-                                           btn.BorderColor = Color.FromArgb(238, 188, 27)
+                                           btn.BorderColor = GoldenYellow
                                            btn.Font = New Font("Poppins", 9, FontStyle.Bold)
                                        End If
                                    End Sub
@@ -3046,7 +3034,7 @@ Public Class Sales
         Dim gcashColor As Color = Color.FromArgb(0, 120, 212)
         Dim cardColor As Color = Color.FromArgb(124, 58, 237)
         Dim actionBorder As Color = Color.FromArgb(200, 198, 192)
-        Dim goldAccent As Color = Color.FromArgb(238, 188, 27)
+        Dim goldAccent As Color = Color.FromArgb(191, 155, 48)
 
         ' Payment method buttons (centered)
         Dim buttonStartX As Integer = (paymentForm.Width - (3 * 150 + 2 * 40)) / 2
@@ -3148,7 +3136,7 @@ Public Class Sales
         Dim paymentButtons As New List(Of Guna.UI2.WinForms.Guna2Button) From {btnCash, btnGCash, btnCard, btnBackToCustomer, btnCancel}
         For Each btn In paymentButtons
             AddHandler btn.GotFocus, Sub()
-                                         btn.BorderColor = Color.FromArgb(238, 188, 27)
+                                         btn.BorderColor = Color.FromArgb(191, 155, 48)
                                          btn.BorderThickness = 2
                                      End Sub
             AddHandler btn.LostFocus, Sub()
@@ -3276,7 +3264,7 @@ Public Class Sales
         Dim cardFore As Color = Color.FromArgb(95, 95, 95)
         Dim cardBorder As Color = Color.FromArgb(200, 198, 192)
         Dim cardHover As Color = Color.FromArgb(240, 238, 232)
-        Dim goldAccent As Color = Color.FromArgb(238, 188, 27)
+        Dim goldAccent As Color = Color.FromArgb(191, 155, 48)
 
         Dim btnComplete As New Guna.UI2.WinForms.Guna2Button()
         btnComplete.Text = "Confirm Payment"
@@ -3611,7 +3599,7 @@ Public Class Sales
         Dim cardFore As Color = Color.FromArgb(95, 95, 95)
         Dim cardBorder As Color = Color.FromArgb(200, 198, 192)
         Dim cardHover As Color = Color.FromArgb(240, 238, 232)
-        Dim goldAccent As Color = Color.FromArgb(238, 188, 27)
+        Dim goldAccent As Color = Color.FromArgb(191, 155, 48)
 
         ' Shared actions used by both the buttons and the keyboard shortcuts.
         ' Calling the logic directly (instead of PerformClick) means Guna2Button

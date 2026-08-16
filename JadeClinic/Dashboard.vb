@@ -393,7 +393,7 @@ Public Class Dashboard
                     Dim lbl As Label = CType(control, Label)
 
                     ' Skip icon labels on circle buttons (olive BackColor) � keep designer ForeColor
-                    If lbl.BackColor = Color.FromArgb(238, 188, 27) Then
+                    If lbl.BackColor = Color.FromArgb(191, 155, 48) Then
                         Continue For
                     End If
 
@@ -429,10 +429,10 @@ Public Class Dashboard
                     Dim circleBtn As Guna2CircleButton = CType(control, Guna2CircleButton)
 
                     ' Update circle buttons with JadeOlive accent � no hover color change
-                    circleBtn.FillColor = Color.FromArgb(238, 188, 27) ' JadeOlive
+                    circleBtn.FillColor = Color.FromArgb(191, 155, 48) ' JadeOlive
                     circleBtn.ForeColor = Color.White
-                    circleBtn.BorderColor = Color.FromArgb(238, 188, 27) ' JadeOlive border
-                    circleBtn.HoverState.FillColor = Color.FromArgb(223, 175, 22)
+                    circleBtn.BorderColor = Color.FromArgb(191, 155, 48) ' JadeOlive border
+                    circleBtn.HoverState.FillColor = Color.FromArgb(191, 155, 48)
                     circleBtn.HoverState.ForeColor = Color.White
 
                 End If

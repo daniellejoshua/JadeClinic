@@ -85,9 +85,7 @@ Partial Class AddStaff
         btnAddStock.DisabledState.CustomBorderColor = Color.DarkGray
         btnAddStock.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         btnAddStock.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        btnAddStock.FillColor = Color.FromArgb(CByte(238), CByte(188), CByte(27))
-        btnAddStock.HoverState.FillColor = Color.FromArgb(CByte(223), CByte(175), CByte(22))
-        btnAddStock.PressedColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
+        btnAddStock.FillColor = Color.FromArgb(CByte(191), CByte(155), CByte(48))
         btnAddStock.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         btnAddStock.ForeColor = Color.White
         btnAddStock.Location = New Point(418, 659)

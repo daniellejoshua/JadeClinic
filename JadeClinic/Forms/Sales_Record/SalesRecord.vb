@@ -15,7 +15,7 @@ Public Class SalesRecord
     Private selectedDate As DateTime? = Nothing
 
     Private ReadOnly GoldenYellow As System.Drawing.Color = System.Drawing.Color.FromArgb(254, 191, 16)
-    Private ReadOnly JadeOlive As System.Drawing.Color = System.Drawing.Color.FromArgb(238, 188, 27)
+    Private ReadOnly JadeOlive As System.Drawing.Color = System.Drawing.Color.FromArgb(191, 155, 48)
     Private ReadOnly DarkText As System.Drawing.Color = System.Drawing.Color.FromArgb(51, 51, 51)
     Private ReadOnly MediumText As System.Drawing.Color = System.Drawing.Color.FromArgb(102, 102, 102)
     Private ReadOnly PanelFill As System.Drawing.Color = System.Drawing.Color.FromArgb(250, 250, 249)

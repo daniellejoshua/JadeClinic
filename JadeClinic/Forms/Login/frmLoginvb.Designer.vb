@@ -113,9 +113,7 @@ Partial Class frmLoginvb
         BtnLogin.DisabledState.CustomBorderColor = Color.DarkGray
         BtnLogin.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         BtnLogin.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        BtnLogin.FillColor = Color.FromArgb(CByte(238), CByte(188), CByte(27))
-        BtnLogin.HoverState.FillColor = Color.FromArgb(CByte(223), CByte(175), CByte(22))
-        BtnLogin.PressedColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
+        BtnLogin.FillColor = Color.FromArgb(CByte(191), CByte(155), CByte(48))
         BtnLogin.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         BtnLogin.ForeColor = Color.White
         BtnLogin.Location = New Point(194, 483)
