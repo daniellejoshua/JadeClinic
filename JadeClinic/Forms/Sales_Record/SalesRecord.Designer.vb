@@ -1,4 +1,4 @@
-<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
+﻿<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
 Partial Class SalesRecord
     Inherits System.Windows.Forms.Form
 
@@ -159,21 +159,23 @@ Partial Class SalesRecord
         ' 
         ' Exportbtn
         ' 
+        Exportbtn.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
         Exportbtn.BorderRadius = 10
+        Exportbtn.BorderThickness = 1
         Exportbtn.CustomizableEdges = CustomizableEdges4
         Exportbtn.DisabledState.BorderColor = Color.DarkGray
         Exportbtn.DisabledState.CustomBorderColor = Color.DarkGray
         Exportbtn.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         Exportbtn.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        Exportbtn.FillColor = Color.FromArgb(CByte(191), CByte(155), CByte(48))
+        Exportbtn.FillColor = Color.White
         Exportbtn.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Exportbtn.ForeColor = Color.White
-        Exportbtn.Location = New Point(1790, 100)
+        Exportbtn.ForeColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
+        Exportbtn.Location = New Point(1723, 102)
         Exportbtn.Name = "Exportbtn"
         Exportbtn.ShadowDecoration.CustomizableEdges = CustomizableEdges5
-        Exportbtn.Size = New Size(86, 40)
+        Exportbtn.Size = New Size(137, 47)
         Exportbtn.TabIndex = 66
-        Exportbtn.Text = "Export"
+        Exportbtn.Text = "📥 Export"
         ' 
         ' lblUsername
         ' 

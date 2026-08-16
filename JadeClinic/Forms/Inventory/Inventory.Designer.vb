@@ -125,7 +125,7 @@ Partial Class Inventory
         Guna2Button1.DisabledState.CustomBorderColor = Color.DarkGray
         Guna2Button1.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         Guna2Button1.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        Guna2Button1.FillColor = Color.FromArgb(CByte(238), CByte(188), CByte(27))
+        Guna2Button1.FillColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         resources.ApplyResources(Guna2Button1, "Guna2Button1")
         Guna2Button1.ForeColor = Color.White
         Guna2Button1.Name = "Guna2Button1"

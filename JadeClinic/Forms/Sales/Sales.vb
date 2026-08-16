@@ -164,6 +164,9 @@ Public Class Sales
     Private originalCategoryOverlayColors As New Dictionary(Of Control, Color)()
     Private originalCategoryOverlayParents As New Dictionary(Of Control, Control)()
     Private originalCategoryOverlayLocations As New Dictionary(Of Control, Point)()
+    ' Original DisabledState colors so the disabled rendering matches the locked fill
+    Private originalCategoryDisabledFillColors As New Dictionary(Of Guna.UI2.WinForms.Guna2Button, Color)()
+    Private originalCategoryDisabledBorderColors As New Dictionary(Of Guna.UI2.WinForms.Guna2Button, Color)()
     Private posLockCategoryFillColor As Color = LightGray
     Private posLockLabelBackColor As Color = Color.Empty
     Private _lockedReplacementLabels As New Dictionary(Of Guna.UI2.WinForms.Guna2HtmlLabel, Label)()
@@ -187,12 +190,20 @@ Public Class Sales
             originalCategoryButtonFillColors.Clear()
             originalCategoryOverlayColors.Clear()
             overlayToButton.Clear()
+            originalCategoryDisabledFillColors.Clear()
+            originalCategoryDisabledBorderColors.Clear()
 
             ' Cache all category buttons currently in the panel
             For Each btn In _categoryTileButtons
                 If btn Is Nothing OrElse btn.IsDisposed Then Continue For
                 If Not originalCategoryButtonFillColors.ContainsKey(btn) Then
                     originalCategoryButtonFillColors(btn) = btn.FillColor
+                End If
+                If Not originalCategoryDisabledFillColors.ContainsKey(btn) Then
+                    originalCategoryDisabledFillColors(btn) = btn.DisabledState.FillColor
+                End If
+                If Not originalCategoryDisabledBorderColors.ContainsKey(btn) Then
+                    originalCategoryDisabledBorderColors(btn) = btn.DisabledState.BorderColor
                 End If
             Next
 
@@ -258,11 +269,21 @@ Public Class Sales
                 Dim originalFill = kvp.Value
                 If btn Is Nothing OrElse btn.IsDisposed Then Continue For
                 btn.FillColor = If(locked, posLockCategoryFillColor, originalFill)
+                ' CategoryPanel is disabled while locked, so Guna2 renders DisabledState instead of
+                ' FillColor. Match the disabled rendering to the locked fill so the tile and its
+                ' labels are the exact same gray.
+                If originalCategoryDisabledFillColors.ContainsKey(btn) Then
+                    btn.DisabledState.FillColor = If(locked, posLockCategoryFillColor, originalCategoryDisabledFillColors(btn))
+                End If
+                If originalCategoryDisabledBorderColors.ContainsKey(btn) Then
+                    btn.DisabledState.BorderColor = If(locked, posLockCategoryFillColor, originalCategoryDisabledBorderColors(btn))
+                End If
             Next
 
-            ' Simple behavior: when locked set all Label and Guna2HtmlLabel BackColor to LightGray; when unlocking restore original BackColor
+            ' Simple behavior: when locked set all Label and Guna2HtmlLabel BackColor to the same color
+            ' as the button fill; when unlocking restore original BackColor
             If locked Then
-                Dim targetColor As Color = LightGray
+                Dim targetColor As Color = posLockCategoryFillColor
                 ' Walk all controls under CategoryPanel (including nested) and set labels' BackColor
                 Dim stack As New Stack(Of Control)()
                 stack.Push(CategoryPanel)
