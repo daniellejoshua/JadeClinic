@@ -6257,6 +6257,16 @@ Public Class Sales
                 Return
             End If
 
+            ' Cart persisted on a previous day is stale: clear it instead of restoring it
+            Try
+                If File.GetLastWriteTime(filePath).Date < Date.Today Then
+                    File.Delete(filePath)
+                    Return
+                End If
+            Catch ex As Exception
+                ' fall through to normal restore if the timestamp can't be read
+            End Try
+
             Dim json As String = File.ReadAllText(filePath)
             Dim snapshot As CartStateSnapshot = JsonConvert.DeserializeObject(Of CartStateSnapshot)(json)
             If snapshot Is Nothing Then

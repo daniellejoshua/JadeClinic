@@ -442,31 +442,31 @@
   <data name="&gt;&gt;txtFilterQuantity.ZOrder" xml:space="preserve">
     <value>12</value>
   </data>
-  <data name="txtFilterPrice.Font" type="System.Drawing.Font, System.Drawing">
+  <data name="txtMinPrice.Font" type="System.Drawing.Font, System.Drawing">
     <value>Segoe UI, 9pt</value>
   </data>
-  <data name="txtFilterPrice.Location" type="System.Drawing.Point, System.Drawing">
+  <data name="txtMinPrice.Location" type="System.Drawing.Point, System.Drawing">
     <value>19, 492</value>
   </data>
-  <data name="txtFilterPrice.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+  <data name="txtMinPrice.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
-  <data name="txtFilterPrice.Size" type="System.Drawing.Size, System.Drawing">
+  <data name="txtMinPrice.Size" type="System.Drawing.Size, System.Drawing">
     <value>161, 48</value>
   </data>
-  <data name="txtFilterPrice.TabIndex" type="System.Int32, mscorlib">
+  <data name="txtMinPrice.TabIndex" type="System.Int32, mscorlib">
     <value>77</value>
   </data>
-  <data name="&gt;&gt;txtFilterPrice.Name" xml:space="preserve">
-    <value>txtFilterPrice</value>
+  <data name="&gt;&gt;txtMinPrice.Name" xml:space="preserve">
+    <value>txtMinPrice</value>
   </data>
-  <data name="&gt;&gt;txtFilterPrice.Type" xml:space="preserve">
+  <data name="&gt;&gt;txtMinPrice.Type" xml:space="preserve">
     <value>Guna.UI2.WinForms.Guna2TextBox, Guna.UI2, Culture=neutral, PublicKeyToken=8b9d14aa5142e261</value>
   </data>
-  <data name="&gt;&gt;txtFilterPrice.Parent" xml:space="preserve">
+  <data name="&gt;&gt;txtMinPrice.Parent" xml:space="preserve">
     <value>FilterPanel</value>
   </data>
-  <data name="&gt;&gt;txtFilterPrice.ZOrder" xml:space="preserve">
+  <data name="&gt;&gt;txtMinPrice.ZOrder" xml:space="preserve">
     <value>11</value>
   </data>
   <data name="txtSearch.Font" type="System.Drawing.Font, System.Drawing">

@@ -380,7 +380,8 @@ Public Class Inventory
         AddHandler Guna2ComboBox1.SelectedIndexChanged, AddressOf ApplyFilters
         AddHandler StockCmbBox.SelectedIndexChanged, AddressOf ApplyFilters
         AddHandler txtFilterQuantity.TextChanged, AddressOf ApplyFilters
-        AddHandler txtFilterPrice.TextChanged, AddressOf ApplyFilters
+        AddHandler txtMinPrice.TextChanged, AddressOf ApplyFilters
+        AddHandler txtMaxPrice.TextChanged, AddressOf ApplyFilters
         AddHandler btnResetFilter.Click, AddressOf ResetFilters_Click
 
         ' Wire status buttons (search recursively)
@@ -1188,12 +1189,19 @@ Public Class Inventory
                 End If
             End If
 
-            ' Price filter
-            If Not String.IsNullOrWhiteSpace(txtFilterPrice.Text) Then
-                Dim filterPrice As Decimal
-                If Decimal.TryParse(txtFilterPrice.Text.Trim(), filterPrice) Then
+            ' Price range filter (min/max)
+            If Not String.IsNullOrWhiteSpace(txtMinPrice.Text) Then
+                Dim minPrice As Decimal
+                If Decimal.TryParse(txtMinPrice.Text.Trim(), minPrice) Then
                     Dim sellingPrice As Decimal = Convert.ToDecimal(product("SellingPrice"))
-                    If sellingPrice < filterPrice Then Return False
+                    If sellingPrice < minPrice Then Return False
+                End If
+            End If
+            If Not String.IsNullOrWhiteSpace(txtMaxPrice.Text) Then
+                Dim maxPrice As Decimal
+                If Decimal.TryParse(txtMaxPrice.Text.Trim(), maxPrice) Then
+                    Dim sellingPrice As Decimal = Convert.ToDecimal(product("SellingPrice"))
+                    If sellingPrice > maxPrice Then Return False
                 End If
             End If
 
@@ -1207,7 +1215,8 @@ Public Class Inventory
         ' Clear all filter inputs
         txtSearch.Text = ""
         txtFilterQuantity.Text = ""
-        txtFilterPrice.Text = ""
+        txtMinPrice.Text = ""
+        txtMaxPrice.Text = ""
 
         ' Reset dropdowns to default
         If Guna2ComboBox1.Items.Count > 0 Then
@@ -1701,8 +1710,14 @@ Public Class Inventory
                 parts.Add($"Min Qty: {txtFilterQuantity.Text.Trim()}")
             End If
 
-            If Not String.IsNullOrWhiteSpace(txtFilterPrice.Text) Then
-                parts.Add($"Min Price: {txtFilterPrice.Text.Trim()}")
+            Dim minPriceText As String = If(String.IsNullOrWhiteSpace(txtMinPrice.Text), "", txtMinPrice.Text.Trim())
+            Dim maxPriceText As String = If(String.IsNullOrWhiteSpace(txtMaxPrice.Text), "", txtMaxPrice.Text.Trim())
+            If minPriceText <> "" AndAlso maxPriceText <> "" Then
+                parts.Add($"Price: {minPriceText} - {maxPriceText}")
+            ElseIf minPriceText <> "" Then
+                parts.Add($"Min Price: {minPriceText}")
+            ElseIf maxPriceText <> "" Then
+                parts.Add($"Max Price: {maxPriceText}")
             End If
 
             If parts.Count = 0 Then

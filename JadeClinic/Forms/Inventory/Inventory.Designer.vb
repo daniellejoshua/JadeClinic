@@ -69,7 +69,7 @@ Partial Class Inventory
         StockCmbBox = New Guna.UI2.WinForms.Guna2ComboBox()
         btnResetFilter = New Guna.UI2.WinForms.Guna2Button()
         txtFilterQuantity = New Guna.UI2.WinForms.Guna2TextBox()
-        txtFilterPrice = New Guna.UI2.WinForms.Guna2TextBox()
+        txtMinPrice = New Guna.UI2.WinForms.Guna2TextBox()
         txtSearch = New Guna.UI2.WinForms.Guna2TextBox()
         FilterPanel = New Guna.UI2.WinForms.Guna2Panel()
         Guna2HtmlLabel2 = New Guna.UI2.WinForms.Guna2HtmlLabel()
@@ -289,26 +289,26 @@ Partial Class Inventory
         txtFilterQuantity.SelectedText = ""
         txtFilterQuantity.ShadowDecoration.CustomizableEdges = CustomizableEdges15
         ' 
-        ' txtFilterPrice
+        ' txtMinPrice
         ' 
-        txtFilterPrice.BackColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
-        txtFilterPrice.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
-        txtFilterPrice.BorderRadius = 8
-        txtFilterPrice.CustomizableEdges = CustomizableEdges16
-        txtFilterPrice.DefaultText = ""
-        txtFilterPrice.DisabledState.BorderColor = Color.FromArgb(CByte(208), CByte(208), CByte(208))
-        txtFilterPrice.DisabledState.FillColor = Color.FromArgb(CByte(226), CByte(226), CByte(226))
-        txtFilterPrice.DisabledState.ForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
-        txtFilterPrice.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
-        txtFilterPrice.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
-        resources.ApplyResources(txtFilterPrice, "txtFilterPrice")
-        txtFilterPrice.ForeColor = Color.Black
-        txtFilterPrice.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
-        txtFilterPrice.Name = "txtFilterPrice"
-        txtFilterPrice.PlaceholderForeColor = Color.DimGray
-        txtFilterPrice.PlaceholderText = "Min Price"
-        txtFilterPrice.SelectedText = ""
-        txtFilterPrice.ShadowDecoration.CustomizableEdges = CustomizableEdges17
+        txtMinPrice.BackColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
+        txtMinPrice.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
+        txtMinPrice.BorderRadius = 8
+        txtMinPrice.CustomizableEdges = CustomizableEdges16
+        txtMinPrice.DefaultText = ""
+        txtMinPrice.DisabledState.BorderColor = Color.FromArgb(CByte(208), CByte(208), CByte(208))
+        txtMinPrice.DisabledState.FillColor = Color.FromArgb(CByte(226), CByte(226), CByte(226))
+        txtMinPrice.DisabledState.ForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
+        txtMinPrice.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
+        txtMinPrice.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
+        resources.ApplyResources(txtMinPrice, "txtMinPrice")
+        txtMinPrice.ForeColor = Color.Black
+        txtMinPrice.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
+        txtMinPrice.Name = "txtMinPrice"
+        txtMinPrice.PlaceholderForeColor = Color.DimGray
+        txtMinPrice.PlaceholderText = "Min Price"
+        txtMinPrice.SelectedText = ""
+        txtMinPrice.ShadowDecoration.CustomizableEdges = CustomizableEdges17
         ' 
         ' txtSearch
         ' 
@@ -347,7 +347,7 @@ Partial Class Inventory
         FilterPanel.Controls.Add(Guna2HtmlLabel17)
         FilterPanel.Controls.Add(Guna2HtmlLabel18)
         FilterPanel.Controls.Add(txtSearch)
-        FilterPanel.Controls.Add(txtFilterPrice)
+        FilterPanel.Controls.Add(txtMinPrice)
         FilterPanel.Controls.Add(txtFilterQuantity)
         FilterPanel.Controls.Add(btnResetFilter)
         FilterPanel.Controls.Add(StockCmbBox)
@@ -557,7 +557,7 @@ Partial Class Inventory
     Friend WithEvents StockCmbBox As Guna.UI2.WinForms.Guna2ComboBox
     Friend WithEvents btnResetFilter As Guna.UI2.WinForms.Guna2Button
     Friend WithEvents txtFilterQuantity As Guna.UI2.WinForms.Guna2TextBox
-    Friend WithEvents txtFilterPrice As Guna.UI2.WinForms.Guna2TextBox
+    Friend WithEvents txtMinPrice As Guna.UI2.WinForms.Guna2TextBox
     Friend WithEvents txtSearch As Guna.UI2.WinForms.Guna2TextBox
     Friend WithEvents FilterPanel As Guna.UI2.WinForms.Guna2Panel
     Friend WithEvents Guna2HtmlLabel10 As Guna.UI2.WinForms.Guna2HtmlLabel
