@@ -2067,8 +2067,8 @@ Public Class Sales
         btn.TextAlign = HorizontalAlignment.Left
 
         ' Apply color scheme for dark navigation panel (idle = transparent, text = white)
-        btn.FillColor = If(isActive, GoldenYellow, System.Drawing.Color.Transparent) ' Golden for active
-        btn.ForeColor = If(isActive, DarkText, PureWhite) ' Dark text on active gold, white on dark background when inactive
+        btn.FillColor = If(isActive, Color.FromArgb(238, 188, 27), System.Drawing.Color.Transparent) ' Gold for active
+        btn.ForeColor = PureWhite ' White text/icon on active and idle (dark nav)
         btn.BorderThickness = If(isActive, 0, 1)
         btn.BorderColor = If(isActive, System.Drawing.Color.Transparent, System.Drawing.Color.FromArgb(80, 80, 80)) ' subtle border on dark bg
         btn.BackColor = System.Drawing.Color.Transparent
@@ -2084,7 +2084,7 @@ Public Class Sales
         AddHandler btn.MouseEnter, Sub()
                                        If Not isActive Then
                                            btn.FillColor = System.Drawing.Color.FromArgb(48, 52, 54) ' slightly lighter than nav bg
-                                           btn.BorderColor = GoldenYellow
+                                           btn.BorderColor = Color.FromArgb(238, 188, 27)
                                            btn.Font = New Font("Poppins", 9, FontStyle.Bold)
                                        End If
                                    End Sub
@@ -3046,7 +3046,7 @@ Public Class Sales
         Dim gcashColor As Color = Color.FromArgb(0, 120, 212)
         Dim cardColor As Color = Color.FromArgb(124, 58, 237)
         Dim actionBorder As Color = Color.FromArgb(200, 198, 192)
-        Dim goldAccent As Color = Color.FromArgb(191, 155, 48)
+        Dim goldAccent As Color = Color.FromArgb(238, 188, 27)
 
         ' Payment method buttons (centered)
         Dim buttonStartX As Integer = (paymentForm.Width - (3 * 150 + 2 * 40)) / 2
@@ -3148,7 +3148,7 @@ Public Class Sales
         Dim paymentButtons As New List(Of Guna.UI2.WinForms.Guna2Button) From {btnCash, btnGCash, btnCard, btnBackToCustomer, btnCancel}
         For Each btn In paymentButtons
             AddHandler btn.GotFocus, Sub()
-                                         btn.BorderColor = Color.FromArgb(191, 155, 48)
+                                         btn.BorderColor = Color.FromArgb(238, 188, 27)
                                          btn.BorderThickness = 2
                                      End Sub
             AddHandler btn.LostFocus, Sub()
@@ -3276,7 +3276,7 @@ Public Class Sales
         Dim cardFore As Color = Color.FromArgb(95, 95, 95)
         Dim cardBorder As Color = Color.FromArgb(200, 198, 192)
         Dim cardHover As Color = Color.FromArgb(240, 238, 232)
-        Dim goldAccent As Color = Color.FromArgb(191, 155, 48)
+        Dim goldAccent As Color = Color.FromArgb(238, 188, 27)
 
         Dim btnComplete As New Guna.UI2.WinForms.Guna2Button()
         btnComplete.Text = "Confirm Payment"
@@ -3611,7 +3611,7 @@ Public Class Sales
         Dim cardFore As Color = Color.FromArgb(95, 95, 95)
         Dim cardBorder As Color = Color.FromArgb(200, 198, 192)
         Dim cardHover As Color = Color.FromArgb(240, 238, 232)
-        Dim goldAccent As Color = Color.FromArgb(191, 155, 48)
+        Dim goldAccent As Color = Color.FromArgb(238, 188, 27)
 
         ' Shared actions used by both the buttons and the keyboard shortcuts.
         ' Calling the logic directly (instead of PerformClick) means Guna2Button

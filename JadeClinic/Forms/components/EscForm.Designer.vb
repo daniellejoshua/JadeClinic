@@ -71,7 +71,9 @@ Partial Class EscForm
         btnClose.DisabledState.CustomBorderColor = Color.DarkGray
         btnClose.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         btnClose.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        btnClose.FillColor = Color.FromArgb(191, 155, 48)
+        btnClose.FillColor = Color.FromArgb(238, 188, 27)
+        btnClose.HoverState.FillColor = Color.FromArgb(223, 175, 22)
+        btnClose.PressedColor = Color.FromArgb(190, 154, 48)
         btnClose.Font = New Font("Poppins Medium", 9.0F, FontStyle.Bold, GraphicsUnit.Point, CByte(0))
         btnClose.ForeColor = Color.White
         btnClose.Location = New Point(372, 14)
@@ -139,7 +141,9 @@ Partial Class EscForm
         ' 
         btnCancel.BorderRadius = 8
         btnCancel.CustomizableEdges = CustomizableEdges5
-        btnCancel.FillColor = Color.FromArgb(191, 155, 48)
+        btnCancel.FillColor = Color.FromArgb(238, 188, 27)
+        btnCancel.HoverState.FillColor = Color.FromArgb(223, 175, 22)
+        btnCancel.PressedColor = Color.FromArgb(190, 154, 48)
         btnCancel.Font = New Font("Poppins", 9.0F, FontStyle.Bold)
         btnCancel.ForeColor = Color.White
         btnCancel.Location = New Point(217, 415)

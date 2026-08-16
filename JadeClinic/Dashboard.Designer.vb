@@ -106,7 +106,7 @@ Partial Class Dashboard
         ' lbl2
         ' 
         lbl2.AutoSize = True
-        lbl2.BackColor = Color.FromArgb(CByte(191), CByte(155), CByte(48))
+        lbl2.BackColor = Color.FromArgb(CByte(238), CByte(188), CByte(27))
         lbl2.Font = New Font("Segoe UI", 9F)
         lbl2.ForeColor = Color.White
         lbl2.Location = New Point(311, 16)
@@ -134,12 +134,12 @@ Partial Class Dashboard
         Guna2CircleButton5.DisabledState.CustomBorderColor = Color.DarkGray
         Guna2CircleButton5.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         Guna2CircleButton5.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        Guna2CircleButton5.FillColor = Color.FromArgb(CByte(191), CByte(155), CByte(48))
+        Guna2CircleButton5.FillColor = Color.FromArgb(CByte(238), CByte(188), CByte(27))
         Guna2CircleButton5.Font = New Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2CircleButton5.ForeColor = Color.FromArgb(CByte(26), CByte(29), CByte(31))
+        Guna2CircleButton5.ForeColor = Color.White
         Guna2CircleButton5.Location = New Point(303, 9)
         Guna2CircleButton5.Name = "Guna2CircleButton5"
-        Guna2CircleButton5.PressedColor = Color.Transparent
+        Guna2CircleButton5.PressedColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         Guna2CircleButton5.PressedDepth = 0
         Guna2CircleButton5.ShadowDecoration.CustomizableEdges = CustomizableEdges1
         Guna2CircleButton5.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
@@ -210,7 +210,7 @@ Partial Class Dashboard
         ' Label2
         ' 
         Label2.AutoSize = True
-        Label2.BackColor = Color.FromArgb(CByte(191), CByte(155), CByte(48))
+        Label2.BackColor = Color.FromArgb(CByte(238), CByte(188), CByte(27))
         Label2.Font = New Font("Segoe UI", 9F)
         Label2.ForeColor = Color.White
         Label2.Location = New Point(321, 16)
@@ -249,12 +249,12 @@ Partial Class Dashboard
         Guna2CircleButton6.DisabledState.CustomBorderColor = Color.DarkGray
         Guna2CircleButton6.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         Guna2CircleButton6.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        Guna2CircleButton6.FillColor = Color.FromArgb(CByte(191), CByte(155), CByte(48))
+        Guna2CircleButton6.FillColor = Color.FromArgb(CByte(238), CByte(188), CByte(27))
         Guna2CircleButton6.Font = New Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2CircleButton6.ForeColor = Color.FromArgb(CByte(26), CByte(29), CByte(31))
+        Guna2CircleButton6.ForeColor = Color.White
         Guna2CircleButton6.Location = New Point(313, 9)
         Guna2CircleButton6.Name = "Guna2CircleButton6"
-        Guna2CircleButton6.PressedColor = Color.Transparent
+        Guna2CircleButton6.PressedColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         Guna2CircleButton6.PressedDepth = 0
         Guna2CircleButton6.ShadowDecoration.CustomizableEdges = CustomizableEdges6
         Guna2CircleButton6.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
@@ -291,7 +291,7 @@ Partial Class Dashboard
         ' Label1
         ' 
         Label1.AutoSize = True
-        Label1.BackColor = Color.FromArgb(CByte(191), CByte(155), CByte(48))
+        Label1.BackColor = Color.FromArgb(CByte(238), CByte(188), CByte(27))
         Label1.Font = New Font("Segoe UI", 9F)
         Label1.ForeColor = Color.White
         Label1.Location = New Point(362, 16)
@@ -329,12 +329,12 @@ Partial Class Dashboard
         Guna2CircleButton7.DisabledState.CustomBorderColor = Color.DarkGray
         Guna2CircleButton7.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         Guna2CircleButton7.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        Guna2CircleButton7.FillColor = Color.FromArgb(CByte(191), CByte(155), CByte(48))
+        Guna2CircleButton7.FillColor = Color.FromArgb(CByte(238), CByte(188), CByte(27))
         Guna2CircleButton7.Font = New Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2CircleButton7.ForeColor = Color.FromArgb(CByte(26), CByte(29), CByte(31))
+        Guna2CircleButton7.ForeColor = Color.White
         Guna2CircleButton7.Location = New Point(354, 9)
         Guna2CircleButton7.Name = "Guna2CircleButton7"
-        Guna2CircleButton7.PressedColor = Color.Transparent
+        Guna2CircleButton7.PressedColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         Guna2CircleButton7.PressedDepth = 0
         Guna2CircleButton7.ShadowDecoration.CustomizableEdges = CustomizableEdges9
         Guna2CircleButton7.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle

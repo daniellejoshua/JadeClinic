@@ -25,7 +25,7 @@ Public Class ProfileSettings
     ' Dental Clinic Color Palette Constants
     Private ReadOnly WarmBeige As Color = Color.FromArgb(235, 228, 200)        '#EBE4C8 - Row selection / highlight
     Private ReadOnly GoldenYellow As Color = Color.FromArgb(254, 191, 16)      '#FECF10 - Accent gold
-    Private ReadOnly RichOlive As Color = Color.FromArgb(191, 155, 48)         '#BF9B30 - Primary accent
+    Private ReadOnly RichOlive As Color = Color.FromArgb(238, 188, 27)         '#EEBC1B - Primary accent
     Private ReadOnly DeepCharcoal As Color = Color.FromArgb(26, 29, 31)        '#1A1D1F - Primary text
     Private ReadOnly DarkSlate As Color = Color.FromArgb(43, 47, 50)           '#2B2F32 - Secondary text
     Private ReadOnly Graphite As Color = Color.FromArgb(61, 65, 69)            '#3D4145 - Interactive
@@ -306,7 +306,7 @@ Public Class ProfileSettings
             btnConfirm.Text = "Confirm"
             btnConfirm.Location = New Point(20, 90)
             btnConfirm.Size = New Size(100, 32)
-            btnConfirm.BackColor = Color.FromArgb(191, 155, 48)
+            btnConfirm.BackColor = Color.FromArgb(238, 188, 27)
             btnConfirm.ForeColor = Color.White
             btnConfirm.Font = New Font("Poppins", 10)
             btnConfirm.FlatStyle = FlatStyle.Flat
@@ -455,7 +455,7 @@ Public Class ProfileSettings
         btnConfirm.Text = "Confirm"
         btnConfirm.Location = New Point(20, 100)
         btnConfirm.Size = New Size(100, 35)
-        btnConfirm.BackColor = Color.FromArgb(191, 155, 48)
+        btnConfirm.BackColor = Color.FromArgb(238, 188, 27)
         btnConfirm.ForeColor = Color.White
         btnConfirm.Font = New Font("Poppins", 10)
         btnConfirm.FlatStyle = FlatStyle.Flat

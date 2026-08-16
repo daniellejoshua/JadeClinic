@@ -126,6 +126,8 @@ Partial Class Inventory
         Guna2Button1.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         Guna2Button1.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
         Guna2Button1.FillColor = Color.FromArgb(CByte(238), CByte(188), CByte(27))
+        Guna2Button1.HoverState.FillColor = Color.FromArgb(CByte(223), CByte(175), CByte(22))
+        Guna2Button1.PressedColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         resources.ApplyResources(Guna2Button1, "Guna2Button1")
         Guna2Button1.ForeColor = Color.White
         Guna2Button1.Name = "Guna2Button1"
@@ -133,7 +135,11 @@ Partial Class Inventory
         ' 
         ' Exportbtn
         ' 
-        Exportbtn.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
+        Exportbtn.BorderColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
+        Exportbtn.HoverState.BorderColor = Color.FromArgb(CByte(238), CByte(188), CByte(27))
+        Exportbtn.HoverState.FillColor = Color.FromArgb(CByte(251), CByte(247), CByte(236))
+        Exportbtn.HoverState.ForeColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
+        Exportbtn.PressedColor = Color.FromArgb(CByte(245), CByte(232), CByte(197))
         Exportbtn.BorderRadius = 10
         Exportbtn.BorderThickness = 1
         Exportbtn.CustomizableEdges = CustomizableEdges5
@@ -143,7 +149,7 @@ Partial Class Inventory
         Exportbtn.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
         Exportbtn.FillColor = Color.White
         resources.ApplyResources(Exportbtn, "Exportbtn")
-        Exportbtn.ForeColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
+        Exportbtn.ForeColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         Exportbtn.Name = "Exportbtn"
         Exportbtn.ShadowDecoration.CustomizableEdges = CustomizableEdges6
         ' 
@@ -396,7 +402,7 @@ Partial Class Inventory
         btnInactive.DisabledState.CustomBorderColor = Color.DarkGray
         btnInactive.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         btnInactive.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        btnInactive.FillColor = Color.FromArgb(CByte(191), CByte(155), CByte(48))
+        btnInactive.FillColor = Color.FromArgb(CByte(238), CByte(188), CByte(27))
         resources.ApplyResources(btnInactive, "btnInactive")
         btnInactive.ForeColor = Color.White
         btnInactive.Name = "btnInactive"
@@ -411,7 +417,7 @@ Partial Class Inventory
         btnActive.DisabledState.CustomBorderColor = Color.DarkGray
         btnActive.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         btnActive.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        btnActive.FillColor = Color.FromArgb(CByte(191), CByte(155), CByte(48))
+        btnActive.FillColor = Color.FromArgb(CByte(238), CByte(188), CByte(27))
         resources.ApplyResources(btnActive, "btnActive")
         btnActive.ForeColor = Color.White
         btnActive.Name = "btnActive"
@@ -426,7 +432,7 @@ Partial Class Inventory
         btnAll.DisabledState.CustomBorderColor = Color.DarkGray
         btnAll.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         btnAll.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        btnAll.FillColor = Color.FromArgb(CByte(191), CByte(155), CByte(48))
+        btnAll.FillColor = Color.FromArgb(CByte(238), CByte(188), CByte(27))
         resources.ApplyResources(btnAll, "btnAll")
         btnAll.ForeColor = Color.White
         btnAll.Name = "btnAll"

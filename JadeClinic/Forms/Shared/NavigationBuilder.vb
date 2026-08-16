@@ -104,7 +104,7 @@ Public NotInheritable Class NavigationBuilder
                                                                             btn.BorderRadius = 12
                                                                             btn.Font = New Font("Poppins", 10, FontStyle.Regular)
                                                                             btn.TextAlign = HorizontalAlignment.Left
-btn.FillColor = If(isActiveBtn, Color.FromArgb(196, 154, 44), Color.White)
+btn.FillColor = If(isActiveBtn, Color.FromArgb(238, 188, 27), Color.White)
                                                                              btn.ForeColor = If(isActiveBtn, Color.White, Color.FromArgb(60, 60, 60))
                                                                              btn.BorderThickness = 0
                                                                              btn.BorderColor = Color.Transparent

@@ -167,9 +167,15 @@ Partial Class AuditLog
         Exportbtn.DisabledState.CustomBorderColor = Color.DarkGray
         Exportbtn.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         Exportbtn.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        Exportbtn.FillColor = Color.FromArgb(CByte(191), CByte(155), CByte(48))
+        Exportbtn.BorderColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
+        Exportbtn.BorderThickness = 1
+        Exportbtn.FillColor = Color.White
+        Exportbtn.HoverState.BorderColor = Color.FromArgb(CByte(238), CByte(188), CByte(27))
+        Exportbtn.HoverState.FillColor = Color.FromArgb(CByte(251), CByte(247), CByte(236))
+        Exportbtn.HoverState.ForeColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
+        Exportbtn.PressedColor = Color.FromArgb(CByte(245), CByte(232), CByte(197))
         Exportbtn.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Exportbtn.ForeColor = Color.White
+        Exportbtn.ForeColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         Exportbtn.Location = New Point(1778, 102)
         Exportbtn.Name = "Exportbtn"
         Exportbtn.ShadowDecoration.CustomizableEdges = CustomizableEdges5

@@ -563,7 +563,9 @@ Partial Class ProfileSettings
         btnSave.DisabledState.CustomBorderColor = Color.DarkGray
         btnSave.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         btnSave.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        btnSave.FillColor = Color.FromArgb(CByte(191), CByte(155), CByte(48))
+        btnSave.FillColor = Color.FromArgb(CByte(238), CByte(188), CByte(27))
+        btnSave.HoverState.FillColor = Color.FromArgb(CByte(223), CByte(175), CByte(22))
+        btnSave.PressedColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         btnSave.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         btnSave.ForeColor = Color.White
         btnSave.Location = New Point(771, 608)
