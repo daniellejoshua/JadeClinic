@@ -40,6 +40,14 @@ Public Class Inventory
         btnResetFilter.HoverState.FillColor = Color.FromArgb(253, 198, 44)
         btnResetFilter.HoverState.ForeColor = Color.White
 
+        ' Export button: same hover as reset filter + clickable cursor
+        Exportbtn.HoverState.FillColor = Color.FromArgb(253, 198, 44)
+        Exportbtn.HoverState.ForeColor = Color.White
+        Exportbtn.Cursor = Cursors.Hand
+
+        ' Add Product button: clickable cursor
+        Guna2Button1.Cursor = Cursors.Hand
+
         ' Enable double buffering for smooth scrollinga
         SetDoubleBuffered(Guna2DataGridView1)
         ' ... inside Inventory_Load, after CreateNavigationMenu() and InitializeProfileSection()
