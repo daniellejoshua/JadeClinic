@@ -162,6 +162,7 @@ Public Class Sales
     ' POS lock color control caches
     Private originalCategoryButtonFillColors As New Dictionary(Of Guna.UI2.WinForms.Guna2Button, Color)()
     Private originalCategoryOverlayColors As New Dictionary(Of Control, Color)()
+    Private originalCategoryOverlayForeColors As New Dictionary(Of Control, Color)()
     Private originalCategoryOverlayParents As New Dictionary(Of Control, Control)()
     Private originalCategoryOverlayLocations As New Dictionary(Of Control, Point)()
     Private posLockCategoryFillColor As Color = LightGray
@@ -186,6 +187,7 @@ Public Class Sales
         Try
             originalCategoryButtonFillColors.Clear()
             originalCategoryOverlayColors.Clear()
+            originalCategoryOverlayForeColors.Clear()
             overlayToButton.Clear()
 
             ' Cache all category buttons currently in the panel
@@ -207,6 +209,7 @@ Public Class Sales
                     If TypeOf child Is Label OrElse TypeOf child Is Guna.UI2.WinForms.Guna2HtmlLabel Then
                         If Not originalCategoryOverlayColors.ContainsKey(child) Then
                             originalCategoryOverlayColors(child) = child.BackColor
+                            originalCategoryOverlayForeColors(child) = child.ForeColor
                             originalCategoryOverlayParents(child) = child.Parent
                             originalCategoryOverlayLocations(child) = child.Location
                         End If
@@ -260,10 +263,11 @@ Public Class Sales
                 btn.FillColor = If(locked, posLockCategoryFillColor, originalFill)
             Next
 
-            ' Simple behavior: when locked set all Label and Guna2HtmlLabel BackColor to LightGray; when unlocking restore original BackColor
+            ' Simple behavior: when locked set all Label and Guna2HtmlLabel BackColor AND text color to the
+            ' button fill color so the labels blend into the grayed-out buttons; when unlocking restore originals
             If locked Then
-                Dim targetColor As Color = LightGray
-                ' Walk all controls under CategoryPanel (including nested) and set labels' BackColor
+                Dim targetColor As Color = posLockCategoryFillColor
+                ' Walk all controls under CategoryPanel (including nested) and set labels' colors
                 Dim stack As New Stack(Of Control)()
                 stack.Push(CategoryPanel)
                 While stack.Count > 0
@@ -274,6 +278,7 @@ Public Class Sales
                         If TypeOf child Is Label OrElse TypeOf child Is Guna.UI2.WinForms.Guna2HtmlLabel Then
                             Try
                                 child.BackColor = targetColor
+                                child.ForeColor = targetColor
                             Catch
                                 ' ignore
                             End Try
@@ -291,6 +296,13 @@ Public Class Sales
                     Catch
                         ' ignore
                     End Try
+                    If originalCategoryOverlayForeColors.ContainsKey(ctrl) Then
+                        Try
+                            ctrl.ForeColor = originalCategoryOverlayForeColors(ctrl)
+                        Catch
+                            ' ignore
+                        End Try
+                    End If
                     ' Restore original parent and location if this control was reparented while locked
                     If originalCategoryOverlayParents.ContainsKey(ctrl) Then
                         Try

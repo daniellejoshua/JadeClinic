@@ -26,10 +26,19 @@ Public Class Inventory
     ' Add this field near the other private fields at the top of the class
     Private statusFilter As Nullable(Of Boolean) = Nothing ' Nothing = All, True = Active, False = Inactive
 
+    ' Pagination state
+    Private _pagination As PaginationControl
+    Private _currentPage As Integer = 1
+    Private _pageSize As Integer = 10
+
     Private Async Sub Inventory_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         btnActive.BorderRadius = 10
         btnAll.BorderRadius = 10
         btnInactive.BorderRadius = 10
+
+        ' Reset filter button: hover -> gold background with white text
+        btnResetFilter.HoverState.FillColor = Color.FromArgb(253, 198, 44)
+        btnResetFilter.HoverState.ForeColor = Color.White
 
         ' Enable double buffering for smooth scrollinga
         SetDoubleBuffered(Guna2DataGridView1)
@@ -277,8 +286,7 @@ Public Class Inventory
                           ' Initially show all products
                           filteredProducts = New List(Of Dictionary(Of String, Object))(allProducts)
 
-                          ' Update item count (do not overwrite lblUsername)
-                          UpdateItemCountLabel(filteredProducts.Count)
+                          _currentPage = 1
 
                           ' Set up virtual scrolling and render
                           RefreshProductDisplay()
@@ -410,11 +418,6 @@ Public Class Inventory
         End If
         StockCmbBox.SelectedIndex = 0 ' Select "All"
 
-        ' Set placeholders
-        txtSearch.PlaceholderText = "Search by name, code, or category..."
-        txtFilterQuantity.PlaceholderText = "Minimum quantity (e.g., 10)"
-        txtFilterPrice.PlaceholderText = "Minimum price (e.g., 100.00)"
-
         ' Initialize visuals for status buttons
         SetStatusButtonsVisualState()
     End Sub    ' Replace existing BtnAll/BtnActive/BtnInactive handlers with these (they already set the filter).
@@ -468,6 +471,17 @@ Public Class Inventory
     Private Sub RefreshProductDisplay()
         ' Set up DataGridView instead of virtual scrolling panels
         SetupProductDataGrid()
+
+        ' Configure pagination for the filtered set (bar is created by SetupProductDataGrid)
+        If _pagination IsNot Nothing Then
+            Dim total As Integer = If(filteredProducts Is Nothing, 0, filteredProducts.Count)
+            Dim maxPage As Integer = If(total = 0, 1, CInt(Math.Ceiling(CDbl(total) / _pageSize)))
+            If _currentPage > maxPage Then _currentPage = maxPage
+            If _currentPage < 1 Then _currentPage = 1
+            _pagination.Configure(total, _pageSize, _currentPage)
+            _currentPage = _pagination.CurrentPage
+        End If
+
         LoadProductsIntoDataGrid()
     End Sub
 
@@ -513,11 +527,25 @@ Public Class Inventory
             productDataGrid.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(250, 249, 246)
             productDataGrid.ColumnHeadersDefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51)  ' DarkText
             productDataGrid.ColumnHeadersDefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(250, 249, 246)
-            productDataGrid.ColumnHeadersDefaultCellStyle.Font = New Font("Poppins SemiBold", 10.5F, FontStyle.Bold)
+            productDataGrid.ColumnHeadersDefaultCellStyle.Font = New Font("Poppins SemiBold", 9.0F, FontStyle.Bold)
             productDataGrid.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
-            productDataGrid.ColumnHeadersHeight = 55
+            productDataGrid.ColumnHeadersHeight = 40
             productDataGrid.RowTemplate.Height = 75
             productDataGrid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing
+
+            ' Pagination bar (same control used by Sales, which renders the count correctly)
+            ' docked to the bottom of the panel; the grid shrinks to sit above it
+            If _pagination Is Nothing Then
+                _pagination = New PaginationControl()
+                AddHandler _pagination.PageChanged, AddressOf OnPaginationPageChanged
+                Guna2Panel1.Controls.Add(_pagination)
+                _pagination.BringToFront()
+            End If
+            _pagination.Width = Guna2Panel1.Width
+            _pagination.Location = New Point(0, Guna2Panel1.Height - _pagination.Height)
+            productDataGrid.Location = New Point(3, 3)
+            productDataGrid.Width = Guna2Panel1.Width - 8
+            productDataGrid.Height = _pagination.Location.Y - 9
 
             ' Clear existing columns
             productDataGrid.Columns.Clear()
@@ -690,10 +718,15 @@ Public Class Inventory
             DataGridViewHelper.HideNoRecordsMessage()
 
             ' Handle no products found
-            If filteredProducts Is Nothing OrElse filteredProducts.Count = 0 Then
+            Dim total As Integer = If(filteredProducts Is Nothing, 0, filteredProducts.Count)
+            If total = 0 Then
                 DataGridViewHelper.ShowNoRecordsMessage(productDataGrid, "No Products Found")
                 Return
             End If
+
+            ' Render only the current page
+            Dim pageItems As IEnumerable(Of Dictionary(Of String, Object)) =
+                filteredProducts.Skip((_currentPage - 1) * _pageSize).Take(_pageSize)
 
             ' Define lighter palette colors
             Dim LightRed As Color = Color.FromArgb(220, 80, 70)        ' red for out of stock / inactive
@@ -702,7 +735,7 @@ Public Class Inventory
             Dim JadeOlive As Color = Color.FromArgb(190, 154, 48)
 
             ' Load filtered products into DataGridView
-            For Each productData As Dictionary(Of String, Object) In filteredProducts
+            For Each productData As Dictionary(Of String, Object) In pageItems
                 Try
                     ' Create display text for product name ONLY (remove code duplication)
                     Dim productName As String = productData("ProductName").ToString()
@@ -774,6 +807,11 @@ Public Class Inventory
         Catch ex As Exception
             MessageBox.Show($"Error loading products into DataGrid: {ex.Message}", "Load Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
+    End Sub
+
+    Private Sub OnPaginationPageChanged(page As Integer)
+        _currentPage = page
+        LoadProductsIntoDataGrid()
     End Sub
     Private Sub ProductDataGrid_CellContentClick(sender As Object, e As DataGridViewCellEventArgs)
         Try
@@ -1091,15 +1129,13 @@ Public Class Inventory
 
     Private Function MatchesFilter(product As Dictionary(Of String, Object)) As Boolean
         Try
-            ' Search filter
+            ' Search filter (product name / barcode only)
             Dim searchText As String = txtSearch.Text.Trim().ToLower()
             If Not String.IsNullOrWhiteSpace(searchText) Then
                 Dim productName As String = product("ProductName").ToString().ToLower()
                 Dim productCode As String = product("ProductCode").ToString().ToLower()
-                Dim category As String = product("Category").ToString().ToLower()
 
-                If Not (productName.Contains(searchText) Or productCode.Contains(searchText) Or
-           category.Contains(searchText)) Then
+                If Not (productName.Contains(searchText) Or productCode.Contains(searchText)) Then
                     Return False
                 End If
             End If
@@ -1201,9 +1237,8 @@ Public Class Inventory
             ' Initially show all products
             filteredProducts = New List(Of Dictionary(Of String, Object))(allProducts)
 
-            ' And inside LoadProducts (refresh path) replace lblUsername update:
-            ' Update item count (do not overwrite lblUsername)
-            UpdateItemCountLabel(filteredProducts.Count)
+            ' Reset to the first page on refresh
+            _currentPage = 1
 
             ' Set up virtual scrolling and render
             RefreshProductDisplay()
@@ -1588,8 +1623,9 @@ Public Class Inventory
             Dim btnActiveCtrl = TryCast(FindControlRecursive(Me, "btnActive"), Guna.UI2.WinForms.Guna2Button)
             Dim btnInactiveCtrl = TryCast(FindControlRecursive(Me, "btnInactive"), Guna.UI2.WinForms.Guna2Button)
 
-            ' default visuals
-            Dim defaultFill As Color = Color.Transparent
+            ' default visuals (opaque white so the 10px border radius renders in every state;
+            ' transparent fill exposes the square BackColor at the corners)
+            Dim defaultFill As Color = Color.White
             Dim defaultFore As Color = Color.FromArgb(51, 51, 51)
 
             ' Clear all to default first
@@ -1675,7 +1711,8 @@ Public Class Inventory
                 currentFilterDescription = String.Join(" | ", parts)
             End If
 
-            ' Refresh display
+            ' Refresh display (start from page 1 on any filter change)
+            _currentPage = 1
             RefreshProductDisplay()
 
         Catch ex As Exception

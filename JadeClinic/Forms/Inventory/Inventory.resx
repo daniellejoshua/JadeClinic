@@ -169,16 +169,16 @@
     <value>Poppins Medium, 9pt</value>
   </data>
   <data name="Guna2Button1.Location" type="System.Drawing.Point, System.Drawing">
-    <value>1567, 108</value>
+    <value>1506, 102</value>
   </data>
   <data name="Guna2Button1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>186, 41</value>
+    <value>198, 47</value>
   </data>
   <data name="Guna2Button1.TabIndex" type="System.Int32, mscorlib">
     <value>60</value>
   </data>
   <data name="Guna2Button1.Text" xml:space="preserve">
-    <value>Add New Product</value>
+    <value>＋ Add New Product</value>
   </data>
   <data name="&gt;&gt;Guna2Button1.Name" xml:space="preserve">
     <value>Guna2Button1</value>
@@ -196,16 +196,16 @@
     <value>Poppins Medium, 9pt</value>
   </data>
   <data name="Exportbtn.Location" type="System.Drawing.Point, System.Drawing">
-    <value>1792, 108</value>
+    <value>1723, 102</value>
   </data>
   <data name="Exportbtn.Size" type="System.Drawing.Size, System.Drawing">
-    <value>86, 40</value>
+    <value>137, 47</value>
   </data>
   <data name="Exportbtn.TabIndex" type="System.Int32, mscorlib">
     <value>67</value>
   </data>
   <data name="Exportbtn.Text" xml:space="preserve">
-    <value>Export</value>
+    <value>📥 Export</value>
   </data>
   <data name="&gt;&gt;Exportbtn.Name" xml:space="preserve">
     <value>Exportbtn</value>
@@ -328,10 +328,10 @@
     <value>40</value>
   </data>
   <data name="Guna2ComboBox1.Location" type="System.Drawing.Point, System.Drawing">
-    <value>9, 251</value>
+    <value>19, 250</value>
   </data>
   <data name="Guna2ComboBox1.Size" type="System.Drawing.Size, System.Drawing">
-    <value>396, 46</value>
+    <value>387, 46</value>
   </data>
   <data name="Guna2ComboBox1.TabIndex" type="System.Int32, mscorlib">
     <value>39</value>
@@ -346,7 +346,7 @@
     <value>FilterPanel</value>
   </data>
   <data name="&gt;&gt;Guna2ComboBox1.ZOrder" xml:space="preserve">
-    <value>13</value>
+    <value>15</value>
   </data>
   <data name="StockCmbBox.Font" type="System.Drawing.Font, System.Drawing">
     <value>Poppins Light, 10.2pt</value>
@@ -367,10 +367,10 @@
     <value>Below Re-order Level</value>
   </data>
   <data name="StockCmbBox.Location" type="System.Drawing.Point, System.Drawing">
-    <value>9, 372</value>
+    <value>19, 372</value>
   </data>
   <data name="StockCmbBox.Size" type="System.Drawing.Size, System.Drawing">
-    <value>396, 46</value>
+    <value>387, 46</value>
   </data>
   <data name="StockCmbBox.TabIndex" type="System.Int32, mscorlib">
     <value>54</value>
@@ -385,22 +385,22 @@
     <value>FilterPanel</value>
   </data>
   <data name="&gt;&gt;StockCmbBox.ZOrder" xml:space="preserve">
-    <value>12</value>
+    <value>14</value>
   </data>
   <data name="btnResetFilter.Font" type="System.Drawing.Font, System.Drawing">
-    <value>Poppins Medium, 9pt</value>
+    <value>Poppins Medium, 9pt, style=Bold</value>
   </data>
   <data name="btnResetFilter.Location" type="System.Drawing.Point, System.Drawing">
-    <value>74, 738</value>
+    <value>49, 738</value>
   </data>
   <data name="btnResetFilter.Size" type="System.Drawing.Size, System.Drawing">
-    <value>270, 57</value>
+    <value>324, 46</value>
   </data>
   <data name="btnResetFilter.TabIndex" type="System.Int32, mscorlib">
     <value>53</value>
   </data>
   <data name="btnResetFilter.Text" xml:space="preserve">
-    <value>Reset Filters</value>
+    <value> 🔄 Reset Filters</value>
   </data>
   <data name="&gt;&gt;btnResetFilter.Name" xml:space="preserve">
     <value>btnResetFilter</value>
@@ -412,20 +412,20 @@
     <value>FilterPanel</value>
   </data>
   <data name="&gt;&gt;btnResetFilter.ZOrder" xml:space="preserve">
-    <value>11</value>
+    <value>13</value>
   </data>
   <data name="txtFilterQuantity.Font" type="System.Drawing.Font, System.Drawing">
     <value>Segoe UI, 9pt</value>
   </data>
   <data name="txtFilterQuantity.Location" type="System.Drawing.Point, System.Drawing">
-    <value>9, 489</value>
+    <value>19, 607</value>
   </data>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
   <data name="txtFilterQuantity.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="txtFilterQuantity.Size" type="System.Drawing.Size, System.Drawing">
-    <value>396, 58</value>
+    <value>387, 48</value>
   </data>
   <data name="txtFilterQuantity.TabIndex" type="System.Int32, mscorlib">
     <value>76</value>
@@ -440,19 +440,19 @@
     <value>FilterPanel</value>
   </data>
   <data name="&gt;&gt;txtFilterQuantity.ZOrder" xml:space="preserve">
-    <value>10</value>
+    <value>12</value>
   </data>
   <data name="txtFilterPrice.Font" type="System.Drawing.Font, System.Drawing">
     <value>Segoe UI, 9pt</value>
   </data>
   <data name="txtFilterPrice.Location" type="System.Drawing.Point, System.Drawing">
-    <value>9, 618</value>
+    <value>19, 492</value>
   </data>
   <data name="txtFilterPrice.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="txtFilterPrice.Size" type="System.Drawing.Size, System.Drawing">
-    <value>396, 58</value>
+    <value>161, 48</value>
   </data>
   <data name="txtFilterPrice.TabIndex" type="System.Int32, mscorlib">
     <value>77</value>
@@ -467,19 +467,19 @@
     <value>FilterPanel</value>
   </data>
   <data name="&gt;&gt;txtFilterPrice.ZOrder" xml:space="preserve">
-    <value>9</value>
+    <value>11</value>
   </data>
   <data name="txtSearch.Font" type="System.Drawing.Font, System.Drawing">
     <value>Segoe UI, 9pt</value>
   </data>
   <data name="txtSearch.Location" type="System.Drawing.Point, System.Drawing">
-    <value>9, 141</value>
+    <value>19, 142</value>
   </data>
   <data name="txtSearch.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
     <value>3, 4, 3, 4</value>
   </data>
   <data name="txtSearch.Size" type="System.Drawing.Size, System.Drawing">
-    <value>396, 58</value>
+    <value>387, 48</value>
   </data>
   <data name="txtSearch.TabIndex" type="System.Int32, mscorlib">
     <value>38</value>
@@ -494,7 +494,61 @@
     <value>FilterPanel</value>
   </data>
   <data name="&gt;&gt;txtSearch.ZOrder" xml:space="preserve">
-    <value>8</value>
+    <value>10</value>
+  </data>
+  <data name="Guna2HtmlLabel2.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Poppins Medium, 19.800001pt, style=Bold</value>
+  </data>
+  <data name="Guna2HtmlLabel2.Location" type="System.Drawing.Point, System.Drawing">
+    <value>204, 489</value>
+  </data>
+  <data name="Guna2HtmlLabel2.Size" type="System.Drawing.Size, System.Drawing">
+    <value>21, 60</value>
+  </data>
+  <data name="Guna2HtmlLabel2.TabIndex" type="System.Int32, mscorlib">
+    <value>89</value>
+  </data>
+  <data name="Guna2HtmlLabel2.Text" xml:space="preserve">
+    <value>-</value>
+  </data>
+  <data name="&gt;&gt;Guna2HtmlLabel2.Name" xml:space="preserve">
+    <value>Guna2HtmlLabel2</value>
+  </data>
+  <data name="&gt;&gt;Guna2HtmlLabel2.Type" xml:space="preserve">
+    <value>Guna.UI2.WinForms.Guna2HtmlLabel, Guna.UI2, Culture=neutral, PublicKeyToken=8b9d14aa5142e261</value>
+  </data>
+  <data name="&gt;&gt;Guna2HtmlLabel2.Parent" xml:space="preserve">
+    <value>FilterPanel</value>
+  </data>
+  <data name="&gt;&gt;Guna2HtmlLabel2.ZOrder" xml:space="preserve">
+    <value>0</value>
+  </data>
+  <data name="txtMaxPrice.Font" type="System.Drawing.Font, System.Drawing">
+    <value>Segoe UI, 9pt</value>
+  </data>
+  <data name="txtMaxPrice.Location" type="System.Drawing.Point, System.Drawing">
+    <value>245, 492</value>
+  </data>
+  <data name="txtMaxPrice.Margin" type="System.Windows.Forms.Padding, System.Windows.Forms">
+    <value>3, 4, 3, 4</value>
+  </data>
+  <data name="txtMaxPrice.Size" type="System.Drawing.Size, System.Drawing">
+    <value>161, 48</value>
+  </data>
+  <data name="txtMaxPrice.TabIndex" type="System.Int32, mscorlib">
+    <value>88</value>
+  </data>
+  <data name="&gt;&gt;txtMaxPrice.Name" xml:space="preserve">
+    <value>txtMaxPrice</value>
+  </data>
+  <data name="&gt;&gt;txtMaxPrice.Type" xml:space="preserve">
+    <value>Guna.UI2.WinForms.Guna2TextBox, Guna.UI2, Culture=neutral, PublicKeyToken=8b9d14aa5142e261</value>
+  </data>
+  <data name="&gt;&gt;txtMaxPrice.Parent" xml:space="preserve">
+    <value>FilterPanel</value>
+  </data>
+  <data name="&gt;&gt;txtMaxPrice.ZOrder" xml:space="preserve">
+    <value>1</value>
   </data>
   <data name="btnInactive.Font" type="System.Drawing.Font, System.Drawing">
     <value>Poppins Medium, 9pt</value>
@@ -521,7 +575,7 @@
     <value>FilterPanel</value>
   </data>
   <data name="&gt;&gt;btnInactive.ZOrder" xml:space="preserve">
-    <value>0</value>
+    <value>2</value>
   </data>
   <data name="btnActive.Font" type="System.Drawing.Font, System.Drawing">
     <value>Poppins Medium, 9pt</value>
@@ -548,7 +602,7 @@
     <value>FilterPanel</value>
   </data>
   <data name="&gt;&gt;btnActive.ZOrder" xml:space="preserve">
-    <value>1</value>
+    <value>3</value>
   </data>
   <data name="btnAll.Font" type="System.Drawing.Font, System.Drawing">
     <value>Poppins Medium, 9pt</value>
@@ -575,7 +629,7 @@
     <value>FilterPanel</value>
   </data>
   <data name="&gt;&gt;btnAll.ZOrder" xml:space="preserve">
-    <value>2</value>
+    <value>4</value>
   </data>
   <data name="Guna2HtmlLabel8.Font" type="System.Drawing.Font, System.Drawing">
     <value>Poppins Medium, 10.2pt</value>
@@ -602,13 +656,13 @@
     <value>FilterPanel</value>
   </data>
   <data name="&gt;&gt;Guna2HtmlLabel8.ZOrder" xml:space="preserve">
-    <value>3</value>
+    <value>5</value>
   </data>
   <data name="Guna2HtmlLabel13.Font" type="System.Drawing.Font, System.Drawing">
     <value>Poppins Medium, 10.2pt</value>
   </data>
   <data name="Guna2HtmlLabel13.Location" type="System.Drawing.Point, System.Drawing">
-    <value>19, 579</value>
+    <value>19, 453</value>
   </data>
   <data name="Guna2HtmlLabel13.Size" type="System.Drawing.Size, System.Drawing">
     <value>46, 32</value>
@@ -629,13 +683,13 @@
     <value>FilterPanel</value>
   </data>
   <data name="&gt;&gt;Guna2HtmlLabel13.ZOrder" xml:space="preserve">
-    <value>4</value>
+    <value>6</value>
   </data>
   <data name="Guna2HtmlLabel16.Font" type="System.Drawing.Font, System.Drawing">
     <value>Poppins Medium, 10.2pt</value>
   </data>
   <data name="Guna2HtmlLabel16.Location" type="System.Drawing.Point, System.Drawing">
-    <value>19, 450</value>
+    <value>19, 568</value>
   </data>
   <data name="Guna2HtmlLabel16.Size" type="System.Drawing.Size, System.Drawing">
     <value>176, 32</value>
@@ -656,7 +710,7 @@
     <value>FilterPanel</value>
   </data>
   <data name="&gt;&gt;Guna2HtmlLabel16.ZOrder" xml:space="preserve">
-    <value>5</value>
+    <value>7</value>
   </data>
   <data name="Guna2HtmlLabel17.Font" type="System.Drawing.Font, System.Drawing">
     <value>Poppins Medium, 10.2pt</value>
@@ -683,7 +737,7 @@
     <value>FilterPanel</value>
   </data>
   <data name="&gt;&gt;Guna2HtmlLabel17.ZOrder" xml:space="preserve">
-    <value>6</value>
+    <value>8</value>
   </data>
   <data name="Guna2HtmlLabel18.Font" type="System.Drawing.Font, System.Drawing">
     <value>Poppins Medium, 10.2pt</value>
@@ -710,7 +764,7 @@
     <value>FilterPanel</value>
   </data>
   <data name="&gt;&gt;Guna2HtmlLabel18.ZOrder" xml:space="preserve">
-    <value>7</value>
+    <value>9</value>
   </data>
   <data name="FilterPanel.Location" type="System.Drawing.Point, System.Drawing">
     <value>243, 167</value>
@@ -864,6 +918,9 @@
   </metadata>
   <data name="$this.AutoScaleDimensions" type="System.Drawing.SizeF, System.Drawing">
     <value>8, 20</value>
+  </data>
+  <data name="$this.AutoScroll" type="System.Boolean, mscorlib">
+    <value>True</value>
   </data>
   <data name="$this.ClientSize" type="System.Drawing.Size, System.Drawing">
     <value>1902, 1033</value>

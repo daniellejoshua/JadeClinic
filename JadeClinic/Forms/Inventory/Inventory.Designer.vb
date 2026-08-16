@@ -1,4 +1,4 @@
-<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
+﻿<Global.Microsoft.VisualBasic.CompilerServices.DesignerGenerated()>
 Partial Class Inventory
     Inherits System.Windows.Forms.Form
 
@@ -45,16 +45,18 @@ Partial Class Inventory
         Dim CustomizableEdges17 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges18 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges19 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges26 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges27 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges28 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges29 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges20 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges21 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges22 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges23 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges24 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges25 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges28 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges29 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges26 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges27 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges30 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges31 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         DashboardPanel = New Guna.UI2.WinForms.Guna2Panel()
         PictureBox9 = New PictureBox()
         Guna2Button1 = New Guna.UI2.WinForms.Guna2Button()
@@ -70,6 +72,8 @@ Partial Class Inventory
         txtFilterPrice = New Guna.UI2.WinForms.Guna2TextBox()
         txtSearch = New Guna.UI2.WinForms.Guna2TextBox()
         FilterPanel = New Guna.UI2.WinForms.Guna2Panel()
+        Guna2HtmlLabel2 = New Guna.UI2.WinForms.Guna2HtmlLabel()
+        txtMaxPrice = New Guna.UI2.WinForms.Guna2TextBox()
         btnInactive = New Guna.UI2.WinForms.Guna2Button()
         btnActive = New Guna.UI2.WinForms.Guna2Button()
         btnAll = New Guna.UI2.WinForms.Guna2Button()
@@ -121,7 +125,7 @@ Partial Class Inventory
         Guna2Button1.DisabledState.CustomBorderColor = Color.DarkGray
         Guna2Button1.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         Guna2Button1.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        Guna2Button1.FillColor = Color.FromArgb(CByte(191), CByte(155), CByte(48))
+        Guna2Button1.FillColor = Color.FromArgb(CByte(238), CByte(188), CByte(27))
         resources.ApplyResources(Guna2Button1, "Guna2Button1")
         Guna2Button1.ForeColor = Color.White
         Guna2Button1.Name = "Guna2Button1"
@@ -129,15 +133,17 @@ Partial Class Inventory
         ' 
         ' Exportbtn
         ' 
+        Exportbtn.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
         Exportbtn.BorderRadius = 10
+        Exportbtn.BorderThickness = 1
         Exportbtn.CustomizableEdges = CustomizableEdges5
         Exportbtn.DisabledState.BorderColor = Color.DarkGray
         Exportbtn.DisabledState.CustomBorderColor = Color.DarkGray
         Exportbtn.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         Exportbtn.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        Exportbtn.FillColor = Color.FromArgb(CByte(191), CByte(155), CByte(48))
+        Exportbtn.FillColor = Color.White
         resources.ApplyResources(Exportbtn, "Exportbtn")
-        Exportbtn.ForeColor = Color.White
+        Exportbtn.ForeColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
         Exportbtn.Name = "Exportbtn"
         Exportbtn.ShadowDecoration.CustomizableEdges = CustomizableEdges6
         ' 
@@ -168,7 +174,6 @@ Partial Class Inventory
         ' 
         DataGridViewCellStyle1.BackColor = Color.White
         Guna2DataGridView1.AlternatingRowsDefaultCellStyle = DataGridViewCellStyle1
-        Guna2DataGridView1.BackgroundColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
         Guna2DataGridView1.BorderStyle = BorderStyle.Fixed3D
         Guna2DataGridView1.CausesValidation = False
         Guna2DataGridView1.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single
@@ -198,7 +203,7 @@ Partial Class Inventory
         Guna2DataGridView1.ThemeStyle.AlternatingRowsStyle.ForeColor = Color.Empty
         Guna2DataGridView1.ThemeStyle.AlternatingRowsStyle.SelectionBackColor = Color.Empty
         Guna2DataGridView1.ThemeStyle.AlternatingRowsStyle.SelectionForeColor = Color.Empty
-        Guna2DataGridView1.ThemeStyle.BackColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
+        Guna2DataGridView1.ThemeStyle.BackColor = Color.White
         Guna2DataGridView1.ThemeStyle.GridColor = Color.FromArgb(CByte(231), CByte(229), CByte(255))
         Guna2DataGridView1.ThemeStyle.HeaderStyle.BackColor = Color.FromArgb(CByte(100), CByte(88), CByte(255))
         Guna2DataGridView1.ThemeStyle.HeaderStyle.BorderStyle = DataGridViewHeaderBorderStyle.Single
@@ -219,7 +224,7 @@ Partial Class Inventory
         ' 
         Guna2ComboBox1.BackColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
         Guna2ComboBox1.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
-        Guna2ComboBox1.BorderRadius = 10
+        Guna2ComboBox1.BorderRadius = 8
         Guna2ComboBox1.CustomizableEdges = CustomizableEdges8
         Guna2ComboBox1.DrawMode = DrawMode.OwnerDrawFixed
         Guna2ComboBox1.DropDownStyle = ComboBoxStyle.DropDownList
@@ -234,7 +239,7 @@ Partial Class Inventory
         ' 
         StockCmbBox.BackColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
         StockCmbBox.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
-        StockCmbBox.BorderRadius = 10
+        StockCmbBox.BorderRadius = 8
         StockCmbBox.CustomizableEdges = CustomizableEdges10
         StockCmbBox.DrawMode = DrawMode.OwnerDrawFixed
         StockCmbBox.DropDownStyle = ComboBoxStyle.DropDownList
@@ -249,15 +254,17 @@ Partial Class Inventory
         ' btnResetFilter
         ' 
         btnResetFilter.BackColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
-        btnResetFilter.BorderRadius = 10
+        btnResetFilter.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
+        btnResetFilter.BorderRadius = 8
+        btnResetFilter.BorderThickness = 1
         btnResetFilter.CustomizableEdges = CustomizableEdges12
         btnResetFilter.DisabledState.BorderColor = Color.DarkGray
         btnResetFilter.DisabledState.CustomBorderColor = Color.DarkGray
         btnResetFilter.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         btnResetFilter.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        btnResetFilter.FillColor = Color.FromArgb(CByte(191), CByte(155), CByte(48))
+        btnResetFilter.FillColor = Color.White
         resources.ApplyResources(btnResetFilter, "btnResetFilter")
-        btnResetFilter.ForeColor = Color.White
+        btnResetFilter.ForeColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
         btnResetFilter.Name = "btnResetFilter"
         btnResetFilter.ShadowDecoration.CustomizableEdges = CustomizableEdges13
         ' 
@@ -265,7 +272,7 @@ Partial Class Inventory
         ' 
         txtFilterQuantity.BackColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
         txtFilterQuantity.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
-        txtFilterQuantity.BorderRadius = 10
+        txtFilterQuantity.BorderRadius = 8
         txtFilterQuantity.CustomizableEdges = CustomizableEdges14
         txtFilterQuantity.DefaultText = ""
         txtFilterQuantity.DisabledState.BorderColor = Color.FromArgb(CByte(208), CByte(208), CByte(208))
@@ -277,8 +284,8 @@ Partial Class Inventory
         txtFilterQuantity.ForeColor = Color.Black
         txtFilterQuantity.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtFilterQuantity.Name = "txtFilterQuantity"
-        txtFilterQuantity.PlaceholderForeColor = Color.White
-        txtFilterQuantity.PlaceholderText = ""
+        txtFilterQuantity.PlaceholderForeColor = Color.DimGray
+        txtFilterQuantity.PlaceholderText = "Enter Quantity..."
         txtFilterQuantity.SelectedText = ""
         txtFilterQuantity.ShadowDecoration.CustomizableEdges = CustomizableEdges15
         ' 
@@ -286,7 +293,7 @@ Partial Class Inventory
         ' 
         txtFilterPrice.BackColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
         txtFilterPrice.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
-        txtFilterPrice.BorderRadius = 10
+        txtFilterPrice.BorderRadius = 8
         txtFilterPrice.CustomizableEdges = CustomizableEdges16
         txtFilterPrice.DefaultText = ""
         txtFilterPrice.DisabledState.BorderColor = Color.FromArgb(CByte(208), CByte(208), CByte(208))
@@ -298,8 +305,8 @@ Partial Class Inventory
         txtFilterPrice.ForeColor = Color.Black
         txtFilterPrice.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtFilterPrice.Name = "txtFilterPrice"
-        txtFilterPrice.PlaceholderForeColor = Color.White
-        txtFilterPrice.PlaceholderText = ""
+        txtFilterPrice.PlaceholderForeColor = Color.DimGray
+        txtFilterPrice.PlaceholderText = "Min Price"
         txtFilterPrice.SelectedText = ""
         txtFilterPrice.ShadowDecoration.CustomizableEdges = CustomizableEdges17
         ' 
@@ -307,7 +314,7 @@ Partial Class Inventory
         ' 
         txtSearch.BackColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
         txtSearch.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
-        txtSearch.BorderRadius = 10
+        txtSearch.BorderRadius = 8
         txtSearch.CustomizableEdges = CustomizableEdges18
         txtSearch.DefaultText = ""
         txtSearch.DisabledState.BorderColor = Color.FromArgb(CByte(208), CByte(208), CByte(208))
@@ -319,16 +326,18 @@ Partial Class Inventory
         txtSearch.ForeColor = Color.Black
         txtSearch.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
         txtSearch.Name = "txtSearch"
-        txtSearch.PlaceholderForeColor = Color.White
-        txtSearch.PlaceholderText = ""
+        txtSearch.PlaceholderForeColor = Color.DimGray
+        txtSearch.PlaceholderText = "🔍 Search Product..."
         txtSearch.SelectedText = ""
         txtSearch.ShadowDecoration.CustomizableEdges = CustomizableEdges19
         ' 
         ' FilterPanel
         ' 
-        FilterPanel.BorderColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
+        FilterPanel.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
         FilterPanel.BorderRadius = 10
         FilterPanel.BorderThickness = 2
+        FilterPanel.Controls.Add(Guna2HtmlLabel2)
+        FilterPanel.Controls.Add(txtMaxPrice)
         FilterPanel.Controls.Add(btnInactive)
         FilterPanel.Controls.Add(btnActive)
         FilterPanel.Controls.Add(btnAll)
@@ -343,18 +352,46 @@ Partial Class Inventory
         FilterPanel.Controls.Add(btnResetFilter)
         FilterPanel.Controls.Add(StockCmbBox)
         FilterPanel.Controls.Add(Guna2ComboBox1)
-        FilterPanel.CustomizableEdges = CustomizableEdges26
-        FilterPanel.FillColor = Color.FromArgb(CByte(250), CByte(249), CByte(246))
+        FilterPanel.CustomizableEdges = CustomizableEdges28
+        FilterPanel.FillColor = Color.White
         FilterPanel.ForeColor = Color.FromArgb(CByte(50), CByte(50), CByte(50))
         resources.ApplyResources(FilterPanel, "FilterPanel")
         FilterPanel.Name = "FilterPanel"
-        FilterPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges27
+        FilterPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges29
+        ' 
+        ' Guna2HtmlLabel2
+        ' 
+        Guna2HtmlLabel2.BackColor = Color.Transparent
+        resources.ApplyResources(Guna2HtmlLabel2, "Guna2HtmlLabel2")
+        Guna2HtmlLabel2.ForeColor = Color.FromArgb(CByte(59), CByte(59), CByte(59))
+        Guna2HtmlLabel2.Name = "Guna2HtmlLabel2"
+        ' 
+        ' txtMaxPrice
+        ' 
+        txtMaxPrice.BackColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
+        txtMaxPrice.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
+        txtMaxPrice.BorderRadius = 8
+        txtMaxPrice.CustomizableEdges = CustomizableEdges20
+        txtMaxPrice.DefaultText = ""
+        txtMaxPrice.DisabledState.BorderColor = Color.FromArgb(CByte(208), CByte(208), CByte(208))
+        txtMaxPrice.DisabledState.FillColor = Color.FromArgb(CByte(226), CByte(226), CByte(226))
+        txtMaxPrice.DisabledState.ForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
+        txtMaxPrice.DisabledState.PlaceholderForeColor = Color.FromArgb(CByte(138), CByte(138), CByte(138))
+        txtMaxPrice.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
+        resources.ApplyResources(txtMaxPrice, "txtMaxPrice")
+        txtMaxPrice.ForeColor = Color.Black
+        txtMaxPrice.HoverState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
+        txtMaxPrice.Name = "txtMaxPrice"
+        txtMaxPrice.PlaceholderForeColor = Color.DimGray
+        txtMaxPrice.PlaceholderText = "Max Price"
+        txtMaxPrice.SelectedText = ""
+        txtMaxPrice.ShadowDecoration.CustomizableEdges = CustomizableEdges21
         ' 
         ' btnInactive
         ' 
-        btnInactive.BackColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
+        btnInactive.BackColor = Color.White
         btnInactive.BorderRadius = 10
-        btnInactive.CustomizableEdges = CustomizableEdges20
+        btnInactive.CustomizableEdges = CustomizableEdges22
         btnInactive.DisabledState.BorderColor = Color.DarkGray
         btnInactive.DisabledState.CustomBorderColor = Color.DarkGray
         btnInactive.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
@@ -363,13 +400,13 @@ Partial Class Inventory
         resources.ApplyResources(btnInactive, "btnInactive")
         btnInactive.ForeColor = Color.White
         btnInactive.Name = "btnInactive"
-        btnInactive.ShadowDecoration.CustomizableEdges = CustomizableEdges21
+        btnInactive.ShadowDecoration.CustomizableEdges = CustomizableEdges23
         ' 
         ' btnActive
         ' 
-        btnActive.BackColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
+        btnActive.BackColor = Color.White
         btnActive.BorderRadius = 10
-        btnActive.CustomizableEdges = CustomizableEdges22
+        btnActive.CustomizableEdges = CustomizableEdges24
         btnActive.DisabledState.BorderColor = Color.DarkGray
         btnActive.DisabledState.CustomBorderColor = Color.DarkGray
         btnActive.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
@@ -378,13 +415,13 @@ Partial Class Inventory
         resources.ApplyResources(btnActive, "btnActive")
         btnActive.ForeColor = Color.White
         btnActive.Name = "btnActive"
-        btnActive.ShadowDecoration.CustomizableEdges = CustomizableEdges23
+        btnActive.ShadowDecoration.CustomizableEdges = CustomizableEdges25
         ' 
         ' btnAll
         ' 
-        btnAll.BackColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
+        btnAll.BackColor = Color.White
         btnAll.BorderRadius = 10
-        btnAll.CustomizableEdges = CustomizableEdges24
+        btnAll.CustomizableEdges = CustomizableEdges26
         btnAll.DisabledState.BorderColor = Color.DarkGray
         btnAll.DisabledState.CustomBorderColor = Color.DarkGray
         btnAll.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
@@ -393,7 +430,7 @@ Partial Class Inventory
         resources.ApplyResources(btnAll, "btnAll")
         btnAll.ForeColor = Color.White
         btnAll.Name = "btnAll"
-        btnAll.ShadowDecoration.CustomizableEdges = CustomizableEdges25
+        btnAll.ShadowDecoration.CustomizableEdges = CustomizableEdges27
         ' 
         ' Guna2HtmlLabel8
         ' 
@@ -467,20 +504,19 @@ Partial Class Inventory
         ' 
         ' Guna2Panel1
         ' 
-        Guna2Panel1.BorderColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
+        Guna2Panel1.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
         Guna2Panel1.BorderThickness = 2
         Guna2Panel1.Controls.Add(Guna2DataGridView1)
-        Guna2Panel1.CustomizableEdges = CustomizableEdges28
+        Guna2Panel1.CustomizableEdges = CustomizableEdges30
         Guna2Panel1.FillColor = Color.FromArgb(CByte(250), CByte(249), CByte(246))
         resources.ApplyResources(Guna2Panel1, "Guna2Panel1")
         Guna2Panel1.Name = "Guna2Panel1"
-        Guna2Panel1.ShadowDecoration.CustomizableEdges = CustomizableEdges29
+        Guna2Panel1.ShadowDecoration.CustomizableEdges = CustomizableEdges31
         ' 
         ' Inventory
         ' 
         resources.ApplyResources(Me, "$this")
         AutoScaleMode = AutoScaleMode.Font
-        AutoScroll = True
         BackColor = Color.White
         Controls.Add(Guna2Panel1)
         Controls.Add(lblUsername)
@@ -538,4 +574,6 @@ Partial Class Inventory
     Friend WithEvents btnActive As Guna.UI2.WinForms.Guna2Button
     Friend WithEvents btnAll As Guna.UI2.WinForms.Guna2Button
     Friend WithEvents Guna2Panel1 As Guna.UI2.WinForms.Guna2Panel
+    Friend WithEvents Guna2HtmlLabel2 As Guna.UI2.WinForms.Guna2HtmlLabel
+    Friend WithEvents txtMaxPrice As Guna.UI2.WinForms.Guna2TextBox
 End Class
