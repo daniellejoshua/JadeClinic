@@ -45,12 +45,218 @@ Public Class frmLoginvb
     Private Const TitleBarHoverHeight As Integer = 8
     Private isTitleBarVisible As Boolean = False
 
+    ' Splash screen
+    Private splashPanel As Panel
+    Private splashTimer As Timer
+    Private splashProgress As Single = 0F
+    Private splashFadingOut As Boolean = False
+    Private splashOpacity As Integer = 255
+    Private splashBuilt As Boolean = False
+    Private splashLogoImg As Image = Nothing
+    Private splashBuffer As Bitmap = Nothing
+
     Private Sub EnableTitleBarHover()
         Me.FormBorderStyle = FormBorderStyle.None
         Me.ControlBox = False
         Me.MinimizeBox = False
         Me.MaximizeBox = False
         Me.TopMost = False
+    End Sub
+
+    ' ================================================================
+    '  SPLASH SCREEN — smooth brush-stroke animation
+    ' ================================================================
+    Private Sub ShowSplashScreen()
+        splashPanel = New Panel()
+        splashPanel.Dock = DockStyle.Fill
+        splashPanel.BackColor = Color.FromArgb(250, 247, 242)
+
+        Dim props As Reflection.BindingFlags = Reflection.BindingFlags.SetProperty Or Reflection.BindingFlags.Instance Or Reflection.BindingFlags.NonPublic
+        GetType(Control).InvokeMember("DoubleBuffered", props, Nothing, splashPanel, New Object() {True})
+
+        Me.Controls.Add(splashPanel)
+        splashPanel.BringToFront()
+
+        Try
+            splashLogoImg = My.Resources.Resources.CleanJadeLogo_1_
+        Catch
+        End Try
+        If splashLogoImg Is Nothing Then
+            Try
+                splashLogoImg = My.Resources.Resources.JadeLogo
+            Catch
+            End Try
+        End If
+
+        AddHandler splashPanel.Paint, AddressOf splashPanel_Paint
+
+        splashProgress = 0F
+        splashFadingOut = False
+        splashOpacity = 255
+        splashBuilt = False
+
+        splashTimer = New Timer()
+        splashTimer.Interval = 16
+        AddHandler splashTimer.Tick, AddressOf splashTimer_Tick
+        splashTimer.Start()
+    End Sub
+
+    Private Sub splashTimer_Tick(sender As Object, e As EventArgs)
+        If splashFadingOut Then
+            splashOpacity -= 8
+            If splashOpacity <= 0 Then
+                splashOpacity = 0
+                splashTimer.Stop()
+                splashTimer.Dispose()
+                RemoveHandler splashTimer.Tick, AddressOf splashTimer_Tick
+                RemoveHandler splashPanel.Paint, AddressOf splashPanel_Paint
+                If splashBuffer IsNot Nothing Then
+                    splashBuffer.Dispose()
+                    splashBuffer = Nothing
+                End If
+                Me.Controls.Remove(splashPanel)
+                splashPanel.Dispose()
+                splashPanel = Nothing
+                Return
+            End If
+        Else
+            splashProgress += 0.008F
+            If splashProgress >= 1.0F Then
+                splashProgress = 1.0F
+                If splashBuilt Then
+                    splashFadingOut = True
+                End If
+            End If
+        End If
+
+        If splashPanel IsNot Nothing Then
+            splashPanel.Invalidate()
+        End If
+    End Sub
+
+    Private Sub splashPanel_Paint(sender As Object, e As PaintEventArgs)
+        Dim w As Integer = splashPanel.Width
+        Dim h As Integer = splashPanel.Height
+        If w <= 0 OrElse h <= 0 Then Return
+
+        If splashBuffer Is Nothing OrElse splashBuffer.Width <> w OrElse splashBuffer.Height <> h Then
+            If splashBuffer IsNot Nothing Then splashBuffer.Dispose()
+            splashBuffer = New Bitmap(w, h, Drawing.Imaging.PixelFormat.Format32bppPArgb)
+        End If
+
+        Using bg As Graphics = Graphics.FromImage(splashBuffer)
+            bg.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias
+            bg.TextRenderingHint = Drawing.Text.TextRenderingHint.AntiAliasGridFit
+            bg.Clear(Color.FromArgb(250, 247, 242))
+
+            Dim cx As Integer = w \ 2
+            Dim gold As Color = Color.FromArgb(190, 154, 48)
+            Dim darkText As Color = Color.FromArgb(37, 37, 37)
+            Dim grayText As Color = Color.FromArgb(153, 153, 153)
+
+            Dim p As Single = splashProgress
+
+            ' ── LOGO ──
+            If p > 0.05F AndAlso splashLogoImg IsNot Nothing Then
+                Dim logoAlpha As Integer = CInt(Math.Min(255, Math.Min(255, ((p - 0.05F) / 0.2F) * 255)))
+                Dim logoSz As Integer = 90
+                Dim logoRect As New Rectangle(cx - logoSz \ 2, CInt(h * 0.28F) - logoSz \ 2, logoSz, logoSz)
+                If logoAlpha < 255 Then
+                    Dim cm As New Drawing.Imaging.ColorMatrix()
+                    cm.Matrix33 = logoAlpha / 255.0F
+                    Using ia As New Drawing.Imaging.ImageAttributes()
+                        ia.SetColorMatrix(cm)
+                        bg.DrawImage(splashLogoImg, logoRect, 0, 0, splashLogoImg.Width, splashLogoImg.Height, GraphicsUnit.Pixel, ia)
+                    End Using
+                Else
+                    bg.DrawImage(splashLogoImg, logoRect)
+                End If
+            End If
+
+            ' ── "JADE CLINIC" TEXT ──
+            Dim titleText As String = "Jade Clinic"
+            Dim titleFont As New Font("Poppins", 32.0F, FontStyle.Regular)
+            Dim titleSize As SizeF = bg.MeasureString(titleText, titleFont)
+            Dim titleX As Single = (w - titleSize.Width) / 2.0F
+            Dim titleY As Single = h * 0.4F
+
+            If p > 0.15F Then
+                Dim reveal As Single = Math.Min(1.0F, (p - 0.15F) / 0.45F)
+                Dim titleAlpha As Integer = CInt(Math.Min(255, reveal * 255 * 2))
+
+                Using path As New Drawing2D.GraphicsPath()
+                    path.AddString(titleText, titleFont.FontFamily, CInt(titleFont.Style), titleFont.Size, New PointF(titleX, titleY), StringFormat.GenericDefault)
+                    Using brush As New SolidBrush(Color.FromArgb(Math.Min(255, titleAlpha), darkText))
+                        bg.SetClip(path)
+                        Dim brushStrokeX As Integer = CInt(w * reveal)
+                        Dim gradRect As New Rectangle(brushStrokeX - 60, 0, 120, h)
+                        bg.FillRectangle(New SolidBrush(Color.FromArgb(0, 250, 247, 242)), 0, 0, w, h)
+                        bg.ResetClip()
+                    End Using
+                End Using
+
+                Using titlePath As New Drawing2D.GraphicsPath()
+                    titlePath.AddString(titleText, titleFont.FontFamily, CInt(titleFont.Style), titleFont.Size, New PointF(titleX, titleY), StringFormat.GenericDefault)
+                    Dim clipX As Integer = CInt(titleX - 10 + (titleSize.Width + 20) * reveal)
+                    If clipX > CInt(titleX - 10) Then
+                        Using clipPath As New Drawing2D.GraphicsPath()
+                            clipPath.AddRectangle(New Rectangle(CInt(titleX - 10), CInt(titleY - 10), clipX - CInt(titleX - 10), CInt(titleSize.Height + 20)))
+                            bg.SetClip(clipPath)
+                            Using brush As New SolidBrush(Color.FromArgb(Math.Min(255, titleAlpha), darkText))
+                                bg.DrawString(titleText, titleFont, brush, titleX, titleY)
+                            End Using
+                            bg.ResetClip()
+                        End Using
+                    End If
+                End Using
+            End If
+            titleFont.Dispose()
+
+            ' ── "POINT OF SALE SYSTEM" ──
+            Dim subText As String = "Point of Sale System"
+            Dim subFont As New Font("Poppins", 12.0F, FontStyle.Regular)
+            Dim subSize As SizeF = bg.MeasureString(subText, subFont)
+            Dim subX As Single = (w - subSize.Width) / 2.0F
+            Dim subY As Single = titleY + titleSize.Height + 8
+
+            If p > 0.45F Then
+                Dim subReveal As Single = Math.Min(1.0F, (p - 0.45F) / 0.3F)
+                Dim subAlpha As Integer = CInt(subReveal * 255)
+                Dim clipSubX As Integer = CInt(subX - 5 + (subSize.Width + 10) * subReveal)
+                If clipSubX > CInt(subX - 5) Then
+                    Using clipPath As New Drawing2D.GraphicsPath()
+                        clipPath.AddRectangle(New Rectangle(CInt(subX - 5), CInt(subY - 5), clipSubX - CInt(subX - 5), CInt(subSize.Height + 10)))
+                        bg.SetClip(clipPath)
+                        Using brush As New SolidBrush(Color.FromArgb(subAlpha, grayText))
+                            bg.DrawString(subText, subFont, brush, subX, subY)
+                        End Using
+                        bg.ResetClip()
+                    End Using
+                End If
+            End If
+            subFont.Dispose()
+
+            ' ── GOLD ACCENT LINE ──
+            If p > 0.6F Then
+                Dim lineReveal As Single = Math.Min(1.0F, (p - 0.6F) / 0.2F)
+                Dim lineW As Integer = CInt(100 * lineReveal)
+                Dim lineY As Integer = CInt(subY + subSize.Height + 16)
+                Using pen As New Pen(gold, 2.0F)
+                    bg.DrawLine(pen, cx - lineW, lineY, cx + lineW, lineY)
+                End Using
+            End If
+        End Using
+
+        If splashFadingOut Then
+            Dim imgAttr As New Drawing.Imaging.ColorMatrix()
+            imgAttr.Matrix33 = splashOpacity / 255.0F
+            Using ia As New Drawing.Imaging.ImageAttributes()
+                ia.SetColorMatrix(imgAttr)
+                e.Graphics.DrawImage(splashBuffer, New Rectangle(0, 0, w, h), 0, 0, w, h, GraphicsUnit.Pixel, ia)
+            End Using
+        Else
+            e.Graphics.DrawImageUnscaled(splashBuffer, 0, 0)
+        End If
     End Sub
 
     Private Sub frmLoginvb_MouseMove(sender As Object, e As MouseEventArgs)
@@ -77,6 +283,19 @@ Public Class frmLoginvb
         Me.FormBorderStyle = FormBorderStyle.None
         Me.KeyPreview = True
 
+        ' ── SHOW SPLASH IMMEDIATELY ──
+        ShowSplashScreen()
+        Application.DoEvents()
+
+        ' ── LOAD BACKGROUND IMAGE (deferred — no lag on open) ──
+        Try
+            Dim res As New System.ComponentModel.ComponentResourceManager(GetType(frmLoginvb))
+            Me.BackgroundImage = CType(res.GetObject("$this.BackgroundImage"), Image)
+            Me.BackgroundImageLayout = ImageLayout.Stretch
+        Catch
+        End Try
+
+        ' ── BUILD ALL CONTROLS (underneath splash) ──
         BuildLoginCard()
         CenterLoginLayout()
         EnableTitleBarHover()
@@ -93,6 +312,9 @@ Public Class frmLoginvb
         AddHandler txtPassword.TextChanged, AddressOf ValidateInputForQRCodes
 
         SetupTabIndex()
+
+        ' ── SIGNAL: splash can finish ──
+        splashBuilt = True
     End Sub
 
     ' ================================================================
