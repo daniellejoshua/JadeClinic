@@ -41,6 +41,7 @@ Public Class frmLoginvb
     Private pnlDivider As Panel
     Private lblOr As Label
     Private WithEvents btnQRLogin As Guna.UI2.WinForms.Guna2Button
+    Private pnlAccentLine As Guna.UI2.WinForms.Guna2Panel
 
     Private Const TitleBarHoverHeight As Integer = 8
     Private isTitleBarVisible As Boolean = False
@@ -114,6 +115,7 @@ Public Class frmLoginvb
                     splashBuffer.Dispose()
                     splashBuffer = Nothing
                 End If
+                splashPanel.Visible = False
                 Me.Controls.Remove(splashPanel)
                 splashPanel.Dispose()
                 splashPanel = Nothing
@@ -213,7 +215,7 @@ Public Class frmLoginvb
             titleFont.Dispose()
 
             ' ── "POINT OF SALE SYSTEM" ──
-            Dim subText As String = "Point of Sale System"
+            Dim subText As String = "Point of Sale & Inventory System"
             Dim subFont As New Font("Poppins", 12.0F, FontStyle.Regular)
             Dim subSize As SizeF = bg.MeasureString(subText, subFont)
             Dim subX As Single = (w - subSize.Width) / 2.0F
@@ -248,6 +250,9 @@ Public Class frmLoginvb
         End Using
 
         If splashFadingOut Then
+            Using creamBrush As New SolidBrush(Color.FromArgb(250, 247, 242))
+                e.Graphics.FillRectangle(creamBrush, 0, 0, w, h)
+            End Using
             Dim imgAttr As New Drawing.Imaging.ColorMatrix()
             imgAttr.Matrix33 = splashOpacity / 255.0F
             Using ia As New Drawing.Imaging.ImageAttributes()
@@ -289,8 +294,7 @@ Public Class frmLoginvb
 
         ' ── LOAD BACKGROUND IMAGE (deferred — no lag on open) ──
         Try
-            Dim res As New System.ComponentModel.ComponentResourceManager(GetType(frmLoginvb))
-            Me.BackgroundImage = CType(res.GetObject("$this.BackgroundImage"), Image)
+            Me.BackgroundImage = My.Resources.Resources.ChatGPT_Image_Aug_17__2026__11_39_37_AM
             Me.BackgroundImageLayout = ImageLayout.Stretch
         Catch
         End Try
@@ -313,7 +317,10 @@ Public Class frmLoginvb
 
         SetupTabIndex()
 
-        ' ── SIGNAL: splash can finish ──
+        ' ── SIGNAL: splash can finish (force form paint underneath first) ──
+        Me.Invalidate()
+        Me.Update()
+        Application.DoEvents()
         splashBuilt = True
     End Sub
 
@@ -405,6 +412,14 @@ Public Class frmLoginvb
         lblTitle.BackColor = Color.Transparent
         lblTitle.AutoSize = True
         cardPanel.Controls.Add(lblTitle)
+
+        ' ── GOLD ACCENT LINE (below title) ──
+        pnlAccentLine = New Guna.UI2.WinForms.Guna2Panel()
+        pnlAccentLine.Size = New Size(48, 4)
+        pnlAccentLine.BorderRadius = 2
+        pnlAccentLine.FillColor = primaryGold
+        pnlAccentLine.BackColor = Color.Transparent
+        cardPanel.Controls.Add(pnlAccentLine)
 
         ' ── SUBTITLE ──
         lblSubtitle = New Guna.UI2.WinForms.Guna2HtmlLabel()
@@ -561,7 +576,10 @@ Public Class frmLoginvb
         Dim y As Integer = 36
 
         lblTitle.Location = New Point((cardW - lblTitle.Width) \ 2, y)
-        y += lblTitle.Height + 10
+        y += lblTitle.Height + 12
+
+        pnlAccentLine.Location = New Point((cardW - 48) \ 2, y)
+        y += 4 + 12
 
         lblSubtitle.Location = New Point((cardW - lblSubtitle.Width) \ 2, y)
         y += lblSubtitle.Height + 44

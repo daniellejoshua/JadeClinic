@@ -17,7 +17,6 @@ Partial Class frmLoginvb
 
     <System.Diagnostics.DebuggerStepThrough()>
     Private Sub InitializeComponent()
-        Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(frmLoginvb))
         SuspendLayout()
         ' 
         ' frmLoginvb
