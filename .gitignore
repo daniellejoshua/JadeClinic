@@ -361,6 +361,3 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-# Supabase secrets (never commit the real file)
-supabase.config.json
-JadeClinic/supabase.config.json

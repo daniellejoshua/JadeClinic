@@ -102,25 +102,39 @@ Public Class frmLoginvb
         splashTimer.Start()
     End Sub
 
+    Private splashRemovePending As Boolean = False
+
     Private Sub splashTimer_Tick(sender As Object, e As EventArgs)
-        If splashFadingOut Then
-            splashOpacity -= 8
-            If splashOpacity <= 0 Then
-                splashOpacity = 0
-                splashTimer.Stop()
-                splashTimer.Dispose()
-                RemoveHandler splashTimer.Tick, AddressOf splashTimer_Tick
-                RemoveHandler splashPanel.Paint, AddressOf splashPanel_Paint
-                If splashBuffer IsNot Nothing Then
-                    splashBuffer.Dispose()
-                    splashBuffer = Nothing
-                End If
-                splashPanel.Visible = False
-                Me.Controls.Remove(splashPanel)
-                splashPanel.Dispose()
-                splashPanel = Nothing
-                Return
+        If splashRemovePending Then
+            ' Controls have now painted — safe to remove splash
+            splashTimer.Stop()
+            splashTimer.Dispose()
+            RemoveHandler splashTimer.Tick, AddressOf splashTimer_Tick
+            RemoveHandler splashPanel.Paint, AddressOf splashPanel_Paint
+            If splashBuffer IsNot Nothing Then
+                splashBuffer.Dispose()
+                splashBuffer = Nothing
             End If
+            Me.Controls.Remove(splashPanel)
+            splashPanel.Dispose()
+            splashPanel = Nothing
+            splashRemovePending = False
+        ElseIf splashFadingOut Then
+            ' Paint BackgroundImage onto splash buffer as final frame
+            If splashBuffer IsNot Nothing AndAlso Me.BackgroundImage IsNot Nothing Then
+                Using bg As Graphics = Graphics.FromImage(splashBuffer)
+                    bg.DrawImage(Me.BackgroundImage, 0, 0, splashBuffer.Width, splashBuffer.Height)
+                End Using
+                splashPanel.Invalidate()
+                splashPanel.Update()
+            End If
+
+            ' Send splash to back — controls become visible and paint
+            splashPanel.SendToBack()
+            Application.DoEvents()
+
+            ' Schedule actual removal on next tick (after controls have painted)
+            splashRemovePending = True
         Else
             splashProgress += 0.008F
             If splashProgress >= 1.0F Then
@@ -249,19 +263,7 @@ Public Class frmLoginvb
             End If
         End Using
 
-        If splashFadingOut Then
-            Using creamBrush As New SolidBrush(Color.FromArgb(250, 247, 242))
-                e.Graphics.FillRectangle(creamBrush, 0, 0, w, h)
-            End Using
-            Dim imgAttr As New Drawing.Imaging.ColorMatrix()
-            imgAttr.Matrix33 = splashOpacity / 255.0F
-            Using ia As New Drawing.Imaging.ImageAttributes()
-                ia.SetColorMatrix(imgAttr)
-                e.Graphics.DrawImage(splashBuffer, New Rectangle(0, 0, w, h), 0, 0, w, h, GraphicsUnit.Pixel, ia)
-            End Using
-        Else
-            e.Graphics.DrawImageUnscaled(splashBuffer, 0, 0)
-        End If
+        e.Graphics.DrawImageUnscaled(splashBuffer, 0, 0)
     End Sub
 
     Private Sub frmLoginvb_MouseMove(sender As Object, e As MouseEventArgs)
@@ -415,10 +417,9 @@ Public Class frmLoginvb
 
         ' ── GOLD ACCENT LINE (below title) ──
         pnlAccentLine = New Guna.UI2.WinForms.Guna2Panel()
-        pnlAccentLine.Size = New Size(48, 4)
-        pnlAccentLine.BorderRadius = 2
+        pnlAccentLine.Size = New Size(56, 6)
+        pnlAccentLine.BorderRadius = 3
         pnlAccentLine.FillColor = primaryGold
-        pnlAccentLine.BackColor = Color.Transparent
         cardPanel.Controls.Add(pnlAccentLine)
 
         ' ── SUBTITLE ──
@@ -578,8 +579,8 @@ Public Class frmLoginvb
         lblTitle.Location = New Point((cardW - lblTitle.Width) \ 2, y)
         y += lblTitle.Height + 12
 
-        pnlAccentLine.Location = New Point((cardW - 48) \ 2, y)
-        y += 4 + 12
+        pnlAccentLine.Location = New Point((cardW - 56) \ 2, y)
+        y += 6 + 14
 
         lblSubtitle.Location = New Point((cardW - lblSubtitle.Width) \ 2, y)
         y += lblSubtitle.Height + 44
