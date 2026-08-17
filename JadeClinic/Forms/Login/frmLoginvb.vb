@@ -18,16 +18,33 @@ Public Class frmLoginvb
     Private pinPanel As Guna.UI2.WinForms.Guna2Panel
     Private pinPanelButtons As List(Of Guna.UI2.WinForms.Guna2Button)
     Private failedPinAttempts As Integer = 0
-    ' Add near other private fields
     Private failedLoginAttempts As Integer = 0
     Private Const MaxLoginAttempts As Integer = 3
-    Private pinInput As String = "" ' Class-level for consistency
-    Private qrScannerEnabled As Boolean = True ' Track QR scanner state
-    Private qrScannerActive As Boolean = False ' Track if QR scanner dialog is currently open
+    Private pinInput As String = ""
+    Private qrScannerEnabled As Boolean = True
+    Private qrScannerActive As Boolean = False
+    Private passwordVisible As Boolean = False
+
+    ' Runtime UI controls
+    Private cardPanel As Guna.UI2.WinForms.Guna2Panel
+    Private shadowLayers As List(Of Guna.UI2.WinForms.Guna2Panel)
+    Private picLogo As Guna.UI2.WinForms.Guna2PictureBox
+    Private lblTitle As Guna.UI2.WinForms.Guna2HtmlLabel
+    Private lblSubtitle As Guna.UI2.WinForms.Guna2HtmlLabel
+    Private lblUsernameLabel As Guna.UI2.WinForms.Guna2HtmlLabel
+    Private txtUsername As Guna.UI2.WinForms.Guna2TextBox
+    Private lblPasswordLabel As Guna.UI2.WinForms.Guna2HtmlLabel
+    Private txtPassword As Guna.UI2.WinForms.Guna2TextBox
+    Private lblEyeToggle As Label
+    Private WithEvents lnkForgotPassword As Guna.UI2.WinForms.Guna2HtmlLabel
+    Private WithEvents btnLogin As Guna.UI2.WinForms.Guna2Button
+    Private pnlDivider As Panel
+    Private lblOr As Label
+    Private WithEvents btnQRLogin As Guna.UI2.WinForms.Guna2Button
 
     Private Const TitleBarHoverHeight As Integer = 8
     Private isTitleBarVisible As Boolean = False
-    Private pictureBoxTopSpacing As Integer = 20
+
     Private Sub EnableTitleBarHover()
         Me.FormBorderStyle = FormBorderStyle.None
         Me.ControlBox = False
@@ -52,59 +69,407 @@ Public Class frmLoginvb
             Me.MinimizeBox = False
         End If
     End Sub
+
     Private Sub frmLoginvb_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         Me.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath)
-        Guna2Panel1.BorderRadius = 50
         Me.MaximizeBox = False
         Me.WindowState = FormWindowState.Maximized
         Me.FormBorderStyle = FormBorderStyle.None
         Me.KeyPreview = True
 
-        pictureBoxTopSpacing = Math.Max(20, Guna2Panel1.Top - (PictureBox1.Top + PictureBox1.Height))
+        BuildLoginCard()
         CenterLoginLayout()
         EnableTitleBarHover()
         AddHandler Me.Resize, Sub() CenterLoginLayout()
-
         AddHandler Me.KeyDown, AddressOf frmLoginvb_KeyDown
 
-        ' Set password char to bullet on form load
-        txtPassword.PasswordChar = "•"c
-
-        ' Initialize database on form load - CRITICAL FIX!
         InitializeDatabaseOnStartup()
 
-        ' Add Enter key support for login
         AddHandler txtPassword.KeyDown, AddressOf txtPassword_KeyDown
 
-        ' Add click handler for QR login label
-        AddHandler Guna2HtmlLabel5.Click, AddressOf Guna2HtmlLabel5_Click
-
-        ' Add hover effect for QR login label with proper cursor
-        AddHandler Guna2HtmlLabel5.MouseEnter, Sub()
-                                                   Guna2HtmlLabel5.ForeColor = Color.FromArgb(254, 191, 16) ' GoldenYellow on hover
-                                                   Guna2HtmlLabel5.Cursor = Cursors.Hand ' Hand cursor on hover
-                                               End Sub
-        AddHandler Guna2HtmlLabel5.MouseLeave, Sub()
-                                                   Guna2HtmlLabel5.ForeColor = Color.FromArgb(51, 51, 51) ' Back to DarkText
-                                                   Guna2HtmlLabel5.Cursor = Cursors.Default ' Default cursor
-                                               End Sub
-
-        ' Add event handlers to show QR code when both fields are filled (DISABLED for security)
-        ' AddHandler txtUserName.TextChanged, AddressOf CheckAndShowQRCode
-        ' AddHandler txtPassword.TextChanged, AddressOf CheckAndShowQRCode
-
-        ' Add QR code protection to input fields
-        AddHandler txtUserName.KeyPress, AddressOf ProtectFromQRInput
+        AddHandler txtUsername.KeyPress, AddressOf ProtectFromQRInput
         AddHandler txtPassword.KeyPress, AddressOf ProtectFromQRInput
-        AddHandler txtUserName.TextChanged, AddressOf ValidateInputForQRCodes
+        AddHandler txtUsername.TextChanged, AddressOf ValidateInputForQRCodes
         AddHandler txtPassword.TextChanged, AddressOf ValidateInputForQRCodes
 
         SetupTabIndex()
     End Sub
 
+    ' ================================================================
+    '  BUILD LOGIN CARD — all UI created at runtime
+    ' ================================================================
+    Private Sub BuildLoginCard()
+        Dim cardW As Integer = 660
+        Dim cardH As Integer = 680
+        Dim contentX As Integer = 65
+        Dim contentW As Integer = cardW - (contentX * 2)
+        Dim inputH As Integer = 48
+        Dim logoSize As Integer = 120
+        Dim logoSpacing As Integer = 30
+        Dim iconSize As New Size(20, 20)
+
+        Dim primaryGold As Color = Color.FromArgb(190, 154, 48)
+        Dim hoverGold As Color = Color.FromArgb(168, 134, 39)
+        Dim inputBorder As Color = Color.FromArgb(217, 217, 217)
+        Dim primaryText As Color = Color.FromArgb(37, 37, 37)
+        Dim labelText As Color = Color.FromArgb(51, 51, 51)
+        Dim subtitleColor As Color = Color.FromArgb(119, 119, 119)
+        Dim dividerColor As Color = Color.FromArgb(232, 230, 224)
+        Dim placeholderColor As Color = Color.FromArgb(153, 153, 153)
+
+        ' ── LOGO (on form, above card) ──
+        Dim logoImg As Image = Nothing
+        Try
+            logoImg = My.Resources.Resources.Jade_Dental_Logo
+
+        Catch
+        End Try
+        If logoImg Is Nothing Then
+            Try
+                logoImg = My.Resources.Resources.JadeLogo
+            Catch
+            End Try
+        End If
+
+        picLogo = New Guna.UI2.WinForms.Guna2PictureBox()
+        picLogo.Size = New Size(logoSize, logoSize)
+        picLogo.SizeMode = PictureBoxSizeMode.Zoom
+        picLogo.BackColor = Color.Transparent
+        If logoImg IsNot Nothing Then picLogo.Image = logoImg
+        Me.Controls.Add(picLogo)
+
+        ' ── CARD PANEL ──
+        cardPanel = New Guna.UI2.WinForms.Guna2Panel()
+        cardPanel.Size = New Size(cardW, cardH)
+        cardPanel.FillColor = Color.White
+        cardPanel.BorderRadius = 22
+        cardPanel.BackColor = Color.Transparent
+        cardPanel.ShadowDecoration.Enabled = False
+        Me.Controls.Add(cardPanel)
+
+        ' ── CUSTOM ROUNDED SHADOW (layered panels behind card, downward offset) ──
+        ' Shadow: color #BE9A30, 10-12% opacity, Y offset 8px, blur ~25-30px, no X offset
+        ' Layers spread outward only downward; top edge is nearly flush with card
+        shadowLayers = New List(Of Guna.UI2.WinForms.Guna2Panel)()
+        Dim shadowData(,) As Integer = {
+            {3, 2, 3, 8, 30},    ' spreadL, spreadT, spreadR, spreadB, alpha
+            {5, 3, 5, 13, 24},
+            {8, 4, 8, 18, 18},
+            {10, 5, 10, 23, 12},
+            {12, 5, 12, 28, 7}
+        }
+        For i As Integer = 0 To shadowData.GetUpperBound(0)
+            Dim sL As Integer = shadowData(i, 0)
+            Dim sT As Integer = shadowData(i, 1)
+            Dim sR As Integer = shadowData(i, 2)
+            Dim sB As Integer = shadowData(i, 3)
+            Dim a As Integer = shadowData(i, 4)
+            Dim sp As New Guna.UI2.WinForms.Guna2Panel()
+            sp.Size = New Size(cardW + sL + sR, cardH + sT + sB)
+            sp.BorderRadius = 22 + Math.Max(Math.Max(sL, sR), Math.Max(sT, sB))
+            sp.FillColor = Color.FromArgb(a, 190, 154, 48)
+            sp.BackColor = Color.Transparent
+            sp.ShadowDecoration.Enabled = False
+            Me.Controls.Add(sp)
+            sp.SendToBack()
+            shadowLayers.Add(sp)
+        Next
+
+        ' ── TITLE ──
+        lblTitle = New Guna.UI2.WinForms.Guna2HtmlLabel()
+        lblTitle.Text = "Welcome Back!"
+        lblTitle.Font = New Font("Poppins", 22.0F, FontStyle.Regular)
+        lblTitle.ForeColor = primaryText
+        lblTitle.BackColor = Color.Transparent
+        lblTitle.AutoSize = True
+        cardPanel.Controls.Add(lblTitle)
+
+        ' ── SUBTITLE ──
+        lblSubtitle = New Guna.UI2.WinForms.Guna2HtmlLabel()
+        lblSubtitle.Text = "Please enter your credentials to continue"
+        lblSubtitle.Font = New Font("Poppins", 9.5F, FontStyle.Regular)
+        lblSubtitle.ForeColor = subtitleColor
+        lblSubtitle.BackColor = Color.Transparent
+        lblSubtitle.AutoSize = True
+        cardPanel.Controls.Add(lblSubtitle)
+
+        ' ── USERNAME LABEL ──
+        lblUsernameLabel = New Guna.UI2.WinForms.Guna2HtmlLabel()
+        lblUsernameLabel.Text = "Username"
+        lblUsernameLabel.Font = New Font("Poppins", 10.0F, FontStyle.Regular)
+        lblUsernameLabel.ForeColor = labelText
+        lblUsernameLabel.BackColor = Color.Transparent
+        lblUsernameLabel.AutoSize = True
+        cardPanel.Controls.Add(lblUsernameLabel)
+
+        ' ── USERNAME TEXTBOX ──
+        txtUsername = New Guna.UI2.WinForms.Guna2TextBox()
+        txtUsername.Size = New Size(contentW, inputH)
+        txtUsername.BorderRadius = 9
+        txtUsername.FillColor = Color.White
+        txtUsername.BorderColor = inputBorder
+        txtUsername.BorderThickness = 1
+        txtUsername.FocusedState.BorderColor = primaryGold
+        txtUsername.HoverState.BorderColor = primaryGold
+        txtUsername.ForeColor = primaryText
+        txtUsername.PlaceholderForeColor = placeholderColor
+        txtUsername.PlaceholderText = "Enter username"
+        txtUsername.Font = New Font("Segoe UI", 10.0F)
+        txtUsername.BackColor = Color.Transparent
+        txtUsername.TextAlign = HorizontalAlignment.Left
+        txtUsername.IconLeft = CreateUserIcon(primaryGold)
+        txtUsername.IconLeftSize = New Size(18, 18)
+        txtUsername.IconLeftOffset = New Point(10, 0)
+        txtUsername.TextOffset = New Point(14, 0)
+        cardPanel.Controls.Add(txtUsername)
+
+        ' ── PASSWORD LABEL ──
+        lblPasswordLabel = New Guna.UI2.WinForms.Guna2HtmlLabel()
+        lblPasswordLabel.Text = "Password"
+        lblPasswordLabel.Font = New Font("Poppins", 10.0F, FontStyle.Regular)
+        lblPasswordLabel.ForeColor = labelText
+        lblPasswordLabel.BackColor = Color.Transparent
+        lblPasswordLabel.AutoSize = True
+        cardPanel.Controls.Add(lblPasswordLabel)
+
+        ' ── PASSWORD TEXTBOX ──
+        txtPassword = New Guna.UI2.WinForms.Guna2TextBox()
+        txtPassword.Size = New Size(contentW, inputH)
+        txtPassword.BorderRadius = 9
+        txtPassword.FillColor = Color.White
+        txtPassword.BorderColor = inputBorder
+        txtPassword.BorderThickness = 1
+        txtPassword.FocusedState.BorderColor = primaryGold
+        txtPassword.HoverState.BorderColor = primaryGold
+        txtPassword.ForeColor = primaryText
+        txtPassword.PlaceholderForeColor = placeholderColor
+        txtPassword.PlaceholderText = "Enter password"
+        txtPassword.PasswordChar = "•"c
+        txtPassword.UseSystemPasswordChar = False
+        txtPassword.Font = New Font("Segoe UI", 10.0F)
+        txtPassword.BackColor = Color.Transparent
+        txtPassword.TextAlign = HorizontalAlignment.Left
+        txtPassword.IconLeft = CreateLockIcon(primaryGold)
+        txtPassword.IconLeftSize = New Size(18, 18)
+        txtPassword.IconLeftOffset = New Point(10, 0)
+        txtPassword.TextOffset = New Point(14, 0)
+        cardPanel.Controls.Add(txtPassword)
+
+        ' ── EYE TOGGLE ──
+        lblEyeToggle = New Label()
+        lblEyeToggle.Size = New Size(28, 28)
+        lblEyeToggle.BackColor = Color.Transparent
+        lblEyeToggle.Cursor = Cursors.Hand
+        lblEyeToggle.Image = CreateEyeIcon(True)
+        cardPanel.Controls.Add(lblEyeToggle)
+        lblEyeToggle.BringToFront()
+        AddHandler lblEyeToggle.Click, Sub() TogglePasswordVisibility()
+
+        ' ── FORGOT PASSWORD LINK ──
+        lnkForgotPassword = New Guna.UI2.WinForms.Guna2HtmlLabel()
+        lnkForgotPassword.Text = "Forgot Password?"
+        lnkForgotPassword.Font = New Font("Poppins", 9.5F, FontStyle.Regular)
+        lnkForgotPassword.ForeColor = primaryGold
+        lnkForgotPassword.BackColor = Color.Transparent
+        lnkForgotPassword.AutoSize = True
+        lnkForgotPassword.Cursor = Cursors.Hand
+        cardPanel.Controls.Add(lnkForgotPassword)
+
+        ' ── LOGIN BUTTON ──
+        btnLogin = New Guna.UI2.WinForms.Guna2Button()
+        btnLogin.Size = New Size(contentW, 52)
+        btnLogin.BorderRadius = 10
+        btnLogin.FillColor = primaryGold
+        btnLogin.ForeColor = Color.White
+        btnLogin.Font = New Font("Poppins", 10.5F, FontStyle.Regular)
+        btnLogin.Text = "➜  Login"
+        btnLogin.TextAlign = HorizontalAlignment.Center
+        btnLogin.BackColor = Color.Transparent
+        btnLogin.HoverState.FillColor = hoverGold
+        cardPanel.Controls.Add(btnLogin)
+
+        ' ── DIVIDER ──
+        pnlDivider = New Panel()
+        pnlDivider.Size = New Size(contentW, 22)
+        pnlDivider.BackColor = Color.Transparent
+        cardPanel.Controls.Add(pnlDivider)
+
+        Dim lineLeft As New Panel()
+        lineLeft.Size = New Size(contentW \ 2 - 26, 1)
+        lineLeft.BackColor = dividerColor
+        lineLeft.Location = New Point(0, 10)
+        pnlDivider.Controls.Add(lineLeft)
+
+        lblOr = New Label()
+        lblOr.Text = "OR"
+        lblOr.Font = New Font("Poppins", 8.5F, FontStyle.Regular)
+        lblOr.ForeColor = Color.FromArgb(153, 153, 153)
+        lblOr.BackColor = Color.Transparent
+        lblOr.AutoSize = True
+        lblOr.Location = New Point(contentW \ 2 - 13, 0)
+        pnlDivider.Controls.Add(lblOr)
+
+        Dim lineRight As New Panel()
+        lineRight.Size = New Size(contentW \ 2 - 26, 1)
+        lineRight.BackColor = dividerColor
+        lineRight.Location = New Point(contentW \ 2 + 26, 10)
+        pnlDivider.Controls.Add(lineRight)
+
+        ' ── QR LOGIN BUTTON ──
+        btnQRLogin = New Guna.UI2.WinForms.Guna2Button()
+        btnQRLogin.Size = New Size(contentW, 48)
+        btnQRLogin.BorderRadius = 10
+        btnQRLogin.FillColor = Color.White
+        btnQRLogin.BorderColor = primaryGold
+        btnQRLogin.BorderThickness = 1
+        btnQRLogin.Text = "Scan QR Code to Login"
+        btnQRLogin.ForeColor = primaryGold
+        btnQRLogin.Font = New Font("Poppins", 9.5F, FontStyle.Regular)
+        btnQRLogin.TextAlign = HorizontalAlignment.Left
+        btnQRLogin.BackColor = Color.Transparent
+        btnQRLogin.HoverState.FillColor = Color.FromArgb(10, 190, 154, 48)
+        btnQRLogin.Image = CreateQRIcon(primaryGold)
+        btnQRLogin.ImageSize = New Size(24, 24)
+        btnQRLogin.ImageAlign = HorizontalAlignment.Left
+        btnQRLogin.ImageOffset = New Point(143, 0)
+        btnQRLogin.TextOffset = New Point(173, 0)
+        cardPanel.Controls.Add(btnQRLogin)
+
+        ' ── LAYOUT POSITIONS ──
+        Dim y As Integer = 36
+
+        lblTitle.Location = New Point((cardW - lblTitle.Width) \ 2, y)
+        y += lblTitle.Height + 10
+
+        lblSubtitle.Location = New Point((cardW - lblSubtitle.Width) \ 2, y)
+        y += lblSubtitle.Height + 44
+
+        lblUsernameLabel.Location = New Point(contentX, y)
+        y += lblUsernameLabel.Height + 10
+
+        txtUsername.Location = New Point(contentX, y)
+        y += inputH + 30
+
+        lblPasswordLabel.Location = New Point(contentX, y)
+        y += lblPasswordLabel.Height + 10
+
+        txtPassword.Location = New Point(contentX, y)
+        lblEyeToggle.Location = New Point(contentX + contentW - 38, y + 10)
+        y += inputH + 10
+
+        lnkForgotPassword.Location = New Point(contentX + contentW - lnkForgotPassword.Width, y)
+        y += 34
+
+        btnLogin.Location = New Point(contentX, y)
+        y += 52 + 22
+
+        pnlDivider.Location = New Point(contentX, y)
+        y += 22 + 20
+
+        btnQRLogin.Location = New Point(contentX, y)
+    End Sub
+
+    ' ================================================================
+    '  EYE ICON HELPERS
+    ' ================================================================
+    Private Function CreateEyeIcon(open As Boolean) As Image
+        Dim bmp As New Bitmap(20, 20)
+        Using g = Graphics.FromImage(bmp)
+            g.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias
+            g.Clear(Color.Transparent)
+            Dim c As Color = Color.FromArgb(153, 153, 153)
+            Using pen As New Pen(c, 1.8F)
+                g.DrawArc(pen, 1, 5, 18, 10, 180, 180)
+                g.DrawArc(pen, 1, 3, 18, 10, 0, 180)
+                If open Then
+                    Using brush As New SolidBrush(c)
+                        g.FillEllipse(brush, 7, 6, 6, 6)
+                    End Using
+                Else
+                    g.DrawLine(pen, 2, 14, 18, 4)
+                End If
+            End Using
+        End Using
+        Return bmp
+    End Function
+
+    Private Function CreateUserIcon(iconColor As Color) As Image
+        Dim bmp As New Bitmap(20, 20)
+        Using g = Graphics.FromImage(bmp)
+            g.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias
+            g.Clear(Color.Transparent)
+            Using pen As New Pen(iconColor, 1.6F)
+                g.DrawEllipse(pen, 6, 1, 8, 8)
+                g.DrawArc(pen, 2, 10, 16, 10, 180, 180)
+            End Using
+        End Using
+        Return bmp
+    End Function
+
+    Private Function CreateLockIcon(iconColor As Color) As Image
+        Dim bmp As New Bitmap(20, 20)
+        Using g = Graphics.FromImage(bmp)
+            g.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias
+            g.Clear(Color.Transparent)
+            Using pen As New Pen(iconColor, 1.6F)
+                g.DrawRectangle(pen, 4, 10, 12, 8)
+                g.DrawArc(pen, 6, 3, 8, 8, 180, 180)
+                g.DrawLine(pen, 6, 7, 14, 7)
+            End Using
+        End Using
+        Return bmp
+    End Function
+
+    Private Function CreateLoginIcon(iconColor As Color) As Image
+        Dim bmp As New Bitmap(20, 20)
+        Using g = Graphics.FromImage(bmp)
+            g.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias
+            g.Clear(Color.Transparent)
+            Using pen As New Pen(iconColor, 1.8F)
+                g.DrawLine(pen, 3, 10, 16, 10)
+                g.DrawLine(pen, 11, 5, 16, 10)
+                g.DrawLine(pen, 11, 15, 16, 10)
+                g.DrawLine(pen, 7, 3, 7, 17)
+            End Using
+        End Using
+        Return bmp
+    End Function
+
+    Private Function CreateQRIcon(iconColor As Color) As Image
+        Dim bmp As New Bitmap(20, 20)
+        Using g = Graphics.FromImage(bmp)
+            g.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias
+            g.Clear(Color.Transparent)
+            Using pen As New Pen(iconColor, 1.6F)
+                g.DrawRectangle(pen, 1, 1, 7, 7)
+                g.DrawRectangle(pen, 12, 1, 7, 7)
+                g.DrawRectangle(pen, 1, 12, 7, 7)
+                Using brush As New SolidBrush(iconColor)
+                    g.FillRectangle(brush, 3, 3, 3, 3)
+                    g.FillRectangle(brush, 14, 3, 3, 3)
+                    g.FillRectangle(brush, 3, 14, 3, 3)
+                    g.FillRectangle(brush, 13, 13, 2, 2)
+                    g.FillRectangle(brush, 16, 13, 2, 2)
+                    g.FillRectangle(brush, 13, 16, 2, 2)
+                End Using
+            End Using
+        End Using
+        Return bmp
+    End Function
+
+    Private Sub TogglePasswordVisibility()
+        passwordVisible = Not passwordVisible
+        If passwordVisible Then
+            txtPassword.PasswordChar = ChrW(0)
+            lblEyeToggle.Image = CreateEyeIcon(False)
+        Else
+            txtPassword.PasswordChar = "•"c
+            lblEyeToggle.Image = CreateEyeIcon(True)
+        End If
+    End Sub
+
     Private Sub CheckForUpdateInternal()
         Try
-            ' Only Admin/Manager can trigger updates
             Dim role As String = If(LoggedInRole, "").ToUpper()
             If role <> "ADMIN" AndAlso role <> "MANAGER" Then Return
 
@@ -136,32 +501,46 @@ Public Class frmLoginvb
     End Sub
 
     Private Sub SetupTabIndex()
-        txtUserName.TabIndex = 0
+        txtUsername.TabIndex = 0
         txtPassword.TabIndex = 1
-        Guna2CheckBox1.TabIndex = 2
-        BtnLogin.TabIndex = 3
+        btnLogin.TabIndex = 2
         Utilities.ApplyInputFocusEffects(Me)
     End Sub
 
     Private Sub CenterLoginLayout()
-        Dim groupHeight As Integer = PictureBox1.Height + pictureBoxTopSpacing + Guna2Panel1.Height
+        If cardPanel Is Nothing OrElse picLogo Is Nothing Then Return
+        Dim logoSize As Integer = 120
+        Dim logoSpacing As Integer = 30
+        Dim groupHeight As Integer = logoSize + logoSpacing + cardPanel.Height
         Dim groupTop As Integer = Math.Max(0, (Me.ClientSize.Height - groupHeight) \ 2)
 
-        PictureBox1.Top = groupTop
-        PictureBox1.Left = (Me.ClientSize.Width - PictureBox1.Width) \ 2
+        picLogo.Left = (Me.ClientSize.Width - logoSize) \ 2
+        picLogo.Top = groupTop
 
-        Guna2Panel1.Top = PictureBox1.Bottom + pictureBoxTopSpacing
-        Guna2Panel1.Left = (Me.ClientSize.Width - Guna2Panel1.Width) \ 2
+        Dim cardX As Integer = (Me.ClientSize.Width - cardPanel.Width) \ 2
+        Dim cardY As Integer = groupTop + logoSize + logoSpacing
+        cardPanel.Left = cardX
+        cardPanel.Top = cardY
 
+        If shadowLayers IsNot Nothing Then
+            Dim spreadData(,) As Integer = {
+                {3, 2, 3, 8},
+                {5, 3, 5, 13},
+                {8, 4, 8, 18},
+                {10, 5, 10, 23},
+                {12, 5, 12, 28}
+            }
+            For i As Integer = 0 To shadowLayers.Count - 1
+                shadowLayers(i).Left = cardX - spreadData(i, 0)
+                shadowLayers(i).Top = cardY - spreadData(i, 1)
+                shadowLayers(i).SendToBack()
+            Next
+        End If
     End Sub
 
-    ' Initialize database on startup - THIS FIXES THE ERROR!
     Private Sub InitializeDatabaseOnStartup()
         Try
             Console.WriteLine("Checking database connectivity on startup...")
-
-            ' Production-safe startup check:
-            ' do NOT run schema initialization from login screen on every client.
             If Connection.TestConnection() Then
                 Console.WriteLine("? Database connection is ready for login.")
             Else
@@ -169,7 +548,6 @@ Public Class frmLoginvb
                 MessageBox.Show("Unable to connect to the database server. Please check network and SQL settings.",
                                 "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
             End If
-
         Catch ex As Exception
             Console.WriteLine($"Database startup check error: {ex.Message}")
             MessageBox.Show($"Database connection error: {ex.Message}",
@@ -177,65 +555,46 @@ Public Class frmLoginvb
         End Try
     End Sub
 
-    ' Protect input fields from QR code input when scanner is not active
+    ' ================================================================
+    '  QR INPUT PROTECTION
+    ' ================================================================
     Private Sub ProtectFromQRInput(sender As Object, e As KeyPressEventArgs)
-        ' If QR scanner is not active, block QR-like input patterns
         If Not qrScannerActive Then
-            ' Always allow control characters (backspace, delete, etc.)
-            If Char.IsControl(e.KeyChar) Then
-                Return ' Allow all control characters
-            End If
+            If Char.IsControl(e.KeyChar) Then Return
 
             Dim currentText As String = ""
             Dim newChar As String = e.KeyChar.ToString()
 
-            ' Handle both Guna2TextBox and regular TextBox
             If TypeOf sender Is Guna.UI2.WinForms.Guna2TextBox Then
-                Dim gunaTextBox As Guna.UI2.WinForms.Guna2TextBox = CType(sender, Guna.UI2.WinForms.Guna2TextBox)
-                currentText = gunaTextBox.Text
+                currentText = CType(sender, Guna.UI2.WinForms.Guna2TextBox).Text
             ElseIf TypeOf sender Is TextBox Then
-                Dim textBox As TextBox = CType(sender, TextBox)
-                currentText = textBox.Text
+                currentText = CType(sender, TextBox).Text
             Else
-                ' Unknown control type, skip validation
                 Return
             End If
 
-            ' Only block if this would create a clear QR code pattern
             Dim potentialText As String = currentText + newChar
             If IsDefiniteQRCodeInput(potentialText) Then
-                e.Handled = True ' Block the input
+                e.Handled = True
                 Console.WriteLine($"Blocked QR code input: '{potentialText}'")
-
-                ' Just show a brief tooltip-style message without modal dialog
-                ' You can implement a non-blocking notification here if desired
             End If
         End If
     End Sub
 
-    ' Validate text input for QR code patterns
     Private Sub ValidateInputForQRCodes(sender As Object, e As EventArgs)
         If Not qrScannerActive Then
             Dim text As String = ""
-
-            ' Handle both Guna2TextBox and regular TextBox
             If TypeOf sender Is Guna.UI2.WinForms.Guna2TextBox Then
-                Dim gunaTextBox As Guna.UI2.WinForms.Guna2TextBox = CType(sender, Guna.UI2.WinForms.Guna2TextBox)
+                Dim gunaTextBox = CType(sender, Guna.UI2.WinForms.Guna2TextBox)
                 text = gunaTextBox.Text
-
-                ' Only clear if this is definitely a complete QR code
                 If IsDefiniteQRCodeInput(text) Then
-                    ' Clear the field silently
                     gunaTextBox.Clear()
                     Console.WriteLine($"Cleared QR code input: '{text}'")
                 End If
             ElseIf TypeOf sender Is TextBox Then
-                Dim textBox As TextBox = CType(sender, TextBox)
+                Dim textBox = CType(sender, TextBox)
                 text = textBox.Text
-
-                ' Only clear if this is definitely a complete QR code
                 If IsDefiniteQRCodeInput(text) Then
-                    ' Clear the field silently
                     textBox.Clear()
                     Console.WriteLine($"Cleared QR code input: '{text}'")
                 End If
@@ -243,102 +602,45 @@ Public Class frmLoginvb
         End If
     End Sub
 
-    ' Check if input is definitely a QR code (more restrictive than IsLikelyQRCodeInput)
     Private Function IsDefiniteQRCodeInput(input As String) As Boolean
         If String.IsNullOrEmpty(input) Then Return False
-
-        ' Only trigger on exact User-XXXXX pattern
         If input.StartsWith("User-", StringComparison.OrdinalIgnoreCase) AndAlso input.Length >= 8 Then
             Dim userIdPart As String = input.Substring(5)
-            If userIdPart.All(AddressOf Char.IsDigit) AndAlso userIdPart.Length >= 3 Then
-                Return True
-            End If
+            If userIdPart.All(AddressOf Char.IsDigit) AndAlso userIdPart.Length >= 3 Then Return True
         End If
-
-        ' Only trigger on very long numeric sequences (8+ digits)
-        If input.Length >= 8 AndAlso input.All(AddressOf Char.IsDigit) Then
-            Return True
-        End If
-
+        If input.Length >= 8 AndAlso input.All(AddressOf Char.IsDigit) Then Return True
         Return False
     End Function
 
-    ' Check if input looks like a QR code (original function, kept for compatibility)
     Private Function IsLikelyQRCodeInput(input As String) As Boolean
         If String.IsNullOrEmpty(input) Then Return False
-
-        ' Check for User-XXXXX pattern
-        If input.StartsWith("User-", StringComparison.OrdinalIgnoreCase) Then
-            Return True
-        End If
-
-        ' Check for rapid sequential numeric input (typical of QR scanners)
-        If input.Length > 3 AndAlso input.All(AddressOf Char.IsDigit) Then
-            Return True
-        End If
-
-        ' Check for mixed alphanumeric that could be a QR code
+        If input.StartsWith("User-", StringComparison.OrdinalIgnoreCase) Then Return True
+        If input.Length > 3 AndAlso input.All(AddressOf Char.IsDigit) Then Return True
         If input.Length > 5 AndAlso Not input.Contains(" ") Then
             Dim alphaCount = input.Count(AddressOf Char.IsLetter)
             Dim digitCount = input.Count(AddressOf Char.IsDigit)
             Dim symbolCount = input.Count(Function(c) Not Char.IsLetterOrDigit(c))
-
-            ' If it has a mix of characters typical of QR codes
-            If (alphaCount > 0 AndAlso digitCount > 0) OrElse symbolCount > 0 Then
-                Return True
-            End If
+            If (alphaCount > 0 AndAlso digitCount > 0) OrElse symbolCount > 0 Then Return True
         End If
-
         Return False
     End Function
 
-    ' Check if both username and password are filled, then show QR code
     Private Sub CheckAndShowQRCode(sender As Object, e As EventArgs)
-        ' Only show QR code if scanner is not currently active and both fields are filled
         If Not qrScannerActive Then
-            Dim usernameText As String = ""
-            Dim passwordText As String = ""
-
-            ' Get text from username field (handle both control types)
-            If TypeOf txtUserName Is Guna.UI2.WinForms.Guna2TextBox Then
-                usernameText = CType(txtUserName, Guna.UI2.WinForms.Guna2TextBox).Text
-            End If
-
-            ' Get text from password field (handle both control types)
-            If TypeOf txtPassword Is Guna.UI2.WinForms.Guna2TextBox Then
-                passwordText = CType(txtPassword, Guna.UI2.WinForms.Guna2TextBox).Text
-            End If
-
+            Dim usernameText As String = txtUsername.Text
+            Dim passwordText As String = txtPassword.Text
             If Not String.IsNullOrWhiteSpace(usernameText) AndAlso Not String.IsNullOrWhiteSpace(passwordText) Then
                 ShowUserQRCode()
             End If
         End If
     End Sub
 
-    ' Show the user's QR code based on their username
     Private Sub ShowUserQRCode()
         Try
-            ' Only show QR code if scanner is not active
-            If qrScannerActive Then
-                Return ' Exit immediately if scanner is active
-            End If
+            If qrScannerActive Then Return
+            Dim username As String = txtUsername.Text.Trim()
+            If String.IsNullOrWhiteSpace(username) Then Return
 
-            Dim username As String = ""
-
-            ' Get username from the appropriate control type
-            If TypeOf txtUserName Is Guna.UI2.WinForms.Guna2TextBox Then
-                username = CType(txtUserName, Guna.UI2.WinForms.Guna2TextBox).Text.Trim()
-
-            Else
-                ' If we can't determine the control type, try accessing .Text property directly
-                username = txtUserName.Text.Trim()
-            End If
-
-            If String.IsNullOrWhiteSpace(username) Then
-                Return ' Don't show QR code if username is empty
-            End If
-
-            ' Get user details from database
             Dim query As String = "SELECT UserID, FullName FROM Users WHERE Username = @Username AND IsActive = 1"
             Dim parameters As SqlParameter() = {New SqlParameter("@Username", username)}
 
@@ -348,7 +650,6 @@ Public Class frmLoginvb
                     Dim fullName As String = If(IsDBNull(reader("FullName")), username, reader("FullName").ToString())
                     Dim qrCode As String = $"User-{userId:D5}"
 
-                    ' Create a form to display the QR code nicely
                     Dim qrForm As New Form()
                     qrForm.Text = "Your QR Code"
                     qrForm.Size = New Size(400, 300)
@@ -405,8 +706,7 @@ Public Class frmLoginvb
         End Try
     End Sub
 
-    ' Event handler for QR login label click
-    Private Sub Guna2HtmlLabel5_Click(sender As Object, e As EventArgs)
+    Private Sub btnQRLogin_Click(sender As Object, e As EventArgs) Handles btnQRLogin.Click
         If qrScannerEnabled Then
             ShowQRScanDialog()
         Else
@@ -414,25 +714,23 @@ Public Class frmLoginvb
         End If
     End Sub
 
-    ' Toggle QR scanner enabled/disabled
     Private Sub ToggleQRScanner()
         qrScannerEnabled = Not qrScannerEnabled
-
         If qrScannerEnabled Then
-            Guna2HtmlLabel5.Text = "?? Scan QR Code"
-            Guna2HtmlLabel5.ForeColor = Color.White
+            btnQRLogin.Text = "Scan QR Code to Login"
+            btnQRLogin.ForeColor = Color.FromArgb(190, 154, 48)
         Else
-            Guna2HtmlLabel5.Text = "?? QR Scanner Disabled"
-            Guna2HtmlLabel5.ForeColor = Color.Gray
+            btnQRLogin.Text = "QR Scanner Disabled"
+            btnQRLogin.ForeColor = Color.Gray
         End If
     End Sub
 
-    ' Create and show QR scan dialog (QR scanner only, no manual typing)
+    ' ================================================================
+    '  QR SCAN DIALOG
+    ' ================================================================
     Private Sub ShowQRScanDialog()
-        ' Set QR scanner as active
         qrScannerActive = True
 
-        ' Create QR scan dialog form
         Dim qrDialog As New Form()
         qrDialog.Text = "QR Code Scanner - Staff Login"
         qrDialog.Size = New Size(550, 480)
@@ -442,11 +740,10 @@ Public Class frmLoginvb
         qrDialog.MaximizeBox = False
         qrDialog.MinimizeBox = False
         qrDialog.ShowIcon = False
-        qrDialog.KeyPreview = True ' Enable key preview for the dialog
+        qrDialog.KeyPreview = True
 
-        ' Create QR input textbox (hidden for scanner input only)
         Dim txtQRInput As New TextBox()
-        txtQRInput.Location = New Point(-1000, 10) ' Visible for debugging
+        txtQRInput.Location = New Point(-1000, 10)
         txtQRInput.Size = New Size(200, 20)
         txtQRInput.BackColor = Color.FromArgb(237, 237, 237)
         txtQRInput.ForeColor = Color.FromArgb(51, 51, 51)
@@ -454,71 +751,63 @@ Public Class frmLoginvb
         txtQRInput.TabIndex = 0
         txtQRInput.TabStop = True
 
-        ' Debug label to show what's being typed
         Dim lblDebug As New Label()
         lblDebug.Text = "Debug: (empty)"
         lblDebug.Font = New Font("Poppins", 8.0F, FontStyle.Regular)
         lblDebug.ForeColor = Color.FromArgb(102, 102, 102)
         lblDebug.BackColor = Color.Transparent
         lblDebug.AutoSize = True
-        lblDebug.Visible = True ' Made visible for debugging
+        lblDebug.Visible = True
         lblDebug.Location = New Point(-1010, 40)
 
-        ' Auto-clear timer to clear accidentally typed text
         Dim autoClearTimer As New Timer()
-        autoClearTimer.Interval = 3000 ' Clear after 3 seconds of inactivity
+        autoClearTimer.Interval = 3000
 
-        ' Title label
         Dim lblTitle As New Label()
         lblTitle.Text = "QR Code Scanner"
         lblTitle.Font = New Font("Poppins", 18.0F, FontStyle.Bold)
         lblTitle.ForeColor = Color.FromArgb(51, 51, 51)
         lblTitle.BackColor = Color.Transparent
         lblTitle.AutoSize = True
-        lblTitle.Location = New Point(0, 70) ' Temporary position
+        lblTitle.Location = New Point(0, 70)
         qrDialog.Controls.Add(lblTitle)
 
-        ' Instruction label
         Dim lblInstruction As New Label()
         lblInstruction.Text = "Point your QR scanner at the staff QR code"
         lblInstruction.Font = New Font("Poppins", 11.0F, FontStyle.Regular)
         lblInstruction.ForeColor = Color.FromArgb(51, 51, 51)
         lblInstruction.BackColor = Color.Transparent
         lblInstruction.AutoSize = True
-        lblInstruction.Location = New Point(0, 120) ' Temporary position
+        lblInstruction.Location = New Point(0, 120)
         qrDialog.Controls.Add(lblInstruction)
 
-        ' Secondary instruction
         Dim lblInstruction2 As New Label()
         lblInstruction2.Text = "Scanner will automatically detect and process QR codes"
         lblInstruction2.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
         lblInstruction2.ForeColor = Color.FromArgb(102, 102, 102)
         lblInstruction2.BackColor = Color.Transparent
         lblInstruction2.AutoSize = True
-        lblInstruction2.Location = New Point(0, 150) ' Temporary position
+        lblInstruction2.Location = New Point(0, 150)
         qrDialog.Controls.Add(lblInstruction2)
 
-        ' Status label
         Dim lblStatus As New Label()
         lblStatus.Text = "Ready to scan QR code..."
         lblStatus.Font = New Font("Poppins", 10.0F, FontStyle.Regular)
         lblStatus.ForeColor = Color.FromArgb(80, 160, 80)
         lblStatus.BackColor = Color.Transparent
         lblStatus.AutoSize = True
-        lblStatus.Location = New Point(0, 200) ' Temporary position
+        lblStatus.Location = New Point(0, 200)
         qrDialog.Controls.Add(lblStatus)
 
-        ' QR indicator (blinking effect)
         Dim lblQRIndicator As New Label()
         lblQRIndicator.Text = "Scanner Active - Waiting for QR code..."
         lblQRIndicator.Font = New Font("Poppins", 10.0F, FontStyle.Regular)
         lblQRIndicator.ForeColor = Color.FromArgb(80, 160, 80)
         lblQRIndicator.BackColor = Color.Transparent
         lblQRIndicator.AutoSize = True
-        lblQRIndicator.Location = New Point(0, 230) ' Temporary position
+        lblQRIndicator.Location = New Point(0, 230)
         qrDialog.Controls.Add(lblQRIndicator)
 
-        ' Close button (centered)
         Dim btnClose As New Button()
         btnClose.Text = "Close Scanner"
         btnClose.Size = New Size(140, 40)
@@ -534,7 +823,6 @@ Public Class frmLoginvb
                                        qrDialog.Close()
                                    End Sub
 
-        ' Add hover effect to close button
         AddHandler btnClose.MouseEnter, Sub()
                                             btnClose.BackColor = Color.FromArgb(190, 60, 50)
                                         End Sub
@@ -542,21 +830,17 @@ Public Class frmLoginvb
                                             btnClose.BackColor = Color.FromArgb(220, 80, 70)
                                         End Sub
 
-        ' Add all controls to dialog first
         qrDialog.Controls.AddRange({txtQRInput, lblDebug, btnClose})
 
-        ' Force layout calculation and then center labels properly
         qrDialog.PerformLayout()
         Application.DoEvents()
 
-        ' Now center all labels properly after AutoSize has calculated their actual sizes
         lblTitle.Location = New Point((qrDialog.ClientSize.Width - lblTitle.Width) / 2, 70)
         lblInstruction.Location = New Point((qrDialog.ClientSize.Width - lblInstruction.Width) / 2, 120)
         lblInstruction2.Location = New Point((qrDialog.ClientSize.Width - lblInstruction2.Width) / 2, 150)
         lblStatus.Location = New Point((qrDialog.ClientSize.Width - lblStatus.Width) / 2, 200)
         lblQRIndicator.Location = New Point((qrDialog.ClientSize.Width - lblQRIndicator.Width) / 2, 230)
 
-        ' Add blinking timer for QR indicator
         Dim blinkTimer As New Timer()
         blinkTimer.Interval = 1000
         AddHandler blinkTimer.Tick, Sub()
@@ -568,7 +852,6 @@ Public Class frmLoginvb
                                                 lblQRIndicator.ForeColor = Color.FromArgb(80, 160, 80)
                                                 lblQRIndicator.Text = "Scanner Active - Waiting for QR code..."
                                             End If
-                                            ' Recenter after text change
                                             lblQRIndicator.Location = New Point((qrDialog.ClientSize.Width - lblQRIndicator.Width) / 2, 230)
                                         Catch ex As Exception
                                             Console.WriteLine($"Blink timer error: {ex.Message}")
@@ -576,7 +859,6 @@ Public Class frmLoginvb
                                     End Sub
         blinkTimer.Start()
 
-        ' Auto-clear timer event
         AddHandler autoClearTimer.Tick, Sub()
                                             Try
                                                 autoClearTimer.Stop()
@@ -588,7 +870,6 @@ Public Class frmLoginvb
                                                     lblStatus.Location = New Point((qrDialog.ClientSize.Width - lblStatus.Width) / 2, 200)
                                                     lblDebug.Text = "Debug: Auto-cleared"
 
-                                                    ' Reset status after showing clear message
                                                     Dim resetStatusTimer As New Timer()
                                                     resetStatusTimer.Interval = 1500
                                                     AddHandler resetStatusTimer.Tick, Sub()
@@ -609,19 +890,13 @@ Public Class frmLoginvb
                                             End Try
                                         End Sub
 
-        ' QR input event handlers with improved validation
         AddHandler txtQRInput.TextChanged, Sub(s, eArgs)
                                                Try
-                                                   ' Update debug label
                                                    lblDebug.Text = $"Debug: '{txtQRInput.Text}'"
-
-                                                   ' Reset and start auto-clear timer when text changes
                                                    autoClearTimer.Stop()
                                                    If Not String.IsNullOrEmpty(txtQRInput.Text) Then
                                                        autoClearTimer.Start()
                                                    End If
-
-                                                   ' Show input feedback
                                                    Console.WriteLine($"QR Input changed: '{txtQRInput.Text}'")
                                                Catch ex As Exception
                                                    Console.WriteLine($"TextChanged error: {ex.Message}")
@@ -634,12 +909,11 @@ Public Class frmLoginvb
 
                                                If eArgs.KeyCode = Keys.Enter Then
                                                    Console.WriteLine("Enter key pressed - processing QR code")
-                                                   autoClearTimer.Stop() ' Stop auto-clear when processing
+                                                   autoClearTimer.Stop()
 
                                                    Dim fullInput As String = txtQRInput.Text.Trim()
                                                    Console.WriteLine($"Processing Enter key with input: '{fullInput}'")
 
-                                                   ' Look for valid QR code pattern in the input
                                                    Dim qrCode As String = ExtractQRCodeFromInput(fullInput)
 
                                                    If Not String.IsNullOrEmpty(qrCode) Then
@@ -652,7 +926,6 @@ Public Class frmLoginvb
                                                        lblQRIndicator.ForeColor = Color.FromArgb(230, 150, 40)
                                                        lblQRIndicator.Location = New Point((qrDialog.ClientSize.Width - lblQRIndicator.Width) / 2, 230)
 
-                                                       ' Small delay to show processing state
                                                        Application.DoEvents()
                                                        Threading.Thread.Sleep(500)
 
@@ -673,7 +946,6 @@ Public Class frmLoginvb
                                                            txtQRInput.Clear()
                                                            lblDebug.Text = "Debug: (cleared after error)"
 
-                                                           ' Reset to scanning state after 3 seconds
                                                            Dim resetTimer As New Timer()
                                                            resetTimer.Interval = 3000
                                                            AddHandler resetTimer.Tick, Sub()
@@ -695,14 +967,12 @@ Public Class frmLoginvb
                                                        End If
                                                    Else
                                                        Console.WriteLine("No valid QR code found")
-                                                       ' No valid QR code found, clear input and show message
                                                        lblStatus.Text = "No valid QR code detected. Please scan again."
                                                        lblStatus.ForeColor = Color.FromArgb(230, 150, 40)
                                                        lblStatus.Location = New Point((qrDialog.ClientSize.Width - lblStatus.Width) / 2, 200)
                                                        txtQRInput.Clear()
                                                        lblDebug.Text = "Debug: No valid QR code"
 
-                                                       ' Reset to scanning state after 2 seconds
                                                        Dim resetTimer As New Timer()
                                                        resetTimer.Interval = 2000
                                                        AddHandler resetTimer.Tick, Sub()
@@ -725,25 +995,22 @@ Public Class frmLoginvb
                                            End Try
                                        End Sub
 
-        ' Clean up timers when dialog closes
         AddHandler qrDialog.FormClosed, Sub()
                                             Try
                                                 Console.WriteLine("QR Dialog closing - cleaning up timers")
                                                 blinkTimer.Stop()
                                                 autoClearTimer.Stop()
-                                                qrScannerActive = False ' Reset active state
+                                                qrScannerActive = False
                                             Catch ex As Exception
                                                 Console.WriteLine($"FormClosed error: {ex.Message}")
                                             End Try
                                         End Sub
 
-        ' Focus on QR input and show dialog
         Console.WriteLine("Showing QR Dialog")
         txtQRInput.Focus()
         qrDialog.ShowDialog(Me)
         Console.WriteLine("QR Dialog closed")
 
-        ' Ensure the main form and PIN panel receive focus after the scanner dialog closes so the user can immediately type the PIN.
         Try
             If pinPanel IsNot Nothing Then
                 Me.Activate()
@@ -751,7 +1018,6 @@ Public Class frmLoginvb
                 Me.ActiveControl = pinPanel
                 pinPanel.Focus()
             Else
-                ' If PIN panel hasn't been created yet, just activate the main form so it gets focus.
                 Me.Activate()
                 Me.Focus()
             End If
@@ -760,14 +1026,11 @@ Public Class frmLoginvb
         End Try
     End Sub
 
-    ' Helper function to extract valid QR code from mixed input
     Private Function ExtractQRCodeFromInput(input As String) As String
         Try
             If String.IsNullOrEmpty(input) Then Return ""
-
             Console.WriteLine($"Extracting QR code from: '{input}'")
 
-            ' Look for User-XXXXX pattern in the input (more flexible)
             Dim pattern As String = "User-\d{1,5}"
             Dim regex As New Regex(pattern)
             Dim match = regex.Match(input)
@@ -777,7 +1040,6 @@ Public Class frmLoginvb
                 Return match.Value
             End If
 
-            ' If no pattern found, check if the entire input is a valid QR code
             If input.StartsWith("User-") AndAlso input.Length >= 6 Then
                 Dim userIdPart As String = input.Substring(5)
                 If userIdPart.All(AddressOf Char.IsDigit) AndAlso userIdPart.Length >= 1 Then
@@ -786,7 +1048,6 @@ Public Class frmLoginvb
                 End If
             End If
 
-            ' Also check for just the number part
             If input.All(AddressOf Char.IsDigit) AndAlso input.Length >= 1 AndAlso input.Length <= 5 Then
                 Dim qrCode As String = $"User-{input.PadLeft(5, "0"c)}"
                 Console.WriteLine($"Constructed QR code from number: {qrCode}")
@@ -801,19 +1062,15 @@ Public Class frmLoginvb
         End Try
     End Function
 
-    ' Process QR login (return true if successful, false if failed)
     Private Function ProcessQRLogin(userCode As String) As Boolean
         Try
             Console.WriteLine($"Processing QR Login for: {userCode}")
 
-            ' Extract UserID from the scanned code (User-00001 -> 1)
-            Dim userIdStr As String = userCode.Substring(5) ' Remove "User-"
+            Dim userIdStr As String = userCode.Substring(5)
             Dim userId As Integer
 
             If Not Integer.TryParse(userIdStr, userId) Then
                 Console.WriteLine("Invalid user ID format")
-
-                ' Count as a failed login attempt; only audit on reaching max.
                 failedLoginAttempts += 1
                 If failedLoginAttempts >= MaxLoginAttempts Then
                     Try
@@ -822,23 +1079,18 @@ Public Class frmLoginvb
                     Catch ex As Exception
                         Console.WriteLine($"Failed to write audit on max QR attempts: {ex.Message}")
                     End Try
-
                     MessageBox.Show("Too many incorrect login attempts. The application will now close.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Error)
                     Application.Exit()
                 Else
                     MessageBox.Show("Invalid QR code format.", "QR Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)
                 End If
-
                 Return False
             End If
 
             Console.WriteLine($"Looking up user ID: {userId}")
 
-            ' Get user details from database using UserID (include IsActive and UserRole)
             Dim query As String = "SELECT Username, pin, IsActive, UserRole, FullName FROM Users WHERE UserID = @UserID"
-            Dim parameters As SqlParameter() = {
-            New SqlParameter("@UserID", userId)
-        }
+            Dim parameters As SqlParameter() = {New SqlParameter("@UserID", userId)}
 
             Dim username As String = Nothing
             Dim pinValue As String = Nothing
@@ -864,14 +1116,12 @@ Public Class frmLoginvb
             End Using
 
             If username IsNot Nothing AndAlso pinValue IsNot Nothing Then
-                ' If account inactive, show error and audit log (keep this as a distinct security event)
                 If Not isActive Then
                     MessageBox.Show("This account is inactive. Please contact your administrator.", "Account Inactive", MessageBoxButtons.OK, MessageBoxIcon.Warning)
                     Utilities.LogAudit(username, "QR Login Attempt (Inactive)", $"Inactive account attempted QR login: {username}")
                     Return False
                 End If
 
-                ' Store user context for subsequent flows
                 LoggedInUserID = userId
                 LoggedInUsername = username
                 LoggedInRole = userRole
@@ -879,22 +1129,13 @@ Public Class frmLoginvb
                     LoggedInFullName = fullName
                 End If
 
-                ' Show success message and proceed to PIN entry
                 MessageBox.Show($"QR Code scanned successfully!{vbCrLf}User: {username}{vbCrLf}Please enter your PIN.", "QR Login", MessageBoxButtons.OK, MessageBoxIcon.Information)
-
-                ' Log the QR scan attempt (successful detection)
                 Utilities.LogAudit(username, "QR Login Attempt", $"User {username} attempted login via QR code scan")
-
-                ' Reset failed login counter on successful identification
                 failedLoginAttempts = 0
-
-                ' Show PIN entry panel and ensure the main form will receive focus after the scanner closes so PIN keystrokes are captured.
                 ShowPinEntryPanel(pinValue)
                 Return True
             Else
                 Console.WriteLine("User not found in database")
-
-                ' Count as a failed attempt; only audit on reaching max.
                 failedLoginAttempts += 1
                 If failedLoginAttempts >= MaxLoginAttempts Then
                     Try
@@ -903,39 +1144,33 @@ Public Class frmLoginvb
                     Catch ex As Exception
                         Console.WriteLine($"Failed to write audit on max QR attempts (user not found): {ex.Message}")
                     End Try
-
                     MessageBox.Show("Too many incorrect login attempts. The application will now close.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Error)
                     Application.Exit()
                 Else
                     MessageBox.Show("Invalid QR code or user not found.", "QR Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)
                 End If
-
                 Return False
             End If
 
         Catch ex As Exception
             Console.WriteLine($"ProcessQRLogin error: {ex.Message}")
             MessageBox.Show($"Error processing QR code: {ex.Message}", "QR Login Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-
-            ' Log unexpected errors (distinct from failed attempts)
             Try
                 Utilities.LogAudit("Unknown", "QR Login Error", $"Error processing QR code {userCode}: {ex.Message}")
             Catch
             End Try
-
             Return False
         End Try
     End Function
-    ' Allow pressing Enter in password box to trigger login
+
     Private Sub txtPassword_KeyDown(sender As Object, e As KeyEventArgs)
         If e.KeyCode = Keys.Enter Then
-            BtnLogin_Click(BtnLogin, EventArgs.Empty)
+            btnLogin_Click(btnLogin, EventArgs.Empty)
             e.Handled = True
         End If
     End Sub
 
     Private Sub frmLoginvb_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
-        ' Log logout when form is closing (if user was logged in)
         If Not String.IsNullOrEmpty(LoggedInUsername) Then
             Utilities.LogAudit(LoggedInUsername, "Logged Out", $"User {LoggedInUsername} logged out or application closed.")
         End If
@@ -951,36 +1186,23 @@ Public Class frmLoginvb
         End If
     End Sub
 
-    Private Sub Guna2Panel1_SizeChanged(sender As Object, e As EventArgs) Handles Guna2Panel1.SizeChanged
-        Dim path As New Drawing2D.GraphicsPath()
-        path.AddArc(0, 0, 100, 100, 180, 90)
-        path.AddArc(Guna2Panel1.Width - 100, 0, 100, 100, 270, 90)
-        path.AddArc(Guna2Panel1.Width - 100, Guna2Panel1.Height - 100, 100, 100, 0, 90)
-        path.AddArc(0, Guna2Panel1.Height - 100, 100, 100, 90, 90)
-        path.CloseAllFigures()
-        Guna2Panel1.Region = New Region(path)
-    End Sub
-
-    Private Sub Guna2Panel1_Paint(sender As Object, e As PaintEventArgs) Handles Guna2Panel1.Paint
-        e.Graphics.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias
-    End Sub
-
-    Private Sub BtnLogin_Click(sender As Object, e As EventArgs) Handles BtnLogin.Click
+    ' ================================================================
+    '  LOGIN
+    ' ================================================================
+    Private Sub btnLogin_Click(sender As Object, e As EventArgs) Handles btnLogin.Click
         Try
-            ' Validate input (do not count these as failed attempts)
-            If String.IsNullOrEmpty(txtUserName.Text.Trim()) OrElse String.IsNullOrEmpty(txtPassword.Text.Trim()) Then
+            If String.IsNullOrEmpty(txtUsername.Text.Trim()) OrElse String.IsNullOrEmpty(txtPassword.Text.Trim()) Then
                 MessageBox.Show("Please enter both username and password.", "Login Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
                 Return
             End If
 
-            ' Query to get user credentials (do not filter by IsActive here so we can detect inactive attempts)
             Dim query As String = "
             SELECT UserID, Username, FullName, UserRole, pin, PasswordHash, IsActive 
             FROM Users 
             WHERE Username = @Username"
 
             Dim parameters As SqlParameter() = {
-            New SqlParameter("@Username", txtUserName.Text.Trim())
+            New SqlParameter("@Username", txtUsername.Text.Trim())
         }
 
             Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters)
@@ -997,7 +1219,6 @@ Public Class frmLoginvb
 
                     Dim usernameDb As String = reader("Username").ToString()
 
-                    ' If account inactive, show error and audit log immediately (keep this as a distinct security event)
                     If Not isActive Then
                         MessageBox.Show("This account is inactive. Please contact your administrator.", "Account Inactive", MessageBoxButtons.OK, MessageBoxIcon.Warning)
                         Utilities.LogAudit(usernameDb, "Login Attempt (Inactive)", $"Inactive account attempted to login: {usernameDb}")
@@ -1008,50 +1229,38 @@ Public Class frmLoginvb
                     Dim enteredPassword As String = txtPassword.Text.Trim()
                     Dim isPasswordValid As Boolean = False
 
-                    ' Check if it's a BCrypt hash (starts with $2a$ or $2b$)
                     If storedPasswordHash.StartsWith("$2a$") OrElse storedPasswordHash.StartsWith("$2b$") Then
-                        ' Use BCrypt verification
                         isPasswordValid = BCrypt.Net.BCrypt.Verify(enteredPassword, storedPasswordHash)
                     Else
-                        ' Legacy SHA256 hash - verify and upgrade to BCrypt
                         Dim enteredPasswordSHA256 As String = HashPasswordSHA256(enteredPassword)
                         isPasswordValid = (enteredPasswordSHA256 = storedPasswordHash)
-
                         If isPasswordValid Then
-                            ' Upgrade to BCrypt hash
-                            UpgradeUserPasswordToBCrypt(txtUserName.Text.Trim(), enteredPassword)
+                            UpgradeUserPasswordToBCrypt(txtUsername.Text.Trim(), enteredPassword)
                         End If
                     End If
 
                     If isPasswordValid Then
-                        ' Reset failed login counters on success
                         failedLoginAttempts = 0
                         failedPinAttempts = 0
 
-                        ' Login successful
                         LoggedInUserID = Convert.ToInt32(reader("UserID"))
                         LoggedInUsername = reader("Username").ToString()
                         LoggedInFullName = reader("FullName").ToString()
                         LoggedInRole = reader("UserRole").ToString()
                         Dim pinValue As String = reader("pin").ToString()
 
-                        ' Log successful login
                         Utilities.LogAudit(LoggedInUsername, "Login", "User logged in successfully")
-
-                        ' Show PIN entry panel instead of going directly to Dashboard
                         ShowPinEntryPanel(pinValue)
                     Else
-                        ' Wrong password: increment counter and only audit on reaching max
                         failedLoginAttempts += 1
 
                         If failedLoginAttempts >= MaxLoginAttempts Then
                             Try
-                                Dim auditUser = If(String.IsNullOrEmpty(txtUserName.Text.Trim()), "Unknown", txtUserName.Text.Trim())
+                                Dim auditUser = If(String.IsNullOrEmpty(txtUsername.Text.Trim()), "Unknown", txtUsername.Text.Trim())
                                 Utilities.LogAudit(auditUser, "Too Many Login Attempts", $"User exceeded maximum login attempts ({MaxLoginAttempts}). Application closing.")
                             Catch ex As Exception
                                 Console.WriteLine($"Failed to write audit on max login attempts: {ex.Message}")
                             End Try
-
                             MessageBox.Show("Too many incorrect login attempts. The application will now close.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Error)
                             Application.Exit()
                         Else
@@ -1059,17 +1268,15 @@ Public Class frmLoginvb
                         End If
                     End If
                 Else
-                    ' Username not found: count toward the same max attempts policy
                     failedLoginAttempts += 1
 
                     If failedLoginAttempts >= MaxLoginAttempts Then
                         Try
-                            Dim auditUser = If(String.IsNullOrEmpty(txtUserName.Text.Trim()), "Unknown", txtUserName.Text.Trim())
+                            Dim auditUser = If(String.IsNullOrEmpty(txtUsername.Text.Trim()), "Unknown", txtUsername.Text.Trim())
                             Utilities.LogAudit(auditUser, "Too Many Login Attempts", $"User exceeded maximum login attempts ({MaxLoginAttempts}). Application closing.")
                         Catch ex As Exception
                             Console.WriteLine($"Failed to write audit on max login attempts (username not found): {ex.Message}")
                         End Try
-
                         MessageBox.Show("Too many incorrect login attempts. The application will now close.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Error)
                         Application.Exit()
                     Else
@@ -1082,14 +1289,11 @@ Public Class frmLoginvb
             MessageBox.Show($"Login error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
-    ' BCrypt password hashing function (PRODUCTION READY!)
+
     Public Shared Function HashPassword(password As String) As String
-        ' BCrypt with salt rounds = 12 (very secure)
-        ' Each hash takes ~0.3 seconds to compute (good for security)
         Return BCrypt.Net.BCrypt.HashPassword(password, 12)
     End Function
 
-    ' Legacy SHA256 password hashing (for backward compatibility during transition)
     Private Function HashPasswordSHA256(password As String) As String
         Using sha256 As SHA256 = SHA256.Create()
             Dim bytes As Byte() = Encoding.UTF8.GetBytes(password)
@@ -1098,42 +1302,40 @@ Public Class frmLoginvb
         End Using
     End Function
 
-    ' Upgrade user's password from SHA256 to BCrypt
     Private Sub UpgradeUserPasswordToBCrypt(username As String, plainPassword As String)
         Try
             Dim newBCryptHash As String = HashPassword(plainPassword)
-
             Dim updateQuery As String = "UPDATE Users SET PasswordHash = @NewHash WHERE Username = @Username"
             Dim updateParams As SqlParameter() = {
                 New SqlParameter("@NewHash", newBCryptHash),
                 New SqlParameter("@Username", username)
             }
-
             Utilities.ExecuteNonQuery(updateQuery, updateParams)
             Console.WriteLine($"Successfully upgraded password for user: {username} to BCrypt")
-
-            ' Log the upgrade
             Utilities.LogAudit(username, "Password Upgraded", "Password hash upgraded from SHA256 to BCrypt")
         Catch ex As Exception
             Console.WriteLine($"Error upgrading password for {username}: {ex.Message}")
         End Try
     End Sub
 
+    ' ================================================================
+    '  PIN ENTRY PANEL
+    ' ================================================================
     Private Sub ShowPinEntryPanel(expectedPin As String)
         pinPanel = New Guna.UI2.WinForms.Guna2Panel()
-        pinPanel.Size = Guna2Panel1.Size
-        pinPanel.BorderRadius = 10
+        pinPanel.Size = cardPanel.Size
+        pinPanel.BorderRadius = 22
         pinPanel.FillColor = Color.FromArgb(250, 250, 249)
-        pinPanel.Location = Guna2Panel1.Location
+        pinPanel.Location = cardPanel.Location
         pinPanel.TabStop = True
 
-        Dim lblTitle As New Guna.UI2.WinForms.Guna2HtmlLabel()
-        lblTitle.Text = "Enter your PIN"
-        lblTitle.Font = New Font("Poppins SemiBold", 18.0F, FontStyle.Regular)
-        lblTitle.ForeColor = Color.FromArgb(51, 51, 51)
-        lblTitle.AutoSize = True
-        lblTitle.Location = New Point((pinPanel.Width - lblTitle.Width) \ 2, 30)
-        pinPanel.Controls.Add(lblTitle)
+        Dim lblPinTitle As New Guna.UI2.WinForms.Guna2HtmlLabel()
+        lblPinTitle.Text = "Enter your PIN"
+        lblPinTitle.Font = New Font("Poppins SemiBold", 18.0F, FontStyle.Regular)
+        lblPinTitle.ForeColor = Color.FromArgb(51, 51, 51)
+        lblPinTitle.AutoSize = True
+        lblPinTitle.Location = New Point((pinPanel.Width - lblPinTitle.Width) \ 2, 30)
+        pinPanel.Controls.Add(lblPinTitle)
 
         Dim pinIndicators As New List(Of Guna.UI2.WinForms.Guna2CircleButton)()
         Dim indicatorSize As Integer = 32
@@ -1142,7 +1344,7 @@ Public Class frmLoginvb
         For i = 0 To 3
             Dim indicator As New Guna.UI2.WinForms.Guna2CircleButton()
             indicator.Size = New Size(indicatorSize, indicatorSize)
-            indicator.FillColor = Color.FromArgb(237, 237, 237)   ' empty indicator color
+            indicator.FillColor = Color.FromArgb(237, 237, 237)
             indicator.BackColor = Color.FromArgb(250, 250, 249)
             indicator.BorderColor = Color.FromArgb(200, 200, 200)
             indicator.Location = New Point(indicatorStartX + i * (indicatorSize + indicatorSpacing), 90)
@@ -1184,7 +1386,6 @@ Public Class frmLoginvb
             button.Font = New Font("Poppins SemiBold", 18.0F, FontStyle.Regular)
             button.Text = buttonTexts(i)
 
-            ' Special styling for X (delete) button
             If button.Text = "X" Then
                 button.ForeColor = Color.FromArgb(220, 80, 70)
             End If
@@ -1193,14 +1394,13 @@ Public Class frmLoginvb
             Dim col = i Mod 3
             button.Location = New Point(buttonStartX + col * (buttonSize + buttonSpacing), buttonStartY + row * (buttonSize + buttonSpacing))
 
-            ' Hover effects
             AddHandler button.MouseEnter, Sub()
                                               Try
                                                   If button.Text = "X" Then
                                                       button.FillColor = Color.FromArgb(220, 80, 70)
                                                       button.ForeColor = Color.White
                                                   Else
-                                                      button.FillColor = Color.FromArgb(254, 191, 16) ' hover GoldenYellow
+                                                      button.FillColor = Color.FromArgb(254, 191, 16)
                                                       button.ForeColor = Color.FromArgb(51, 51, 51)
                                                   End If
                                               Catch
@@ -1227,7 +1427,6 @@ Public Class frmLoginvb
             pinPanelButtons.Add(button)
         Next
 
-        ' Inside ShowPinEntryPanel(expectedPin As String), update lblForgotPin setup:
         Dim lblForgotPin As New Label()
         lblForgotPin.Text = "Forgot PIN?"
         lblForgotPin.Font = New Font("Poppins", 10.0F, FontStyle.Underline)
@@ -1256,7 +1455,6 @@ Public Class frmLoginvb
             End Sub
         pinPanel.Controls.Add(lblForgotPin)
 
-        ' Key handler for PIN entry (including Enter)
         AddHandler pinPanel.KeyDown, Sub(senderObj, eArgs)
                                          Dim key As Keys = eArgs.KeyCode
                                          If key >= Keys.D0 And key <= Keys.D9 Then
@@ -1280,81 +1478,80 @@ Public Class frmLoginvb
         If String.IsNullOrWhiteSpace(targetUsername) Then Return False
 
         Dim dlg As New Form With {
-        .Text = "Forgot PIN",
-        .Size = New Size(560, 430),
-        .StartPosition = FormStartPosition.CenterParent,
-        .FormBorderStyle = FormBorderStyle.FixedDialog,
-        .MaximizeBox = False,
-        .MinimizeBox = False,
-        .BackColor = Color.White,
-        .KeyPreview = True
-    }
+            .Text = "Forgot PIN",
+            .Size = New Size(560, 430),
+            .StartPosition = FormStartPosition.CenterParent,
+            .FormBorderStyle = FormBorderStyle.FixedDialog,
+            .MaximizeBox = False,
+            .MinimizeBox = False,
+            .BackColor = Color.White,
+            .KeyPreview = True
+        }
 
         Dim currentStep As Integer = 1
         Dim success As Boolean = False
 
         Dim lblTitle As New Label With {
-        .Text = "RESET PIN",
-        .Font = New Font("Poppins", 16, FontStyle.Bold),
-        .ForeColor = Color.FromArgb(51, 51, 51),
-        .AutoSize = False,
-        .Size = New Size(520, 34),
-        .Location = New Point(20, 14),
-        .TextAlign = ContentAlignment.MiddleCenter,
-        .BackColor = Color.Transparent
-    }
+            .Text = "RESET PIN",
+            .Font = New Font("Poppins", 16, FontStyle.Bold),
+            .ForeColor = Color.FromArgb(51, 51, 51),
+            .AutoSize = False,
+            .Size = New Size(520, 34),
+            .Location = New Point(20, 14),
+            .TextAlign = ContentAlignment.MiddleCenter,
+            .BackColor = Color.Transparent
+        }
         dlg.Controls.Add(lblTitle)
 
         Dim lblUser As New Label With {
-        .Text = $"User: {targetUsername}",
-        .Font = New Font("Poppins", 9, FontStyle.Regular),
-        .ForeColor = Color.FromArgb(102, 102, 102),
-        .AutoSize = False,
-        .Size = New Size(520, 24),
-        .Location = New Point(20, 48),
-        .TextAlign = ContentAlignment.MiddleCenter,
-        .BackColor = Color.Transparent
-    }
+            .Text = $"User: {targetUsername}",
+            .Font = New Font("Poppins", 9, FontStyle.Regular),
+            .ForeColor = Color.FromArgb(102, 102, 102),
+            .AutoSize = False,
+            .Size = New Size(520, 24),
+            .Location = New Point(20, 48),
+            .TextAlign = ContentAlignment.MiddleCenter,
+            .BackColor = Color.Transparent
+        }
         dlg.Controls.Add(lblUser)
 
         Dim lblStep1 As New Label With {
-        .Text = "1. Verify Passkeys",
-        .Font = New Font("Poppins", 9, FontStyle.Bold),
-        .ForeColor = Color.FromArgb(254, 191, 16),
-        .AutoSize = True,
-        .BackColor = Color.Transparent,
-        .Location = New Point(90, 84)
-    }
+            .Text = "1. Verify Passkeys",
+            .Font = New Font("Poppins", 9, FontStyle.Bold),
+            .ForeColor = Color.FromArgb(254, 191, 16),
+            .AutoSize = True,
+            .BackColor = Color.Transparent,
+            .Location = New Point(90, 84)
+        }
         Dim lblStep2 As New Label With {
-        .Text = "2. Set New PIN",
-        .Font = New Font("Poppins", 9, FontStyle.Bold),
-        .ForeColor = Color.FromArgb(102, 102, 102),
-        .AutoSize = True,
-        .BackColor = Color.Transparent,
-        .Location = New Point(360, 84)
-    }
+            .Text = "2. Set New PIN",
+            .Font = New Font("Poppins", 9, FontStyle.Bold),
+            .ForeColor = Color.FromArgb(102, 102, 102),
+            .AutoSize = True,
+            .BackColor = Color.Transparent,
+            .Location = New Point(360, 84)
+        }
         Dim stepLine As New Panel With {
-        .Size = New Size(120, 2),
-        .Location = New Point(220, 94),
-        .BackColor = Color.FromArgb(200, 200, 200)
-    }
+            .Size = New Size(120, 2),
+            .Location = New Point(220, 94),
+            .BackColor = Color.FromArgb(200, 200, 200)
+        }
         dlg.Controls.Add(lblStep1)
         dlg.Controls.Add(stepLine)
         dlg.Controls.Add(lblStep2)
 
         Dim lblInstruction As New Label With {
-        .Text = "",
-        .Font = New Font("Poppins", 10, FontStyle.Regular),
-        .ForeColor = Color.FromArgb(51, 51, 51),
-        .AutoSize = False,
-        .Size = New Size(520, 28),
-        .Location = New Point(20, 112),
-        .TextAlign = ContentAlignment.MiddleCenter,
-        .BackColor = Color.Transparent
-    }
+            .Text = "",
+            .Font = New Font("Poppins", 10, FontStyle.Regular),
+            .ForeColor = Color.FromArgb(51, 51, 51),
+            .AutoSize = False,
+            .Size = New Size(520, 28),
+            .Location = New Point(20, 112),
+            .TextAlign = ContentAlignment.MiddleCenter,
+            .BackColor = Color.Transparent
+        }
         dlg.Controls.Add(lblInstruction)
 
-        ' Step 1 controls
         Dim txtK1 As New TextBox With {.Location = New Point(50, 154), .Size = New Size(460, 30), .TextAlign = HorizontalAlignment.Center, .BackColor = Color.FromArgb(237, 237, 237), .ForeColor = Color.FromArgb(51, 51, 51)}
         Dim txtK2 As New TextBox With {.Location = New Point(50, 194), .Size = New Size(460, 30), .TextAlign = HorizontalAlignment.Center, .BackColor = Color.FromArgb(237, 237, 237), .ForeColor = Color.FromArgb(51, 51, 51)}
         Dim txtK3 As New TextBox With {.Location = New Point(50, 234), .Size = New Size(460, 30), .TextAlign = HorizontalAlignment.Center, .BackColor = Color.FromArgb(237, 237, 237), .ForeColor = Color.FromArgb(51, 51, 51)}
@@ -1368,27 +1565,26 @@ Public Class frmLoginvb
         dlg.Controls.Add(txtK2)
         dlg.Controls.Add(txtK3)
 
-        ' Step 2 controls
         Dim txtNewPin As New TextBox With {
-        .Location = New Point(50, 174),
-        .Size = New Size(220, 30),
-        .TextAlign = HorizontalAlignment.Center,
-        .MaxLength = 4,
-        .UseSystemPasswordChar = True,
-        .Visible = False,
-        .BackColor = Color.FromArgb(237, 237, 237),
-        .ForeColor = Color.FromArgb(51, 51, 51)
-    }
+            .Location = New Point(50, 174),
+            .Size = New Size(220, 30),
+            .TextAlign = HorizontalAlignment.Center,
+            .MaxLength = 4,
+            .UseSystemPasswordChar = True,
+            .Visible = False,
+            .BackColor = Color.FromArgb(237, 237, 237),
+            .ForeColor = Color.FromArgb(51, 51, 51)
+        }
         Dim txtConfirmPin As New TextBox With {
-        .Location = New Point(290, 174),
-        .Size = New Size(220, 30),
-        .TextAlign = HorizontalAlignment.Center,
-        .MaxLength = 4,
-        .UseSystemPasswordChar = True,
-        .Visible = False,
-        .BackColor = Color.FromArgb(237, 237, 237),
-        .ForeColor = Color.FromArgb(51, 51, 51)
-    }
+            .Location = New Point(290, 174),
+            .Size = New Size(220, 30),
+            .TextAlign = HorizontalAlignment.Center,
+            .MaxLength = 4,
+            .UseSystemPasswordChar = True,
+            .Visible = False,
+            .BackColor = Color.FromArgb(237, 237, 237),
+            .ForeColor = Color.FromArgb(51, 51, 51)
+        }
         Try
             txtNewPin.PlaceholderText = "New 4-digit PIN"
             txtConfirmPin.PlaceholderText = "Confirm PIN"
@@ -1408,45 +1604,45 @@ Public Class frmLoginvb
         dlg.Controls.Add(txtConfirmPin)
 
         Dim lblStatus As New Label With {
-        .Text = "",
-        .ForeColor = Color.FromArgb(220, 80, 70),
-        .AutoSize = False,
-        .Size = New Size(520, 24),
-        .Location = New Point(20, 274),
-        .TextAlign = ContentAlignment.MiddleCenter,
-        .BackColor = Color.Transparent
-    }
+            .Text = "",
+            .ForeColor = Color.FromArgb(220, 80, 70),
+            .AutoSize = False,
+            .Size = New Size(520, 24),
+            .Location = New Point(20, 274),
+            .TextAlign = ContentAlignment.MiddleCenter,
+            .BackColor = Color.Transparent
+        }
         dlg.Controls.Add(lblStatus)
 
         Dim btnBack As New Button With {
-        .Text = "Back",
-        .Size = New Size(110, 38),
-        .Location = New Point(120, 318),
-        .BackColor = Color.FromArgb(237, 237, 237),
-        .ForeColor = Color.FromArgb(51, 51, 51),
-        .FlatStyle = FlatStyle.Flat,
-        .Visible = False
-    }
+            .Text = "Back",
+            .Size = New Size(110, 38),
+            .Location = New Point(120, 318),
+            .BackColor = Color.FromArgb(237, 237, 237),
+            .ForeColor = Color.FromArgb(51, 51, 51),
+            .FlatStyle = FlatStyle.Flat,
+            .Visible = False
+        }
         btnBack.FlatAppearance.BorderSize = 0
 
         Dim btnNext As New Button With {
-        .Text = "Next",
-        .Size = New Size(110, 38),
-        .Location = New Point(240, 318),
-        .BackColor = Color.FromArgb(254, 191, 16),
-        .ForeColor = Color.FromArgb(51, 51, 51),
-        .FlatStyle = FlatStyle.Flat
-    }
+            .Text = "Next",
+            .Size = New Size(110, 38),
+            .Location = New Point(240, 318),
+            .BackColor = Color.FromArgb(254, 191, 16),
+            .ForeColor = Color.FromArgb(51, 51, 51),
+            .FlatStyle = FlatStyle.Flat
+        }
         btnNext.FlatAppearance.BorderSize = 0
 
         Dim btnCancel As New Button With {
-        .Text = "Cancel",
-        .Size = New Size(110, 38),
-        .Location = New Point(360, 318),
-        .BackColor = Color.FromArgb(220, 80, 70),
-        .ForeColor = Color.White,
-        .FlatStyle = FlatStyle.Flat
-    }
+            .Text = "Cancel",
+            .Size = New Size(110, 38),
+            .Location = New Point(360, 318),
+            .BackColor = Color.FromArgb(220, 80, 70),
+            .ForeColor = Color.White,
+            .FlatStyle = FlatStyle.Flat
+        }
         btnCancel.FlatAppearance.BorderSize = 0
 
         dlg.Controls.Add(btnBack)
@@ -1542,7 +1738,6 @@ Public Class frmLoginvb
                         Utilities.LogAudit(targetUsername, "PIN Reset via Passkeys", "User reset PIN using 3 passkeys")
                     Catch
                     End Try
-
                     success = True
                     dlg.DialogResult = DialogResult.OK
                     dlg.Close()
@@ -1565,6 +1760,7 @@ Public Class frmLoginvb
         dlg.ShowDialog(Me)
         Return success
     End Function
+
     Private Function VerifyThreePasskeysForUser(targetUsername As String, p1 As String, p2 As String, p3 As String) As Boolean
         Try
             Dim query As String = "SELECT Passkeys FROM Users WHERE Username = @Username AND IsActive = 1"
@@ -1584,10 +1780,10 @@ Public Class frmLoginvb
             If stored.Count <> 3 Then Return False
 
             Dim inputKeys As New List(Of String) From {
-            p1.Trim().ToUpperInvariant(),
-            p2.Trim().ToUpperInvariant(),
-            p3.Trim().ToUpperInvariant()
-        }
+                p1.Trim().ToUpperInvariant(),
+                p2.Trim().ToUpperInvariant(),
+                p3.Trim().ToUpperInvariant()
+            }
 
             inputKeys.Sort()
             stored.Sort()
@@ -1598,6 +1794,7 @@ Public Class frmLoginvb
             Return False
         End Try
     End Function
+
     Private Function UpdateUserPinByUsername(targetUsername As String, newPin As String) As Boolean
         Try
             Dim q As String = "UPDATE Users SET pin = @Pin WHERE Username = @Username"
@@ -1610,11 +1807,11 @@ Public Class frmLoginvb
             Return False
         End Try
     End Function
+
     Private Sub ValidatePin(expectedPin As String, pinIndicators As List(Of Guna.UI2.WinForms.Guna2CircleButton), pinPanel As Control)
         Const MaxPinAttempts As Integer = 3
 
         If pinInput = expectedPin Then
-            ' Reset failed attempts on success
             failedPinAttempts = 0
 
             LoggedInPIN = pinInput
@@ -1624,25 +1821,19 @@ Public Class frmLoginvb
             Me.Hide()
             pinInput = ""
 
-            ' Route user to appropriate form based on their role
             Try
                 Console.WriteLine($"Routing user {LoggedInUsername} with role: {LoggedInRole}")
-
-                ' Check user role and route accordingly
                 Dim userRole As String = If(LoggedInRole, "Staff").ToUpper()
 
                 Dim shell As New MainShell()
                 shell.Show()
                 shell.ShowInitialPage()
 
-                ' Check for updates in background (Admin/Manager only)
                 Task.Run(Sub() CheckForUpdateInternal())
 
             Catch ex As Exception
                 Console.WriteLine($"Error showing target form: {ex.Message}")
                 Console.WriteLine($"Stack trace: {ex.StackTrace}")
-
-                ' Show the login form again and display error
                 Me.Show()
                 MessageBox.Show($"Error opening application: {ex.Message}{vbCrLf}{vbCrLf}Please try logging in again.",
                           "Application Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
@@ -1650,7 +1841,6 @@ Public Class frmLoginvb
         Else
             failedPinAttempts += 1
 
-            ' Do NOT audit log every failed attempt. Only log once when the maximum is reached.
             If failedPinAttempts >= MaxPinAttempts Then
                 Try
                     Dim auditUser As String = If(String.IsNullOrEmpty(LoggedInUsername), "Unknown", LoggedInUsername)
@@ -1658,7 +1848,6 @@ Public Class frmLoginvb
                 Catch ex As Exception
                     Console.WriteLine($"Failed to write audit on max PIN attempts: {ex.Message}")
                 End Try
-
                 MessageBox.Show("Too many incorrect PIN attempts. The application will now close.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Error)
                 Application.Exit()
             Else
@@ -1670,7 +1859,7 @@ Public Class frmLoginvb
             End If
         End If
     End Sub
-    ' Public method to handle logout from other forms
+
     Public Shared Sub LogoutUser()
         If Not String.IsNullOrEmpty(LoggedInUsername) Then
             Utilities.LogAudit(LoggedInUsername, "Logged Out", $"User {LoggedInUsername} logged out at {DateTime.Now:yyyy-MM-dd HH:mm:ss}")
@@ -1700,23 +1889,19 @@ Public Class frmLoginvb
         End If
     End Sub
 
-    Private Sub lblForgotPass_Click(sender As Object, e As EventArgs) Handles lblForgotPass.Click
+    Private Sub lnkForgotPassword_Click(sender As Object, e As EventArgs) Handles lnkForgotPassword.Click
         Try
-            ' Open the dedicated ForgotPasswordForm so the user can recover/reset credentials.
-            ' If the login username field is populated, attempt to prefill it on the forgot form (best-effort).
             Dim forgotForm As New ForgotPasswordForm
 
             Try
-                Dim initialUsername = txtUserName.Text.Trim
+                Dim initialUsername = txtUsername.Text.Trim
                 If Not String.IsNullOrEmpty(initialUsername) Then
-                    ' Best-effort: if the ForgotPasswordForm exposes a public property named InitialUsername, set it.
                     Dim prop = forgotForm.GetType.GetProperty("InitialUsername")
                     If prop IsNot Nothing AndAlso prop.CanWrite Then
                         prop.SetValue(forgotForm, initialUsername)
                     End If
                 End If
             Catch ex As Exception
-                ' Non-fatal: prefilling is optional
                 Console.WriteLine($"Prefill attempt failed: {ex.Message}")
             End Try
 
@@ -1725,23 +1910,5 @@ Public Class frmLoginvb
             Console.WriteLine($"Error opening Forgot Password dialog: {ex.Message}")
             MessageBox.Show("Unable to open the Forgot Password dialog. Please try again.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
-    End Sub
-
-    Private Sub Guna2CheckBox1_CheckedChanged(sender As Object, e As EventArgs) Handles Guna2CheckBox1.CheckedChanged
-        Try
-            If Guna2CheckBox1.Checked Then
-                ' Reveal password (clear PasswordChar)
-                txtPassword.PasswordChar = ChrW(0)
-            Else
-                ' Hide password (use bullet as on form load)
-                txtPassword.PasswordChar = "•"c
-            End If
-        Catch ex As Exception
-            Console.WriteLine($"Show/hide password toggle failed: {ex.Message}")
-        End Try
-    End Sub
-
-    Private Sub txtPassword_TextChanged(sender As Object, e As EventArgs) Handles txtPassword.TextChanged
-
     End Sub
 End Class
