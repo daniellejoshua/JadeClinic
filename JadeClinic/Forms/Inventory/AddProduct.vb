@@ -113,16 +113,48 @@ Public Class AddProduct
         cmbCategory.SelectedIndex = -1
         UnitCmbBox.Items.Clear()
         UnitCmbBox.Items.AddRange(New String() {"PCS", "BOX", "PACK", "BOTTLE", "TUBE", "SET", "PAIR", "DOZEN", "REAM"})
-        UnitCmbBox.SelectedItem = "PCS"
+        UnitCmbBox.SelectedIndex = -1
 
         ' Initialize categories
         InitializeMainCategories()
+
+        ' Overlay placeholder labels on the combo boxes
+        AddComboPlaceholder(cmbCategory, "Select Category")
+        AddComboPlaceholder(UnitCmbBox, "Select Unit")
+
+        ' Dashed border on the product image placeholder
+        AddHandler ProductImage.Paint, AddressOf ProductImage_DashedBorder_Paint
 
         ' Set placeholder text
         CostPriceTextBox.PlaceholderText = "0.00"
         SellingPriceTextBox.PlaceholderText = "0.00"
         WholeSaleTextbox.PlaceholderText = "0.00"
         ReOrderLevelTextBox.PlaceholderText = "0"
+    End Sub
+
+    Private Sub AddComboPlaceholder(combo As ComboBox, text As String)
+        Dim placeholder As New Label() With {
+            .Text = text,
+            .Font = combo.Font,
+            .ForeColor = Color.DarkGray,
+            .BackColor = Color.Transparent,
+            .AutoSize = False,
+            .Size = New Size(combo.Width - 10, combo.Height - 4),
+            .Location = New Point(combo.Location.X + 5, combo.Location.Y + 2),
+            .TextAlign = ContentAlignment.MiddleLeft,
+            .Cursor = Cursors.Hand,
+            .Enabled = False
+        }
+        combo.Parent.Controls.Add(placeholder)
+        placeholder.BringToFront()
+
+        Dim updatePlaceholder As Action =
+            Sub()
+                placeholder.Visible = (combo.SelectedIndex = -1)
+            End Sub
+
+        AddHandler combo.SelectedIndexChanged, Sub(s, e) updatePlaceholder()
+        updatePlaceholder()
     End Sub
 
     Private Sub LoadCategories()
@@ -157,6 +189,14 @@ Public Class AddProduct
         Else
             cmbCategory.SelectedIndex = -1
         End If
+    End Sub
+
+    Private Sub ProductImage_DashedBorder_Paint(sender As Object, e As PaintEventArgs)
+        Using pen As New Pen(Color.LightGray, 2)
+            pen.DashStyle = Drawing2D.DashStyle.Dash
+            Dim rect As New Rectangle(1, 1, ProductImage.Width - 3, ProductImage.Height - 3)
+            e.Graphics.DrawRectangle(pen, rect)
+        End Using
     End Sub
 
     Private Sub lblProductPicturetrigger_Click(sender As Object, e As EventArgs) Handles lblProductPicturetrigger.Click

@@ -163,16 +163,17 @@ Partial Class AddProduct
         lblStatus.BackColor = Color.Transparent
         lblStatus.Font = New Font("Poppins Medium", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         lblStatus.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
-        lblStatus.Location = New Point(207, 562)
+        lblStatus.Location = New Point(15, 643)
         lblStatus.Name = "lblStatus"
         lblStatus.Size = New Size(58, 32)
         lblStatus.TabIndex = 120
         lblStatus.Text = "Status"
+        lblStatus.Visible = False
         ' 
         ' cmbStatus
         ' 
         cmbStatus.BackColor = Color.Transparent
-        cmbStatus.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
+        cmbStatus.BorderColor = Color.DarkGray
         cmbStatus.BorderRadius = 10
         cmbStatus.CustomizableEdges = CustomizableEdges5
         cmbStatus.DrawMode = DrawMode.OwnerDrawFixed
@@ -183,18 +184,19 @@ Partial Class AddProduct
         cmbStatus.ForeColor = Color.FromArgb(CByte(51), CByte(51), CByte(51))
         cmbStatus.ItemHeight = 40
         cmbStatus.Items.AddRange(New Object() {"T-shirt", "Jersey", "Caps", "Key-Chains", "Ski-Masks", "Shorts", "Pants", "Towels", "Hoodies", "Slides", "Bags", "Socks"})
-        cmbStatus.Location = New Point(207, 605)
+        cmbStatus.Location = New Point(79, 629)
         cmbStatus.Name = "cmbStatus"
         cmbStatus.ShadowDecoration.CustomizableEdges = CustomizableEdges6
         cmbStatus.Size = New Size(155, 46)
         cmbStatus.TabIndex = 119
+        cmbStatus.Visible = False
         ' 
         ' PrintBarcodeTextBox
         ' 
         PrintBarcodeTextBox.BackColor = Color.Transparent
         PrintBarcodeTextBox.Font = New Font("Poppins", 9F, FontStyle.Underline, GraphicsUnit.Point, CByte(0))
         PrintBarcodeTextBox.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
-        PrintBarcodeTextBox.Location = New Point(445, 229)
+        PrintBarcodeTextBox.Location = New Point(561, 257)
         PrintBarcodeTextBox.Name = "PrintBarcodeTextBox"
         PrintBarcodeTextBox.Size = New Size(105, 28)
         PrintBarcodeTextBox.TabIndex = 118
@@ -206,10 +208,10 @@ Partial Class AddProduct
         BarcodeImage.CustomizableEdges = CustomizableEdges7
         BarcodeImage.FillColor = Color.FromArgb(CByte(245), CByte(245), CByte(245))
         BarcodeImage.ImageRotate = 0F
-        BarcodeImage.Location = New Point(399, 67)
+        BarcodeImage.Location = New Point(454, 67)
         BarcodeImage.Name = "BarcodeImage"
         BarcodeImage.ShadowDecoration.CustomizableEdges = CustomizableEdges8
-        BarcodeImage.Size = New Size(196, 140)
+        BarcodeImage.Size = New Size(311, 175)
         BarcodeImage.SizeMode = PictureBoxSizeMode.StretchImage
         BarcodeImage.TabIndex = 117
         BarcodeImage.TabStop = False
