@@ -102,24 +102,13 @@ Public Class frmLoginvb
         splashTimer.Start()
     End Sub
 
-    Private splashRemovePending As Boolean = False
-
     Private Sub splashTimer_Tick(sender As Object, e As EventArgs)
-        If splashRemovePending Then
-            ' Controls have now painted — safe to remove splash
+        If splashFadingOut Then
             splashTimer.Stop()
             splashTimer.Dispose()
             RemoveHandler splashTimer.Tick, AddressOf splashTimer_Tick
             RemoveHandler splashPanel.Paint, AddressOf splashPanel_Paint
-            If splashBuffer IsNot Nothing Then
-                splashBuffer.Dispose()
-                splashBuffer = Nothing
-            End If
-            Me.Controls.Remove(splashPanel)
-            splashPanel.Dispose()
-            splashPanel = Nothing
-            splashRemovePending = False
-        ElseIf splashFadingOut Then
+
             ' Paint BackgroundImage onto splash buffer as final frame
             If splashBuffer IsNot Nothing AndAlso Me.BackgroundImage IsNot Nothing Then
                 Using bg As Graphics = Graphics.FromImage(splashBuffer)
@@ -129,12 +118,19 @@ Public Class frmLoginvb
                 splashPanel.Update()
             End If
 
-            ' Send splash to back — controls become visible and paint
-            splashPanel.SendToBack()
+            ' Force ALL child controls to repaint
+            ForcePaintAllControls(Me)
+            Me.Update()
             Application.DoEvents()
 
-            ' Schedule actual removal on next tick (after controls have painted)
-            splashRemovePending = True
+            ' NOW remove splash — everything underneath is painted
+            Me.Controls.Remove(splashPanel)
+            splashPanel.Dispose()
+            splashPanel = Nothing
+            If splashBuffer IsNot Nothing Then
+                splashBuffer.Dispose()
+                splashBuffer = Nothing
+            End If
         Else
             splashProgress += 0.008F
             If splashProgress >= 1.0F Then
@@ -266,6 +262,15 @@ Public Class frmLoginvb
         e.Graphics.DrawImageUnscaled(splashBuffer, 0, 0)
     End Sub
 
+    Private Sub ForcePaintAllControls(parent As Control)
+        For Each c As Control In parent.Controls
+            If c IsNot splashPanel AndAlso c.IsHandleCreated Then
+                c.Invalidate(True)
+                ForcePaintAllControls(c)
+            End If
+        Next
+    End Sub
+
     Private Sub frmLoginvb_MouseMove(sender As Object, e As MouseEventArgs)
         Dim shouldShow = e.Y <= TitleBarHoverHeight
         If shouldShow <> isTitleBarVisible Then
@@ -284,6 +289,10 @@ Public Class frmLoginvb
     End Sub
 
     Private Sub frmLoginvb_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        ' Enable double buffering on form to prevent repaint flicker
+        Dim props As Reflection.BindingFlags = Reflection.BindingFlags.SetProperty Or Reflection.BindingFlags.Instance Or Reflection.BindingFlags.NonPublic
+        GetType(Control).InvokeMember("DoubleBuffered", props, Nothing, Me, New Object() {True})
+
         Me.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath)
         Me.MaximizeBox = False
         Me.WindowState = FormWindowState.Maximized
@@ -293,13 +302,6 @@ Public Class frmLoginvb
         ' ── SHOW SPLASH IMMEDIATELY ──
         ShowSplashScreen()
         Application.DoEvents()
-
-        ' ── LOAD BACKGROUND IMAGE (deferred — no lag on open) ──
-        Try
-            Me.BackgroundImage = My.Resources.Resources.ChatGPT_Image_Aug_17__2026__11_39_37_AM
-            Me.BackgroundImageLayout = ImageLayout.Stretch
-        Catch
-        End Try
 
         ' ── BUILD ALL CONTROLS (underneath splash) ──
         BuildLoginCard()
@@ -319,10 +321,14 @@ Public Class frmLoginvb
 
         SetupTabIndex()
 
-        ' ── SIGNAL: splash can finish (force form paint underneath first) ──
-        Me.Invalidate()
-        Me.Update()
-        Application.DoEvents()
+        ' ── LOAD BACKGROUND IMAGE LAST (heaviest — splash covers it) ──
+        Try
+            Me.BackgroundImage = My.Resources.Resources.ChatGPT_Image_Aug_17__2026__11_39_37_AM
+            Me.BackgroundImageLayout = ImageLayout.Stretch
+        Catch
+        End Try
+
+        ' ── SIGNAL: splash can finish ──
         splashBuilt = True
     End Sub
 
