@@ -124,6 +124,7 @@ Public Class AddProduct
 
         ' Dashed border on the product image placeholder
         AddHandler ProductImage.Paint, AddressOf ProductImage_DashedBorder_Paint
+        ProductImage.Cursor = Cursors.Hand
 
         ' Set placeholder text
         CostPriceTextBox.PlaceholderText = "0.00"
@@ -193,6 +194,7 @@ Public Class AddProduct
     End Sub
 
     Private Sub ProductImage_DashedBorder_Paint(sender As Object, e As PaintEventArgs)
+        If ProductImage.Image IsNot Nothing Then Return
         Using pen As New Pen(Color.LightGray, 2)
             pen.DashStyle = Drawing2D.DashStyle.Dash
             Dim rect As New Rectangle(1, 1, ProductImage.Width - 3, ProductImage.Height - 3)
@@ -200,7 +202,11 @@ Public Class AddProduct
         End Using
     End Sub
 
-    Private Sub lblProductPicturetrigger_Click(sender As Object, e As EventArgs) Handles lblProductPicturetrigger.Click
+    Private Sub lblProductPicturetrigger_Click(sender As Object, e As EventArgs) Handles lblProductPicturetrigger.Click, ProductImage.Click
+        OpenImagePicker()
+    End Sub
+
+    Private Sub OpenImagePicker()
         Using openFileDialog As New OpenFileDialog()
             openFileDialog.Filter = "Image Files|*.jpg;*.jpeg;*.png;*.gif;*.bmp"
             openFileDialog.Title = "Select Product Image"
@@ -208,6 +214,7 @@ Public Class AddProduct
             If openFileDialog.ShowDialog() = DialogResult.OK Then
                 selectedImagePath = openFileDialog.FileName
                 ProductImage.Image = Image.FromFile(selectedImagePath)
+                ProductImage.Invalidate()
             End If
         End Using
     End Sub
@@ -272,6 +279,13 @@ Public Class AddProduct
         If cmbCategory.SelectedItem Is Nothing OrElse cmbCategory.SelectedItem.ToString() = "Add Custom Category..." Then
             MessageBox.Show("Please select a valid category!", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
             cmbCategory.Focus()
+            Return False
+        End If
+
+        ' Validate unit
+        If UnitCmbBox.SelectedItem Is Nothing Then
+            MessageBox.Show("Please select a unit!", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            UnitCmbBox.Focus()
             Return False
         End If
 
@@ -646,7 +660,7 @@ Public Class AddProduct
                 conn.Open()
 
                 Dim mainCategoriesString As String = "'ORTHO','CONSUMABLES','SURGERY','RESTO','ENDO','COSMETIC'"
-                Dim query As String = $"SELECT DISTINCT Category FROM Products WHERE Category IS NOT NULL AND IsActive = 1 AND Category NOT IN ({mainCategoriesString}) ORDER BY Category"
+                Dim query As String = $"SELECT DISTINCT Category FROM Products WHERE Category IS NOT NULL AND Category NOT IN ({mainCategoriesString}) ORDER BY Category"
 
                 Using cmd As New SqliteCommand(query, conn)
                     Using reader As DbDataReader = cmd.ExecuteReader()

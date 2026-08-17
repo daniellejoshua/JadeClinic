@@ -183,7 +183,7 @@ Partial Class AddProduct
         cmbStatus.Font = New Font("Poppins Light", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         cmbStatus.ForeColor = Color.FromArgb(CByte(51), CByte(51), CByte(51))
         cmbStatus.ItemHeight = 40
-        cmbStatus.Items.AddRange(New Object() {"T-shirt", "Jersey", "Caps", "Key-Chains", "Ski-Masks", "Shorts", "Pants", "Towels", "Hoodies", "Slides", "Bags", "Socks"})
+        cmbStatus.Items.AddRange(New Object() {"Active", "Inactive"})
         cmbStatus.Location = New Point(79, 629)
         cmbStatus.Name = "cmbStatus"
         cmbStatus.ShadowDecoration.CustomizableEdges = CustomizableEdges6
