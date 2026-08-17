@@ -99,6 +99,7 @@ Partial Class Sales
         ' 
         ' TxtSearch
         ' 
+        TxtSearch.BorderColor = Color.DarkGray
         TxtSearch.BorderRadius = 10
         TxtSearch.CustomizableEdges = CustomizableEdges1
         TxtSearch.DefaultText = ""

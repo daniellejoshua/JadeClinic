@@ -1250,6 +1250,7 @@ Public Class Inventory
         ' The main loading is handled by LoadProductsAsync
         Try
             LoadProductsFromDatabase()
+            LoadCategoriesForFilter()
 
             ' Initially show all products
             filteredProducts = New List(Of Dictionary(Of String, Object))(allProducts)

@@ -143,7 +143,7 @@ Partial Class Inventory
         Exportbtn.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
         Exportbtn.FillColor = Color.White
         resources.ApplyResources(Exportbtn, "Exportbtn")
-        Exportbtn.ForeColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
+        Exportbtn.ForeColor = Color.FromArgb(CByte(64), CByte(64), CByte(64))
         Exportbtn.Name = "Exportbtn"
         Exportbtn.ShadowDecoration.CustomizableEdges = CustomizableEdges6
         ' 
@@ -223,7 +223,7 @@ Partial Class Inventory
         ' Guna2ComboBox1
         ' 
         Guna2ComboBox1.BackColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
-        Guna2ComboBox1.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
+        Guna2ComboBox1.BorderColor = Color.DarkGray
         Guna2ComboBox1.BorderRadius = 8
         Guna2ComboBox1.CustomizableEdges = CustomizableEdges8
         Guna2ComboBox1.DrawMode = DrawMode.OwnerDrawFixed
@@ -238,7 +238,7 @@ Partial Class Inventory
         ' StockCmbBox
         ' 
         StockCmbBox.BackColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
-        StockCmbBox.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
+        StockCmbBox.BorderColor = Color.DarkGray
         StockCmbBox.BorderRadius = 8
         StockCmbBox.CustomizableEdges = CustomizableEdges10
         StockCmbBox.DrawMode = DrawMode.OwnerDrawFixed
@@ -264,14 +264,14 @@ Partial Class Inventory
         btnResetFilter.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
         btnResetFilter.FillColor = Color.White
         resources.ApplyResources(btnResetFilter, "btnResetFilter")
-        btnResetFilter.ForeColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
+        btnResetFilter.ForeColor = Color.FromArgb(CByte(64), CByte(64), CByte(64))
         btnResetFilter.Name = "btnResetFilter"
         btnResetFilter.ShadowDecoration.CustomizableEdges = CustomizableEdges13
         ' 
         ' txtFilterQuantity
         ' 
         txtFilterQuantity.BackColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
-        txtFilterQuantity.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
+        txtFilterQuantity.BorderColor = Color.DarkGray
         txtFilterQuantity.BorderRadius = 8
         txtFilterQuantity.CustomizableEdges = CustomizableEdges14
         txtFilterQuantity.DefaultText = ""
@@ -292,7 +292,7 @@ Partial Class Inventory
         ' txtMinPrice
         ' 
         txtMinPrice.BackColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
-        txtMinPrice.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
+        txtMinPrice.BorderColor = Color.DarkGray
         txtMinPrice.BorderRadius = 8
         txtMinPrice.CustomizableEdges = CustomizableEdges16
         txtMinPrice.DefaultText = ""
@@ -313,7 +313,7 @@ Partial Class Inventory
         ' txtSearch
         ' 
         txtSearch.BackColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
-        txtSearch.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
+        txtSearch.BorderColor = Color.DarkGray
         txtSearch.BorderRadius = 8
         txtSearch.CustomizableEdges = CustomizableEdges18
         txtSearch.DefaultText = ""
@@ -369,7 +369,7 @@ Partial Class Inventory
         ' txtMaxPrice
         ' 
         txtMaxPrice.BackColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
-        txtMaxPrice.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
+        txtMaxPrice.BorderColor = Color.DarkGray
         txtMaxPrice.BorderRadius = 8
         txtMaxPrice.CustomizableEdges = CustomizableEdges20
         txtMaxPrice.DefaultText = ""

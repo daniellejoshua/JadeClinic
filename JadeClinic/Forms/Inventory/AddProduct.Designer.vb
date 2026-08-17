@@ -24,10 +24,8 @@ Partial Class AddProduct
     Private Sub InitializeComponent()
         Dim CustomizableEdges1 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges2 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges25 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges26 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges3 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges4 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges27 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges28 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges5 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges6 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges7 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
@@ -48,6 +46,10 @@ Partial Class AddProduct
         Dim CustomizableEdges22 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges23 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges24 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges25 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges26 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges3 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges4 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Guna2HtmlLabel6 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2Panel1 = New Guna.UI2.WinForms.Guna2Panel()
         Guna2Panel2 = New Guna.UI2.WinForms.Guna2Panel()
@@ -73,6 +75,8 @@ Partial Class AddProduct
         Guna2HtmlLabel15 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         UnitCmbBox = New Guna.UI2.WinForms.Guna2ComboBox()
         Guna2HtmlLabel11 = New Guna.UI2.WinForms.Guna2HtmlLabel()
+        Guna2Panel3 = New Guna.UI2.WinForms.Guna2Panel()
+        Guna2HtmlLabel2 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2Panel2.SuspendLayout()
         CType(BarcodeImage, ComponentModel.ISupportInitialize).BeginInit()
         CType(ProductImage, ComponentModel.ISupportInitialize).BeginInit()
@@ -93,14 +97,16 @@ Partial Class AddProduct
         ' 
         Guna2Panel1.CustomizableEdges = CustomizableEdges1
         Guna2Panel1.FillColor = Color.FromArgb(CByte(200), CByte(200), CByte(200))
-        Guna2Panel1.Location = New Point(12, 59)
+        Guna2Panel1.Location = New Point(27, 59)
         Guna2Panel1.Name = "Guna2Panel1"
         Guna2Panel1.ShadowDecoration.CustomizableEdges = CustomizableEdges2
-        Guna2Panel1.Size = New Size(550, 2)
+        Guna2Panel1.Size = New Size(750, 2)
         Guna2Panel1.TabIndex = 78
         ' 
         ' Guna2Panel2
         ' 
+        Guna2Panel2.Controls.Add(Guna2HtmlLabel2)
+        Guna2Panel2.Controls.Add(Guna2Panel3)
         Guna2Panel2.Controls.Add(lblStatus)
         Guna2Panel2.Controls.Add(cmbStatus)
         Guna2Panel2.Controls.Add(PrintBarcodeTextBox)
@@ -123,12 +129,12 @@ Partial Class AddProduct
         Guna2Panel2.Controls.Add(Guna2HtmlLabel15)
         Guna2Panel2.Controls.Add(UnitCmbBox)
         Guna2Panel2.Controls.Add(Guna2HtmlLabel11)
-        Guna2Panel2.CustomizableEdges = CustomizableEdges25
-        Guna2Panel2.FillColor = Color.FromArgb(CByte(250), CByte(249), CByte(246))
+        Guna2Panel2.CustomizableEdges = CustomizableEdges27
+        Guna2Panel2.FillColor = Color.White
         Guna2Panel2.Location = New Point(12, 67)
         Guna2Panel2.Name = "Guna2Panel2"
-        Guna2Panel2.ShadowDecoration.CustomizableEdges = CustomizableEdges26
-        Guna2Panel2.Size = New Size(678, 621)
+        Guna2Panel2.ShadowDecoration.CustomizableEdges = CustomizableEdges28
+        Guna2Panel2.Size = New Size(791, 683)
         Guna2Panel2.TabIndex = 79
         ' 
         ' lblStatus
@@ -136,7 +142,7 @@ Partial Class AddProduct
         lblStatus.BackColor = Color.Transparent
         lblStatus.Font = New Font("Poppins Medium", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         lblStatus.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
-        lblStatus.Location = New Point(489, 373)
+        lblStatus.Location = New Point(207, 562)
         lblStatus.Name = "lblStatus"
         lblStatus.Size = New Size(58, 32)
         lblStatus.TabIndex = 120
@@ -147,7 +153,7 @@ Partial Class AddProduct
         cmbStatus.BackColor = Color.Transparent
         cmbStatus.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
         cmbStatus.BorderRadius = 10
-        cmbStatus.CustomizableEdges = CustomizableEdges3
+        cmbStatus.CustomizableEdges = CustomizableEdges5
         cmbStatus.DrawMode = DrawMode.OwnerDrawFixed
         cmbStatus.DropDownStyle = ComboBoxStyle.DropDownList
         cmbStatus.FocusedColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
@@ -156,9 +162,9 @@ Partial Class AddProduct
         cmbStatus.ForeColor = Color.FromArgb(CByte(51), CByte(51), CByte(51))
         cmbStatus.ItemHeight = 40
         cmbStatus.Items.AddRange(New Object() {"T-shirt", "Jersey", "Caps", "Key-Chains", "Ski-Masks", "Shorts", "Pants", "Towels", "Hoodies", "Slides", "Bags", "Socks"})
-        cmbStatus.Location = New Point(489, 416)
+        cmbStatus.Location = New Point(207, 605)
         cmbStatus.Name = "cmbStatus"
-        cmbStatus.ShadowDecoration.CustomizableEdges = CustomizableEdges4
+        cmbStatus.ShadowDecoration.CustomizableEdges = CustomizableEdges6
         cmbStatus.Size = New Size(155, 46)
         cmbStatus.TabIndex = 119
         ' 
@@ -167,7 +173,7 @@ Partial Class AddProduct
         PrintBarcodeTextBox.BackColor = Color.Transparent
         PrintBarcodeTextBox.Font = New Font("Poppins", 9F, FontStyle.Underline, GraphicsUnit.Point, CByte(0))
         PrintBarcodeTextBox.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
-        PrintBarcodeTextBox.Location = New Point(445, 197)
+        PrintBarcodeTextBox.Location = New Point(537, 257)
         PrintBarcodeTextBox.Name = "PrintBarcodeTextBox"
         PrintBarcodeTextBox.Size = New Size(105, 28)
         PrintBarcodeTextBox.TabIndex = 118
@@ -176,22 +182,22 @@ Partial Class AddProduct
         ' BarcodeImage
         ' 
         BarcodeImage.BorderRadius = 10
-        BarcodeImage.CustomizableEdges = CustomizableEdges5
+        BarcodeImage.CustomizableEdges = CustomizableEdges7
         BarcodeImage.FillColor = Color.FromArgb(CByte(245), CByte(245), CByte(245))
         BarcodeImage.ImageRotate = 0F
-        BarcodeImage.Location = New Point(399, 35)
+        BarcodeImage.Location = New Point(495, 67)
         BarcodeImage.Name = "BarcodeImage"
-        BarcodeImage.ShadowDecoration.CustomizableEdges = CustomizableEdges6
-        BarcodeImage.Size = New Size(196, 140)
+        BarcodeImage.ShadowDecoration.CustomizableEdges = CustomizableEdges8
+        BarcodeImage.Size = New Size(190, 175)
         BarcodeImage.SizeMode = PictureBoxSizeMode.StretchImage
         BarcodeImage.TabIndex = 117
         BarcodeImage.TabStop = False
         ' 
         ' ReOrderLevelTextBox
         ' 
-        ReOrderLevelTextBox.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
-        ReOrderLevelTextBox.BorderRadius = 10
-        ReOrderLevelTextBox.CustomizableEdges = CustomizableEdges7
+        ReOrderLevelTextBox.BorderColor = Color.DarkGray
+        ReOrderLevelTextBox.BorderRadius = 8
+        ReOrderLevelTextBox.CustomizableEdges = CustomizableEdges9
         ReOrderLevelTextBox.DefaultText = ""
         ReOrderLevelTextBox.DisabledState.BorderColor = Color.FromArgb(CByte(208), CByte(208), CByte(208))
         ReOrderLevelTextBox.DisabledState.FillColor = Color.FromArgb(CByte(226), CByte(226), CByte(226))
@@ -201,13 +207,13 @@ Partial Class AddProduct
         ReOrderLevelTextBox.Font = New Font("Segoe UI", 9F)
         ReOrderLevelTextBox.ForeColor = Color.FromArgb(CByte(51), CByte(51), CByte(51))
         ReOrderLevelTextBox.HoverState.BorderColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
-        ReOrderLevelTextBox.Location = New Point(15, 415)
+        ReOrderLevelTextBox.Location = New Point(15, 476)
         ReOrderLevelTextBox.Margin = New Padding(3, 4, 3, 4)
         ReOrderLevelTextBox.Name = "ReOrderLevelTextBox"
-        ReOrderLevelTextBox.PlaceholderText = ""
+        ReOrderLevelTextBox.PlaceholderText = "0"
         ReOrderLevelTextBox.SelectedText = ""
-        ReOrderLevelTextBox.ShadowDecoration.CustomizableEdges = CustomizableEdges8
-        ReOrderLevelTextBox.Size = New Size(136, 46)
+        ReOrderLevelTextBox.ShadowDecoration.CustomizableEdges = CustomizableEdges10
+        ReOrderLevelTextBox.Size = New Size(223, 60)
         ReOrderLevelTextBox.TabIndex = 109
         ' 
         ' Guna2HtmlLabel7
@@ -215,7 +221,7 @@ Partial Class AddProduct
         Guna2HtmlLabel7.BackColor = Color.Transparent
         Guna2HtmlLabel7.Font = New Font("Poppins Medium", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel7.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
-        Guna2HtmlLabel7.Location = New Point(15, 373)
+        Guna2HtmlLabel7.Location = New Point(15, 434)
         Guna2HtmlLabel7.Name = "Guna2HtmlLabel7"
         Guna2HtmlLabel7.Size = New Size(125, 32)
         Guna2HtmlLabel7.TabIndex = 108
@@ -225,7 +231,7 @@ Partial Class AddProduct
         ' 
         WholeSaleTextbox.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
         WholeSaleTextbox.BorderRadius = 10
-        WholeSaleTextbox.CustomizableEdges = CustomizableEdges9
+        WholeSaleTextbox.CustomizableEdges = CustomizableEdges11
         WholeSaleTextbox.DefaultText = ""
         WholeSaleTextbox.DisabledState.BorderColor = Color.FromArgb(CByte(208), CByte(208), CByte(208))
         WholeSaleTextbox.DisabledState.FillColor = Color.FromArgb(CByte(226), CByte(226), CByte(226))
@@ -235,12 +241,12 @@ Partial Class AddProduct
         WholeSaleTextbox.Font = New Font("Segoe UI", 9F)
         WholeSaleTextbox.ForeColor = Color.FromArgb(CByte(51), CByte(51), CByte(51))
         WholeSaleTextbox.HoverState.BorderColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
-        WholeSaleTextbox.Location = New Point(15, 543)
+        WholeSaleTextbox.Location = New Point(15, 604)
         WholeSaleTextbox.Margin = New Padding(3, 4, 3, 4)
         WholeSaleTextbox.Name = "WholeSaleTextbox"
         WholeSaleTextbox.PlaceholderText = ""
         WholeSaleTextbox.SelectedText = ""
-        WholeSaleTextbox.ShadowDecoration.CustomizableEdges = CustomizableEdges10
+        WholeSaleTextbox.ShadowDecoration.CustomizableEdges = CustomizableEdges12
         WholeSaleTextbox.Size = New Size(136, 46)
         WholeSaleTextbox.TabIndex = 105
         WholeSaleTextbox.Visible = False
@@ -250,7 +256,7 @@ Partial Class AddProduct
         Guna2HtmlLabel4.BackColor = Color.Transparent
         Guna2HtmlLabel4.Font = New Font("Poppins Medium", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel4.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
-        Guna2HtmlLabel4.Location = New Point(15, 501)
+        Guna2HtmlLabel4.Location = New Point(15, 562)
         Guna2HtmlLabel4.Name = "Guna2HtmlLabel4"
         Guna2HtmlLabel4.Size = New Size(144, 32)
         Guna2HtmlLabel4.TabIndex = 104
@@ -259,9 +265,9 @@ Partial Class AddProduct
         ' 
         ' SellingPriceTextBox
         ' 
-        SellingPriceTextBox.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
-        SellingPriceTextBox.BorderRadius = 10
-        SellingPriceTextBox.CustomizableEdges = CustomizableEdges11
+        SellingPriceTextBox.BorderColor = Color.DarkGray
+        SellingPriceTextBox.BorderRadius = 8
+        SellingPriceTextBox.CustomizableEdges = CustomizableEdges13
         SellingPriceTextBox.DefaultText = ""
         SellingPriceTextBox.DisabledState.BorderColor = Color.FromArgb(CByte(208), CByte(208), CByte(208))
         SellingPriceTextBox.DisabledState.FillColor = Color.FromArgb(CByte(226), CByte(226), CByte(226))
@@ -271,13 +277,13 @@ Partial Class AddProduct
         SellingPriceTextBox.Font = New Font("Segoe UI", 9F)
         SellingPriceTextBox.ForeColor = Color.FromArgb(CByte(51), CByte(51), CByte(51))
         SellingPriceTextBox.HoverState.BorderColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
-        SellingPriceTextBox.Location = New Point(337, 415)
+        SellingPriceTextBox.Location = New Point(537, 476)
         SellingPriceTextBox.Margin = New Padding(3, 4, 3, 4)
         SellingPriceTextBox.Name = "SellingPriceTextBox"
-        SellingPriceTextBox.PlaceholderText = ""
+        SellingPriceTextBox.PlaceholderText = "0.00"
         SellingPriceTextBox.SelectedText = ""
-        SellingPriceTextBox.ShadowDecoration.CustomizableEdges = CustomizableEdges12
-        SellingPriceTextBox.Size = New Size(136, 46)
+        SellingPriceTextBox.ShadowDecoration.CustomizableEdges = CustomizableEdges14
+        SellingPriceTextBox.Size = New Size(223, 60)
         SellingPriceTextBox.TabIndex = 103
         ' 
         ' Guna2HtmlLabel3
@@ -285,7 +291,7 @@ Partial Class AddProduct
         Guna2HtmlLabel3.BackColor = Color.Transparent
         Guna2HtmlLabel3.Font = New Font("Poppins Medium", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel3.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
-        Guna2HtmlLabel3.Location = New Point(337, 373)
+        Guna2HtmlLabel3.Location = New Point(539, 434)
         Guna2HtmlLabel3.Name = "Guna2HtmlLabel3"
         Guna2HtmlLabel3.Size = New Size(105, 32)
         Guna2HtmlLabel3.TabIndex = 102
@@ -295,32 +301,32 @@ Partial Class AddProduct
         ' 
         lblProductPicturetrigger.BackColor = Color.Transparent
         lblProductPicturetrigger.Font = New Font("Poppins", 9F, FontStyle.Underline, GraphicsUnit.Point, CByte(0))
-        lblProductPicturetrigger.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
-        lblProductPicturetrigger.Location = New Point(51, 197)
+        lblProductPicturetrigger.ForeColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
+        lblProductPicturetrigger.Location = New Point(48, 257)
         lblProductPicturetrigger.Name = "lblProductPicturetrigger"
-        lblProductPicturetrigger.Size = New Size(118, 28)
+        lblProductPicturetrigger.Size = New Size(144, 28)
         lblProductPicturetrigger.TabIndex = 99
-        lblProductPicturetrigger.Text = "Add Thumbnail"
+        lblProductPicturetrigger.Text = "＋ Add Thumbnail"
         ' 
         ' ProductImage
         ' 
         ProductImage.BorderRadius = 10
-        ProductImage.CustomizableEdges = CustomizableEdges13
+        ProductImage.CustomizableEdges = CustomizableEdges15
         ProductImage.FillColor = Color.Silver
         ProductImage.ImageRotate = 0F
-        ProductImage.Location = New Point(15, 35)
+        ProductImage.Location = New Point(27, 67)
         ProductImage.Name = "ProductImage"
-        ProductImage.ShadowDecoration.CustomizableEdges = CustomizableEdges14
-        ProductImage.Size = New Size(196, 140)
+        ProductImage.ShadowDecoration.CustomizableEdges = CustomizableEdges16
+        ProductImage.Size = New Size(190, 175)
         ProductImage.SizeMode = PictureBoxSizeMode.StretchImage
         ProductImage.TabIndex = 98
         ProductImage.TabStop = False
         ' 
         ' CostPriceTextBox
         ' 
-        CostPriceTextBox.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
-        CostPriceTextBox.BorderRadius = 10
-        CostPriceTextBox.CustomizableEdges = CustomizableEdges15
+        CostPriceTextBox.BorderColor = Color.DarkGray
+        CostPriceTextBox.BorderRadius = 8
+        CostPriceTextBox.CustomizableEdges = CustomizableEdges17
         CostPriceTextBox.DefaultText = ""
         CostPriceTextBox.DisabledState.BorderColor = Color.FromArgb(CByte(208), CByte(208), CByte(208))
         CostPriceTextBox.DisabledState.FillColor = Color.FromArgb(CByte(226), CByte(226), CByte(226))
@@ -330,13 +336,13 @@ Partial Class AddProduct
         CostPriceTextBox.Font = New Font("Segoe UI", 9F)
         CostPriceTextBox.ForeColor = Color.FromArgb(CByte(51), CByte(51), CByte(51))
         CostPriceTextBox.HoverState.BorderColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
-        CostPriceTextBox.Location = New Point(175, 415)
+        CostPriceTextBox.Location = New Point(281, 476)
         CostPriceTextBox.Margin = New Padding(3, 4, 3, 4)
         CostPriceTextBox.Name = "CostPriceTextBox"
-        CostPriceTextBox.PlaceholderText = ""
+        CostPriceTextBox.PlaceholderText = "0.00"
         CostPriceTextBox.SelectedText = ""
-        CostPriceTextBox.ShadowDecoration.CustomizableEdges = CustomizableEdges16
-        CostPriceTextBox.Size = New Size(136, 46)
+        CostPriceTextBox.ShadowDecoration.CustomizableEdges = CustomizableEdges18
+        CostPriceTextBox.Size = New Size(223, 60)
         CostPriceTextBox.TabIndex = 97
         ' 
         ' Guna2HtmlLabel5
@@ -344,7 +350,7 @@ Partial Class AddProduct
         Guna2HtmlLabel5.BackColor = Color.Transparent
         Guna2HtmlLabel5.Font = New Font("Poppins Medium", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel5.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
-        Guna2HtmlLabel5.Location = New Point(175, 373)
+        Guna2HtmlLabel5.Location = New Point(281, 434)
         Guna2HtmlLabel5.Name = "Guna2HtmlLabel5"
         Guna2HtmlLabel5.Size = New Size(90, 32)
         Guna2HtmlLabel5.TabIndex = 96
@@ -355,7 +361,7 @@ Partial Class AddProduct
         Guna2HtmlLabel10.BackColor = Color.Transparent
         Guna2HtmlLabel10.Font = New Font("Poppins Medium", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel10.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
-        Guna2HtmlLabel10.Location = New Point(281, 264)
+        Guna2HtmlLabel10.Location = New Point(281, 316)
         Guna2HtmlLabel10.Name = "Guna2HtmlLabel10"
         Guna2HtmlLabel10.Size = New Size(84, 32)
         Guna2HtmlLabel10.TabIndex = 95
@@ -364,28 +370,28 @@ Partial Class AddProduct
         ' cmbCategory
         ' 
         cmbCategory.BackColor = Color.Transparent
-        cmbCategory.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
-        cmbCategory.BorderRadius = 10
-        cmbCategory.CustomizableEdges = CustomizableEdges17
+        cmbCategory.BorderColor = Color.DarkGray
+        cmbCategory.BorderRadius = 8
+        cmbCategory.CustomizableEdges = CustomizableEdges19
         cmbCategory.DrawMode = DrawMode.OwnerDrawFixed
         cmbCategory.DropDownStyle = ComboBoxStyle.DropDownList
         cmbCategory.FocusedColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
         cmbCategory.FocusedState.BorderColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
         cmbCategory.Font = New Font("Poppins Light", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         cmbCategory.ForeColor = Color.FromArgb(CByte(51), CByte(51), CByte(51))
-        cmbCategory.ItemHeight = 40
+        cmbCategory.ItemHeight = 55
         cmbCategory.Items.AddRange(New Object() {"T-shirt", "Jersey", "Caps", "Key-Chains", "Ski-Masks", "Shorts", "Pants", "Towels", "Hoodies", "Slides", "Bags", "Socks"})
-        cmbCategory.Location = New Point(281, 307)
+        cmbCategory.Location = New Point(281, 354)
         cmbCategory.Name = "cmbCategory"
-        cmbCategory.ShadowDecoration.CustomizableEdges = CustomizableEdges18
-        cmbCategory.Size = New Size(240, 46)
+        cmbCategory.ShadowDecoration.CustomizableEdges = CustomizableEdges20
+        cmbCategory.Size = New Size(223, 61)
         cmbCategory.TabIndex = 94
         ' 
         ' txtProductName
         ' 
-        txtProductName.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
-        txtProductName.BorderRadius = 10
-        txtProductName.CustomizableEdges = CustomizableEdges19
+        txtProductName.BorderColor = Color.DarkGray
+        txtProductName.BorderRadius = 8
+        txtProductName.CustomizableEdges = CustomizableEdges21
         txtProductName.DefaultText = ""
         txtProductName.DisabledState.BorderColor = Color.FromArgb(CByte(208), CByte(208), CByte(208))
         txtProductName.DisabledState.FillColor = Color.FromArgb(CByte(226), CByte(226), CByte(226))
@@ -395,13 +401,13 @@ Partial Class AddProduct
         txtProductName.Font = New Font("Segoe UI", 9F)
         txtProductName.ForeColor = Color.FromArgb(CByte(51), CByte(51), CByte(51))
         txtProductName.HoverState.BorderColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
-        txtProductName.Location = New Point(15, 307)
+        txtProductName.Location = New Point(15, 354)
         txtProductName.Margin = New Padding(3, 4, 3, 4)
         txtProductName.Name = "txtProductName"
-        txtProductName.PlaceholderText = ""
+        txtProductName.PlaceholderText = "Enter product name"
         txtProductName.SelectedText = ""
-        txtProductName.ShadowDecoration.CustomizableEdges = CustomizableEdges20
-        txtProductName.Size = New Size(250, 46)
+        txtProductName.ShadowDecoration.CustomizableEdges = CustomizableEdges22
+        txtProductName.Size = New Size(223, 60)
         txtProductName.TabIndex = 93
         ' 
         ' Guna2HtmlLabel1
@@ -409,7 +415,7 @@ Partial Class AddProduct
         Guna2HtmlLabel1.BackColor = Color.Transparent
         Guna2HtmlLabel1.Font = New Font("Poppins", 9F, FontStyle.Underline, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel1.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
-        Guna2HtmlLabel1.Location = New Point(445, 548)
+        Guna2HtmlLabel1.Location = New Point(561, 647)
         Guna2HtmlLabel1.Name = "Guna2HtmlLabel1"
         Guna2HtmlLabel1.Size = New Size(56, 28)
         Guna2HtmlLabel1.TabIndex = 92
@@ -418,7 +424,7 @@ Partial Class AddProduct
         ' btnAddStock
         ' 
         btnAddStock.BorderRadius = 10
-        btnAddStock.CustomizableEdges = CustomizableEdges21
+        btnAddStock.CustomizableEdges = CustomizableEdges23
         btnAddStock.DisabledState.BorderColor = Color.DarkGray
         btnAddStock.DisabledState.CustomBorderColor = Color.DarkGray
         btnAddStock.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
@@ -426,9 +432,9 @@ Partial Class AddProduct
         btnAddStock.FillColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
         btnAddStock.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         btnAddStock.ForeColor = Color.FromArgb(CByte(51), CByte(51), CByte(51))
-        btnAddStock.Location = New Point(525, 530)
+        btnAddStock.Location = New Point(641, 629)
         btnAddStock.Name = "btnAddStock"
-        btnAddStock.ShadowDecoration.CustomizableEdges = CustomizableEdges22
+        btnAddStock.ShadowDecoration.CustomizableEdges = CustomizableEdges24
         btnAddStock.Size = New Size(119, 57)
         btnAddStock.TabIndex = 91
         btnAddStock.Text = "Save"
@@ -438,7 +444,7 @@ Partial Class AddProduct
         Guna2HtmlLabel15.BackColor = Color.Transparent
         Guna2HtmlLabel15.Font = New Font("Poppins Medium", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel15.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
-        Guna2HtmlLabel15.Location = New Point(15, 265)
+        Guna2HtmlLabel15.Location = New Point(15, 316)
         Guna2HtmlLabel15.Name = "Guna2HtmlLabel15"
         Guna2HtmlLabel15.Size = New Size(55, 32)
         Guna2HtmlLabel15.TabIndex = 90
@@ -447,21 +453,21 @@ Partial Class AddProduct
         ' UnitCmbBox
         ' 
         UnitCmbBox.BackColor = Color.Transparent
-        UnitCmbBox.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
-        UnitCmbBox.BorderRadius = 10
-        UnitCmbBox.CustomizableEdges = CustomizableEdges23
+        UnitCmbBox.BorderColor = Color.DarkGray
+        UnitCmbBox.BorderRadius = 8
+        UnitCmbBox.CustomizableEdges = CustomizableEdges25
         UnitCmbBox.DrawMode = DrawMode.OwnerDrawFixed
         UnitCmbBox.DropDownStyle = ComboBoxStyle.DropDownList
         UnitCmbBox.FocusedColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
         UnitCmbBox.FocusedState.BorderColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
         UnitCmbBox.Font = New Font("Poppins Light", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         UnitCmbBox.ForeColor = Color.FromArgb(CByte(51), CByte(51), CByte(51))
-        UnitCmbBox.ItemHeight = 40
+        UnitCmbBox.ItemHeight = 55
         UnitCmbBox.Items.AddRange(New Object() {"PCS", "BOX", "PACK", "BOTTLE", "TUBE", "SET", "PAIR", "DOZEN", "REAM", "PCS", "BOX", "PACK", "BOTTLE", "TUBE", "SET", "PAIR", "DOZEN", "REAM"})
-        UnitCmbBox.Location = New Point(537, 307)
+        UnitCmbBox.Location = New Point(537, 354)
         UnitCmbBox.Name = "UnitCmbBox"
-        UnitCmbBox.ShadowDecoration.CustomizableEdges = CustomizableEdges24
-        UnitCmbBox.Size = New Size(120, 46)
+        UnitCmbBox.ShadowDecoration.CustomizableEdges = CustomizableEdges26
+        UnitCmbBox.Size = New Size(223, 61)
         UnitCmbBox.TabIndex = 115
         ' 
         ' Guna2HtmlLabel11
@@ -469,18 +475,39 @@ Partial Class AddProduct
         Guna2HtmlLabel11.BackColor = Color.Transparent
         Guna2HtmlLabel11.Font = New Font("Poppins Medium", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel11.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
-        Guna2HtmlLabel11.Location = New Point(537, 265)
+        Guna2HtmlLabel11.Location = New Point(539, 316)
         Guna2HtmlLabel11.Name = "Guna2HtmlLabel11"
         Guna2HtmlLabel11.Size = New Size(36, 32)
         Guna2HtmlLabel11.TabIndex = 96
         Guna2HtmlLabel11.Text = "Unit"
+        ' 
+        ' Guna2Panel3
+        ' 
+        Guna2Panel3.CustomizableEdges = CustomizableEdges3
+        Guna2Panel3.FillColor = Color.FromArgb(CByte(200), CByte(200), CByte(200))
+        Guna2Panel3.Location = New Point(15, 605)
+        Guna2Panel3.Name = "Guna2Panel3"
+        Guna2Panel3.ShadowDecoration.CustomizableEdges = CustomizableEdges4
+        Guna2Panel3.Size = New Size(750, 2)
+        Guna2Panel3.TabIndex = 79
+        ' 
+        ' Guna2HtmlLabel2
+        ' 
+        Guna2HtmlLabel2.BackColor = Color.Transparent
+        Guna2HtmlLabel2.Font = New Font("Poppins Medium", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Guna2HtmlLabel2.ForeColor = Color.FromArgb(CByte(42), CByte(42), CByte(42))
+        Guna2HtmlLabel2.Location = New Point(37, 29)
+        Guna2HtmlLabel2.Name = "Guna2HtmlLabel2"
+        Guna2HtmlLabel2.Size = New Size(130, 32)
+        Guna2HtmlLabel2.TabIndex = 121
+        Guna2HtmlLabel2.Text = "Product Image"
         ' 
         ' AddProduct
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
         BackColor = Color.White
-        ClientSize = New Size(688, 691)
+        ClientSize = New Size(805, 762)
         Controls.Add(Guna2Panel2)
         Controls.Add(Guna2Panel1)
         Controls.Add(Guna2HtmlLabel6)
@@ -523,4 +550,5 @@ Partial Class AddProduct
     Friend WithEvents lblStatus As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents cmbStatus As Guna.UI2.WinForms.Guna2ComboBox
     Friend WithEvents exitDialoglbl As Guna.UI2.WinForms.Guna2HtmlLabel
+    Friend WithEvents Guna2Panel3 As Guna.UI2.WinForms.Guna2Panel
 End Class
