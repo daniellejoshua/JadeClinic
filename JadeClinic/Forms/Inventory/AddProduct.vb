@@ -113,7 +113,10 @@ Public Class AddProduct
         cmbCategory.SelectedIndex = -1
         UnitCmbBox.Items.Clear()
         UnitCmbBox.Items.AddRange(New String() {"PCS", "BOX", "PACK", "BOTTLE", "TUBE", "SET", "PAIR", "DOZEN", "REAM"})
+        LoadAdditionalUnits()
+        UnitCmbBox.Items.Add("Add Custom Unit...")
         UnitCmbBox.SelectedIndex = -1
+        UnitCmbBox.Enabled = True
 
         ' Initialize categories
         InitializeMainCategories()
@@ -191,6 +194,58 @@ Public Class AddProduct
         Else
             cmbCategory.SelectedIndex = -1
         End If
+    End Sub
+
+    Private Sub UnitCmbBox_SelectedIndexChanged(sender As Object, e As EventArgs) Handles UnitCmbBox.SelectedIndexChanged
+        If UnitCmbBox.SelectedItem IsNot Nothing Then
+            If UnitCmbBox.SelectedItem.ToString() = "Add Custom Unit..." Then
+                AddCustomUnit()
+            End If
+        End If
+    End Sub
+
+    Private Sub AddCustomUnit()
+        Dim customUnit As String = InputBox("Enter new unit name:", "Add Custom Unit")
+
+        If Not String.IsNullOrWhiteSpace(customUnit) Then
+            customUnit = customUnit.Trim().ToUpper()
+            If Not UnitCmbBox.Items.Contains(customUnit) Then
+                UnitCmbBox.Items.Insert(UnitCmbBox.Items.Count - 1, customUnit)
+                UnitCmbBox.SelectedItem = customUnit
+            Else
+                MessageBox.Show("Unit already exists!", "Duplicate Unit", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                UnitCmbBox.SelectedItem = customUnit
+            End If
+        Else
+            UnitCmbBox.SelectedIndex = -1
+        End If
+    End Sub
+
+    Private Sub LoadAdditionalUnits()
+        Try
+            Dim baseUnits As String() = {"PCS", "BOX", "PACK", "BOTTLE", "TUBE", "SET", "PAIR", "DOZEN", "REAM"}
+            Dim connStr As String = Connection.GetConnectionString()
+            Using conn As New SqliteConnection(connStr)
+                conn.Open()
+
+                Dim baseUnitsFilter As String = String.Join(",", baseUnits.Select(Function(u) $"'{u}'"))
+                Dim query As String = $"SELECT DISTINCT Unit FROM Products WHERE Unit IS NOT NULL AND Unit NOT IN ({baseUnitsFilter}) ORDER BY Unit"
+                Using cmd As New SqliteCommand(query, conn)
+                    Using reader As DbDataReader = cmd.ExecuteReader()
+                        While reader.Read()
+                            If Not IsDBNull(reader("Unit")) Then
+                                Dim unit As String = reader("Unit").ToString()
+                                If Not UnitCmbBox.Items.Contains(unit) Then
+                                    UnitCmbBox.Items.Add(unit)
+                                End If
+                            End If
+                        End While
+                    End Using
+                End Using
+            End Using
+        Catch ex As Exception
+            Console.WriteLine($"LoadAdditionalUnits: {ex.Message}")
+        End Try
     End Sub
 
     Private Sub ProductImage_DashedBorder_Paint(sender As Object, e As PaintEventArgs)
@@ -283,8 +338,8 @@ Public Class AddProduct
         End If
 
         ' Validate unit
-        If UnitCmbBox.SelectedItem Is Nothing Then
-            MessageBox.Show("Please select a unit!", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        If UnitCmbBox.SelectedItem Is Nothing OrElse UnitCmbBox.SelectedItem.ToString() = "Add Custom Unit..." Then
+            MessageBox.Show("Please select a valid unit!", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
             UnitCmbBox.Focus()
             Return False
         End If
@@ -566,6 +621,7 @@ Public Class AddProduct
                             If UnitCmbBox.Items.Contains(unit) Then
                                 UnitCmbBox.SelectedItem = unit
                             End If
+                            UnitCmbBox.Enabled = False
 
                             If Not IsDBNull(reader("CostPrice")) Then
                                 CostPriceTextBox.Text = Convert.ToDecimal(reader("CostPrice")).ToString("0.00")
@@ -627,6 +683,8 @@ Public Class AddProduct
     Private Sub ClearForm()
         txtProductName.Clear()
         cmbCategory.SelectedIndex = -1
+        UnitCmbBox.SelectedIndex = -1
+        UnitCmbBox.Enabled = True
         CostPriceTextBox.Clear()
         SellingPriceTextBox.Clear()
         WholeSaleTextbox.Clear()

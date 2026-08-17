@@ -471,7 +471,7 @@ Partial Class AddProduct
         Guna2HtmlLabel15.Name = "Guna2HtmlLabel15"
         Guna2HtmlLabel15.Size = New Size(55, 32)
         Guna2HtmlLabel15.TabIndex = 90
-        Guna2HtmlLabel15.Text = "Name"
+        Guna2HtmlLabel15.Text = "Name "
         ' 
         ' UnitCmbBox
         ' 
