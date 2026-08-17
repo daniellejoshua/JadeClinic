@@ -26,6 +26,8 @@ Partial Class AddProduct
         Dim CustomizableEdges2 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges27 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges28 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges3 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges4 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges5 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges6 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges7 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
@@ -48,11 +50,11 @@ Partial Class AddProduct
         Dim CustomizableEdges24 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges25 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges26 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges3 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges4 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Guna2HtmlLabel6 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2Panel1 = New Guna.UI2.WinForms.Guna2Panel()
         Guna2Panel2 = New Guna.UI2.WinForms.Guna2Panel()
+        Guna2HtmlLabel2 = New Guna.UI2.WinForms.Guna2HtmlLabel()
+        Guna2Panel3 = New Guna.UI2.WinForms.Guna2Panel()
         lblStatus = New Guna.UI2.WinForms.Guna2HtmlLabel()
         cmbStatus = New Guna.UI2.WinForms.Guna2ComboBox()
         PrintBarcodeTextBox = New Guna.UI2.WinForms.Guna2HtmlLabel()
@@ -75,8 +77,6 @@ Partial Class AddProduct
         Guna2HtmlLabel15 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         UnitCmbBox = New Guna.UI2.WinForms.Guna2ComboBox()
         Guna2HtmlLabel11 = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        Guna2Panel3 = New Guna.UI2.WinForms.Guna2Panel()
-        Guna2HtmlLabel2 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2Panel2.SuspendLayout()
         CType(BarcodeImage, ComponentModel.ISupportInitialize).BeginInit()
         CType(ProductImage, ComponentModel.ISupportInitialize).BeginInit()
@@ -134,8 +134,29 @@ Partial Class AddProduct
         Guna2Panel2.Location = New Point(12, 67)
         Guna2Panel2.Name = "Guna2Panel2"
         Guna2Panel2.ShadowDecoration.CustomizableEdges = CustomizableEdges28
-        Guna2Panel2.Size = New Size(791, 683)
+        Guna2Panel2.Size = New Size(791, 705)
         Guna2Panel2.TabIndex = 79
+        ' 
+        ' Guna2HtmlLabel2
+        ' 
+        Guna2HtmlLabel2.BackColor = Color.Transparent
+        Guna2HtmlLabel2.Font = New Font("Poppins Medium", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Guna2HtmlLabel2.ForeColor = Color.FromArgb(CByte(42), CByte(42), CByte(42))
+        Guna2HtmlLabel2.Location = New Point(37, 29)
+        Guna2HtmlLabel2.Name = "Guna2HtmlLabel2"
+        Guna2HtmlLabel2.Size = New Size(130, 32)
+        Guna2HtmlLabel2.TabIndex = 121
+        Guna2HtmlLabel2.Text = "Product Image"
+        ' 
+        ' Guna2Panel3
+        ' 
+        Guna2Panel3.CustomizableEdges = CustomizableEdges3
+        Guna2Panel3.FillColor = Color.FromArgb(CByte(200), CByte(200), CByte(200))
+        Guna2Panel3.Location = New Point(15, 605)
+        Guna2Panel3.Name = "Guna2Panel3"
+        Guna2Panel3.ShadowDecoration.CustomizableEdges = CustomizableEdges4
+        Guna2Panel3.Size = New Size(750, 2)
+        Guna2Panel3.TabIndex = 79
         ' 
         ' lblStatus
         ' 
@@ -173,7 +194,7 @@ Partial Class AddProduct
         PrintBarcodeTextBox.BackColor = Color.Transparent
         PrintBarcodeTextBox.Font = New Font("Poppins", 9F, FontStyle.Underline, GraphicsUnit.Point, CByte(0))
         PrintBarcodeTextBox.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
-        PrintBarcodeTextBox.Location = New Point(537, 257)
+        PrintBarcodeTextBox.Location = New Point(445, 229)
         PrintBarcodeTextBox.Name = "PrintBarcodeTextBox"
         PrintBarcodeTextBox.Size = New Size(105, 28)
         PrintBarcodeTextBox.TabIndex = 118
@@ -185,10 +206,10 @@ Partial Class AddProduct
         BarcodeImage.CustomizableEdges = CustomizableEdges7
         BarcodeImage.FillColor = Color.FromArgb(CByte(245), CByte(245), CByte(245))
         BarcodeImage.ImageRotate = 0F
-        BarcodeImage.Location = New Point(495, 67)
+        BarcodeImage.Location = New Point(399, 67)
         BarcodeImage.Name = "BarcodeImage"
         BarcodeImage.ShadowDecoration.CustomizableEdges = CustomizableEdges8
-        BarcodeImage.Size = New Size(190, 175)
+        BarcodeImage.Size = New Size(196, 140)
         BarcodeImage.SizeMode = PictureBoxSizeMode.StretchImage
         BarcodeImage.TabIndex = 117
         BarcodeImage.TabStop = False
@@ -413,11 +434,11 @@ Partial Class AddProduct
         ' Guna2HtmlLabel1
         ' 
         Guna2HtmlLabel1.BackColor = Color.Transparent
-        Guna2HtmlLabel1.Font = New Font("Poppins", 9F, FontStyle.Underline, GraphicsUnit.Point, CByte(0))
+        Guna2HtmlLabel1.Font = New Font("Poppins Medium", 9F, FontStyle.Bold Or FontStyle.Underline, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel1.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
         Guna2HtmlLabel1.Location = New Point(561, 647)
         Guna2HtmlLabel1.Name = "Guna2HtmlLabel1"
-        Guna2HtmlLabel1.Size = New Size(56, 28)
+        Guna2HtmlLabel1.Size = New Size(62, 28)
         Guna2HtmlLabel1.TabIndex = 92
         Guna2HtmlLabel1.Text = "Cancel"
         ' 
@@ -429,15 +450,15 @@ Partial Class AddProduct
         btnAddStock.DisabledState.CustomBorderColor = Color.DarkGray
         btnAddStock.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         btnAddStock.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        btnAddStock.FillColor = Color.FromArgb(CByte(254), CByte(191), CByte(16))
+        btnAddStock.FillColor = Color.FromArgb(CByte(190), CByte(154), CByte(48))
         btnAddStock.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        btnAddStock.ForeColor = Color.FromArgb(CByte(51), CByte(51), CByte(51))
+        btnAddStock.ForeColor = Color.White
         btnAddStock.Location = New Point(641, 629)
         btnAddStock.Name = "btnAddStock"
         btnAddStock.ShadowDecoration.CustomizableEdges = CustomizableEdges24
         btnAddStock.Size = New Size(119, 57)
         btnAddStock.TabIndex = 91
-        btnAddStock.Text = "Save"
+        btnAddStock.Text = "💾 Save"
         ' 
         ' Guna2HtmlLabel15
         ' 
@@ -481,33 +502,12 @@ Partial Class AddProduct
         Guna2HtmlLabel11.TabIndex = 96
         Guna2HtmlLabel11.Text = "Unit"
         ' 
-        ' Guna2Panel3
-        ' 
-        Guna2Panel3.CustomizableEdges = CustomizableEdges3
-        Guna2Panel3.FillColor = Color.FromArgb(CByte(200), CByte(200), CByte(200))
-        Guna2Panel3.Location = New Point(15, 605)
-        Guna2Panel3.Name = "Guna2Panel3"
-        Guna2Panel3.ShadowDecoration.CustomizableEdges = CustomizableEdges4
-        Guna2Panel3.Size = New Size(750, 2)
-        Guna2Panel3.TabIndex = 79
-        ' 
-        ' Guna2HtmlLabel2
-        ' 
-        Guna2HtmlLabel2.BackColor = Color.Transparent
-        Guna2HtmlLabel2.Font = New Font("Poppins Medium", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel2.ForeColor = Color.FromArgb(CByte(42), CByte(42), CByte(42))
-        Guna2HtmlLabel2.Location = New Point(37, 29)
-        Guna2HtmlLabel2.Name = "Guna2HtmlLabel2"
-        Guna2HtmlLabel2.Size = New Size(130, 32)
-        Guna2HtmlLabel2.TabIndex = 121
-        Guna2HtmlLabel2.Text = "Product Image"
-        ' 
         ' AddProduct
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
         BackColor = Color.White
-        ClientSize = New Size(805, 762)
+        ClientSize = New Size(805, 772)
         Controls.Add(Guna2Panel2)
         Controls.Add(Guna2Panel1)
         Controls.Add(Guna2HtmlLabel6)
