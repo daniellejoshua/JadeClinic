@@ -133,13 +133,14 @@ Public Class AddProduct
     End Sub
 
     Private Sub AddComboPlaceholder(combo As ComboBox, text As String)
+        Dim arrowWidth As Integer = 30
         Dim placeholder As New Label() With {
             .Text = text,
             .Font = combo.Font,
             .ForeColor = Color.DarkGray,
             .BackColor = Color.Transparent,
             .AutoSize = False,
-            .Size = New Size(combo.Width - 10, combo.Height - 4),
+            .Size = New Size(combo.Width - arrowWidth - 10, combo.Height - 4),
             .Location = New Point(combo.Location.X + 5, combo.Location.Y + 2),
             .TextAlign = ContentAlignment.MiddleLeft,
             .Cursor = Cursors.Hand,
