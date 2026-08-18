@@ -46,6 +46,16 @@ Public Class frmLoginvb
     Private Const TitleBarHoverHeight As Integer = 8
     Private isTitleBarVisible As Boolean = False
 
+    ' Custom title bar
+    Private titleBarPanel As Guna.UI2.WinForms.Guna2Panel
+    Private WithEvents btnMinimize As Guna.UI2.WinForms.Guna2Button
+    Private WithEvents btnMaximize As Guna.UI2.WinForms.Guna2Button
+    Private WithEvents btnCloseTitle As Guna.UI2.WinForms.Guna2Button
+
+    ' Drag support
+    Private isDragging As Boolean = False
+    Private dragOffset As Point
+
     ' Splash screen
     Private splashPanel As Panel
     Private splashTimer As Timer
@@ -62,6 +72,105 @@ Public Class frmLoginvb
         Me.MinimizeBox = False
         Me.MaximizeBox = False
         Me.TopMost = False
+    End Sub
+
+    Private Sub CreateTitleBar()
+        Dim btnWidth As Integer = 46
+        Dim btnCount As Integer = 3
+
+        titleBarPanel = New Guna.UI2.WinForms.Guna2Panel() With {
+            .Height = 35,
+            .Width = btnWidth * btnCount,
+            .FillColor = Color.White,
+            .Visible = False,
+            .Anchor = AnchorStyles.Top Or AnchorStyles.Right
+        }
+
+        btnCloseTitle = New Guna.UI2.WinForms.Guna2Button() With {
+            .Dock = DockStyle.Right,
+            .Width = 46,
+            .FillColor = Color.White,
+            .ForeColor = Color.FromArgb(42, 42, 42),
+            .Font = New Font("Segoe UI", 10),
+            .Text = ChrW(&H2715),
+            .BorderColor = Color.Transparent,
+            .BorderRadius = 0,
+            .Cursor = Cursors.Hand
+        }
+        AddHandler btnCloseTitle.Click, Sub() Me.Close()
+        AddHandler btnCloseTitle.MouseEnter, Sub()
+                                                btnCloseTitle.FillColor = Color.FromArgb(220, 80, 70)
+                                                btnCloseTitle.ForeColor = Color.White
+                                            End Sub
+        AddHandler btnCloseTitle.MouseLeave, Sub()
+                                                btnCloseTitle.FillColor = Color.White
+                                                btnCloseTitle.ForeColor = Color.FromArgb(42, 42, 42)
+                                            End Sub
+
+        btnMaximize = New Guna.UI2.WinForms.Guna2Button() With {
+            .Dock = DockStyle.Right,
+            .Width = 46,
+            .FillColor = Color.White,
+            .ForeColor = Color.FromArgb(42, 42, 42),
+            .Font = New Font("Segoe UI", 10),
+            .Text = ChrW(&H2752),
+            .BorderColor = Color.Transparent,
+            .BorderRadius = 0,
+            .Cursor = Cursors.Hand
+        }
+        AddHandler btnMaximize.Click, Sub()
+                                          If Me.WindowState = FormWindowState.Maximized Then
+                                              Me.WindowState = FormWindowState.Normal
+                                              Dim w As Integer = CInt(Screen.PrimaryScreen.WorkingArea.Width * 0.8)
+                                              Dim h As Integer = CInt(Screen.PrimaryScreen.WorkingArea.Height * 0.85)
+                                              Dim x As Integer = CInt((Screen.PrimaryScreen.WorkingArea.Width - w) / 2)
+                                              Dim y As Integer = CInt((Screen.PrimaryScreen.WorkingArea.Height - h) / 2)
+                                              Me.Bounds = New Rectangle(x, y, w, h)
+                                              btnMaximize.Text = ChrW(&H25A1)
+                                          Else
+                                              Me.WindowState = FormWindowState.Maximized
+                                              btnMaximize.Text = ChrW(&H2752)
+                                          End If
+                                          CenterLoginLayout()
+                                      End Sub
+        AddHandler btnMaximize.MouseEnter, Sub()
+                                               btnMaximize.FillColor = Color.FromArgb(230, 230, 230)
+                                           End Sub
+        AddHandler btnMaximize.MouseLeave, Sub()
+                                               btnMaximize.FillColor = Color.White
+                                           End Sub
+
+        btnMinimize = New Guna.UI2.WinForms.Guna2Button() With {
+            .Dock = DockStyle.Right,
+            .Width = 46,
+            .FillColor = Color.White,
+            .ForeColor = Color.FromArgb(42, 42, 42),
+            .Font = New Font("Segoe UI", 10),
+            .Text = ChrW(&H2013),
+            .BorderColor = Color.Transparent,
+            .BorderRadius = 0,
+            .Cursor = Cursors.Hand
+        }
+        AddHandler btnMinimize.Click, Sub() Me.WindowState = FormWindowState.Minimized
+        AddHandler btnMinimize.MouseEnter, Sub()
+                                               btnMinimize.FillColor = Color.FromArgb(230, 230, 230)
+                                           End Sub
+        AddHandler btnMinimize.MouseLeave, Sub()
+                                               btnMinimize.FillColor = Color.White
+                                           End Sub
+
+        titleBarPanel.Controls.Add(btnMinimize)
+        titleBarPanel.Controls.Add(btnMaximize)
+        titleBarPanel.Controls.Add(btnCloseTitle)
+
+        Me.Controls.Add(titleBarPanel)
+        titleBarPanel.BringToFront()
+        PositionTitleBar()
+    End Sub
+
+    Private Sub PositionTitleBar()
+        If titleBarPanel Is Nothing Then Return
+        titleBarPanel.Location = New Point(Me.ClientSize.Width - titleBarPanel.Width, 0)
     End Sub
 
     ' ================================================================
@@ -275,16 +384,23 @@ Public Class frmLoginvb
         Dim shouldShow = e.Y <= TitleBarHoverHeight
         If shouldShow <> isTitleBarVisible Then
             isTitleBarVisible = shouldShow
-            Me.ControlBox = shouldShow
-            Me.MinimizeBox = shouldShow
+            If titleBarPanel IsNot Nothing Then
+                PositionTitleBar()
+                titleBarPanel.Visible = shouldShow
+                If shouldShow Then titleBarPanel.BringToFront()
+            End If
+        End If
+
+        ' Form drag when not maximized
+        If isDragging AndAlso Me.WindowState <> FormWindowState.Maximized Then
+            Me.Location = New Point(Cursor.Position.X - dragOffset.X, Cursor.Position.Y - dragOffset.Y)
         End If
     End Sub
 
     Private Sub frmLoginvb_MouseLeave(sender As Object, e As EventArgs)
         If isTitleBarVisible Then
             isTitleBarVisible = False
-            Me.ControlBox = False
-            Me.MinimizeBox = False
+            If titleBarPanel IsNot Nothing Then titleBarPanel.Visible = False
         End If
     End Sub
 
@@ -307,8 +423,23 @@ Public Class frmLoginvb
         BuildLoginCard()
         CenterLoginLayout()
         EnableTitleBarHover()
-        AddHandler Me.Resize, Sub() CenterLoginLayout()
+        CreateTitleBar()
+        AddHandler Me.Resize, Sub()
+                                  CenterLoginLayout()
+                                  PositionTitleBar()
+                              End Sub
         AddHandler Me.KeyDown, AddressOf frmLoginvb_KeyDown
+        AddHandler Me.MouseMove, AddressOf frmLoginvb_MouseMove
+        AddHandler Me.MouseLeave, AddressOf frmLoginvb_MouseLeave
+        AddHandler Me.MouseDown, Sub(s2, e2)
+                                     If e2.Button = MouseButtons.Left AndAlso e2.Y <= TitleBarHoverHeight AndAlso Me.WindowState <> FormWindowState.Maximized Then
+                                         isDragging = True
+                                         dragOffset = New Point(e2.X, e2.Y)
+                                     End If
+                                 End Sub
+        AddHandler Me.MouseUp, Sub(s2, e2)
+                                   isDragging = False
+                               End Sub
 
         InitializeDatabaseOnStartup()
 
