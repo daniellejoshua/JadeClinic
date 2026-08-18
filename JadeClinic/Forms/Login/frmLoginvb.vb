@@ -43,18 +43,36 @@ Public Class frmLoginvb
     Private WithEvents btnQRLogin As Guna.UI2.WinForms.Guna2Button
     Private pnlAccentLine As Guna.UI2.WinForms.Guna2Panel
 
-    Private Const TitleBarHoverHeight As Integer = 8
-    Private isTitleBarVisible As Boolean = False
-
-    ' Custom title bar
+    ' Custom title bar (same pattern as MainShell)
     Private titleBarPanel As Guna.UI2.WinForms.Guna2Panel
     Private WithEvents btnMinimize As Guna.UI2.WinForms.Guna2Button
     Private WithEvents btnMaximize As Guna.UI2.WinForms.Guna2Button
     Private WithEvents btnCloseTitle As Guna.UI2.WinForms.Guna2Button
+    Private _isMaximized As Boolean = True
+    Private _wasMaximizedBeforeMinimize As Boolean = False
+    Private WithEvents _hoverTimer As New Timer() With {.Interval = 100}
 
-    ' Drag support
-    Private isDragging As Boolean = False
-    Private dragOffset As Point
+    ' Win32 edge resize support
+    Private Const WM_NCHITTEST As Integer = &H84
+    Private Const WM_NCLBUTTONDOWN As Integer = &HA1
+    Private Const HTLEFT As Integer = 10
+    Private Const HTRIGHT As Integer = 11
+    Private Const HTTOP As Integer = 12
+    Private Const HTTOPLEFT As Integer = 13
+    Private Const HTTOPRIGHT As Integer = 14
+    Private Const HTBOTTOM As Integer = 15
+    Private Const HTBOTTOMLEFT As Integer = 16
+    Private Const HTBOTTOMRIGHT As Integer = 17
+    Private Const HTCAPTION As Integer = 2
+    Private Const BORDERWIDTH As Integer = 8
+
+    <System.Runtime.InteropServices.DllImport("user32.dll")>
+    Private Shared Function ReleaseCapture() As Boolean
+    End Function
+
+    <System.Runtime.InteropServices.DllImport("user32.dll")>
+    Private Shared Function SendMessage(hWnd As IntPtr, msg As Integer, wParam As Integer, lParam As Integer) As Integer
+    End Function
 
     ' Splash screen
     Private splashPanel As Panel
@@ -99,13 +117,13 @@ Public Class frmLoginvb
         }
         AddHandler btnCloseTitle.Click, Sub() Me.Close()
         AddHandler btnCloseTitle.MouseEnter, Sub()
-                                                btnCloseTitle.FillColor = Color.FromArgb(220, 80, 70)
-                                                btnCloseTitle.ForeColor = Color.White
-                                            End Sub
+                                                 btnCloseTitle.FillColor = Color.FromArgb(220, 80, 70)
+                                                 btnCloseTitle.ForeColor = Color.White
+                                             End Sub
         AddHandler btnCloseTitle.MouseLeave, Sub()
-                                                btnCloseTitle.FillColor = Color.White
-                                                btnCloseTitle.ForeColor = Color.FromArgb(42, 42, 42)
-                                            End Sub
+                                                 btnCloseTitle.FillColor = Color.White
+                                                 btnCloseTitle.ForeColor = Color.FromArgb(42, 42, 42)
+                                             End Sub
 
         btnMaximize = New Guna.UI2.WinForms.Guna2Button() With {
             .Dock = DockStyle.Right,
@@ -166,11 +184,119 @@ Public Class frmLoginvb
         Me.Controls.Add(titleBarPanel)
         titleBarPanel.BringToFront()
         PositionTitleBar()
+
+        _hoverTimer.Start()
     End Sub
 
     Private Sub PositionTitleBar()
         If titleBarPanel Is Nothing Then Return
         titleBarPanel.Location = New Point(Me.ClientSize.Width - titleBarPanel.Width, 0)
+    End Sub
+
+    Private Sub _hoverTimer_Tick(sender As Object, e As EventArgs) Handles _hoverTimer.Tick
+        Dim screenY As Integer = Cursor.Position.Y
+        Dim screenBounds As Rectangle = Screen.PrimaryScreen.Bounds
+
+        If _isMaximized Then
+            If Not titleBarPanel.Visible AndAlso screenY <= screenBounds.Top + 4 Then
+                PositionTitleBar()
+                titleBarPanel.Visible = True
+                titleBarPanel.BringToFront()
+            ElseIf titleBarPanel.Visible AndAlso screenY > screenBounds.Top + titleBarPanel.Height + 10 Then
+                titleBarPanel.Visible = False
+            End If
+        Else
+            If Not titleBarPanel.Visible Then
+                PositionTitleBar()
+                titleBarPanel.Visible = True
+                titleBarPanel.BringToFront()
+            End If
+        End If
+    End Sub
+
+    Private Function GetEdgeHit(screenPos As Point) As Integer
+        If _isMaximized Then Return 0
+
+        ' Avoid PointToClient — it sends WM_NCHITTEST causing infinite recursion
+        Dim mp As New Point(screenPos.X - Me.Location.X, screenPos.Y - Me.Location.Y)
+        Dim cw As Integer = Me.ClientSize.Width
+        Dim ch As Integer = Me.ClientSize.Height
+
+        Dim hitLeft As Boolean = mp.X <= BORDERWIDTH
+        Dim hitRight As Boolean = mp.X >= cw - BORDERWIDTH
+        Dim hitTop As Boolean = mp.Y <= BORDERWIDTH
+        Dim hitBottom As Boolean = mp.Y >= ch - BORDERWIDTH
+
+        If hitLeft AndAlso hitTop Then Return HTTOPLEFT
+        If hitRight AndAlso hitTop Then Return HTTOPRIGHT
+        If hitLeft AndAlso hitBottom Then Return HTBOTTOMLEFT
+        If hitRight AndAlso hitBottom Then Return HTBOTTOMRIGHT
+        If hitLeft Then Return HTLEFT
+        If hitRight Then Return HTRIGHT
+        If hitTop Then Return HTTOP
+        If hitBottom Then Return HTBOTTOM
+
+        Return 0
+    End Function
+
+    Private Sub BeginEdgeResize(edge As Integer)
+        ReleaseCapture()
+        SendMessage(Me.Handle, WM_NCLBUTTONDOWN, edge, 0)
+    End Sub
+
+    Protected Overrides Sub WndProc(ByRef m As Message)
+        If m.Msg = WM_NCHITTEST Then
+            Dim hit As Integer = GetEdgeHit(Cursor.Position)
+            If hit <> 0 Then
+                m.Result = New IntPtr(hit)
+                Return
+            End If
+            If Not _isMaximized Then
+                m.Result = New IntPtr(HTCAPTION)
+                Return
+            End If
+        End If
+        MyBase.WndProc(m)
+    End Sub
+
+    Private Sub frmLoginvb_Resize(sender As Object, e As EventArgs) Handles Me.Resize
+        PositionTitleBar()
+
+        If btnMaximize Is Nothing Then Return
+
+        If Me.WindowState = FormWindowState.Minimized Then
+            _wasMaximizedBeforeMinimize = _isMaximized
+            If titleBarPanel IsNot Nothing Then titleBarPanel.Visible = False
+            Return
+        End If
+
+        If _wasMaximizedBeforeMinimize AndAlso Me.WindowState <> FormWindowState.Minimized Then
+            _wasMaximizedBeforeMinimize = False
+            If Not _isMaximized Then
+                _isMaximized = True
+                Me.FormBorderStyle = FormBorderStyle.None
+                Me.Bounds = Screen.PrimaryScreen.Bounds
+                btnMaximize.Text = ChrW(&H2752)
+            End If
+            CenterLoginLayout()
+            Return
+        End If
+
+        If Me.WindowState = FormWindowState.Maximized Then
+            If Not _isMaximized Then
+                _isMaximized = True
+                Me.FormBorderStyle = FormBorderStyle.None
+                Me.Bounds = Screen.PrimaryScreen.Bounds
+                btnMaximize.Text = ChrW(&H2752)
+            End If
+        ElseIf Me.WindowState = FormWindowState.Normal Then
+            If _isMaximized Then
+                _isMaximized = False
+                btnMaximize.Text = ChrW(&H25A1)
+            End If
+        End If
+
+        CenterLoginLayout()
     End Sub
 
     ' ================================================================
@@ -380,30 +506,6 @@ Public Class frmLoginvb
         Next
     End Sub
 
-    Private Sub frmLoginvb_MouseMove(sender As Object, e As MouseEventArgs)
-        Dim shouldShow = e.Y <= TitleBarHoverHeight
-        If shouldShow <> isTitleBarVisible Then
-            isTitleBarVisible = shouldShow
-            If titleBarPanel IsNot Nothing Then
-                PositionTitleBar()
-                titleBarPanel.Visible = shouldShow
-                If shouldShow Then titleBarPanel.BringToFront()
-            End If
-        End If
-
-        ' Form drag when not maximized
-        If isDragging AndAlso Me.WindowState <> FormWindowState.Maximized Then
-            Me.Location = New Point(Cursor.Position.X - dragOffset.X, Cursor.Position.Y - dragOffset.Y)
-        End If
-    End Sub
-
-    Private Sub frmLoginvb_MouseLeave(sender As Object, e As EventArgs)
-        If isTitleBarVisible Then
-            isTitleBarVisible = False
-            If titleBarPanel IsNot Nothing Then titleBarPanel.Visible = False
-        End If
-    End Sub
-
     Private Sub frmLoginvb_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         ' Enable double buffering on form to prevent repaint flicker
         Dim props As Reflection.BindingFlags = Reflection.BindingFlags.SetProperty Or Reflection.BindingFlags.Instance Or Reflection.BindingFlags.NonPublic
@@ -424,22 +526,7 @@ Public Class frmLoginvb
         CenterLoginLayout()
         EnableTitleBarHover()
         CreateTitleBar()
-        AddHandler Me.Resize, Sub()
-                                  CenterLoginLayout()
-                                  PositionTitleBar()
-                              End Sub
         AddHandler Me.KeyDown, AddressOf frmLoginvb_KeyDown
-        AddHandler Me.MouseMove, AddressOf frmLoginvb_MouseMove
-        AddHandler Me.MouseLeave, AddressOf frmLoginvb_MouseLeave
-        AddHandler Me.MouseDown, Sub(s2, e2)
-                                     If e2.Button = MouseButtons.Left AndAlso e2.Y <= TitleBarHoverHeight AndAlso Me.WindowState <> FormWindowState.Maximized Then
-                                         isDragging = True
-                                         dragOffset = New Point(e2.X, e2.Y)
-                                     End If
-                                 End Sub
-        AddHandler Me.MouseUp, Sub(s2, e2)
-                                   isDragging = False
-                               End Sub
 
         InitializeDatabaseOnStartup()
 
