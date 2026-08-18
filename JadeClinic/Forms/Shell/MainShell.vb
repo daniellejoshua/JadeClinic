@@ -59,7 +59,26 @@ Public Class MainShell
         }
         CreateTitleBar()
         AddHandler ContentPanel.Resize, AddressOf ContentPanel_Resize
+        SetupDragStrip()
         _hoverTimer.Start()
+    End Sub
+
+    Private WithEvents dragStrip As Panel
+
+    Private Sub SetupDragStrip()
+        dragStrip = New Panel() With {
+            .Dock = DockStyle.Top,
+            .Height = 35,
+            .BackColor = Color.FromArgb(1, 26, 29, 31),
+            .Cursor = Cursors.SizeAll,
+            .Visible = False
+        }
+        AddHandler dragStrip.MouseDown, Sub(s, e)
+                                            If e.Button <> MouseButtons.Left Then Return
+                                            ReleaseCapture()
+                                            SendMessage(Me.Handle, WM_NCLBUTTONDOWN, HTCAPTION, 0)
+                                        End Sub
+        Me.Controls.Add(dragStrip)
     End Sub
 
     Private Sub CreateTitleBar()
@@ -192,22 +211,18 @@ Public Class MainShell
     Friend Function GetEdgeHit(screenPos As Point) As Integer
         If _isMaximized Then Return 0
 
-        Dim mp As Point = Me.PointToClient(screenPos)
+        Dim mp As New Point(screenPos.X - Me.Location.X, screenPos.Y - Me.Location.Y)
         Dim cw As Integer = Me.ClientSize.Width
         Dim ch As Integer = Me.ClientSize.Height
 
         Dim hitLeft As Boolean = mp.X <= BORDERWIDTH
         Dim hitRight As Boolean = mp.X >= cw - BORDERWIDTH
-        Dim hitTop As Boolean = mp.Y <= BORDERWIDTH
         Dim hitBottom As Boolean = mp.Y >= ch - BORDERWIDTH
 
-        If hitLeft AndAlso hitTop Then Return HTTOPLEFT
-        If hitRight AndAlso hitTop Then Return HTTOPRIGHT
         If hitLeft AndAlso hitBottom Then Return HTBOTTOMLEFT
         If hitRight AndAlso hitBottom Then Return HTBOTTOMRIGHT
         If hitLeft Then Return HTLEFT
         If hitRight Then Return HTRIGHT
-        If hitTop Then Return HTTOP
         If hitBottom Then Return HTBOTTOM
 
         Return 0
@@ -216,6 +231,24 @@ Public Class MainShell
     Friend Sub BeginEdgeResize(edge As Integer)
         ReleaseCapture()
         SendMessage(Me.Handle, WM_NCLBUTTONDOWN, edge, 0)
+    End Sub
+
+    Protected Overrides Sub WndProc(ByRef m As Message)
+        If m.Msg = WM_NCHITTEST Then
+            Dim hit As Integer = GetEdgeHit(Cursor.Position)
+            If hit <> 0 Then
+                m.Result = New IntPtr(hit)
+                Return
+            End If
+            If Not _isMaximized Then
+                Dim mp As New Point(Cursor.Position.X - Me.Location.X, Cursor.Position.Y - Me.Location.Y)
+                If mp.Y <= 35 Then
+                    m.Result = New IntPtr(HTCAPTION)
+                    Return
+                End If
+            End If
+        End If
+        MyBase.WndProc(m)
     End Sub
 
     Private Sub MainShell_Resize(sender As Object, e As EventArgs) Handles Me.Resize
@@ -253,6 +286,8 @@ Public Class MainShell
                 btnMaximize.Text = ChrW(&H25A1)
             End If
         End If
+
+        If dragStrip IsNot Nothing Then dragStrip.Visible = Not _isMaximized
     End Sub
 
     Private Sub ContentPanel_Resize(sender As Object, e As EventArgs)

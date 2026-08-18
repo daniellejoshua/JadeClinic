@@ -51,6 +51,7 @@ Public Class frmLoginvb
     Private _isMaximized As Boolean = True
     Private _wasMaximizedBeforeMinimize As Boolean = False
     Private WithEvents _hoverTimer As New Timer() With {.Interval = 100}
+    Private WithEvents dragStrip As Panel
 
     ' Win32 edge resize support
     Private Const WM_NCHITTEST As Integer = &H84
@@ -224,16 +225,12 @@ Public Class frmLoginvb
 
         Dim hitLeft As Boolean = mp.X <= BORDERWIDTH
         Dim hitRight As Boolean = mp.X >= cw - BORDERWIDTH
-        Dim hitTop As Boolean = mp.Y <= BORDERWIDTH
         Dim hitBottom As Boolean = mp.Y >= ch - BORDERWIDTH
 
-        If hitLeft AndAlso hitTop Then Return HTTOPLEFT
-        If hitRight AndAlso hitTop Then Return HTTOPRIGHT
         If hitLeft AndAlso hitBottom Then Return HTBOTTOMLEFT
         If hitRight AndAlso hitBottom Then Return HTBOTTOMRIGHT
         If hitLeft Then Return HTLEFT
         If hitRight Then Return HTRIGHT
-        If hitTop Then Return HTTOP
         If hitBottom Then Return HTBOTTOM
 
         Return 0
@@ -251,12 +248,25 @@ Public Class frmLoginvb
                 m.Result = New IntPtr(hit)
                 Return
             End If
-            If Not _isMaximized Then
-                m.Result = New IntPtr(HTCAPTION)
-                Return
-            End If
         End If
         MyBase.WndProc(m)
+    End Sub
+
+    Private Sub SetupDragStrip()
+        dragStrip = New Panel() With {
+            .Dock = DockStyle.Top,
+            .Height = 35,
+            .BackColor = Color.FromArgb(1, 250, 247, 242),
+            .Cursor = Cursors.SizeAll,
+            .Visible = False
+        }
+        AddHandler dragStrip.MouseDown, Sub(s, e)
+                                            If e.Button <> MouseButtons.Left Then Return
+                                            ReleaseCapture()
+                                            SendMessage(Me.Handle, WM_NCLBUTTONDOWN, HTCAPTION, 0)
+                                        End Sub
+        Me.Controls.Add(dragStrip)
+        dragStrip.BringToFront()
     End Sub
 
     Private Sub frmLoginvb_Resize(sender As Object, e As EventArgs) Handles Me.Resize
@@ -295,6 +305,9 @@ Public Class frmLoginvb
                 btnMaximize.Text = ChrW(&H25A1)
             End If
         End If
+
+        ' Show drag strip only when not maximized
+        If dragStrip IsNot Nothing Then dragStrip.Visible = Not _isMaximized
 
         CenterLoginLayout()
     End Sub
@@ -525,6 +538,7 @@ Public Class frmLoginvb
         BuildLoginCard()
         CenterLoginLayout()
         EnableTitleBarHover()
+        SetupDragStrip()
         CreateTitleBar()
         AddHandler Me.KeyDown, AddressOf frmLoginvb_KeyDown
 
