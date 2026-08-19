@@ -295,7 +295,6 @@ Public Class Supplier
         Dim totalWidth As Integer = 1650
         Dim cardGap As Integer = 20
         Dim cardW As Integer = (totalWidth - (cardGap * 2)) \ 3
-        Dim iconSize As Integer = 60
 
         Dim cardBg As Color = Color.White
         Dim cardBorder As Color = Color.FromArgb(240, 239, 235)
@@ -308,16 +307,13 @@ Public Class Supplier
             .FillColor = cardBg, .BorderRadius = 14, .BorderThickness = 1,
             .BorderColor = cardBorder, .Cursor = Cursors.Hand
         }
-        Dim icon1 As New Guna.UI2.WinForms.Guna2Panel() With {
-            .Location = New Point(22, (cardH - iconSize) \ 2), .Size = New Size(iconSize, iconSize),
-            .FillColor = CircleBg, .BorderColor = CircleBg, .BorderThickness = 0, .BorderRadius = iconSize \ 2
-        }
-        AddHandler icon1.Paint, Sub(s, ev) DrawEmojiOnCircle(ev.Graphics, icon1, EmojiUsers, Color.FromArgb(196, 154, 44))
-        card1.Controls.Add(icon1)
-        card1.Controls.Add(New Label() With {.Text = "TOTAL SUPPLIERS", .Font = New Font("Poppins", 9.0F, FontStyle.Bold), .ForeColor = Color.FromArgb(119, 119, 119), .BackColor = Color.Transparent, .Location = New Point(86, 18), .AutoSize = True})
-        _lblTotalValue = New Label() With {.Text = "0", .Font = New Font("Poppins", 30.0F, FontStyle.Bold), .ForeColor = Color.FromArgb(34, 34, 34), .BackColor = Color.Transparent, .Location = New Point(84, 42), .AutoSize = True}
+        AddHandler card1.Paint, Sub(s, ev)
+                                    DrawCircleWithEmoji(ev.Graphics, 36, (cardH - 72) \ 2, 72, EmojiUsers, Color.FromArgb(196, 154, 44))
+                                End Sub
+        card1.Controls.Add(New Label() With {.Text = "TOTAL SUPPLIERS", .Font = New Font("Poppins", 9.0F, FontStyle.Bold), .ForeColor = Color.FromArgb(119, 119, 119), .BackColor = Color.Transparent, .Location = New Point(122, 18), .AutoSize = True})
+        _lblTotalValue = New Label() With {.Text = "0", .Font = New Font("Poppins", 30.0F, FontStyle.Bold), .ForeColor = Color.FromArgb(34, 34, 34), .BackColor = Color.Transparent, .Location = New Point(120, 42), .AutoSize = True}
         card1.Controls.Add(_lblTotalValue)
-        _lblTotalSub = New Label() With {.Text = "All suppliers", .Font = New Font("Poppins", 9.0F, FontStyle.Regular), .ForeColor = Color.FromArgb(46, 125, 50), .BackColor = Color.Transparent, .Location = New Point(88, cardH - 30), .AutoSize = True}
+        _lblTotalSub = New Label() With {.Text = "All suppliers", .Font = New Font("Poppins", 9.0F, FontStyle.Regular), .ForeColor = Color.FromArgb(46, 125, 50), .BackColor = Color.Transparent, .Location = New Point(124, cardH - 30), .AutoSize = True}
         card1.Controls.Add(_lblTotalSub)
 
         ' ── Card 2: Active Suppliers ──
@@ -326,16 +322,13 @@ Public Class Supplier
             .FillColor = cardBg, .BorderRadius = 14, .BorderThickness = 1,
             .BorderColor = cardBorder, .Cursor = Cursors.Hand
         }
-        Dim icon2 As New Guna.UI2.WinForms.Guna2Panel() With {
-            .Location = New Point(22, (cardH - iconSize) \ 2), .Size = New Size(iconSize, iconSize),
-            .FillColor = CircleBg, .BorderColor = CircleBg, .BorderThickness = 0, .BorderRadius = iconSize \ 2
-        }
-        AddHandler icon2.Paint, Sub(s, ev) DrawEmojiOnCircle(ev.Graphics, icon2, EmojiCheck, Color.FromArgb(46, 125, 50))
-        card2.Controls.Add(icon2)
-        card2.Controls.Add(New Label() With {.Text = "ACTIVE SUPPLIERS", .Font = New Font("Poppins", 9.0F, FontStyle.Bold), .ForeColor = Color.FromArgb(119, 119, 119), .BackColor = Color.Transparent, .Location = New Point(86, 18), .AutoSize = True})
-        _lblActiveValue = New Label() With {.Text = "0", .Font = New Font("Poppins", 30.0F, FontStyle.Bold), .ForeColor = Color.FromArgb(34, 34, 34), .BackColor = Color.Transparent, .Location = New Point(84, 42), .AutoSize = True}
+        AddHandler card2.Paint, Sub(s, ev)
+                                    DrawCircleWithEmoji(ev.Graphics, 36, (cardH - 72) \ 2, 72, EmojiCheck, Color.FromArgb(46, 125, 50))
+                                End Sub
+        card2.Controls.Add(New Label() With {.Text = "ACTIVE SUPPLIERS", .Font = New Font("Poppins", 9.0F, FontStyle.Bold), .ForeColor = Color.FromArgb(119, 119, 119), .BackColor = Color.Transparent, .Location = New Point(122, 18), .AutoSize = True})
+        _lblActiveValue = New Label() With {.Text = "0", .Font = New Font("Poppins", 30.0F, FontStyle.Bold), .ForeColor = Color.FromArgb(34, 34, 34), .BackColor = Color.Transparent, .Location = New Point(120, 42), .AutoSize = True}
         card2.Controls.Add(_lblActiveValue)
-        _lblActiveSub = New Label() With {.Text = "All operational", .Font = New Font("Poppins", 9.0F, FontStyle.Regular), .ForeColor = Color.FromArgb(46, 125, 50), .BackColor = Color.Transparent, .Location = New Point(88, cardH - 30), .AutoSize = True}
+        _lblActiveSub = New Label() With {.Text = "All operational", .Font = New Font("Poppins", 9.0F, FontStyle.Regular), .ForeColor = Color.FromArgb(46, 125, 50), .BackColor = Color.Transparent, .Location = New Point(124, cardH - 30), .AutoSize = True}
         card2.Controls.Add(_lblActiveSub)
 
         ' ── Card 3: Stock Ins ──
@@ -344,16 +337,13 @@ Public Class Supplier
             .FillColor = cardBg, .BorderRadius = 14, .BorderThickness = 1,
             .BorderColor = cardBorder, .Cursor = Cursors.Hand
         }
-        Dim icon3 As New Guna.UI2.WinForms.Guna2Panel() With {
-            .Location = New Point(22, (cardH - iconSize) \ 2), .Size = New Size(iconSize, iconSize),
-            .FillColor = CircleBg, .BorderColor = CircleBg, .BorderThickness = 0, .BorderRadius = iconSize \ 2
-        }
-        AddHandler icon3.Paint, Sub(s, ev) DrawEmojiOnCircle(ev.Graphics, icon3, EmojiPackage, Color.FromArgb(255, 152, 0))
-        card3.Controls.Add(icon3)
-        card3.Controls.Add(New Label() With {.Text = "STOCK INS", .Font = New Font("Poppins", 9.0F, FontStyle.Bold), .ForeColor = Color.FromArgb(119, 119, 119), .BackColor = Color.Transparent, .Location = New Point(86, 18), .AutoSize = True})
-        _lblStockValue = New Label() With {.Text = "0", .Font = New Font("Poppins", 30.0F, FontStyle.Bold), .ForeColor = Color.FromArgb(34, 34, 34), .BackColor = Color.Transparent, .Location = New Point(84, 42), .AutoSize = True}
+        AddHandler card3.Paint, Sub(s, ev)
+                                    DrawCircleWithEmoji(ev.Graphics, 36, (cardH - 72) \ 2, 72, EmojiPackage, Color.FromArgb(255, 152, 0))
+                                End Sub
+        card3.Controls.Add(New Label() With {.Text = "STOCK INS", .Font = New Font("Poppins", 9.0F, FontStyle.Bold), .ForeColor = Color.FromArgb(119, 119, 119), .BackColor = Color.Transparent, .Location = New Point(122, 18), .AutoSize = True})
+        _lblStockValue = New Label() With {.Text = "0", .Font = New Font("Poppins", 30.0F, FontStyle.Bold), .ForeColor = Color.FromArgb(34, 34, 34), .BackColor = Color.Transparent, .Location = New Point(120, 42), .AutoSize = True}
         card3.Controls.Add(_lblStockValue)
-        _lblStockSub = New Label() With {.Text = "Total inbound", .Font = New Font("Poppins", 9.0F, FontStyle.Regular), .ForeColor = Color.FromArgb(119, 119, 119), .BackColor = Color.Transparent, .Location = New Point(88, cardH - 30), .AutoSize = True}
+        _lblStockSub = New Label() With {.Text = "Total inbound", .Font = New Font("Poppins", 9.0F, FontStyle.Regular), .ForeColor = Color.FromArgb(119, 119, 119), .BackColor = Color.Transparent, .Location = New Point(124, cardH - 30), .AutoSize = True}
         card3.Controls.Add(_lblStockSub)
 
         ' Add hover handlers to all cards
@@ -379,15 +369,23 @@ Public Class Supplier
         card3.BringToFront()
     End Sub
 
-    Private Sub DrawEmojiOnCircle(g As Graphics, circle As Control, emoji As String, fallbackColor As Color)
+    Private Sub DrawCircleWithEmoji(g As Graphics, x As Integer, y As Integer, diameter As Integer, emoji As String, emojiColor As Color)
         Try
+            g.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias
             g.TextRenderingHint = Drawing.Text.TextRenderingHint.AntiAliasGridFit
+
+            ' Draw filled circle
+            Using brush As New SolidBrush(CircleBg)
+                g.FillEllipse(brush, x, y, diameter, diameter)
+            End Using
+
+            ' Draw emoji centered on the circle
             Dim emojiFontName As String = ResolveEmojiFontFamily()
-            Using f As New Font(emojiFontName, 20.0F, FontStyle.Regular)
+            Using f As New Font(emojiFontName, 22.0F, FontStyle.Regular)
                 Dim sz As Size = TextRenderer.MeasureText(emoji, f)
-                Dim x As Integer = (circle.Width - sz.Width) \ 2
-                Dim y As Integer = (circle.Height - sz.Height) \ 2
-                TextRenderer.DrawText(g, emoji, f, New Point(x, y), fallbackColor)
+                Dim ex As Integer = x + (diameter - sz.Width) \ 2 + 4
+                Dim ey As Integer = y + (diameter - sz.Height) \ 2
+                TextRenderer.DrawText(g, emoji, f, New Point(ex, ey), emojiColor)
             End Using
         Catch
         End Try
