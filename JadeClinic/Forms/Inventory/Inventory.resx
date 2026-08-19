@@ -169,7 +169,7 @@
     <value>Poppins Medium, 9pt</value>
   </data>
   <data name="Guna2Button1.Location" type="System.Drawing.Point, System.Drawing">
-    <value>1506, 102</value>
+    <value>1671, 102</value>
   </data>
   <data name="Guna2Button1.Size" type="System.Drawing.Size, System.Drawing">
     <value>198, 47</value>
@@ -196,7 +196,7 @@
     <value>Poppins Medium, 9pt</value>
   </data>
   <data name="Exportbtn.Location" type="System.Drawing.Point, System.Drawing">
-    <value>1723, 102</value>
+    <value>1509, 102</value>
   </data>
   <data name="Exportbtn.Size" type="System.Drawing.Size, System.Drawing">
     <value>137, 47</value>

@@ -290,24 +290,28 @@ Public Class Inventory
             ' Update UI on the main thread
             ' Replace occurrences that previously wrote item counts into lblUsername.
             ' Inside LoadProductsAsync, update the UI section:
-            Me.Invoke(Sub()
-                          ' Initially show all products
-                          filteredProducts = New List(Of Dictionary(Of String, Object))(allProducts)
+            If Me.IsHandleCreated Then
+                Me.Invoke(Sub()
+                              ' Initially show all products
+                              filteredProducts = New List(Of Dictionary(Of String, Object))(allProducts)
 
-                          _currentPage = 1
+                              _currentPage = 1
 
-                          ' Set up virtual scrolling and render
-                          RefreshProductDisplay()
+                              ' Set up virtual scrolling and render
+                              RefreshProductDisplay()
 
-                          ' Hide loading overlay
-                          HideLoadingOverlay()
-                      End Sub)
+                              ' Hide loading overlay
+                              HideLoadingOverlay()
+                          End Sub)
+            End If
         Catch ex As Exception
             ' Handle errors on main thread
-            Me.Invoke(Sub()
-                          HideLoadingOverlay()
-                          MessageBox.Show("Error loading products: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-                      End Sub)
+            If Me.IsHandleCreated Then
+                Me.Invoke(Sub()
+                              HideLoadingOverlay()
+                              MessageBox.Show("Error loading products: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                          End Sub)
+            End If
         End Try
     End Function
     Private Sub LoadProductsFromDatabase()
