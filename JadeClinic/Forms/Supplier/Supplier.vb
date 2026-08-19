@@ -21,15 +21,8 @@ Public Class Supplier
     Private _pageSize As Integer = 15
     Private _allSuppliers As New List(Of Dictionary(Of String, Object))
     Private _currentSearch As String = ""
-    Private _currentSort As String = ""
-
-    ' KPI card labels
-    Private _lblTotalValue As Label
-    Private _lblTotalSub As Label
-    Private _lblActiveValue As Label
-    Private _lblActiveSub As Label
-    Private _lblStockValue As Label
-    Private _lblStockSub As Label
+    Private _currentFilter As String = ""
+    Private _filterPlaceholder As Label
 
     Private Sub Supplier_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         DashboardPanel.Location = New Point(-10, 5)
@@ -71,13 +64,15 @@ Public Class Supplier
             ' Wire sort
             InitializeSortComboBox()
             AddHandler SortBy.SelectedIndexChanged, AddressOf SortBy_SelectedIndexChanged
+            AddFilterPlaceholder()
 
             ' Wire export
             AddHandler Exportbtn.Click, AddressOf Exportbtn_Click
 
+            ' Wire add supplier
+            AddHandler Guna2Button1.Click, AddressOf Guna2Button1_Click
+
             LoadSuppliersData()
-            BuildKPICards()
-            UpdateKPICards()
             SetupPagination()
 
             Me.Activate()
@@ -282,146 +277,6 @@ Public Class Supplier
         AlignDataGridViewToPanel()
     End Sub
 
-    ' Emoji constants (surrogate pairs - can't use ChrW for these)
-    Private Const EmojiUsers As String = "👥"
-    Private Const EmojiCheck As String = "✅"
-    Private Const EmojiPackage As String = "📦"
-    Private CircleBg As Color = Color.FromArgb(251, 247, 236)  ' #FBF7EC
-
-    Private Sub BuildKPICards()
-        Dim cardY As Integer = 102
-        Dim cardH As Integer = 155
-        Dim startX As Integer = 242
-        Dim totalWidth As Integer = 1650
-        Dim cardGap As Integer = 20
-        Dim cardW As Integer = (totalWidth - (cardGap * 2)) \ 3
-
-        Dim cardBg As Color = Color.White
-        Dim cardBorder As Color = Color.FromArgb(240, 239, 235)
-        Dim hoverBg As Color = Color.FromArgb(255, 254, 249)
-        Dim hoverBorder As Color = Color.FromArgb(196, 154, 44)
-
-        ' ── Card 1: Total Suppliers ──
-        Dim card1 As New Guna.UI2.WinForms.Guna2Panel() With {
-            .Location = New Point(startX, cardY), .Size = New Size(cardW, cardH),
-            .FillColor = cardBg, .BorderRadius = 14, .BorderThickness = 1,
-            .BorderColor = cardBorder, .Cursor = Cursors.Hand
-        }
-        AddHandler card1.Paint, Sub(s, ev)
-                                    DrawCircleWithEmoji(ev.Graphics, 36, (cardH - 72) \ 2, 72, EmojiUsers, Color.FromArgb(196, 154, 44))
-                                End Sub
-        card1.Controls.Add(New Label() With {.Text = "TOTAL SUPPLIERS", .Font = New Font("Poppins", 9.0F, FontStyle.Bold), .ForeColor = Color.FromArgb(119, 119, 119), .BackColor = Color.Transparent, .Location = New Point(122, 18), .AutoSize = True})
-        _lblTotalValue = New Label() With {.Text = "0", .Font = New Font("Poppins", 30.0F, FontStyle.Bold), .ForeColor = Color.FromArgb(34, 34, 34), .BackColor = Color.Transparent, .Location = New Point(120, 42), .AutoSize = True}
-        card1.Controls.Add(_lblTotalValue)
-        _lblTotalSub = New Label() With {.Text = "All suppliers", .Font = New Font("Poppins", 9.0F, FontStyle.Regular), .ForeColor = Color.FromArgb(46, 125, 50), .BackColor = Color.Transparent, .Location = New Point(124, cardH - 30), .AutoSize = True}
-        card1.Controls.Add(_lblTotalSub)
-
-        ' ── Card 2: Active Suppliers ──
-        Dim card2 As New Guna.UI2.WinForms.Guna2Panel() With {
-            .Location = New Point(startX + cardW + cardGap, cardY), .Size = New Size(cardW, cardH),
-            .FillColor = cardBg, .BorderRadius = 14, .BorderThickness = 1,
-            .BorderColor = cardBorder, .Cursor = Cursors.Hand
-        }
-        AddHandler card2.Paint, Sub(s, ev)
-                                    DrawCircleWithEmoji(ev.Graphics, 36, (cardH - 72) \ 2, 72, EmojiCheck, Color.FromArgb(46, 125, 50))
-                                End Sub
-        card2.Controls.Add(New Label() With {.Text = "ACTIVE SUPPLIERS", .Font = New Font("Poppins", 9.0F, FontStyle.Bold), .ForeColor = Color.FromArgb(119, 119, 119), .BackColor = Color.Transparent, .Location = New Point(122, 18), .AutoSize = True})
-        _lblActiveValue = New Label() With {.Text = "0", .Font = New Font("Poppins", 30.0F, FontStyle.Bold), .ForeColor = Color.FromArgb(34, 34, 34), .BackColor = Color.Transparent, .Location = New Point(120, 42), .AutoSize = True}
-        card2.Controls.Add(_lblActiveValue)
-        _lblActiveSub = New Label() With {.Text = "All operational", .Font = New Font("Poppins", 9.0F, FontStyle.Regular), .ForeColor = Color.FromArgb(46, 125, 50), .BackColor = Color.Transparent, .Location = New Point(124, cardH - 30), .AutoSize = True}
-        card2.Controls.Add(_lblActiveSub)
-
-        ' ── Card 3: Stock Ins ──
-        Dim card3 As New Guna.UI2.WinForms.Guna2Panel() With {
-            .Location = New Point(startX + (cardW + cardGap) * 2, cardY), .Size = New Size(cardW, cardH),
-            .FillColor = cardBg, .BorderRadius = 14, .BorderThickness = 1,
-            .BorderColor = cardBorder, .Cursor = Cursors.Hand
-        }
-        AddHandler card3.Paint, Sub(s, ev)
-                                    DrawCircleWithEmoji(ev.Graphics, 36, (cardH - 72) \ 2, 72, EmojiPackage, Color.FromArgb(255, 152, 0))
-                                End Sub
-        card3.Controls.Add(New Label() With {.Text = "STOCK INS", .Font = New Font("Poppins", 9.0F, FontStyle.Bold), .ForeColor = Color.FromArgb(119, 119, 119), .BackColor = Color.Transparent, .Location = New Point(122, 18), .AutoSize = True})
-        _lblStockValue = New Label() With {.Text = "0", .Font = New Font("Poppins", 30.0F, FontStyle.Bold), .ForeColor = Color.FromArgb(34, 34, 34), .BackColor = Color.Transparent, .Location = New Point(120, 42), .AutoSize = True}
-        card3.Controls.Add(_lblStockValue)
-        _lblStockSub = New Label() With {.Text = "Total inbound", .Font = New Font("Poppins", 9.0F, FontStyle.Regular), .ForeColor = Color.FromArgb(119, 119, 119), .BackColor = Color.Transparent, .Location = New Point(124, cardH - 30), .AutoSize = True}
-        card3.Controls.Add(_lblStockSub)
-
-        ' Add hover handlers to all cards
-        For Each card As Guna.UI2.WinForms.Guna2Panel In {card1, card2, card3}
-            Dim c As Color = cardBg
-            Dim hb As Color = hoverBg
-            Dim hc As Color = hoverBorder
-            AddHandler card.MouseEnter, Sub(s, e)
-                                            card.FillColor = hb
-                                            card.BorderColor = hc
-                                        End Sub
-            AddHandler card.MouseLeave, Sub(s, e)
-                                            card.FillColor = c
-                                            card.BorderColor = cardBorder
-                                        End Sub
-        Next
-
-        Me.Controls.Add(card3)
-        Me.Controls.Add(card2)
-        Me.Controls.Add(card1)
-        card1.BringToFront()
-        card2.BringToFront()
-        card3.BringToFront()
-    End Sub
-
-    Private Sub DrawCircleWithEmoji(g As Graphics, x As Integer, y As Integer, diameter As Integer, emoji As String, emojiColor As Color)
-        Try
-            g.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias
-            g.TextRenderingHint = Drawing.Text.TextRenderingHint.AntiAliasGridFit
-
-            ' Draw filled circle
-            Using brush As New SolidBrush(CircleBg)
-                g.FillEllipse(brush, x, y, diameter, diameter)
-            End Using
-
-            ' Draw emoji centered on the circle
-            Dim emojiFontName As String = ResolveEmojiFontFamily()
-            Using f As New Font(emojiFontName, 22.0F, FontStyle.Regular)
-                Dim sz As Size = TextRenderer.MeasureText(emoji, f)
-                Dim ex As Integer = x + (diameter - sz.Width) \ 2 + 4
-                Dim ey As Integer = y + (diameter - sz.Height) \ 2
-                TextRenderer.DrawText(g, emoji, f, New Point(ex, ey), emojiColor)
-            End Using
-        Catch
-        End Try
-    End Sub
-
-    Private Function ResolveEmojiFontFamily() As String
-        Try
-            Dim installed As New HashSet(Of String)()
-            For Each family As FontFamily In Drawing.FontFamily.Families
-                installed.Add(family.Name)
-            Next
-            For Each name As String In {"Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", "Arial"}
-                If installed.Contains(name) Then Return name
-            Next
-        Catch
-        End Try
-        Return "Segoe UI"
-    End Function
-
-    Private Sub UpdateKPICards()
-        If _allSuppliers Is Nothing Then Return
-
-        Dim total As Integer = _allSuppliers.Count
-        Dim active As Integer = _allSuppliers.Where(Function(s) Convert.ToBoolean(s("IsActive"))).Count()
-        Dim stockIns As Integer = _allSuppliers.Sum(Function(s) Convert.ToInt32(s("StockIns")))
-
-        If _lblTotalValue IsNot Nothing Then _lblTotalValue.Text = total.ToString("D2")
-        If _lblTotalSub IsNot Nothing Then _lblTotalSub.Text = If(total = 0, "No suppliers yet", $"Active rate: {If(total > 0, CInt(active * 100 / total), 0)}%")
-
-        If _lblActiveValue IsNot Nothing Then _lblActiveValue.Text = active.ToString("D2")
-        If _lblActiveSub IsNot Nothing Then _lblActiveSub.Text = If(active = total AndAlso total > 0, "All operational", $"{If(total > 0, CInt(active * 100 / total), 0)}% of total")
-
-        If _lblStockValue IsNot Nothing Then _lblStockValue.Text = stockIns.ToString("N0")
-        If _lblStockSub IsNot Nothing Then _lblStockSub.Text = "Total inbound"
-    End Sub
-
     Private Sub OnPaginationPageChanged(page As Integer)
         _currentPage = page
         RenderCurrentPage()
@@ -453,12 +308,35 @@ Public Class Supplier
 
     Private Sub InitializeSortComboBox()
         SortBy.Items.Clear()
-        SortBy.Items.Add("Name (A-Z)")
-        SortBy.Items.Add("Name (Z-A)")
-        SortBy.Items.Add("Code (Ascending)")
-        SortBy.Items.Add("Code (Descending)")
-        SortBy.Items.Add("Status (Active First)")
-        SortBy.SelectedIndex = 0
+        SortBy.Items.Add("Active")
+        SortBy.Items.Add("Inactive")
+        SortBy.SelectedIndex = -1
+    End Sub
+
+    Private Sub AddFilterPlaceholder()
+        Dim arrowWidth As Integer = 30
+        _filterPlaceholder = New Label() With {
+            .Text = "🔍  Filter",
+            .Font = SortBy.Font,
+            .ForeColor = Color.DarkGray,
+            .BackColor = Color.Transparent,
+            .AutoSize = False,
+            .Size = New Size(SortBy.Width - arrowWidth - 10, SortBy.Height - 4),
+            .Location = New Point(SortBy.Location.X + 5, SortBy.Location.Y + 2),
+            .TextAlign = ContentAlignment.MiddleLeft,
+            .Cursor = Cursors.Hand,
+            .Enabled = False
+        }
+        SortBy.Parent.Controls.Add(_filterPlaceholder)
+        _filterPlaceholder.BringToFront()
+        UpdateFilterPlaceholder()
+        AddHandler SortBy.SelectedIndexChanged, Sub(s, e) UpdateFilterPlaceholder()
+    End Sub
+
+    Private Sub UpdateFilterPlaceholder()
+        If _filterPlaceholder IsNot Nothing Then
+            _filterPlaceholder.Visible = (SortBy.SelectedIndex = -1)
+        End If
     End Sub
 
     Private Sub TxtSearch_TextChanged(sender As Object, e As EventArgs)
@@ -471,16 +349,17 @@ Public Class Supplier
         _currentSearch = TxtSearch.Text.Trim()
         _currentPage = 1
         LoadSuppliersData()
-        UpdateKPICards()
         SetupPagination()
     End Sub
 
     Private Sub SortBy_SelectedIndexChanged(sender As Object, e As EventArgs)
-        If SortBy.SelectedItem Is Nothing Then Return
-        _currentSort = SortBy.SelectedItem.ToString()
+        If SortBy.SelectedItem Is Nothing Then
+            _currentFilter = ""
+        Else
+            _currentFilter = SortBy.SelectedItem.ToString()
+        End If
         _currentPage = 1
         LoadSuppliersData()
-        UpdateKPICards()
         SetupPagination()
     End Sub
 
@@ -490,26 +369,24 @@ Public Class Supplier
 
             Dim query As String = "SELECT SupplierID, SupplierCode, SupplierName, ContactPerson, Phone, Email, IsActive FROM Suppliers"
             Dim params As New List(Of SqlParameter)()
+            Dim conditions As New List(Of String)()
 
             If Not String.IsNullOrWhiteSpace(_currentSearch) Then
-                query += " WHERE SupplierName LIKE @SearchText OR ContactPerson LIKE @SearchText OR SupplierCode LIKE @SearchText"
+                conditions.Add("(SupplierName LIKE @SearchText OR ContactPerson LIKE @SearchText OR SupplierCode LIKE @SearchText)")
                 params.Add(New SqlParameter("@SearchText", "%" & _currentSearch & "%"))
             End If
 
-            Select Case _currentSort
-                Case "Name (A-Z)"
-                    query += " ORDER BY SupplierName ASC"
-                Case "Name (Z-A)"
-                    query += " ORDER BY SupplierName DESC"
-                Case "Code (Ascending)"
-                    query += " ORDER BY SupplierCode ASC"
-                Case "Code (Descending)"
-                    query += " ORDER BY SupplierCode DESC"
-                Case "Status (Active First)"
-                    query += " ORDER BY IsActive DESC, SupplierName ASC"
-                Case Else
-                    query += " ORDER BY SupplierName ASC"
-            End Select
+            If _currentFilter = "Active" Then
+                conditions.Add("IsActive = 1")
+            ElseIf _currentFilter = "Inactive" Then
+                conditions.Add("IsActive = 0")
+            End If
+
+            If conditions.Count > 0 Then
+                query += " WHERE " & String.Join(" AND ", conditions)
+            End If
+
+            query += " ORDER BY SupplierName ASC"
 
             Using reader As DbDataReader = Utilities.ExecuteReader(query, params.ToArray())
                 While reader.Read()
@@ -865,7 +742,6 @@ Public Class Supplier
                                                   MessageBox.Show("Supplier updated successfully.", "Saved", MessageBoxButtons.OK, MessageBoxIcon.Information)
                                                   editForm.Close()
                                                   LoadSuppliersData()
-                                                  UpdateKPICards()
                                                   SetupPagination()
                                               Else
                                                   MessageBox.Show("No changes saved.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information)
@@ -882,19 +758,183 @@ Public Class Supplier
         End Try
     End Sub
 
+    Private Sub Guna2Button1_Click(sender As Object, e As EventArgs)
+        ShowAddSupplierModal()
+    End Sub
+
+    Private Sub ShowAddSupplierModal()
+        Try
+            Dim addForm As New Form() With {
+                .Text = "Add New Supplier",
+                .Size = New Size(520, 420),
+                .StartPosition = FormStartPosition.CenterParent,
+                .FormBorderStyle = FormBorderStyle.FixedDialog,
+                .BackColor = Color.White,
+                .MaximizeBox = False,
+                .MinimizeBox = False
+            }
+
+            Dim padLeft As Integer = 20
+            Dim labelW As Integer = 130
+            Dim controlW As Integer = 310
+            Dim y As Integer = 56
+            Dim h As Integer = 30
+
+            Dim header As New Label() With {
+                .Text = "Add New Supplier",
+                .Font = New Font("Poppins SemiBold", 14, FontStyle.Bold),
+                .ForeColor = GoldenYellow,
+                .AutoSize = False,
+                .Size = New Size(addForm.ClientSize.Width - 40, 36),
+                .Location = New Point(padLeft, 8),
+                .TextAlign = ContentAlignment.MiddleLeft
+            }
+            addForm.Controls.Add(header)
+
+            Dim AddLabel = Function(text As String, top As Integer) As Label
+                               Dim l As New Label() With {
+                                   .Text = text,
+                                   .ForeColor = Color.FromArgb(51, 51, 51),
+                                   .Font = New Font("Poppins", 10),
+                                   .Location = New Point(padLeft, top),
+                                   .Size = New Size(labelW, h),
+                                   .TextAlign = ContentAlignment.MiddleLeft
+                               }
+                               addForm.Controls.Add(l)
+                               Return l
+                           End Function
+
+            Dim AddTextBox = Function(top As Integer) As TextBox
+                                 Dim t As New TextBox() With {
+                                     .Location = New Point(padLeft + labelW + 10, top),
+                                     .Size = New Size(controlW, h),
+                                     .BackColor = Color.White,
+                                     .ForeColor = Color.FromArgb(51, 51, 51),
+                                     .BorderStyle = BorderStyle.FixedSingle
+                                 }
+                                 addForm.Controls.Add(t)
+                                 Return t
+                             End Function
+
+            AddLabel("Supplier Name:", y)
+            Dim txtName As TextBox = AddTextBox(y)
+            y += 44
+
+            AddLabel("Contact Person:", y)
+            Dim txtContact As TextBox = AddTextBox(y)
+            y += 44
+
+            AddLabel("Phone:", y)
+            Dim txtPhone As TextBox = AddTextBox(y)
+            y += 44
+
+            AddLabel("Email:", y)
+            Dim txtEmail As TextBox = AddTextBox(y)
+            y += 44
+
+            AddLabel("Status:", y)
+            Dim chkActive As New CheckBox() With {
+                .Location = New Point(padLeft + labelW + 10, y),
+                .Size = New Size(20, 20),
+                .Checked = True,
+                .BackColor = Color.Transparent
+            }
+            addForm.Controls.Add(chkActive)
+
+            Dim lblStatusText As New Label() With {
+                .Text = "Active",
+                .ForeColor = Color.FromArgb(51, 51, 51),
+                .Font = New Font("Poppins", 9),
+                .Location = New Point(padLeft + labelW + 36, y - 2),
+                .Size = New Size(100, 24),
+                .TextAlign = ContentAlignment.MiddleLeft
+            }
+            addForm.Controls.Add(lblStatusText)
+            AddHandler chkActive.CheckedChanged, Sub() lblStatusText.Text = If(chkActive.Checked, "Active", "Inactive")
+
+            Dim btnSave As New Button() With {
+                .Text = "Save", .Size = New Size(120, 36),
+                .Location = New Point(addForm.ClientSize.Width - 260, addForm.ClientSize.Height - 70),
+                .BackColor = SuccessGreen, .ForeColor = Color.White,
+                .FlatStyle = FlatStyle.Flat, .Font = New Font("Poppins", 10, FontStyle.Regular)
+            }
+            Dim btnCancel As New Button() With {
+                .Text = "Cancel", .Size = New Size(120, 36),
+                .Location = New Point(addForm.ClientSize.Width - 130, addForm.ClientSize.Height - 70),
+                .BackColor = GoldenYellow, .ForeColor = DeepCharcoal,
+                .FlatStyle = FlatStyle.Flat, .Font = New Font("Poppins", 10, FontStyle.Regular)
+            }
+            addForm.Controls.Add(btnSave)
+            addForm.Controls.Add(btnCancel)
+            AddHandler btnCancel.Click, Sub() addForm.Close()
+
+            AddHandler btnSave.Click, Sub()
+                                          Try
+                                              If String.IsNullOrWhiteSpace(txtName.Text) Then
+                                                  MessageBox.Show("Supplier name is required.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                                                  txtName.Focus()
+                                                  Return
+                                              End If
+
+                                              Dim supplierCode As String = GenerateNextSupplierCode()
+                                              Dim insertQuery As String = "INSERT INTO Suppliers (SupplierCode, SupplierName, ContactPerson, Phone, Email, IsActive) " &
+                                                                         "VALUES (@SupplierCode, @SupplierName, @ContactPerson, @Phone, @Email, @IsActive)"
+                                              Dim parms As SqlParameter() = {
+                                                  New SqlParameter("@SupplierCode", supplierCode),
+                                                  New SqlParameter("@SupplierName", txtName.Text.Trim()),
+                                                  New SqlParameter("@ContactPerson", If(String.IsNullOrWhiteSpace(txtContact.Text), DBNull.Value, CObj(txtContact.Text.Trim()))),
+                                                  New SqlParameter("@Phone", If(String.IsNullOrWhiteSpace(txtPhone.Text), DBNull.Value, CObj(txtPhone.Text.Trim()))),
+                                                  New SqlParameter("@Email", If(String.IsNullOrWhiteSpace(txtEmail.Text), DBNull.Value, CObj(txtEmail.Text.Trim()))),
+                                                  New SqlParameter("@IsActive", If(chkActive.Checked, 1, 0))
+                                              }
+
+                                              Dim rowsAffected As Integer = Utilities.ExecuteNonQuery(insertQuery, parms)
+                                              If rowsAffected > 0 Then
+                                                  Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Supplier Created", $"Supplier '{txtName.Text.Trim()}' ({supplierCode}) created.")
+                                                  MessageBox.Show($"Supplier added successfully.{vbCrLf}Code: {supplierCode}", "Saved", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                                                  addForm.Close()
+                                                  LoadSuppliersData()
+                                                  SetupPagination()
+                                              Else
+                                                  MessageBox.Show("No supplier created.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                                              End If
+                                          Catch ex As Exception
+                                              MessageBox.Show($"Error saving supplier: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                                          End Try
+                                      End Sub
+
+            addForm.ShowDialog()
+            addForm.Dispose()
+        Catch ex As Exception
+            MessageBox.Show($"Error opening add supplier form: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
+
+    Private Function GenerateNextSupplierCode() As String
+        Try
+            Dim query As String = "SELECT IFNULL(MAX(CAST(SUBSTR(SupplierCode, 2) AS INTEGER)), 0) + 1 FROM Suppliers WHERE SupplierCode LIKE 'S%'"
+            Dim result As Object = Utilities.ExecuteScalar(query, New SqlParameter() {})
+            Dim nextId As Integer = If(result Is Nothing OrElse IsDBNull(result), 1, Convert.ToInt32(result))
+            Return "S" & nextId.ToString("D5")
+        Catch
+            Return "S" & DateTime.Now.Ticks.ToString().Substring(DateTime.Now.Ticks.ToString().Length - 5)
+        End Try
+    End Function
+
     Private Sub Exportbtn_Click(sender As Object, e As EventArgs)
         Try
             Exportbtn.Enabled = False
 
-            Dim sortOrder As String = ""
-            If SortBy IsNot Nothing AndAlso SortBy.SelectedItem IsNot Nothing Then
-                sortOrder = SortBy.SelectedItem.ToString()
-            End If
-
             Dim filterType As String = "All Suppliers"
             Dim filterDate As DateTime? = Nothing
 
-            SupplierExporter.ExportOrderRecordsReport(sortOrder, filterType, filterDate)
+            If _currentFilter = "Active" Then
+                filterType = "Active Suppliers"
+            ElseIf _currentFilter = "Inactive" Then
+                filterType = "Inactive Suppliers"
+            End If
+
+            SupplierExporter.ExportOrderRecordsReport("", filterType, filterDate)
         Catch ex As Exception
             MessageBox.Show($"Export failed: {ex.Message}", "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
             If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
