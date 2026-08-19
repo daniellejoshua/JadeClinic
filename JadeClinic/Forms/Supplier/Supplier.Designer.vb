@@ -34,7 +34,7 @@ Partial Class Supplier
         Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(Supplier))
         LabelTitle = New Label()
         lblSubtitle = New Label()
-        DashboardPanel = New Guna.UI2.WinForms.Guna2Panel()
+        NavigationPanel = New Guna.UI2.WinForms.Guna2Panel()
         PictureBox9 = New PictureBox()
         Guna2CirclePictureBox5 = New Guna.UI2.WinForms.Guna2CirclePictureBox()
         InventoryLogDataGrid = New Guna.UI2.WinForms.Guna2DataGridView()
@@ -44,7 +44,7 @@ Partial Class Supplier
         Guna2Button1 = New Guna.UI2.WinForms.Guna2Button()
         TxtSearch = New Guna.UI2.WinForms.Guna2TextBox()
         lblUsername = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        DashboardPanel.SuspendLayout()
+        NavigationPanel.SuspendLayout()
         CType(PictureBox9, ComponentModel.ISupportInitialize).BeginInit()
         CType(Guna2CirclePictureBox5, ComponentModel.ISupportInitialize).BeginInit()
         CType(InventoryLogDataGrid, ComponentModel.ISupportInitialize).BeginInit()
@@ -73,19 +73,22 @@ Partial Class Supplier
         lblSubtitle.TabIndex = 1
         lblSubtitle.Text = "Manage your supplier information and inventory relationships"
         ' 
-        ' DashboardPanel
+        ' NavigationPanel
         ' 
-        DashboardPanel.BorderColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
-        DashboardPanel.BorderRadius = 10
-        DashboardPanel.BorderThickness = 2
-        DashboardPanel.Controls.Add(PictureBox9)
-        DashboardPanel.CustomizableEdges = CustomizableEdges1
-        DashboardPanel.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
-        DashboardPanel.Location = New Point(-10, 5)
-        DashboardPanel.Name = "DashboardPanel"
-        DashboardPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges2
-        DashboardPanel.Size = New Size(236, 1016)
-        DashboardPanel.TabIndex = 6
+        NavigationPanel.BorderColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
+        NavigationPanel.BorderRadius = 10
+        NavigationPanel.BorderThickness = 2
+        NavigationPanel.Controls.Add(PictureBox9)
+        NavigationPanel.CustomizableEdges = CustomizableEdges1
+        NavigationPanel.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
+        NavigationPanel.Location = New Point(-10, 5)
+        NavigationPanel.Name = "NavigationPanel"
+        NavigationPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges2
+        NavigationPanel.ShadowDecoration.Depth = 10
+        NavigationPanel.ShadowDecoration.Enabled = True
+        NavigationPanel.ShadowDecoration.Shadow = New Padding(0, 0, 4, 4)
+        NavigationPanel.Size = New Size(236, 1016)
+        NavigationPanel.TabIndex = 6
         ' 
         ' PictureBox9
         ' 
@@ -144,7 +147,7 @@ Partial Class Supplier
         InventoryLogDataGrid.RowHeadersVisible = False
         InventoryLogDataGrid.RowHeadersWidth = 51
         InventoryLogDataGrid.RowTemplate.Height = 50
-        InventoryLogDataGrid.Size = New Size(1641, 770)
+        InventoryLogDataGrid.Size = New Size(1641, 801)
         InventoryLogDataGrid.TabIndex = 41
         InventoryLogDataGrid.ThemeStyle.AlternatingRowsStyle.BackColor = Color.White
         InventoryLogDataGrid.ThemeStyle.AlternatingRowsStyle.Font = Nothing
@@ -188,7 +191,7 @@ Partial Class Supplier
         Guna2Panel1.ShadowDecoration.Depth = 20
         Guna2Panel1.ShadowDecoration.Enabled = True
         Guna2Panel1.ShadowDecoration.Shadow = New Padding(0, 0, 0, 8)
-        Guna2Panel1.Size = New Size(1650, 771)
+        Guna2Panel1.Size = New Size(1650, 908)
         Guna2Panel1.TabIndex = 80
         ' 
         ' SortBy
@@ -295,7 +298,7 @@ Partial Class Supplier
         Controls.Add(lblSubtitle)
         Controls.Add(lblUsername)
         Controls.Add(Guna2CirclePictureBox5)
-        Controls.Add(DashboardPanel)
+        Controls.Add(NavigationPanel)
         Controls.Add(LabelTitle)
         Controls.Add(Guna2Panel1)
         Icon = CType(resources.GetObject("$this.Icon"), Icon)
@@ -303,7 +306,7 @@ Partial Class Supplier
         SizeGripStyle = SizeGripStyle.Hide
         StartPosition = FormStartPosition.CenterScreen
         Text = "Orders"
-        DashboardPanel.ResumeLayout(False)
+        NavigationPanel.ResumeLayout(False)
         CType(PictureBox9, ComponentModel.ISupportInitialize).EndInit()
         CType(Guna2CirclePictureBox5, ComponentModel.ISupportInitialize).EndInit()
         CType(InventoryLogDataGrid, ComponentModel.ISupportInitialize).EndInit()
@@ -314,7 +317,7 @@ Partial Class Supplier
 
     Friend WithEvents LabelTitle As Label
     Friend WithEvents lblSubtitle As Label
-    Friend WithEvents DashboardPanel As Guna.UI2.WinForms.Guna2Panel
+    Friend WithEvents NavigationPanel As Guna.UI2.WinForms.Guna2Panel
     Friend WithEvents PictureBox9 As PictureBox
     Friend WithEvents Guna2CirclePictureBox5 As Guna.UI2.WinForms.Guna2CirclePictureBox
     Friend WithEvents InventoryLogDataGrid As Guna.UI2.WinForms.Guna2DataGridView

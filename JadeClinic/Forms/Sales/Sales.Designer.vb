@@ -360,7 +360,7 @@ Partial Class Sales
         ' DashboardPanel
         ' 
         DashboardPanel.BackColor = Color.White
-        DashboardPanel.BorderColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
+        DashboardPanel.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
         DashboardPanel.BorderRadius = 10
         DashboardPanel.BorderThickness = 2
         DashboardPanel.Controls.Add(PictureBox9)

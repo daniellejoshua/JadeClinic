@@ -25,7 +25,7 @@ Public Class Supplier
     Private _filterPlaceholder As Label
 
     Private Sub Supplier_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        DashboardPanel.Location = New Point(-10, 5)
+        NavigationPanel.Location = New Point(-10, 5)
         Try
             Me.KeyPreview = True
 
@@ -50,7 +50,7 @@ Public Class Supplier
             IdleTimeoutManager.Instance.StartMonitoring(Me)
             InitializeProfileSection()
 
-            NavigationBuilder.Build(DashboardPanel, Me, "Supplier")
+            NavigationBuilder.Build(NavigationPanel, Me, "Supplier")
 
             InitializeDataGridView()
 
@@ -765,109 +765,197 @@ Public Class Supplier
     Private Sub ShowAddSupplierModal()
         Try
             Dim addForm As New Form() With {
-                .Text = "Add New Supplier",
-                .Size = New Size(520, 420),
+                .Text = "",
+                .Size = New Size(620, 580),
                 .StartPosition = FormStartPosition.CenterParent,
-                .FormBorderStyle = FormBorderStyle.FixedDialog,
-                .BackColor = Color.White,
-                .MaximizeBox = False,
-                .MinimizeBox = False
+                .FormBorderStyle = FormBorderStyle.None,
+                .BackColor = Color.FromArgb(245, 244, 240)
             }
 
-            Dim padLeft As Integer = 20
-            Dim labelW As Integer = 130
-            Dim controlW As Integer = 310
-            Dim y As Integer = 56
-            Dim h As Integer = 30
+            Dim cardPadding As Integer = 28
+            Dim fieldSpacing As Integer = 18
+            Dim labelH As Integer = 26
+            Dim controlH As Integer = 40
+            Dim labelW As Integer = 140
+            Dim inputW As Integer = 330
+            Dim cornerRadius As Integer = 10
+            Dim accentGold As Color = Color.FromArgb(196, 154, 48)
+            Dim textColor As Color = Color.FromArgb(51, 51, 51)
+            Dim labelColor As Color = Color.FromArgb(80, 80, 80)
+            Dim inputBg As Color = Color.FromArgb(250, 249, 246)
 
-            Dim header As New Label() With {
+            ' ── Card panel (white rounded body) ──
+            Dim card As New Guna.UI2.WinForms.Guna2Panel() With {
+                .Dock = DockStyle.Fill,
+                .FillColor = Color.White,
+                .BorderRadius = 18,
+                .BorderThickness = 1,
+                .BorderColor = Color.FromArgb(235, 234, 230),
+                .Padding = New Padding(cardPadding)
+            }
+            addForm.Controls.Add(card)
+
+            ' ── Drag support (borderless form) ──
+            Dim dragOffset As Point = Point.Empty
+            AddHandler card.MouseDown, Sub(s, e)
+                                           If e.Button = MouseButtons.Left Then dragOffset = e.Location
+                                       End Sub
+            AddHandler card.MouseMove, Sub(s, e)
+                                           If e.Button = MouseButtons.Left Then
+                                               addForm.Location = New Point(addForm.Location.X + e.X - dragOffset.X, addForm.Location.Y + e.Y - dragOffset.Y)
+                                           End If
+                                       End Sub
+
+            ' ── Header bar ──
+            Dim headerBar As New Panel() With {
+                .Dock = DockStyle.Top,
+                .Height = 56,
+                .BackColor = Color.White
+            }
+            Dim lblHeader As New Label() With {
                 .Text = "Add New Supplier",
-                .Font = New Font("Poppins SemiBold", 14, FontStyle.Bold),
-                .ForeColor = GoldenYellow,
+                .Font = New Font("Poppins SemiBold", 13, FontStyle.Bold),
+                .ForeColor = accentGold,
                 .AutoSize = False,
-                .Size = New Size(addForm.ClientSize.Width - 40, 36),
-                .Location = New Point(padLeft, 8),
+                .Size = New Size(400, 56),
+                .Location = New Point(0, 0),
                 .TextAlign = ContentAlignment.MiddleLeft
             }
-            addForm.Controls.Add(header)
+            headerBar.Controls.Add(lblHeader)
+            card.Controls.Add(headerBar)
 
-            Dim AddLabel = Function(text As String, top As Integer) As Label
-                               Dim l As New Label() With {
-                                   .Text = text,
-                                   .ForeColor = Color.FromArgb(51, 51, 51),
-                                   .Font = New Font("Poppins", 10),
-                                   .Location = New Point(padLeft, top),
-                                   .Size = New Size(labelW, h),
-                                   .TextAlign = ContentAlignment.MiddleLeft
-                               }
-                               addForm.Controls.Add(l)
-                               Return l
-                           End Function
-
-            Dim AddTextBox = Function(top As Integer) As TextBox
-                                 Dim t As New TextBox() With {
-                                     .Location = New Point(padLeft + labelW + 10, top),
-                                     .Size = New Size(controlW, h),
-                                     .BackColor = Color.White,
-                                     .ForeColor = Color.FromArgb(51, 51, 51),
-                                     .BorderStyle = BorderStyle.FixedSingle
-                                 }
-                                 addForm.Controls.Add(t)
-                                 Return t
-                             End Function
-
-            AddLabel("Supplier Name:", y)
-            Dim txtName As TextBox = AddTextBox(y)
-            y += 44
-
-            AddLabel("Contact Person:", y)
-            Dim txtContact As TextBox = AddTextBox(y)
-            y += 44
-
-            AddLabel("Phone:", y)
-            Dim txtPhone As TextBox = AddTextBox(y)
-            y += 44
-
-            AddLabel("Email:", y)
-            Dim txtEmail As TextBox = AddTextBox(y)
-            y += 44
-
-            AddLabel("Status:", y)
-            Dim chkActive As New CheckBox() With {
-                .Location = New Point(padLeft + labelW + 10, y),
-                .Size = New Size(20, 20),
-                .Checked = True,
-                .BackColor = Color.Transparent
+            ' ── Separator line under header ──
+            Dim sepLine As New Panel() With {
+                .Dock = DockStyle.Top,
+                .Height = 1,
+                .BackColor = Color.FromArgb(235, 234, 230)
             }
-            addForm.Controls.Add(chkActive)
+            card.Controls.Add(sepLine)
+            sepLine.BringToFront()
+
+            ' ── Button bar at bottom ──
+            Dim btnBar As New Panel() With {
+                .Dock = DockStyle.Bottom,
+                .Height = 64,
+                .BackColor = Color.White,
+                .Padding = New Padding(0, 12, cardPadding, 0)
+            }
+            Dim btnSave As New Guna.UI2.WinForms.Guna2Button() With {
+                .Text = "Save Supplier",
+                .Size = New Size(150, 40),
+                .Anchor = AnchorStyles.Bottom Or AnchorStyles.Right,
+                .Location = New Point(addForm.ClientSize.Width - 290, 12),
+                .FillColor = accentGold,
+                .ForeColor = Color.White,
+                .Font = New Font("Poppins", 9.5F, FontStyle.Regular),
+                .BorderRadius = cornerRadius,
+                .Cursor = Cursors.Hand
+            }
+            Dim btnCancel As New Guna.UI2.WinForms.Guna2Button() With {
+                .Text = "Cancel",
+                .Size = New Size(110, 40),
+                .Anchor = AnchorStyles.Bottom Or AnchorStyles.Right,
+                .Location = New Point(addForm.ClientSize.Width - 132, 12),
+                .FillColor = Color.FromArgb(240, 239, 235),
+                .ForeColor = textColor,
+                .Font = New Font("Poppins", 9.5F, FontStyle.Regular),
+                .BorderRadius = cornerRadius,
+                .Cursor = Cursors.Hand
+            }
+            btnBar.Controls.Add(btnSave)
+            btnBar.Controls.Add(btnCancel)
+            card.Controls.Add(btnBar)
+            AddHandler btnCancel.Click, Sub() addForm.Close()
+
+            ' ── Field panel (scrollable content area) ──
+            Dim fieldPanel As New Panel() With {
+                .Dock = DockStyle.Fill,
+                .BackColor = Color.Transparent,
+                .Padding = New Padding(4, 12, 4, 8)
+            }
+            card.Controls.Add(fieldPanel)
+
+            Dim y As Integer = 12
+
+            ' Helper: create a label + Guna2TextBox pair
+            Dim CreateField = Sub(text As String, ByRef txtRef As Guna.UI2.WinForms.Guna2TextBox, isOptional As Boolean)
+                                  Dim displayText = If(isOptional, text & "  (optional)", text)
+                                  Dim lbl As New Label() With {
+                                      .Text = displayText,
+                                      .Font = New Font("Poppins", 9.5F, FontStyle.Regular),
+                                      .ForeColor = labelColor,
+                                      .AutoSize = True,
+                                      .Location = New Point(8, y),
+                                      .Height = labelH
+                                  }
+                                  fieldPanel.Controls.Add(lbl)
+                                  y += labelH + 6
+
+                                  txtRef = New Guna.UI2.WinForms.Guna2TextBox() With {
+                                      .Location = New Point(8, y),
+                                      .Size = New Size(fieldPanel.Width - 20, controlH),
+                                      .Anchor = AnchorStyles.Top Or AnchorStyles.Left Or AnchorStyles.Right,
+                                      .BackColor = Color.Transparent,
+                                      .FillColor = inputBg,
+                                      .ForeColor = textColor,
+                                      .PlaceholderForeColor = Color.FromArgb(170, 170, 170),
+                                      .BorderRadius = cornerRadius,
+                                      .BorderThickness = 1,
+                                      .BorderColor = Color.FromArgb(220, 220, 220),
+                                      .Font = New Font("Poppins", 9.5F, FontStyle.Regular),
+                                      .Cursor = Cursors.IBeam
+                                  }
+                                  txtRef.FocusedState.BorderColor = accentGold
+                                  txtRef.HoverState.BorderColor = Color.FromArgb(180, 180, 180)
+                                  fieldPanel.Controls.Add(txtRef)
+                                  y += controlH + fieldSpacing
+                              End Sub
+
+            Dim txtName As Guna.UI2.WinForms.Guna2TextBox = Nothing
+            Dim txtContact As Guna.UI2.WinForms.Guna2TextBox = Nothing
+            Dim txtPhone As Guna.UI2.WinForms.Guna2TextBox = Nothing
+            Dim txtEmail As Guna.UI2.WinForms.Guna2TextBox = Nothing
+
+            CreateField("Supplier Name", txtName, False)
+            CreateField("Contact Person", txtContact, True)
+            CreateField("Phone", txtPhone, True)
+            CreateField("Email", txtEmail, True)
+
+            ' ── Status toggle ──
+            Dim lblStatus As New Label() With {
+                .Text = "Status",
+                .Font = New Font("Poppins", 9.5F, FontStyle.Regular),
+                .ForeColor = labelColor,
+                .AutoSize = True,
+                .Location = New Point(8, y),
+                .Height = labelH
+            }
+            fieldPanel.Controls.Add(lblStatus)
+            y += labelH + 6
+
+            Dim chkActive As New Guna.UI2.WinForms.Guna2ToggleSwitch() With {
+                .Location = New Point(8, y + 2),
+                .Size = New Size(44, 22),
+                .Checked = True,
+                .ForeColor = Color.White
+            }
+            chkActive.CheckedState.FillColor = accentGold
+            fieldPanel.Controls.Add(chkActive)
 
             Dim lblStatusText As New Label() With {
                 .Text = "Active",
-                .ForeColor = Color.FromArgb(51, 51, 51),
-                .Font = New Font("Poppins", 9),
-                .Location = New Point(padLeft + labelW + 36, y - 2),
-                .Size = New Size(100, 24),
-                .TextAlign = ContentAlignment.MiddleLeft
+                .Font = New Font("Poppins", 9.5F, FontStyle.Regular),
+                .ForeColor = textColor,
+                .AutoSize = True,
+                .Location = New Point(62, y + 2)
             }
-            addForm.Controls.Add(lblStatusText)
-            AddHandler chkActive.CheckedChanged, Sub() lblStatusText.Text = If(chkActive.Checked, "Active", "Inactive")
+            fieldPanel.Controls.Add(lblStatusText)
+            AddHandler chkActive.CheckedChanged, Sub()
+                                                     lblStatusText.Text = If(chkActive.Checked, "Active", "Inactive")
+                                                     lblStatusText.ForeColor = If(chkActive.Checked, Color.FromArgb(46, 125, 50), Color.FromArgb(180, 60, 60))
+                                                 End Sub
 
-            Dim btnSave As New Button() With {
-                .Text = "Save", .Size = New Size(120, 36),
-                .Location = New Point(addForm.ClientSize.Width - 260, addForm.ClientSize.Height - 70),
-                .BackColor = SuccessGreen, .ForeColor = Color.White,
-                .FlatStyle = FlatStyle.Flat, .Font = New Font("Poppins", 10, FontStyle.Regular)
-            }
-            Dim btnCancel As New Button() With {
-                .Text = "Cancel", .Size = New Size(120, 36),
-                .Location = New Point(addForm.ClientSize.Width - 130, addForm.ClientSize.Height - 70),
-                .BackColor = GoldenYellow, .ForeColor = DeepCharcoal,
-                .FlatStyle = FlatStyle.Flat, .Font = New Font("Poppins", 10, FontStyle.Regular)
-            }
-            addForm.Controls.Add(btnSave)
-            addForm.Controls.Add(btnCancel)
-            AddHandler btnCancel.Click, Sub() addForm.Close()
-
+            ' ── Save handler ──
             AddHandler btnSave.Click, Sub()
                                           Try
                                               If String.IsNullOrWhiteSpace(txtName.Text) Then
