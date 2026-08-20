@@ -791,6 +791,7 @@ Public Class Supplier
                                           End Try
                                       End Sub
 
+            Utilities.EnableEscCloseModal(editForm)
             editForm.ShowDialog()
             editForm.Dispose()
         Catch ex As Exception
@@ -957,6 +958,7 @@ Public Class Supplier
                                           End Try
                                       End Sub
 
+            Utilities.EnableEscCloseModal(addForm)
             addForm.ShowDialog()
             addForm.Dispose()
         Catch ex As Exception

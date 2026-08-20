@@ -398,4 +398,13 @@ Module Utilities
             End If
         Next
     End Sub
+
+    Public Sub EnableEscCloseModal(frm As Form)
+        frm.KeyPreview = True
+        AddHandler frm.KeyDown, Sub(s, e)
+                                    If e.KeyCode = Keys.Escape Then
+                                        frm.Close()
+                                    End If
+                                End Sub
+    End Sub
 End Module

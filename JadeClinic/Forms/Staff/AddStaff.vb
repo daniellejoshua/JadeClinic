@@ -944,6 +944,7 @@ Public Class AddStaff
                                 End Sub
 
         ' Show the dialog (modal) � do not auto-close the AddStaff form until user closes the print/passkey modal
+        Utilities.EnableEscCloseModal(dlg)
         dlg.ShowDialog(Me)
         dlg.Dispose()
 

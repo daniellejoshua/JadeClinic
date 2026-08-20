@@ -427,6 +427,7 @@ Public Class IdleTimeoutManager
                                             End Sub
 
             txtPassword.Focus()
+            Utilities.EnableEscCloseModal(passwordDialog)
             passwordDialog.ShowDialog(currentForm)
 
             ' After dialog closes, handle any pending logout (form-hide and login-show must happen OUTSIDE modal pump)

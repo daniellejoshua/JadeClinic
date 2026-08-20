@@ -890,6 +890,7 @@ Public Class Inventory
             editProductForm.StartPosition = FormStartPosition.CenterScreen
             editProductForm.TopMost = True
 
+            Utilities.EnableEscCloseModal(editProductForm)
             Dim result As DialogResult = editProductForm.ShowDialog(Me)
 
             ' Refresh the inventory list if product was updated
@@ -1122,6 +1123,7 @@ Public Class Inventory
             addProductForm.StartPosition = FormStartPosition.CenterScreen
             addProductForm.TopMost = True
 
+            Utilities.EnableEscCloseModal(addProductForm)
             Dim result As DialogResult = addProductForm.ShowDialog(Me)
 
             ' Refresh if successful

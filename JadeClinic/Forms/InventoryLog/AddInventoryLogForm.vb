@@ -777,6 +777,7 @@ Public Class AddInventoryLogForm
                                                 End If
                                             End Sub
 
+        Utilities.EnableEscCloseModal(supplierForm)
         supplierForm.ShowDialog(Me)
     End Sub
 

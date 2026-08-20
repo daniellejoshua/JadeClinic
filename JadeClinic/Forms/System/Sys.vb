@@ -204,6 +204,7 @@ Public Class Sys
     Private Sub btnCompanySettings_Click(sender As Object, e As EventArgs) Handles btnCompanySettings.Click
         Try
             Dim companySettingsForm As New CompanySettings()
+            Utilities.EnableEscCloseModal(companySettingsForm)
             companySettingsForm.ShowDialog()
         Catch ex As Exception
             MessageBox.Show($"Error opening Company Settings: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
@@ -426,6 +427,7 @@ Public Class Sys
         AddHandler btnClose.Click, Sub() backupForm.Close()
         backupForm.Controls.Add(btnClose)
 
+        Utilities.EnableEscCloseModal(backupForm)
         backupForm.ShowDialog()
         backupForm.Dispose()
     End Sub

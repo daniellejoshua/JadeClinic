@@ -565,6 +565,7 @@ Public Class SalesRecord
                     ' Open SalesDetails form as modal and pass the SaleID
                     Dim detailsForm As New SalesDetails(saleId)
                     detailsForm.StartPosition = FormStartPosition.CenterParent
+                    Utilities.EnableEscCloseModal(detailsForm)
                     detailsForm.ShowDialog(Me)
                 End If
             End If

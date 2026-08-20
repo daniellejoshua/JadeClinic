@@ -492,6 +492,7 @@ Public Class Staff
             Dim idForm As New IdCard()
             idForm.StartPosition = FormStartPosition.CenterParent
             idForm.LoadFromUserData(userData)
+            Utilities.EnableEscCloseModal(idForm)
             idForm.ShowDialog()
         Catch ex As Exception
             MessageBox.Show($"Unable to show ID Card: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
@@ -564,6 +565,7 @@ Public Class Staff
 
         pinDialog.Controls.AddRange({lblPrompt, txtPin, btnConfirm, btnCancel})
         txtPin.Focus()
+        Utilities.EnableEscCloseModal(pinDialog)
         pinDialog.ShowDialog()
 
         Return pinAccepted
@@ -610,6 +612,7 @@ Public Class Staff
                 End If
 
                 addStaffForm.StartPosition = FormStartPosition.CenterParent
+                Utilities.EnableEscCloseModal(addStaffForm)
                 addStaffForm.ShowDialog()
             End Using
 
@@ -625,6 +628,7 @@ Public Class Staff
         ' Open AddStaff form for adding new staff members
         Try
             Dim addStaffForm As New AddStaff()
+            Utilities.EnableEscCloseModal(addStaffForm)
             addStaffForm.ShowDialog()
 
             ' Refresh the staff list after adding new staff
@@ -842,6 +846,7 @@ Public Class Staff
             Dim idForm As New IdCard()
             idForm.StartPosition = FormStartPosition.CenterParent
             idForm.LoadFromUserData(rowTag)
+            Utilities.EnableEscCloseModal(idForm)
             idForm.ShowDialog()
 
         Catch ex As Exception

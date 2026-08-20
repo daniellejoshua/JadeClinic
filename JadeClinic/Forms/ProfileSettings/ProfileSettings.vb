@@ -342,6 +342,7 @@ Public Class ProfileSettings
 
             pinDialog.Controls.AddRange({lblPrompt, txtPin, btnConfirm, btnCancel})
             txtPin.Focus()
+            Utilities.EnableEscCloseModal(pinDialog)
             pinDialog.ShowDialog(Me)
 
             If pinAccepted Then
@@ -491,6 +492,7 @@ Public Class ProfileSettings
 
         pinDialog.Controls.AddRange({lblPrompt, txtPin, btnConfirm, btnCancel})
         txtPin.Focus()
+        Utilities.EnableEscCloseModal(pinDialog)
         pinDialog.ShowDialog(Me)
     End Sub
 

@@ -654,6 +654,7 @@ Public Class InventoryLog
                                         End Sub
             detailForm.Controls.Add(btnExport)
 
+            Utilities.EnableEscCloseModal(detailForm)
             detailForm.ShowDialog()
             detailForm.Dispose()
         Catch ex As Exception
@@ -1016,6 +1017,7 @@ Public Class InventoryLog
                                               End If
                                           End Sub
 
+        Utilities.EnableEscCloseModal(addLogForm)
         Dim result As DialogResult = addLogForm.ShowDialog(Me)
 
         ' Cleanup overlay if still exists

@@ -1177,6 +1177,7 @@ Public Class frmLoginvb
                                                    End Sub
                     qrForm.Controls.Add(btnDisableQR)
 
+                    Utilities.EnableEscCloseModal(qrForm)
                     qrForm.ShowDialog(Me)
                 End If
             End Using
@@ -1487,6 +1488,7 @@ Public Class frmLoginvb
 
         Console.WriteLine("Showing QR Dialog")
         txtQRInput.Focus()
+        Utilities.EnableEscCloseModal(qrDialog)
         qrDialog.ShowDialog(Me)
         Console.WriteLine("QR Dialog closed")
 
@@ -2236,6 +2238,7 @@ Public Class frmLoginvb
         End Sub
 
         setStep(1)
+        Utilities.EnableEscCloseModal(dlg)
         dlg.ShowDialog(Me)
         Return success
     End Function
@@ -2384,6 +2387,7 @@ Public Class frmLoginvb
                 Console.WriteLine($"Prefill attempt failed: {ex.Message}")
             End Try
 
+            Utilities.EnableEscCloseModal(forgotForm)
             forgotForm.ShowDialog(Me)
         Catch ex As Exception
             Console.WriteLine($"Error opening Forgot Password dialog: {ex.Message}")
