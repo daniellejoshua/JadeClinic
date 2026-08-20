@@ -210,6 +210,7 @@ Public Class Inventory
 
     Private Sub ShowLoadingOverlay()
         If DashboardPanel IsNot Nothing Then DashboardPanel.ShadowDecoration.Enabled = False
+        If Guna2Panel1 IsNot Nothing Then Guna2Panel1.ShadowDecoration.Enabled = False
 
         ' Create loading overlay with DarkGray background
         loadingOverlay = New Panel()
@@ -268,6 +269,7 @@ Public Class Inventory
             loadingOverlay = Nothing
         End If
         If DashboardPanel IsNot Nothing Then DashboardPanel.ShadowDecoration.Enabled = True
+        If Guna2Panel1 IsNot Nothing Then Guna2Panel1.ShadowDecoration.Enabled = True
     End Sub
 
     Private Async Function LoadProductsAsync() As Task

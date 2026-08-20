@@ -80,6 +80,9 @@ Public Class Dashboard
 
     Private Sub ShowLoadingOverlay()
         If DashboardPanel IsNot Nothing Then DashboardPanel.ShadowDecoration.Enabled = False
+        For Each p In {DailySalesPanel, LowStockPanel, Guna2Panel6, Guna2Panel7, PopularPanel}
+            If p IsNot Nothing Then p.ShadowDecoration.Enabled = False
+        Next
 
         loadingPanel = New Panel()
         loadingPanel.BackColor = Color.Transparent
@@ -114,6 +117,9 @@ Public Class Dashboard
         End If
         loadingLabel = Nothing
         If DashboardPanel IsNot Nothing Then DashboardPanel.ShadowDecoration.Enabled = True
+        For Each p In {DailySalesPanel, LowStockPanel, Guna2Panel6, Guna2Panel7, PopularPanel}
+            If p IsNot Nothing Then p.ShadowDecoration.Enabled = True
+        Next
     End Sub
 
     Private Sub CenterLoadingLabel()
