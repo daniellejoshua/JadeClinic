@@ -261,6 +261,9 @@ Partial Class SalesRecord
         Guna2Panel1.Location = New Point(235, 160)
         Guna2Panel1.Name = "Guna2Panel1"
         Guna2Panel1.ShadowDecoration.CustomizableEdges = CustomizableEdges11
+        Guna2Panel1.ShadowDecoration.Depth = 10
+        Guna2Panel1.ShadowDecoration.Enabled = True
+        Guna2Panel1.ShadowDecoration.Shadow = New Padding(0, 0, 4, 4)
         Guna2Panel1.Size = New Size(1657, 861)
         Guna2Panel1.TabIndex = 88
         ' 

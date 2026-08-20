@@ -512,6 +512,9 @@ Partial Class Inventory
         resources.ApplyResources(Guna2Panel1, "Guna2Panel1")
         Guna2Panel1.Name = "Guna2Panel1"
         Guna2Panel1.ShadowDecoration.CustomizableEdges = CustomizableEdges31
+        Guna2Panel1.ShadowDecoration.Depth = 10
+        Guna2Panel1.ShadowDecoration.Enabled = True
+        Guna2Panel1.ShadowDecoration.Shadow = New Padding(0, 0, 4, 4)
         ' 
         ' Inventory
         ' 

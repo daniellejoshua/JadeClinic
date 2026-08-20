@@ -94,6 +94,9 @@ Partial Class Sales
         CategoryPanel.Location = New Point(231, 96)
         CategoryPanel.Name = "CategoryPanel"
         CategoryPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges4
+        CategoryPanel.ShadowDecoration.Depth = 10
+        CategoryPanel.ShadowDecoration.Enabled = True
+        CategoryPanel.ShadowDecoration.Shadow = New Padding(0, 0, 4, 4)
         CategoryPanel.Size = New Size(1039, 938)
         CategoryPanel.TabIndex = 2
         ' 

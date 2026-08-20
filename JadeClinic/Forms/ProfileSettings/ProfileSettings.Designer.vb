@@ -325,6 +325,9 @@ Partial Class ProfileSettings
         Guna2Panel1.Location = New Point(614, 84)
         Guna2Panel1.Name = "Guna2Panel1"
         Guna2Panel1.ShadowDecoration.CustomizableEdges = CustomizableEdges27
+        Guna2Panel1.ShadowDecoration.Depth = 10
+        Guna2Panel1.ShadowDecoration.Enabled = True
+        Guna2Panel1.ShadowDecoration.Shadow = New Padding(0, 0, 4, 4)
         Guna2Panel1.Size = New Size(960, 753)
         Guna2Panel1.TabIndex = 41
         ' 

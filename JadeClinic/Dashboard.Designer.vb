@@ -100,6 +100,9 @@ Partial Class Dashboard
         DailySalesPanel.Location = New Point(236, 61)
         DailySalesPanel.Name = "DailySalesPanel"
         DailySalesPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges3
+        DailySalesPanel.ShadowDecoration.Depth = 6
+        DailySalesPanel.ShadowDecoration.Enabled = True
+        DailySalesPanel.ShadowDecoration.Shadow = New Padding(0, 0, 2, 2)
         DailySalesPanel.Size = New Size(368, 146)
         DailySalesPanel.TabIndex = 9
         ' 
@@ -188,6 +191,9 @@ Partial Class Dashboard
         LowStockPanel.Location = New Point(1295, 235)
         LowStockPanel.Name = "LowStockPanel"
         LowStockPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges5
+        LowStockPanel.ShadowDecoration.Depth = 6
+        LowStockPanel.ShadowDecoration.Enabled = True
+        LowStockPanel.ShadowDecoration.Shadow = New Padding(0, 0, 2, 2)
         LowStockPanel.Size = New Size(577, 367)
         LowStockPanel.TabIndex = 63
         ' 
@@ -204,6 +210,9 @@ Partial Class Dashboard
         Guna2Panel6.Location = New Point(840, 61)
         Guna2Panel6.Name = "Guna2Panel6"
         Guna2Panel6.ShadowDecoration.CustomizableEdges = CustomizableEdges8
+        Guna2Panel6.ShadowDecoration.Depth = 6
+        Guna2Panel6.ShadowDecoration.Enabled = True
+        Guna2Panel6.ShadowDecoration.Shadow = New Padding(0, 0, 2, 2)
         Guna2Panel6.Size = New Size(372, 146)
         Guna2Panel6.TabIndex = 56
         ' 
@@ -285,6 +294,9 @@ Partial Class Dashboard
         Guna2Panel7.Location = New Point(1418, 61)
         Guna2Panel7.Name = "Guna2Panel7"
         Guna2Panel7.ShadowDecoration.CustomizableEdges = CustomizableEdges11
+        Guna2Panel7.ShadowDecoration.Depth = 6
+        Guna2Panel7.ShadowDecoration.Enabled = True
+        Guna2Panel7.ShadowDecoration.Shadow = New Padding(0, 0, 2, 2)
         Guna2Panel7.Size = New Size(409, 146)
         Guna2Panel7.TabIndex = 57
         ' 
@@ -444,6 +456,9 @@ Partial Class Dashboard
         PopularPanel.Location = New Point(236, 235)
         PopularPanel.Name = "PopularPanel"
         PopularPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges19
+        PopularPanel.ShadowDecoration.Depth = 6
+        PopularPanel.ShadowDecoration.Enabled = True
+        PopularPanel.ShadowDecoration.Shadow = New Padding(0, 0, 2, 2)
         PopularPanel.Size = New Size(1019, 367)
         PopularPanel.TabIndex = 62
         ' 
