@@ -79,6 +79,8 @@ Public Class Dashboard
     End Sub
 
     Private Sub ShowLoadingOverlay()
+        If DashboardPanel IsNot Nothing Then DashboardPanel.ShadowDecoration.Enabled = False
+
         loadingPanel = New Panel()
         loadingPanel.BackColor = Color.Transparent
         loadingPanel.Dock = DockStyle.Fill
@@ -111,6 +113,7 @@ Public Class Dashboard
             loadingPanel = Nothing
         End If
         loadingLabel = Nothing
+        If DashboardPanel IsNot Nothing Then DashboardPanel.ShadowDecoration.Enabled = True
     End Sub
 
     Private Sub CenterLoadingLabel()

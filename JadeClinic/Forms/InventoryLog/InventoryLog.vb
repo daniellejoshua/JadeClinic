@@ -77,6 +77,7 @@ Public Class InventoryLog
 
             ' Show loading panel early so it can render while we prepare the UI
             If loadingPanel IsNot Nothing Then
+                If DashboardPanel IsNot Nothing Then DashboardPanel.ShadowDecoration.Enabled = False
                 loadingPanel.Visible = True
                 loadingPanel.BringToFront()
                 ' allow a short time for the overlay to render before doing heavier UI work
@@ -114,6 +115,7 @@ Public Class InventoryLog
             If loadingPanel IsNot Nothing Then
                 loadingPanel.Visible = False
             End If
+            If DashboardPanel IsNot Nothing Then DashboardPanel.ShadowDecoration.Enabled = True
 
             ' Update form title to show logged-in user
             Me.Text = $"Inventory Logs - {frmLoginvb.LoggedInUsername}"
@@ -128,6 +130,7 @@ Public Class InventoryLog
             If loadingPanel IsNot Nothing Then
                 loadingPanel.Visible = False
             End If
+            If DashboardPanel IsNot Nothing Then DashboardPanel.ShadowDecoration.Enabled = True
             MessageBox.Show($"Error initializing InventoryLog form: {ex.Message}{vbCrLf}{vbCrLf}Stack Trace: {ex.StackTrace}", "Initialization Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
