@@ -22,48 +22,20 @@ Partial Class Dashboard
     'Do not modify it using the code editor.
     <System.Diagnostics.DebuggerStepThrough()>
     Private Sub InitializeComponent()
+        Dim CustomizableEdges1 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges2 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges3 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges1 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges4 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges5 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges6 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges9 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges10 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges7 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges8 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges6 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges10 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges11 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges9 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges12 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges13 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges14 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges15 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges18 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges19 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges16 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges17 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim DataGridViewCellStyle1 As DataGridViewCellStyle = New DataGridViewCellStyle()
         Dim DataGridViewCellStyle2 As DataGridViewCellStyle = New DataGridViewCellStyle()
         Dim DataGridViewCellStyle3 As DataGridViewCellStyle = New DataGridViewCellStyle()
-        DailySalesPanel = New Guna.UI2.WinForms.Guna2Panel()
-        lbl2 = New Label()
-        Guna2HtmlLabel2 = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        Guna2CircleButton5 = New Guna.UI2.WinForms.Guna2CircleButton()
-        lblDateDailySales = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        Guna2HtmlLabel3 = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        Guna2HtmlLabel1 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         LowStockPanel = New Guna.UI2.WinForms.Guna2Panel()
-        Guna2Panel6 = New Guna.UI2.WinForms.Guna2Panel()
-        Label2 = New Label()
-        Guna2HtmlLabel12 = New Label()
-        Guna2HtmlLabel11 = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        Guna2CircleButton6 = New Guna.UI2.WinForms.Guna2CircleButton()
-        Guna2HtmlLabel14 = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        Guna2Panel7 = New Guna.UI2.WinForms.Guna2Panel()
-        Label1 = New Label()
-        Guna2HtmlLabel15 = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        Guna2HtmlLabel16 = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        Guna2CircleButton7 = New Guna.UI2.WinForms.Guna2CircleButton()
-        Guna2HtmlLabel18 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         DashboardPanel = New Guna.UI2.WinForms.Guna2Panel()
         PictureBox9 = New PictureBox()
         AreaChart = New Guna.UI2.WinForms.Guna2Panel()
@@ -77,292 +49,28 @@ Partial Class Dashboard
         Guna2DataGridView1 = New Guna.UI2.WinForms.Guna2DataGridView()
         Guna2HtmlLabel4 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         PopoularSeeAll = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        DailySalesPanel.SuspendLayout()
-        Guna2Panel6.SuspendLayout()
-        Guna2Panel7.SuspendLayout()
         DashboardPanel.SuspendLayout()
         CType(PictureBox9, ComponentModel.ISupportInitialize).BeginInit()
         PopularPanel.SuspendLayout()
         CType(Guna2DataGridView1, ComponentModel.ISupportInitialize).BeginInit()
         SuspendLayout()
         ' 
-        ' DailySalesPanel
-        ' 
-        DailySalesPanel.BorderRadius = 10
-        DailySalesPanel.Controls.Add(lbl2)
-        DailySalesPanel.Controls.Add(Guna2HtmlLabel2)
-        DailySalesPanel.Controls.Add(Guna2CircleButton5)
-        DailySalesPanel.Controls.Add(lblDateDailySales)
-        DailySalesPanel.Controls.Add(Guna2HtmlLabel3)
-        DailySalesPanel.Controls.Add(Guna2HtmlLabel1)
-        DailySalesPanel.CustomizableEdges = CustomizableEdges2
-        DailySalesPanel.FillColor = Color.FromArgb(CByte(250), CByte(250), CByte(249))
-        DailySalesPanel.Location = New Point(236, 61)
-        DailySalesPanel.Name = "DailySalesPanel"
-        DailySalesPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges3
-        DailySalesPanel.ShadowDecoration.Depth = 6
-        DailySalesPanel.ShadowDecoration.Enabled = True
-        DailySalesPanel.ShadowDecoration.Shadow = New Padding(0, 0, 2, 2)
-        DailySalesPanel.Size = New Size(368, 146)
-        DailySalesPanel.TabIndex = 9
-        ' 
-        ' lbl2
-        ' 
-        lbl2.AutoSize = True
-        lbl2.BackColor = Color.FromArgb(CByte(191), CByte(155), CByte(48))
-        lbl2.Font = New Font("Segoe UI", 9F)
-        lbl2.ForeColor = Color.White
-        lbl2.Location = New Point(311, 16)
-        lbl2.Name = "lbl2"
-        lbl2.Size = New Size(30, 20)
-        lbl2.TabIndex = 68
-        lbl2.Text = "📊"
-        ' 
-        ' Guna2HtmlLabel2
-        ' 
-        Guna2HtmlLabel2.BackColor = Color.FromArgb(CByte(41), CByte(44), CByte(45))
-        Guna2HtmlLabel2.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel2.ForeColor = Color.FromArgb(CByte(119), CByte(121), CByte(121))
-        Guna2HtmlLabel2.Location = New Point(182, 103)
-        Guna2HtmlLabel2.Name = "Guna2HtmlLabel2"
-        Guna2HtmlLabel2.Size = New Size(3, 2)
-        Guna2HtmlLabel2.TabIndex = 66
-        Guna2HtmlLabel2.Text = Nothing
-        Guna2HtmlLabel2.TextAlignment = ContentAlignment.TopRight
-        ' 
-        ' Guna2CircleButton5
-        ' 
-        Guna2CircleButton5.BackColor = Color.FromArgb(CByte(250), CByte(250), CByte(249))
-        Guna2CircleButton5.DisabledState.BorderColor = Color.DarkGray
-        Guna2CircleButton5.DisabledState.CustomBorderColor = Color.DarkGray
-        Guna2CircleButton5.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
-        Guna2CircleButton5.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        Guna2CircleButton5.FillColor = Color.FromArgb(CByte(191), CByte(155), CByte(48))
-        Guna2CircleButton5.Font = New Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2CircleButton5.ForeColor = Color.FromArgb(CByte(26), CByte(29), CByte(31))
-        Guna2CircleButton5.Location = New Point(303, 9)
-        Guna2CircleButton5.Name = "Guna2CircleButton5"
-        Guna2CircleButton5.PressedColor = Color.Transparent
-        Guna2CircleButton5.PressedDepth = 0
-        Guna2CircleButton5.ShadowDecoration.CustomizableEdges = CustomizableEdges1
-        Guna2CircleButton5.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
-        Guna2CircleButton5.Size = New Size(44, 36)
-        Guna2CircleButton5.TabIndex = 67
-        ' 
-        ' lblDateDailySales
-        ' 
-        lblDateDailySales.BackColor = Color.FromArgb(CByte(250), CByte(250), CByte(249))
-        lblDateDailySales.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblDateDailySales.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
-        lblDateDailySales.Location = New Point(12, 103)
-        lblDateDailySales.Name = "lblDateDailySales"
-        lblDateDailySales.Size = New Size(84, 28)
-        lblDateDailySales.TabIndex = 55
-        lblDateDailySales.Text = "Feb 2, 2025"
-        ' 
-        ' Guna2HtmlLabel3
-        ' 
-        Guna2HtmlLabel3.BackColor = Color.FromArgb(CByte(250), CByte(250), CByte(249))
-        Guna2HtmlLabel3.Font = New Font("Poppins Medium", 13.8F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel3.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
-        Guna2HtmlLabel3.Location = New Point(12, 51)
-        Guna2HtmlLabel3.Name = "Guna2HtmlLabel3"
-        Guna2HtmlLabel3.Size = New Size(28, 42)
-        Guna2HtmlLabel3.TabIndex = 52
-        Guna2HtmlLabel3.Text = "2k"
-        ' 
-        ' Guna2HtmlLabel1
-        ' 
-        Guna2HtmlLabel1.BackColor = Color.FromArgb(CByte(250), CByte(250), CByte(249))
-        Guna2HtmlLabel1.Font = New Font("Poppins Light", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel1.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
-        Guna2HtmlLabel1.Location = New Point(12, 13)
-        Guna2HtmlLabel1.Name = "Guna2HtmlLabel1"
-        Guna2HtmlLabel1.Size = New Size(91, 32)
-        Guna2HtmlLabel1.TabIndex = 52
-        Guna2HtmlLabel1.Text = "Daily Sales"
-        ' 
         ' LowStockPanel
         ' 
         LowStockPanel.AutoScroll = True
+        LowStockPanel.BackColor = Color.Transparent
+        LowStockPanel.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
         LowStockPanel.BorderRadius = 10
-        LowStockPanel.CustomizableEdges = CustomizableEdges4
-        LowStockPanel.FillColor = Color.FromArgb(CByte(250), CByte(250), CByte(249))
+        LowStockPanel.BorderThickness = 2
+        LowStockPanel.CustomizableEdges = CustomizableEdges1
+        LowStockPanel.FillColor = Color.White
         LowStockPanel.Location = New Point(1295, 235)
         LowStockPanel.Name = "LowStockPanel"
-        LowStockPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges5
-        LowStockPanel.ShadowDecoration.Depth = 6
-        LowStockPanel.ShadowDecoration.Enabled = True
-        LowStockPanel.ShadowDecoration.Shadow = New Padding(0, 0, 2, 2)
+        LowStockPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges2
+        LowStockPanel.ShadowDecoration.Depth = 0
+        LowStockPanel.ShadowDecoration.Enabled = False
         LowStockPanel.Size = New Size(577, 367)
         LowStockPanel.TabIndex = 63
-        ' 
-        ' Guna2Panel6
-        ' 
-        Guna2Panel6.BorderRadius = 10
-        Guna2Panel6.Controls.Add(Label2)
-        Guna2Panel6.Controls.Add(Guna2HtmlLabel12)
-        Guna2Panel6.Controls.Add(Guna2HtmlLabel11)
-        Guna2Panel6.Controls.Add(Guna2CircleButton6)
-        Guna2Panel6.Controls.Add(Guna2HtmlLabel14)
-        Guna2Panel6.CustomizableEdges = CustomizableEdges7
-        Guna2Panel6.FillColor = Color.FromArgb(CByte(250), CByte(250), CByte(249))
-        Guna2Panel6.Location = New Point(840, 61)
-        Guna2Panel6.Name = "Guna2Panel6"
-        Guna2Panel6.ShadowDecoration.CustomizableEdges = CustomizableEdges8
-        Guna2Panel6.ShadowDecoration.Depth = 6
-        Guna2Panel6.ShadowDecoration.Enabled = True
-        Guna2Panel6.ShadowDecoration.Shadow = New Padding(0, 0, 2, 2)
-        Guna2Panel6.Size = New Size(372, 146)
-        Guna2Panel6.TabIndex = 56
-        ' 
-        ' Label2
-        ' 
-        Label2.AutoSize = True
-        Label2.BackColor = Color.FromArgb(CByte(191), CByte(155), CByte(48))
-        Label2.Font = New Font("Segoe UI", 9F)
-        Label2.ForeColor = Color.White
-        Label2.Location = New Point(321, 16)
-        Label2.Name = "Label2"
-        Label2.Size = New Size(30, 20)
-        Label2.TabIndex = 56
-        Label2.Text = "📅"
-        ' 
-        ' Guna2HtmlLabel12
-        ' 
-        Guna2HtmlLabel12.AutoSize = True
-        Guna2HtmlLabel12.BackColor = Color.FromArgb(CByte(250), CByte(250), CByte(249))
-        Guna2HtmlLabel12.Font = New Font("Segoe UI", 13.8F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel12.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
-        Guna2HtmlLabel12.Location = New Point(12, 51)
-        Guna2HtmlLabel12.Name = "Guna2HtmlLabel12"
-        Guna2HtmlLabel12.Size = New Size(81, 31)
-        Guna2HtmlLabel12.TabIndex = 56
-        Guna2HtmlLabel12.Text = "Label1"
-        ' 
-        ' Guna2HtmlLabel11
-        ' 
-        Guna2HtmlLabel11.BackColor = Color.FromArgb(CByte(250), CByte(250), CByte(249))
-        Guna2HtmlLabel11.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel11.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
-        Guna2HtmlLabel11.Location = New Point(12, 103)
-        Guna2HtmlLabel11.Name = "Guna2HtmlLabel11"
-        Guna2HtmlLabel11.Size = New Size(71, 28)
-        Guna2HtmlLabel11.TabIndex = 55
-        Guna2HtmlLabel11.Text = "Jan1-1Feb"
-        ' 
-        ' Guna2CircleButton6
-        ' 
-        Guna2CircleButton6.BackColor = Color.FromArgb(CByte(250), CByte(250), CByte(249))
-        Guna2CircleButton6.DisabledState.BorderColor = Color.DarkGray
-        Guna2CircleButton6.DisabledState.CustomBorderColor = Color.DarkGray
-        Guna2CircleButton6.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
-        Guna2CircleButton6.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        Guna2CircleButton6.FillColor = Color.FromArgb(CByte(191), CByte(155), CByte(48))
-        Guna2CircleButton6.Font = New Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2CircleButton6.ForeColor = Color.FromArgb(CByte(26), CByte(29), CByte(31))
-        Guna2CircleButton6.Location = New Point(313, 9)
-        Guna2CircleButton6.Name = "Guna2CircleButton6"
-        Guna2CircleButton6.PressedColor = Color.Transparent
-        Guna2CircleButton6.PressedDepth = 0
-        Guna2CircleButton6.ShadowDecoration.CustomizableEdges = CustomizableEdges6
-        Guna2CircleButton6.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
-        Guna2CircleButton6.Size = New Size(44, 36)
-        Guna2CircleButton6.TabIndex = 52
-        ' 
-        ' Guna2HtmlLabel14
-        ' 
-        Guna2HtmlLabel14.BackColor = Color.FromArgb(CByte(250), CByte(250), CByte(249))
-        Guna2HtmlLabel14.Font = New Font("Poppins Light", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel14.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
-        Guna2HtmlLabel14.Location = New Point(12, 13)
-        Guna2HtmlLabel14.Name = "Guna2HtmlLabel14"
-        Guna2HtmlLabel14.Size = New Size(117, 32)
-        Guna2HtmlLabel14.TabIndex = 52
-        Guna2HtmlLabel14.Text = "Monthly Sales"
-        ' 
-        ' Guna2Panel7
-        ' 
-        Guna2Panel7.BorderRadius = 10
-        Guna2Panel7.Controls.Add(Label1)
-        Guna2Panel7.Controls.Add(Guna2HtmlLabel15)
-        Guna2Panel7.Controls.Add(Guna2HtmlLabel16)
-        Guna2Panel7.Controls.Add(Guna2CircleButton7)
-        Guna2Panel7.Controls.Add(Guna2HtmlLabel18)
-        Guna2Panel7.CustomizableEdges = CustomizableEdges10
-        Guna2Panel7.FillColor = Color.FromArgb(CByte(250), CByte(250), CByte(249))
-        Guna2Panel7.Location = New Point(1418, 61)
-        Guna2Panel7.Name = "Guna2Panel7"
-        Guna2Panel7.ShadowDecoration.CustomizableEdges = CustomizableEdges11
-        Guna2Panel7.ShadowDecoration.Depth = 6
-        Guna2Panel7.ShadowDecoration.Enabled = True
-        Guna2Panel7.ShadowDecoration.Shadow = New Padding(0, 0, 2, 2)
-        Guna2Panel7.Size = New Size(409, 146)
-        Guna2Panel7.TabIndex = 57
-        ' 
-        ' Label1
-        ' 
-        Label1.AutoSize = True
-        Label1.BackColor = Color.FromArgb(CByte(191), CByte(155), CByte(48))
-        Label1.Font = New Font("Segoe UI", 9F)
-        Label1.ForeColor = Color.White
-        Label1.Location = New Point(362, 16)
-        Label1.Name = "Label1"
-        Label1.Size = New Size(30, 20)
-        Label1.TabIndex = 69
-        Label1.Text = "📈"
-        ' 
-        ' Guna2HtmlLabel15
-        ' 
-        Guna2HtmlLabel15.BackColor = Color.FromArgb(CByte(250), CByte(250), CByte(249))
-        Guna2HtmlLabel15.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel15.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
-        Guna2HtmlLabel15.Location = New Point(12, 103)
-        Guna2HtmlLabel15.Name = "Guna2HtmlLabel15"
-        Guna2HtmlLabel15.Size = New Size(84, 28)
-        Guna2HtmlLabel15.TabIndex = 55
-        Guna2HtmlLabel15.Text = "Feb 2, 2025"
-        ' 
-        ' Guna2HtmlLabel16
-        ' 
-        Guna2HtmlLabel16.BackColor = Color.FromArgb(CByte(250), CByte(250), CByte(249))
-        Guna2HtmlLabel16.Font = New Font("Poppins Medium", 13.8F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel16.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
-        Guna2HtmlLabel16.Location = New Point(12, 51)
-        Guna2HtmlLabel16.Name = "Guna2HtmlLabel16"
-        Guna2HtmlLabel16.Size = New Size(28, 42)
-        Guna2HtmlLabel16.TabIndex = 52
-        Guna2HtmlLabel16.Text = "2k"
-        ' 
-        ' Guna2CircleButton7
-        ' 
-        Guna2CircleButton7.BackColor = Color.FromArgb(CByte(250), CByte(250), CByte(249))
-        Guna2CircleButton7.DisabledState.BorderColor = Color.DarkGray
-        Guna2CircleButton7.DisabledState.CustomBorderColor = Color.DarkGray
-        Guna2CircleButton7.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
-        Guna2CircleButton7.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        Guna2CircleButton7.FillColor = Color.FromArgb(CByte(191), CByte(155), CByte(48))
-        Guna2CircleButton7.Font = New Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2CircleButton7.ForeColor = Color.FromArgb(CByte(26), CByte(29), CByte(31))
-        Guna2CircleButton7.Location = New Point(354, 9)
-        Guna2CircleButton7.Name = "Guna2CircleButton7"
-        Guna2CircleButton7.PressedColor = Color.Transparent
-        Guna2CircleButton7.PressedDepth = 0
-        Guna2CircleButton7.ShadowDecoration.CustomizableEdges = CustomizableEdges9
-        Guna2CircleButton7.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
-        Guna2CircleButton7.Size = New Size(44, 36)
-        Guna2CircleButton7.TabIndex = 52
-        ' 
-        ' Guna2HtmlLabel18
-        ' 
-        Guna2HtmlLabel18.BackColor = Color.FromArgb(CByte(250), CByte(250), CByte(249))
-        Guna2HtmlLabel18.Font = New Font("Poppins Light", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel18.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
-        Guna2HtmlLabel18.Location = New Point(12, 13)
-        Guna2HtmlLabel18.Name = "Guna2HtmlLabel18"
-        Guna2HtmlLabel18.Size = New Size(109, 32)
-        Guna2HtmlLabel18.TabIndex = 52
-        Guna2HtmlLabel18.Text = "Overall Sales"
         ' 
         ' DashboardPanel
         ' 
@@ -370,11 +78,11 @@ Partial Class Dashboard
         DashboardPanel.BorderRadius = 10
         DashboardPanel.BorderThickness = 2
         DashboardPanel.Controls.Add(PictureBox9)
-        DashboardPanel.CustomizableEdges = CustomizableEdges12
+        DashboardPanel.CustomizableEdges = CustomizableEdges3
         DashboardPanel.FillColor = Color.White
         DashboardPanel.Location = New Point(-10, 5)
         DashboardPanel.Name = "DashboardPanel"
-        DashboardPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges13
+        DashboardPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges4
         DashboardPanel.Size = New Size(236, 1016)
         DashboardPanel.TabIndex = 64
         ' 
@@ -392,12 +100,14 @@ Partial Class Dashboard
         ' AreaChart
         ' 
         AreaChart.AutoScroll = True
+        AreaChart.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
         AreaChart.BorderRadius = 10
-        AreaChart.CustomizableEdges = CustomizableEdges14
-        AreaChart.FillColor = Color.FromArgb(CByte(250), CByte(250), CByte(249))
+        AreaChart.BorderThickness = 2
+        AreaChart.CustomizableEdges = CustomizableEdges5
+        AreaChart.FillColor = Color.White
         AreaChart.Location = New Point(236, 639)
         AreaChart.Name = "AreaChart"
-        AreaChart.ShadowDecoration.CustomizableEdges = CustomizableEdges15
+        AreaChart.ShadowDecoration.CustomizableEdges = CustomizableEdges6
         AreaChart.Size = New Size(1636, 397)
         AreaChart.TabIndex = 63
         ' 
@@ -447,18 +157,20 @@ Partial Class Dashboard
         ' 
         ' PopularPanel
         ' 
+        PopularPanel.BackColor = Color.Transparent
+        PopularPanel.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
         PopularPanel.BorderRadius = 10
+        PopularPanel.BorderThickness = 2
         PopularPanel.Controls.Add(txtProductSearch)
         PopularPanel.Controls.Add(Guna2HtmlLabel8)
         PopularPanel.Controls.Add(Guna2DataGridView1)
-        PopularPanel.CustomizableEdges = CustomizableEdges18
-        PopularPanel.FillColor = Color.FromArgb(CByte(250), CByte(250), CByte(249))
+        PopularPanel.CustomizableEdges = CustomizableEdges9
+        PopularPanel.FillColor = Color.White
         PopularPanel.Location = New Point(236, 235)
         PopularPanel.Name = "PopularPanel"
-        PopularPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges19
-        PopularPanel.ShadowDecoration.Depth = 6
-        PopularPanel.ShadowDecoration.Enabled = True
-        PopularPanel.ShadowDecoration.Shadow = New Padding(0, 0, 2, 2)
+        PopularPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges10
+        PopularPanel.ShadowDecoration.Depth = 0
+        PopularPanel.ShadowDecoration.Enabled = False
         PopularPanel.Size = New Size(1019, 367)
         PopularPanel.TabIndex = 62
         ' 
@@ -467,7 +179,7 @@ Partial Class Dashboard
         txtProductSearch.BackColor = Color.Transparent
         txtProductSearch.BorderRadius = 10
         txtProductSearch.BorderThickness = 0
-        txtProductSearch.CustomizableEdges = CustomizableEdges16
+        txtProductSearch.CustomizableEdges = CustomizableEdges7
         txtProductSearch.DefaultText = ""
         txtProductSearch.DisabledState.BorderColor = Color.FromArgb(CByte(208), CByte(208), CByte(208))
         txtProductSearch.DisabledState.FillColor = Color.FromArgb(CByte(226), CByte(226), CByte(226))
@@ -483,7 +195,7 @@ Partial Class Dashboard
         txtProductSearch.Name = "txtProductSearch"
         txtProductSearch.PlaceholderText = ""
         txtProductSearch.SelectedText = ""
-        txtProductSearch.ShadowDecoration.CustomizableEdges = CustomizableEdges17
+        txtProductSearch.ShadowDecoration.CustomizableEdges = CustomizableEdges8
         txtProductSearch.Size = New Size(250, 33)
         txtProductSearch.TabIndex = 66
         ' 
@@ -583,20 +295,11 @@ Partial Class Dashboard
         ClientSize = New Size(1902, 1033)
         Controls.Add(PopularPanel)
         Controls.Add(DashboardPanel)
-        Controls.Add(Guna2Panel7)
-        Controls.Add(Guna2Panel6)
         Controls.Add(LowStockPanel)
         Controls.Add(AreaChart)
-        Controls.Add(DailySalesPanel)
         Name = "Dashboard"
         StartPosition = FormStartPosition.CenterScreen
         Text = "Dashboard"
-        DailySalesPanel.ResumeLayout(False)
-        DailySalesPanel.PerformLayout()
-        Guna2Panel6.ResumeLayout(False)
-        Guna2Panel6.PerformLayout()
-        Guna2Panel7.ResumeLayout(False)
-        Guna2Panel7.PerformLayout()
         DashboardPanel.ResumeLayout(False)
         CType(PictureBox9, ComponentModel.ISupportInitialize).EndInit()
         PopularPanel.ResumeLayout(False)
@@ -604,20 +307,7 @@ Partial Class Dashboard
         CType(Guna2DataGridView1, ComponentModel.ISupportInitialize).EndInit()
         ResumeLayout(False)
     End Sub
-    Friend WithEvents DailySalesPanel As Guna.UI2.WinForms.Guna2Panel
-    Friend WithEvents Guna2HtmlLabel1 As Guna.UI2.WinForms.Guna2HtmlLabel
-    Friend WithEvents Guna2HtmlLabel3 As Guna.UI2.WinForms.Guna2HtmlLabel
-    Friend WithEvents lblDateDailySales As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents LowStockPanel As Guna.UI2.WinForms.Guna2Panel
-    Friend WithEvents Guna2Panel6 As Guna.UI2.WinForms.Guna2Panel
-    Friend WithEvents Guna2HtmlLabel11 As Guna.UI2.WinForms.Guna2HtmlLabel
-    Friend WithEvents Guna2CircleButton6 As Guna.UI2.WinForms.Guna2CircleButton
-    Friend WithEvents Guna2HtmlLabel14 As Guna.UI2.WinForms.Guna2HtmlLabel
-    Friend WithEvents Guna2Panel7 As Guna.UI2.WinForms.Guna2Panel
-    Friend WithEvents Guna2HtmlLabel15 As Guna.UI2.WinForms.Guna2HtmlLabel
-    Friend WithEvents Guna2HtmlLabel16 As Guna.UI2.WinForms.Guna2HtmlLabel
-    Friend WithEvents Guna2CircleButton7 As Guna.UI2.WinForms.Guna2CircleButton
-    Friend WithEvents Guna2HtmlLabel18 As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents DashboardPanel As Guna.UI2.WinForms.Guna2Panel
     Friend WithEvents PictureBox9 As PictureBox
     Friend WithEvents AreaChart As Guna.UI2.WinForms.Guna2Panel
@@ -628,13 +318,7 @@ Partial Class Dashboard
     Friend WithEvents PopularPanel As Guna.UI2.WinForms.Guna2Panel
     Friend WithEvents Guna2HtmlLabel4 As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents PopoularSeeAll As Guna.UI2.WinForms.Guna2HtmlLabel
-    Friend WithEvents Guna2HtmlLabel12 As Label
     Friend WithEvents Guna2DataGridView1 As Guna.UI2.WinForms.Guna2DataGridView
     Friend WithEvents txtProductSearch As Guna.UI2.WinForms.Guna2TextBox
     Friend WithEvents Guna2HtmlLabel8 As Guna.UI2.WinForms.Guna2HtmlLabel
-    Friend WithEvents Guna2HtmlLabel2 As Guna.UI2.WinForms.Guna2HtmlLabel
-    Friend WithEvents Label2 As Label
-    Friend WithEvents lbl2 As Label
-    Friend WithEvents Guna2CircleButton5 As Guna.UI2.WinForms.Guna2CircleButton
-    Friend WithEvents Label1 As Label
 End Class

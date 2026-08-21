@@ -22,9 +22,9 @@ Public NotInheritable Class NavigationBuilder
             dashboardPanel.BorderColor = Color.FromArgb(246, 245, 242)
             dashboardPanel.BorderRadius = 10
             dashboardPanel.BorderThickness = 2
-            dashboardPanel.ShadowDecoration.Depth = 10
+            dashboardPanel.ShadowDecoration.Depth = 4
             dashboardPanel.ShadowDecoration.Enabled = True
-            dashboardPanel.ShadowDecoration.Shadow = New Padding(0, 0, 4, 4)
+            dashboardPanel.ShadowDecoration.Shadow = New Padding(0, 0, 2, 2)
 
             ' Render company logo into existing PictureBox9 if present
             Dim logoCtrl() As Control = dashboardPanel.Controls.Find("PictureBox9", True)

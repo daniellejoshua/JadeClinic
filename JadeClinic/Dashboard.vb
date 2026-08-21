@@ -64,6 +64,19 @@ Public Class Dashboard
     Private navLogoutBtn As Guna2Button
     Private navDashboardBtn As Guna2Button
 
+    ' Runtime KPI card fields
+    Private _lblTotalOrdersValue As Label
+    Private _lblTotalOrdersSub As Label
+    Private _lblStockValueValue As Label
+    Private _lblStockValueSub As Label
+    Private _lblRevenueValue As Label
+    Private _lblRevenueSub As Label
+    Private _kpiCards As New List(Of Guna2Panel)
+    Private Const EmojiChart As String = "📊"
+    Private Const EmojiMoney As String = "💰"
+    Private Const EmojiTrend As String = "📈"
+    Private CircleBg As Color = Color.FromArgb(255, 244, 217)
+
     Public Sub New()
         Try
             Console.WriteLine("Dashboard constructor starting...")
@@ -80,9 +93,6 @@ Public Class Dashboard
 
     Private Sub ShowLoadingOverlay()
         If DashboardPanel IsNot Nothing Then DashboardPanel.ShadowDecoration.Enabled = False
-        For Each p In {DailySalesPanel, LowStockPanel, Guna2Panel6, Guna2Panel7, PopularPanel}
-            If p IsNot Nothing Then p.ShadowDecoration.Enabled = False
-        Next
 
         loadingPanel = New Panel()
         loadingPanel.BackColor = Color.Transparent
@@ -117,9 +127,6 @@ Public Class Dashboard
         End If
         loadingLabel = Nothing
         If DashboardPanel IsNot Nothing Then DashboardPanel.ShadowDecoration.Enabled = True
-        For Each p In {DailySalesPanel, LowStockPanel, Guna2Panel6, Guna2Panel7, PopularPanel}
-            If p IsNot Nothing Then p.ShadowDecoration.Enabled = True
-        Next
     End Sub
 
     Private Sub CenterLoadingLabel()
@@ -142,7 +149,7 @@ Public Class Dashboard
 
             ' Initialize form with new color scheme
             Me.Text = $"JadeClinic Dashboard - Welcome {frmLoginvb.LoggedInUsername}"
-            Me.BackColor = Color.White
+            Me.BackColor = Color.FromArgb(250, 250, 249)
             Me.MaximizeBox = False
             Me.MinimizeBox = False
 
@@ -153,6 +160,10 @@ Public Class Dashboard
             Me.Bounds = Screen.PrimaryScreen.Bounds
             Me.WindowState = FormWindowState.Maximized
             Console.WriteLine("Basic form properties set (full screen)")
+
+            ' Build runtime KPI cards
+            BuildKPICards()
+            Console.WriteLine("KPI cards built")
 
             ' Apply new color scheme to existing panels
             ApplyNewColorScheme()
@@ -246,9 +257,6 @@ Public Class Dashboard
 
     Private Sub SetupTabIndex()
         txtProductSearch.TabIndex = 0
-        Guna2CircleButton5.TabIndex = 1
-        Guna2CircleButton6.TabIndex = 2
-        Guna2CircleButton7.TabIndex = 3
         Utilities.ApplyInputFocusEffects(Me)
     End Sub
 
@@ -299,157 +307,10 @@ Public Class Dashboard
     Private Sub ApplyNewColorScheme()
         Try
             Console.WriteLine("ApplyNewColorScheme starting...")
-
-            ' Update main form background
-            Me.BackColor = Color.White
-            Console.WriteLine("Form background updated")
-
-            ' Update main statistic panels with new color scheme - add null checks
-
-            ' DailySalesPanel - First statistics card
-            If DailySalesPanel IsNot Nothing Then
-                DailySalesPanel.FillColor = Color.FromArgb(250, 250, 249)
-                DailySalesPanel.BorderColor = Color.FromArgb(246, 245, 242)
-                DailySalesPanel.BorderThickness = 2
-                Console.WriteLine("DailySalesPanel updated")
-
-                ' Update labels in DailySalesPanel
-                UpdatePanelLabels(DailySalesPanel)
-            Else
-                Console.WriteLine("DailySalesPanel is null")
-            End If
-
-            ' Guna2Panel6 - Second statistics card  
-            If Guna2Panel6 IsNot Nothing Then
-                Guna2Panel6.FillColor = Color.FromArgb(250, 250, 249)
-                Guna2Panel6.BorderColor = Color.FromArgb(246, 245, 242)
-                Guna2Panel6.BorderThickness = 2
-                UpdatePanelLabels(Guna2Panel6)
-                Console.WriteLine("Guna2Panel6 updated")
-            Else
-                Console.WriteLine("Guna2Panel6 is null")
-            End If
-
-            ' Guna2Panel7 - Third statistics card
-            If Guna2Panel7 IsNot Nothing Then
-                Guna2Panel7.FillColor = Color.FromArgb(250, 250, 249)
-                Guna2Panel7.BorderColor = Color.FromArgb(246, 245, 242)
-                Guna2Panel7.BorderThickness = 2
-                UpdatePanelLabels(Guna2Panel7)
-                Console.WriteLine("Guna2Panel7 updated")
-            Else
-                Console.WriteLine("Guna2Panel7 is null")
-            End If
-
-            ' LowStockPanel - Inventory status panel
-            If LowStockPanel IsNot Nothing Then
-                LowStockPanel.FillColor = Color.FromArgb(250, 250, 249)
-                LowStockPanel.BorderColor = Color.FromArgb(246, 245, 242)
-                LowStockPanel.BorderThickness = 2
-                Console.WriteLine("LowStockPanel updated")
-            Else
-                Console.WriteLine("LowStockPanel is null")
-            End If
-
-            ' AreaChart - Chart panel
-            If AreaChart IsNot Nothing Then
-                AreaChart.FillColor = Color.FromArgb(250, 250, 249)
-                AreaChart.BorderColor = Color.FromArgb(246, 245, 242)
-                AreaChart.BorderThickness = 2
-                Console.WriteLine("AreaChart updated")
-            Else
-                Console.WriteLine("AreaChart is null")
-            End If
-
-            ' Update navigation colors
-            If DashboardPanel IsNot Nothing Then
-                DashboardPanel.FillColor = Color.FromArgb(250, 250, 249)
-                DashboardPanel.BorderColor = Color.FromArgb(246, 245, 242)
-                DashboardPanel.BorderThickness = 2
-                Console.WriteLine("DashboardPanel updated")
-            Else
-                Console.WriteLine("DashboardPanel is null")
-            End If
-
-            ' PopularPanel is already updated in LoadAllPopularProducts()
+            Me.BackColor = Color.FromArgb(250, 250, 249)
             Console.WriteLine("ApplyNewColorScheme completed")
-
         Catch ex As Exception
             Console.WriteLine($"Error applying color scheme: {ex.Message}")
-            Console.WriteLine($"Stack trace: {ex.StackTrace}")
-        End Try
-    End Sub
-
-    Private Sub UpdatePanelLabels(panel As Panel)
-        Try
-            If panel Is Nothing Then
-                Console.WriteLine("UpdatePanelLabels called with null panel")
-                Return
-            End If
-
-            If panel.Controls Is Nothing Then
-                Console.WriteLine("Panel.Controls is null")
-                Return
-            End If
-
-            Console.WriteLine($"UpdatePanelLabels processing panel with {panel.Controls.Count} controls")
-
-            ' Update all labels in the panel with appropriate colors
-            For Each control As Control In panel.Controls
-                If control Is Nothing Then Continue For
-
-                If TypeOf control Is Label Then
-                    Dim lbl As Label = CType(control, Label)
-
-                    ' Skip icon labels on circle buttons (olive BackColor) � keep designer ForeColor
-                    If lbl.BackColor = Color.FromArgb(191, 155, 48) Then
-                        Continue For
-                    End If
-
-                    ' Check if it's a main heading/value label
-                    If lbl.Font IsNot Nothing AndAlso (lbl.Font.Size > 12 OrElse lbl.Font.Bold) Then
-                        lbl.ForeColor = Color.FromArgb(51, 51, 51) ' DarkText for main text
-                    Else
-                        lbl.ForeColor = Color.FromArgb(102, 102, 102) ' MediumText for secondary text
-                    End If
-
-                ElseIf TypeOf control Is Guna2HtmlLabel Then
-                    Dim htmlLbl As Guna2HtmlLabel = CType(control, Guna2HtmlLabel)
-
-                    ' Check if it's a main value label by font size
-                    If htmlLbl.Font IsNot Nothing AndAlso (htmlLbl.Font.Size > 12 OrElse htmlLbl.Font.Bold) Then
-                        htmlLbl.ForeColor = Color.FromArgb(51, 51, 51) ' DarkText for main values
-                    Else
-                        ' Keep specific colors for growth indicators
-                        If htmlLbl.Text IsNot Nothing Then
-                            If htmlLbl.Text.Contains("?") Then
-                                htmlLbl.ForeColor = Color.FromArgb(16, 216, 98) ' Success Green
-                            ElseIf htmlLbl.Text.Contains("?") Then
-                                htmlLbl.ForeColor = Color.FromArgb(255, 71, 87) ' Alert Red
-                            Else
-                                htmlLbl.ForeColor = Color.FromArgb(102, 102, 102) ' MediumText
-                            End If
-                        Else
-                            htmlLbl.ForeColor = Color.FromArgb(102, 102, 102) ' MediumText
-                        End If
-                    End If
-
-                ElseIf TypeOf control Is Guna2CircleButton Then
-                    Dim circleBtn As Guna2CircleButton = CType(control, Guna2CircleButton)
-
-                    ' Update circle buttons with JadeOlive accent � no hover color change
-                    circleBtn.FillColor = Color.FromArgb(191, 155, 48) ' JadeOlive
-                    circleBtn.ForeColor = Color.White
-                    circleBtn.BorderColor = Color.FromArgb(191, 155, 48) ' JadeOlive border
-                    circleBtn.HoverState.FillColor = Color.FromArgb(191, 155, 48)
-                    circleBtn.HoverState.ForeColor = Color.White
-
-                End If
-            Next
-
-        Catch ex As Exception
-            Console.WriteLine($"Error updating panel labels: {ex.Message}")
-            Console.WriteLine($"Stack trace: {ex.StackTrace}")
         End Try
     End Sub
 
@@ -498,28 +359,21 @@ Public Class Dashboard
                     Dim totalOrders As Integer = Convert.ToInt32(reader("TotalOrders"))
                     Dim activeStockValue As Decimal = Convert.ToDecimal(reader("ActiveStockValue"))
 
-                    ' Card 1: Total Orders
-                    Guna2HtmlLabel3.Text = totalOrders.ToString("N0")
-                    Guna2HtmlLabel1.Text = "Total Orders"
-                    lblDateDailySales.Text = "All Time"
+                    If _lblTotalOrdersValue IsNot Nothing Then _lblTotalOrdersValue.Text = totalOrders.ToString("N0")
+                    If _lblTotalOrdersSub IsNot Nothing Then _lblTotalOrdersSub.Text = "All recorded orders"
 
-                    ' Card 2: Stock Value (active products only)
-                    Guna2HtmlLabel12.Text = ChrW(&H20B1) & activeStockValue.ToString("N0")
-                    Guna2HtmlLabel14.Text = "Stock Value"
-                    Guna2HtmlLabel11.Text = "Active products only"
-                    Guna2HtmlLabel11.ForeColor = Color.FromArgb(102, 102, 102)
+                    If _lblStockValueValue IsNot Nothing Then _lblStockValueValue.Text = String.Format(Globalization.CultureInfo.GetCultureInfo("en-PH"), "{0}{1:N0}", ChrW(&H20B1), activeStockValue)
+                    If _lblStockValueSub IsNot Nothing Then _lblStockValueSub.Text = "Active products"
 
                     lastProductCount = totalOrders
                 Else
-                    Guna2HtmlLabel3.Text = "0"
-                    Guna2HtmlLabel12.Text = ChrW(&H20B1) & "0"
+                    If _lblTotalOrdersValue IsNot Nothing Then _lblTotalOrdersValue.Text = "0"
+                    If _lblStockValueValue IsNot Nothing Then _lblStockValueValue.Text = ChrW(&H20B1) & "0"
                 End If
             End Using
         Catch ex As Exception
-            Guna2HtmlLabel3.Text = "0"
-            Guna2HtmlLabel12.Text = ChrW(&H20B1) & "0"
-            Guna2HtmlLabel11.Text = "Active products only"
-            Guna2HtmlLabel11.ForeColor = Color.FromArgb(102, 102, 102)
+            If _lblTotalOrdersValue IsNot Nothing Then _lblTotalOrdersValue.Text = "0"
+            If _lblStockValueValue IsNot Nothing Then _lblStockValueValue.Text = ChrW(&H20B1) & "0"
             Console.WriteLine($"Error loading dashboard card #1/#2 data: {ex.Message}")
         End Try
     End Sub
@@ -533,24 +387,15 @@ Public Class Dashboard
             Using reader As DbDataReader = Utilities.ExecuteReader(query, Nothing)
                 If reader.Read() Then
                     Dim totalRevenue As Decimal = Convert.ToDecimal(reader("TotalRevenue"))
-                    Dim pesoSign As String = ChrW(&H20B1)
 
-                    ' Ensure font supports peso symbol
-                    Guna2HtmlLabel16.Font = New Font("Segoe UI", Guna2HtmlLabel16.Font.Size, Guna2HtmlLabel16.Font.Style)
-
-                    ' Card 3: Total Revenue
-                    Guna2HtmlLabel16.Text = String.Format(Globalization.CultureInfo.GetCultureInfo("en-PH"), "{0}{1:N0}", pesoSign, totalRevenue)
-                    Guna2HtmlLabel15.Text = "Total Revenue"
-                    Guna2HtmlLabel15.ForeColor = Color.FromArgb(102, 102, 102)
-                    Guna2HtmlLabel18.Text = "All recorded sales"
+                    If _lblRevenueValue IsNot Nothing Then _lblRevenueValue.Text = String.Format(Globalization.CultureInfo.GetCultureInfo("en-PH"), "{0}{1:N0}", ChrW(&H20B1), totalRevenue)
+                    If _lblRevenueSub IsNot Nothing Then _lblRevenueSub.Text = "All recorded sales"
                 Else
-                    Guna2HtmlLabel16.Font = New Font("Segoe UI", Guna2HtmlLabel16.Font.Size, Guna2HtmlLabel16.Font.Style)
-                    Guna2HtmlLabel16.Text = ChrW(&H20B1) & "0"
+                    If _lblRevenueValue IsNot Nothing Then _lblRevenueValue.Text = ChrW(&H20B1) & "0"
                 End If
             End Using
         Catch ex As Exception
-            Guna2HtmlLabel16.Font = New Font("Segoe UI", Guna2HtmlLabel16.Font.Size, Guna2HtmlLabel16.Font.Style)
-            Guna2HtmlLabel16.Text = ChrW(&H20B1) & "0"
+            If _lblRevenueValue IsNot Nothing Then _lblRevenueValue.Text = ChrW(&H20B1) & "0"
             Console.WriteLine($"Error loading dashboard card #3 data: {ex.Message}")
         End Try
     End Sub
@@ -1712,11 +1557,123 @@ Public Class Dashboard
         Return MyBase.ProcessCmdKey(msg, keyData)
     End Function
 
-    Private Sub Guna2CircleButton6_Click(sender As Object, e As EventArgs) Handles Guna2CircleButton6.Click
+    Private Sub BuildKPICards()
+        Dim cardY As Integer = 61
+        Dim cardH As Integer = 150
+        Dim startX As Integer = 236
+        Dim totalWidth As Integer = 1636
+        Dim cardW As Integer = 354
+        Dim cardGap As Integer = (totalWidth - (cardW * 3)) \ 2
 
+        Dim cardBg As Color = Color.FromArgb(255, 253, 248)
+        Dim cardBorder As Color = Color.FromArgb(232, 232, 232)
+        Dim hoverBg As Color = Color.FromArgb(255, 254, 249)
+        Dim hoverBorder As Color = Color.FromArgb(196, 154, 44)
+
+        ' Card 1: Total Orders
+        Dim card1 As New Guna2Panel() With {
+            .Location = New Point(startX, cardY), .Size = New Size(cardW, cardH),
+            .FillColor = cardBg, .BorderRadius = 12, .BorderThickness = 2,
+            .BorderColor = cardBorder, .Cursor = Cursors.Hand
+        }
+        card1.ShadowDecoration.Enabled = False
+        AddHandler card1.Paint, Sub(s, ev)
+                                    DrawCircleWithEmoji(ev.Graphics, 28, (cardH - 52) \ 2, 52, EmojiChart, Color.FromArgb(196, 154, 44))
+                                End Sub
+        card1.Controls.Add(New Label() With {.Text = "TOTAL ORDERS", .Font = New Font("Poppins", 8.0F, FontStyle.Regular), .ForeColor = Color.FromArgb(119, 119, 119), .BackColor = Color.Transparent, .Location = New Point(96, 20), .AutoSize = True})
+        _lblTotalOrdersValue = New Label() With {.Text = "0", .Font = New Font("Poppins", 22.0F, FontStyle.Regular), .ForeColor = Color.FromArgb(34, 34, 34), .BackColor = Color.Transparent, .Location = New Point(94, 46), .AutoSize = True}
+        card1.Controls.Add(_lblTotalOrdersValue)
+        _lblTotalOrdersSub = New Label() With {.Text = "All recorded orders", .Font = New Font("Poppins", 8.0F, FontStyle.Regular), .ForeColor = Color.FromArgb(46, 125, 50), .BackColor = Color.Transparent, .Location = New Point(98, cardH - 28), .AutoSize = True}
+        card1.Controls.Add(_lblTotalOrdersSub)
+
+        ' Card 2: Stock Value
+        Dim card2 As New Guna2Panel() With {
+            .Location = New Point(startX + cardW + cardGap, cardY), .Size = New Size(cardW, cardH),
+            .FillColor = cardBg, .BorderRadius = 12, .BorderThickness = 2,
+            .BorderColor = cardBorder, .Cursor = Cursors.Hand
+        }
+        card2.ShadowDecoration.Enabled = False
+        AddHandler card2.Paint, Sub(s, ev)
+                                    DrawCircleWithEmoji(ev.Graphics, 28, (cardH - 52) \ 2, 52, EmojiMoney, Color.FromArgb(255, 152, 0))
+                                End Sub
+        card2.Controls.Add(New Label() With {.Text = "STOCK VALUE", .Font = New Font("Poppins", 8.0F, FontStyle.Regular), .ForeColor = Color.FromArgb(119, 119, 119), .BackColor = Color.Transparent, .Location = New Point(96, 20), .AutoSize = True})
+        _lblStockValueValue = New Label() With {.Text = ChrW(&H20B1) & "0", .Font = New Font("Poppins", 22.0F, FontStyle.Regular), .ForeColor = Color.FromArgb(34, 34, 34), .BackColor = Color.Transparent, .Location = New Point(94, 46), .AutoSize = True}
+        card2.Controls.Add(_lblStockValueValue)
+        _lblStockValueSub = New Label() With {.Text = "Active products", .Font = New Font("Poppins", 8.0F, FontStyle.Regular), .ForeColor = Color.FromArgb(46, 125, 50), .BackColor = Color.Transparent, .Location = New Point(98, cardH - 28), .AutoSize = True}
+        card2.Controls.Add(_lblStockValueSub)
+
+        ' Card 3: Total Revenue
+        Dim card3 As New Guna2Panel() With {
+            .Location = New Point(startX + (cardW + cardGap) * 2, cardY), .Size = New Size(cardW, cardH),
+            .FillColor = cardBg, .BorderRadius = 12, .BorderThickness = 2,
+            .BorderColor = cardBorder, .Cursor = Cursors.Hand
+        }
+        card3.ShadowDecoration.Enabled = False
+        AddHandler card3.Paint, Sub(s, ev)
+                                    DrawCircleWithEmoji(ev.Graphics, 28, (cardH - 52) \ 2, 52, EmojiTrend, Color.FromArgb(46, 125, 50))
+                                End Sub
+        card3.Controls.Add(New Label() With {.Text = "TOTAL REVENUE", .Font = New Font("Poppins", 8.0F, FontStyle.Regular), .ForeColor = Color.FromArgb(119, 119, 119), .BackColor = Color.Transparent, .Location = New Point(96, 20), .AutoSize = True})
+        _lblRevenueValue = New Label() With {.Text = ChrW(&H20B1) & "0", .Font = New Font("Poppins", 22.0F, FontStyle.Regular), .ForeColor = Color.FromArgb(34, 34, 34), .BackColor = Color.Transparent, .Location = New Point(94, 46), .AutoSize = True}
+        card3.Controls.Add(_lblRevenueValue)
+        _lblRevenueSub = New Label() With {.Text = "All recorded sales", .Font = New Font("Poppins", 8.0F, FontStyle.Regular), .ForeColor = Color.FromArgb(119, 119, 119), .BackColor = Color.Transparent, .Location = New Point(98, cardH - 28), .AutoSize = True}
+        card3.Controls.Add(_lblRevenueSub)
+
+        ' Add hover handlers
+        For Each card As Guna2Panel In {card1, card2, card3}
+            Dim c As Color = cardBg
+            Dim hb As Color = hoverBg
+            Dim hc As Color = hoverBorder
+            AddHandler card.MouseEnter, Sub(s, e)
+                                            card.FillColor = hb
+                                            card.BorderColor = hc
+                                        End Sub
+            AddHandler card.MouseLeave, Sub(s, e)
+                                            card.FillColor = c
+                                            card.BorderColor = cardBorder
+                                        End Sub
+        Next
+
+        Me.Controls.Add(card3)
+        Me.Controls.Add(card2)
+        Me.Controls.Add(card1)
+        card1.BringToFront()
+        card2.BringToFront()
+        card3.BringToFront()
+
+        _kpiCards.AddRange({card1, card2, card3})
     End Sub
 
-    Private Sub Guna2CircleButton5_Click(sender As Object, e As EventArgs) Handles Guna2CircleButton5.Click
+    Private Sub DrawCircleWithEmoji(g As Graphics, x As Integer, y As Integer, diameter As Integer, emoji As String, emojiColor As Color)
+        Try
+            g.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias
+            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit
 
+            Using brush As New SolidBrush(CircleBg)
+                g.FillEllipse(brush, x, y, diameter, diameter)
+            End Using
+
+            Dim emojiFontName As String = ResolveEmojiFontFamily()
+            Using f As New Font(emojiFontName, 16.0F, FontStyle.Regular)
+                Dim sz As Size = TextRenderer.MeasureText(emoji, f)
+                Dim ex As Integer = x + (diameter - sz.Width) \ 2 + 4
+                Dim ey As Integer = y + (diameter - sz.Height) \ 2
+                TextRenderer.DrawText(g, emoji, f, New Point(ex, ey), emojiColor)
+            End Using
+        Catch
+        End Try
     End Sub
+
+    Private Function ResolveEmojiFontFamily() As String
+        Try
+            Dim installed As New HashSet(Of String)()
+            For Each family As FontFamily In System.Drawing.FontFamily.Families
+                installed.Add(family.Name)
+            Next
+            For Each name As String In {"Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", "Arial"}
+                If installed.Contains(name) Then Return name
+            Next
+        Catch
+        End Try
+        Return "Segoe UI"
+    End Function
 End Class
