@@ -411,7 +411,7 @@ Public Class Dashboard
             Next
 
             PopularPanel.Padding = New Padding(15, 10, 15, 15)
-            PopularPanel.FillColor = Color.FromArgb(250, 250, 249)
+            PopularPanel.FillColor = Color.White
             PopularPanel.BorderColor = Color.FromArgb(246, 245, 242)
             PopularPanel.BorderThickness = 2
 
@@ -481,7 +481,7 @@ Public Class Dashboard
             Guna2DataGridView1.Rows.Clear()
 
             ' Apply new dark theme styling
-            Guna2DataGridView1.BackgroundColor = Color.FromArgb(250, 250, 249)
+            Guna2DataGridView1.BackgroundColor = Color.White
             Guna2DataGridView1.BorderStyle = BorderStyle.None
             Guna2DataGridView1.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal
             Guna2DataGridView1.RowHeadersVisible = False
@@ -710,21 +710,22 @@ Public Class Dashboard
             ' Create main container that fills remaining space
             Dim mainContainer As New Panel()
             mainContainer.Dock = DockStyle.Fill
-            mainContainer.Padding = New Padding(12)
-            mainContainer.BackColor = Color.FromArgb(250, 250, 249)
+            mainContainer.Padding = New Padding(16)
+            mainContainer.BackColor = Color.White
             LowStockPanel.Controls.Add(mainContainer)
             ApplyRoundedCorners(mainContainer, 18)
 
             ' Create pie chart for status overview (responsive)
             Dim pieChart As New PieChart()
-            pieChart.BackColor = Color.FromArgb(250, 250, 249)
-            pieChart.Margin = New Padding(6)
+            pieChart.BackColor = Color.White
+            pieChart.Margin = New Padding(2)
             ApplyRoundedCorners(pieChart, 14)
 
             Dim updateChartLayout As Action = Sub()
-                                                  Dim maxWidth = Math.Max(420, mainContainer.ClientSize.Width - 30)
-                                                  Dim maxHeight = Math.Max(420, mainContainer.ClientSize.Height - 30)
-                                                  Dim chartSize = Math.Min(maxWidth, maxHeight)
+                                                  Dim legendBuffer As Integer = 80
+                                                  Dim availW = Math.Max(100, mainContainer.ClientSize.Width - 30 - legendBuffer)
+                                                  Dim availH = Math.Max(100, mainContainer.ClientSize.Height - 30)
+                                                  Dim chartSize = Math.Min(availW, availH)
 
                                                   pieChart.Size = New Size(chartSize, chartSize)
                                                   pieChart.Location = New Point((mainContainer.ClientSize.Width - pieChart.Width) \ 2,
@@ -781,11 +782,11 @@ Public Class Dashboard
             pieChart.AnimationsSpeed = TimeSpan.FromMilliseconds(1200)
             pieChart.LegendPosition = LiveChartsCore.Measure.LegendPosition.Right
             pieChart.LegendTextPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#333333"))
-            pieChart.LegendBackgroundPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#F5F5F5"))
+            pieChart.LegendBackgroundPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#FFFFFF"))
 
             ' Enhanced tooltip with numbers
             pieChart.TooltipPosition = LiveChartsCore.Measure.TooltipPosition.Top
-            pieChart.TooltipBackgroundPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#F5F5F5"))
+            pieChart.TooltipBackgroundPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#FFFFFF"))
             pieChart.TooltipTextPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#333333"))
 
             mainContainer.Controls.Add(pieChart)
@@ -801,12 +802,13 @@ Public Class Dashboard
             ' Title label
             titleLabel = New Label()
             titleLabel.Text = "Sales Overview"
-            titleLabel.Font = New Font("Poppins Medium", 16, FontStyle.Bold)
+            titleLabel.Font = New Font("Poppins", 13, FontStyle.Regular)
             titleLabel.ForeColor = Color.FromArgb(51, 51, 51)
             titleLabel.Dock = DockStyle.Top
-            titleLabel.Height = 40
+            titleLabel.Height = 44
             titleLabel.TextAlign = ContentAlignment.MiddleLeft
-            titleLabel.Padding = New Padding(15, 0, 0, 0)
+            titleLabel.Padding = New Padding(20, 12, 0, 0)
+            titleLabel.BackColor = Color.Transparent
 
             ' Legend and Filter panel combined for better layout
             Dim topPanel As New Panel()
@@ -817,7 +819,7 @@ Public Class Dashboard
             ' Sales legend on the left
             Dim salesLegend As New Label()
             salesLegend.Text = Char.ConvertFromUtf32(&H1F4CA) & " Sales Tracking"
-            salesLegend.Font = New Font("Poppins", 11, FontStyle.Bold)
+            salesLegend.Font = New Font("Poppins", 10, FontStyle.Regular)
             salesLegend.ForeColor = Color.FromArgb(254, 191, 16)
             salesLegend.AutoSize = True
             salesLegend.Location = New Point(15, 15)
@@ -863,8 +865,8 @@ Public Class Dashboard
             ' Chart panel with proper margins
             chartPanel = New Panel()
             chartPanel.Dock = DockStyle.Fill
-            chartPanel.Padding = New Padding(20)
-            chartPanel.BackColor = Color.Transparent
+            chartPanel.Padding = New Padding(24)
+            chartPanel.BackColor = Color.White
             ApplyRoundedCorners(chartPanel, 18)
 
             ' Try to create LiveCharts CartesianChart
@@ -873,7 +875,7 @@ Public Class Dashboard
                 salesChart.Dock = DockStyle.Fill
                 salesChart.Margin = New Padding(5)
                 salesChart.LegendPosition = LiveChartsCore.Measure.LegendPosition.Hidden
-                salesChart.BackColor = Color.Transparent
+                salesChart.BackColor = Color.White
                 chartPanel.Controls.Add(salesChart)
                 ApplyRoundedCorners(salesChart, 14)
                 Console.WriteLine("LiveCharts CartesianChart created successfully")
@@ -965,7 +967,7 @@ Public Class Dashboard
                         .Labels = labels.ToArray(),
                         .TextSize = 12,
                         .LabelsPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#666666")),
-                        .SeparatorsPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#CCCCCC").WithAlpha(50)) With {
+                        .SeparatorsPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#F1F0EC").WithAlpha(50)) With {
                             .StrokeThickness = 1
                         },
                         .AnimationsSpeed = TimeSpan.FromMilliseconds(1000)
@@ -979,7 +981,7 @@ Public Class Dashboard
                         .Position = LiveChartsCore.Measure.AxisPosition.Start,
                         .MinLimit = yAxisMin,
                         .MaxLimit = yAxisMax,
-                        .SeparatorsPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#CCCCCC").WithAlpha(40)) With {
+                        .SeparatorsPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#F1F0EC").WithAlpha(40)) With {
                             .StrokeThickness = 1
                         },
                         .AnimationsSpeed = TimeSpan.FromMilliseconds(800),

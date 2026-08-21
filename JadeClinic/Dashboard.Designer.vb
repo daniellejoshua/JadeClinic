@@ -66,9 +66,9 @@ Partial Class Dashboard
         LowStockPanel.FillColor = Color.White
         LowStockPanel.Location = New Point(1295, 235)
         LowStockPanel.Name = "LowStockPanel"
+        LowStockPanel.Padding = New Padding(4)
         LowStockPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges2
         LowStockPanel.ShadowDecoration.Depth = 0
-        LowStockPanel.ShadowDecoration.Enabled = False
         LowStockPanel.Size = New Size(577, 367)
         LowStockPanel.TabIndex = 63
         ' 
@@ -108,6 +108,7 @@ Partial Class Dashboard
         AreaChart.Location = New Point(236, 639)
         AreaChart.Name = "AreaChart"
         AreaChart.ShadowDecoration.CustomizableEdges = CustomizableEdges6
+        AreaChart.Padding = New Padding(4)
         AreaChart.Size = New Size(1636, 397)
         AreaChart.TabIndex = 63
         ' 
@@ -170,7 +171,6 @@ Partial Class Dashboard
         PopularPanel.Name = "PopularPanel"
         PopularPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges10
         PopularPanel.ShadowDecoration.Depth = 0
-        PopularPanel.ShadowDecoration.Enabled = False
         PopularPanel.Size = New Size(1019, 367)
         PopularPanel.TabIndex = 62
         ' 
@@ -218,9 +218,9 @@ Partial Class Dashboard
         DataGridViewCellStyle1.BackColor = Color.White
         Guna2DataGridView1.AlternatingRowsDefaultCellStyle = DataGridViewCellStyle1
         DataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleLeft
-        DataGridViewCellStyle2.BackColor = Color.FromArgb(CByte(100), CByte(88), CByte(255))
+        DataGridViewCellStyle2.BackColor = Color.FromArgb(CByte(242), CByte(241), CByte(238))
         DataGridViewCellStyle2.Font = New Font("Segoe UI", 9F)
-        DataGridViewCellStyle2.ForeColor = Color.White
+        DataGridViewCellStyle2.ForeColor = Color.FromArgb(CByte(51), CByte(51), CByte(51))
         DataGridViewCellStyle2.SelectionBackColor = SystemColors.Highlight
         DataGridViewCellStyle2.SelectionForeColor = SystemColors.HighlightText
         DataGridViewCellStyle2.WrapMode = DataGridViewTriState.True
@@ -231,11 +231,11 @@ Partial Class Dashboard
         DataGridViewCellStyle3.BackColor = Color.White
         DataGridViewCellStyle3.Font = New Font("Segoe UI", 9F)
         DataGridViewCellStyle3.ForeColor = SystemColors.ControlText
-        DataGridViewCellStyle3.SelectionBackColor = Color.FromArgb(CByte(231), CByte(229), CByte(255))
+        DataGridViewCellStyle3.SelectionBackColor = Color.FromArgb(CByte(245), CByte(243), CByte(239))
         DataGridViewCellStyle3.SelectionForeColor = Color.FromArgb(CByte(71), CByte(69), CByte(94))
         DataGridViewCellStyle3.WrapMode = DataGridViewTriState.False
         Guna2DataGridView1.DefaultCellStyle = DataGridViewCellStyle3
-        Guna2DataGridView1.GridColor = Color.FromArgb(CByte(231), CByte(229), CByte(255))
+        Guna2DataGridView1.GridColor = Color.FromArgb(CByte(240), CByte(239), CByte(235))
         Guna2DataGridView1.Location = New Point(25, 55)
         Guna2DataGridView1.Name = "Guna2DataGridView1"
         Guna2DataGridView1.RowHeadersVisible = False
@@ -248,11 +248,11 @@ Partial Class Dashboard
         Guna2DataGridView1.ThemeStyle.AlternatingRowsStyle.SelectionBackColor = Color.Empty
         Guna2DataGridView1.ThemeStyle.AlternatingRowsStyle.SelectionForeColor = Color.Empty
         Guna2DataGridView1.ThemeStyle.BackColor = Color.White
-        Guna2DataGridView1.ThemeStyle.GridColor = Color.FromArgb(CByte(231), CByte(229), CByte(255))
-        Guna2DataGridView1.ThemeStyle.HeaderStyle.BackColor = Color.FromArgb(CByte(100), CByte(88), CByte(255))
+        Guna2DataGridView1.ThemeStyle.GridColor = Color.FromArgb(CByte(240), CByte(239), CByte(235))
+        Guna2DataGridView1.ThemeStyle.HeaderStyle.BackColor = Color.FromArgb(CByte(242), CByte(241), CByte(238))
         Guna2DataGridView1.ThemeStyle.HeaderStyle.BorderStyle = DataGridViewHeaderBorderStyle.None
         Guna2DataGridView1.ThemeStyle.HeaderStyle.Font = New Font("Segoe UI", 9F)
-        Guna2DataGridView1.ThemeStyle.HeaderStyle.ForeColor = Color.White
+        Guna2DataGridView1.ThemeStyle.HeaderStyle.ForeColor = Color.FromArgb(CByte(51), CByte(51), CByte(51))
         Guna2DataGridView1.ThemeStyle.HeaderStyle.HeaightSizeMode = DataGridViewColumnHeadersHeightSizeMode.EnableResizing
         Guna2DataGridView1.ThemeStyle.HeaderStyle.Height = 4
         Guna2DataGridView1.ThemeStyle.ReadOnly = False
@@ -261,8 +261,8 @@ Partial Class Dashboard
         Guna2DataGridView1.ThemeStyle.RowsStyle.Font = New Font("Segoe UI", 9F)
         Guna2DataGridView1.ThemeStyle.RowsStyle.ForeColor = Color.FromArgb(CByte(71), CByte(69), CByte(94))
         Guna2DataGridView1.ThemeStyle.RowsStyle.Height = 29
-        Guna2DataGridView1.ThemeStyle.RowsStyle.SelectionBackColor = Color.FromArgb(CByte(231), CByte(229), CByte(255))
-        Guna2DataGridView1.ThemeStyle.RowsStyle.SelectionForeColor = Color.FromArgb(CByte(71), CByte(69), CByte(94))
+        Guna2DataGridView1.ThemeStyle.RowsStyle.SelectionBackColor = Color.FromArgb(CByte(245), CByte(243), CByte(239))
+        Guna2DataGridView1.ThemeStyle.RowsStyle.SelectionForeColor = Color.FromArgb(CByte(51), CByte(51), CByte(51))
         ' 
         ' Guna2HtmlLabel4
         ' 
