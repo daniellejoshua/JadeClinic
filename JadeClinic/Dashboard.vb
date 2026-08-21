@@ -71,10 +71,13 @@ Public Class Dashboard
     Private _lblStockValueSub As Label
     Private _lblRevenueValue As Label
     Private _lblRevenueSub As Label
+    Private _lblGrossProfitValue As Label
+    Private _lblGrossProfitSub As Label
     Private _kpiCards As New List(Of Guna2Panel)
     Private Const EmojiChart As String = "📊"
     Private Const EmojiMoney As String = "💰"
     Private Const EmojiTrend As String = "📈"
+    Private Const EmojiProfit As String = "💵"
     Private CircleBg As Color = Color.FromArgb(255, 244, 217)
 
     Public Sub New()
@@ -381,22 +384,30 @@ Public Class Dashboard
     Private Sub LoadMonthlySalesData()
         Try
             Dim query As String = "
-        SELECT IFNULL(SUM(TotalAmount), 0) AS TotalRevenue
+        SELECT IFNULL(SUM(TotalAmount), 0) AS TotalRevenue,
+               IFNULL((SELECT SUM(si.Quantity * p.CostPrice) FROM SaleItems si JOIN Products p ON si.ProductID = p.ProductID), 0) AS TotalCOGS
         FROM Sales"
 
             Using reader As DbDataReader = Utilities.ExecuteReader(query, Nothing)
                 If reader.Read() Then
                     Dim totalRevenue As Decimal = Convert.ToDecimal(reader("TotalRevenue"))
+                    Dim totalCOGS As Decimal = Convert.ToDecimal(reader("TotalCOGS"))
+                    Dim grossProfit As Decimal = totalRevenue - totalCOGS
 
                     If _lblRevenueValue IsNot Nothing Then _lblRevenueValue.Text = String.Format(Globalization.CultureInfo.GetCultureInfo("en-PH"), "{0}{1:N0}", ChrW(&H20B1), totalRevenue)
                     If _lblRevenueSub IsNot Nothing Then _lblRevenueSub.Text = "All recorded sales"
+
+                    If _lblGrossProfitValue IsNot Nothing Then _lblGrossProfitValue.Text = String.Format(Globalization.CultureInfo.GetCultureInfo("en-PH"), "{0}{1:N0}", ChrW(&H20B1), grossProfit)
+                    If _lblGrossProfitSub IsNot Nothing Then _lblGrossProfitSub.Text = "Revenue minus COGS"
                 Else
                     If _lblRevenueValue IsNot Nothing Then _lblRevenueValue.Text = ChrW(&H20B1) & "0"
+                    If _lblGrossProfitValue IsNot Nothing Then _lblGrossProfitValue.Text = ChrW(&H20B1) & "0"
                 End If
             End Using
         Catch ex As Exception
             If _lblRevenueValue IsNot Nothing Then _lblRevenueValue.Text = ChrW(&H20B1) & "0"
-            Console.WriteLine($"Error loading dashboard card #3 data: {ex.Message}")
+            If _lblGrossProfitValue IsNot Nothing Then _lblGrossProfitValue.Text = ChrW(&H20B1) & "0"
+            Console.WriteLine($"Error loading dashboard card #3/#4 data: {ex.Message}")
         End Try
     End Sub
 
@@ -412,7 +423,7 @@ Public Class Dashboard
 
             PopularPanel.Padding = New Padding(15, 10, 15, 15)
             PopularPanel.FillColor = Color.White
-            PopularPanel.BorderColor = Color.FromArgb(246, 245, 242)
+            PopularPanel.BorderColor = Color.FromArgb(232, 232, 232)
             PopularPanel.BorderThickness = 2
 
             ' Keep the existing header panel (so txtProductSearch is not disposed)
@@ -722,9 +733,8 @@ Public Class Dashboard
             ApplyRoundedCorners(pieChart, 14)
 
             Dim updateChartLayout As Action = Sub()
-                                                  Dim legendBuffer As Integer = 80
-                                                  Dim availW = Math.Max(100, mainContainer.ClientSize.Width - 30 - legendBuffer)
-                                                  Dim availH = Math.Max(100, mainContainer.ClientSize.Height - 30)
+                                                  Dim availW = Math.Max(100, mainContainer.ClientSize.Width - 40)
+                                                  Dim availH = Math.Max(100, mainContainer.ClientSize.Height - 80)
                                                   Dim chartSize = Math.Min(availW, availH)
 
                                                   pieChart.Size = New Size(chartSize, chartSize)
@@ -780,7 +790,7 @@ Public Class Dashboard
 
             ' Configure chart animation and interactivity
             pieChart.AnimationsSpeed = TimeSpan.FromMilliseconds(1200)
-            pieChart.LegendPosition = LiveChartsCore.Measure.LegendPosition.Right
+            pieChart.LegendPosition = LiveChartsCore.Measure.LegendPosition.Bottom
             pieChart.LegendTextPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#333333"))
             pieChart.LegendBackgroundPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#FFFFFF"))
 
@@ -1565,7 +1575,7 @@ Public Class Dashboard
         Dim startX As Integer = 236
         Dim totalWidth As Integer = 1636
         Dim cardW As Integer = 354
-        Dim cardGap As Integer = (totalWidth - (cardW * 3)) \ 2
+        Dim cardGap As Integer = (totalWidth - (cardW * 4)) \ 3
 
         Dim cardBg As Color = Color.FromArgb(255, 253, 248)
         Dim cardBorder As Color = Color.FromArgb(232, 232, 232)
@@ -1620,8 +1630,24 @@ Public Class Dashboard
         _lblRevenueSub = New Label() With {.Text = "All recorded sales", .Font = New Font("Poppins", 8.0F, FontStyle.Regular), .ForeColor = Color.FromArgb(119, 119, 119), .BackColor = Color.Transparent, .Location = New Point(98, cardH - 28), .AutoSize = True}
         card3.Controls.Add(_lblRevenueSub)
 
+        ' Card 4: Gross Profit
+        Dim card4 As New Guna2Panel() With {
+            .Location = New Point(startX + (cardW + cardGap) * 3, cardY), .Size = New Size(cardW, cardH),
+            .FillColor = cardBg, .BorderRadius = 12, .BorderThickness = 2,
+            .BorderColor = cardBorder, .Cursor = Cursors.Hand
+        }
+        card4.ShadowDecoration.Enabled = False
+        AddHandler card4.Paint, Sub(s, ev)
+                                    DrawCircleWithEmoji(ev.Graphics, 28, (cardH - 52) \ 2, 52, EmojiProfit, Color.FromArgb(232, 176, 76))
+                                End Sub
+        card4.Controls.Add(New Label() With {.Text = "GROSS PROFIT", .Font = New Font("Poppins", 8.0F, FontStyle.Regular), .ForeColor = Color.FromArgb(119, 119, 119), .BackColor = Color.Transparent, .Location = New Point(96, 20), .AutoSize = True})
+        _lblGrossProfitValue = New Label() With {.Text = ChrW(&H20B1) & "0", .Font = New Font("Poppins", 22.0F, FontStyle.Regular), .ForeColor = Color.FromArgb(34, 34, 34), .BackColor = Color.Transparent, .Location = New Point(94, 46), .AutoSize = True}
+        card4.Controls.Add(_lblGrossProfitValue)
+        _lblGrossProfitSub = New Label() With {.Text = "Revenue minus COGS", .Font = New Font("Poppins", 8.0F, FontStyle.Regular), .ForeColor = Color.FromArgb(119, 119, 119), .BackColor = Color.Transparent, .Location = New Point(98, cardH - 28), .AutoSize = True}
+        card4.Controls.Add(_lblGrossProfitSub)
+
         ' Add hover handlers
-        For Each card As Guna2Panel In {card1, card2, card3}
+        For Each card As Guna2Panel In {card1, card2, card3, card4}
             Dim c As Color = cardBg
             Dim hb As Color = hoverBg
             Dim hc As Color = hoverBorder
@@ -1635,14 +1661,16 @@ Public Class Dashboard
                                         End Sub
         Next
 
+        Me.Controls.Add(card4)
         Me.Controls.Add(card3)
         Me.Controls.Add(card2)
         Me.Controls.Add(card1)
         card1.BringToFront()
         card2.BringToFront()
         card3.BringToFront()
+        card4.BringToFront()
 
-        _kpiCards.AddRange({card1, card2, card3})
+        _kpiCards.AddRange({card1, card2, card3, card4})
     End Sub
 
     Private Sub DrawCircleWithEmoji(g As Graphics, x As Integer, y As Integer, diameter As Integer, emoji As String, emojiColor As Color)
