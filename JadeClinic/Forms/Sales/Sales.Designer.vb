@@ -85,7 +85,7 @@ Partial Class Sales
         CategoryPanel.AutoScroll = True
         CategoryPanel.BackColor = Color.Transparent
         CategoryPanel.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
-        CategoryPanel.BorderRadius = 8
+        CategoryPanel.BorderRadius = 10
         CategoryPanel.BorderThickness = 2
         CategoryPanel.Controls.Add(TxtSearch)
         CategoryPanel.CustomizableEdges = CustomizableEdges3
@@ -94,8 +94,8 @@ Partial Class Sales
         CategoryPanel.Location = New Point(231, 96)
         CategoryPanel.Name = "CategoryPanel"
         CategoryPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges4
-        CategoryPanel.ShadowDecoration.Depth = 10
-        CategoryPanel.ShadowDecoration.Enabled = True
+        CategoryPanel.ShadowDecoration.Depth = 0
+        CategoryPanel.ShadowDecoration.Enabled = False
         CategoryPanel.ShadowDecoration.Shadow = New Padding(0, 0, 4, 4)
         CategoryPanel.Size = New Size(1039, 938)
         CategoryPanel.TabIndex = 2
@@ -127,7 +127,7 @@ Partial Class Sales
         ' 
         orderSummaryPanel.AutoScroll = True
         orderSummaryPanel.BackColor = Color.Transparent
-        orderSummaryPanel.BorderColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
+        orderSummaryPanel.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
         orderSummaryPanel.BorderRadius = 10
         orderSummaryPanel.BorderThickness = 2
         orderSummaryPanel.CustomizableEdges = CustomizableEdges5
@@ -152,7 +152,7 @@ Partial Class Sales
         ' totalPanel
         ' 
         totalPanel.BackColor = Color.Transparent
-        totalPanel.BorderColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
+        totalPanel.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
         totalPanel.BorderRadius = 10
         totalPanel.BorderThickness = 2
         totalPanel.Controls.Add(confirmBtn)

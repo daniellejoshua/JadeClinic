@@ -105,7 +105,7 @@ Partial Class Sys
         ' DashboardPanel
         ' 
         DashboardPanel.BackColor = Color.White
-        DashboardPanel.BorderColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
+        DashboardPanel.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
         DashboardPanel.BorderRadius = 10
         DashboardPanel.BorderThickness = 2
         DashboardPanel.Controls.Add(PictureBox9)
@@ -138,8 +138,10 @@ Partial Class Sys
         MainContentPanel.Name = "MainContentPanel"
         MainContentPanel.Padding = New Padding(20)
         MainContentPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges17
-        MainContentPanel.ShadowDecoration.Depth = 10
-        MainContentPanel.ShadowDecoration.Enabled = True
+        MainContentPanel.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
+        MainContentPanel.BorderThickness = 2
+        MainContentPanel.ShadowDecoration.Depth = 0
+        MainContentPanel.ShadowDecoration.Enabled = False
         MainContentPanel.ShadowDecoration.Shadow = New Padding(0, 0, 4, 4)
         MainContentPanel.Size = New Size(1191, 805)
         MainContentPanel.TabIndex = 2

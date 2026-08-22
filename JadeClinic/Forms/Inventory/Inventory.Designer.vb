@@ -98,7 +98,7 @@ Partial Class Inventory
         ' 
         ' DashboardPanel
         ' 
-        DashboardPanel.BorderColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
+        DashboardPanel.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
         DashboardPanel.BorderRadius = 10
         DashboardPanel.BorderThickness = 2
         DashboardPanel.Controls.Add(PictureBox9)
@@ -512,8 +512,8 @@ Partial Class Inventory
         resources.ApplyResources(Guna2Panel1, "Guna2Panel1")
         Guna2Panel1.Name = "Guna2Panel1"
         Guna2Panel1.ShadowDecoration.CustomizableEdges = CustomizableEdges31
-        Guna2Panel1.ShadowDecoration.Depth = 10
-        Guna2Panel1.ShadowDecoration.Enabled = True
+        Guna2Panel1.ShadowDecoration.Depth = 0
+        Guna2Panel1.ShadowDecoration.Enabled = False
         Guna2Panel1.ShadowDecoration.Shadow = New Padding(0, 0, 4, 4)
         ' 
         ' Inventory

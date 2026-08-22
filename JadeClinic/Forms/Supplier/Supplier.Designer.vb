@@ -75,7 +75,7 @@ Partial Class Supplier
         ' 
         ' NavigationPanel
         ' 
-        NavigationPanel.BorderColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
+        NavigationPanel.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
         NavigationPanel.BorderRadius = 10
         NavigationPanel.BorderThickness = 2
         NavigationPanel.Controls.Add(PictureBox9)
@@ -84,8 +84,8 @@ Partial Class Supplier
         NavigationPanel.Location = New Point(-10, 5)
         NavigationPanel.Name = "NavigationPanel"
         NavigationPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges2
-        NavigationPanel.ShadowDecoration.Depth = 10
-        NavigationPanel.ShadowDecoration.Enabled = True
+        NavigationPanel.ShadowDecoration.Depth = 0
+        NavigationPanel.ShadowDecoration.Enabled = False
         NavigationPanel.ShadowDecoration.Shadow = New Padding(0, 0, 4, 4)
         NavigationPanel.Size = New Size(236, 1016)
         NavigationPanel.TabIndex = 6
@@ -176,8 +176,8 @@ Partial Class Supplier
         Guna2Panel1.Anchor = AnchorStyles.Top Or AnchorStyles.Left Or AnchorStyles.Right
         Guna2Panel1.BackColor = Color.Transparent
         Guna2Panel1.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
-        Guna2Panel1.BorderRadius = 12
-        Guna2Panel1.BorderThickness = 1
+        Guna2Panel1.BorderRadius = 10
+        Guna2Panel1.BorderThickness = 2
         Guna2Panel1.Controls.Add(InventoryLogDataGrid)
         Guna2Panel1.Controls.Add(SortBy)
         Guna2Panel1.Controls.Add(Exportbtn)
@@ -188,8 +188,8 @@ Partial Class Supplier
         Guna2Panel1.Location = New Point(240, 113)
         Guna2Panel1.Name = "Guna2Panel1"
         Guna2Panel1.ShadowDecoration.CustomizableEdges = CustomizableEdges11
-        Guna2Panel1.ShadowDecoration.Depth = 10
-        Guna2Panel1.ShadowDecoration.Enabled = True
+        Guna2Panel1.ShadowDecoration.Depth = 0
+        Guna2Panel1.ShadowDecoration.Enabled = False
         Guna2Panel1.ShadowDecoration.Shadow = New Padding(0, 0, 4, 4)
         Guna2Panel1.Size = New Size(1650, 908)
         Guna2Panel1.TabIndex = 80

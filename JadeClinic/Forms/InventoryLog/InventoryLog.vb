@@ -117,8 +117,8 @@ Public Class InventoryLog
             If loadingPanel IsNot Nothing Then
                 loadingPanel.Visible = False
             End If
-            If DashboardPanel IsNot Nothing Then DashboardPanel.ShadowDecoration.Enabled = True
-            If Guna2Panel1 IsNot Nothing Then Guna2Panel1.ShadowDecoration.Enabled = True
+            If DashboardPanel IsNot Nothing Then DashboardPanel.ShadowDecoration.Enabled = False
+            If Guna2Panel1 IsNot Nothing Then Guna2Panel1.ShadowDecoration.Enabled = False
 
             ' Update form title to show logged-in user
             Me.Text = $"Inventory Logs - {frmLoginvb.LoggedInUsername}"
@@ -133,8 +133,8 @@ Public Class InventoryLog
             If loadingPanel IsNot Nothing Then
                 loadingPanel.Visible = False
             End If
-            If DashboardPanel IsNot Nothing Then DashboardPanel.ShadowDecoration.Enabled = True
-            If Guna2Panel1 IsNot Nothing Then Guna2Panel1.ShadowDecoration.Enabled = True
+            If DashboardPanel IsNot Nothing Then DashboardPanel.ShadowDecoration.Enabled = False
+            If Guna2Panel1 IsNot Nothing Then Guna2Panel1.ShadowDecoration.Enabled = False
             MessageBox.Show($"Error initializing InventoryLog form: {ex.Message}{vbCrLf}{vbCrLf}Stack Trace: {ex.StackTrace}", "Initialization Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub

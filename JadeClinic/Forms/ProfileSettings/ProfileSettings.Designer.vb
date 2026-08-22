@@ -297,7 +297,7 @@ Partial Class ProfileSettings
         ' Guna2Panel1
         ' 
         Guna2Panel1.BackColor = Color.Transparent
-        Guna2Panel1.BorderColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
+        Guna2Panel1.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
         Guna2Panel1.BorderRadius = 10
         Guna2Panel1.BorderThickness = 2
         Guna2Panel1.Controls.Add(Guna2CheckBox1)
@@ -325,8 +325,8 @@ Partial Class ProfileSettings
         Guna2Panel1.Location = New Point(614, 84)
         Guna2Panel1.Name = "Guna2Panel1"
         Guna2Panel1.ShadowDecoration.CustomizableEdges = CustomizableEdges27
-        Guna2Panel1.ShadowDecoration.Depth = 10
-        Guna2Panel1.ShadowDecoration.Enabled = True
+        Guna2Panel1.ShadowDecoration.Depth = 0
+        Guna2Panel1.ShadowDecoration.Enabled = False
         Guna2Panel1.ShadowDecoration.Shadow = New Padding(0, 0, 4, 4)
         Guna2Panel1.Size = New Size(960, 753)
         Guna2Panel1.TabIndex = 41
@@ -651,7 +651,7 @@ Partial Class ProfileSettings
         ' Guna2Panel2
         ' 
         Guna2Panel2.BackColor = Color.Transparent
-        Guna2Panel2.BorderColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
+        Guna2Panel2.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
         Guna2Panel2.BorderRadius = 10
         Guna2Panel2.BorderThickness = 2
         Guna2Panel2.Controls.Add(lblLogout)
@@ -703,7 +703,7 @@ Partial Class ProfileSettings
         ' 
         ' DashboardPanel
         ' 
-        DashboardPanel.BorderColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
+        DashboardPanel.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
         DashboardPanel.BorderRadius = 10
         DashboardPanel.BorderThickness = 2
         DashboardPanel.Controls.Add(PictureBox9)
