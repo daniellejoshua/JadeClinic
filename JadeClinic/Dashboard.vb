@@ -34,21 +34,13 @@ End Module
 
 Public Class Dashboard
     Private filterPanel As Panel
-    Private btnMonthly As Guna2Button
-    Private btnDaily As Guna2Button
-    Private btnWeekly As Guna2Button
-    Private btnExport As Guna2Button
     Private titleLabel As Label
     Private legendPanel As Panel
     Private chartPanel As Panel
     Private lastProductCount As Integer = -1
-    Private btnAll As Guna2Button
     ' Navigation flag to prevent exit confirmation on programmatic close
     Private isNavigating As Boolean = False
     Private salesChart As CartesianChart
-    Private btnYearly As Guna2Button
-    Private btnToday As Guna2Button
-    Private btnAllTime As Guna2Button
     Private currentChartMode As String = "Today"
     ' Loading panel fields
     Private loadingPanel As Panel
@@ -201,26 +193,6 @@ Public Class Dashboard
             LoadChartData("Today")
             Console.WriteLine("Chart data loaded")
 
-            ' Initialize chart filter buttons if they exist
-            If btnAll IsNot Nothing Then
-                btnAll.FillColor = Color.FromArgb(240, 240, 240)
-                btnAll.ForeColor = Color.FromArgb(51, 51, 51)
-            End If
-            If btnMonthly IsNot Nothing Then
-                btnMonthly.FillColor = Color.FromArgb(240, 240, 240)
-                btnMonthly.ForeColor = Color.FromArgb(51, 51, 51)
-            End If
-            If btnWeekly IsNot Nothing Then
-                btnWeekly.FillColor = Color.FromArgb(254, 191, 16)
-                btnWeekly.ForeColor = Color.FromArgb(51, 51, 51)
-            End If
-            If btnDaily IsNot Nothing Then
-                btnDaily.FillColor = Color.FromArgb(240, 240, 240)
-                btnDaily.ForeColor = Color.FromArgb(51, 51, 51)
-            End If
-            SetActiveChartButton(currentChartMode)
-            Console.WriteLine("Filter buttons initialized")
-
             ' Make DataGridView columns non-sortable
             If Guna2DataGridView1 IsNot Nothing AndAlso Guna2DataGridView1.Columns IsNot Nothing Then
                 For Each col As DataGridViewColumn In Guna2DataGridView1.Columns
@@ -271,23 +243,6 @@ Public Class Dashboard
         ' Placeholder for monthly trend updates
         ' This can be expanded later when LiveCharts is properly configured
     End Sub
-    Private Sub SetActiveChartButton(mode As String)
-        Dim buttons = New Dictionary(Of String, Guna2Button) From {
-        {"Yearly", btnYearly},
-        {"Monthly", btnMonthly},
-        {"Weekly", btnWeekly},
-        {"Today", btnToday}
-    }
-
-        For Each kv In buttons
-            If kv.Value Is Nothing Then Continue For
-
-            Dim active = kv.Key.Equals(mode, StringComparison.OrdinalIgnoreCase)
-            kv.Value.FillColor = If(active, Color.FromArgb(254, 191, 16), Color.FromArgb(240, 240, 240))
-            kv.Value.ForeColor = If(active, Color.FromArgb(51, 51, 51), Color.FromArgb(51, 51, 51))
-        Next
-    End Sub
-
     Private Sub ApplyRoundedCorners(target As Control, radius As Integer)
         Try
             If target Is Nothing Then Return
@@ -351,6 +306,21 @@ Public Class Dashboard
     Private Sub OnPeriodChanged(sender As Object, e As EventArgs)
         If _periodCombo Is Nothing OrElse _periodCombo.SelectedIndex < 0 Then Return
         _selectedPeriod = _periodCombo.SelectedItem.ToString()
+
+        ' Map period to chart mode
+        Select Case _selectedPeriod
+            Case "Today"
+                currentChartMode = "Today"
+            Case "Last 7 Days"
+                currentChartMode = "Weekly"
+            Case "Last 30 Days", "This Month", "Last Month"
+                currentChartMode = "Monthly"
+            Case "This Year", "All Time"
+                currentChartMode = "Yearly"
+            Case Else
+                currentChartMode = "Monthly"
+        End Select
+
         LoadKPIData()
         LoadChartData(currentChartMode)
         LoadAllPopularProducts()
@@ -885,58 +855,6 @@ Public Class Dashboard
             titleLabel.Padding = New Padding(20, 12, 0, 0)
             titleLabel.BackColor = Color.Transparent
 
-            ' Legend and Filter panel combined for better layout
-            Dim topPanel As New Panel()
-            topPanel.Height = 50
-            topPanel.Dock = DockStyle.Top
-            topPanel.BackColor = Color.Transparent
-
-            ' Sales legend on the left
-            Dim salesLegend As New Label()
-            salesLegend.Text = Char.ConvertFromUtf32(&H1F4CA) & " Sales Tracking"
-            salesLegend.Font = New Font("Poppins", 10, FontStyle.Regular)
-            salesLegend.ForeColor = Color.FromArgb(254, 191, 16)
-            salesLegend.AutoSize = True
-            salesLegend.Location = New Point(15, 15)
-            topPanel.Controls.Add(salesLegend)
-
-            ' FlowLayoutPanel for filter buttons positioned cleanly on the right
-            Dim buttonFlow As New FlowLayoutPanel()
-            buttonFlow.AutoSize = True
-            buttonFlow.AutoSizeMode = AutoSizeMode.GrowAndShrink
-            buttonFlow.FlowDirection = FlowDirection.LeftToRight
-            buttonFlow.WrapContents = False
-            buttonFlow.BackColor = Color.Transparent
-            buttonFlow.Anchor = AnchorStyles.Top Or AnchorStyles.Right
-            topPanel.Controls.Add(buttonFlow)
-
-            ' Create filter buttons
-            btnYearly = CreateChartFilterButton("Yearly")
-            AddHandler btnYearly.Click, Sub() LoadChartData("Yearly")
-
-            btnMonthly = CreateChartFilterButton("Monthly")
-            AddHandler btnMonthly.Click, Sub() LoadChartData("Monthly")
-
-            btnWeekly = CreateChartFilterButton("Weekly")
-            AddHandler btnWeekly.Click, Sub() LoadChartData("Weekly")
-
-            btnToday = CreateChartFilterButton("Today")
-            AddHandler btnToday.Click, Sub() LoadChartData("Today")
-
-            buttonFlow.Controls.Add(btnYearly)
-            buttonFlow.Controls.Add(btnMonthly)
-            buttonFlow.Controls.Add(btnWeekly)
-            buttonFlow.Controls.Add(btnToday)
-
-            ' Position filter buttons professionally on the right side
-            Dim positionFilterButtons As Action = Sub()
-                                                      buttonFlow.Location = New Point(topPanel.ClientSize.Width - buttonFlow.Width - 15, 9)
-                                                  End Sub
-            positionFilterButtons()
-            AddHandler topPanel.SizeChanged, Sub(sender, e)
-                                                 positionFilterButtons()
-                                             End Sub
-
             ' Chart panel with proper margins
             chartPanel = New Panel()
             chartPanel.Dock = DockStyle.Fill
@@ -961,12 +879,10 @@ Public Class Dashboard
 
             ' Add panels in proper order
             AreaChart.Controls.Add(chartPanel)
-            AreaChart.Controls.Add(topPanel)
             AreaChart.Controls.Add(titleLabel)
 
             ' Bring to front in proper order
             titleLabel.BringToFront()
-            topPanel.BringToFront()
             chartPanel.BringToFront()
 
             LoadChartData(currentChartMode)
@@ -974,24 +890,6 @@ Public Class Dashboard
             Console.WriteLine($"Error loading chart interface: {ex.Message}")
         End Try
     End Sub
-    Private Function CreateChartFilterButton(text As String) As Guna2Button
-        Dim btn As New Guna2Button()
-        btn.Text = text
-        btn.Font = New Font("Poppins", 10, FontStyle.Regular)
-        btn.FillColor = Color.FromArgb(240, 240, 240)
-        btn.ForeColor = Color.FromArgb(51, 51, 51)
-        btn.BorderRadius = 10
-        btn.Size = New Size(120, 32)
-        btn.Margin = New Padding(0, 0, 8, 0)
-        btn.TabStop = False
-
-        ' Remove press flash: keep pressed/hover close to base fill
-        btn.PressedColor = btn.FillColor
-        btn.HoverState.FillColor = btn.FillColor
-        btn.HoverState.ForeColor = btn.ForeColor
-
-        Return btn
-    End Function
 
     Private Sub LoadChartData(mode As String)
         Try
@@ -1080,7 +978,6 @@ Public Class Dashboard
                 CreateFallbackChartDisplay(mode, salesData, labels)
             End If
 
-            SetActiveChartButton(mode)
         Catch ex As Exception
             Console.WriteLine($"Error loading chart data: {ex.Message}")
         End Try
@@ -1637,26 +1534,34 @@ Public Class Dashboard
     Private Sub BuildKPICards()
         ' === Header row with title + time-period filter ===
         Dim headerPanel As New Panel() With {
-            .Location = New Point(236, 10), .Size = New Size(1636, 42),
+            .Location = New Point(236, 40), .Size = New Size(1636, 52),
             .BackColor = Color.Transparent
         }
         Dim headerTitle As New Label() With {
-            .Text = "Dashboard Overview", .Font = New Font("Poppins", 14, FontStyle.Regular),
+            .Text = "Dashboard Overview", .Font = New Font("Poppins", 15, FontStyle.Regular),
             .ForeColor = Color.FromArgb(34, 34, 34), .BackColor = Color.Transparent,
-            .Location = New Point(0, 8), .AutoSize = True
+            .Location = New Point(0, 14), .AutoSize = True
         }
         headerPanel.Controls.Add(headerTitle)
 
+        Dim filterLabel As New Label() With {
+            .Text = "Period:", .Font = New Font("Poppins", 9.5F, FontStyle.Regular),
+            .ForeColor = Color.FromArgb(100, 100, 100), .BackColor = Color.Transparent,
+            .AutoSize = True, .Anchor = AnchorStyles.Top Or AnchorStyles.Right,
+            .Location = New Point(headerPanel.Width - 290, 14)
+        }
+        headerPanel.Controls.Add(filterLabel)
+
         _periodCombo = New Guna2ComboBox() With {
-            .Size = New Size(160, 28),
+            .Size = New Size(210, 36),
             .Anchor = AnchorStyles.Top Or AnchorStyles.Right,
-            .Location = New Point(headerPanel.Width - 160, 7),
+            .Location = New Point(headerPanel.Width - 210, 8),
             .DropDownStyle = ComboBoxStyle.DropDownList,
-            .Font = New Font("Poppins", 8.5F, FontStyle.Regular),
+            .Font = New Font("Poppins", 10, FontStyle.Regular),
             .FillColor = Color.White,
-            .BorderColor = Color.FromArgb(232, 232, 232),
+            .BorderColor = Color.FromArgb(218, 218, 218),
             .BorderThickness = 1,
-            .BorderRadius = 6,
+            .BorderRadius = 8,
             .Cursor = Cursors.Hand,
             .TextAlign = HorizontalAlignment.Left
         }
@@ -1669,7 +1574,7 @@ Public Class Dashboard
         headerPanel.BringToFront()
 
         ' === KPI Cards ===
-        Dim cardY As Integer = 58
+        Dim cardY As Integer = 100
         Dim cardH As Integer = 150
         Dim startX As Integer = 236
         Dim totalWidth As Integer = 1636
