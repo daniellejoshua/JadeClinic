@@ -550,6 +550,8 @@ Public Class Inventory
             productDataGrid.ColumnHeadersHeight = 40
             productDataGrid.RowTemplate.Height = 75
             productDataGrid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing
+            productDataGrid.ThemeStyle.RowsStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
+            productDataGrid.ThemeStyle.HeaderStyle.Font = New Font("Poppins", 9.0F, FontStyle.Bold)
 
             ' Pagination bar (same control used by Sales, which renders the count correctly)
             ' docked to the bottom of the panel; the grid shrinks to sit above it
@@ -580,16 +582,10 @@ Public Class Inventory
             Dim colProductName As New DataGridViewTextBoxColumn()
             colProductName.Name = "ProductName"
             colProductName.HeaderText = "Product Information"
-
-            ' FIXED WIDTH
-            colProductName.AutoSizeMode = DataGridViewAutoSizeColumnMode.None
-            colProductName.Width = 280
-            colProductName.MinimumWidth = 280
-
-            colProductName.DefaultCellStyle.Font = New Font("Poppins SemiBold", 9.5F, FontStyle.Regular)
+            colProductName.FillWeight = 35
+            colProductName.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
             colProductName.DefaultCellStyle.ForeColor = DarkText
             colProductName.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft
-            colProductName.DefaultCellStyle.Padding = New Padding(5, 5, 5, 5)
             colProductName.DefaultCellStyle.SelectionBackColor = Color.FromArgb(235, 228, 200)
             colProductName.DefaultCellStyle.SelectionForeColor = DarkText
             productDataGrid.Columns.Add(colProductName)
@@ -623,7 +619,7 @@ Public Class Inventory
             colStock.HeaderText = "Stock"
             colStock.FillWeight = 9
             colStock.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
-            colStock.DefaultCellStyle.Font = New Font("PoppinsSemiBold", 9.5F, FontStyle.Bold)
+            colStock.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
             colStock.DefaultCellStyle.ForeColor = MediumText
             colStock.DefaultCellStyle.SelectionBackColor = Color.FromArgb(235, 228, 200)
             colStock.DefaultCellStyle.SelectionForeColor = DarkText
@@ -647,7 +643,7 @@ Public Class Inventory
             colSellingPrice.HeaderText = "Price"
             colSellingPrice.FillWeight = 14
             colSellingPrice.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
-            colSellingPrice.DefaultCellStyle.Font = New Font("PoppinsSemiBold", 9.5F, FontStyle.Bold)
+            colSellingPrice.DefaultCellStyle.Font = New Font("Poppins", 9.0F, FontStyle.Regular)
             colSellingPrice.DefaultCellStyle.ForeColor = DarkText
             colSellingPrice.DefaultCellStyle.SelectionBackColor = Color.FromArgb(235, 228, 200)
             colSellingPrice.DefaultCellStyle.SelectionForeColor = DarkText
