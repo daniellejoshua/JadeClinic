@@ -80,6 +80,10 @@ Public Class Dashboard
     Private Const EmojiProfit As String = "💵"
     Private CircleBg As Color = Color.FromArgb(255, 244, 217)
 
+    ' Time-period filter
+    Private _periodCombo As Guna2ComboBox
+    Private _selectedPeriod As String = "Last 30 Days"
+
     Public Sub New()
         Try
             Console.WriteLine("Dashboard constructor starting...")
@@ -152,7 +156,7 @@ Public Class Dashboard
 
             ' Initialize form with new color scheme
             Me.Text = $"JadeClinic Dashboard - Welcome {frmLoginvb.LoggedInUsername}"
-            Me.BackColor = Color.FromArgb(250, 250, 249)
+            Me.BackColor = Color.FromArgb(248, 248, 247)
             Me.MaximizeBox = False
             Me.MinimizeBox = False
 
@@ -310,7 +314,7 @@ Public Class Dashboard
     Private Sub ApplyNewColorScheme()
         Try
             Console.WriteLine("ApplyNewColorScheme starting...")
-            Me.BackColor = Color.FromArgb(250, 250, 249)
+            Me.BackColor = Color.FromArgb(248, 248, 247)
             Console.WriteLine("ApplyNewColorScheme completed")
         Catch ex As Exception
             Console.WriteLine($"Error applying color scheme: {ex.Message}")
@@ -339,75 +343,136 @@ Public Class Dashboard
 
 
     Private Sub LoadDashboardData()
-        ' Load real sales/inventory data for all three cards
-        LoadDailySalesData()
-        LoadMonthlySalesData()
-
-        ' Load popular products with existing DataGridView
+        LoadKPIData()
         LoadAllPopularProducts()
-
-        ' Load inventory status chart
         LoadInventoryStatusChart()
     End Sub
 
-    Private Sub LoadDailySalesData()
+    Private Sub OnPeriodChanged(sender As Object, e As EventArgs)
+        If _periodCombo Is Nothing OrElse _periodCombo.SelectedIndex < 0 Then Return
+        _selectedPeriod = _periodCombo.SelectedItem.ToString()
+        LoadKPIData()
+        LoadChartData(currentChartMode)
+        LoadAllPopularProducts()
+    End Sub
+
+    Private Function GetDateRange() As (StartSql As String, EndSql As String, Label As String)
+        Dim today As Date = Date.Today
+        Dim startDt As Date
+        Dim endDt As Date = today.AddDays(1).AddTicks(-1)
+        Dim label As String = ""
+
+        Select Case _selectedPeriod
+            Case "Today"
+                startDt = today
+                label = "Today, " & today.ToString("MMM d, yyyy")
+            Case "Last 7 Days"
+                startDt = today.AddDays(-6)
+                label = startDt.ToString("MMM d") & " - " & today.ToString("d, yyyy")
+            Case "Last 30 Days"
+                startDt = today.AddDays(-29)
+                If startDt.Month = today.Month Then
+                    label = startDt.ToString("MMM d") & " - " & today.ToString("d, yyyy")
+                Else
+                    label = startDt.ToString("MMM d") & " - " & today.ToString("MMM d, yyyy")
+                End If
+            Case "This Month"
+                startDt = New Date(today.Year, today.Month, 1)
+                If startDt.Month = today.Month Then
+                    label = startDt.ToString("MMM d") & " - " & today.ToString("d, yyyy")
+                Else
+                    label = startDt.ToString("MMM d") & " - " & today.ToString("MMM d, yyyy")
+                End If
+            Case "Last Month"
+                Dim lastMonth As Date = today.AddMonths(-1)
+                startDt = New Date(lastMonth.Year, lastMonth.Month, 1)
+                endDt = startDt.AddMonths(1).AddTicks(-1)
+                label = startDt.ToString("MMM d") & " - " & endDt.ToString("d, yyyy")
+            Case "This Year"
+                startDt = New Date(today.Year, 1, 1)
+                label = "Jan 1 - " & today.ToString("MMM d, yyyy")
+            Case "All Time"
+                startDt = Date.MinValue
+                label = "All time"
+            Case Else
+                startDt = Date.MinValue
+                label = "All time"
+        End Select
+
+        Return (startDt.ToString("yyyy-MM-dd"), endDt.ToString("yyyy-MM-dd HH:mm:ss"), label)
+    End Function
+
+    Private Sub LoadKPIData()
         Try
-            Dim query As String = "
-            SELECT
-                IFNULL((SELECT COUNT(*) FROM Sales), 0) AS TotalOrders,
-                IFNULL((SELECT SUM(CostPrice * CurrentStock) FROM Products WHERE IsActive = 1), 0) AS ActiveStockValue"
+            Dim dr = GetDateRange()
+            Dim dateFilter As String = ""
+            Dim orderFilter As String = ""
+
+            If _selectedPeriod <> "All Time" Then
+                dateFilter = $"AND s.SaleDate >= '{dr.StartSql}' AND s.SaleDate <= '{dr.EndSql}'"
+                orderFilter = $"AND si.SaleID IN (SELECT SaleID FROM Sales WHERE SaleDate >= '{dr.StartSql}' AND SaleDate <= '{dr.EndSql}')"
+            End If
+
+            ' Orders + Revenue + COGS in one query
+            Dim query As String = $"
+                SELECT
+                    IFNULL((SELECT COUNT(*) FROM Sales s WHERE 1=1 {dateFilter}), 0) AS TotalOrders,
+                    IFNULL((SELECT SUM(TotalAmount) FROM Sales s WHERE 1=1 {dateFilter}), 0) AS TotalRevenue,
+                    IFNULL((SELECT SUM(si.Quantity * p.CostPrice) FROM SaleItems si JOIN Products p ON si.ProductID = p.ProductID {orderFilter}), 0) AS TotalCOGS,
+                    IFNULL((SELECT SUM(CostPrice * CurrentStock) FROM Products WHERE IsActive = 1), 0) AS ActiveStockValue,
+                    IFNULL((SELECT COUNT(*) FROM Products WHERE IsActive = 1), 0) AS ActiveProductCount"
 
             Using reader As DbDataReader = Utilities.ExecuteReader(query, Nothing)
                 If reader.Read() Then
                     Dim totalOrders As Integer = Convert.ToInt32(reader("TotalOrders"))
+                    Dim totalRevenue As Decimal = Convert.ToDecimal(reader("TotalRevenue"))
+                    Dim totalCOGS As Decimal = Convert.ToDecimal(reader("TotalCOGS"))
                     Dim activeStockValue As Decimal = Convert.ToDecimal(reader("ActiveStockValue"))
+                    Dim activeProductCount As Integer = Convert.ToInt32(reader("ActiveProductCount"))
+                    Dim grossProfit As Decimal = totalRevenue - totalCOGS
+                    Dim pesoSign As String = ChrW(&H20B1)
 
+                    ' Card 1: Total Orders
                     If _lblTotalOrdersValue IsNot Nothing Then _lblTotalOrdersValue.Text = totalOrders.ToString("N0")
-                    If _lblTotalOrdersSub IsNot Nothing Then _lblTotalOrdersSub.Text = "All recorded orders"
+                    If _lblTotalOrdersSub IsNot Nothing Then
+                        Dim daysInPeriod As Integer = Math.Max(1, (Date.Parse(dr.EndSql) - Date.Parse(dr.StartSql)).Days + 1)
+                        If _selectedPeriod = "All Time" Then
+                            Dim allDays = Math.Max(1, (Date.Today - New Date(2020, 1, 1)).Days + 1)
+                            _lblTotalOrdersSub.Text = $"Avg {totalOrders / allDays:F1} /day"
+                        Else
+                            _lblTotalOrdersSub.Text = $"Avg {totalOrders / daysInPeriod:F1} /day"
+                        End If
+                    End If
 
-                    If _lblStockValueValue IsNot Nothing Then _lblStockValueValue.Text = String.Format(Globalization.CultureInfo.GetCultureInfo("en-PH"), "{0}{1:N0}", ChrW(&H20B1), activeStockValue)
-                    If _lblStockValueSub IsNot Nothing Then _lblStockValueSub.Text = "Active products"
+                    ' Card 2: Inventory Value
+                    If _lblStockValueValue IsNot Nothing Then _lblStockValueValue.Text = String.Format(Globalization.CultureInfo.GetCultureInfo("en-PH"), "{0}{1:N0}", pesoSign, activeStockValue)
+                    If _lblStockValueSub IsNot Nothing Then _lblStockValueSub.Text = $"{activeProductCount} products"
+
+                    ' Card 3: Total Revenue
+                    If _lblRevenueValue IsNot Nothing Then _lblRevenueValue.Text = String.Format(Globalization.CultureInfo.GetCultureInfo("en-PH"), "{0}{1:N0}", pesoSign, totalRevenue)
+                    If _lblRevenueSub IsNot Nothing Then _lblRevenueSub.Text = dr.Label
+
+                    ' Card 4: Gross Profit
+                    If _lblGrossProfitValue IsNot Nothing Then _lblGrossProfitValue.Text = String.Format(Globalization.CultureInfo.GetCultureInfo("en-PH"), "{0}{1:N0}", pesoSign, grossProfit)
+                    If _lblGrossProfitSub IsNot Nothing Then
+                        If totalRevenue > 0 Then
+                            Dim margin As Decimal = (grossProfit / totalRevenue) * 100
+                            _lblGrossProfitSub.Text = $"{margin:F0}% margin"
+                        Else
+                            _lblGrossProfitSub.Text = "0% margin"
+                        End If
+                    End If
 
                     lastProductCount = totalOrders
                 Else
                     If _lblTotalOrdersValue IsNot Nothing Then _lblTotalOrdersValue.Text = "0"
                     If _lblStockValueValue IsNot Nothing Then _lblStockValueValue.Text = ChrW(&H20B1) & "0"
-                End If
-            End Using
-        Catch ex As Exception
-            If _lblTotalOrdersValue IsNot Nothing Then _lblTotalOrdersValue.Text = "0"
-            If _lblStockValueValue IsNot Nothing Then _lblStockValueValue.Text = ChrW(&H20B1) & "0"
-            Console.WriteLine($"Error loading dashboard card #1/#2 data: {ex.Message}")
-        End Try
-    End Sub
-
-    Private Sub LoadMonthlySalesData()
-        Try
-            Dim query As String = "
-        SELECT IFNULL(SUM(TotalAmount), 0) AS TotalRevenue,
-               IFNULL((SELECT SUM(si.Quantity * p.CostPrice) FROM SaleItems si JOIN Products p ON si.ProductID = p.ProductID), 0) AS TotalCOGS
-        FROM Sales"
-
-            Using reader As DbDataReader = Utilities.ExecuteReader(query, Nothing)
-                If reader.Read() Then
-                    Dim totalRevenue As Decimal = Convert.ToDecimal(reader("TotalRevenue"))
-                    Dim totalCOGS As Decimal = Convert.ToDecimal(reader("TotalCOGS"))
-                    Dim grossProfit As Decimal = totalRevenue - totalCOGS
-
-                    If _lblRevenueValue IsNot Nothing Then _lblRevenueValue.Text = String.Format(Globalization.CultureInfo.GetCultureInfo("en-PH"), "{0}{1:N0}", ChrW(&H20B1), totalRevenue)
-                    If _lblRevenueSub IsNot Nothing Then _lblRevenueSub.Text = "All recorded sales"
-
-                    If _lblGrossProfitValue IsNot Nothing Then _lblGrossProfitValue.Text = String.Format(Globalization.CultureInfo.GetCultureInfo("en-PH"), "{0}{1:N0}", ChrW(&H20B1), grossProfit)
-                    If _lblGrossProfitSub IsNot Nothing Then _lblGrossProfitSub.Text = "Revenue minus COGS"
-                Else
                     If _lblRevenueValue IsNot Nothing Then _lblRevenueValue.Text = ChrW(&H20B1) & "0"
                     If _lblGrossProfitValue IsNot Nothing Then _lblGrossProfitValue.Text = ChrW(&H20B1) & "0"
                 End If
             End Using
         Catch ex As Exception
-            If _lblRevenueValue IsNot Nothing Then _lblRevenueValue.Text = ChrW(&H20B1) & "0"
-            If _lblGrossProfitValue IsNot Nothing Then _lblGrossProfitValue.Text = ChrW(&H20B1) & "0"
-            Console.WriteLine($"Error loading dashboard card #3/#4 data: {ex.Message}")
+            Console.WriteLine($"Error loading KPI data: {ex.Message}")
         End Try
     End Sub
 
@@ -1570,7 +1635,41 @@ Public Class Dashboard
     End Function
 
     Private Sub BuildKPICards()
-        Dim cardY As Integer = 61
+        ' === Header row with title + time-period filter ===
+        Dim headerPanel As New Panel() With {
+            .Location = New Point(236, 10), .Size = New Size(1636, 42),
+            .BackColor = Color.Transparent
+        }
+        Dim headerTitle As New Label() With {
+            .Text = "Dashboard Overview", .Font = New Font("Poppins", 14, FontStyle.Regular),
+            .ForeColor = Color.FromArgb(34, 34, 34), .BackColor = Color.Transparent,
+            .Location = New Point(0, 8), .AutoSize = True
+        }
+        headerPanel.Controls.Add(headerTitle)
+
+        _periodCombo = New Guna2ComboBox() With {
+            .Size = New Size(160, 28),
+            .Anchor = AnchorStyles.Top Or AnchorStyles.Right,
+            .Location = New Point(headerPanel.Width - 160, 7),
+            .DropDownStyle = ComboBoxStyle.DropDownList,
+            .Font = New Font("Poppins", 8.5F, FontStyle.Regular),
+            .FillColor = Color.White,
+            .BorderColor = Color.FromArgb(232, 232, 232),
+            .BorderThickness = 1,
+            .BorderRadius = 6,
+            .Cursor = Cursors.Hand,
+            .TextAlign = HorizontalAlignment.Left
+        }
+        _periodCombo.Items.AddRange({"Today", "Last 7 Days", "Last 30 Days", "This Month", "Last Month", "This Year", "All Time"})
+        _periodCombo.SelectedIndex = 2 ' Last 30 Days default
+        AddHandler _periodCombo.SelectedIndexChanged, AddressOf OnPeriodChanged
+        headerPanel.Controls.Add(_periodCombo)
+
+        Me.Controls.Add(headerPanel)
+        headerPanel.BringToFront()
+
+        ' === KPI Cards ===
+        Dim cardY As Integer = 58
         Dim cardH As Integer = 150
         Dim startX As Integer = 236
         Dim totalWidth As Integer = 1636

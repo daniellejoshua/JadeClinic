@@ -83,7 +83,7 @@ Partial Class Sales
         ' CategoryPanel
         ' 
         CategoryPanel.AutoScroll = True
-        CategoryPanel.BackColor = Color.White
+        CategoryPanel.BackColor = Color.Transparent
         CategoryPanel.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
         CategoryPanel.BorderRadius = 8
         CategoryPanel.BorderThickness = 2
@@ -431,7 +431,7 @@ Partial Class Sales
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
         AutoScroll = True
-        BackColor = Color.FromArgb(CByte(254), CByte(254), CByte(254))
+        BackColor = Color.FromArgb(CByte(248), CByte(248), CByte(247))
         ClientSize = New Size(1902, 1033)
         Controls.Add(lblUsername)
         Controls.Add(Guna2CirclePictureBox5)

@@ -28,6 +28,7 @@ Public Class Sys
     Private ReadOnly AlertRed As Color = Color.FromArgb(255, 71, 87)           ' #FF4757 - Error/Alert states
 
     Private Sub Sys_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        Me.BackColor = Color.FromArgb(248, 248, 247)
         Try
             Console.WriteLine($"Sys_Load: starting. Form size={Me.Size}, ClientSize={Me.ClientSize}, TopLevel={Me.TopLevel}, IsHosted={IsHostedInMainShell()}")
 

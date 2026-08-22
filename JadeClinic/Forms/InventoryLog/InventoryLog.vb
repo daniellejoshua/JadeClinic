@@ -66,6 +66,7 @@ Public Class InventoryLog
     End Sub
 
     Private Async Sub InventoryLog_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        Me.BackColor = Color.FromArgb(248, 248, 247)
         Try
             ' Setup form
             SetupForm()

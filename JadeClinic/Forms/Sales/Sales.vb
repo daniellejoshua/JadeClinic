@@ -527,6 +527,7 @@ Public Class Sales
     End Sub
 
     Private Sub Sales_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        Me.BackColor = Color.FromArgb(248, 248, 247)
         LogDiagnostic($"DIAG02 LOAD Sales form version={Me.GetType().Assembly.GetName().Version}")
         ' Stop idle timeout monitoring
         ' Start idle timeout monitoring

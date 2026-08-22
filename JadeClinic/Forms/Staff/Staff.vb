@@ -14,6 +14,7 @@ Public Class Staff
     Private isNavigating As Boolean = False
 
     Private Sub Staff_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        Me.BackColor = Drawing.Color.FromArgb(248, 248, 247)
         ' Initialize QuestPDF
         ' Stop idle timeout monitoring
         IdleTimeoutManager.Instance.StartMonitoring(Me)

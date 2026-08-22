@@ -25,6 +25,7 @@ Public Class Supplier
     Private _filterPlaceholder As Label
 
     Private Sub Supplier_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        Me.BackColor = Color.FromArgb(248, 248, 247)
         NavigationPanel.Location = New Point(-10, 5)
         Try
             Me.KeyPreview = True

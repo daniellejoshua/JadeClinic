@@ -32,6 +32,7 @@ Public Class Inventory
     Private _pageSize As Integer = 10
 
     Private Async Sub Inventory_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        Me.BackColor = Color.FromArgb(248, 248, 247)
         btnActive.BorderRadius = 10
         btnAll.BorderRadius = 10
         btnInactive.BorderRadius = 10

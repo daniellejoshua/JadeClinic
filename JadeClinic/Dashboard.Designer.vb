@@ -64,7 +64,7 @@ Partial Class Dashboard
         LowStockPanel.BorderThickness = 2
         LowStockPanel.CustomizableEdges = CustomizableEdges1
         LowStockPanel.FillColor = Color.White
-        LowStockPanel.Location = New Point(1295, 235)
+        LowStockPanel.Location = New Point(1291, 275)
         LowStockPanel.Name = "LowStockPanel"
         LowStockPanel.Padding = New Padding(4)
         LowStockPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges2
@@ -105,11 +105,11 @@ Partial Class Dashboard
         AreaChart.BorderThickness = 2
         AreaChart.CustomizableEdges = CustomizableEdges5
         AreaChart.FillColor = Color.White
-        AreaChart.Location = New Point(236, 639)
+        AreaChart.Location = New Point(232, 679)
         AreaChart.Name = "AreaChart"
-        AreaChart.ShadowDecoration.CustomizableEdges = CustomizableEdges6
         AreaChart.Padding = New Padding(4)
-        AreaChart.Size = New Size(1636, 397)
+        AreaChart.ShadowDecoration.CustomizableEdges = CustomizableEdges6
+        AreaChart.Size = New Size(1636, 351)
         AreaChart.TabIndex = 63
         ' 
         ' Guna2HtmlLabel5
@@ -167,7 +167,7 @@ Partial Class Dashboard
         PopularPanel.Controls.Add(Guna2DataGridView1)
         PopularPanel.CustomizableEdges = CustomizableEdges9
         PopularPanel.FillColor = Color.White
-        PopularPanel.Location = New Point(236, 235)
+        PopularPanel.Location = New Point(232, 275)
         PopularPanel.Name = "PopularPanel"
         PopularPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges10
         PopularPanel.ShadowDecoration.Depth = 0
@@ -291,7 +291,7 @@ Partial Class Dashboard
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
         AutoScroll = True
-        BackColor = Color.White
+        BackColor = Color.FromArgb(CByte(248), CByte(248), CByte(247))
         ClientSize = New Size(1902, 1033)
         Controls.Add(PopularPanel)
         Controls.Add(DashboardPanel)

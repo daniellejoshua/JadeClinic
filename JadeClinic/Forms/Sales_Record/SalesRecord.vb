@@ -26,6 +26,7 @@ Public Class SalesRecord
     Private ReadOnly White As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 255, 255)
 
     Private Sub SalesRecord_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        Me.BackColor = Drawing.Color.FromArgb(248, 248, 247)
         ' Initialize QuestPDF
         ' Start idle timeout monitoring
         IdleTimeoutManager.Instance.StartMonitoring(Me)

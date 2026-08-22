@@ -36,6 +36,7 @@ Public Class ProfileSettings
     Private ReadOnly AlertRed As Color = Color.FromArgb(255, 71, 87)           '#FF4757 - Error
 
     Private Sub ProfileSettings_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        Me.BackColor = Color.FromArgb(248, 248, 247)
 
         ' Stop idle timeout monitoring
         IdleTimeoutManager.Instance.StartMonitoring(Me) ' Initialize form

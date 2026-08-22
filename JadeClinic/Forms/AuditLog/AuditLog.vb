@@ -20,6 +20,7 @@ Public Class AuditLog
     Private ReadOnly AlertRed As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 255, 71, 87)
 
     Private Async Sub AuditLog_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        Me.BackColor = Color.FromArgb(248, 248, 247)
         ' Stop idle timeout monitoring
         IdleTimeoutManager.Instance.StartMonitoring(Me)
         Me.FormBorderStyle = FormBorderStyle.None
