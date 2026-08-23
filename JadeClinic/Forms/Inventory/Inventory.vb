@@ -1816,4 +1816,7 @@ Public Class Inventory
         Return MyBase.ProcessCmdKey(msg, keyData)
     End Function
 
+    Private Sub btnActive_Click_1(sender As Object, e As EventArgs) Handles btnActive.Click
+
+    End Sub
 End Class

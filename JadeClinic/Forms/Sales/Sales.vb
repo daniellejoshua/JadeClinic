@@ -610,11 +610,6 @@ Public Class Sales
         ' ... existing code in Sales_Load ...
 
 
-        ' Set payment button to golden color
-        If btnPayment IsNot Nothing Then
-            btnPayment.FillColor = GoldenYellow
-            btnPayment.ForeColor = Color.White
-        End If
 
         SetupTabIndex()
 
@@ -675,13 +670,25 @@ Public Class Sales
         backCategory.Visible = True
         LabelTitle.Text = categoryName
 
+        ' Padding creates a gap for the GDI+ border drawn in CategoryPanel_Paint
+        CategoryPanel.Padding = New Padding(2)
+
+        ' Keep the search box visible so users can refine within the category
+        If Not CategoryPanel.Controls.Contains(TxtSearch) Then
+            CategoryPanel.Controls.Add(TxtSearch)
+        End If
+        TxtSearch.Location = New Point(16, 12)
+        TxtSearch.Size = New Size(CategoryPanel.Width - 40, 36)
+        TxtSearch.Anchor = AnchorStyles.Top Or AnchorStyles.Left Or AnchorStyles.Right
+        TxtSearch.BringToFront()
+
         ' Use FlowLayoutPanel for responsive card layout (Dock Fill so it stays
-        ' inside the rounded border; add it before the footer so it fills above it)
+        ' inside the rounded border; top padding reserves space for the search box)
         Dim flowPanel As New FlowLayoutPanel()
         flowPanel.Dock = DockStyle.Fill
         flowPanel.AutoScroll = True
         flowPanel.BackColor = Color.White
-        flowPanel.Padding = New Padding(14)
+        flowPanel.Padding = New Padding(14, 56, 14, 14)
         CategoryPanel.Controls.Add(flowPanel)
 
         ' Count matching rows so the footer can show total pages
@@ -711,6 +718,8 @@ Public Class Sales
         _paginationCategory = categoryName
         _paginationContext = PaginationContext.Category
         LoadCategoryProductsPage(categoryName, 1)
+
+        CategoryPanel.Invalidate()
     End Sub
 
     ' Loads a single page of product cards for a category (raises no events)
@@ -2705,6 +2714,22 @@ Public Class Sales
     End Sub
     ' Event handlers for form events
     Private Sub CategoryPanel_Paint(sender As Object, e As PaintEventArgs) Handles CategoryPanel.Paint
+        Dim radius As Integer = CategoryPanel.BorderRadius
+        Dim borderPen As New Pen(Color.FromArgb(232, 232, 232), 2)
+        borderPen.Alignment = PenAlignment.Inset
+        e.Graphics.SmoothingMode = SmoothingMode.AntiAlias
+
+        Dim rect As New Rectangle(1, 1, CategoryPanel.Width - 3, CategoryPanel.Height - 3)
+        Dim d As Integer = radius * 2
+        Dim path As New GraphicsPath()
+        path.AddArc(rect.X, rect.Y, d, d, 180, 90)
+        path.AddArc(rect.Right - d, rect.Y, d, d, 270, 90)
+        path.AddArc(rect.Right - d, rect.Bottom - d, d, d, 0, 90)
+        path.AddArc(rect.X, rect.Bottom - d, d, d, 90, 90)
+        path.CloseFigure()
+        e.Graphics.DrawPath(borderPen, path)
+        path.Dispose()
+        borderPen.Dispose()
     End Sub
 
     Private Sub Guna2HtmlLabel16_Click(sender As Object, e As EventArgs)
@@ -5391,6 +5416,9 @@ Public Class Sales
         If Not CategoryPanel.Controls.Contains(TxtSearch) Then
             CategoryPanel.Controls.Add(TxtSearch)
         End If
+
+        ' Padding creates a gap for the GDI+ border drawn in CategoryPanel_Paint
+        CategoryPanel.Padding = New Padding(2)
 
         ' Flow panel fills the space above the footer; top padding reserves the
         ' search box area so cards never slide underneath it (Dock Fill stays
