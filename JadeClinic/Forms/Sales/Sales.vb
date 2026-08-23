@@ -677,9 +677,6 @@ Public Class Sales
         If Not CategoryPanel.Controls.Contains(TxtSearch) Then
             CategoryPanel.Controls.Add(TxtSearch)
         End If
-        TxtSearch.Location = New Point(16, 12)
-        TxtSearch.Size = New Size(CategoryPanel.Width - 40, 36)
-        TxtSearch.Anchor = AnchorStyles.Top Or AnchorStyles.Left Or AnchorStyles.Right
         TxtSearch.BringToFront()
 
         ' Use FlowLayoutPanel for responsive card layout (Dock Fill so it stays
@@ -688,7 +685,7 @@ Public Class Sales
         flowPanel.Dock = DockStyle.Fill
         flowPanel.AutoScroll = True
         flowPanel.BackColor = Color.White
-        flowPanel.Padding = New Padding(14, 56, 14, 14)
+        flowPanel.Padding = New Padding(14, 74, 14, 14)
         CategoryPanel.Controls.Add(flowPanel)
 
         ' Count matching rows so the footer can show total pages
