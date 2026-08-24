@@ -824,29 +824,29 @@ Public Class Sales
         FocusBarcodeInputIfAllowed()
     End Sub
 
-    ' Builds and returns a unit filter label + ComboBox positioned on the right side of CategoryPanel
+    ' Builds and returns a unit filter label + ComboBox positioned right of the search box
     Private Function CreateAndPopulateUnitFilter() As Guna2ComboBox
-        ' Label
+        ' Label — vertically centered next to the ComboBox
         If _lblUnitFilter Is Nothing OrElse _lblUnitFilter.IsDisposed Then
             _lblUnitFilter = New Label()
             _lblUnitFilter.Text = "Unit:"
             _lblUnitFilter.Font = New Font("Poppins", 10.0F, FontStyle.Regular)
-            _lblUnitFilter.ForeColor = Color.FromArgb(100, 100, 100)
+            _lblUnitFilter.ForeColor = Color.FromArgb(80, 80, 80)
             _lblUnitFilter.BackColor = Color.Transparent
             _lblUnitFilter.AutoSize = True
-            _lblUnitFilter.Location = New Point(835, 25)
+            _lblUnitFilter.Location = New Point(391, 30)
         End If
 
-        ' ComboBox
+        ' ComboBox — same Y/height as TxtSearch for a cohesive filter bar
         If _cmbUnitFilter Is Nothing OrElse _cmbUnitFilter.IsDisposed Then
             _cmbUnitFilter = New Guna2ComboBox()
             _cmbUnitFilter.Font = New Font("Poppins", 10.0F, FontStyle.Regular)
-            _cmbUnitFilter.Size = New Size(155, 47)
-            _cmbUnitFilter.Location = New Point(878, 18)
-            _cmbUnitFilter.BorderRadius = 8
+            _cmbUnitFilter.Size = New Size(170, 47)
+            _cmbUnitFilter.Location = New Point(448, 22)
+            _cmbUnitFilter.BorderRadius = 6
             _cmbUnitFilter.BackColor = Color.White
             _cmbUnitFilter.ForeColor = Color.FromArgb(51, 51, 51)
-            _cmbUnitFilter.BorderColor = Color.FromArgb(213, 218, 223)
+            _cmbUnitFilter.BorderColor = Color.DarkGray
             _cmbUnitFilter.BorderThickness = 1
             AddHandler _cmbUnitFilter.SelectedIndexChanged, AddressOf UnitFilter_Changed
         End If
