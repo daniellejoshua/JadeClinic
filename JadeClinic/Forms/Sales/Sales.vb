@@ -59,6 +59,10 @@ Public Class Sales
     Private _paginationCategory As String = ""
     Private _paginationSearchTerm As String = ""
 
+    ' Unit filter for product listings
+    Private _selectedUnitFilter As String = ""
+    Private _cmbUnitFilter As Guna2ComboBox
+
     ' Receipt printing variables
     Private printDocument As PrintDocument
     Private receiptOrderId As String
@@ -683,6 +687,13 @@ Public Class Sales
         End If
         TxtSearch.BringToFront()
 
+        ' Unit filter combo next to the search box
+        Dim unitCombo = CreateAndPopulateUnitFilter()
+        If Not CategoryPanel.Controls.Contains(unitCombo) Then
+            CategoryPanel.Controls.Add(unitCombo)
+        End If
+        unitCombo.BringToFront()
+
         ' Use FlowLayoutPanel for responsive card layout (Dock Fill so it stays
         ' inside the rounded border; top padding reserves space for the search box)
         Dim flowPanel As New FlowLayoutPanel()
@@ -734,12 +745,20 @@ Public Class Sales
 
         Dim offset As Integer = (page - 1) * ProductPageSize
         ' ORDER BY keeps the paging stable across queries
-        Dim query As String = "SELECT ProductID, ProductName, SellingPrice, ProductCode, ReorderLevel, CurrentStock, Category FROM Products WHERE Category = @Category AND IsActive = 1 ORDER BY ProductName LIMIT @Limit OFFSET @Offset"
-        Dim parameters As SqlParameter() = {
+        Dim baseWhere As String = "WHERE Category = @Category AND IsActive = 1"
+        If Not String.IsNullOrEmpty(_selectedUnitFilter) Then
+            baseWhere &= " AND Unit = @Unit"
+        End If
+        Dim query As String = $"SELECT ProductID, ProductName, SellingPrice, ProductCode, ReorderLevel, CurrentStock, Category, Unit FROM Products {baseWhere} ORDER BY ProductName LIMIT @Limit OFFSET @Offset"
+        Dim paramList As New List(Of SqlParameter) From {
             New SqlParameter("@Category", categoryName),
             New SqlParameter("@Limit", ProductPageSize),
             New SqlParameter("@Offset", offset)
         }
+        If Not String.IsNullOrEmpty(_selectedUnitFilter) Then
+            paramList.Add(New SqlParameter("@Unit", _selectedUnitFilter))
+        End If
+        Dim parameters As SqlParameter() = paramList.ToArray()
         Try
             Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters)
                 While reader.Read()
@@ -751,6 +770,7 @@ Public Class Sales
                         {"Price", Convert.ToDecimal(reader("SellingPrice"))},
                         {"ProductCode", reader("ProductCode")},
                         {"Category", reader("Category")},
+                        {"Unit", reader("Unit")},
                         {"CurrentStock", stock}
                     }
                     productDbStock(reader("ProductID").ToString()) = stock
@@ -797,6 +817,100 @@ Public Class Sales
             LoadSearchProductsPage(_paginationSearchTerm, page)
         End If
         FocusBarcodeInputIfAllowed()
+    End Sub
+
+    ' Builds and returns a unit filter ComboBox positioned after TxtSearch (41, 18)
+    Private Function CreateAndPopulateUnitFilter() As Guna2ComboBox
+        If _cmbUnitFilter Is Nothing OrElse _cmbUnitFilter.IsDisposed Then
+            _cmbUnitFilter = New Guna2ComboBox()
+            _cmbUnitFilter.Font = New Font("Poppins", 10.0F, FontStyle.Regular)
+            _cmbUnitFilter.Size = New Size(180, 47)
+            _cmbUnitFilter.Location = New Point(381, 18)
+            _cmbUnitFilter.BorderRadius = 8
+            _cmbUnitFilter.BackColor = Color.White
+            _cmbUnitFilter.ForeColor = Color.FromArgb(51, 51, 51)
+            _cmbUnitFilter.BorderColor = Color.FromArgb(213, 218, 223)
+            _cmbUnitFilter.BorderThickness = 1
+            AddHandler _cmbUnitFilter.SelectedIndexChanged, AddressOf UnitFilter_Changed
+        End If
+
+        _cmbUnitFilter.Items.Clear()
+        _cmbUnitFilter.Items.Add("All Units")
+        Try
+            Using reader = Utilities.ExecuteReader("SELECT DISTINCT Unit FROM Products WHERE IsActive = 1 AND Unit IS NOT NULL AND Unit <> '' ORDER BY Unit", {})
+                While reader.Read()
+                    _cmbUnitFilter.Items.Add(reader("Unit").ToString())
+                End While
+            End Using
+        Catch
+        End Try
+
+        ' Default selection
+        If _cmbUnitFilter.Items.Count > 0 Then
+            _cmbUnitFilter.SelectedIndex = 0
+        End If
+        _selectedUnitFilter = ""
+
+        Return _cmbUnitFilter
+    End Function
+
+    Private Sub UnitFilter_Changed(sender As Object, e As EventArgs)
+        If _cmbUnitFilter Is Nothing OrElse _cmbUnitFilter.IsDisposed Then Return
+        Dim selected As String = If(_cmbUnitFilter.SelectedItem IsNot Nothing, _cmbUnitFilter.SelectedItem.ToString(), "All Units")
+        If selected = "All Units" Then
+            _selectedUnitFilter = ""
+        Else
+            _selectedUnitFilter = selected
+        End If
+
+        ' Reload current page 1 with new filter
+        If _paginationContext = PaginationContext.Category AndAlso Not String.IsNullOrEmpty(_paginationCategory) Then
+            ReloadCategoryWithFilter()
+        ElseIf _paginationContext = PaginationContext.Search AndAlso Not String.IsNullOrEmpty(_paginationSearchTerm) Then
+            ReloadSearchWithFilter()
+        End If
+    End Sub
+
+    Private Sub ReloadCategoryWithFilter()
+        ' Recount with unit filter and reload page 1
+        Dim totalItems As Integer = 0
+        Try
+            Dim countQuery As String = "SELECT COUNT(*) FROM Products WHERE Category = @Category AND IsActive = 1"
+            Dim countParams As New List(Of SqlParameter) From {New SqlParameter("@Category", _paginationCategory)}
+            If Not String.IsNullOrEmpty(_selectedUnitFilter) Then
+                countQuery &= " AND Unit = @Unit"
+                countParams.Add(New SqlParameter("@Unit", _selectedUnitFilter))
+            End If
+            Dim countResult = Utilities.ExecuteScalar(countQuery, countParams.ToArray())
+            If countResult IsNot Nothing Then totalItems = Convert.ToInt32(countResult)
+        Catch
+        End Try
+
+        Dim pagination = GetPagination()
+        pagination.Configure(totalItems, ProductPageSize, 1)
+        LoadCategoryProductsPage(_paginationCategory, 1)
+    End Sub
+
+    Private Sub ReloadSearchWithFilter()
+        Dim totalItems As Integer = 0
+        Try
+            Dim countQuery As String = "SELECT COUNT(*) FROM Products WHERE IsActive = 1 AND (ProductCode = @term OR ProductName LIKE @like)"
+            Dim countParams As New List(Of SqlParameter) From {
+                New SqlParameter("@term", _paginationSearchTerm),
+                New SqlParameter("@like", "%" & _paginationSearchTerm & "%")
+            }
+            If Not String.IsNullOrEmpty(_selectedUnitFilter) Then
+                countQuery &= " AND Unit = @Unit"
+                countParams.Add(New SqlParameter("@Unit", _selectedUnitFilter))
+            End If
+            Dim countResult = Utilities.ExecuteScalar(countQuery, countParams.ToArray())
+            If countResult IsNot Nothing Then totalItems = Convert.ToInt32(countResult)
+        Catch
+        End Try
+
+        Dim pagination = GetPagination()
+        pagination.Configure(totalItems, ProductPageSize, 1)
+        LoadSearchProductsPage(_paginationSearchTerm, 1)
     End Sub
 
     ' UNIFIED: Handle both manual clicks and barcode scans
@@ -1387,6 +1501,7 @@ Public Class Sales
         ' Going back to the categories grid resets the search box
         If _searchTimer IsNot Nothing Then _searchTimer.Stop()
         If TxtSearch IsNot Nothing Then TxtSearch.Text = ""
+        _selectedUnitFilter = ""
 
         ' Store the current state before clearing
         CategoryPanel.SuspendLayout()
@@ -5418,6 +5533,13 @@ Public Class Sales
             CategoryPanel.Controls.Add(TxtSearch)
         End If
 
+        ' Unit filter combo next to the search box
+        Dim unitCombo = CreateAndPopulateUnitFilter()
+        If Not CategoryPanel.Controls.Contains(unitCombo) Then
+            CategoryPanel.Controls.Add(unitCombo)
+        End If
+        unitCombo.BringToFront()
+
         ' Padding creates a gap for the GDI+ border drawn in CategoryPanel_Paint
         CategoryPanel.Padding = New Padding(2)
 
@@ -5475,13 +5597,21 @@ Public Class Sales
         productDbStock.Clear()
 
         Dim offset As Integer = (page - 1) * ProductPageSize
-        Dim query As String = "SELECT ProductID, ProductName, SellingPrice, ProductCode, ReorderLevel, CurrentStock, Category FROM Products WHERE IsActive = 1 AND (ProductCode = @term OR ProductName LIKE @like) ORDER BY CASE WHEN ProductCode = @term THEN 0 ELSE 1 END, ProductName LIMIT @Limit OFFSET @Offset"
-        Dim parameters As SqlParameter() = {
+        Dim baseWhere As String = "WHERE IsActive = 1 AND (ProductCode = @term OR ProductName LIKE @like)"
+        If Not String.IsNullOrEmpty(_selectedUnitFilter) Then
+            baseWhere &= " AND Unit = @Unit"
+        End If
+        Dim query As String = $"SELECT ProductID, ProductName, SellingPrice, ProductCode, ReorderLevel, CurrentStock, Category, Unit FROM Products {baseWhere} ORDER BY CASE WHEN ProductCode = @term THEN 0 ELSE 1 END, ProductName LIMIT @Limit OFFSET @Offset"
+        Dim paramList As New List(Of SqlParameter) From {
             New SqlParameter("@term", term),
             New SqlParameter("@like", "%" & term & "%"),
             New SqlParameter("@Limit", ProductPageSize),
             New SqlParameter("@Offset", offset)
         }
+        If Not String.IsNullOrEmpty(_selectedUnitFilter) Then
+            paramList.Add(New SqlParameter("@Unit", _selectedUnitFilter))
+        End If
+        Dim parameters As SqlParameter() = paramList.ToArray()
         Try
             Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters)
                 While reader.Read()
@@ -5493,6 +5623,7 @@ Public Class Sales
                         {"Price", Convert.ToDecimal(reader("SellingPrice"))},
                         {"ProductCode", reader("ProductCode")},
                         {"Category", reader("Category")},
+                        {"Unit", reader("Unit")},
                         {"CurrentStock", stock}
                     }
                     productDbStock(reader("ProductID").ToString()) = stock
@@ -5542,7 +5673,7 @@ Public Class Sales
         backCategory.Visible = True
         LabelTitle.Text = $"Search: {productName}"
 
-        Dim query As String = "SELECT ProductID, ProductName, SellingPrice, ProductCode, ReorderLevel, CurrentStock, Category FROM Products WHERE ProductID = @ProductID AND IsActive = 1"
+        Dim query As String = "SELECT ProductID, ProductName, SellingPrice, ProductCode, ReorderLevel, CurrentStock, Category, Unit FROM Products WHERE ProductID = @ProductID AND IsActive = 1"
         Dim param As New SqlParameter("@ProductID", productId)
         Using reader As DbDataReader = Utilities.ExecuteReader(query, {param})
             If reader.Read() Then
@@ -5554,6 +5685,7 @@ Public Class Sales
                     {"Price", Convert.ToDecimal(reader("SellingPrice"))},
                     {"ProductCode", reader("ProductCode")},
                     {"Category", reader("Category")},
+                    {"Unit", reader("Unit")},
                     {"CurrentStock", stock}
                 }
                 productDbStock(reader("ProductID").ToString()) = stock

@@ -115,6 +115,23 @@ Public Module ProductCardBuilder
         card.Controls.Add(lblPrice)
         WireCard(lblPrice, card, info, onProductClicked)
 
+        ' Unit (muted, small, below price)
+        Dim lblUnit As New Label()
+        lblUnit.Location = New Point(15, 228)
+        lblUnit.AutoSize = True
+        lblUnit.Font = New Font(ResolveFontFamily({"Poppins", "Segoe UI"}), 7.5F, FontStyle.Regular)
+        lblUnit.ForeColor = ColorMutedText
+        lblUnit.BackColor = Color.Transparent
+        Dim unit As String = ""
+        If productData IsNot Nothing AndAlso productData.ContainsKey("Unit") Then
+            unit = productData("Unit").ToString()
+        End If
+        lblUnit.Text = If(String.IsNullOrEmpty(unit), "", $"Unit: {unit}")
+        If lblUnit.Text <> "" Then
+            card.Controls.Add(lblUnit)
+            WireCard(lblUnit, card, info, onProductClicked)
+        End If
+
         ' Product code (muted, truncated)
         Dim lblCode As New Label()
         lblCode.Location = New Point(15, 240)
