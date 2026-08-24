@@ -576,6 +576,10 @@ Public Class Sales
         ApplyPosLockColors(posLockedForCapital)
 
         backCategory.Visible = False
+
+        ' Show empty cart state on initial load
+        EnsureOrderSummaryGrid()
+
         ' Enforce daily opening capital when the form is shown to avoid blocking initial render
         AddHandler Me.Shown, Sub(shSender, shArgs) Me.BeginInvoke(Sub() EnsureCapitalBeforeUsingPOS())
         ' Show next possible Sale ID in lblOrderId
