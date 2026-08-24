@@ -62,6 +62,7 @@ Public Class Sales
     ' Unit filter for product listings
     Private _selectedUnitFilter As String = ""
     Private _cmbUnitFilter As Guna2ComboBox
+    Private _lblUnitFilter As Label
 
     ' Receipt printing variables
     Private printDocument As PrintDocument
@@ -687,8 +688,12 @@ Public Class Sales
         End If
         TxtSearch.BringToFront()
 
-        ' Unit filter combo next to the search box
+        ' Unit filter combo on the right side of the panel
         Dim unitCombo = CreateAndPopulateUnitFilter()
+        If Not CategoryPanel.Controls.Contains(_lblUnitFilter) Then
+            CategoryPanel.Controls.Add(_lblUnitFilter)
+        End If
+        _lblUnitFilter.BringToFront()
         If Not CategoryPanel.Controls.Contains(unitCombo) Then
             CategoryPanel.Controls.Add(unitCombo)
         End If
@@ -819,13 +824,25 @@ Public Class Sales
         FocusBarcodeInputIfAllowed()
     End Sub
 
-    ' Builds and returns a unit filter ComboBox positioned after TxtSearch (41, 18)
+    ' Builds and returns a unit filter label + ComboBox positioned on the right side of CategoryPanel
     Private Function CreateAndPopulateUnitFilter() As Guna2ComboBox
+        ' Label
+        If _lblUnitFilter Is Nothing OrElse _lblUnitFilter.IsDisposed Then
+            _lblUnitFilter = New Label()
+            _lblUnitFilter.Text = "Unit:"
+            _lblUnitFilter.Font = New Font("Poppins", 10.0F, FontStyle.Regular)
+            _lblUnitFilter.ForeColor = Color.FromArgb(100, 100, 100)
+            _lblUnitFilter.BackColor = Color.Transparent
+            _lblUnitFilter.AutoSize = True
+            _lblUnitFilter.Location = New Point(835, 25)
+        End If
+
+        ' ComboBox
         If _cmbUnitFilter Is Nothing OrElse _cmbUnitFilter.IsDisposed Then
             _cmbUnitFilter = New Guna2ComboBox()
             _cmbUnitFilter.Font = New Font("Poppins", 10.0F, FontStyle.Regular)
-            _cmbUnitFilter.Size = New Size(180, 47)
-            _cmbUnitFilter.Location = New Point(381, 18)
+            _cmbUnitFilter.Size = New Size(155, 47)
+            _cmbUnitFilter.Location = New Point(878, 18)
             _cmbUnitFilter.BorderRadius = 8
             _cmbUnitFilter.BackColor = Color.White
             _cmbUnitFilter.ForeColor = Color.FromArgb(51, 51, 51)
@@ -5533,8 +5550,12 @@ Public Class Sales
             CategoryPanel.Controls.Add(TxtSearch)
         End If
 
-        ' Unit filter combo next to the search box
+        ' Unit filter combo on the right side of the panel
         Dim unitCombo = CreateAndPopulateUnitFilter()
+        If Not CategoryPanel.Controls.Contains(_lblUnitFilter) Then
+            CategoryPanel.Controls.Add(_lblUnitFilter)
+        End If
+        _lblUnitFilter.BringToFront()
         If Not CategoryPanel.Controls.Contains(unitCombo) Then
             CategoryPanel.Controls.Add(unitCombo)
         End If

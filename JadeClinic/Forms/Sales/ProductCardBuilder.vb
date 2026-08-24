@@ -10,7 +10,7 @@ Imports System.Windows.Forms
 Public Module ProductCardBuilder
 
     Private Const CardWidth As Integer = 230
-    Private Const CardHeight As Integer = 340
+    Private Const CardHeight As Integer = 380
     Private Const CardRadius As Integer = 12
 
     ' The card face is inset slightly so a soft shadow can peek out bottom-right.
@@ -84,7 +84,7 @@ Public Module ProductCardBuilder
 
         ' Product name (2 fixed lines, ellipsis)
         Dim lblName As New Label()
-        lblName.Location = New Point(15, 148)
+        lblName.Location = New Point(15, 152)
         lblName.Size = New Size(190, 40)
         lblName.Font = New Font(ResolveFontFamily({"Poppins SemiBold", "Poppins", "Segoe UI"}), 10.0F, FontStyle.Regular)
         lblName.ForeColor = ColorDarkText
@@ -98,7 +98,7 @@ Public Module ProductCardBuilder
 
         ' Price (gold, no label prefix)
         Dim lblPrice As New Label()
-        lblPrice.Location = New Point(15, 205)
+        lblPrice.Location = New Point(15, 210)
         lblPrice.AutoSize = True
         lblPrice.MaximumSize = New Size(190, 0)
         lblPrice.Font = New Font(ResolveFontFamily({"Poppins SemiBold", "Poppins", "Segoe UI"}), 12.0F, FontStyle.Regular)
@@ -117,11 +117,12 @@ Public Module ProductCardBuilder
 
         ' Unit (muted, small, below price)
         Dim lblUnit As New Label()
-        lblUnit.Location = New Point(15, 228)
-        lblUnit.AutoSize = True
-        lblUnit.Font = New Font(ResolveFontFamily({"Poppins", "Segoe UI"}), 7.5F, FontStyle.Regular)
-        lblUnit.ForeColor = ColorMutedText
+        lblUnit.Location = New Point(15, 240)
+        lblUnit.Size = New Size(190, 18)
+        lblUnit.Font = New Font(ResolveFontFamily({"Poppins", "Segoe UI"}), 9.0F, FontStyle.Regular)
+        lblUnit.ForeColor = Color.FromArgb(90, 90, 90)
         lblUnit.BackColor = Color.Transparent
+        lblUnit.TextAlign = ContentAlignment.TopLeft
         Dim unit As String = ""
         If productData IsNot Nothing AndAlso productData.ContainsKey("Unit") Then
             unit = productData("Unit").ToString()
@@ -134,7 +135,7 @@ Public Module ProductCardBuilder
 
         ' Product code (muted, truncated)
         Dim lblCode As New Label()
-        lblCode.Location = New Point(15, 240)
+        lblCode.Location = New Point(15, 270)
         lblCode.Size = New Size(190, 16)
         lblCode.Font = New Font(ResolveFontFamily({"Poppins", "Segoe UI"}), 8.0F, FontStyle.Regular)
         lblCode.ForeColor = ColorMutedText
@@ -151,7 +152,7 @@ Public Module ProductCardBuilder
 
         ' Subtle divider separating product info from the stock footer
         Dim divider As New Panel()
-        divider.Location = New Point(15, 264)
+        divider.Location = New Point(15, 310)
         divider.Size = New Size(190, 1)
         divider.BackColor = ColorCardBorder
         card.Controls.Add(divider)
@@ -159,7 +160,7 @@ Public Module ProductCardBuilder
 
         ' Stock (green default; amber low; red out) - color managed by ProductCardInfo.UpdateStock
         Dim lblStock As New Label()
-        lblStock.Location = New Point(15, 292)
+        lblStock.Location = New Point(15, 330)
         lblStock.AutoSize = True
         lblStock.Font = New Font(ResolveFontFamily({"Poppins SemiBold", "Poppins", "Segoe UI"}), 9.5F, FontStyle.Regular)
         lblStock.ForeColor = ColorSuccessGreen
