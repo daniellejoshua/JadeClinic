@@ -14,6 +14,12 @@ Public Class SalesRecord
     ' Sort selection variable
     Private selectedDate As DateTime? = Nothing
 
+    ' Search debounce timer
+    Private WithEvents _searchTimer As Timer
+
+    ' In-memory cache for search filtering
+    Private allSales As New List(Of Dictionary(Of String, Object))()
+
     Private ReadOnly GoldenYellow As System.Drawing.Color = System.Drawing.Color.FromArgb(254, 191, 16)
     Private ReadOnly JadeOlive As System.Drawing.Color = System.Drawing.Color.FromArgb(191, 155, 48)
     Private ReadOnly DarkText As System.Drawing.Color = System.Drawing.Color.FromArgb(51, 51, 51)
@@ -52,11 +58,6 @@ Public Class SalesRecord
 
         ' Initialize DataGridView
         InitializeDataGridView()
-        ' Prevent resizing of all columns and rows
-        Guna2DataGridView1.AllowUserToResizeColumns = False
-        Guna2DataGridView1.AllowUserToResizeRows = False
-        Guna2DataGridView1.RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.DisableResizing
-        Guna2DataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing
 
         ' Initialize Sort ComboBox
         InitializeSortComboBox()
@@ -132,37 +133,13 @@ Public Class SalesRecord
     End Function
 
     Private Sub InitializeDataGridView()
-        ' Clear existing columns
         Guna2DataGridView1.Columns.Clear()
 
-        ' Configure DataGridView appearance � light theme matching InventoryLog
-        Guna2DataGridView1.BackgroundColor = PanelFill
-        Guna2DataGridView1.GridColor = System.Drawing.Color.FromArgb(220, 220, 220)
-        Guna2DataGridView1.DefaultCellStyle.BackColor = White
-        Guna2DataGridView1.AlternatingRowsDefaultCellStyle.BackColor = PanelFill
-        Guna2DataGridView1.DefaultCellStyle.ForeColor = DarkText
-        Guna2DataGridView1.DefaultCellStyle.SelectionBackColor = OliveSelection
-        Guna2DataGridView1.DefaultCellStyle.SelectionForeColor = DarkText
-        Guna2DataGridView1.DefaultCellStyle.Font = New System.Drawing.Font("Poppins", 9.0F, System.Drawing.FontStyle.Regular)
-        Guna2DataGridView1.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
-
-        ' Configure header style
-        Guna2DataGridView1.ColumnHeadersDefaultCellStyle.BackColor = PanelFill
-        Guna2DataGridView1.ColumnHeadersDefaultCellStyle.ForeColor = DarkText
-        Guna2DataGridView1.ColumnHeadersDefaultCellStyle.SelectionBackColor = PanelFill
-        Guna2DataGridView1.ColumnHeadersDefaultCellStyle.SelectionForeColor = DarkText
-        Guna2DataGridView1.ColumnHeadersDefaultCellStyle.Font = New System.Drawing.Font("Poppins SemiBold", 10.5F, System.Drawing.FontStyle.Bold)
-        Guna2DataGridView1.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter
-        Guna2DataGridView1.ColumnHeadersHeight = 50
-        Guna2DataGridView1.RowTemplate.Height = 50
-
-        ' Ensure row borders are visible
-        Guna2DataGridView1.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal
-
-        ' Set AutoSizeColumnsMode to Fill
+        Guna2DataGridView1.SelectionMode = DataGridViewSelectionMode.FullRowSelect
+        Guna2DataGridView1.MultiSelect = False
+        Guna2DataGridView1.ScrollBars = ScrollBars.Vertical
         Guna2DataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
 
-        ' Add columns dynamically
         Guna2DataGridView1.Columns.Add(New DataGridViewTextBoxColumn() With {
             .Name = "OrderID",
             .HeaderText = "Sale No",
@@ -248,21 +225,25 @@ Public Class SalesRecord
     End Sub
 
     Private Sub InitializeSortComboBox()
-        ' Use existing designer controls only
         SortBy.Items.Clear()
-        SortBy.Items.AddRange(New Object() {
-        "Sale Date (Newest First)",
-        "Sale Date (Oldest First)",
-        "Sale ID (Ascending)",
-        "Sale ID (Descending)",
-        "Total Amount (Highest First)",
-        "Total Amount (Lowest First)"
-    })
+        SortBy.Items.Add("All Users")
+
+        Try
+            Dim query As String = "SELECT DISTINCT u.Username FROM Users u INNER JOIN Sales s ON s.UserID = u.UserID ORDER BY u.Username"
+            Using reader As DbDataReader = Utilities.ExecuteReader(query)
+                While reader.Read()
+                    If Not IsDBNull(reader("Username")) Then
+                        SortBy.Items.Add(reader("Username").ToString())
+                    End If
+                End While
+            End Using
+        Catch
+        End Try
+
         If SortBy.Items.Count > 0 Then
             SortBy.SelectedIndex = 0
         End If
 
-        ' Default date picker to today's date and enable the checkbox so the filter is active on start
         Guna2DateTimePicker1.ShowCheckBox = True
         Guna2DateTimePicker1.Value = Date.Today
         Guna2DateTimePicker1.Checked = True
@@ -276,30 +257,42 @@ Public Class SalesRecord
         RemoveHandler Guna2DateTimePicker1.CheckedChanged, AddressOf DtpSaleDate_CheckedChanged
         AddHandler Guna2DateTimePicker1.CheckedChanged, AddressOf DtpSaleDate_CheckedChanged
 
-        ' Fix DateTimePicker dropdown for hosted forms
         AddHandler Guna2DateTimePicker1.DropDown, AddressOf DateTimePicker_DropDown
-    End Sub
-    Private Sub LoadOrderRecordsData(Optional sortOrder As String = "", Optional filterDate As DateTime? = Nothing)
-        Try
-            Guna2DataGridView1.Rows.Clear()
-            
-            ' Hide any existing "No records" message
-            DataGridViewHelper.HideNoRecordsMessage()
 
+        _searchTimer = New Timer()
+        _searchTimer.Interval = 400
+        AddHandler _searchTimer.Tick, AddressOf SearchTimer_Tick
+
+        If TxtSearch IsNot Nothing Then
+            RemoveHandler TxtSearch.TextChanged, AddressOf TxtSearch_TextChanged
+            AddHandler TxtSearch.TextChanged, AddressOf TxtSearch_TextChanged
+        End If
+    End Sub
+    Private Function LoadOrderRecordsData(Optional sortOrder As String = "Sale Date (Newest First)", Optional filterDate As DateTime? = Nothing, Optional userFilter As String = Nothing) As List(Of Dictionary(Of String, Object))
+        Dim sales As New List(Of Dictionary(Of String, Object))()
+        Try
             Dim query As String = "SELECT s.SaleID, IFNULL(s.SaleNumber, '') AS SaleNumber, u.Username, s.SaleDate, s.PaymentMethod, s.TotalAmount, s.AmountPaid, " &
                           "(s.AmountPaid - s.TotalAmount) AS Change, s.SalesData " &
                           "FROM Sales s LEFT JOIN Users u ON s.UserID = u.UserID"
 
+            Dim whereClauses As New List(Of String)()
             Dim parameters As New List(Of SqlParameter)()
 
             If filterDate.HasValue Then
-                query &= " WHERE DATE(s.SaleDate) = @FilterDate"
+                whereClauses.Add("DATE(s.SaleDate) = @FilterDate")
                 parameters.Add(New SqlParameter("@FilterDate", filterDate.Value.Date.ToString("yyyy-MM-dd")))
             End If
 
+            If Not String.IsNullOrWhiteSpace(userFilter) AndAlso userFilter <> "All Users" Then
+                whereClauses.Add("u.Username = @Username")
+                parameters.Add(New SqlParameter("@Username", userFilter))
+            End If
+
+            If whereClauses.Count > 0 Then
+                query &= " WHERE " & String.Join(" AND ", whereClauses)
+            End If
+
             Select Case sortOrder
-                Case "Sale Date (Newest First)"
-                    query += " ORDER BY s.SaleDate DESC"
                 Case "Sale Date (Oldest First)"
                     query += " ORDER BY s.SaleDate ASC"
                 Case "Sale ID (Ascending)"
@@ -314,7 +307,6 @@ Public Class SalesRecord
                     query += " ORDER BY s.SaleDate DESC"
             End Select
 
-            ' Replace the inner part of the reader loop in LoadOrderRecordsData with this (keeps behavior but sets PaymentMethod cell color)
             Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters.ToArray())
                 While reader.Read()
                     Dim saleId As Integer = If(IsDBNull(reader("SaleID")), 0, Convert.ToInt32(reader("SaleID")))
@@ -339,45 +331,20 @@ Public Class SalesRecord
                     Catch
                     End Try
 
-                    Dim rowIndex As Integer = Guna2DataGridView1.Rows.Add()
-
-                    Guna2DataGridView1.Rows(rowIndex).Cells("OrderID").Value = saleNumber
-                    Guna2DataGridView1.Rows(rowIndex).Cells("CreatedBy").Value = username
-                    Guna2DataGridView1.Rows(rowIndex).Cells("OrderDate").Value = If(saleDate = DateTime.MinValue, "", saleDate.ToString("MM/dd/yyyy HH:mm"))
-
-                    ' Set payment method value and color based on method
-                    Guna2DataGridView1.Rows(rowIndex).Cells("PaymentMethod").Value = paymentMethod
-                    Dim pmColor As System.Drawing.Color = GetPaymentMethodColor(paymentMethod)
-                    Guna2DataGridView1.Rows(rowIndex).Cells("PaymentMethod").Style.ForeColor = pmColor
-
-                    Guna2DataGridView1.Rows(rowIndex).Cells("TotalAmount").Value = ChrW(&H20B1) & totalAmount.ToString("F2")
-                    Guna2DataGridView1.Rows(rowIndex).Cells("TotalReceived").Value = ChrW(&H20B1) & amountPaid.ToString("F2")
-                    Guna2DataGridView1.Rows(rowIndex).Cells("Change").Value = ChrW(&H20B1) & changeVal.ToString("F2")
-                    Guna2DataGridView1.Rows(rowIndex).Cells("DiscountType").Value = discountType
-                    Guna2DataGridView1.Rows(rowIndex).Cells("DiscountAmount").Value = ChrW(&H20B1) & discountAmount.ToString("F2")
-                    Guna2DataGridView1.Rows(rowIndex).Cells("Action").Value = "👁️"
-
-                    ' store raw values for later use
-                    Guna2DataGridView1.Rows(rowIndex).Tag = New Dictionary(Of String, Object) From {
-            {"SaleID", saleId},
-            {"SaleNumber", saleNumber},
-            {"Username", username},
-            {"SaleDate", saleDate},
-            {"PaymentMethod", paymentMethod},
-            {"TotalAmount", totalAmount},
-            {"AmountPaid", amountPaid},
-            {"Change", changeVal},
-            {"DiscountType", discountType},
-            {"DiscountAmount", discountAmount}
-        }
+                    sales.Add(New Dictionary(Of String, Object) From {
+                        {"SaleID", saleId},
+                        {"SaleNumber", saleNumber},
+                        {"Username", username},
+                        {"SaleDate", saleDate},
+                        {"PaymentMethod", paymentMethod},
+                        {"TotalAmount", totalAmount},
+                        {"AmountPaid", amountPaid},
+                        {"Change", changeVal},
+                        {"DiscountType", discountType},
+                        {"DiscountAmount", discountAmount}
+                    })
                 End While
             End Using
-
-            If Guna2DataGridView1.Rows.Count = 0 Then
-                DataGridViewHelper.ShowNoRecordsMessage(Guna2DataGridView1, "No Sales Records Found")
-            End If
-
-            Guna2DataGridView1.ClearSelection()
 
         Catch ex As Exception
             MessageBox.Show($"Error loading sales records: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
@@ -385,6 +352,46 @@ Public Class SalesRecord
                 Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Sales Records Load Failed", $"Error: {ex.Message}")
             End If
         End Try
+
+        Return sales
+    End Function
+
+    Private Sub PopulateGridFromData(data As List(Of Dictionary(Of String, Object)))
+        Guna2DataGridView1.Rows.Clear()
+        DataGridViewHelper.HideNoRecordsMessage()
+
+        For Each record In data
+            Dim saleNumber As String = If(record.ContainsKey("SaleNumber"), record("SaleNumber").ToString(), "")
+            Dim username As String = If(record.ContainsKey("Username"), record("Username").ToString(), "")
+            Dim saleDate As DateTime = If(record.ContainsKey("SaleDate"), CDate(record("SaleDate")), DateTime.MinValue)
+            Dim paymentMethod As String = If(record.ContainsKey("PaymentMethod"), record("PaymentMethod").ToString(), "")
+            Dim totalAmount As Decimal = If(record.ContainsKey("TotalAmount"), CDec(record("TotalAmount")), 0D)
+            Dim amountPaid As Decimal = If(record.ContainsKey("AmountPaid"), CDec(record("AmountPaid")), 0D)
+            Dim changeVal As Decimal = If(record.ContainsKey("Change"), CDec(record("Change")), 0D)
+            Dim discountType As String = If(record.ContainsKey("DiscountType"), record("DiscountType").ToString(), "")
+            Dim discountAmount As Decimal = If(record.ContainsKey("DiscountAmount"), CDec(record("DiscountAmount")), 0D)
+
+            Dim rowIndex As Integer = Guna2DataGridView1.Rows.Add()
+            Guna2DataGridView1.Rows(rowIndex).Cells("OrderID").Value = saleNumber
+            Guna2DataGridView1.Rows(rowIndex).Cells("CreatedBy").Value = username
+            Guna2DataGridView1.Rows(rowIndex).Cells("OrderDate").Value = If(saleDate = DateTime.MinValue, "", saleDate.ToString("MM/dd/yyyy HH:mm"))
+            Guna2DataGridView1.Rows(rowIndex).Cells("PaymentMethod").Value = paymentMethod
+            Dim pmColor As Drawing.Color = GetPaymentMethodColor(paymentMethod)
+            Guna2DataGridView1.Rows(rowIndex).Cells("PaymentMethod").Style.ForeColor = pmColor
+            Guna2DataGridView1.Rows(rowIndex).Cells("TotalAmount").Value = ChrW(&H20B1) & totalAmount.ToString("F2")
+            Guna2DataGridView1.Rows(rowIndex).Cells("TotalReceived").Value = ChrW(&H20B1) & amountPaid.ToString("F2")
+            Guna2DataGridView1.Rows(rowIndex).Cells("Change").Value = ChrW(&H20B1) & changeVal.ToString("F2")
+            Guna2DataGridView1.Rows(rowIndex).Cells("DiscountType").Value = discountType
+            Guna2DataGridView1.Rows(rowIndex).Cells("DiscountAmount").Value = ChrW(&H20B1) & discountAmount.ToString("F2")
+            Guna2DataGridView1.Rows(rowIndex).Cells("Action").Value = "👁️"
+            Guna2DataGridView1.Rows(rowIndex).Tag = record
+        Next
+
+        If Guna2DataGridView1.Rows.Count = 0 Then
+            DataGridViewHelper.ShowNoRecordsMessage(Guna2DataGridView1, "No Sales Records Found")
+        End If
+
+        Guna2DataGridView1.ClearSelection()
     End Sub
     Private isSyncingFilters As Boolean = False
 
@@ -416,8 +423,24 @@ Public Class SalesRecord
             selectedDate = Nothing
         End If
 
-        LoadOrderRecordsData(sortOrder, selectedDate)
+        Dim userFilter As String = If(SortBy IsNot Nothing AndAlso SortBy.SelectedItem IsNot Nothing,
+                                      SortBy.SelectedItem.ToString(),
+                                      Nothing)
 
+        allSales = LoadOrderRecordsData(sortOrder, selectedDate, userFilter)
+
+        Dim searchTerm As String = If(TxtSearch?.Text?.Trim(), "")
+        Dim filtered = allSales
+        If Not String.IsNullOrWhiteSpace(searchTerm) Then
+            filtered = allSales.Where(Function(r)
+                                          Dim saleId As String = If(r.ContainsKey("SaleNumber"), r("SaleNumber").ToString(), "")
+                                          Dim username As String = If(r.ContainsKey("Username"), r("Username").ToString(), "")
+                                          Return saleId.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0 OrElse
+                                                 username.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0
+                                      End Function).ToList()
+        End If
+
+        PopulateGridFromData(filtered)
         isSyncingFilters = False
     End Sub
 
@@ -481,11 +504,7 @@ Public Class SalesRecord
     End Function
     Private Sub Exportbtn_Click(sender As Object, e As EventArgs) Handles Exportbtn.Click
         Try
-
             Dim sortOrder As String = "Sale Date (Newest First)"
-            If SortBy IsNot Nothing AndAlso SortBy.SelectedItem IsNot Nothing Then
-                sortOrder = SortBy.SelectedItem.ToString()
-            End If
 
             Dim filterDate As DateTime? = Nothing
             If Guna2DateTimePicker1 IsNot Nothing Then
@@ -501,7 +520,12 @@ Public Class SalesRecord
         End Try
     End Sub
     Public Sub ClearDateFilter()
-        ' No date filter control in this form; just reload
+        If Guna2DateTimePicker1 IsNot Nothing Then
+            Guna2DateTimePicker1.Value = Date.Today
+            Guna2DateTimePicker1.Checked = True
+        End If
+        selectedDate = Date.Today
+        ApplyFilters()
     End Sub
 
 
@@ -651,6 +675,44 @@ Public Class SalesRecord
 
     Private Sub DateTimePicker_CloseUp(sender As Object, e As EventArgs)
         ' No longer needed
+    End Sub
+
+    Private Sub TxtSearch_TextChanged(sender As Object, e As EventArgs)
+        _searchTimer.Stop()
+        _searchTimer.Start()
+
+        Dim hasSearch = Not String.IsNullOrWhiteSpace(TxtSearch?.Text)
+        If Guna2DateTimePicker1 IsNot Nothing Then
+            Guna2DateTimePicker1.Enabled = Not hasSearch
+        End If
+        If SortBy IsNot Nothing Then
+            SortBy.Enabled = Not hasSearch
+        End If
+        If hasSearch Then
+            selectedDate = Nothing
+        Else
+            If Guna2DateTimePicker1 IsNot Nothing AndAlso Guna2DateTimePicker1.Checked Then
+                selectedDate = Guna2DateTimePicker1.Value.Date
+            End If
+            _searchTimer.Stop()
+            ApplyFilters()
+            Return
+        End If
+    End Sub
+
+    Private Sub SearchTimer_Tick(sender As Object, e As EventArgs)
+        _searchTimer.Stop()
+        Dim searchTerm As String = If(TxtSearch?.Text?.Trim(), "")
+        Dim filtered = allSales
+        If Not String.IsNullOrWhiteSpace(searchTerm) Then
+            filtered = allSales.Where(Function(r)
+                                          Dim saleId As String = If(r.ContainsKey("SaleNumber"), r("SaleNumber").ToString(), "")
+                                          Dim username As String = If(r.ContainsKey("Username"), r("Username").ToString(), "")
+                                          Return saleId.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0 OrElse
+                                                 username.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0
+                                      End Function).ToList()
+        End If
+        PopulateGridFromData(filtered)
     End Sub
 
     Private Function IsHostedInMainShell() As Boolean
