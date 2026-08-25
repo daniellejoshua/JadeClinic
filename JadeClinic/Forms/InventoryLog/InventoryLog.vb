@@ -13,6 +13,9 @@ Public Class InventoryLog
     Private loadingLabel As Label
     Private selectedDate As DateTime? = Nothing
 
+    ' Search debounce timer
+    Private WithEvents _searchTimer As Timer
+
     ' Navigation flag for proper form closing
     Private isNavigating As Boolean = False
 
@@ -202,6 +205,17 @@ Public Class InventoryLog
                 AddHandler AddInventoryLog.Click, AddressOf AddInventoryLog_Click
                 ' Make add button visible
                 AddInventoryLog.Visible = True
+            End If
+
+            ' Setup search debounce timer
+            _searchTimer = New Timer()
+            _searchTimer.Interval = 400
+            AddHandler _searchTimer.Tick, AddressOf SearchTimer_Tick
+
+            ' Wire search input
+            If TxtSearch IsNot Nothing Then
+                RemoveHandler TxtSearch.TextChanged, AddressOf TxtSearch_TextChanged
+                AddHandler TxtSearch.TextChanged, AddressOf TxtSearch_TextChanged
             End If
 
             ' Fix DateTimePicker dropdown for hosted forms
@@ -668,25 +682,32 @@ Public Class InventoryLog
             MessageBox.Show($"Error showing log details: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
-    Private Async Function LoadInventoryLogsAsync() As Task
+    Private Async Function LoadInventoryLogsAsync(Optional fromDb As Boolean = True) As Task
         Try
-            ' Show inline loading label on DataGridView
-            ShowLoadingLabel("Loading filters...")
+            If fromDb Then
+                ' Full DB reload (date/sort changes)
+                ShowLoadingLabel("Loading...")
 
-            ' Get current sort order
-            Dim sortOrder As String = If(SortBy?.SelectedItem?.ToString(), "Date (Newest First)")
+                Dim sortOrder As String = If(SortBy?.SelectedItem?.ToString(), "Date (Newest First)")
+                allLogs = Await Task.Run(Function() GetInventoryLogsData(sortOrder, selectedDate))
+            End If
 
-            ' Load data in background thread
-            Dim inventoryData = Await Task.Run(Function() GetInventoryLogsData(sortOrder, selectedDate))
+            ' Filter in memory (fast — no DB hit)
+            Dim searchTerm As String = If(TxtSearch?.Text?.Trim(), "")
+            Dim filtered = allLogs
+            If Not String.IsNullOrWhiteSpace(searchTerm) Then
+                filtered = allLogs.Where(Function(r)
+                                             Dim logId As String = If(r.ContainsKey("LogID"), r("LogID").ToString(), "")
+                                             Dim reference As String = If(r.ContainsKey("Reference"), r("Reference").ToString(), "")
+                                             Return logId.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0 OrElse
+                                                    reference.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0
+                                         End Function).ToList()
+            End If
 
-            ' Update UI on main thread
-            LoadInventoryLogsDataOnUI(inventoryData)
-
-            ' Hide loading label immediately after UI is updated
+            LoadInventoryLogsDataOnUI(filtered)
             HideLoadingLabel()
 
         Catch ex As Exception
-            ' Hide loading label in case of error
             HideLoadingLabel()
             MessageBox.Show("Error loading inventory logs: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
@@ -1342,5 +1363,33 @@ Public Class InventoryLog
 
     Private Sub Guna2CirclePictureBox5_Click(sender As Object, e As EventArgs) Handles Guna2CirclePictureBox5.Click
 
+    End Sub
+
+    Private Async Sub TxtSearch_TextChanged(sender As Object, e As EventArgs)
+        _searchTimer.Stop()
+        _searchTimer.Start()
+
+        ' Disable date filter while searching
+        Dim hasSearch = Not String.IsNullOrWhiteSpace(TxtSearch?.Text)
+        If Guna2DateTimePicker1 IsNot Nothing Then
+            Guna2DateTimePicker1.Enabled = Not hasSearch
+        End If
+        If hasSearch Then
+            selectedDate = Nothing
+        Else
+            ' Restore date filter from picker
+            If Guna2DateTimePicker1 IsNot Nothing AndAlso Guna2DateTimePicker1.Checked Then
+                selectedDate = Guna2DateTimePicker1.Value.Date
+            End If
+            ' Reload from DB with restored date filter
+            _searchTimer.Stop()
+            Await LoadInventoryLogsAsync(fromDb:=True)
+            Return
+        End If
+    End Sub
+
+    Private Async Sub SearchTimer_Tick(sender As Object, e As EventArgs)
+        _searchTimer.Stop()
+        Await LoadInventoryLogsAsync(fromDb:=False)
     End Sub
 End Class

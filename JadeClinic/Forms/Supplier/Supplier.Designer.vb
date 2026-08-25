@@ -80,12 +80,11 @@ Partial Class Supplier
         NavigationPanel.BorderThickness = 2
         NavigationPanel.Controls.Add(PictureBox9)
         NavigationPanel.CustomizableEdges = CustomizableEdges1
-        NavigationPanel.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
+        NavigationPanel.FillColor = Color.White
         NavigationPanel.Location = New Point(-10, 5)
         NavigationPanel.Name = "NavigationPanel"
         NavigationPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges2
         NavigationPanel.ShadowDecoration.Depth = 0
-        NavigationPanel.ShadowDecoration.Enabled = False
         NavigationPanel.ShadowDecoration.Shadow = New Padding(0, 0, 4, 4)
         NavigationPanel.Size = New Size(236, 1016)
         NavigationPanel.TabIndex = 6
@@ -189,7 +188,6 @@ Partial Class Supplier
         Guna2Panel1.Name = "Guna2Panel1"
         Guna2Panel1.ShadowDecoration.CustomizableEdges = CustomizableEdges11
         Guna2Panel1.ShadowDecoration.Depth = 0
-        Guna2Panel1.ShadowDecoration.Enabled = False
         Guna2Panel1.ShadowDecoration.Shadow = New Padding(0, 0, 4, 4)
         Guna2Panel1.Size = New Size(1650, 908)
         Guna2Panel1.TabIndex = 80

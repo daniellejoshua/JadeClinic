@@ -103,30 +103,32 @@ Partial Class InventoryLog
         DataGridViewCellStyle1.BackColor = Color.White
         InventoryLogDataGrid.AlternatingRowsDefaultCellStyle = DataGridViewCellStyle1
         InventoryLogDataGrid.Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
-        InventoryLogDataGrid.BackgroundColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
+        InventoryLogDataGrid.BackgroundColor = Color.FromArgb(CByte(255), CByte(255), CByte(255))
         DataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleLeft
-        DataGridViewCellStyle2.BackColor = Color.FromArgb(CByte(100), CByte(88), CByte(255))
-        DataGridViewCellStyle2.Font = New Font("Segoe UI", 9F)
-        DataGridViewCellStyle2.ForeColor = Color.White
+        DataGridViewCellStyle2.BackColor = Color.FromArgb(CByte(250), CByte(249), CByte(246))
+        DataGridViewCellStyle2.Font = New Font("Poppins", 9.5F, FontStyle.Bold)
+        DataGridViewCellStyle2.ForeColor = Color.FromArgb(CByte(68), CByte(68), CByte(68))
         DataGridViewCellStyle2.SelectionBackColor = SystemColors.Highlight
         DataGridViewCellStyle2.SelectionForeColor = SystemColors.HighlightText
         DataGridViewCellStyle2.WrapMode = DataGridViewTriState.True
         InventoryLogDataGrid.ColumnHeadersDefaultCellStyle = DataGridViewCellStyle2
-        InventoryLogDataGrid.ColumnHeadersHeight = 4
-        InventoryLogDataGrid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.EnableResizing
+        InventoryLogDataGrid.ColumnHeadersHeight = 44
+        InventoryLogDataGrid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing
         DataGridViewCellStyle3.Alignment = DataGridViewContentAlignment.MiddleLeft
         DataGridViewCellStyle3.BackColor = Color.White
-        DataGridViewCellStyle3.Font = New Font("Segoe UI", 9F)
-        DataGridViewCellStyle3.ForeColor = Color.FromArgb(CByte(71), CByte(69), CByte(94))
-        DataGridViewCellStyle3.SelectionBackColor = Color.FromArgb(CByte(231), CByte(229), CByte(255))
-        DataGridViewCellStyle3.SelectionForeColor = Color.FromArgb(CByte(71), CByte(69), CByte(94))
+        DataGridViewCellStyle3.Font = New Font("Poppins", 9.5F)
+        DataGridViewCellStyle3.ForeColor = Color.FromArgb(CByte(51), CByte(51), CByte(51))
+        DataGridViewCellStyle3.SelectionBackColor = Color.FromArgb(CByte(235), CByte(228), CByte(200))
+        DataGridViewCellStyle3.SelectionForeColor = Color.FromArgb(CByte(51), CByte(51), CByte(51))
         DataGridViewCellStyle3.WrapMode = DataGridViewTriState.False
         InventoryLogDataGrid.DefaultCellStyle = DataGridViewCellStyle3
-        InventoryLogDataGrid.GridColor = Color.FromArgb(CByte(231), CByte(229), CByte(255))
+        InventoryLogDataGrid.GridColor = Color.FromArgb(CByte(238), CByte(236), CByte(236))
         InventoryLogDataGrid.Location = New Point(8, 72)
         InventoryLogDataGrid.Name = "InventoryLogDataGrid"
+        InventoryLogDataGrid.ReadOnly = True
         InventoryLogDataGrid.RowHeadersVisible = False
         InventoryLogDataGrid.RowHeadersWidth = 51
+        InventoryLogDataGrid.RowTemplate.Height = 50
         InventoryLogDataGrid.Size = New Size(1641, 801)
         InventoryLogDataGrid.TabIndex = 41
         InventoryLogDataGrid.ThemeStyle.AlternatingRowsStyle.BackColor = Color.White
@@ -134,22 +136,22 @@ Partial Class InventoryLog
         InventoryLogDataGrid.ThemeStyle.AlternatingRowsStyle.ForeColor = Color.Empty
         InventoryLogDataGrid.ThemeStyle.AlternatingRowsStyle.SelectionBackColor = Color.Empty
         InventoryLogDataGrid.ThemeStyle.AlternatingRowsStyle.SelectionForeColor = Color.Empty
-        InventoryLogDataGrid.ThemeStyle.BackColor = Color.FromArgb(CByte(246), CByte(245), CByte(242))
-        InventoryLogDataGrid.ThemeStyle.GridColor = Color.FromArgb(CByte(231), CByte(229), CByte(255))
-        InventoryLogDataGrid.ThemeStyle.HeaderStyle.BackColor = Color.FromArgb(CByte(100), CByte(88), CByte(255))
+        InventoryLogDataGrid.ThemeStyle.BackColor = Color.FromArgb(CByte(255), CByte(255), CByte(255))
+        InventoryLogDataGrid.ThemeStyle.GridColor = Color.FromArgb(CByte(238), CByte(236), CByte(236))
+        InventoryLogDataGrid.ThemeStyle.HeaderStyle.BackColor = Color.FromArgb(CByte(250), CByte(249), CByte(246))
         InventoryLogDataGrid.ThemeStyle.HeaderStyle.BorderStyle = DataGridViewHeaderBorderStyle.None
-        InventoryLogDataGrid.ThemeStyle.HeaderStyle.Font = New Font("Segoe UI", 9F)
-        InventoryLogDataGrid.ThemeStyle.HeaderStyle.ForeColor = Color.White
-        InventoryLogDataGrid.ThemeStyle.HeaderStyle.HeaightSizeMode = DataGridViewColumnHeadersHeightSizeMode.EnableResizing
-        InventoryLogDataGrid.ThemeStyle.HeaderStyle.Height = 4
-        InventoryLogDataGrid.ThemeStyle.ReadOnly = False
+        InventoryLogDataGrid.ThemeStyle.HeaderStyle.Font = New Font("Poppins", 9.5F, FontStyle.Bold)
+        InventoryLogDataGrid.ThemeStyle.HeaderStyle.ForeColor = Color.FromArgb(CByte(68), CByte(68), CByte(68))
+        InventoryLogDataGrid.ThemeStyle.HeaderStyle.HeaightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing
+        InventoryLogDataGrid.ThemeStyle.HeaderStyle.Height = 44
+        InventoryLogDataGrid.ThemeStyle.ReadOnly = True
         InventoryLogDataGrid.ThemeStyle.RowsStyle.BackColor = Color.White
         InventoryLogDataGrid.ThemeStyle.RowsStyle.BorderStyle = DataGridViewCellBorderStyle.SingleHorizontal
-        InventoryLogDataGrid.ThemeStyle.RowsStyle.Font = New Font("Segoe UI", 9F)
-        InventoryLogDataGrid.ThemeStyle.RowsStyle.ForeColor = Color.FromArgb(CByte(71), CByte(69), CByte(94))
-        InventoryLogDataGrid.ThemeStyle.RowsStyle.Height = 29
-        InventoryLogDataGrid.ThemeStyle.RowsStyle.SelectionBackColor = Color.FromArgb(CByte(231), CByte(229), CByte(255))
-        InventoryLogDataGrid.ThemeStyle.RowsStyle.SelectionForeColor = Color.FromArgb(CByte(71), CByte(69), CByte(94))
+        InventoryLogDataGrid.ThemeStyle.RowsStyle.Font = New Font("Poppins", 9.5F)
+        InventoryLogDataGrid.ThemeStyle.RowsStyle.ForeColor = Color.FromArgb(CByte(51), CByte(51), CByte(51))
+        InventoryLogDataGrid.ThemeStyle.RowsStyle.Height = 50
+        InventoryLogDataGrid.ThemeStyle.RowsStyle.SelectionBackColor = Color.FromArgb(CByte(235), CByte(228), CByte(200))
+        InventoryLogDataGrid.ThemeStyle.RowsStyle.SelectionForeColor = Color.FromArgb(CByte(51), CByte(51), CByte(51))
         ' 
         ' SortBy
         ' 
@@ -167,7 +169,7 @@ Partial Class InventoryLog
         SortBy.Location = New Point(409, 11)
         SortBy.Name = "SortBy"
         SortBy.ShadowDecoration.CustomizableEdges = CustomizableEdges4
-        SortBy.Size = New Size(309, 46)
+        SortBy.Size = New Size(176, 46)
         SortBy.TabIndex = 65
         ' 
         ' Exportbtn
@@ -264,7 +266,10 @@ Partial Class InventoryLog
         ' 
         ' Guna2Panel1
         ' 
+        Guna2Panel1.Anchor = AnchorStyles.Top Or AnchorStyles.Left Or AnchorStyles.Right
+        Guna2Panel1.BackColor = Color.Transparent
         Guna2Panel1.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
+        Guna2Panel1.BorderRadius = 10
         Guna2Panel1.BorderThickness = 2
         Guna2Panel1.Controls.Add(TxtSearch)
         Guna2Panel1.Controls.Add(InventoryLogDataGrid)
@@ -301,7 +306,7 @@ Partial Class InventoryLog
         TxtSearch.Location = New Point(779, 13)
         TxtSearch.Margin = New Padding(3, 4, 3, 4)
         TxtSearch.Name = "TxtSearch"
-        TxtSearch.PlaceholderText = "🔍  Search suppliers..."
+        TxtSearch.PlaceholderText = "🔍  Search by ID or Reference..."
         TxtSearch.SelectedText = ""
         TxtSearch.ShadowDecoration.CustomizableEdges = CustomizableEdges11
         TxtSearch.Size = New Size(446, 42)
@@ -334,7 +339,7 @@ Partial Class InventoryLog
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
         AutoScroll = True
-        BackColor = Color.White
+        BackColor = Color.FromArgb(CByte(245), CByte(243), CByte(239))
         ClientSize = New Size(1902, 1033)
         Controls.Add(lblSubtitle)
         Controls.Add(Guna2CirclePictureBox5)
