@@ -261,6 +261,8 @@ Public Class SalesRecord
         If TxtSearch IsNot Nothing Then
             RemoveHandler TxtSearch.KeyDown, AddressOf TxtSearch_KeyDown
             AddHandler TxtSearch.KeyDown, AddressOf TxtSearch_KeyDown
+            RemoveHandler TxtSearch.TextChanged, AddressOf TxtSearch_TextChanged
+            AddHandler TxtSearch.TextChanged, AddressOf TxtSearch_TextChanged
         End If
 
         If PaginationControl1 IsNot Nothing Then
@@ -476,8 +478,13 @@ Public Class SalesRecord
                                        SortBy.SelectedItem.ToString(),
                                        Nothing)
 
-        Dim totalCount As Integer = CountSalesRecords(selectedDate, userFilter, _searchTerm)
-        Dim data = LoadOrderRecordsData("Sale Date (Newest First)", selectedDate, userFilter, _searchTerm, _currentPage, PageSize)
+        Dim hasSearch As Boolean = Not String.IsNullOrWhiteSpace(_searchTerm)
+
+        Dim filterDate As DateTime? = If(hasSearch, Nothing, selectedDate)
+        Dim filterUser As String = If(hasSearch, Nothing, userFilter)
+
+        Dim totalCount As Integer = CountSalesRecords(filterDate, filterUser, _searchTerm)
+        Dim data = LoadOrderRecordsData("Sale Date (Newest First)", filterDate, filterUser, _searchTerm, _currentPage, PageSize)
 
         PopulateGridFromData(data)
 
@@ -730,6 +737,14 @@ Public Class SalesRecord
         End If
     End Sub
 
+    Private Sub TxtSearch_TextChanged(sender As Object, e As EventArgs)
+        If String.IsNullOrWhiteSpace(TxtSearch?.Text) AndAlso _searchTerm <> "" Then
+            _searchTerm = ""
+            _currentPage = 1
+            LoadPage()
+        End If
+    End Sub
+
     Private Sub PaginationControl1_PageChanged(page As Integer)
         _currentPage = page
         LoadPage()
@@ -756,4 +771,8 @@ Public Class SalesRecord
         End While
         Return Nothing
     End Function
+
+    Private Sub Guna2DataGridView1_CellContentClick(sender As Object, e As DataGridViewCellEventArgs) Handles Guna2DataGridView1.CellContentClick
+
+    End Sub
 End Class

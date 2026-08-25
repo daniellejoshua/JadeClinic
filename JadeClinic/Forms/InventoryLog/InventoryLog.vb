@@ -211,6 +211,8 @@ Public Class InventoryLog
             If TxtSearch IsNot Nothing Then
                 RemoveHandler TxtSearch.KeyDown, AddressOf TxtSearch_KeyDown
                 AddHandler TxtSearch.KeyDown, AddressOf TxtSearch_KeyDown
+                RemoveHandler TxtSearch.TextChanged, AddressOf TxtSearch_TextChanged
+                AddHandler TxtSearch.TextChanged, AddressOf TxtSearch_TextChanged
             End If
 
             ' Wire pagination control
@@ -683,13 +685,18 @@ Public Class InventoryLog
             MessageBox.Show($"Error showing log details: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
-    Private Async Function LoadInventoryLogsAsync(Optional fromDb As Boolean = True) As Task
+    Private Async Function LoadInventoryLogsAsync() As Task
         Try
             ShowLoadingLabel("Loading...")
 
             Dim sortType As String = If(SortBy?.SelectedItem?.ToString(), "All Types")
-            Dim totalCount As Integer = Await Task.Run(Function() CountInventoryLogs(sortType, selectedDate, _searchTerm))
-            Dim data = Await Task.Run(Function() GetInventoryLogsData(sortType, selectedDate, _searchTerm, _currentPage, PageSize))
+            Dim hasSearch As Boolean = Not String.IsNullOrWhiteSpace(_searchTerm)
+
+            Dim filterType As String = If(hasSearch, "All Types", sortType)
+            Dim filterDate As DateTime? = If(hasSearch, Nothing, selectedDate)
+
+            Dim totalCount As Integer = Await Task.Run(Function() CountInventoryLogs(filterType, filterDate, _searchTerm))
+            Dim data = Await Task.Run(Function() GetInventoryLogsData(filterType, filterDate, _searchTerm, _currentPage, PageSize))
 
             LoadInventoryLogsDataOnUI(data)
 
@@ -1406,6 +1413,14 @@ Public Class InventoryLog
         If e.KeyCode = Keys.Enter Then
             e.SuppressKeyPress = True
             _searchTerm = If(TxtSearch?.Text?.Trim(), "")
+            _currentPage = 1
+            LoadPage()
+        End If
+    End Sub
+
+    Private Sub TxtSearch_TextChanged(sender As Object, e As EventArgs)
+        If String.IsNullOrWhiteSpace(TxtSearch?.Text) AndAlso _searchTerm <> "" Then
+            _searchTerm = ""
             _currentPage = 1
             LoadPage()
         End If

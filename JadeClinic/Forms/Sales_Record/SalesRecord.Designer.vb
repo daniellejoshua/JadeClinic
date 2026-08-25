@@ -113,13 +113,13 @@ Partial Class SalesRecord
         DataGridViewCellStyle1.BackColor = Color.White
         Guna2DataGridView1.AlternatingRowsDefaultCellStyle = DataGridViewCellStyle1
         Guna2DataGridView1.Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
-        Guna2DataGridView1.BackgroundColor = Color.FromArgb(CByte(255), CByte(255), CByte(255))
+        Guna2DataGridView1.BackgroundColor = Color.FromArgb(CByte(250), CByte(249), CByte(246))
         DataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleLeft
         DataGridViewCellStyle2.BackColor = Color.FromArgb(CByte(250), CByte(249), CByte(246))
-        DataGridViewCellStyle2.Font = New Font("Poppins", 9.5F, FontStyle.Bold)
+        DataGridViewCellStyle2.Font = New Font("Poppins", 8.5F, FontStyle.Bold)
         DataGridViewCellStyle2.ForeColor = Color.FromArgb(CByte(68), CByte(68), CByte(68))
-        DataGridViewCellStyle2.SelectionBackColor = SystemColors.Highlight
-        DataGridViewCellStyle2.SelectionForeColor = SystemColors.HighlightText
+        DataGridViewCellStyle2.SelectionBackColor = Color.FromArgb(CByte(250), CByte(249), CByte(246))
+        DataGridViewCellStyle2.SelectionForeColor = Color.FromArgb(CByte(68), CByte(68), CByte(68))
         DataGridViewCellStyle2.WrapMode = DataGridViewTriState.True
         Guna2DataGridView1.ColumnHeadersDefaultCellStyle = DataGridViewCellStyle2
         Guna2DataGridView1.ColumnHeadersHeight = 44
@@ -138,18 +138,18 @@ Partial Class SalesRecord
         Guna2DataGridView1.RowHeadersVisible = False
         Guna2DataGridView1.RowHeadersWidth = 51
         Guna2DataGridView1.RowTemplate.Height = 50
-        Guna2DataGridView1.Size = New Size(1641, 741)
+        Guna2DataGridView1.Size = New Size(1641, 768)
         Guna2DataGridView1.TabIndex = 41
         Guna2DataGridView1.ThemeStyle.AlternatingRowsStyle.BackColor = Color.White
         Guna2DataGridView1.ThemeStyle.AlternatingRowsStyle.Font = Nothing
         Guna2DataGridView1.ThemeStyle.AlternatingRowsStyle.ForeColor = Color.Empty
         Guna2DataGridView1.ThemeStyle.AlternatingRowsStyle.SelectionBackColor = Color.Empty
         Guna2DataGridView1.ThemeStyle.AlternatingRowsStyle.SelectionForeColor = Color.Empty
-        Guna2DataGridView1.ThemeStyle.BackColor = Color.FromArgb(CByte(255), CByte(255), CByte(255))
+        Guna2DataGridView1.ThemeStyle.BackColor = Color.FromArgb(CByte(250), CByte(249), CByte(246))
         Guna2DataGridView1.ThemeStyle.GridColor = Color.FromArgb(CByte(238), CByte(236), CByte(236))
         Guna2DataGridView1.ThemeStyle.HeaderStyle.BackColor = Color.FromArgb(CByte(250), CByte(249), CByte(246))
         Guna2DataGridView1.ThemeStyle.HeaderStyle.BorderStyle = DataGridViewHeaderBorderStyle.None
-        Guna2DataGridView1.ThemeStyle.HeaderStyle.Font = New Font("Poppins", 9.5F, FontStyle.Bold)
+        Guna2DataGridView1.ThemeStyle.HeaderStyle.Font = New Font("Poppins", 8.5F, FontStyle.Bold)
         Guna2DataGridView1.ThemeStyle.HeaderStyle.ForeColor = Color.FromArgb(CByte(68), CByte(68), CByte(68))
         Guna2DataGridView1.ThemeStyle.HeaderStyle.HeaightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing
         Guna2DataGridView1.ThemeStyle.HeaderStyle.Height = 44
@@ -261,6 +261,7 @@ Partial Class SalesRecord
         Guna2Panel1.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
         Guna2Panel1.BorderRadius = 10
         Guna2Panel1.BorderThickness = 2
+        Guna2Panel1.Controls.Add(PaginationControl1)
         Guna2Panel1.Controls.Add(TxtSearch)
         Guna2Panel1.Controls.Add(Guna2DataGridView1)
         Guna2Panel1.Controls.Add(SortBy)
@@ -272,10 +273,11 @@ Partial Class SalesRecord
         Guna2Panel1.FillColor = Color.White
         Guna2Panel1.Location = New Point(240, 113)
         Guna2Panel1.Name = "Guna2Panel1"
+        Guna2Panel1.Padding = New Padding(0)
         Guna2Panel1.ShadowDecoration.CustomizableEdges = CustomizableEdges12
         Guna2Panel1.ShadowDecoration.Depth = 0
-        Guna2Panel1.ShadowDecoration.Shadow = New Padding(0, 0, 4, 4)
-        Guna2Panel1.Size = New Size(1650, 848)
+        Guna2Panel1.ShadowDecoration.Shadow = New Padding(0)
+        Guna2Panel1.Size = New Size(1650, 908)
         Guna2Panel1.TabIndex = 79
         ' 
         ' TxtSearch
@@ -303,11 +305,10 @@ Partial Class SalesRecord
         ' 
         ' PaginationControl1
         ' 
-        PaginationControl1.Anchor = AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
         PaginationControl1.BackColor = Color.White
-        PaginationControl1.Location = New Point(244, 968)
+        PaginationControl1.Location = New Point(8, 846)
         PaginationControl1.Name = "PaginationControl1"
-        PaginationControl1.Size = New Size(1642, 62)
+        PaginationControl1.Size = New Size(1641, 48)
         PaginationControl1.TabIndex = 86
         ' 
         ' SalesRecord
@@ -316,7 +317,6 @@ Partial Class SalesRecord
         AutoScaleMode = AutoScaleMode.Font
         BackColor = Color.FromArgb(CByte(245), CByte(243), CByte(239))
         ClientSize = New Size(1902, 1033)
-        Controls.Add(PaginationControl1)
         Controls.Add(Guna2Panel1)
         Controls.Add(lblUsername)
         Controls.Add(Guna2CirclePictureBox5)

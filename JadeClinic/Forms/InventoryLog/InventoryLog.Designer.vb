@@ -130,7 +130,7 @@ Partial Class InventoryLog
         InventoryLogDataGrid.RowHeadersVisible = False
         InventoryLogDataGrid.RowHeadersWidth = 51
         InventoryLogDataGrid.RowTemplate.Height = 50
-        InventoryLogDataGrid.Size = New Size(1641, 741)
+        InventoryLogDataGrid.Size = New Size(1641, 768)
         InventoryLogDataGrid.TabIndex = 41
         InventoryLogDataGrid.ThemeStyle.AlternatingRowsStyle.BackColor = Color.White
         InventoryLogDataGrid.ThemeStyle.AlternatingRowsStyle.Font = Nothing
@@ -272,6 +272,7 @@ Partial Class InventoryLog
         Guna2Panel1.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
         Guna2Panel1.BorderRadius = 10
         Guna2Panel1.BorderThickness = 2
+        Guna2Panel1.Controls.Add(PaginationControl1)
         Guna2Panel1.Controls.Add(TxtSearch)
         Guna2Panel1.Controls.Add(InventoryLogDataGrid)
         Guna2Panel1.Controls.Add(SortBy)
@@ -284,10 +285,11 @@ Partial Class InventoryLog
         Guna2Panel1.FillColor = Color.White
         Guna2Panel1.Location = New Point(240, 113)
         Guna2Panel1.Name = "Guna2Panel1"
+        Guna2Panel1.Padding = New Padding(0)
         Guna2Panel1.ShadowDecoration.CustomizableEdges = CustomizableEdges13
         Guna2Panel1.ShadowDecoration.Depth = 0
-        Guna2Panel1.ShadowDecoration.Shadow = New Padding(0, 0, 4, 4)
-        Guna2Panel1.Size = New Size(1650, 848)
+        Guna2Panel1.ShadowDecoration.Shadow = New Padding(0)
+        Guna2Panel1.Size = New Size(1650, 908)
         Guna2Panel1.TabIndex = 79
         ' 
         ' TxtSearch
@@ -337,21 +339,18 @@ Partial Class InventoryLog
         ' 
         ' PaginationControl1
         ' 
-        PaginationControl1.Anchor = AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
         PaginationControl1.BackColor = Color.White
-        PaginationControl1.Location = New Point(244, 968)
+        PaginationControl1.Location = New Point(8, 846)
         PaginationControl1.Name = "PaginationControl1"
-        PaginationControl1.Size = New Size(1642, 62)
+        PaginationControl1.Size = New Size(1641, 48)
         PaginationControl1.TabIndex = 86
         ' 
         ' InventoryLog
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
-        AutoScroll = True
         BackColor = Color.FromArgb(CByte(245), CByte(243), CByte(239))
         ClientSize = New Size(1902, 1033)
-        Controls.Add(PaginationControl1)
         Controls.Add(lblSubtitle)
         Controls.Add(Guna2CirclePictureBox5)
         Controls.Add(Guna2Panel1)
