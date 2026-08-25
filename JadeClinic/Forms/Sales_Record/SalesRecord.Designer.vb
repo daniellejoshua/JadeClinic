@@ -47,6 +47,7 @@ Partial Class SalesRecord
         Guna2HtmlLabel4 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2Panel1 = New Guna.UI2.WinForms.Guna2Panel()
         TxtSearch = New Guna.UI2.WinForms.Guna2TextBox()
+        PaginationControl1 = New PaginationControl()
         DashboardPanel.SuspendLayout()
         CType(PictureBox9, ComponentModel.ISupportInitialize).BeginInit()
         CType(Guna2CirclePictureBox5, ComponentModel.ISupportInitialize).BeginInit()
@@ -137,7 +138,7 @@ Partial Class SalesRecord
         Guna2DataGridView1.RowHeadersVisible = False
         Guna2DataGridView1.RowHeadersWidth = 51
         Guna2DataGridView1.RowTemplate.Height = 50
-        Guna2DataGridView1.Size = New Size(1641, 801)
+        Guna2DataGridView1.Size = New Size(1641, 741)
         Guna2DataGridView1.TabIndex = 41
         Guna2DataGridView1.ThemeStyle.AlternatingRowsStyle.BackColor = Color.White
         Guna2DataGridView1.ThemeStyle.AlternatingRowsStyle.Font = Nothing
@@ -274,7 +275,7 @@ Partial Class SalesRecord
         Guna2Panel1.ShadowDecoration.CustomizableEdges = CustomizableEdges12
         Guna2Panel1.ShadowDecoration.Depth = 0
         Guna2Panel1.ShadowDecoration.Shadow = New Padding(0, 0, 4, 4)
-        Guna2Panel1.Size = New Size(1650, 908)
+        Guna2Panel1.Size = New Size(1650, 848)
         Guna2Panel1.TabIndex = 79
         ' 
         ' TxtSearch
@@ -300,12 +301,22 @@ Partial Class SalesRecord
         TxtSearch.Size = New Size(446, 42)
         TxtSearch.TabIndex = 85
         ' 
+        ' PaginationControl1
+        ' 
+        PaginationControl1.Anchor = AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
+        PaginationControl1.BackColor = Color.White
+        PaginationControl1.Location = New Point(244, 968)
+        PaginationControl1.Name = "PaginationControl1"
+        PaginationControl1.Size = New Size(1642, 62)
+        PaginationControl1.TabIndex = 86
+        ' 
         ' SalesRecord
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
         BackColor = Color.FromArgb(CByte(245), CByte(243), CByte(239))
         ClientSize = New Size(1902, 1033)
+        Controls.Add(PaginationControl1)
         Controls.Add(Guna2Panel1)
         Controls.Add(lblUsername)
         Controls.Add(Guna2CirclePictureBox5)
@@ -338,4 +349,5 @@ Partial Class SalesRecord
     Friend WithEvents Guna2HtmlLabel4 As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents Guna2Panel1 As Guna.UI2.WinForms.Guna2Panel
     Friend WithEvents TxtSearch As Guna.UI2.WinForms.Guna2TextBox
+    Friend WithEvents PaginationControl1 As PaginationControl
 End Class

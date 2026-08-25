@@ -14,11 +14,10 @@ Public Class SalesRecord
     ' Sort selection variable
     Private selectedDate As DateTime? = Nothing
 
-    ' Search debounce timer
-    Private WithEvents _searchTimer As Timer
-
-    ' In-memory cache for search filtering
-    Private allSales As New List(Of Dictionary(Of String, Object))()
+    ' Pagination state
+    Private Const PageSize As Integer = 50
+    Private _currentPage As Integer = 1
+    Private _searchTerm As String = ""
 
     Private ReadOnly GoldenYellow As System.Drawing.Color = System.Drawing.Color.FromArgb(254, 191, 16)
     Private ReadOnly JadeOlive As System.Drawing.Color = System.Drawing.Color.FromArgb(191, 155, 48)
@@ -259,16 +258,17 @@ Public Class SalesRecord
 
         AddHandler Guna2DateTimePicker1.DropDown, AddressOf DateTimePicker_DropDown
 
-        _searchTimer = New Timer()
-        _searchTimer.Interval = 400
-        AddHandler _searchTimer.Tick, AddressOf SearchTimer_Tick
-
         If TxtSearch IsNot Nothing Then
-            RemoveHandler TxtSearch.TextChanged, AddressOf TxtSearch_TextChanged
-            AddHandler TxtSearch.TextChanged, AddressOf TxtSearch_TextChanged
+            RemoveHandler TxtSearch.KeyDown, AddressOf TxtSearch_KeyDown
+            AddHandler TxtSearch.KeyDown, AddressOf TxtSearch_KeyDown
+        End If
+
+        If PaginationControl1 IsNot Nothing Then
+            RemoveHandler PaginationControl1.PageChanged, AddressOf PaginationControl1_PageChanged
+            AddHandler PaginationControl1.PageChanged, AddressOf PaginationControl1_PageChanged
         End If
     End Sub
-    Private Function LoadOrderRecordsData(Optional sortOrder As String = "Sale Date (Newest First)", Optional filterDate As DateTime? = Nothing, Optional userFilter As String = Nothing) As List(Of Dictionary(Of String, Object))
+    Private Function LoadOrderRecordsData(Optional sortOrder As String = "Sale Date (Newest First)", Optional filterDate As DateTime? = Nothing, Optional userFilter As String = Nothing, Optional searchTerm As String = "", Optional pageNumber As Integer = 1, Optional pageSize As Integer = 50) As List(Of Dictionary(Of String, Object))
         Dim sales As New List(Of Dictionary(Of String, Object))()
         Try
             Dim query As String = "SELECT s.SaleID, IFNULL(s.SaleNumber, '') AS SaleNumber, u.Username, s.SaleDate, s.PaymentMethod, s.TotalAmount, s.AmountPaid, " &
@@ -286,6 +286,11 @@ Public Class SalesRecord
             If Not String.IsNullOrWhiteSpace(userFilter) AndAlso userFilter <> "All Users" Then
                 whereClauses.Add("u.Username = @Username")
                 parameters.Add(New SqlParameter("@Username", userFilter))
+            End If
+
+            If Not String.IsNullOrWhiteSpace(searchTerm) Then
+                whereClauses.Add("(IFNULL(s.SaleNumber, '') LIKE @Search OR IFNULL(u.Username, '') LIKE @Search)")
+                parameters.Add(New SqlParameter("@Search", "%" & searchTerm & "%"))
             End If
 
             If whereClauses.Count > 0 Then
@@ -306,6 +311,9 @@ Public Class SalesRecord
                 Case Else
                     query += " ORDER BY s.SaleDate DESC"
             End Select
+
+            Dim offset As Integer = (pageNumber - 1) * pageSize
+            query &= $" LIMIT {pageSize} OFFSET {offset}"
 
             Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters.ToArray())
                 While reader.Read()
@@ -354,6 +362,41 @@ Public Class SalesRecord
         End Try
 
         Return sales
+    End Function
+
+    Private Function CountSalesRecords(Optional filterDate As DateTime? = Nothing, Optional userFilter As String = Nothing, Optional searchTerm As String = "") As Integer
+        Dim count As Integer = 0
+        Try
+            Dim query As String = "SELECT COUNT(*) FROM Sales s LEFT JOIN Users u ON s.UserID = u.UserID"
+            Dim whereClauses As New List(Of String)()
+            Dim parameters As New List(Of SqlParameter)()
+
+            If filterDate.HasValue Then
+                whereClauses.Add("DATE(s.SaleDate) = @FilterDate")
+                parameters.Add(New SqlParameter("@FilterDate", filterDate.Value.Date.ToString("yyyy-MM-dd")))
+            End If
+
+            If Not String.IsNullOrWhiteSpace(userFilter) AndAlso userFilter <> "All Users" Then
+                whereClauses.Add("u.Username = @Username")
+                parameters.Add(New SqlParameter("@Username", userFilter))
+            End If
+
+            If Not String.IsNullOrWhiteSpace(searchTerm) Then
+                whereClauses.Add("(IFNULL(s.SaleNumber, '') LIKE @Search OR IFNULL(u.Username, '') LIKE @Search)")
+                parameters.Add(New SqlParameter("@Search", "%" & searchTerm & "%"))
+            End If
+
+            If whereClauses.Count > 0 Then
+                query &= " WHERE " & String.Join(" AND ", whereClauses)
+            End If
+
+            Dim result = Utilities.ExecuteScalar(query, parameters.ToArray())
+            If result IsNot Nothing AndAlso Not IsDBNull(result) Then
+                count = Convert.ToInt32(result)
+            End If
+        Catch
+        End Try
+        Return count
     End Function
 
     Private Sub PopulateGridFromData(data As List(Of Dictionary(Of String, Object)))
@@ -412,10 +455,11 @@ Public Class SalesRecord
 
     Private Sub ApplyFilters()
         isSyncingFilters = True
+        _currentPage = 1
 
-        Dim sortOrder As String = If(SortBy IsNot Nothing AndAlso SortBy.SelectedItem IsNot Nothing,
-                                     SortBy.SelectedItem.ToString(),
-                                     "Sale Date (Newest First)")
+        Dim userFilter As String = If(SortBy IsNot Nothing AndAlso SortBy.SelectedItem IsNot Nothing,
+                                       SortBy.SelectedItem.ToString(),
+                                       Nothing)
 
         If Guna2DateTimePicker1 IsNot Nothing AndAlso Guna2DateTimePicker1.Checked Then
             selectedDate = Guna2DateTimePicker1.Value.Date
@@ -423,25 +467,23 @@ Public Class SalesRecord
             selectedDate = Nothing
         End If
 
-        Dim userFilter As String = If(SortBy IsNot Nothing AndAlso SortBy.SelectedItem IsNot Nothing,
-                                      SortBy.SelectedItem.ToString(),
-                                      Nothing)
-
-        allSales = LoadOrderRecordsData(sortOrder, selectedDate, userFilter)
-
-        Dim searchTerm As String = If(TxtSearch?.Text?.Trim(), "")
-        Dim filtered = allSales
-        If Not String.IsNullOrWhiteSpace(searchTerm) Then
-            filtered = allSales.Where(Function(r)
-                                          Dim saleId As String = If(r.ContainsKey("SaleNumber"), r("SaleNumber").ToString(), "")
-                                          Dim username As String = If(r.ContainsKey("Username"), r("Username").ToString(), "")
-                                          Return saleId.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0 OrElse
-                                                 username.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0
-                                      End Function).ToList()
-        End If
-
-        PopulateGridFromData(filtered)
+        LoadPage()
         isSyncingFilters = False
+    End Sub
+
+    Private Sub LoadPage()
+        Dim userFilter As String = If(SortBy IsNot Nothing AndAlso SortBy.SelectedItem IsNot Nothing,
+                                       SortBy.SelectedItem.ToString(),
+                                       Nothing)
+
+        Dim totalCount As Integer = CountSalesRecords(selectedDate, userFilter, _searchTerm)
+        Dim data = LoadOrderRecordsData("Sale Date (Newest First)", selectedDate, userFilter, _searchTerm, _currentPage, PageSize)
+
+        PopulateGridFromData(data)
+
+        If PaginationControl1 IsNot Nothing Then
+            PaginationControl1.Configure(totalCount, PageSize, _currentPage)
+        End If
     End Sub
 
     ' Initialize profile section
@@ -504,8 +546,6 @@ Public Class SalesRecord
     End Function
     Private Sub Exportbtn_Click(sender As Object, e As EventArgs) Handles Exportbtn.Click
         Try
-            Dim sortOrder As String = "Sale Date (Newest First)"
-
             Dim filterDate As DateTime? = Nothing
             If Guna2DateTimePicker1 IsNot Nothing Then
                 If Not Guna2DateTimePicker1.ShowCheckBox OrElse Guna2DateTimePicker1.Checked Then
@@ -513,7 +553,11 @@ Public Class SalesRecord
                 End If
             End If
 
-            SalesRecordExporter.ExportOrderRecordsReport(sortOrder, "All Sales", filterDate)
+            Dim userFilter As String = If(SortBy IsNot Nothing AndAlso SortBy.SelectedItem IsNot Nothing,
+                                           SortBy.SelectedItem.ToString(),
+                                           Nothing)
+
+            SalesRecordExporter.ExportOrderRecordsReport("Sale Date (Newest First)", userFilter, filterDate, _searchTerm)
 
         Catch ex As Exception
             MessageBox.Show($"Export failed: {ex.Message}", "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
@@ -677,42 +721,18 @@ Public Class SalesRecord
         ' No longer needed
     End Sub
 
-    Private Sub TxtSearch_TextChanged(sender As Object, e As EventArgs)
-        _searchTimer.Stop()
-        _searchTimer.Start()
-
-        Dim hasSearch = Not String.IsNullOrWhiteSpace(TxtSearch?.Text)
-        If Guna2DateTimePicker1 IsNot Nothing Then
-            Guna2DateTimePicker1.Enabled = Not hasSearch
-        End If
-        If SortBy IsNot Nothing Then
-            SortBy.Enabled = Not hasSearch
-        End If
-        If hasSearch Then
-            selectedDate = Nothing
-        Else
-            If Guna2DateTimePicker1 IsNot Nothing AndAlso Guna2DateTimePicker1.Checked Then
-                selectedDate = Guna2DateTimePicker1.Value.Date
-            End If
-            _searchTimer.Stop()
-            ApplyFilters()
-            Return
+    Private Sub TxtSearch_KeyDown(sender As Object, e As KeyEventArgs)
+        If e.KeyCode = Keys.Enter Then
+            e.SuppressKeyPress = True
+            _searchTerm = If(TxtSearch?.Text?.Trim(), "")
+            _currentPage = 1
+            LoadPage()
         End If
     End Sub
 
-    Private Sub SearchTimer_Tick(sender As Object, e As EventArgs)
-        _searchTimer.Stop()
-        Dim searchTerm As String = If(TxtSearch?.Text?.Trim(), "")
-        Dim filtered = allSales
-        If Not String.IsNullOrWhiteSpace(searchTerm) Then
-            filtered = allSales.Where(Function(r)
-                                          Dim saleId As String = If(r.ContainsKey("SaleNumber"), r("SaleNumber").ToString(), "")
-                                          Dim username As String = If(r.ContainsKey("Username"), r("Username").ToString(), "")
-                                          Return saleId.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0 OrElse
-                                                 username.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0
-                                      End Function).ToList()
-        End If
-        PopulateGridFromData(filtered)
+    Private Sub PaginationControl1_PageChanged(page As Integer)
+        _currentPage = page
+        LoadPage()
     End Sub
 
     Private Function IsHostedInMainShell() As Boolean

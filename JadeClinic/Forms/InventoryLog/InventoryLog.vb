@@ -6,15 +6,15 @@ Imports System.Linq
 Imports System.Threading.Tasks
 
 Public Class InventoryLog
-    Private allLogs As New List(Of Dictionary(Of String, Object))
-
     ' Loading panel fields
     Private loadingPanel As Panel
     Private loadingLabel As Label
     Private selectedDate As DateTime? = Nothing
 
-    ' Search debounce timer
-    Private WithEvents _searchTimer As Timer
+    ' Pagination state
+    Private Const PageSize As Integer = 50
+    Private _currentPage As Integer = 1
+    Private _searchTerm As String = ""
 
     ' Navigation flag for proper form closing
     Private isNavigating As Boolean = False
@@ -207,15 +207,16 @@ Public Class InventoryLog
                 AddInventoryLog.Visible = True
             End If
 
-            ' Setup search debounce timer
-            _searchTimer = New Timer()
-            _searchTimer.Interval = 400
-            AddHandler _searchTimer.Tick, AddressOf SearchTimer_Tick
-
-            ' Wire search input
+            ' Wire search input - search on Enter key
             If TxtSearch IsNot Nothing Then
-                RemoveHandler TxtSearch.TextChanged, AddressOf TxtSearch_TextChanged
-                AddHandler TxtSearch.TextChanged, AddressOf TxtSearch_TextChanged
+                RemoveHandler TxtSearch.KeyDown, AddressOf TxtSearch_KeyDown
+                AddHandler TxtSearch.KeyDown, AddressOf TxtSearch_KeyDown
+            End If
+
+            ' Wire pagination control
+            If PaginationControl1 IsNot Nothing Then
+                RemoveHandler PaginationControl1.PageChanged, AddressOf PaginationControl1_PageChanged
+                AddHandler PaginationControl1.PageChanged, AddressOf PaginationControl1_PageChanged
             End If
 
             ' Fix DateTimePicker dropdown for hosted forms
@@ -684,40 +685,34 @@ Public Class InventoryLog
     End Sub
     Private Async Function LoadInventoryLogsAsync(Optional fromDb As Boolean = True) As Task
         Try
-            If fromDb Then
-                ' Full DB reload (date/sort changes)
-                ShowLoadingLabel("Loading...")
+            ShowLoadingLabel("Loading...")
 
-                Dim sortOrder As String = If(SortBy?.SelectedItem?.ToString(), "Date (Newest First)")
-                allLogs = Await Task.Run(Function() GetInventoryLogsData(sortOrder, selectedDate))
+            Dim sortType As String = If(SortBy?.SelectedItem?.ToString(), "All Types")
+            Dim totalCount As Integer = Await Task.Run(Function() CountInventoryLogs(sortType, selectedDate, _searchTerm))
+            Dim data = Await Task.Run(Function() GetInventoryLogsData(sortType, selectedDate, _searchTerm, _currentPage, PageSize))
+
+            LoadInventoryLogsDataOnUI(data)
+
+            If PaginationControl1 IsNot Nothing Then
+                PaginationControl1.Configure(totalCount, PageSize, _currentPage)
             End If
 
-            ' Filter in memory (fast — no DB hit)
-            Dim searchTerm As String = If(TxtSearch?.Text?.Trim(), "")
-            Dim filtered = allLogs
-            If Not String.IsNullOrWhiteSpace(searchTerm) Then
-                filtered = allLogs.Where(Function(r)
-                                             Dim logId As String = If(r.ContainsKey("LogID"), r("LogID").ToString(), "")
-                                             Dim reference As String = If(r.ContainsKey("Reference"), r("Reference").ToString(), "")
-                                             Return logId.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0 OrElse
-                                                    reference.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0
-                                         End Function).ToList()
-            End If
-
-            LoadInventoryLogsDataOnUI(filtered)
             HideLoadingLabel()
-
         Catch ex As Exception
             HideLoadingLabel()
             MessageBox.Show("Error loading inventory logs: " & ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Function
 
-    Private Function GetInventoryLogsData(sortOrder As String, Optional filterDate As DateTime? = Nothing) As List(Of Dictionary(Of String, Object))
+    Private Async Sub LoadPage()
+        Await LoadInventoryLogsAsync()
+    End Sub
+
+    Private Function GetInventoryLogsData(sortOrder As String, Optional filterDate As DateTime? = Nothing, Optional searchTerm As String = "", Optional pageNumber As Integer = 1, Optional pageSize As Integer = 50) As List(Of Dictionary(Of String, Object))
         Dim inventoryLogs As New List(Of Dictionary(Of String, Object))()
         Dim query As String = "SELECT il.LogID, il.ProductID, p.ProductName, il.TransactionType, " &
              "il.Quantity, il.PreviousStock, il.NewStock, s.SupplierName, " &
-             "il.Reference, il.Notes, il.BatchNumber, il.ExpiryDate, p.Category, il.CreatedAt " &  ' <- include Category (product category)
+             "il.Reference, il.Notes, il.BatchNumber, il.ExpiryDate, p.Category, il.CreatedAt " &
              "FROM InventoryLog il " &
              "INNER JOIN Products p ON il.ProductID = p.ProductID " &
              "LEFT JOIN Suppliers s ON il.SupplierID = s.SupplierID"
@@ -725,29 +720,29 @@ Public Class InventoryLog
         Dim whereClauses As New List(Of String)()
         Dim parameters As New List(Of SqlParameter)()
 
-        ' Add date filter if provided
         If filterDate.HasValue Then
             whereClauses.Add("DATE(il.CreatedAt) = @FilterDate")
             parameters.Add(New SqlParameter("@FilterDate", filterDate.Value.Date.ToString("yyyy-MM-dd")))
         End If
 
-        ' Build WHERE clause
+        If Not String.IsNullOrWhiteSpace(sortOrder) AndAlso sortOrder <> "All Types" Then
+            whereClauses.Add("il.TransactionType = @TransType")
+            parameters.Add(New SqlParameter("@TransType", sortOrder))
+        End If
+
+        If Not String.IsNullOrWhiteSpace(searchTerm) Then
+            whereClauses.Add("(CAST(il.LogID AS TEXT) LIKE @Search OR IFNULL(il.Reference, '') LIKE @Search OR IFNULL(p.ProductName, '') LIKE @Search)")
+            parameters.Add(New SqlParameter("@Search", "%" & searchTerm & "%"))
+        End If
+
         If whereClauses.Count > 0 Then
             query += " WHERE " & String.Join(" AND ", whereClauses)
         End If
 
-        ' Add transaction type filter via SortBy (repurposed as type filter)
-        If sortOrder <> "All Types" Then
-            If whereClauses.Count > 0 Then
-                query += " AND il.TransactionType = @TransType"
-            Else
-                query += " WHERE il.TransactionType = @TransType"
-            End If
-            parameters.Add(New SqlParameter("@TransType", sortOrder))
-        End If
-
-        ' Default ordering - users sort via column header clicks
         query += " ORDER BY il.CreatedAt DESC"
+
+        Dim offset As Integer = (pageNumber - 1) * pageSize
+        query &= $" LIMIT {pageSize} OFFSET {offset}"
 
         Try
             Dim connStr As String = Connection.GetConnectionString()
@@ -795,6 +790,45 @@ Public Class InventoryLog
 
         Return inventoryLogs
     End Function
+
+    Private Function CountInventoryLogs(Optional sortOrder As String = "All Types", Optional filterDate As DateTime? = Nothing, Optional searchTerm As String = "") As Integer
+        Dim count As Integer = 0
+        Try
+            Dim query As String = "SELECT COUNT(*) FROM InventoryLog il " &
+                                  "INNER JOIN Products p ON il.ProductID = p.ProductID " &
+                                  "LEFT JOIN Suppliers s ON il.SupplierID = s.SupplierID"
+
+            Dim whereClauses As New List(Of String)()
+            Dim parameters As New List(Of SqlParameter)()
+
+            If filterDate.HasValue Then
+                whereClauses.Add("DATE(il.CreatedAt) = @FilterDate")
+                parameters.Add(New SqlParameter("@FilterDate", filterDate.Value.Date.ToString("yyyy-MM-dd")))
+            End If
+
+            If Not String.IsNullOrWhiteSpace(sortOrder) AndAlso sortOrder <> "All Types" Then
+                whereClauses.Add("il.TransactionType = @TransType")
+                parameters.Add(New SqlParameter("@TransType", sortOrder))
+            End If
+
+            If Not String.IsNullOrWhiteSpace(searchTerm) Then
+                whereClauses.Add("(CAST(il.LogID AS TEXT) LIKE @Search OR IFNULL(il.Reference, '') LIKE @Search OR IFNULL(p.ProductName, '') LIKE @Search)")
+                parameters.Add(New SqlParameter("@Search", "%" & searchTerm & "%"))
+            End If
+
+            If whereClauses.Count > 0 Then
+                query += " WHERE " & String.Join(" AND ", whereClauses)
+            End If
+
+            Dim result = Utilities.ExecuteScalar(query, parameters.ToArray())
+            If result IsNot Nothing AndAlso Not IsDBNull(result) Then
+                count = Convert.ToInt32(result)
+            End If
+        Catch
+        End Try
+        Return count
+    End Function
+
     Private Sub LoadInventoryLogsDataOnUI(inventoryData As List(Of Dictionary(Of String, Object)))
         Try
             ' Check if DataGrid exists
@@ -1005,6 +1039,7 @@ Public Class InventoryLog
     Private Async Sub Guna2DateTimePicker1_ValueChanged(sender As Object, e As EventArgs)
         Try
             selectedDate = Guna2DateTimePicker1.Value.Date
+            _currentPage = 1
             Await LoadInventoryLogsAsync()
         Catch ex As Exception
             MessageBox.Show($"Error filtering by date: {ex.Message}", "Filter Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
@@ -1014,6 +1049,7 @@ Public Class InventoryLog
     ' Method to clear date filter (can be called from a clear filter button if needed)
     Public Async Sub ClearDateFilter()
         selectedDate = Nothing
+        _currentPage = 1
         If Guna2DateTimePicker1 IsNot Nothing Then
             ' reset UI and reload data
             Guna2DateTimePicker1.Value = DateTime.Today
@@ -1275,6 +1311,7 @@ Public Class InventoryLog
 
     Private Async Sub SortBy_SelectedIndexChanged(sender As Object, e As EventArgs)
         Try
+            _currentPage = 1
             ' Refresh logs when sorting option changes
             Await LoadInventoryLogsAsync()
         Catch ex As Exception
@@ -1365,31 +1402,17 @@ Public Class InventoryLog
 
     End Sub
 
-    Private Async Sub TxtSearch_TextChanged(sender As Object, e As EventArgs)
-        _searchTimer.Stop()
-        _searchTimer.Start()
-
-        ' Disable date filter while searching
-        Dim hasSearch = Not String.IsNullOrWhiteSpace(TxtSearch?.Text)
-        If Guna2DateTimePicker1 IsNot Nothing Then
-            Guna2DateTimePicker1.Enabled = Not hasSearch
-        End If
-        If hasSearch Then
-            selectedDate = Nothing
-        Else
-            ' Restore date filter from picker
-            If Guna2DateTimePicker1 IsNot Nothing AndAlso Guna2DateTimePicker1.Checked Then
-                selectedDate = Guna2DateTimePicker1.Value.Date
-            End If
-            ' Reload from DB with restored date filter
-            _searchTimer.Stop()
-            Await LoadInventoryLogsAsync(fromDb:=True)
-            Return
+    Private Sub TxtSearch_KeyDown(sender As Object, e As KeyEventArgs)
+        If e.KeyCode = Keys.Enter Then
+            e.SuppressKeyPress = True
+            _searchTerm = If(TxtSearch?.Text?.Trim(), "")
+            _currentPage = 1
+            LoadPage()
         End If
     End Sub
 
-    Private Async Sub SearchTimer_Tick(sender As Object, e As EventArgs)
-        _searchTimer.Stop()
-        Await LoadInventoryLogsAsync(fromDb:=False)
+    Private Sub PaginationControl1_PageChanged(page As Integer)
+        _currentPage = page
+        LoadPage()
     End Sub
 End Class

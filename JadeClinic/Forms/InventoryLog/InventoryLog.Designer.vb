@@ -50,6 +50,7 @@ Partial Class InventoryLog
         Guna2Panel1 = New Guna.UI2.WinForms.Guna2Panel()
         TxtSearch = New Guna.UI2.WinForms.Guna2TextBox()
         Guna2CirclePictureBox5 = New Guna.UI2.WinForms.Guna2CirclePictureBox()
+        PaginationControl1 = New PaginationControl()
         lblSubtitle = New Label()
         DashboardPanel.SuspendLayout()
         CType(PictureBox9, ComponentModel.ISupportInitialize).BeginInit()
@@ -129,7 +130,7 @@ Partial Class InventoryLog
         InventoryLogDataGrid.RowHeadersVisible = False
         InventoryLogDataGrid.RowHeadersWidth = 51
         InventoryLogDataGrid.RowTemplate.Height = 50
-        InventoryLogDataGrid.Size = New Size(1641, 801)
+        InventoryLogDataGrid.Size = New Size(1641, 741)
         InventoryLogDataGrid.TabIndex = 41
         InventoryLogDataGrid.ThemeStyle.AlternatingRowsStyle.BackColor = Color.White
         InventoryLogDataGrid.ThemeStyle.AlternatingRowsStyle.Font = Nothing
@@ -286,7 +287,7 @@ Partial Class InventoryLog
         Guna2Panel1.ShadowDecoration.CustomizableEdges = CustomizableEdges13
         Guna2Panel1.ShadowDecoration.Depth = 0
         Guna2Panel1.ShadowDecoration.Shadow = New Padding(0, 0, 4, 4)
-        Guna2Panel1.Size = New Size(1650, 908)
+        Guna2Panel1.Size = New Size(1650, 848)
         Guna2Panel1.TabIndex = 79
         ' 
         ' TxtSearch
@@ -334,6 +335,15 @@ Partial Class InventoryLog
         lblSubtitle.TabIndex = 81
         lblSubtitle.Text = "View and track all inventory transactions." & vbCrLf
         ' 
+        ' PaginationControl1
+        ' 
+        PaginationControl1.Anchor = AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
+        PaginationControl1.BackColor = Color.White
+        PaginationControl1.Location = New Point(244, 968)
+        PaginationControl1.Name = "PaginationControl1"
+        PaginationControl1.Size = New Size(1642, 62)
+        PaginationControl1.TabIndex = 86
+        ' 
         ' InventoryLog
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
@@ -341,6 +351,7 @@ Partial Class InventoryLog
         AutoScroll = True
         BackColor = Color.FromArgb(CByte(245), CByte(243), CByte(239))
         ClientSize = New Size(1902, 1033)
+        Controls.Add(PaginationControl1)
         Controls.Add(lblSubtitle)
         Controls.Add(Guna2CirclePictureBox5)
         Controls.Add(Guna2Panel1)
@@ -378,4 +389,5 @@ Partial Class InventoryLog
     Friend WithEvents Guna2CirclePictureBox5 As Guna.UI2.WinForms.Guna2CirclePictureBox
     Friend WithEvents TxtSearch As Guna.UI2.WinForms.Guna2TextBox
     Friend WithEvents lblSubtitle As Label
+    Friend WithEvents PaginationControl1 As PaginationControl
 End Class

@@ -11,7 +11,7 @@ Public Class SalesRecordExporter
         QuestPDF.Settings.License = LicenseType.Community
     End Sub
 
-    Public Shared Sub ExportOrderRecordsReport(Optional sortOrder As String = "", Optional filterType As String = "All Sales", Optional filterDate As DateTime? = Nothing)
+    Public Shared Sub ExportOrderRecordsReport(Optional sortOrder As String = "", Optional userFilter As String = Nothing, Optional filterDate As DateTime? = Nothing, Optional searchTerm As String = "")
         Try
             Dim orderReportsPath As String = Path.Combine(Application.StartupPath, "orderreports")
             If Not Directory.Exists(orderReportsPath) Then
@@ -35,28 +35,21 @@ Public Class SalesRecordExporter
                                   "LEFT JOIN Users u ON s.UserID = u.UserID"
 
             Dim whereClauses As New List(Of String)()
+            Dim parameters As New List(Of SqlParameter)()
 
-            Select Case filterType
-                Case "Today's Sales", "Today's Orders"
-                    whereClauses.Add("DATE(s.SaleDate) = date('now')")
-                Case "This Week's Sales", "This Week's Orders"
-                    whereClauses.Add("s.SaleDate >= datetime('now', 'start of week')")
-                Case "This Month's Sales", "This Month's Orders"
-                    whereClauses.Add("CAST(strftime('%m', s.SaleDate) AS INTEGER) = CAST(strftime('%m', 'now') AS INTEGER) AND CAST(strftime('%Y', s.SaleDate) AS INTEGER) = CAST(strftime('%Y', 'now') AS INTEGER)")
-                Case "Sales with Discounts", "Orders with Discounts"
-                    whereClauses.Add("IFNULL(s.DiscountAmount, 0) > 0")
-                Case "Sales without Discounts", "Orders without Discounts"
-                    whereClauses.Add("IFNULL(s.DiscountAmount, 0) = 0")
-                Case "High Value Sales (?1000+)", "High Value Orders (?1000+)"
-                    whereClauses.Add("s.TotalAmount >= 1000")
-                Case "Low Value Sales (<?500)", "Low Value Orders (<?500)"
-                    whereClauses.Add("s.TotalAmount < 500")
-                Case Else
-                    ' All Sales
-            End Select
+            If Not String.IsNullOrWhiteSpace(userFilter) AndAlso userFilter <> "All Users" Then
+                whereClauses.Add("u.Username = @Username")
+                parameters.Add(New SqlParameter("@Username", userFilter))
+            End If
 
             If filterDate.HasValue Then
                 whereClauses.Add("DATE(s.SaleDate) = @FilterDate")
+                parameters.Add(New SqlParameter("@FilterDate", filterDate.Value.Date.ToString("yyyy-MM-dd")))
+            End If
+
+            If Not String.IsNullOrWhiteSpace(searchTerm) Then
+                whereClauses.Add("(IFNULL(s.SaleNumber, '') LIKE @Search OR IFNULL(u.Username, '') LIKE @Search)")
+                parameters.Add(New SqlParameter("@Search", "%" & searchTerm & "%"))
             End If
 
             If whereClauses.Count > 0 Then
@@ -85,10 +78,6 @@ Public Class SalesRecordExporter
             End Select
 
             Dim orderDataList As New List(Of OrderReportData)()
-            Dim parameters As New List(Of SqlParameter)()
-            If filterDate.HasValue Then
-                parameters.Add(New SqlParameter("@FilterDate", filterDate.Value.Date))
-            End If
 
             Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters.ToArray())
                 While reader.Read()
@@ -125,19 +114,29 @@ Public Class SalesRecordExporter
             Dim fileName As String = $"Sales_Records_Report{dateSuffix}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf"
             Dim fullPath As String = Path.Combine(orderReportsPath, fileName)
 
-            CreateQuestPDFOrderRecordsReport(orderDataList, fullPath, filterType, reportCapital, expectedAmount, filterDate)
+            Dim filterDesc As String = "All Sales"
+            If Not String.IsNullOrWhiteSpace(userFilter) AndAlso userFilter <> "All Users" Then
+                filterDesc = $"User: {userFilter}"
+            End If
+            If filterDate.HasValue Then
+                filterDesc &= $", Date: {filterDate.Value:yyyy-MM-dd}"
+            End If
+            If Not String.IsNullOrWhiteSpace(searchTerm) Then
+                filterDesc &= $", Search: ""{searchTerm}"""
+            End If
+
+            CreateQuestPDFOrderRecordsReport(orderDataList, fullPath, filterDesc, reportCapital, expectedAmount, filterDate)
 
             If Not File.Exists(fullPath) Then
                 Throw New Exception("PDF file was not created successfully.")
             End If
 
             If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
-                Dim dateFilterInfo As String = If(filterDate.HasValue, $", Date: {filterDate.Value:yyyy-MM-dd}", ", Date: All dates")
-                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Sales Records Report Exported", $"Filter: {filterType}{dateFilterInfo}, Records: {orderDataList.Count}")
+                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Sales Records Report Exported", $"Filter: {filterDesc}, Records: {orderDataList.Count}")
             End If
 
             Dim dateFilterMessage As String = If(filterDate.HasValue, $"{vbCrLf}Date Filter: {filterDate.Value:yyyy-MM-dd}", $"{vbCrLf}Date Filter: All dates")
-            MessageBox.Show($"Sales records report exported successfully!{vbCrLf}Filter Applied: {filterType}{dateFilterMessage}{vbCrLf}Records Exported: {orderDataList.Count}{vbCrLf}Opening PDF now...",
+            MessageBox.Show($"Sales records report exported successfully!{vbCrLf}Filter Applied: {filterDesc}{dateFilterMessage}{vbCrLf}Records Exported: {orderDataList.Count}{vbCrLf}Opening PDF now...",
                             "Export Successful", MessageBoxButtons.OK, MessageBoxIcon.Information)
 
             Try

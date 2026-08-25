@@ -221,6 +221,24 @@ Public Class DatabaseInitializer
             Console.WriteLine($"Note: Could not create CustomerTIN index on Sales: {ex.Message}")
         End Try
 
+        Try
+            DatabaseHelper.ExecuteNonQuery("CREATE INDEX IF NOT EXISTS IX_Sales_SaleDate ON Sales (SaleDate)", Nothing)
+        Catch ex As Exception
+            Console.WriteLine($"Note: Could not create SaleDate index on Sales: {ex.Message}")
+        End Try
+
+        Try
+            DatabaseHelper.ExecuteNonQuery("CREATE INDEX IF NOT EXISTS IX_Sales_UserID ON Sales (UserID)", Nothing)
+        Catch ex As Exception
+            Console.WriteLine($"Note: Could not create UserID index on Sales: {ex.Message}")
+        End Try
+
+        Try
+            DatabaseHelper.ExecuteNonQuery("CREATE INDEX IF NOT EXISTS IX_Sales_SaleNumber ON Sales (SaleNumber)", Nothing)
+        Catch ex As Exception
+            Console.WriteLine($"Note: Could not create SaleNumber index on Sales: {ex.Message}")
+        End Try
+
         ' Backfill SaleNumber for rows that predate automatic generation so
         ' every sale has a readable numbers-only reference
         ' (yyyyMMdd + zero-padded SaleID, e.g. 20230201000001).
@@ -328,6 +346,12 @@ Public Class DatabaseInitializer
             DatabaseHelper.ExecuteNonQuery("CREATE INDEX IF NOT EXISTS IX_InventoryLog_Expiry ON InventoryLog (ExpiryDate)", Nothing)
         Catch ex As Exception
             Console.WriteLine($"Note: Could not create ExpiryDate index: {ex.Message}")
+        End Try
+
+        Try
+            DatabaseHelper.ExecuteNonQuery("CREATE INDEX IF NOT EXISTS IX_InventoryLog_Reference ON InventoryLog (Reference)", Nothing)
+        Catch ex As Exception
+            Console.WriteLine($"Note: Could not create Reference index: {ex.Message}")
         End Try
     End Sub
 
