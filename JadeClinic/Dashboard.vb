@@ -532,7 +532,7 @@ Public Class Dashboard
                     .Font = captionFont,
                     .ForeColor = Color.FromArgb(140, 140, 140),
                     .BackColor = Color.Transparent,
-                    .Location = New Point(10, 7),
+                    .Location = New Point(10, 4),
                     .AutoSize = True
                 }
 
@@ -1013,13 +1013,13 @@ Public Class Dashboard
             titleLabel.ForeColor = Color.FromArgb(51, 51, 51)
             titleLabel.Dock = DockStyle.Fill
             titleLabel.TextAlign = ContentAlignment.MiddleLeft
-            titleLabel.Padding = New Padding(4, 0, 0, 0)
+            titleLabel.Padding = New Padding(28, 0, 0, 0)
             titleLabel.BackColor = Color.Transparent
 
             ' Chart panel with margins; keep the plot area as tall as possible
             chartPanel = New Panel()
             chartPanel.Dock = DockStyle.Fill
-            chartPanel.Padding = New Padding(16, 12, 16, 18)
+            chartPanel.Padding = New Padding(16, 20, 16, 46)
             chartPanel.BackColor = Color.White
             ApplyRoundedCorners(chartPanel, 18)
 
@@ -1109,7 +1109,9 @@ Public Class Dashboard
                     combined.AddRange(cogsData)
                     Dim maxValue As Double = If(combined.Count > 0, combined.Max(), 0)
                     Dim isZeroData As Boolean = maxValue <= 0
-                    Dim yAxisMin As Double = If(isZeroData, -2, 0)
+                    ' small negative floor so the 0-baseline fill never sits flush with the
+                    ' x-axis label row (which otherwise looks 'cut')
+                    Dim yAxisMin As Double = If(isZeroData, -2, -(Math.Max(maxValue * 0.05, 500)))
                     Dim yAxisMax As Double = If(isZeroData, 5, Math.Ceiling(maxValue * 1.2))
 
                     ' Configure axes

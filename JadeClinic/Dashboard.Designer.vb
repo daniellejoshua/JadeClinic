@@ -109,7 +109,7 @@ Partial Class Dashboard
         AreaChart.Name = "AreaChart"
         AreaChart.Padding = New Padding(6)
         AreaChart.ShadowDecoration.CustomizableEdges = CustomizableEdges6
-        AreaChart.Size = New Size(1636, 360)
+        AreaChart.Size = New Size(1636, 400)
         AreaChart.TabIndex = 63
         ' 
         ' Guna2HtmlLabel5
