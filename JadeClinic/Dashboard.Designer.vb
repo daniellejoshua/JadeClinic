@@ -64,7 +64,7 @@ Partial Class Dashboard
         LowStockPanel.BorderThickness = 2
         LowStockPanel.CustomizableEdges = CustomizableEdges1
         LowStockPanel.FillColor = Color.White
-        LowStockPanel.Location = New Point(1291, 310)
+        LowStockPanel.Location = New Point(1291, 270)
         LowStockPanel.Name = "LowStockPanel"
         LowStockPanel.Padding = New Padding(4)
         LowStockPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges2
@@ -105,11 +105,11 @@ Partial Class Dashboard
         AreaChart.BorderThickness = 2
         AreaChart.CustomizableEdges = CustomizableEdges5
         AreaChart.FillColor = Color.White
-        AreaChart.Location = New Point(232, 714)
+        AreaChart.Location = New Point(232, 650)
         AreaChart.Name = "AreaChart"
-        AreaChart.Padding = New Padding(4)
+        AreaChart.Padding = New Padding(6)
         AreaChart.ShadowDecoration.CustomizableEdges = CustomizableEdges6
-        AreaChart.Size = New Size(1636, 351)
+        AreaChart.Size = New Size(1636, 360)
         AreaChart.TabIndex = 63
         ' 
         ' Guna2HtmlLabel5
@@ -167,7 +167,7 @@ Partial Class Dashboard
         PopularPanel.Controls.Add(Guna2DataGridView1)
         PopularPanel.CustomizableEdges = CustomizableEdges9
         PopularPanel.FillColor = Color.White
-        PopularPanel.Location = New Point(232, 310)
+        PopularPanel.Location = New Point(232, 270)
         PopularPanel.Name = "PopularPanel"
         PopularPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges10
         PopularPanel.ShadowDecoration.Depth = 0

@@ -76,6 +76,14 @@ Public Class Dashboard
     Private _periodCombo As Guna2ComboBox
     Private _selectedPeriod As String = "Last 30 Days"
 
+    ' Margin summary strip above the performance chart
+    Private _marginStrip As Panel
+    Private _headerPanel As Panel
+    Private _lblSummaryRevenue As Label
+    Private _lblSummaryCost As Label
+    Private _lblSummaryProfit As Label
+    Private _lblSummaryMargin As Label
+
     Public Sub New()
         Try
             Console.WriteLine("Dashboard constructor starting...")
@@ -180,6 +188,10 @@ Public Class Dashboard
             ' Load all UI/data while loading panel is visible
             LoadChartInterface()
             Console.WriteLine("Chart interface loaded")
+
+            ' Build the compact margin chips inside the chart panel (top-right)
+            BuildMarginSummaryStrip()
+            Console.WriteLine("Margin summary strip built")
 
             InitializeProductSearch()
             Console.WriteLine("Product search initialized")
@@ -433,6 +445,9 @@ Public Class Dashboard
                         End If
                     End If
 
+                    ' Update the margin summary strip above the performance chart
+                    UpdateMarginSummary(totalRevenue, totalCOGS, grossProfit)
+
                     lastProductCount = totalOrders
                 Else
                     If _lblTotalOrdersValue IsNot Nothing Then _lblTotalOrdersValue.Text = "0"
@@ -443,6 +458,148 @@ Public Class Dashboard
             End Using
         Catch ex As Exception
             Console.WriteLine($"Error loading KPI data: {ex.Message}")
+        End Try
+    End Sub
+
+    Private Sub BuildMarginSummaryStrip()
+        Try
+            If _marginStrip IsNot Nothing Then
+                If _headerPanel IsNot Nothing Then _headerPanel.Controls.Remove(_marginStrip)
+                _marginStrip.Dispose()
+                _marginStrip = Nothing
+            End If
+
+            ' Compact margin chips rendered in the top-right of the AreaChart panel,
+            ' visually belonging to the chart below them.
+
+            Dim captions() As String = {"Revenue", "Cost of Goods", "Gross Profit", "Margin"}
+            Dim colors() As Color = {
+                Color.FromArgb(245, 158, 11),
+                Color.FromArgb(148, 163, 184),
+                Color.FromArgb(46, 125, 50),
+                Color.FromArgb(34, 34, 34)
+            }
+
+            Dim chipH As Integer = 28
+            Dim chipGap As Integer = 14
+            Dim rightMargin As Integer = 6
+
+            ' Pre-measure captions so caption and value never collide
+            Dim captionFont As New Font("Poppins", 8.0F, FontStyle.Regular)
+            Dim valueFont As New Font("Poppins", 8.5F, FontStyle.Bold)
+            Dim capW(captions.Length - 1) As Integer
+            For i As Integer = 0 To captions.Length - 1
+                capW(i) = TextRenderer.MeasureText(captions(i) & " ", captionFont).Width
+            Next
+
+            ' Value display width: grows for large numbers but caps to avoid overflow
+            Dim valueW As Integer = 108
+
+            ' Compute chip widths and right-aligned positions
+            Dim chipW(captions.Length - 1) As Integer
+            Dim totalW As Integer = 0
+            For i As Integer = 0 To captions.Length - 1
+                chipW(i) = 10 + capW(i) + 6 + valueW
+                totalW += chipW(i)
+                If i < captions.Length - 1 Then totalW += chipGap
+            Next
+
+            Dim stripW As Integer = totalW + rightMargin
+            Dim stripX As Integer = 0
+            If _headerPanel IsNot Nothing Then stripX = _headerPanel.Width - stripW - 4
+            _marginStrip = New Panel() With {
+                .Location = New Point(stripX, 12),
+                .Size = New Size(stripW, 34),
+                .Anchor = AnchorStyles.Top Or AnchorStyles.Right,
+                .BackColor = Color.Transparent
+            }
+
+            Dim rightEdge As Integer = rightMargin
+            For i As Integer = captions.Length - 1 To 0 Step -1
+                Dim x As Integer = _marginStrip.Width - rightEdge - chipW(i)
+                Dim chip As New Guna.UI2.WinForms.Guna2Panel() With {
+                    .Location = New Point(x, 3),
+                    .Size = New Size(chipW(i), chipH),
+                    .FillColor = Color.FromArgb(255, 253, 248),
+                    .BorderColor = Color.FromArgb(232, 232, 232),
+                    .BorderThickness = 1,
+                    .BorderRadius = 8
+                }
+                chip.ShadowDecoration.Enabled = False
+
+                Dim cap As New Label() With {
+                    .Text = captions(i),
+                    .Font = captionFont,
+                    .ForeColor = Color.FromArgb(140, 140, 140),
+                    .BackColor = Color.Transparent,
+                    .Location = New Point(10, 7),
+                    .AutoSize = True
+                }
+
+                Dim val As New Label() With {
+                    .Text = "",
+                    .Font = valueFont,
+                    .ForeColor = colors(i),
+                    .BackColor = Color.Transparent,
+                    .AutoSize = False,
+                    .AutoEllipsis = True,
+                    .TextAlign = ContentAlignment.MiddleLeft,
+                    .Location = New Point(14 + capW(i), 4),
+                    .Size = New Size(valueW - 6, chipH - 8)
+                }
+
+                Select Case i
+                    Case 0
+                        _lblSummaryRevenue = val
+                    Case 1
+                        _lblSummaryCost = val
+                    Case 2
+                        _lblSummaryProfit = val
+                    Case 3
+                        _lblSummaryMargin = val
+                End Select
+
+                chip.Controls.Add(cap)
+                chip.Controls.Add(val)
+                _marginStrip.Controls.Add(chip)
+
+                rightEdge += chipW(i) + chipGap
+            Next
+
+            If _headerPanel IsNot Nothing Then
+                _headerPanel.Controls.Add(_marginStrip)
+                _marginStrip.BringToFront()
+            End If
+            If _headerPanel IsNot Nothing AndAlso titleLabel IsNot Nothing Then
+                titleLabel.SendToBack()
+            End If
+        Catch ex As Exception
+            Console.WriteLine($"Error building margin summary strip: {ex.Message}")
+        End Try
+    End Sub
+
+    Private Sub UpdateMarginSummary(totalRevenue As Decimal, totalCost As Decimal, grossProfit As Decimal)
+        Try
+            Dim pesoSign As String = ChrW(&H20B1)
+            If _lblSummaryRevenue IsNot Nothing Then
+                _lblSummaryRevenue.Text = String.Format(Globalization.CultureInfo.GetCultureInfo("en-PH"), "{0}{1:N0}", pesoSign, totalRevenue)
+            End If
+            If _lblSummaryCost IsNot Nothing Then
+                _lblSummaryCost.Text = String.Format(Globalization.CultureInfo.GetCultureInfo("en-PH"), "{0}{1:N0}", pesoSign, totalCost)
+            End If
+            If _lblSummaryProfit IsNot Nothing Then
+                _lblSummaryProfit.Text = String.Format(Globalization.CultureInfo.GetCultureInfo("en-PH"), "{0}{1:N0}", pesoSign, grossProfit)
+            End If
+            If _lblSummaryMargin IsNot Nothing Then
+                If totalRevenue > 0 Then
+                    Dim margin As Decimal = (grossProfit / totalRevenue) * 100
+                    _lblSummaryMargin.Text = $"{margin:F0}%"
+                Else
+                    _lblSummaryMargin.Text = "0%"
+                End If
+            End If
+        Catch ex As Exception
+            Console.WriteLine($"Error updating margin summary: {ex.Message}")
         End Try
     End Sub
 
@@ -844,21 +1001,25 @@ Public Class Dashboard
         Try
             AreaChart.Controls.Clear()
 
-            ' Title label
+            ' Header band: title on the left, margin KPI cards on the right
+            _headerPanel = New Panel()
+            _headerPanel.Dock = DockStyle.Top
+            _headerPanel.Height = 58
+            _headerPanel.BackColor = Color.Transparent
+
             titleLabel = New Label()
             titleLabel.Text = "Sales Overview"
-            titleLabel.Font = New Font("Poppins", 13, FontStyle.Regular)
+            titleLabel.Font = New Font("Poppins", 14, FontStyle.Bold)
             titleLabel.ForeColor = Color.FromArgb(51, 51, 51)
-            titleLabel.Dock = DockStyle.Top
-            titleLabel.Height = 44
+            titleLabel.Dock = DockStyle.Fill
             titleLabel.TextAlign = ContentAlignment.MiddleLeft
-            titleLabel.Padding = New Padding(20, 12, 0, 0)
+            titleLabel.Padding = New Padding(4, 0, 0, 0)
             titleLabel.BackColor = Color.Transparent
 
-            ' Chart panel with proper margins
+            ' Chart panel with margins; keep the plot area as tall as possible
             chartPanel = New Panel()
             chartPanel.Dock = DockStyle.Fill
-            chartPanel.Padding = New Padding(24)
+            chartPanel.Padding = New Padding(16, 12, 16, 18)
             chartPanel.BackColor = Color.White
             ApplyRoundedCorners(chartPanel, 18)
 
@@ -866,8 +1027,10 @@ Public Class Dashboard
             Try
                 salesChart = New CartesianChart()
                 salesChart.Dock = DockStyle.Fill
-                salesChart.Margin = New Padding(5)
-                salesChart.LegendPosition = LiveChartsCore.Measure.LegendPosition.Hidden
+                salesChart.Margin = New Padding(2)
+                salesChart.LegendPosition = LiveChartsCore.Measure.LegendPosition.Top
+                salesChart.LegendTextPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#666666"))
+                salesChart.LegendBackgroundPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#FFFFFF"))
                 salesChart.BackColor = Color.White
                 chartPanel.Controls.Add(salesChart)
                 ApplyRoundedCorners(salesChart, 14)
@@ -879,10 +1042,12 @@ Public Class Dashboard
 
             ' Add panels in proper order
             AreaChart.Controls.Add(chartPanel)
-            AreaChart.Controls.Add(titleLabel)
+            AreaChart.Controls.Add(_headerPanel)
+
+            _headerPanel.Controls.Add(titleLabel)
 
             ' Bring to front in proper order
-            titleLabel.BringToFront()
+            _headerPanel.BringToFront()
             chartPanel.BringToFront()
 
             LoadChartData(currentChartMode)
@@ -895,41 +1060,54 @@ Public Class Dashboard
         Try
             currentChartMode = mode
 
-            Dim salesData As New List(Of Double)()
+            ' Build the continuous time-bucketed series (revenue vs cost of goods).
             Dim revenueData As New List(Of Double)()
+            Dim cogsData As New List(Of Double)()
             Dim labels As New List(Of String)()
+            Dim tooltipDates As New List(Of String)()
+            BuildRevenueCostSeries(revenueData, cogsData, labels, tooltipDates)
 
-            Select Case mode
-                Case "Today"
-                    LoadTodayData(salesData, revenueData, labels)
-                Case "Monthly"
-                    LoadMonthlyData(salesData, revenueData, labels)
-                Case "Weekly"
-                    LoadWeeklyData(salesData, revenueData, labels)
-                Case "Daily"
-                    LoadDailyData(salesData, revenueData, labels)
-                Case "Yearly"
-                    LoadYearlyData(salesData, revenueData, labels)
-            End Select
+            Dim dateArray As String() = tooltipDates.ToArray()
+
+            ' Update the description header
+            If titleLabel IsNot Nothing Then
+                titleLabel.Text = "Revenue vs Cost of Goods" & "  ·  " & _selectedPeriod
+            End If
 
             ' Check if salesChart is properly initialized before using it
             If salesChart IsNot Nothing Then
                 Try
-                    ' Set the chart series with LiveCharts
+                    ' Set the chart series with LiveCharts: Revenue + Cost of Goods as filled lines.
+                    ' XToolTipLabelFormatter shows the bucket date as the tooltip header.
                     salesChart.Series = {
                     New LineSeries(Of Double) With {
-                        .Values = salesData.ToArray(),
-                        .Name = "Sales",
+                        .Values = revenueData.ToArray(),
+                        .Name = "Revenue",
                         .GeometrySize = 8,
-                        .GeometryStroke = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#333333"), 2),
-                        .Fill = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#FECF10").WithAlpha(30)),
-                        .Stroke = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#FECF10"), 4),
+                        .GeometryStroke = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#B57408"), 2),
+                        .Fill = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#F59E0B").WithAlpha(40)),
+                        .Stroke = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#F59E0B"), 4),
                         .LineSmoothness = 0.8,
-                        .AnimationsSpeed = TimeSpan.FromMilliseconds(1500)
+                        .AnimationsSpeed = TimeSpan.FromMilliseconds(1500),
+                        .XToolTipLabelFormatter = Function(point) If(point.Index >= 0 AndAlso point.Index < dateArray.Length, dateArray(point.Index), "")
+                    },
+                    New LineSeries(Of Double) With {
+                        .Values = cogsData.ToArray(),
+                        .Name = "Cost of Goods",
+                        .GeometrySize = 8,
+                        .GeometryStroke = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#7084A8"), 2),
+                        .Fill = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#94A3B8").WithAlpha(40)),
+                        .Stroke = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#94A3B8"), 4),
+                        .LineSmoothness = 0.8,
+                        .AnimationsSpeed = TimeSpan.FromMilliseconds(1500),
+                        .XToolTipLabelFormatter = Function(point) If(point.Index >= 0 AndAlso point.Index < dateArray.Length, dateArray(point.Index), "")
                     }
                 }
 
-                    Dim maxValue As Double = If(salesData.Count > 0, salesData.Max(), 0)
+                    Dim combined As New List(Of Double)()
+                    combined.AddRange(revenueData)
+                    combined.AddRange(cogsData)
+                    Dim maxValue As Double = If(combined.Count > 0, combined.Max(), 0)
                     Dim isZeroData As Boolean = maxValue <= 0
                     Dim yAxisMin As Double = If(isZeroData, -2, 0)
                     Dim yAxisMax As Double = If(isZeroData, 5, Math.Ceiling(maxValue * 1.2))
@@ -939,6 +1117,7 @@ Public Class Dashboard
                     New Axis With {
                         .Labels = labels.ToArray(),
                         .TextSize = 12,
+                        .Padding = New LiveChartsCore.Drawing.Padding(0),
                         .LabelsPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#666666")),
                         .SeparatorsPaint = New LiveChartsCore.SkiaSharpView.Painting.SolidColorPaint(SKColor.Parse("#F1F0EC").WithAlpha(50)) With {
                             .StrokeThickness = 1
@@ -963,25 +1142,241 @@ Public Class Dashboard
                                            If Math.Abs(value) < 0.001 Then Return ChrW(&H20B1) & "0"
                                            Return ""
                                        End If
-                                       Return ChrW(&H20B1) & $"{value:N0}"
+                                       Return ChrW(&H20B1) & $"{value / 1000.0:0.#}k"
                                    End Function
                     }
                 }
                 Catch chartEx As Exception
                     Console.WriteLine($"Error setting up LiveCharts: {chartEx.Message}")
                     ' Create fallback display
-                    CreateFallbackChartDisplay(mode, salesData, labels)
+                    CreateFallbackChartDisplay(mode, revenueData, labels)
                 End Try
             Else
                 Console.WriteLine("salesChart is null, creating fallback display")
                 ' Create fallback display
-                CreateFallbackChartDisplay(mode, salesData, labels)
+                CreateFallbackChartDisplay(mode, revenueData, labels)
             End If
 
         Catch ex As Exception
             Console.WriteLine($"Error loading chart data: {ex.Message}")
         End Try
     End Sub
+
+    Private Sub BuildRevenueCostSeries(revenueData As List(Of Double), cogsData As List(Of Double), labels As List(Of String), tooltipDates As List(Of String))
+        Try
+            Dim now As DateTime = DateTime.Now
+            Dim startDt As DateTime
+            Dim endDt As DateTime = now
+
+            Select Case _selectedPeriod
+                Case "Today"
+                    startDt = now.Date
+                Case "Last 7 Days"
+                    startDt = now.Date.AddDays(-6)
+                    endDt = now.Date.AddDays(1).AddSeconds(-1)
+                Case "Last 30 Days"
+                    startDt = now.Date.AddDays(-29)
+                    endDt = now.Date.AddDays(1).AddSeconds(-1)
+                Case "This Month"
+                    startDt = New Date(now.Year, now.Month, 1)
+                Case "Last Month"
+                    Dim lm As Date = now.AddMonths(-1)
+                    startDt = New Date(lm.Year, lm.Month, 1)
+                    endDt = startDt.AddMonths(1).AddSeconds(-1)
+                Case "This Year"
+                    startDt = New Date(now.Year, 1, 1)
+                Case Else ' All Time
+                    startDt = GetEarliestSaleDate()
+            End Select
+
+            If startDt > endDt Then startDt = endDt
+
+            ' Determine granularity based on the range length
+            Dim dayCount As Integer = CInt(Math.Floor((endDt - startDt).TotalDays))
+            Dim granularity As String
+            If _selectedPeriod = "Today" OrElse dayCount = 0 Then
+                granularity = "hourly"
+            ElseIf dayCount <= 31 Then
+                granularity = "daily"
+            ElseIf dayCount <= 180 Then
+                granularity = "weekly"
+            Else
+                granularity = "monthly"
+            End If
+
+            ' Bucket key expression in SQL depends on granularity
+            Dim keyExpr As String
+            Select Case granularity
+                Case "hourly"
+                    keyExpr = "strftime('%Y-%m-%d %H', SaleDate)"
+                Case "daily"
+                    keyExpr = "date(SaleDate)"
+                Case "weekly"
+                    keyExpr = "date(SaleDate)" ' aggregated to ISO week in VB
+                Case Else
+                    keyExpr = "strftime('%Y-%m', SaleDate)"
+            End Select
+
+            ' Build the continuous bucket list + labels
+            Dim buckets As New List(Of DateTime)()
+            Select Case granularity
+                Case "hourly"
+                    Dim h As DateTime = startDt.Date.AddHours(startDt.Hour)
+                    While h <= endDt
+                        buckets.Add(h)
+                        h = h.AddHours(1)
+                    End While
+                Case "daily"
+                    Dim d As DateTime = startDt.Date
+                    While d <= endDt.Date
+                        buckets.Add(d)
+                        d = d.AddDays(1)
+                    End While
+                Case "weekly"
+                    ' Start on the Monday of the week containing startDt
+                    Dim firstMon As DateTime = startDt.Date.AddDays(-((CInt(startDt.DayOfWeek) + 6) Mod 7))
+                    Dim wk As DateTime = firstMon
+                    While wk <= endDt.Date
+                        buckets.Add(wk)
+                        wk = wk.AddDays(7)
+                    End While
+                Case Else ' monthly
+                    Dim first As DateTime = New Date(startDt.Year, startDt.Month, 1)
+                    Dim m As DateTime = first
+                    While m <= endDt
+                        buckets.Add(m)
+                        m = m.AddMonths(1)
+                    End While
+            End Select
+
+            Dim startSql As String = startDt.ToString("yyyy-MM-dd HH:mm:ss")
+            Dim endSql As String = endDt.ToString("yyyy-MM-dd HH:mm:ss")
+            Dim parameters As SqlParameter() = {
+                New SqlParameter("@S", startSql),
+                New SqlParameter("@E", endSql)
+            }
+
+            ' Revenue per bucket (exclude voided)
+            Dim revenueQuery As String = "SELECT " & keyExpr & " AS k, IFNULL(SUM(TotalAmount),0) AS Rev " &
+                "FROM Sales WHERE IsVoid = 0 AND SaleDate >= @S AND SaleDate <= @E GROUP BY k"
+            Dim revenueByKey As New Dictionary(Of String, Double)()
+            Using reader As DbDataReader = Utilities.ExecuteReader(revenueQuery, parameters)
+                While reader.Read()
+                    Dim k As String = Convert.ToString(reader("k"))
+                    revenueByKey(k) = Convert.ToDouble(reader("Rev"))
+                End While
+            End Using
+
+            ' COGS per bucket — join SaleItems x Products via Sales for the date
+            Dim dailyKeyExpr As String = If(granularity = "weekly", "date(s.SaleDate)", keyExpr)
+            Dim cogsQuery As String = "SELECT " & dailyKeyExpr & " AS k, IFNULL(SUM(si.Quantity * p.CostPrice),0) AS C " &
+                "FROM SaleItems si " &
+                "JOIN Sales s ON si.SaleID = s.SaleID " &
+                "JOIN Products p ON si.ProductID = p.ProductID " &
+                "WHERE s.IsVoid = 0 AND s.SaleDate >= @S AND s.SaleDate <= @E GROUP BY k"
+            Dim cogsByKey As New Dictionary(Of String, Double)()
+            Using reader As DbDataReader = Utilities.ExecuteReader(cogsQuery, parameters)
+                While reader.Read()
+                    Dim k As String = Convert.ToString(reader("k"))
+                    cogsByKey(k) = Convert.ToDouble(reader("C"))
+                End While
+            End Using
+
+            Dim bucketIdx As Integer = 0
+            For Each b As DateTime In buckets
+                Dim key As String
+                Select Case granularity
+                    Case "hourly"
+                        key = b.ToString("yyyy-MM-dd HH")
+                    Case "daily"
+                        key = b.ToString("yyyy-MM-dd")
+                    Case "weekly"
+                        key = b.ToString("yyyy-MM-dd")
+                    Case Else
+                        key = b.ToString("yyyy-MM")
+                End Select
+
+                Dim rev As Double = If(revenueByKey.ContainsKey(key), revenueByKey(key), 0)
+
+                ' For weekly we aggregate COGS across the 7 days of the bucket's week
+                Dim cogs As Double = 0
+                If granularity = "weekly" Then
+                    For i As Integer = 0 To 6
+                        Dim dayKey As String = b.AddDays(i).ToString("yyyy-MM-dd")
+                        If cogsByKey.ContainsKey(dayKey) Then cogs += cogsByKey(dayKey)
+                    Next
+                Else
+                    cogs = If(cogsByKey.ContainsKey(key), cogsByKey(key), 0)
+                End If
+
+                ' Build the axis label; for long ranges show a summarized subset
+                Dim lbl As String = ""
+                Select Case granularity
+                    Case "hourly"
+                        lbl = b.ToString("h tt")
+                        tooltipDates.Add(b.ToString("ddd, MMM d · h tt"))
+                    Case "daily"
+                        tooltipDates.Add(b.ToString("ddd, MMM d, yyyy"))
+                        ' summarize: keep ~4-5 labels across the run, full date is in tooltip
+                        If dayCount <= 31 Then
+                            Dim labelStep As Integer = If(dayCount > 14, 5, 3)
+                            lbl = If(b.Day = 1 OrElse b.Day Mod labelStep = 0 OrElse bucketIdx = buckets.Count - 1, b.ToString("MMM d"), "")
+                        Else
+                            ' long daily range: label first-of-month days only
+                            lbl = If(b.Day = 1, b.ToString("MMM yy"), "")
+                        End If
+                    Case "weekly"
+                        tooltipDates.Add("Week of " & b.ToString("MMM d, yyyy"))
+                        ' label the first week of each month and the last bucket
+                        If b.Day <= 7 OrElse bucketIdx = buckets.Count - 1 Then
+                            lbl = b.ToString("d MMM")
+                        Else
+                            lbl = ""
+                        End If
+                    Case Else ' monthly
+                        tooltipDates.Add(b.ToString("MMMM yyyy"))
+                        ' label January of each year, then every 3rd month after
+                        If b.Month = 1 OrElse (b.Month - 1) Mod 3 = 0 OrElse bucketIdx = buckets.Count - 1 Then
+                            lbl = b.ToString("MMM yy")
+                        Else
+                            lbl = ""
+                        End If
+                End Select
+                labels.Add(lbl)
+
+                revenueData.Add(rev)
+                cogsData.Add(cogs)
+                bucketIdx += 1
+            Next
+
+            If buckets.Count = 0 Then
+                labels.Add(_selectedPeriod)
+                tooltipDates.Add(_selectedPeriod)
+                revenueData.Add(0)
+                cogsData.Add(0)
+            End If
+        Catch ex As Exception
+            Console.WriteLine($"Error building revenue/cost series: {ex.Message}")
+        End Try
+    End Sub
+
+    Private Function GetEarliestSaleDate() As DateTime
+        Try
+            Using reader As DbDataReader = Utilities.ExecuteReader("SELECT MIN(SaleDate) AS MinSale FROM Sales", Nothing)
+                If reader.Read() Then
+                    Dim raw As Object = reader("MinSale")
+                    If raw IsNot DBNull.Value AndAlso Not String.IsNullOrEmpty(Convert.ToString(raw)) Then
+                        Dim parsed As DateTime
+                        If DateTime.TryParse(Convert.ToString(raw), parsed) Then
+                            Return parsed.Date
+                        End If
+                    End If
+                End If
+            End Using
+        Catch
+        End Try
+        Return DateTime.Now.Date
+    End Function
 
     Private Sub CreateFallbackChartDisplay(mode As String, salesData As List(Of Double), labels As List(Of String))
         Try
