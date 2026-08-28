@@ -181,10 +181,6 @@ Public Class Sys
 
     Private Sub NavigateToProfileSettings()
         Try
-            If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
-                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Navigation", "Navigated from System to ProfileSettings")
-            End If
-
             isNavigating = True
             ProfileManager.HideProfileDropdown(Me)
 

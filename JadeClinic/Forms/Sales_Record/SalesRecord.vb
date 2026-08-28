@@ -561,10 +561,6 @@ Public Class SalesRecord
 
     Private Sub NavigateToProfileSettings()
         Try
-            If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
-                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Navigation", "Navigated from System to ProfileSettings")
-            End If
-
             ' Prevent the form-closing confirmation and hide dropdown first
             isNavigating = True
             ProfileManager.HideProfileDropdown(Me)

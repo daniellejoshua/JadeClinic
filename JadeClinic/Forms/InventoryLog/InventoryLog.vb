@@ -947,10 +947,6 @@ Public Class InventoryLog
     End Sub
     Private Sub NavigateToProfileSettings()
         Try
-            If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
-                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Navigation", "Navigated from InventoryLog to ProfileSettings")
-            End If
-
             ' Prevent the form-closing confirmation and hide the dropdown first
             isNavigating = True
             ProfileManager.HideProfileDropdown(Me)

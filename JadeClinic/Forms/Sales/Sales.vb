@@ -5036,10 +5036,6 @@ Public Class Sales
         PersistCartState()
 
         Try
-            If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
-                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Navigation", "Navigated from Sales to ProfileSettings")
-            End If
-
             ' Navigate to ProfileSettings form
             isNavigating = True
 

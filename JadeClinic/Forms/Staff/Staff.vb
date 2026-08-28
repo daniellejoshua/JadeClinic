@@ -773,10 +773,6 @@ Public Class Staff
     Private Sub NavigateToProfileSettings()
         ' Navigate to ProfileSettings form (preserve audit and dropdown state).
         Try
-            If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
-                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Navigation", "Navigated from Inventory to ProfileSettings")
-            End If
-
             ' Prevent the form-closing confirmation and hide the dropdown first
             isNavigating = True
             ProfileManager.HideProfileDropdown(Me)

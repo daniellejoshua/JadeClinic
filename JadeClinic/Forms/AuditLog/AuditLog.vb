@@ -8,6 +8,10 @@ Public Class AuditLog
     Private overlayPanel As Panel
     Private isNavigating As Boolean = False
 
+    ' Pagination state
+    Private Const PageSize As Integer = 50
+    Private _currentPage As Integer = 1
+
     Private ReadOnly GoldenYellow As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 254, 191, 16)
     Private ReadOnly RichOlive As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 190, 154, 48)
     Private ReadOnly DeepCharcoal As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 26, 29, 31)
@@ -43,7 +47,7 @@ Public Class AuditLog
         InitializeFilterTypeComboBox()
         InitializeUserAccountsCombo()
 
-        ' Create navigation menu (same style/behavior as SalesRecord)
+        ' Create navigation menu (same style/behavior as other pages)
         CreateNavigationMenu()
 
         InitializeProfileSection()
@@ -52,6 +56,12 @@ Public Class AuditLog
         AddHandler filtertype.SelectedIndexChanged, AddressOf Filters_Changed
         AddHandler Guna2DateTimePicker1.ValueChanged, AddressOf Filters_Changed
         AddHandler Exportbtn.Click, AddressOf Exportbtn_Click
+        If PaginationControl1 IsNot Nothing Then
+            AddHandler PaginationControl1.PageChanged, AddressOf PaginationControl1_PageChanged
+        End If
+        If Guna2Panel1 IsNot Nothing Then
+            AddHandler Guna2Panel1.Resize, AddressOf AlignPaginationToPanel
+        End If
 
         ' Fix DateTimePicker dropdown for hosted forms
         AddHandler Guna2DateTimePicker1.DropDown, AddressOf DateTimePicker_DropDown
@@ -64,6 +74,9 @@ Public Class AuditLog
         Catch ex As Exception
             ' Ignore if control not available or doesn't support Checked
         End Try
+
+        ' Align grid + pagination to the panel (now that the form is maximized and laid out)
+        AlignPaginationToPanel(Nothing, EventArgs.Empty)
 
         ' Load data (with today's date filter active by default)
         Await LoadAuditLogsAsync()
@@ -116,7 +129,7 @@ Public Class AuditLog
     Private Sub Exportbtn_Click(sender As Object, e As EventArgs)
         Try
             Dim selectedFilterType As String = If(filtertype IsNot Nothing AndAlso filtertype.SelectedItem IsNot Nothing,
-                                                  filtertype.SelectedItem.ToString(),
+                                                  StripLeadingEmoji(filtertype.SelectedItem.ToString()),
                                                   "All Logs")
 
             Dim selectedUser As String = If(cmbAccounts IsNot Nothing AndAlso cmbAccounts.SelectedItem IsNot Nothing,
@@ -140,6 +153,8 @@ Public Class AuditLog
     End Sub
 
     Private Async Sub Filters_Changed(sender As Object, e As EventArgs)
+        ' Reset to first page when the filters change.
+        _currentPage = 1
         ' Kick off async refresh but don't block UI
         Await LoadAuditLogsAsync()
     End Sub
@@ -294,10 +309,9 @@ Public Class AuditLog
         filtertype.Items.Clear()
         filtertype.Items.Add("All Logs")
         filtertype.Items.Add("Authentication Events")
-        filtertype.Items.Add("Navigation & Access")
         filtertype.Items.Add("Data Creation")
         filtertype.Items.Add("Data Updates")
-        filtertype.Items.Add("Data Deletion")
+        filtertype.Items.Add("Void Activities")
         filtertype.Items.Add("Export Activities")
         filtertype.Items.Add("Session Management")
         filtertype.Items.Add("System Errors")
@@ -305,12 +319,21 @@ Public Class AuditLog
         filtertype.SelectedIndex = 0
     End Sub
 
+    Private Function StripLeadingEmoji(source As String) As String
+        If String.IsNullOrWhiteSpace(source) Then Return source
+        Dim i As Integer = 0
+        While i < source.Length AndAlso Not Char.IsLetter(source(i))
+            i += 1
+        End While
+        Return source.Substring(i).Trim()
+    End Function
+
     ' Updated signature: added selectedUser filter parameter
-    Private Async Function GetAuditLogsDataAsync(filterType As String, Optional filterDate As DateTime? = Nothing, Optional selectedUser As String = "All Accounts") As Task(Of List(Of Dictionary(Of String, Object)))
+    Private Async Function GetAuditLogsDataAsync(filterType As String, Optional filterDate As DateTime? = Nothing, Optional selectedUser As String = "All Accounts", Optional pageNumber As Integer = 1, Optional pageSize As Integer = PageSize) As Task(Of List(Of Dictionary(Of String, Object)))
         Return Await Task.Run(Function()
                                   Dim auditLogs As New List(Of Dictionary(Of String, Object))()
 
-                                  Dim ft As String = If(filterType, "").Trim().ToLowerInvariant()
+                                  Dim ft As String = StripLeadingEmoji(filterType).Trim().ToLowerInvariant()
 
                                   Dim query As String = "SELECT a.AuditID, u.Username, a.Action, a.Details, a.ActionTime FROM AuditLog a LEFT JOIN Users u ON a.UserID = u.UserID"
                                   Dim whereClauses As New List(Of String)()
@@ -319,15 +342,13 @@ Public Class AuditLog
                                   ' Build filter clauses
                                   Select Case ft
                                       Case "authentication events"
-                                          whereClauses.Add("(LOWER(a.Action) LIKE '%log%' OR LOWER(a.Action) LIKE '%logged%')")
-                                      Case "navigation & access"
-                                          whereClauses.Add("(LOWER(a.Action) LIKE '%navigation%' OR LOWER(a.Action) LIKE '%navigate%' OR LOWER(a.Action) LIKE '%access%')")
+                                          whereClauses.Add("(LOWER(a.Action) LIKE '%login%' OR LOWER(a.Action) LIKE '%logged%' OR LOWER(a.Action) LIKE '%logout%' OR LOWER(a.Action) LIKE '%log in%' OR LOWER(a.Action) LIKE '%log out%' OR LOWER(a.Action) LIKE '%authentication%' OR LOWER(a.Action) LIKE '%password%' OR LOWER(a.Action) LIKE '%passkey%' OR LOWER(a.Action) LIKE '%attempt%' OR LOWER(a.Action) LIKE '%exit%')")
                                       Case "data creation"
                                           whereClauses.Add("(LOWER(a.Action) LIKE '%add%' OR LOWER(a.Action) LIKE '%create%' OR LOWER(a.Action) LIKE '%added%' OR LOWER(a.Action) LIKE '%created%')")
                                       Case "data updates"
                                           whereClauses.Add("(LOWER(a.Action) LIKE '%update%' OR LOWER(a.Action) LIKE '%modify%' OR LOWER(a.Action) LIKE '%edit%' OR LOWER(a.Action) LIKE '%edited%')")
-                                      Case "data deletion"
-                                          whereClauses.Add("(LOWER(a.Action) LIKE '%delete%' OR LOWER(a.Action) LIKE '%remove%' OR LOWER(a.Action) LIKE '%deleted%')")
+                                      Case "void activities"
+                                          whereClauses.Add("(LOWER(a.Action) LIKE '%void%' OR LOWER(a.Action) LIKE '%delete%' OR LOWER(a.Action) LIKE '%remove%' OR LOWER(a.Action) LIKE '%deleted%')")
                                       Case "export activities"
                                           whereClauses.Add("(LOWER(a.Action) LIKE '%export%' OR LOWER(a.Action) LIKE '%report%')")
                                       Case "session management"
@@ -335,11 +356,11 @@ Public Class AuditLog
                                       Case "system errors"
                                           whereClauses.Add("(LOWER(a.Action) LIKE '%error%' OR LOWER(a.Action) LIKE '%failed%' OR LOWER(a.Action) LIKE '%exception%')")
                                       Case "information events"
-                                          whereClauses.Add("LOWER(a.Action) NOT LIKE '%log%' AND LOWER(a.Action) NOT LIKE '%logout%' AND LOWER(a.Action) NOT LIKE '%error%' AND LOWER(a.Action) NOT LIKE '%failed%' AND LOWER(a.Action) NOT LIKE '%navigation%' AND LOWER(a.Action) NOT LIKE '%add%' AND LOWER(a.Action) NOT LIKE '%create%' AND LOWER(a.Action) NOT LIKE '%update%' AND LOWER(a.Action) NOT LIKE '%delete%' AND LOWER(a.Action) NOT LIKE '%export%'")
+                                          whereClauses.Add("LOWER(a.Action) NOT LIKE '%log%' AND LOWER(a.Action) NOT LIKE '%logout%' AND LOWER(a.Action) NOT LIKE '%error%' AND LOWER(a.Action) NOT LIKE '%failed%' AND LOWER(a.Action) NOT LIKE '%navigation%' AND LOWER(a.Action) NOT LIKE '%add%' AND LOWER(a.Action) NOT LIKE '%create%' AND LOWER(a.Action) NOT LIKE '%update%' AND LOWER(a.Action) NOT LIKE '%delete%' AND LOWER(a.Action) NOT LIKE '%void%' AND LOWER(a.Action) NOT LIKE '%exit%' AND LOWER(a.Action) NOT LIKE '%export%'")
                                       Case "all logs", ""
                                           ' no where clause
                                       Case Else
-                                          If ft.StartsWith("authentication") Then whereClauses.Add("(LOWER(a.Action) LIKE '%log%' OR LOWER(a.Action) LIKE '%logged%')")
+                                          If ft.StartsWith("authentication") Then whereClauses.Add("(LOWER(a.Action) LIKE '%login%' OR LOWER(a.Action) LIKE '%logged%' OR LOWER(a.Action) LIKE '%logout%' OR LOWER(a.Action) LIKE '%log in%' OR LOWER(a.Action) LIKE '%log out%' OR LOWER(a.Action) LIKE '%authentication%' OR LOWER(a.Action) LIKE '%password%' OR LOWER(a.Action) LIKE '%passkey%' OR LOWER(a.Action) LIKE '%attempt%' OR LOWER(a.Action) LIKE '%exit%')")
                                   End Select
 
                                   ' Date filter
@@ -361,6 +382,10 @@ Public Class AuditLog
                                   ' Fixed sort (newest first)
                                   query += " ORDER BY a.ActionTime DESC"
 
+                                  ' Paging
+                                  Dim offset As Integer = (pageNumber - 1) * pageSize
+                                  query &= $" LIMIT {pageSize} OFFSET {offset}"
+
                                   Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters.ToArray())
                                       While reader.Read()
                                           Dim auditData As New Dictionary(Of String, Object) From {
@@ -377,6 +402,55 @@ Public Class AuditLog
                                   Return auditLogs
                               End Function)
     End Function
+    Private Async Function CountAuditLogsAsync(filterType As String, Optional filterDate As DateTime? = Nothing, Optional selectedUser As String = "All Accounts") As Task(Of Integer)
+        Return Await Task.Run(Function()
+                                  Dim ft As String = StripLeadingEmoji(filterType).Trim().ToLowerInvariant()
+                                  Dim query As String = "SELECT COUNT(*) FROM AuditLog a LEFT JOIN Users u ON a.UserID = u.UserID"
+                                  Dim whereClauses As New List(Of String)()
+                                  Dim parameters As New List(Of SqlParameter)()
+
+                                  Select Case ft
+                                      Case "authentication events"
+                                          whereClauses.Add("(LOWER(a.Action) LIKE '%login%' OR LOWER(a.Action) LIKE '%logged%' OR LOWER(a.Action) LIKE '%logout%' OR LOWER(a.Action) LIKE '%log in%' OR LOWER(a.Action) LIKE '%log out%' OR LOWER(a.Action) LIKE '%authentication%' OR LOWER(a.Action) LIKE '%password%' OR LOWER(a.Action) LIKE '%passkey%' OR LOWER(a.Action) LIKE '%attempt%' OR LOWER(a.Action) LIKE '%exit%')")
+                                      Case "data creation"
+                                          whereClauses.Add("(LOWER(a.Action) LIKE '%add%' OR LOWER(a.Action) LIKE '%create%' OR LOWER(a.Action) LIKE '%added%' OR LOWER(a.Action) LIKE '%created%')")
+                                      Case "data updates"
+                                          whereClauses.Add("(LOWER(a.Action) LIKE '%update%' OR LOWER(a.Action) LIKE '%modify%' OR LOWER(a.Action) LIKE '%edit%' OR LOWER(a.Action) LIKE '%edited%')")
+                                      Case "void activities"
+                                          whereClauses.Add("(LOWER(a.Action) LIKE '%void%' OR LOWER(a.Action) LIKE '%delete%' OR LOWER(a.Action) LIKE '%remove%' OR LOWER(a.Action) LIKE '%deleted%')")
+                                      Case "export activities"
+                                          whereClauses.Add("(LOWER(a.Action) LIKE '%export%' OR LOWER(a.Action) LIKE '%report%')")
+                                      Case "session management"
+                                          whereClauses.Add("(LOWER(a.Action) LIKE '%session%' OR LOWER(a.Action) LIKE '%pin%' OR LOWER(a.Action) LIKE '%timeout%')")
+                                      Case "system errors"
+                                          whereClauses.Add("(LOWER(a.Action) LIKE '%error%' OR LOWER(a.Action) LIKE '%failed%' OR LOWER(a.Action) LIKE '%exception%')")
+                                      Case "information events"
+                                          whereClauses.Add("LOWER(a.Action) NOT LIKE '%log%' AND LOWER(a.Action) NOT LIKE '%logout%' AND LOWER(a.Action) NOT LIKE '%error%' AND LOWER(a.Action) NOT LIKE '%failed%' AND LOWER(a.Action) NOT LIKE '%navigation%' AND LOWER(a.Action) NOT LIKE '%add%' AND LOWER(a.Action) NOT LIKE '%create%' AND LOWER(a.Action) NOT LIKE '%update%' AND LOWER(a.Action) NOT LIKE '%delete%' AND LOWER(a.Action) NOT LIKE '%void%' AND LOWER(a.Action) NOT LIKE '%exit%' AND LOWER(a.Action) NOT LIKE '%export%'")
+                                  End Select
+
+                                  If filterDate.HasValue Then
+                                      whereClauses.Add("DATE(a.ActionTime) = @FilterDate")
+                                      parameters.Add(New SqlParameter("@FilterDate", filterDate.Value.Date.ToString("yyyy-MM-dd")))
+                                  End If
+
+                                  If Not String.IsNullOrWhiteSpace(selectedUser) AndAlso selectedUser <> "All Accounts" Then
+                                      whereClauses.Add("u.Username = @Username")
+                                      parameters.Add(New SqlParameter("@Username", selectedUser))
+                                  End If
+
+                                  If whereClauses.Count > 0 Then
+                                      query += " WHERE " & String.Join(" AND ", whereClauses)
+                                  End If
+
+                                  Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters.ToArray())
+                                      If reader.Read() Then
+                                          Return Convert.ToInt32(reader(0))
+                                      End If
+                                  End Using
+                                  Return 0
+                              End Function)
+    End Function
+
     Private Async Function LoadAuditLogsAsync() As Task
         Try
             ' Show inline loading label on DataGridView
@@ -393,7 +467,15 @@ Public Class AuditLog
                 selectedUser = cmbAccounts.SelectedItem.ToString()
             End If
 
-            Dim results = Await GetAuditLogsDataAsync(selectedFilterType, filterDate, selectedUser)
+            ' Fetch the total count (for pagination) and just the current page.
+            Dim totalCount As Integer = Await CountAuditLogsAsync(selectedFilterType, filterDate, selectedUser)
+            Dim results = Await GetAuditLogsDataAsync(selectedFilterType, filterDate, selectedUser, _currentPage, PageSize)
+
+            ' Configure pagination (clamps current page if it exceeds total pages)
+            If PaginationControl1 IsNot Nothing Then
+                PaginationControl1.Configure(totalCount, PageSize, _currentPage)
+                _currentPage = PaginationControl1.CurrentPage
+            End If
 
             ' Remove any existing no-records label
             Dim existingLbl = Me.Controls.OfType(Of Label)().FirstOrDefault(Function(l) l.Name = "lblNoAuditLogs")
@@ -452,7 +534,7 @@ Public Class AuditLog
     End Function ' Map action text to emoji + short label for grid
     Private Function GetActionType(action As String) As String
         Dim a As String = If(action, "").ToLowerInvariant()
-        If a.Contains("login") OrElse a.Contains("logout") OrElse a.Contains("logged") Then
+        If a.Contains("login") OrElse a.Contains("logged") OrElse a.Contains("logout") OrElse a.Contains("authentication") OrElse a.Contains("password") OrElse a.Contains("passkey") OrElse a.Contains("attempt") OrElse a.Contains("exit") Then
             Return Char.ConvertFromUtf32(&H1F511) & " AUTH"
         ElseIf a.Contains("navigation") OrElse a.Contains("access") OrElse a.Contains("view") Then
             Return Char.ConvertFromUtf32(&H1F9ED) & " NAV"
@@ -460,8 +542,8 @@ Public Class AuditLog
             Return ChrW(&H2795) & " CREATE"
         ElseIf a.Contains("update") OrElse a.Contains("modify") OrElse a.Contains("edit") OrElse a.Contains("edited") Then
             Return Char.ConvertFromUtf32(&H1F504) & " UPDATE"
-        ElseIf a.Contains("delete") OrElse a.Contains("remove") OrElse a.Contains("deleted") Then
-            Return Char.ConvertFromUtf32(&H1F5D1) & " DELETE"
+        ElseIf a.Contains("void") OrElse a.Contains("delete") OrElse a.Contains("remove") OrElse a.Contains("deleted") Then
+            Return Char.ConvertFromUtf32(&H1F6AB) & " VOID"
         ElseIf a.Contains("export") OrElse a.Contains("report") Then
             Return Char.ConvertFromUtf32(&H1F4E4) & " EXPORT"
         ElseIf a.Contains("error") OrElse a.Contains("failed") Then
@@ -480,7 +562,7 @@ Public Class AuditLog
     Private Function GetActionTypeColor(action As String) As Color
         Dim a As String = If(action, "").ToLowerInvariant()
 
-        If a.Contains("login") OrElse a.Contains("logout") OrElse a.Contains("logged") Then
+        If a.Contains("login") OrElse a.Contains("logout") OrElse a.Contains("logged") OrElse a.Contains("authentication") OrElse a.Contains("password") OrElse a.Contains("passkey") OrElse a.Contains("attempt") OrElse a.Contains("exit") Then
             Return Color.FromArgb(52, 152, 219)      ' Blue - Auth
         ElseIf a.Contains("navigation") OrElse a.Contains("access") OrElse a.Contains("view") Then
             Return Color.FromArgb(155, 89, 182)      ' Purple - Navigation
@@ -488,8 +570,8 @@ Public Class AuditLog
             Return Color.FromArgb(46, 204, 113)      ' Green - Create
         ElseIf a.Contains("update") OrElse a.Contains("modify") OrElse a.Contains("edit") OrElse a.Contains("edited") Then
             Return Color.FromArgb(212, 172, 13)      ' Dark gold - Update
-        ElseIf a.Contains("delete") OrElse a.Contains("remove") OrElse a.Contains("deleted") Then
-            Return Color.FromArgb(231, 76, 60)       ' Red - Delete
+        ElseIf a.Contains("void") OrElse a.Contains("delete") OrElse a.Contains("remove") OrElse a.Contains("deleted") Then
+            Return Color.FromArgb(231, 76, 60)       ' Red - Void/Delete
         ElseIf a.Contains("export") OrElse a.Contains("report") Then
             Return Color.FromArgb(26, 188, 156)      ' Teal - Export
         ElseIf a.Contains("error") OrElse a.Contains("failed") Then
@@ -505,123 +587,17 @@ Public Class AuditLog
         End If
     End Function
 
-    ' Navigation menu (copied/styled same as SalesRecord.CreateNavigationMenu)
+    ' Insert these methods inside the AuditLog class
     Private Sub CreateNavigationMenu()
         NavigationBuilder.Build(DashboardPanel, Me, "AuditLog")
     End Sub
-    Private Sub NavSalesRecords_Click(sender As Object, e As EventArgs)
-        Try
-            isNavigating = True
-            Dim salesRecordForm As New SalesRecord()
-            salesRecordForm.Show()
-            Me.Close()
-        Catch ex As Exception
-            isNavigating = False
-            MessageBox.Show($"Unable to open Sales Records: {ex.Message}", "Navigation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-        End Try
-    End Sub
-    Private Function CreateLargeNavButton(text As String, yPosition As Integer, isActive As Boolean, buttonWidth As Integer, buttonHeight As Integer) As Guna.UI2.WinForms.Guna2Button
-        Dim btn As New Guna.UI2.WinForms.Guna2Button()
-        btn.Text = text
-        btn.Size = New System.Drawing.Size(buttonWidth, buttonHeight)
-        btn.Location = New Point(20, yPosition)
-        btn.BorderRadius = 12
-        btn.Font = New Font("Poppins", 10, FontStyle.Regular)
-        btn.TextAlign = HorizontalAlignment.Left
 
-        btn.FillColor = If(isActive, System.Drawing.Color.FromArgb(254, 191, 16), System.Drawing.Color.Transparent)
-        btn.ForeColor = If(isActive, System.Drawing.Color.FromArgb(26, 29, 31), System.Drawing.Color.White)
-        btn.BorderThickness = If(isActive, 0, 1)
-        btn.BorderColor = If(isActive, System.Drawing.Color.Transparent, System.Drawing.Color.FromArgb(80, 80, 80))
-        btn.BackColor = System.Drawing.Color.Transparent
-        btn.Cursor = Cursors.Hand
-
-        btn.ShadowDecoration.Enabled = True
-        btn.ShadowDecoration.Color = System.Drawing.Color.FromArgb(30, 30, 30)
-        btn.ShadowDecoration.Depth = 4
-
-        AddHandler btn.MouseEnter, Sub()
-                                       If Not isActive Then
-                                           btn.FillColor = System.Drawing.Color.FromArgb(48, 52, 54)
-                                           btn.BorderColor = System.Drawing.Color.FromArgb(254, 191, 16)
-                                           btn.Font = New Font("Poppins", 9, FontStyle.Bold)
-
-                                       End If
-                                   End Sub
-        AddHandler btn.MouseLeave, Sub()
-                                       If Not isActive Then
-                                           btn.FillColor = System.Drawing.Color.Transparent
-                                           btn.BorderColor = System.Drawing.Color.FromArgb(80, 80, 80)
-                                           btn.Font = New Font("Poppins", 10, FontStyle.Regular)
-                                       End If
-                                   End Sub
-
-        DashboardPanel.Controls.Add(btn)
-        Return btn
-    End Function
-
-    ' Navigation handlers
-    Private Sub NavDashboard_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        Dashboard.Show()
-        Me.Close()
-    End Sub
-
-    Private Sub NavPOS_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        Sales.Show()
-        Me.Close()
-    End Sub
-
-    Private Sub NavInventory_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        Inventory.Show()
-        Me.Close()
-    End Sub
-
-    Private Sub NavInventoryLog_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        InventoryLog.Show()
-        Me.Close()
-    End Sub
-
-    Private Sub NavStaff_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        Staff.Show()
-        Me.Close()
-    End Sub
-
-    Private Sub NavSystemSettings_Click(sender As Object, e As EventArgs)
-        isNavigating = True
-        Sys.Show()
-        Me.Close()
-    End Sub
-
-    Private Sub NavAuditLog_Click(sender As Object, e As EventArgs)
-        ' already on this form; keep focus
-    End Sub
-
-    Private Sub NavSuppliers_Click(sender As Object, e As EventArgs)
-        Try
-            isNavigating = True
-            Supplier.Show()
-            Me.Close()
-        Catch ex As Exception
-            isNavigating = False
-            MessageBox.Show($"Unable to open Suppliers: {ex.Message}", "Navigation Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-        End Try
-    End Sub
-    ' Insert these methods inside the AuditLog class
     Private Sub InitializeProfileSection()
         ProfileManager.InitializeProfile(Me, lblUsername, Guna2CirclePictureBox5, AddressOf NavigateToProfileSettings)
     End Sub
 
     Private Sub NavigateToProfileSettings()
         Try
-            If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
-                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Navigation", "Navigated from AuditLog to ProfileSettings")
-            End If
-
             isNavigating = True
             ProfileManager.HideProfileDropdown(Me)
 
@@ -721,5 +697,23 @@ Public Class AuditLog
             End Try
             loadingLabel = Nothing
         End If
+    End Sub
+
+    Private Async Sub PaginationControl1_PageChanged(page As Integer)
+        _currentPage = page
+        Await LoadAuditLogsAsync()
+    End Sub
+
+    Private Sub AlignPaginationToPanel(sender As Object, e As EventArgs)
+        If PaginationControl1 Is Nothing OrElse Guna2Panel1 Is Nothing OrElse InventoryLogDataGrid Is Nothing Then Return
+
+        ' Pagination anchored to the bottom of the panel.
+        PaginationControl1.Width = Guna2Panel1.Width - 8
+        PaginationControl1.Location = New Point(4, Guna2Panel1.Height - PaginationControl1.Height - 10)
+
+        ' Grid fills the panel above the pagination.
+        InventoryLogDataGrid.Width = Guna2Panel1.Width - 8
+        InventoryLogDataGrid.Location = New Point(8, 72)
+        InventoryLogDataGrid.Height = PaginationControl1.Top - InventoryLogDataGrid.Top - 6
     End Sub
 End Class

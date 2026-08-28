@@ -473,9 +473,6 @@ Public Class Supplier
 
     Private Sub NavigateToProfileSettings()
         Try
-            If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
-                Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Navigation", "Navigated from Supplier to ProfileSettings")
-            End If
             isNavigating = True
             Dim profileForm As New ProfileSettings()
             profileForm.StartPosition = FormStartPosition.CenterScreen

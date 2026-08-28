@@ -31,15 +31,13 @@ Public Class AuditExporter
             Dim ft As String = If(filterType, "").Trim().ToLowerInvariant()
             Select Case ft
                 Case "authentication events"
-                    whereClauses.Add("(LOWER(a.Action) LIKE '%log%' OR LOWER(a.Action) LIKE '%logged%')")
-                Case "navigation & access"
-                    whereClauses.Add("(LOWER(a.Action) LIKE '%navigation%' OR LOWER(a.Action) LIKE '%navigate%' OR LOWER(a.Action) LIKE '%access%')")
+                    whereClauses.Add("(LOWER(a.Action) LIKE '%login%' OR LOWER(a.Action) LIKE '%logged%' OR LOWER(a.Action) LIKE '%logout%' OR LOWER(a.Action) LIKE '%log in%' OR LOWER(a.Action) LIKE '%log out%' OR LOWER(a.Action) LIKE '%authentication%' OR LOWER(a.Action) LIKE '%password%' OR LOWER(a.Action) LIKE '%passkey%' OR LOWER(a.Action) LIKE '%attempt%' OR LOWER(a.Action) LIKE '%exit%')")
                 Case "data creation"
                     whereClauses.Add("(LOWER(a.Action) LIKE '%add%' OR LOWER(a.Action) LIKE '%create%' OR LOWER(a.Action) LIKE '%added%' OR LOWER(a.Action) LIKE '%created%')")
                 Case "data updates"
                     whereClauses.Add("(LOWER(a.Action) LIKE '%update%' OR LOWER(a.Action) LIKE '%modify%' OR LOWER(a.Action) LIKE '%edit%' OR LOWER(a.Action) LIKE '%edited%')")
-                Case "data deletion"
-                    whereClauses.Add("(LOWER(a.Action) LIKE '%delete%' OR LOWER(a.Action) LIKE '%remove%' OR LOWER(a.Action) LIKE '%deleted%')")
+                Case "void activities"
+                    whereClauses.Add("(LOWER(a.Action) LIKE '%void%' OR LOWER(a.Action) LIKE '%delete%' OR LOWER(a.Action) LIKE '%remove%' OR LOWER(a.Action) LIKE '%deleted%')")
                 Case "export activities"
                     whereClauses.Add("(LOWER(a.Action) LIKE '%export%' OR LOWER(a.Action) LIKE '%report%')")
                 Case "session management"
@@ -47,12 +45,12 @@ Public Class AuditExporter
                 Case "system errors"
                     whereClauses.Add("(LOWER(a.Action) LIKE '%error%' OR LOWER(a.Action) LIKE '%failed%' OR LOWER(a.Action) LIKE '%exception%')")
                 Case "information events"
-                    whereClauses.Add("LOWER(a.Action) NOT LIKE '%log%' AND LOWER(a.Action) NOT LIKE '%logout%' AND LOWER(a.Action) NOT LIKE '%error%' AND LOWER(a.Action) NOT LIKE '%failed%' AND LOWER(a.Action) NOT LIKE '%navigation%' AND LOWER(a.Action) NOT LIKE '%add%' AND LOWER(a.Action) NOT LIKE '%create%' AND LOWER(a.Action) NOT LIKE '%update%' AND LOWER(a.Action) NOT LIKE '%delete%' AND LOWER(a.Action) NOT LIKE '%export%'")
+                    whereClauses.Add("LOWER(a.Action) NOT LIKE '%log%' AND LOWER(a.Action) NOT LIKE '%logout%' AND LOWER(a.Action) NOT LIKE '%error%' AND LOWER(a.Action) NOT LIKE '%failed%' AND LOWER(a.Action) NOT LIKE '%navigation%' AND LOWER(a.Action) NOT LIKE '%add%' AND LOWER(a.Action) NOT LIKE '%create%' AND LOWER(a.Action) NOT LIKE '%update%' AND LOWER(a.Action) NOT LIKE '%delete%' AND LOWER(a.Action) NOT LIKE '%void%' AND LOWER(a.Action) NOT LIKE '%exit%' AND LOWER(a.Action) NOT LIKE '%export%'")
                 Case "all logs", ""
                     ' no filter
                 Case Else
                     If ft.StartsWith("authentication") Then
-                        whereClauses.Add("(LOWER(a.Action) LIKE '%log%' OR LOWER(a.Action) LIKE '%logged%')")
+                        whereClauses.Add("(LOWER(a.Action) LIKE '%login%' OR LOWER(a.Action) LIKE '%logged%' OR LOWER(a.Action) LIKE '%logout%' OR LOWER(a.Action) LIKE '%log in%' OR LOWER(a.Action) LIKE '%log out%' OR LOWER(a.Action) LIKE '%authentication%' OR LOWER(a.Action) LIKE '%password%' OR LOWER(a.Action) LIKE '%passkey%' OR LOWER(a.Action) LIKE '%attempt%' OR LOWER(a.Action) LIKE '%exit%')")
                     End If
             End Select
 
@@ -143,7 +141,7 @@ Public Class AuditExporter
         Dim navCount As Integer = logs.Where(Function(x) GetActionTypeLabel(x.Action) = "NAV").Count()
         Dim createCount As Integer = logs.Where(Function(x) GetActionTypeLabel(x.Action) = "CREATE").Count()
         Dim updateCount As Integer = logs.Where(Function(x) GetActionTypeLabel(x.Action) = "UPDATE").Count()
-        Dim deleteCount As Integer = logs.Where(Function(x) GetActionTypeLabel(x.Action) = "DELETE").Count()
+        Dim deleteCount As Integer = logs.Where(Function(x) GetActionTypeLabel(x.Action) = "VOID").Count()
         Dim errorCount As Integer = logs.Where(Function(x) GetActionTypeLabel(x.Action) = "ERROR").Count()
 
         Document.Create(Sub(container)
@@ -198,7 +196,7 @@ Public Class AuditExporter
                                                                                         c.Item().PaddingTop(10).Border(1).BorderColor(Colors.Grey.Lighten2).Background(Colors.Grey.Lighten5).Padding(8).Column(Sub(summary)
                                                                                                                                                                                                                    summary.Item().Text("AUDIT SUMMARY").SemiBold().FontSize(10).FontColor(Colors.Grey.Darken3)
                                                                                                                                                                                                                    summary.Item().Text($"Total Records: {totalCount}").FontSize(9)
-                                                                                                                                                                                                                   summary.Item().Text($"AUTH: {authCount} | NAV: {navCount} | CREATE: {createCount} | UPDATE: {updateCount} | DELETE: {deleteCount} | ERROR: {errorCount}").FontSize(9)
+                                                                                                                                                                                                                    summary.Item().Text($"AUTH: {authCount} | NAV: {navCount} | CREATE: {createCount} | UPDATE: {updateCount} | VOID: {deleteCount} | ERROR: {errorCount}").FontSize(9)
                                                                                                                                                                                                                End Sub)
                                                                                     End Sub)
 
@@ -214,7 +212,7 @@ Public Class AuditExporter
 
     Private Shared Function GetActionTypeLabel(action As String) As String
         Dim a As String = If(action, "").ToLowerInvariant()
-        If a.Contains("login") OrElse a.Contains("logout") OrElse a.Contains("logged") Then
+        If a.Contains("login") OrElse a.Contains("logged") OrElse a.Contains("logout") OrElse a.Contains("authentication") OrElse a.Contains("password") OrElse a.Contains("passkey") OrElse a.Contains("attempt") OrElse a.Contains("exit") Then
             Return "AUTH"
         ElseIf a.Contains("navigation") OrElse a.Contains("access") OrElse a.Contains("view") Then
             Return "NAV"
@@ -222,8 +220,8 @@ Public Class AuditExporter
             Return "CREATE"
         ElseIf a.Contains("update") OrElse a.Contains("modify") OrElse a.Contains("edit") OrElse a.Contains("edited") Then
             Return "UPDATE"
-        ElseIf a.Contains("delete") OrElse a.Contains("remove") OrElse a.Contains("deleted") Then
-            Return "DELETE"
+        ElseIf a.Contains("void") OrElse a.Contains("delete") OrElse a.Contains("remove") OrElse a.Contains("deleted") Then
+            Return "VOID"
         ElseIf a.Contains("export") OrElse a.Contains("report") Then
             Return "EXPORT"
         ElseIf a.Contains("error") OrElse a.Contains("failed") Then
@@ -249,7 +247,7 @@ Public Class AuditExporter
                 Return Colors.Green.Medium
             Case "UPDATE"
                 Return Colors.Orange.Medium
-            Case "DELETE"
+            Case "VOID"
                 Return Colors.Red.Medium
             Case "EXPORT"
                 Return Colors.Indigo.Medium
