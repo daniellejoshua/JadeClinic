@@ -33,15 +33,54 @@ Public Class ReceiptData
 End Class
 
 Public Module ReceiptRenderer
-    ' Draws the receipt page using the same layout as the Sales Record "eye"
-    ' view: Arial fonts, real peso sign, two-column customer block.
+    ' Const value used to give the receipt a consistent paper width (in pixels)
+    ' that all previews render at. Content is laid out at its natural size and
+    ' the image is as tall as the content requires, so nothing gets cut off.
+    Public Const ReceiptWidth As Integer = 300
+
+    ' Draws the receipt at its natural layout (no scaling, no clipping). The
+    ' image can grow taller than a page when there are many line items.
     Public Sub DrawReceipt(g As Graphics, marginBounds As Rectangle, data As ReceiptData)
         Try
             If data Is Nothing Then
                 g.DrawString("No receipt data available.", New Font("Arial", 10), Brushes.Black, 10, 10)
                 Return
             End If
+            DrawReceiptLayout(g, marginBounds, data)
+        Catch ex As Exception
+            g.DrawString($"Receipt render error: {ex.Message}", New Font("Arial", 10), Brushes.Black, 10, 10)
+        End Try
+    End Sub
 
+    ' Renders the full receipt (header, all items, footer) onto a bitmap whose
+    ' height is exactly the content height. Used by scrollable previews so the
+    ' layout stays fixed and the footer is never cut off, no matter how many
+    ' line items there are.
+    Public Function RenderReceiptToBitmap(data As ReceiptData, Optional width As Integer = ReceiptWidth) As Bitmap
+        ' First pass: measure the natural content height.
+        Dim usedHeight As Integer = ReceiptWidth
+        Using measureG = Graphics.FromImage(New Bitmap(1, 1))
+            usedHeight = CInt(DrawReceiptLayoutMeasure(measureG, New Rectangle(0, 0, width, 1000000), data))
+        End Using
+        If usedHeight < 100 Then usedHeight = 100
+
+        Dim bmp As Bitmap = New Bitmap(width, usedHeight)
+        Using g As Graphics = Graphics.FromImage(bmp)
+            g.Clear(Color.White)
+            g.TextRenderingHint = Drawing.Text.TextRenderingHint.AntiAlias
+            DrawReceiptLayout(g, New Rectangle(0, 0, width, usedHeight), data)
+        End Using
+        Return bmp
+    End Function
+
+    ' Measures the natural height without drawing anything on the target.
+    Private Function DrawReceiptLayoutMeasure(g As Graphics, marginBounds As Rectangle, data As ReceiptData) As Single
+        Return DrawReceiptLayout(g, marginBounds, data)
+    End Function
+
+
+    Private Function DrawReceiptLayout(g As Graphics, marginBounds As Rectangle, data As ReceiptData) As Single
+        Try
             Dim regularFont As New Font("Arial", 8)
             Dim boldFont As New Font("Arial", 10, FontStyle.Bold)
             Dim headerFont As New Font("Arial", 12, FontStyle.Bold)
@@ -56,6 +95,9 @@ Public Module ReceiptRenderer
             Dim leftColX As Integer = marginLeft
             Dim rightColX As Integer = marginLeft + colWidth + colGap
             Dim peso As String = ChrW(&H20B1)
+
+            ' Separator line: a long run of "=" that spans the content width.
+            Dim separator As String = New String("="c, Math.Max(45, CInt(contentWidth / g.MeasureString("=", regularFont).Width)))
 
             ' Company header
             Dim cm As CompanySettingsManager = CompanySettingsManager.Instance
@@ -95,7 +137,7 @@ Public Module ReceiptRenderer
                 yPosition += 14
             End If
 
-            g.DrawString(New String("="c, Math.Min(36, CInt(contentWidth / 6))), regularFont, brush, marginLeft, yPosition)
+            g.DrawString(separator, regularFont, brush, marginLeft, yPosition)
             yPosition += 16
 
             ' Document title and metadata
@@ -119,7 +161,7 @@ Public Module ReceiptRenderer
             g.DrawString($"Email: {data.CustomerEmail}", regularFont, brush, rightColX, yPosition)
             yPosition += 14
 
-            g.DrawString(New String("="c, Math.Min(36, CInt(contentWidth / 6))), regularFont, brush, marginLeft, yPosition)
+            g.DrawString(separator, regularFont, brush, marginLeft, yPosition)
             yPosition += 14
 
             ' Items
@@ -128,10 +170,12 @@ Public Module ReceiptRenderer
                 yPosition += 12
                 g.DrawString($"@ {peso}{item.UnitVatInc:F2}", regularFont, brush, marginLeft + 8, yPosition)
                 g.DrawString($"{peso}{item.LineTotal:F2}", regularFont, brush, CSng(marginBounds.Right - g.MeasureString($"{peso}{item.LineTotal:F2}", regularFont).Width), CSng(yPosition))
+                ' Padding between line items so the list reads more cleanly.
                 yPosition += 15
+                yPosition += 4
             Next
 
-            g.DrawString(New String("="c, Math.Min(36, CInt(contentWidth / 6))), regularFont, brush, marginLeft, yPosition)
+            g.DrawString(separator, regularFont, brush, marginLeft, yPosition)
             yPosition += 14
 
             ' VAT / totals
@@ -155,7 +199,7 @@ Public Module ReceiptRenderer
             g.DrawString($"{peso}{data.VatAmount:F2}", regularFont, brush, CSng(marginBounds.Right - g.MeasureString($"{peso}{data.VatAmount:F2}", regularFont).Width), CSng(yPosition))
             yPosition += 12
 
-            g.DrawString(New String("="c, Math.Min(36, CInt(contentWidth / 6))), regularFont, brush, marginLeft, yPosition)
+            g.DrawString(separator, regularFont, brush, marginLeft, yPosition)
             yPosition += 12
 
             g.DrawString("TOTAL AMOUNT DUE:", boldFont, brush, marginLeft, yPosition)
@@ -176,13 +220,13 @@ Public Module ReceiptRenderer
             g.DrawString($"Change: {peso}{data.Change:F2}", regularFont, brush, marginLeft, yPosition)
             yPosition += 14
 
-            g.DrawString(New String("="c, Math.Min(36, CInt(contentWidth / 6))), regularFont, brush, marginLeft, yPosition)
+            g.DrawString(separator, regularFont, brush, marginLeft, yPosition)
             yPosition += 12
             g.DrawString($"BIR Authority to Print No.: {birAuthNumber}", regularFont, brush, marginLeft, yPosition)
             yPosition += 12
             g.DrawString($"PTU No.: {ptuNumber}", regularFont, brush, marginLeft, yPosition)
             yPosition += 12
-            g.DrawString(New String("="c, Math.Min(36, CInt(contentWidth / 6))), regularFont, brush, marginLeft, yPosition)
+            g.DrawString(separator, regularFont, brush, marginLeft, yPosition)
             yPosition += 12
 
             Dim footerLines() As String = footerMessage.Split({vbCrLf, vbLf}, StringSplitOptions.RemoveEmptyEntries)
@@ -191,13 +235,18 @@ Public Module ReceiptRenderer
                 yPosition += 12
             Next
 
+            ' Bottom margin so the footer does not sit flush against the edge.
+            yPosition += 16
+
             regularFont.Dispose()
             boldFont.Dispose()
             headerFont.Dispose()
             sectionHeaderFont.Dispose()
             brush.Dispose()
+            Return yPosition
         Catch ex As Exception
             g.DrawString($"Receipt render error: {ex.Message}", New Font("Arial", 10), Brushes.Black, 10, 10)
+            Return 0
         End Try
-    End Sub
+    End Function
 End Module

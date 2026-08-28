@@ -12,8 +12,8 @@ Public Class EscPosPreviewForm
     Private ReadOnly _printerName As String
     Private ReadOnly _lines As List(Of EscPosPrinter.EscLine)
     Private ReadOnly _data As ReceiptData
-    Private _preview As PrintPreviewControl
-    Private _doc As PrintDocument
+    Private _scrollPanel As Panel
+    Private _preview As PictureBox
     Private WithEvents btnPrint As Button
     Private WithEvents btnClose As Button
 
@@ -32,23 +32,32 @@ Public Class EscPosPreviewForm
         Me.MinimizeBox = False
         Me.ShowInTaskbar = False
         Me.ClientSize = New Size(380, 660)
-        Me.BackColor = Color.FromArgb(26, 29, 31)
+        Me.BackColor = Color.White
         Me.KeyPreview = True
 
-        ' Page preview (same style as the Sales Record eye view)
-        _preview = New PrintPreviewControl() With {
+        ' Scrollable receipt preview: the receipt is rendered onto a bitmap at
+        ' its full natural height, and shown in a scrollable picture. The layout
+        ' stays fixed and nothing is ever cut off, even with many line items.
+        _scrollPanel = New Panel() With {
             .Dock = DockStyle.Fill,
-            .AutoZoom = True,
-            .Zoom = 1.0,
-            .UseAntiAlias = True
+            .AutoScroll = True,
+            .BackColor = Color.White
         }
-        Me.Controls.Add(_preview)
-        _preview.BringToFront()
+        Me.Controls.Add(_scrollPanel)
+        _scrollPanel.BringToFront()
+
+        _preview = New PictureBox() With {
+            .SizeMode = PictureBoxSizeMode.Normal,
+            .Location = New Point(0, 0),
+            .BackColor = Color.White
+        }
+        _scrollPanel.Controls.Add(_preview)
+        AddHandler _scrollPanel.Resize, AddressOf RebuildReceipt
 
         Dim bottomPanel As New Panel() With {
             .Dock = DockStyle.Bottom,
             .Height = 60,
-            .BackColor = Color.FromArgb(43, 47, 50)
+            .BackColor = Color.FromArgb(249, 249, 249)
         }
         Me.Controls.Add(bottomPanel)
         bottomPanel.BringToFront()
@@ -67,8 +76,8 @@ Public Class EscPosPreviewForm
         btnClose.Text = "Close"
         btnClose.Location = New Point(220, 12)
         btnClose.Size = New Size(110, 38)
-        btnClose.BackColor = Color.FromArgb(61, 65, 69)
-        btnClose.ForeColor = Color.White
+        btnClose.BackColor = Color.FromArgb(240, 240, 240)
+        btnClose.ForeColor = Color.FromArgb(51, 51, 51)
         btnClose.FlatStyle = FlatStyle.Flat
         btnClose.Font = New Font("Segoe UI", 10.0F)
         bottomPanel.Controls.Add(btnClose)
@@ -76,27 +85,25 @@ Public Class EscPosPreviewForm
         Me.AcceptButton = btnPrint
         AddHandler Me.KeyDown, AddressOf OnPreviewFormKeyDown
 
-        ' Build the receipt page the same way as the Sales Record eye view
-        ' (300x700 GDI page), so the preview looks identical on both forms.
-        Try
-            _doc = New PrintDocument()
-            _doc.DefaultPageSettings.PaperSize = New PaperSize("Receipt", 300, 700)
-            _doc.DefaultPageSettings.Margins = New Margins(10, 10, 10, 10)
-            AddHandler _doc.PrintPage, AddressOf RenderReceiptPage
-            _preview.Document = _doc
-            _preview.InvalidatePreview()
-        Catch ex As Exception
-            Console.WriteLine($"Receipt preview setup error: {ex.Message}")
-        End Try
+        ' Render the receipt at the full width of the window so there is no
+        ' empty space, laid out at natural size and scrollable when tall.
+        RebuildReceipt(_scrollPanel, EventArgs.Empty)
     End Sub
 
-    ' Draw the receipt page with the shared GDI renderer (the exact same look
-    ' as the Sales Record "eye" view).
-    Private Sub RenderReceiptPage(sender As Object, e As PrintPageEventArgs)
+    Private Sub RebuildReceipt(sender As Object, e As EventArgs)
+        If _scrollPanel Is Nothing OrElse _data Is Nothing Then Return
+        ' Use the full width of the panel (with a small inset so it still reads
+        ' as a paper slip), capping so it never collapses below a sane width.
+        Dim paperWidth As Integer = Math.Max(200, _scrollPanel.ClientSize.Width - 8)
         Try
-            ReceiptRenderer.DrawReceipt(e.Graphics, e.MarginBounds, _data)
+            Dim bmp As Bitmap = ReceiptRenderer.RenderReceiptToBitmap(_data, paperWidth)
+            If _preview.Image IsNot Nothing Then _preview.Image.Dispose()
+            _preview.Image = bmp
+            _preview.Size = bmp.Size
+            _preview.Left = 4
+            _preview.Top = 4
         Catch ex As Exception
-            e.Graphics.DrawString($"Preview render error: {ex.Message}", New Font("Arial", 10), Brushes.Black, 10, 10)
+            Console.WriteLine($"Receipt preview error: {ex.Message}")
         End Try
     End Sub
 

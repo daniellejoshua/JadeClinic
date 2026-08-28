@@ -5,8 +5,8 @@ Imports System.Drawing.Printing
 Public Class SalesDetails
     Private ReadOnly _saleId As Integer
     Private txtReceipt As TextBox
-    Private receiptPreview As PrintPreviewControl
-    Private receiptDocument As PrintDocument
+    Private receiptScrollPanel As Panel
+    Private receiptPreview As PictureBox
 
     Private saleRecord As Dictionary(Of String, Object) = Nothing
     Private saleItems As New List(Of Dictionary(Of String, Object))()
@@ -104,26 +104,45 @@ Public Class SalesDetails
             txtReceipt.Visible = False
         End If
 
-        If receiptPreview Is Nothing Then
-            receiptPreview = New PrintPreviewControl() With {
+        If receiptScrollPanel Is Nothing Then
+            receiptScrollPanel = New Panel() With {
                 .Dock = DockStyle.Fill,
-                .Zoom = 1.0,
-                .AutoZoom = True,
-                .UseAntiAlias = True
+                .AutoScroll = True
             }
-            Me.Controls.Add(receiptPreview)
-            receiptPreview.BringToFront()
+            Me.Controls.Add(receiptScrollPanel)
+            receiptScrollPanel.BringToFront()
         End If
 
-        If receiptDocument Is Nothing Then
-            receiptDocument = New PrintDocument()
-            receiptDocument.DefaultPageSettings.PaperSize = New PaperSize("Receipt", 300, 700)
-            receiptDocument.DefaultPageSettings.Margins = New Margins(10, 10, 10, 10)
-            AddHandler receiptDocument.PrintPage, AddressOf ReceiptDocument_PrintPage
+        If receiptPreview Is Nothing Then
+            receiptPreview = New PictureBox() With {
+                .SizeMode = PictureBoxSizeMode.Normal,
+                .Location = New Point(0, 0),
+                .BackColor = Color.White
+            }
+            receiptScrollPanel.Controls.Add(receiptPreview)
+            AddHandler receiptScrollPanel.Resize, AddressOf RebuildReceipt
         End If
 
-        receiptPreview.Document = receiptDocument
-        receiptPreview.InvalidatePreview()
+        ' Render the full-width, full-natural-height receipt so the preview
+        ' scrolls instead of shrinking or clipping the footer, even with many
+        ' line items.
+        RebuildReceipt(receiptScrollPanel, EventArgs.Empty)
+    End Sub
+
+    Private Sub RebuildReceipt(sender As Object, e As EventArgs)
+        If receiptScrollPanel Is Nothing OrElse saleRecord Is Nothing Then Return
+        Dim panelWidth As Integer = Math.Max(200, receiptScrollPanel.ClientSize.Width - 8)
+        Try
+            ' Keep the full width even if the panel was previously sized.
+            Dim bmp As Bitmap = ReceiptRenderer.RenderReceiptToBitmap(BuildReceiptData(), panelWidth)
+            If receiptPreview.Image IsNot Nothing Then receiptPreview.Image.Dispose()
+            receiptPreview.Image = bmp
+            receiptPreview.Size = bmp.Size
+            receiptPreview.Left = 4
+            receiptPreview.Top = 4
+        Catch ex As Exception
+            MessageBox.Show($"Error rendering receipt: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
     End Sub
 
     Private Function BuildReceiptData() As ReceiptData
@@ -207,17 +226,4 @@ Public Class SalesDetails
 
         Return data
     End Function
-
-    Private Sub ReceiptDocument_PrintPage(sender As Object, e As PrintPageEventArgs)
-        Try
-            If saleRecord Is Nothing Then
-                e.Graphics.DrawString("No receipt data available.", New Font("Arial", 10), Brushes.Black, 10, 10)
-                Return
-            End If
-
-            ReceiptRenderer.DrawReceipt(e.Graphics, e.MarginBounds, BuildReceiptData())
-        Catch ex As Exception
-            e.Graphics.DrawString($"Receipt render error: {ex.Message}", New Font("Arial", 10), Brushes.Black, 10, 10)
-        End Try
-    End Sub
 End Class

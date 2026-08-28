@@ -2269,9 +2269,31 @@ Public Class Sales
     ' Replace OnPrintPage with this updated version that displays subtotal, discount, VATable sales, VAT and Total consistently
     Private Sub OnPrintPage(sender As Object, e As PrintPageEventArgs)
         Try
+            ' Auto-fit: render once to measure, then scale the whole receipt down
+            ' so the footer is never cut off, even with many line items.
+            Dim marginBounds As New Rectangle(10, 10, e.MarginBounds.Width - 20, e.MarginBounds.Height - 20)
+            Dim fit As Single = 1.0F
+            Using measureG = Graphics.FromImage(New Bitmap(1, 1))
+                Dim usedH As Single = DrawSalesReceipt(measureG, marginBounds)
+                If usedH > CSng(marginBounds.Height) Then
+                    fit = CSng(marginBounds.Height) / usedH
+                    If fit < 0.5F Then fit = 0.5F
+                End If
+            End Using
+            If fit < 1.0F Then
+                e.Graphics.ScaleTransform(fit, fit)
+            End If
+            DrawSalesReceipt(e.Graphics, marginBounds)
+        Catch ex As Exception
+            Console.WriteLine($"Print error: {ex.Message}")
+        End Try
+    End Sub
+
+    Private Function DrawSalesReceipt(g As Graphics, marginBounds As Rectangle) As Single
+        Try
             ' Scale fonts down for narrow thermal rolls (e.g. 58mm) so the
             ' receipt does not clip horizontally. No change on 80mm or wider.
-            Dim scale As Single = CSng(e.MarginBounds.Width / 280.0F)
+            Dim scale As Single = CSng(marginBounds.Width / 280.0F)
             scale = Math.Min(1.0F, Math.Max(0.55F, scale))
             Dim regularFont As New Font("Arial", 8.0F * scale)
             Dim boldFont As New Font("Arial", 10.0F * scale, FontStyle.Bold)
@@ -2281,12 +2303,15 @@ Public Class Sales
             Dim pen As New Pen(Color.Black, 1.0F)
             Dim yPosition As Integer = 10
             Dim marginLeft As Integer = 10
-            Dim contentWidth As Integer = e.MarginBounds.Width - (marginLeft * 2)
-            Dim centerX As Integer = e.MarginBounds.Width \ 2
+            Dim contentWidth As Integer = marginBounds.Width - (marginLeft * 2)
+            Dim centerX As Integer = marginBounds.Width \ 2
             Dim colGap As Integer = 20
             Dim colWidth As Integer = (contentWidth - colGap) \ 2
             Dim leftColX As Integer = marginLeft
             Dim rightColX As Integer = marginLeft + colWidth + colGap
+
+            ' Separator line: a long run of "=" that spans the content width.
+            Dim separator As String = New String("="c, Math.Max(45, CInt(contentWidth / g.MeasureString("=", regularFont).Width)))
 
             ' Company header
             Dim companyName As String = CompanySettingsManager.Instance.GetSettingString("CompanyName", "JADE CLINIC")
@@ -2298,46 +2323,46 @@ Public Class Sales
             Dim ptuNumber As String = CompanySettingsManager.Instance.GetSettingString("PTUNumber", "PTU-2024-001")
             Dim footerMessage As String = CompanySettingsManager.Instance.GetSettingString("ReceiptFooter", "Thank you for your business!" & vbCrLf & "Have a great day!")
 
-            e.Graphics.DrawString(companyName, headerFont, brush, CSng(centerX - (e.Graphics.MeasureString(companyName, headerFont).Width / 2)), CSng(yPosition))
+            g.DrawString(companyName, headerFont, brush, CSng(centerX - (g.MeasureString(companyName, headerFont).Width / 2)), CSng(yPosition))
             yPosition += 24
-            e.Graphics.DrawString("Dental Supply Management", regularFont, brush, CSng(centerX - (e.Graphics.MeasureString("Dental Supply Management", regularFont).Width / 2)), CSng(yPosition))
+            g.DrawString("Dental Supply Management", regularFont, brush, CSng(centerX - (g.MeasureString("Dental Supply Management", regularFont).Width / 2)), CSng(yPosition))
             yPosition += 14
 
             If Not String.IsNullOrEmpty(companyTIN) Then
-                e.Graphics.DrawString($"TIN: {companyTIN} (VAT Registered)", regularFont, brush, CSng(centerX - (e.Graphics.MeasureString($"TIN: {companyTIN} (VAT Registered)", regularFont).Width / 2)), CSng(yPosition))
+                g.DrawString($"TIN: {companyTIN} (VAT Registered)", regularFont, brush, CSng(centerX - (g.MeasureString($"TIN: {companyTIN} (VAT Registered)", regularFont).Width / 2)), CSng(yPosition))
                 yPosition += 14
             End If
 
             If Not String.IsNullOrEmpty(companyPhone) Then
-                e.Graphics.DrawString($"Tel: {companyPhone}", regularFont, brush, CSng(centerX - (e.Graphics.MeasureString($"Tel: {companyPhone}", regularFont).Width / 2)), CSng(yPosition))
+                g.DrawString($"Tel: {companyPhone}", regularFont, brush, CSng(centerX - (g.MeasureString($"Tel: {companyPhone}", regularFont).Width / 2)), CSng(yPosition))
                 yPosition += 14
             End If
 
             If Not String.IsNullOrEmpty(companyAddress) Then
-                e.Graphics.DrawString(companyAddress, regularFont, brush, CSng(centerX - (e.Graphics.MeasureString(companyAddress, regularFont).Width / 2)), CSng(yPosition))
+                g.DrawString(companyAddress, regularFont, brush, CSng(centerX - (g.MeasureString(companyAddress, regularFont).Width / 2)), CSng(yPosition))
                 yPosition += 14
             End If
 
             If Not String.IsNullOrEmpty(companyWebsite) Then
-                e.Graphics.DrawString(companyWebsite, regularFont, brush, CSng(centerX - (e.Graphics.MeasureString(companyWebsite, regularFont).Width / 2)), CSng(yPosition))
+                g.DrawString(companyWebsite, regularFont, brush, CSng(centerX - (g.MeasureString(companyWebsite, regularFont).Width / 2)), CSng(yPosition))
                 yPosition += 14
             End If
 
-            e.Graphics.DrawString(New String("="c, Math.Min(36, CInt(contentWidth / 6))), regularFont, brush, marginLeft, yPosition)
+            g.DrawString(separator, regularFont, brush, marginLeft, yPosition)
             yPosition += 16
 
             ' Document title and metadata
-            e.Graphics.DrawString("SALES INVOICE", boldFont, brush, CSng(centerX - (e.Graphics.MeasureString("SALES INVOICE", boldFont).Width / 2)), CSng(yPosition))
+            g.DrawString("SALES INVOICE", boldFont, brush, CSng(centerX - (g.MeasureString("SALES INVOICE", boldFont).Width / 2)), CSng(yPosition))
             yPosition += 22
-            e.Graphics.DrawString($"Receipt #: {receiptOrderId}", regularFont, brush, marginLeft, yPosition)
+            g.DrawString($"Receipt #: {receiptOrderId}", regularFont, brush, marginLeft, yPosition)
             yPosition += 12
-            e.Graphics.DrawString($"Date: {DateTime.Now:MM/dd/yyyy HH:mm:ss}", regularFont, brush, marginLeft, yPosition)
+            g.DrawString($"Date: {DateTime.Now:MM/dd/yyyy HH:mm:ss}", regularFont, brush, marginLeft, yPosition)
             yPosition += 12
-            e.Graphics.DrawString($"Cashier: {frmLoginvb.LoggedInUsername}", regularFont, brush, marginLeft, yPosition)
+            g.DrawString($"Cashier: {frmLoginvb.LoggedInUsername}", regularFont, brush, marginLeft, yPosition)
             yPosition += 14
 
             ' --- CUSTOMER BLOCK (2x2 layout) ---
-            e.Graphics.DrawString("Customer Details:", regularFont, brush, marginLeft, yPosition)
+            g.DrawString("Customer Details:", regularFont, brush, marginLeft, yPosition)
             yPosition += 12
 
             Dim printedName As String = If(Not String.IsNullOrWhiteSpace(receiptCustomerName), receiptCustomerName, If(Not String.IsNullOrWhiteSpace(selectedCustomerName), selectedCustomerName, "________________"))
@@ -2346,16 +2371,16 @@ Public Class Sales
             Dim printedEmail As String = If(Not String.IsNullOrWhiteSpace(selectedCustomerEmail), selectedCustomerEmail, "________________")
 
             ' Row 1: Name (left) | TIN (right)
-            e.Graphics.DrawString($"Name: {printedName}", regularFont, brush, leftColX, yPosition)
-            e.Graphics.DrawString($"TIN: {printedTIN}", regularFont, brush, rightColX, yPosition)
+            g.DrawString($"Name: {printedName}", regularFont, brush, leftColX, yPosition)
+            g.DrawString($"TIN: {printedTIN}", regularFont, brush, rightColX, yPosition)
             yPosition += 12
 
             ' Row 2: Phone (left) | Email (right)
-            e.Graphics.DrawString($"Phone: {printedPhone}", regularFont, brush, leftColX, yPosition)
-            e.Graphics.DrawString($"Email: {printedEmail}", regularFont, brush, rightColX, yPosition)
+            g.DrawString($"Phone: {printedPhone}", regularFont, brush, leftColX, yPosition)
+            g.DrawString($"Email: {printedEmail}", regularFont, brush, rightColX, yPosition)
             yPosition += 14
 
-            e.Graphics.DrawString(New String("="c, Math.Min(36, CInt(contentWidth / 6))), regularFont, brush, marginLeft, yPosition)
+            g.DrawString(separator, regularFont, brush, marginLeft, yPosition)
             yPosition += 14
 
             ' --- ITEMS (VAT-INCLUSIVE unit prices, discount applied per logic) ---
@@ -2390,15 +2415,17 @@ Public Class Sales
 
                     Dim lineTotal As Decimal = Math.Round(unitVatInc * quantity, 2)
 
-                    e.Graphics.DrawString($"{quantity}x {itemName}", regularFont, brush, marginLeft, yPosition)
+                    g.DrawString($"{quantity}x {itemName}", regularFont, brush, marginLeft, yPosition)
                     yPosition += 12
-                    e.Graphics.DrawString($"@ ₱{unitVatInc:F2}", regularFont, brush, marginLeft + 8, yPosition)
-                    e.Graphics.DrawString($"₱{lineTotal:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"₱{lineTotal:F2}", regularFont).Width), CSng(yPosition))
+                    g.DrawString($"@ ₱{unitVatInc:F2}", regularFont, brush, marginLeft + 8, yPosition)
+                    g.DrawString($"₱{lineTotal:F2}", regularFont, brush, CSng(marginBounds.Right - g.MeasureString($"₱{lineTotal:F2}", regularFont).Width), CSng(yPosition))
+                    ' Padding between line items so the list reads more cleanly.
                     yPosition += 15
+                    yPosition += 4
                 Next
             End If
 
-            e.Graphics.DrawString(New String("="c, Math.Min(36, CInt(contentWidth / 6))), regularFont, brush, marginLeft, yPosition)
+            g.DrawString(separator, regularFont, brush, marginLeft, yPosition)
             yPosition += 14
 
             ' --- VAT / TOTAL CALCULATION (consistent with RefreshOrderDisplay) ---
@@ -2421,69 +2448,71 @@ Public Class Sales
             Dim totalDue As Decimal = Math.Round(remainingVatInclusive, 2)
 
             ' Print breakdown using clear labels
-            e.Graphics.DrawString("SUBTOTAL (VAT-INC):", regularFont, brush, marginLeft, yPosition)
-            e.Graphics.DrawString($"₱{preDiscountVatInclusive:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"₱{preDiscountVatInclusive:F2}", regularFont).Width), CSng(yPosition))
+            g.DrawString("SUBTOTAL (VAT-INC):", regularFont, brush, marginLeft, yPosition)
+            g.DrawString($"₱{preDiscountVatInclusive:F2}", regularFont, brush, CSng(marginBounds.Right - g.MeasureString($"₱{preDiscountVatInclusive:F2}", regularFont).Width), CSng(yPosition))
             yPosition += 12
 
             If discountVatInclusive > 0D Then
                 Dim discountLabel As String = $"Less: Discount ({discountType})"
                 If Not String.IsNullOrEmpty(discountedItemName) Then discountLabel &= $" on {discountedItemName}"
-                e.Graphics.DrawString(discountLabel & ":", regularFont, brush, marginLeft, yPosition)
-                e.Graphics.DrawString($"-₱{discountVatInclusive:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"-₱{discountVatInclusive:F2}", regularFont).Width), CSng(yPosition))
+                g.DrawString(discountLabel & ":", regularFont, brush, marginLeft, yPosition)
+                g.DrawString($"-₱{discountVatInclusive:F2}", regularFont, brush, CSng(marginBounds.Right - g.MeasureString($"-₱{discountVatInclusive:F2}", regularFont).Width), CSng(yPosition))
                 yPosition += 12
             End If
 
-            e.Graphics.DrawString("VATABLE SALES (NET):", regularFont, brush, marginLeft, yPosition)
-            e.Graphics.DrawString($"₱{vatableNet:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"₱{vatableNet:F2}", regularFont).Width), CSng(yPosition))
+            g.DrawString("VATABLE SALES (NET):", regularFont, brush, marginLeft, yPosition)
+            g.DrawString($"₱{vatableNet:F2}", regularFont, brush, CSng(marginBounds.Right - g.MeasureString($"₱{vatableNet:F2}", regularFont).Width), CSng(yPosition))
             yPosition += 12
 
-            e.Graphics.DrawString("VAT (12%):", regularFont, brush, marginLeft, yPosition)
-            e.Graphics.DrawString($"₱{vatAmt:F2}", regularFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"₱{vatAmt:F2}", regularFont).Width), CSng(yPosition))
+            g.DrawString("VAT (12%):", regularFont, brush, marginLeft, yPosition)
+            g.DrawString($"₱{vatAmt:F2}", regularFont, brush, CSng(marginBounds.Right - g.MeasureString($"₱{vatAmt:F2}", regularFont).Width), CSng(yPosition))
             yPosition += 12
 
-            e.Graphics.DrawString(New String("="c, Math.Min(36, CInt(contentWidth / 6))), regularFont, brush, marginLeft, yPosition)
+            g.DrawString(separator, regularFont, brush, marginLeft, yPosition)
             yPosition += 12
 
-            e.Graphics.DrawString("TOTAL AMOUNT DUE:", boldFont, brush, marginLeft, yPosition)
-            e.Graphics.DrawString($"₱{totalDue:F2}", boldFont, brush, CSng(e.MarginBounds.Right - e.Graphics.MeasureString($"₱{totalDue:F2}", boldFont).Width), CSng(yPosition))
+            g.DrawString("TOTAL AMOUNT DUE:", boldFont, brush, marginLeft, yPosition)
+            g.DrawString($"₱{totalDue:F2}", boldFont, brush, CSng(marginBounds.Right - g.MeasureString($"₱{totalDue:F2}", boldFont).Width), CSng(yPosition))
             yPosition += 18
 
             ' Payment info
-            e.Graphics.DrawString("PAYMENT INFORMATION", sectionHeaderFont, brush, marginLeft, yPosition)
+            g.DrawString("PAYMENT INFORMATION", sectionHeaderFont, brush, marginLeft, yPosition)
             yPosition += 14
-            e.Graphics.DrawString($"Payment Method: {selectedPaymentMethod}", regularFont, brush, marginLeft, yPosition)
+            g.DrawString($"Payment Method: {selectedPaymentMethod}", regularFont, brush, marginLeft, yPosition)
             yPosition += 12
             If Not String.IsNullOrEmpty(paymentReference) Then
-                e.Graphics.DrawString($"Reference: {paymentReference}", regularFont, brush, marginLeft, yPosition)
+                g.DrawString($"Reference: {paymentReference}", regularFont, brush, marginLeft, yPosition)
                 yPosition += 12
             End If
-            e.Graphics.DrawString($"Amount Received: ₱{receiptAmountReceived:F2}", regularFont, brush, marginLeft, yPosition)
+            g.DrawString($"Amount Received: ₱{receiptAmountReceived:F2}", regularFont, brush, marginLeft, yPosition)
             yPosition += 12
-            e.Graphics.DrawString($"Change: ₱{receiptChange:F2}", regularFont, brush, marginLeft, yPosition)
+            g.DrawString($"Change: ₱{receiptChange:F2}", regularFont, brush, marginLeft, yPosition)
             yPosition += 14
 
-            e.Graphics.DrawString(New String("="c, Math.Min(36, CInt(contentWidth / 6))), regularFont, brush, marginLeft, yPosition)
+            g.DrawString(separator, regularFont, brush, marginLeft, yPosition)
             yPosition += 12
 
             ' BIR and footer
-            e.Graphics.DrawString($"BIR Authority to Print No.: {birAuthNumber}", regularFont, brush, marginLeft, yPosition)
+            g.DrawString($"BIR Authority to Print No.: {birAuthNumber}", regularFont, brush, marginLeft, yPosition)
             yPosition += 12
-            e.Graphics.DrawString($"PTU No.: {ptuNumber}", regularFont, brush, marginLeft, yPosition)
+            g.DrawString($"PTU No.: {ptuNumber}", regularFont, brush, marginLeft, yPosition)
             yPosition += 12
 
-            e.Graphics.DrawString(New String("="c, Math.Min(36, CInt(contentWidth / 6))), regularFont, brush, marginLeft, yPosition)
+            g.DrawString(separator, regularFont, brush, marginLeft, yPosition)
             yPosition += 12
             Dim footerLines() As String = footerMessage.Split({vbCrLf, vbLf}, StringSplitOptions.RemoveEmptyEntries)
             For Each line As String In footerLines
-                e.Graphics.DrawString(line, regularFont, brush, CSng(centerX - (e.Graphics.MeasureString(line, regularFont).Width / 2)), CSng(yPosition))
+                g.DrawString(line, regularFont, brush, CSng(centerX - (g.MeasureString(line, regularFont).Width / 2)), CSng(yPosition))
                 yPosition += 12
             Next
 
             pen.Dispose()
+            Return yPosition
         Catch ex As Exception
             Console.WriteLine($"Print error: {ex.Message}")
+            Return 0
         End Try
-    End Sub
+    End Function
     Private Sub PrintReceipt()
         Try
             ' ESC/POS path for thermal/receipt printers: the preview renders the
@@ -2536,8 +2565,9 @@ Public Class Sales
             Dim printPreview As New PrintPreviewDialog()
             printPreview.Document = printDoc
             printPreview.Text = $"Receipt Preview - {companyName}"
-            printPreview.WindowState = FormWindowState.Maximized
-            printPreview.ShowDialog()
+            printPreview.ShowInTaskbar = False
+            printPreview.StartPosition = FormStartPosition.CenterParent
+            printPreview.ShowDialog(Me)
         Catch ex As Exception
             MessageBox.Show($"Error printing receipt: {ex.Message}", "Print Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try

@@ -32,6 +32,7 @@ Partial Class SalesDetails
         Margin = New Padding(3, 4, 3, 4)
         Name = "SalesDetails"
         Text = "Order Details"
+        ShowInTaskbar = False
         ResumeLayout(False)
 
     End Sub
