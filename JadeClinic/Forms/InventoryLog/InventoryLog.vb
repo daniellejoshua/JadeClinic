@@ -485,7 +485,7 @@ Public Class InventoryLog
             ' Build a clean modal that uses a two-column grid (Field | Value) for spacing and readability
             Dim detailForm As New Form() With {
             .Text = "Inventory Log Details",
-            .Size = New Size(760, 520),
+            .Size = New Size(760, 580),
             .StartPosition = FormStartPosition.CenterParent,
             .FormBorderStyle = FormBorderStyle.FixedDialog,
             .MaximizeBox = False,
@@ -636,8 +636,8 @@ Public Class InventoryLog
             .Text = "Close",
             .Size = New Size(120, 38),
             .Location = New Point(detailForm.ClientSize.Width - pad - 120, detailForm.ClientSize.Height - 70),
-            .BackColor = GoldenYellow,
-            .ForeColor = DeepCharcoal,
+            .BackColor = System.Drawing.Color.FromArgb(220, 53, 69),
+            .ForeColor = Color.White,
             .Font = New Font("Poppins", 10, FontStyle.Bold),
             .FlatStyle = FlatStyle.Flat
         }
