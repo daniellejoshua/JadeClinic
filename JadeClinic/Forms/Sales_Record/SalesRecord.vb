@@ -19,6 +19,9 @@ Public Class SalesRecord
     Private _currentPage As Integer = 1
     Private _searchTerm As String = ""
 
+    ' Day-capital display label (top filter row)
+    Private lblCapital As Label
+
     Private ReadOnly GoldenYellow As System.Drawing.Color = System.Drawing.Color.FromArgb(254, 191, 16)
     Private ReadOnly JadeOlive As System.Drawing.Color = System.Drawing.Color.FromArgb(191, 155, 48)
     Private ReadOnly DarkText As System.Drawing.Color = System.Drawing.Color.FromArgb(51, 51, 51)
@@ -65,6 +68,9 @@ Public Class SalesRecord
         Guna2DateTimePicker1.Value = Date.Today
         Guna2DateTimePicker1.ShowCheckBox = True
         Guna2DateTimePicker1.Checked = True
+
+        ' Show the day's capital (opening capital for the selected date)
+        InitializeCapitalLabel()
 
         ' Load sales records data with today's date filter active by default
         ApplyFilters()
@@ -213,6 +219,7 @@ Public Class SalesRecord
             .ForeColor = DarkText
         }
         actionCol.Width = 60
+        actionCol.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter
         Guna2DataGridView1.Columns.Add(actionCol)
 
         ' Configure DataGridView properties
@@ -492,7 +499,55 @@ Public Class SalesRecord
             PaginationControl1.Configure(totalCount, PageSize, _currentPage)
         End If
         AlignPaginationToPanel()
+        UpdateCapitalLabel(filterDate)
     End Sub
+
+    Private Sub InitializeCapitalLabel()
+        Try
+            If lblCapital IsNot Nothing Then Return
+            lblCapital = New Label() With {
+                .AutoSize = True,
+                .Font = New Font("Poppins", 10, FontStyle.Bold),
+                .ForeColor = DarkText,
+                .BackColor = System.Drawing.Color.Transparent,
+                .Anchor = AnchorStyles.Top Or AnchorStyles.Right,
+                .Text = "Capital: --"
+            }
+            lblCapital.Location = New Point(Me.ClientSize.Width - 280, 82)
+            Me.Controls.Add(lblCapital)
+            lblCapital.BringToFront()
+        Catch
+        End Try
+    End Sub
+
+    Private Sub UpdateCapitalLabel(filterDate As DateTime?)
+        Try
+            If lblCapital Is Nothing Then Return
+            Dim capitalDate As Date = If(filterDate.HasValue, filterDate.Value.Date, Date.Today)
+            Dim capital As Decimal = GetOpeningCapitalForDate(capitalDate)
+            Dim peso As String = ChrW(&H20B1)
+            If capital > 0D Then
+                lblCapital.Text = "Capital: " & peso & capital.ToString("N2", Globalization.CultureInfo.GetCultureInfo("en-PH"))
+            Else
+                lblCapital.Text = "Capital: No capital set"
+            End If
+        Catch
+        End Try
+    End Sub
+
+    Private Function GetOpeningCapitalForDate(targetDate As Date) As Decimal
+        Try
+            Dim capitalObj = Utilities.ExecuteScalar(
+                "SELECT OpeningAmount FROM DailyOpeningCapital WHERE CashDate = @CashDate",
+                New SqlParameter("@CashDate", targetDate.Date))
+            If capitalObj Is Nothing OrElse capitalObj Is DBNull.Value Then
+                Return 0D
+            End If
+            Return Convert.ToDecimal(capitalObj)
+        Catch
+            Return 0D
+        End Try
+    End Function
 
     ' Initialize profile section
     ' Profile managed by ProfileManager
