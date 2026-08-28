@@ -491,6 +491,7 @@ Public Class SalesRecord
         If PaginationControl1 IsNot Nothing Then
             PaginationControl1.Configure(totalCount, PageSize, _currentPage)
         End If
+        AlignPaginationToPanel()
     End Sub
 
     ' Initialize profile section
@@ -748,6 +749,21 @@ Public Class SalesRecord
     Private Sub PaginationControl1_PageChanged(page As Integer)
         _currentPage = page
         LoadPage()
+    End Sub
+
+    Private Sub AlignPaginationToPanel()
+        Try
+            If PaginationControl1 IsNot Nothing AndAlso Guna2Panel1 IsNot Nothing Then
+                PaginationControl1.Width = Guna2Panel1.Width - 8
+                PaginationControl1.Location = New Point(4, Guna2Panel1.Height - PaginationControl1.Height - 2)
+                PaginationControl1.BringToFront()
+            End If
+        Catch
+        End Try
+    End Sub
+
+    Private Sub SalesRecord_Resize(sender As Object, e As EventArgs) Handles Me.Resize
+        AlignPaginationToPanel()
     End Sub
 
     Private Function IsHostedInMainShell() As Boolean
