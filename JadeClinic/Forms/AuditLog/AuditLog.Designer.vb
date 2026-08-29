@@ -19,11 +19,11 @@ Partial Class AuditLog
 
     <System.Diagnostics.DebuggerStepThrough()>
     Private Sub InitializeComponent()
+        Dim CustomizableEdges1 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges2 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim DataGridViewCellStyle1 As DataGridViewCellStyle = New DataGridViewCellStyle()
         Dim DataGridViewCellStyle2 As DataGridViewCellStyle = New DataGridViewCellStyle()
         Dim DataGridViewCellStyle3 As DataGridViewCellStyle = New DataGridViewCellStyle()
-        Dim CustomizableEdges1 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges2 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges3 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges4 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges5 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
@@ -98,9 +98,9 @@ Partial Class AuditLog
         InventoryLogDataGrid.AllowUserToDeleteRows = False
         InventoryLogDataGrid.AllowUserToResizeColumns = False
         InventoryLogDataGrid.AllowUserToResizeRows = False
-        InventoryLogDataGrid.Anchor = AnchorStyles.Top Or AnchorStyles.Left Or AnchorStyles.Right
         DataGridViewCellStyle1.BackColor = Color.White
         InventoryLogDataGrid.AlternatingRowsDefaultCellStyle = DataGridViewCellStyle1
+        InventoryLogDataGrid.Anchor = AnchorStyles.Top Or AnchorStyles.Left Or AnchorStyles.Right
         InventoryLogDataGrid.BackgroundColor = Color.FromArgb(CByte(255), CByte(255), CByte(255))
         DataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleCenter
         DataGridViewCellStyle2.BackColor = Color.FromArgb(CByte(250), CByte(249), CByte(246))
@@ -111,7 +111,6 @@ Partial Class AuditLog
         DataGridViewCellStyle2.WrapMode = DataGridViewTriState.True
         InventoryLogDataGrid.ColumnHeadersDefaultCellStyle = DataGridViewCellStyle2
         InventoryLogDataGrid.ColumnHeadersHeight = 44
-        InventoryLogDataGrid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing
         DataGridViewCellStyle3.Alignment = DataGridViewContentAlignment.MiddleCenter
         DataGridViewCellStyle3.BackColor = Color.White
         DataGridViewCellStyle3.Font = New Font("Poppins", 9.5F)
@@ -176,7 +175,7 @@ Partial Class AuditLog
         lblUsername.BackColor = Color.Transparent
         lblUsername.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         lblUsername.ForeColor = Color.FromArgb(CByte(59), CByte(59), CByte(59))
-        lblUsername.Location = New Point(1792, 20)
+        lblUsername.Location = New Point(1821, 20)
         lblUsername.Name = "lblUsername"
         lblUsername.Size = New Size(65, 28)
         lblUsername.TabIndex = 75
@@ -275,7 +274,7 @@ Partial Class AuditLog
         ' 
         ' Guna2Panel1
         ' 
-        Guna2Panel1.Anchor = AnchorStyles.Top Or AnchorStyles.Left Or AnchorStyles.Right Or AnchorStyles.Bottom
+        Guna2Panel1.Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
         Guna2Panel1.BackColor = Color.Transparent
         Guna2Panel1.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
         Guna2Panel1.BorderRadius = 10
@@ -302,10 +301,16 @@ Partial Class AuditLog
         ' PaginationControl1
         ' 
         PaginationControl1.BackColor = Color.White
+        PaginationControl1.CurrentPage = 1
+        PaginationControl1.ItemsPerPage = 8
         PaginationControl1.Location = New Point(8, 842)
+        PaginationControl1.MaximumSize = New Size(0, 62)
+        PaginationControl1.MinimumSize = New Size(360, 62)
         PaginationControl1.Name = "PaginationControl1"
-        PaginationControl1.Size = New Size(1641, 48)
+        PaginationControl1.Size = New Size(1641, 62)
         PaginationControl1.TabIndex = 86
+        PaginationControl1.TotalItems = 0
+        PaginationControl1.TotalPages = 1
         ' 
         ' Guna2CirclePictureBox5
         ' 
@@ -325,7 +330,7 @@ Partial Class AuditLog
         lblSubtitle.ForeColor = Color.FromArgb(CByte(119), CByte(119), CByte(119))
         lblSubtitle.Location = New Point(264, 68)
         lblSubtitle.Name = "lblSubtitle"
-        lblSubtitle.Size = New Size(260, 28)
+        lblSubtitle.Size = New Size(294, 28)
         lblSubtitle.TabIndex = 85
         lblSubtitle.Text = "View and track all system activities."
         ' 

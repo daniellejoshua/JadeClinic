@@ -237,16 +237,49 @@ Public Class ProfileSettings
                     img = Image.FromFile(fullPath)
                 End If
             End If
+
+            Dim avatar As Image
             If img IsNot Nothing Then
-                Guna2CirclePictureBox7.Image = img
-                Guna2CirclePictureBox7.SizeMode = PictureBoxSizeMode.Zoom
+                avatar = BuildAvatarImage(img)
             Else
-                Guna2CirclePictureBox7.Image = New Bitmap(My.Resources.avatar_default_svgrepo_com)
+                avatar = New Bitmap(My.Resources.avatar_default_svgrepo_com)
             End If
+
+            Guna2CirclePictureBox7.Image = avatar
+            Guna2CirclePictureBox7.SizeMode = PictureBoxSizeMode.Zoom
         Catch ex As Exception
             Guna2CirclePictureBox7.Image = New Bitmap(My.Resources.avatar_default_svgrepo_com)
+            Guna2CirclePictureBox7.SizeMode = PictureBoxSizeMode.Zoom
         End Try
     End Sub
+
+    Private Function BuildAvatarImage(source As Image) As Image
+        Const size As Integer = 240
+        Const inset As Integer = 8
+
+        Dim canvas As New Bitmap(size, size)
+        Using g As Graphics = Graphics.FromImage(canvas)
+            g.SmoothingMode = Drawing2D.SmoothingMode.HighQuality
+            g.InterpolationMode = Drawing2D.InterpolationMode.HighQualityBicubic
+            g.PixelOffsetMode = Drawing2D.PixelOffsetMode.HighQuality
+
+            ' Warm backing so nothing appears gray behind the avatar
+            g.Clear(Color.FromArgb(250, 249, 246))
+
+            ' Draw the source centered, scaled to fit the inner square (less inset)
+            Dim inner As Integer = size - inset * 2
+            Dim sW As Single = source.Width
+            Dim sH As Single = source.Height
+            Dim scale As Single = Math.Min(inner / sW, inner / sH)
+            Dim dW As Single = sW * scale
+            Dim dH As Single = sH * scale
+            Dim dx As Single = (size - dW) / 2
+            Dim dy As Single = (size - dH) / 2
+
+            g.DrawImage(source, dx, dy, dW, dH)
+        End Using
+        Return canvas
+    End Function
 
     Private Sub LoadPasskeys()
         Try
@@ -278,79 +311,16 @@ Public Class ProfileSettings
     Private Sub Guna2CheckBox1_CheckedChanged(sender As Object, e As EventArgs) Handles Guna2CheckBox1.CheckedChanged
         If Guna2CheckBox1.Checked Then
             ' Prompt for PIN before showing passkeys
-            Dim pinDialog As New Form()
-            pinDialog.Text = "PIN Confirmation"
-            pinDialog.Size = New Size(320, 180)
-            pinDialog.StartPosition = FormStartPosition.CenterParent
-            pinDialog.BackColor = Color.White
-            pinDialog.FormBorderStyle = FormBorderStyle.FixedDialog
-            pinDialog.MaximizeBox = False
-            pinDialog.MinimizeBox = False
-
-            Dim lblPrompt As New Label()
-            lblPrompt.Text = "Enter your PIN to view passkeys:"
-            lblPrompt.ForeColor = Color.FromArgb(51, 51, 51)
-            lblPrompt.Font = New Font("Poppins", 10)
-            lblPrompt.AutoSize = True
-            lblPrompt.Location = New Point(20, 20)
-
-            Dim txtPin As New TextBox()
-            txtPin.PasswordChar = "?"c
-            txtPin.MaxLength = 4
-            txtPin.Location = New Point(20, 50)
-            txtPin.Size = New Size(260, 30)
-            txtPin.BackColor = Color.White
-            txtPin.ForeColor = Color.FromArgb(51, 51, 51)
-            txtPin.Font = New Font("Poppins", 12)
-
-            Dim btnConfirm As New Button()
-            btnConfirm.Text = "Confirm"
-            btnConfirm.Location = New Point(20, 90)
-            btnConfirm.Size = New Size(100, 32)
-            btnConfirm.BackColor = Color.FromArgb(191, 155, 48)
-            btnConfirm.ForeColor = Color.White
-            btnConfirm.Font = New Font("Poppins", 10)
-            btnConfirm.FlatStyle = FlatStyle.Flat
-
-            Dim btnCancel As New Button()
-            btnCancel.Text = "Cancel"
-            btnCancel.Location = New Point(140, 90)
-            btnCancel.Size = New Size(100, 32)
-            btnCancel.BackColor = Color.FromArgb(225, 229, 233)
-            btnCancel.ForeColor = Color.FromArgb(51, 51, 51)
-            btnCancel.Font = New Font("Poppins", 10)
-            btnCancel.FlatStyle = FlatStyle.Flat
-
             Dim pinAccepted As Boolean = False
-            AddHandler btnConfirm.Click, Sub()
-                                             If txtPin.Text = currentUserData("PIN").ToString() Then
-                                                 pinAccepted = True
-                                                 pinDialog.Close()
-                                             Else
-                                                 MessageBox.Show("Invalid PIN.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-                                                 txtPin.Clear()
-                                                 txtPin.Focus()
-                                             End If
-                                         End Sub
-            AddHandler btnCancel.Click, Sub()
-                                            pinDialog.Close()
-                                        End Sub
-            AddHandler txtPin.KeyDown, Sub(s, eArgs)
-                                           If eArgs.KeyCode = Keys.Enter Then
-                                               btnConfirm.PerformClick()
-                                           End If
-                                       End Sub
+            ShowPinDialog("Enter your PIN to view passkeys:",
+                          Sub()
+                              pinAccepted = True
+                              If lblpasskey1.Tag IsNot Nothing Then lblpasskey1.Text = lblpasskey1.Tag.ToString()
+                              If lblpasskey2.Tag IsNot Nothing Then lblpasskey2.Text = lblpasskey2.Tag.ToString()
+                              If lblpasskey3.Tag IsNot Nothing Then lblpasskey3.Text = lblpasskey3.Tag.ToString()
+                          End Sub)
 
-            pinDialog.Controls.AddRange({lblPrompt, txtPin, btnConfirm, btnCancel})
-            txtPin.Focus()
-            Utilities.EnableEscCloseModal(pinDialog)
-            pinDialog.ShowDialog(Me)
-
-            If pinAccepted Then
-                If lblpasskey1.Tag IsNot Nothing Then lblpasskey1.Text = lblpasskey1.Tag.ToString()
-                If lblpasskey2.Tag IsNot Nothing Then lblpasskey2.Text = lblpasskey2.Tag.ToString()
-                If lblpasskey3.Tag IsNot Nothing Then lblpasskey3.Text = lblpasskey3.Tag.ToString()
-            Else
+            If Not pinAccepted Then
                 ' PIN not accepted, keep passkeys hidden and uncheck
                 lblpasskey1.Text = ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF)
                 lblpasskey2.Text = ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF) & " " & ChrW(&H25CF)
@@ -428,48 +398,60 @@ Public Class ProfileSettings
     End Function
 
     Private Sub ShowPinConfirmationDialog(onSuccess As Action)
+        ShowPinDialog("Enter your PIN to confirm changes:", onSuccess)
+    End Sub
+
+    Private Sub ShowPinDialog(prompt As String, onSuccess As Action)
+        Const dialogW As Integer = 360
+        Const dialogH As Integer = 230
+
         Dim pinDialog As New Form()
         pinDialog.Text = "PIN Confirmation"
-        pinDialog.Size = New Size(320, 220)
+        pinDialog.Size = New Size(dialogW, dialogH)
         pinDialog.StartPosition = FormStartPosition.CenterParent
-        pinDialog.BackColor = Color.White
+        pinDialog.BackColor = Color.FromArgb(250, 249, 246)
         pinDialog.FormBorderStyle = FormBorderStyle.FixedDialog
         pinDialog.MaximizeBox = False
         pinDialog.MinimizeBox = False
 
         Dim lblPrompt As New Label()
-        lblPrompt.Text = "Enter your PIN to confirm changes:"
+        lblPrompt.Text = prompt
         lblPrompt.ForeColor = Color.FromArgb(51, 51, 51)
         lblPrompt.Font = New Font("Poppins", 10)
         lblPrompt.AutoSize = True
-        lblPrompt.Location = New Point(20, 20)
+        lblPrompt.Location = New Point(24, 22)
 
         Dim txtPin As New TextBox()
         txtPin.PasswordChar = "●"c
         txtPin.MaxLength = 4
-        txtPin.Location = New Point(20, 50)
-        txtPin.Size = New Size(260, 30)
+        txtPin.Location = New Point(24, 56)
+        txtPin.Size = New Size(dialogW - 48, 34)
         txtPin.BackColor = Color.White
         txtPin.ForeColor = Color.FromArgb(51, 51, 51)
         txtPin.Font = New Font("Poppins", 12)
+        txtPin.BorderStyle = BorderStyle.FixedSingle
 
         Dim btnConfirm As New Button()
         btnConfirm.Text = "Confirm"
-        btnConfirm.Location = New Point(20, 100)
-        btnConfirm.Size = New Size(100, 35)
+        btnConfirm.Location = New Point(24, 118)
+        btnConfirm.Size = New Size((dialogW - 48 - 12) \ 2, 40)
         btnConfirm.BackColor = Color.FromArgb(191, 155, 48)
         btnConfirm.ForeColor = Color.White
         btnConfirm.Font = New Font("Poppins", 10)
         btnConfirm.FlatStyle = FlatStyle.Flat
+        btnConfirm.FlatAppearance.BorderSize = 0
+        btnConfirm.Cursor = Cursors.Hand
 
         Dim btnCancel As New Button()
         btnCancel.Text = "Cancel"
-        btnCancel.Location = New Point(140, 100)
-        btnCancel.Size = New Size(100, 35)
+        btnCancel.Location = New Point(btnConfirm.Right + 12, 118)
+        btnCancel.Size = btnConfirm.Size
         btnCancel.BackColor = Color.FromArgb(225, 229, 233)
         btnCancel.ForeColor = Color.FromArgb(51, 51, 51)
         btnCancel.Font = New Font("Poppins", 10)
         btnCancel.FlatStyle = FlatStyle.Flat
+        btnCancel.FlatAppearance.BorderSize = 0
+        btnCancel.Cursor = Cursors.Hand
 
         AddHandler btnConfirm.Click, Sub()
                                          If txtPin.Text = currentUserData("PIN").ToString() Then
@@ -1061,7 +1043,7 @@ Public Class ProfileSettings
 
                 If openFileDialog.ShowDialog() = DialogResult.OK Then
                     Dim selectedImage As Image = Image.FromFile(openFileDialog.FileName)
-                    Guna2CirclePictureBox7.Image = selectedImage
+                    Guna2CirclePictureBox7.Image = BuildAvatarImage(selectedImage)
                     Guna2CirclePictureBox7.SizeMode = PictureBoxSizeMode.Zoom
 
                     Dim userId As Integer = Convert.ToInt32(currentUserData("UserID"))

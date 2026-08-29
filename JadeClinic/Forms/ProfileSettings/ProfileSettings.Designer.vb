@@ -321,12 +321,11 @@ Partial Class ProfileSettings
         Guna2Panel1.Controls.Add(Guna2HtmlLabel2)
         Guna2Panel1.Controls.Add(txtNewPassword)
         Guna2Panel1.CustomizableEdges = CustomizableEdges26
-        Guna2Panel1.FillColor = Color.FromArgb(CByte(250), CByte(249), CByte(246))
+        Guna2Panel1.FillColor = Color.White
         Guna2Panel1.Location = New Point(614, 84)
         Guna2Panel1.Name = "Guna2Panel1"
         Guna2Panel1.ShadowDecoration.CustomizableEdges = CustomizableEdges27
         Guna2Panel1.ShadowDecoration.Depth = 0
-        Guna2Panel1.ShadowDecoration.Enabled = False
         Guna2Panel1.ShadowDecoration.Shadow = New Padding(0, 0, 4, 4)
         Guna2Panel1.Size = New Size(960, 753)
         Guna2Panel1.TabIndex = 41
@@ -438,7 +437,7 @@ Partial Class ProfileSettings
         ' txtPhone
         ' 
         txtPhone.BackColor = Color.Transparent
-        txtPhone.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
+        txtPhone.BorderColor = Color.FromArgb(CByte(230), CByte(230), CByte(230))
         txtPhone.BorderRadius = 10
         txtPhone.CustomizableEdges = CustomizableEdges13
         txtPhone.DefaultText = ""
@@ -474,7 +473,7 @@ Partial Class ProfileSettings
         ' txtConfirmPassword
         ' 
         txtConfirmPassword.BackColor = Color.Transparent
-        txtConfirmPassword.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
+        txtConfirmPassword.BorderColor = Color.FromArgb(CByte(230), CByte(230), CByte(230))
         txtConfirmPassword.BorderRadius = 10
         txtConfirmPassword.CustomizableEdges = CustomizableEdges15
         txtConfirmPassword.DefaultText = ""
@@ -510,7 +509,7 @@ Partial Class ProfileSettings
         ' txtEmail
         ' 
         txtEmail.BackColor = Color.Transparent
-        txtEmail.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
+        txtEmail.BorderColor = Color.FromArgb(CByte(230), CByte(230), CByte(230))
         txtEmail.BorderRadius = 10
         txtEmail.CustomizableEdges = CustomizableEdges17
         txtEmail.DefaultText = ""
@@ -547,13 +546,18 @@ Partial Class ProfileSettings
         ' Guna2CirclePictureBox7
         ' 
         Guna2CirclePictureBox7.BackColor = Color.Transparent
-        Guna2CirclePictureBox7.FillColor = Color.Silver
+        Guna2CirclePictureBox7.FillColor = Color.FromArgb(CByte(250), CByte(249), CByte(246))
+        Guna2CirclePictureBox7.Image = My.Resources.Resources.avatar_default_svgrepo_com
         Guna2CirclePictureBox7.ImageRotate = 0F
         Guna2CirclePictureBox7.Location = New Point(46, 60)
         Guna2CirclePictureBox7.Name = "Guna2CirclePictureBox7"
+        Guna2CirclePictureBox7.ShadowDecoration.Color = Color.FromArgb(CByte(191), CByte(155), CByte(48))
         Guna2CirclePictureBox7.ShadowDecoration.CustomizableEdges = CustomizableEdges19
+        Guna2CirclePictureBox7.ShadowDecoration.Depth = 10
         Guna2CirclePictureBox7.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
-        Guna2CirclePictureBox7.Size = New Size(139, 132)
+        Guna2CirclePictureBox7.ShadowDecoration.Shadow = New Padding(2)
+        Guna2CirclePictureBox7.Size = New Size(132, 132)
+        Guna2CirclePictureBox7.SizeMode = PictureBoxSizeMode.Zoom
         Guna2CirclePictureBox7.TabIndex = 42
         Guna2CirclePictureBox7.TabStop = False
         ' 
@@ -583,14 +587,14 @@ Partial Class ProfileSettings
         Guna2HtmlLabel3.ForeColor = Color.FromArgb(CByte(42), CByte(42), CByte(42))
         Guna2HtmlLabel3.Location = New Point(19, 12)
         Guna2HtmlLabel3.Name = "Guna2HtmlLabel3"
-        Guna2HtmlLabel3.Size = New Size(242, 42)
+        Guna2HtmlLabel3.Size = New Size(241, 42)
         Guna2HtmlLabel3.TabIndex = 5
-        Guna2HtmlLabel3.Text = "Personal Information"
+        Guna2HtmlLabel3.Text = "Account Information"
         ' 
         ' txtUserName
         ' 
         txtUserName.BackColor = Color.Transparent
-        txtUserName.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
+        txtUserName.BorderColor = Color.FromArgb(CByte(230), CByte(230), CByte(230))
         txtUserName.BorderRadius = 10
         txtUserName.CustomizableEdges = CustomizableEdges22
         txtUserName.DefaultText = ""
@@ -626,7 +630,7 @@ Partial Class ProfileSettings
         ' txtNewPassword
         ' 
         txtNewPassword.BackColor = Color.Transparent
-        txtNewPassword.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
+        txtNewPassword.BorderColor = Color.FromArgb(CByte(230), CByte(230), CByte(230))
         txtNewPassword.BorderRadius = 10
         txtNewPassword.CustomizableEdges = CustomizableEdges24
         txtNewPassword.DefaultText = ""
@@ -658,7 +662,7 @@ Partial Class ProfileSettings
         Guna2Panel2.Controls.Add(lblChangePin)
         Guna2Panel2.Controls.Add(lblProfileSettings)
         Guna2Panel2.CustomizableEdges = CustomizableEdges28
-        Guna2Panel2.FillColor = Color.FromArgb(CByte(250), CByte(249), CByte(246))
+        Guna2Panel2.FillColor = Color.White
         Guna2Panel2.Location = New Point(262, 87)
         Guna2Panel2.Name = "Guna2Panel2"
         Guna2Panel2.ShadowDecoration.CustomizableEdges = CustomizableEdges29
@@ -673,9 +677,9 @@ Partial Class ProfileSettings
         lblLogout.ForeColor = Color.FromArgb(CByte(42), CByte(42), CByte(42))
         lblLogout.Location = New Point(33, 174)
         lblLogout.Name = "lblLogout"
-        lblLogout.Size = New Size(115, 36)
+        lblLogout.Size = New Size(127, 36)
         lblLogout.TabIndex = 57
-        lblLogout.Text = Char.ConvertFromUtf32(&H1F6AA) & " Log out "
+        lblLogout.Text = "🚪 Log out "
         ' 
         ' lblChangePin
         ' 
@@ -687,7 +691,7 @@ Partial Class ProfileSettings
         lblChangePin.Name = "lblChangePin"
         lblChangePin.Size = New Size(162, 36)
         lblChangePin.TabIndex = 56
-        lblChangePin.Text = Char.ConvertFromUtf32(&H1F511) & " Change Pin"
+        lblChangePin.Text = "🔑 Change Pin"
         ' 
         ' lblProfileSettings
         ' 
@@ -699,7 +703,7 @@ Partial Class ProfileSettings
         lblProfileSettings.Name = "lblProfileSettings"
         lblProfileSettings.Size = New Size(193, 36)
         lblProfileSettings.TabIndex = 55
-        lblProfileSettings.Text = ChrW(&H2699) & " Profile Settings"
+        lblProfileSettings.Text = "⚙ Profile Settings"
         ' 
         ' DashboardPanel
         ' 
@@ -708,16 +712,16 @@ Partial Class ProfileSettings
         DashboardPanel.BorderThickness = 2
         DashboardPanel.Controls.Add(PictureBox9)
         DashboardPanel.CustomizableEdges = CustomizableEdges30
-        DashboardPanel.FillColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
+        DashboardPanel.FillColor = Color.White
         DashboardPanel.Location = New Point(-10, 5)
         DashboardPanel.Name = "DashboardPanel"
         DashboardPanel.ShadowDecoration.CustomizableEdges = CustomizableEdges31
-        DashboardPanel.Size = New Size(236, 885)
+        DashboardPanel.Size = New Size(236, 1016)
         DashboardPanel.TabIndex = 55
         ' 
         ' PictureBox9
         ' 
-        PictureBox9.BackColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
+        PictureBox9.BackColor = Color.White
         PictureBox9.Location = New Point(63, 7)
         PictureBox9.Name = "PictureBox9"
         PictureBox9.Size = New Size(103, 85)
@@ -731,7 +735,7 @@ Partial Class ProfileSettings
         AutoScaleMode = AutoScaleMode.Font
         AutoScroll = True
         BackColor = Color.White
-        ClientSize = New Size(1609, 875)
+        ClientSize = New Size(1902, 1033)
         Controls.Add(DashboardPanel)
         Controls.Add(Guna2Panel2)
         Controls.Add(Guna2Panel1)
