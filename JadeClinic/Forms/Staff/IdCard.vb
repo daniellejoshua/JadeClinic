@@ -116,10 +116,11 @@ Public Class IdCard
                 End Try
             End If
 
-            ' If still no photo, show placeholder (designer may already show one)
+            ' If still no photo, show the default avatar (never leave it blank)
             If Not photoSet Then
                 DisposePictureBoxImage(picStaffPhoto)
-                picStaffPhoto.Image = Nothing
+                picStaffPhoto.Image = New Bitmap(My.Resources.avatar_default_svgrepo_com)
+                picStaffPhoto.SizeMode = PictureBoxSizeMode.Zoom
             End If
 
             ' If QR text present, generate QR image; otherwise generate from username/userid fallback

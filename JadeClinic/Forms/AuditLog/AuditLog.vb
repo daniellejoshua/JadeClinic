@@ -709,7 +709,7 @@ Public Class AuditLog
 
         ' Pagination anchored to the bottom of the panel.
         PaginationControl1.Width = Guna2Panel1.Width - 8
-        PaginationControl1.Location = New Point(4, Guna2Panel1.Height - PaginationControl1.Height - 10)
+        PaginationControl1.Location = New Point(4, Guna2Panel1.Height - PaginationControl1.Height - 2)
 
         ' Grid fills the panel above the pagination.
         InventoryLogDataGrid.Width = Guna2Panel1.Width - 8

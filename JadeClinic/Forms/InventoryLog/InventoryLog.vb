@@ -1430,10 +1430,16 @@ Public Class InventoryLog
 
     Private Sub AlignPaginationToPanel()
         Try
-            If PaginationControl1 IsNot Nothing AndAlso Guna2Panel1 IsNot Nothing Then
+            If PaginationControl1 IsNot Nothing AndAlso Guna2Panel1 IsNot Nothing AndAlso InventoryLogDataGrid IsNot Nothing Then
+                ' Pagination anchored to the bottom of the panel.
                 PaginationControl1.Width = Guna2Panel1.Width - 8
                 PaginationControl1.Location = New Point(4, Guna2Panel1.Height - PaginationControl1.Height - 2)
                 PaginationControl1.BringToFront()
+
+                ' Grid fills the panel above the pagination.
+                InventoryLogDataGrid.Width = Guna2Panel1.Width - 8
+                InventoryLogDataGrid.Location = New Point(8, 72)
+                InventoryLogDataGrid.Height = PaginationControl1.Top - InventoryLogDataGrid.Top - 6
             End If
         Catch
         End Try

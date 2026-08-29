@@ -13,6 +13,9 @@ Public Class Staff
     ' Navigation flag to prevent exit confirmation on programmatic close
     Private isNavigating As Boolean = False
 
+    Private Const PageSize As Integer = 50
+    Private _currentPage As Integer = 1
+
     Private Sub Staff_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         Me.BackColor = Drawing.Color.FromArgb(248, 248, 247)
         ' Initialize QuestPDF
@@ -65,6 +68,12 @@ Public Class Staff
 
         ' Initialize Sort ComboBox
         InitializeSortComboBox()
+
+        ' Wire pagination
+        If PaginationControl1 IsNot Nothing Then
+            RemoveHandler PaginationControl1.PageChanged, AddressOf PaginationControl1_PageChanged
+            AddHandler PaginationControl1.PageChanged, AddressOf PaginationControl1_PageChanged
+        End If
 
         ' Load logged-in user's profile picture
         ProfileManager.LoadUserProfilePicture(Me, Guna2CirclePictureBox5)
@@ -187,7 +196,7 @@ Public Class Staff
         .Alignment = DataGridViewContentAlignment.MiddleCenter
     }
         Guna2DataGridView1.ColumnHeadersHeight = 50
-        Guna2DataGridView1.RowTemplate.Height = 60
+        Guna2DataGridView1.RowTemplate.Height = 72
         Guna2DataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing
 
         ' Add columns (center aligned by default, except Username/Email/Phone)
@@ -267,17 +276,19 @@ Public Class Staff
         Guna2DataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
     End Sub
 
-    Private Sub LoadUsersData(Optional sortOrder As String = "")
+    Private Sub LoadUsersData(Optional sortOrder As String = "", Optional pageNumber As Integer = -1)
         Try
+            If pageNumber >= 1 Then
+                _currentPage = pageNumber
+            End If
+
             ' Clear existing rows
             Guna2DataGridView1.Rows.Clear()
 
             ' Hide any existing "No records" message
             DataGridViewHelper.HideNoRecordsMessage()
 
-            Dim query As String = "SELECT UserID, Username, PIN, Email, Phone, UserRole, PhotoPath, IsActive FROM Users"
             Dim whereClause As String = ""
-
             Select Case sortOrder
                 Case "Admins Only"
                     whereClause = " WHERE UserRole = 'Admin'"
@@ -287,11 +298,17 @@ Public Class Staff
                     whereClause = " WHERE UserRole = 'Staff'"
             End Select
 
-            If whereClause <> "" Then
-                query += whereClause
+            ' Configure pagination with the filtered total count.
+            If PaginationControl1 IsNot Nothing Then
+                Dim totalCount As Integer = CountUsers(sortOrder)
+                PaginationControl1.Configure(totalCount, PageSize, _currentPage)
             End If
 
-            query += " ORDER BY UserID ASC"
+            Dim offset As Integer = (_currentPage - 1) * PageSize
+            Dim query As String = "SELECT UserID, Username, PIN, Email, Phone, UserRole, PhotoPath, IsActive FROM Users" &
+                                  whereClause &
+                                  " ORDER BY UserID ASC" &
+                                  $" LIMIT {PageSize} OFFSET {offset}"
 
             Using reader As DbDataReader = Utilities.ExecuteReader(query, Nothing)
                 While reader.Read()
@@ -353,6 +370,8 @@ Public Class Staff
                 DataGridViewHelper.ShowNoRecordsMessage(Guna2DataGridView1, "No Staff Members Found")
             End If
 
+            AlignPaginationToPanel()
+
         Catch ex As Exception
             MessageBox.Show($"Error loading staff data: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
 
@@ -362,6 +381,28 @@ Public Class Staff
             End If
         End Try
     End Sub
+
+    Private Function CountUsers(Optional sortOrder As String = "") As Integer
+        Dim count As Integer = 0
+        Try
+            Dim whereClause As String = ""
+            Select Case sortOrder
+                Case "Admins Only"
+                    whereClause = " WHERE UserRole = 'Admin'"
+                Case "Managers Only"
+                    whereClause = " WHERE UserRole = 'Manager'"
+                Case "Staff Only"
+                    whereClause = " WHERE UserRole = 'Staff'"
+            End Select
+
+            Dim result = Utilities.ExecuteScalar("SELECT COUNT(*) FROM Users" & whereClause, Nothing)
+            If result IsNot Nothing AndAlso Not IsDBNull(result) Then
+                count = Convert.ToInt32(result)
+            End If
+        Catch
+        End Try
+        Return count
+    End Function
     Private Function CreateDefaultAvatarImage() As System.Drawing.Image
         Const w As Integer = 90
         Const h As Integer = 60
@@ -397,6 +438,7 @@ Public Class Staff
 
     Private Sub SortBy_SelectedIndexChanged(sender As Object, e As EventArgs) Handles SortBy.SelectedIndexChanged
         If SortBy.SelectedItem IsNot Nothing Then
+            _currentPage = 1
             LoadUsersData(SortBy.SelectedItem.ToString())
         End If
     End Sub
@@ -494,7 +536,7 @@ Public Class Staff
             idForm.StartPosition = FormStartPosition.CenterParent
             idForm.LoadFromUserData(userData)
             Utilities.EnableEscCloseModal(idForm)
-            idForm.ShowDialog()
+            idForm.ShowDialog(Me)
         Catch ex As Exception
             MessageBox.Show($"Unable to show ID Card: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
@@ -567,7 +609,7 @@ Public Class Staff
         pinDialog.Controls.AddRange({lblPrompt, txtPin, btnConfirm, btnCancel})
         txtPin.Focus()
         Utilities.EnableEscCloseModal(pinDialog)
-        pinDialog.ShowDialog()
+        pinDialog.ShowDialog(Me)
 
         Return pinAccepted
     End Function
@@ -614,10 +656,11 @@ Public Class Staff
 
                 addStaffForm.StartPosition = FormStartPosition.CenterParent
                 Utilities.EnableEscCloseModal(addStaffForm)
-                addStaffForm.ShowDialog()
+                addStaffForm.ShowDialog(Me)
             End Using
 
             ' Refresh the staff list after possible edits
+            _currentPage = 1
             LoadUsersData(If(SortBy.SelectedItem IsNot Nothing, SortBy.SelectedItem.ToString(), ""))
         Catch ex As Exception
             MessageBox.Show($"Error opening Edit Staff form: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
@@ -633,6 +676,7 @@ Public Class Staff
             addStaffForm.ShowDialog()
 
             ' Refresh the staff list after adding new staff
+            _currentPage = 1
             LoadUsersData(If(SortBy.SelectedItem IsNot Nothing, SortBy.SelectedItem.ToString(), ""))
 
         Catch ex As Exception
@@ -844,7 +888,7 @@ Public Class Staff
             idForm.StartPosition = FormStartPosition.CenterParent
             idForm.LoadFromUserData(rowTag)
             Utilities.EnableEscCloseModal(idForm)
-            idForm.ShowDialog()
+            idForm.ShowDialog(Me)
 
         Catch ex As Exception
             MessageBox.Show($"Unable to display ID Card: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
@@ -871,5 +915,31 @@ Public Class Staff
 
     Private Sub PictureBox9_Click(sender As Object, e As EventArgs)
 
+    End Sub
+
+    Private Sub PaginationControl1_PageChanged(page As Integer)
+        _currentPage = page
+        LoadUsersData(If(SortBy.SelectedItem IsNot Nothing, SortBy.SelectedItem.ToString(), ""), page)
+    End Sub
+
+    Private Sub AlignPaginationToPanel()
+        Try
+            If PaginationControl1 IsNot Nothing AndAlso Guna2Panel1 IsNot Nothing AndAlso Guna2DataGridView1 IsNot Nothing Then
+                ' Pagination anchored to the bottom of the panel.
+                PaginationControl1.Width = Guna2Panel1.Width - 8
+                PaginationControl1.Location = New Point(4, Guna2Panel1.Height - PaginationControl1.Height - 2)
+                PaginationControl1.BringToFront()
+
+                ' Grid fills the panel above the pagination.
+                Guna2DataGridView1.Width = Guna2Panel1.Width - 8
+                Guna2DataGridView1.Location = New Point(8, 72)
+                Guna2DataGridView1.Height = PaginationControl1.Top - Guna2DataGridView1.Top - 6
+            End If
+        Catch
+        End Try
+    End Sub
+
+    Private Sub Staff_Resize(sender As Object, e As EventArgs) Handles Me.Resize
+        AlignPaginationToPanel()
     End Sub
 End Class

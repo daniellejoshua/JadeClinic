@@ -44,6 +44,7 @@ Partial Class Staff
         lblUsername = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2HtmlLabel3 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2Panel1 = New Guna.UI2.WinForms.Guna2Panel()
+        PaginationControl1 = New PaginationControl()
         DashboardPanel.SuspendLayout()
         CType(PictureBox9, ComponentModel.ISupportInitialize).BeginInit()
         CType(Guna2CirclePictureBox5, ComponentModel.ISupportInitialize).BeginInit()
@@ -109,6 +110,7 @@ Partial Class Staff
         Guna2DataGridView1.AllowUserToResizeRows = False
         DataGridViewCellStyle1.BackColor = Color.White
         Guna2DataGridView1.AlternatingRowsDefaultCellStyle = DataGridViewCellStyle1
+        Guna2DataGridView1.Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
         Guna2DataGridView1.BackgroundColor = Color.FromArgb(CByte(250), CByte(249), CByte(246))
         DataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleCenter
         DataGridViewCellStyle2.BackColor = Color.FromArgb(CByte(250), CByte(249), CByte(246))
@@ -129,11 +131,11 @@ Partial Class Staff
         DataGridViewCellStyle3.WrapMode = DataGridViewTriState.False
         Guna2DataGridView1.DefaultCellStyle = DataGridViewCellStyle3
         Guna2DataGridView1.GridColor = Color.FromArgb(CByte(220), CByte(220), CByte(220))
-        Guna2DataGridView1.Location = New Point(6, 3)
+        Guna2DataGridView1.Location = New Point(8, 58)
         Guna2DataGridView1.Name = "Guna2DataGridView1"
         Guna2DataGridView1.RowHeadersVisible = False
         Guna2DataGridView1.RowHeadersWidth = 51
-        Guna2DataGridView1.Size = New Size(1651, 852)
+        Guna2DataGridView1.Size = New Size(1641, 800)
         Guna2DataGridView1.TabIndex = 41
         Guna2DataGridView1.ThemeStyle.AlternatingRowsStyle.BackColor = Color.White
         Guna2DataGridView1.ThemeStyle.AlternatingRowsStyle.Font = Nothing
@@ -168,17 +170,17 @@ Partial Class Staff
         btnDiscount.FillColor = Color.FromArgb(CByte(191), CByte(155), CByte(48))
         btnDiscount.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         btnDiscount.ForeColor = Color.White
-        btnDiscount.Location = New Point(1616, 106)
+        btnDiscount.Location = New Point(1284, 13)
         btnDiscount.Name = "btnDiscount"
         btnDiscount.ShadowDecoration.CustomizableEdges = CustomizableEdges5
-        btnDiscount.Size = New Size(147, 40)
+        btnDiscount.Size = New Size(206, 44)
         btnDiscount.TabIndex = 64
-        btnDiscount.Text = "Add Staff"
+        btnDiscount.Text = "＋ Add Staff"
         ' 
         ' SortBy
         ' 
         SortBy.BackColor = Color.Transparent
-        SortBy.BorderColor = Color.FromArgb(CByte(253), CByte(198), CByte(44))
+        SortBy.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
         SortBy.BorderRadius = 10
         SortBy.CustomizableEdges = CustomizableEdges6
         SortBy.DrawMode = DrawMode.OwnerDrawFixed
@@ -188,36 +190,38 @@ Partial Class Staff
         SortBy.Font = New Font("Poppins Light", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         SortBy.ForeColor = Color.FromArgb(CByte(51), CByte(51), CByte(51))
         SortBy.ItemHeight = 40
-        SortBy.Location = New Point(330, 100)
+        SortBy.Location = New Point(115, 11)
         SortBy.Name = "SortBy"
         SortBy.ShadowDecoration.CustomizableEdges = CustomizableEdges7
-        SortBy.Size = New Size(361, 46)
+        SortBy.Size = New Size(200, 46)
         SortBy.TabIndex = 65
         ' 
         ' Exportbtn
         ' 
+        Exportbtn.BorderColor = Color.Gainsboro
         Exportbtn.BorderRadius = 10
+        Exportbtn.BorderThickness = 1
         Exportbtn.CustomizableEdges = CustomizableEdges8
         Exportbtn.DisabledState.BorderColor = Color.DarkGray
         Exportbtn.DisabledState.CustomBorderColor = Color.DarkGray
         Exportbtn.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
         Exportbtn.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        Exportbtn.FillColor = Color.FromArgb(CByte(191), CByte(155), CByte(48))
+        Exportbtn.FillColor = Color.White
         Exportbtn.Font = New Font("Poppins Medium", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Exportbtn.ForeColor = Color.White
-        Exportbtn.Location = New Point(1803, 106)
+        Exportbtn.ForeColor = Color.FromArgb(CByte(80), CByte(80), CByte(80))
+        Exportbtn.Location = New Point(1505, 13)
         Exportbtn.Name = "Exportbtn"
         Exportbtn.ShadowDecoration.CustomizableEdges = CustomizableEdges9
-        Exportbtn.Size = New Size(86, 40)
+        Exportbtn.Size = New Size(130, 42)
         Exportbtn.TabIndex = 66
-        Exportbtn.Text = "Export"
+        Exportbtn.Text = "📥 Export"
         ' 
         ' lblUsername
         ' 
         lblUsername.BackColor = Color.Transparent
         lblUsername.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblUsername.ForeColor = Color.FromArgb(CByte(51), CByte(51), CByte(51))
-        lblUsername.Location = New Point(1779, 26)
+        lblUsername.ForeColor = Color.FromArgb(CByte(59), CByte(59), CByte(59))
+        lblUsername.Location = New Point(1821, 20)
         lblUsername.Name = "lblUsername"
         lblUsername.Size = New Size(65, 28)
         lblUsername.TabIndex = 74
@@ -228,7 +232,7 @@ Partial Class Staff
         Guna2HtmlLabel3.BackColor = Color.Transparent
         Guna2HtmlLabel3.Font = New Font("Poppins", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         Guna2HtmlLabel3.ForeColor = Color.FromArgb(CByte(42), CByte(42), CByte(42))
-        Guna2HtmlLabel3.Location = New Point(241, 108)
+        Guna2HtmlLabel3.Location = New Point(22, 19)
         Guna2HtmlLabel3.Name = "Guna2HtmlLabel3"
         Guna2HtmlLabel3.Size = New Size(72, 32)
         Guna2HtmlLabel3.TabIndex = 75
@@ -236,33 +240,50 @@ Partial Class Staff
         ' 
         ' Guna2Panel1
         ' 
+        Guna2Panel1.Anchor = AnchorStyles.Top Or AnchorStyles.Left Or AnchorStyles.Right
+        Guna2Panel1.BackColor = Color.Transparent
         Guna2Panel1.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
+        Guna2Panel1.BorderRadius = 10
         Guna2Panel1.BorderThickness = 2
         Guna2Panel1.Controls.Add(Guna2DataGridView1)
+        Guna2Panel1.Controls.Add(PaginationControl1)
+        Guna2Panel1.Controls.Add(SortBy)
+        Guna2Panel1.Controls.Add(Guna2HtmlLabel3)
+        Guna2Panel1.Controls.Add(btnDiscount)
+        Guna2Panel1.Controls.Add(Exportbtn)
         Guna2Panel1.CustomizableEdges = CustomizableEdges10
-        Guna2Panel1.FillColor = Color.FromArgb(CByte(250), CByte(249), CByte(246))
-        Guna2Panel1.Location = New Point(235, 160)
+        Guna2Panel1.FillColor = Color.White
+        Guna2Panel1.Location = New Point(240, 113)
         Guna2Panel1.Name = "Guna2Panel1"
         Guna2Panel1.ShadowDecoration.CustomizableEdges = CustomizableEdges11
         Guna2Panel1.ShadowDecoration.Depth = 0
-        Guna2Panel1.ShadowDecoration.Enabled = False
-        Guna2Panel1.ShadowDecoration.Shadow = New Padding(0, 0, 4, 4)
-        Guna2Panel1.Size = New Size(1657, 861)
+        Guna2Panel1.ShadowDecoration.Shadow = New Padding(0)
+        Guna2Panel1.Size = New Size(1650, 908)
         Guna2Panel1.TabIndex = 80
+        ' 
+        ' PaginationControl1
+        ' 
+        PaginationControl1.BackColor = Color.White
+        PaginationControl1.CurrentPage = 1
+        PaginationControl1.ItemsPerPage = 8
+        PaginationControl1.Location = New Point(8, 858)
+        PaginationControl1.MaximumSize = New Size(0, 62)
+        PaginationControl1.MinimumSize = New Size(360, 62)
+        PaginationControl1.Name = "PaginationControl1"
+        PaginationControl1.Size = New Size(1641, 62)
+        PaginationControl1.TabIndex = 86
+        PaginationControl1.TotalItems = 0
+        PaginationControl1.TotalPages = 1
         ' 
         ' Staff
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
         AutoScroll = True
-        BackColor = Color.White
+        BackColor = Color.FromArgb(CByte(245), CByte(243), CByte(239))
         ClientSize = New Size(1902, 1033)
         Controls.Add(Guna2Panel1)
-        Controls.Add(Guna2HtmlLabel3)
         Controls.Add(lblUsername)
-        Controls.Add(Exportbtn)
-        Controls.Add(SortBy)
-        Controls.Add(btnDiscount)
         Controls.Add(Guna2CirclePictureBox5)
         Controls.Add(DashboardPanel)
         Controls.Add(LabelTitle)
@@ -274,6 +295,7 @@ Partial Class Staff
         CType(Guna2CirclePictureBox5, ComponentModel.ISupportInitialize).EndInit()
         CType(Guna2DataGridView1, ComponentModel.ISupportInitialize).EndInit()
         Guna2Panel1.ResumeLayout(False)
+        Guna2Panel1.PerformLayout()
         ResumeLayout(False)
         PerformLayout()
     End Sub
@@ -289,4 +311,5 @@ Partial Class Staff
     Friend WithEvents Guna2HtmlLabel3 As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents PictureBox9 As PictureBox
     Friend WithEvents Guna2Panel1 As Guna.UI2.WinForms.Guna2Panel
+    Friend WithEvents PaginationControl1 As PaginationControl
 End Class

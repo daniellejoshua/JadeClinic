@@ -212,6 +212,7 @@ Partial Class IdCard
         ' picStaffPhoto
         ' 
         picStaffPhoto.BackColor = Color.Transparent
+        picStaffPhoto.Image = My.Resources.Resources.avatar_default_svgrepo_com
         picStaffPhoto.ImageRotate = 0F
         picStaffPhoto.Location = New Point(128, 31)
         picStaffPhoto.Name = "picStaffPhoto"
