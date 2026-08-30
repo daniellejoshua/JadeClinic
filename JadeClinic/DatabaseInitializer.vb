@@ -28,6 +28,12 @@ Public Class DatabaseInitializer
             Catch
             End Try
 
+            ' Add ApprovedBy/AbortReason columns and drop the obsolete IsVoid column on existing databases
+            Try
+                SalesStatusMigration.UpdateDatabaseForSalesStatus()
+            Catch
+            End Try
+
             Console.WriteLine("?? Database schema created successfully!")
         Catch ex As Exception
             Console.WriteLine($"? Error creating database schema: {ex.Message}")
@@ -202,10 +208,11 @@ Public Class DatabaseInitializer
             "TotalAmount REAL DEFAULT 0, " &
             "AmountPaid REAL DEFAULT 0, " &
             "PaymentMethod TEXT DEFAULT 'Cash', " &
-            "IsVoid INTEGER DEFAULT 0, " &
             "Reference TEXT NULL, " &
             "SalesData TEXT NOT NULL, " &
             "Status TEXT DEFAULT 'Completed', " &
+            "ApprovedBy TEXT NULL, " &
+            "AbortReason TEXT NULL, " &
             "DiscountType TEXT NULL, " &
             "DiscountAmount REAL NOT NULL DEFAULT 0, " &
             "FOREIGN KEY (UserID) REFERENCES Users(UserID)" &

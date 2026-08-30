@@ -484,8 +484,8 @@ Public Class DemoDataSeeder
 
                 Using cmd As New SqliteCommand(
                     "INSERT INTO Sales (SaleNumber, SaleDate, CustomerName, CustomerTIN, UserID, TotalAmount, " &
-                    "AmountPaid, PaymentMethod, IsVoid, Reference, SalesData, Status, DiscountType, DiscountAmount) " &
-                    "VALUES (@salenum, @saledate, @customer, @tin, @user, @total, @paid, @method, 0, @reference, " &
+                    "AmountPaid, PaymentMethod, Reference, SalesData, Status, DiscountType, DiscountAmount) " &
+                    "VALUES (@salenum, @saledate, @customer, @tin, @user, @total, @paid, @method, @reference, " &
                     "@salesdata, 'Completed', NULL, 0); SELECT last_insert_rowid()", conn, tran)
                     cmd.Parameters.AddWithValue("@salenum", saleNumber)
                     cmd.Parameters.AddWithValue("@saledate", saleDateTime)

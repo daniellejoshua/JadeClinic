@@ -281,7 +281,7 @@ Public Class SalesRecord
         Dim sales As New List(Of Dictionary(Of String, Object))()
         Try
             Dim query As String = "SELECT s.SaleID, IFNULL(s.SaleNumber, '') AS SaleNumber, u.Username, s.SaleDate, s.PaymentMethod, s.TotalAmount, s.AmountPaid, " &
-                          "(s.AmountPaid - s.TotalAmount) AS Change, s.SalesData " &
+                          "(s.AmountPaid - s.TotalAmount) AS Change, s.SalesData, IFNULL(s.Status, 'Completed') AS Status " &
                           "FROM Sales s LEFT JOIN Users u ON s.UserID = u.UserID"
 
             Dim whereClauses As New List(Of String)()
@@ -336,6 +336,7 @@ Public Class SalesRecord
                     Dim amountPaid As Decimal = If(IsDBNull(reader("AmountPaid")), 0D, Convert.ToDecimal(reader("AmountPaid")))
                     Dim changeVal As Decimal = If(IsDBNull(reader("Change")), amountPaid - totalAmount, Convert.ToDecimal(reader("Change")))
                     Dim salesDataJson As String = If(IsDBNull(reader("SalesData")), "{}", reader("SalesData").ToString())
+                    Dim status As String = If(IsDBNull(reader("Status")), "Completed", reader("Status").ToString())
                     Dim discountType As String = ""
                     Dim discountAmount As Decimal = 0D
                     Try
@@ -358,7 +359,8 @@ Public Class SalesRecord
                         {"AmountPaid", amountPaid},
                         {"Change", changeVal},
                         {"DiscountType", discountType},
-                        {"DiscountAmount", discountAmount}
+                        {"DiscountAmount", discountAmount},
+                        {"Status", status}
                     })
                 End While
             End Using
@@ -422,12 +424,21 @@ Public Class SalesRecord
             Dim changeVal As Decimal = If(record.ContainsKey("Change"), CDec(record("Change")), 0D)
             Dim discountType As String = If(record.ContainsKey("DiscountType"), record("DiscountType").ToString(), "")
             Dim discountAmount As Decimal = If(record.ContainsKey("DiscountAmount"), CDec(record("DiscountAmount")), 0D)
+            Dim status As String = If(record.ContainsKey("Status"), record("Status").ToString(), "Completed")
+            Dim isAborted As Boolean = String.Equals(status, "Aborted", StringComparison.OrdinalIgnoreCase)
 
             Dim rowIndex As Integer = Guna2DataGridView1.Rows.Add()
             Guna2DataGridView1.Rows(rowIndex).Cells("OrderID").Value = saleNumber
             Guna2DataGridView1.Rows(rowIndex).Cells("CreatedBy").Value = username
             Guna2DataGridView1.Rows(rowIndex).Cells("OrderDate").Value = If(saleDate = DateTime.MinValue, "", saleDate.ToString("MM/dd/yyyy HH:mm"))
-            Guna2DataGridView1.Rows(rowIndex).Cells("PaymentMethod").Value = paymentMethod
+            Guna2DataGridView1.Rows(rowIndex).Cells("PaymentMethod").Value = If(isAborted, "Aborted", paymentMethod)
+            ' Stamp aborted rows clearly and de-emphasize their (zero) values
+            If isAborted Then
+                Guna2DataGridView1.Rows(rowIndex).Cells("OrderID").Value = saleNumber & "  (ABORTED)"
+                Guna2DataGridView1.Rows(rowIndex).Cells("OrderID").Style.ForeColor = Drawing.Color.FromArgb(170, 40, 40)
+                Guna2DataGridView1.Rows(rowIndex).Cells("OrderID").Style.Font = New Font("Poppins", 9, FontStyle.Bold)
+                Guna2DataGridView1.Rows(rowIndex).Cells("PaymentMethod").Style.ForeColor = Drawing.Color.FromArgb(190, 60, 60)
+            End If
             Dim pmColor As Drawing.Color = GetPaymentMethodColor(paymentMethod)
             Guna2DataGridView1.Rows(rowIndex).Cells("PaymentMethod").Style.ForeColor = pmColor
             Guna2DataGridView1.Rows(rowIndex).Cells("TotalAmount").Value = ChrW(&H20B1) & totalAmount.ToString("F2")

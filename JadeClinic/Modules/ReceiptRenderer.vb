@@ -19,6 +19,9 @@ Public Class ReceiptData
     Public Property CustomerPhone As String = "________________"
     Public Property CustomerEmail As String = "________________"
     Public Property Items As New List(Of ReceiptLineItem)()
+    Public Property VoidedItems As New List(Of ReceiptLineItem)()
+    Public Property ShowVoidedItems As Boolean = False
+    Public Property IsAborted As Boolean = False
     Public Property SubtotalVatInclusive As Decimal = 0D
     Public Property DiscountAmount As Decimal = 0D
     Public Property DiscountType As String = "None"
@@ -141,6 +144,12 @@ Public Module ReceiptRenderer
             yPosition += 16
 
             ' Document title and metadata
+            If data.IsAborted Then
+                g.DrawString("ABORTED SALE", boldFont, brush, CSng(centerX - (g.MeasureString("ABORTED SALE", boldFont).Width / 2)), CSng(yPosition))
+                yPosition += 12
+                g.DrawString("(Cart discarded - no payment)", regularFont, brush, CSng(centerX - (g.MeasureString("(Cart discarded - no payment)", regularFont).Width / 2)), CSng(yPosition))
+                yPosition += 12
+            End If
             g.DrawString("SALES INVOICE", boldFont, brush, CSng(centerX - (g.MeasureString("SALES INVOICE", boldFont).Width / 2)), CSng(yPosition))
             yPosition += 22
             g.DrawString($"Receipt #: {data.ReceiptNumber}", regularFont, brush, marginLeft, yPosition)
@@ -174,6 +183,24 @@ Public Module ReceiptRenderer
                 yPosition += 15
                 yPosition += 4
             Next
+
+            ' Voided-items trail (internal view only - excluded from the customer receipt)
+            If data.ShowVoidedItems AndAlso data.VoidedItems.Count > 0 Then
+                g.DrawString(separator, regularFont, brush, marginLeft, yPosition)
+                yPosition += 12
+                g.DrawString("VOIDED ITEMS (TRAIL)", sectionHeaderFont, brush, marginLeft, yPosition)
+                yPosition += 14
+                For Each vitem As ReceiptLineItem In data.VoidedItems
+                    g.DrawString($"{vitem.Quantity}x {vitem.ProductName}  (voided)", regularFont, brush, marginLeft, yPosition)
+                    yPosition += 12
+                    g.DrawString($"@ {peso}{vitem.UnitVatInc:F2}", regularFont, brush, marginLeft + 8, yPosition)
+                    g.DrawString($"{peso}{vitem.LineTotal:F2}", regularFont, brush, CSng(marginBounds.Right - g.MeasureString($"{peso}{vitem.LineTotal:F2}", regularFont).Width), CSng(yPosition))
+                    yPosition += 15
+                    yPosition += 4
+                Next
+                g.DrawString(separator, regularFont, brush, marginLeft, yPosition)
+                yPosition += 14
+            End If
 
             g.DrawString(separator, regularFont, brush, marginLeft, yPosition)
             yPosition += 14

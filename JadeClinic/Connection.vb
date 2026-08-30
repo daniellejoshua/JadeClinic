@@ -67,6 +67,14 @@ Module Connection
                         Console.WriteLine("No tables found. Creating database schema...")
                         DatabaseInitializer.CreateDatabaseSchema()
                         Console.WriteLine("? Database schema initialized successfully!")
+                    Else
+                        ' Existing database: run schema maintenance/migrations so new
+                        ' columns land on already-created tables too (e.g. Sales
+                        ' ApprovedBy/AbortReason and the IsVoid drop).
+                        Try
+                            SalesStatusMigration.UpdateDatabaseForSalesStatus()
+                        Catch
+                        End Try
                     End If
                 End Using
             End Using

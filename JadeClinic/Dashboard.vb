@@ -1258,9 +1258,9 @@ Public Class Dashboard
                 New SqlParameter("@E", endSql)
             }
 
-            ' Revenue per bucket (exclude voided)
+            ' Revenue per bucket (exclude aborted)
             Dim revenueQuery As String = "SELECT " & keyExpr & " AS k, IFNULL(SUM(TotalAmount),0) AS Rev " &
-                "FROM Sales WHERE IsVoid = 0 AND SaleDate >= @S AND SaleDate <= @E GROUP BY k"
+                "FROM Sales WHERE Status <> 'Aborted' AND SaleDate >= @S AND SaleDate <= @E GROUP BY k"
             Dim revenueByKey As New Dictionary(Of String, Double)()
             Using reader As DbDataReader = Utilities.ExecuteReader(revenueQuery, parameters)
                 While reader.Read()
@@ -1275,7 +1275,7 @@ Public Class Dashboard
                 "FROM SaleItems si " &
                 "JOIN Sales s ON si.SaleID = s.SaleID " &
                 "JOIN Products p ON si.ProductID = p.ProductID " &
-                "WHERE s.IsVoid = 0 AND s.SaleDate >= @S AND s.SaleDate <= @E GROUP BY k"
+                "WHERE s.Status <> 'Aborted' AND s.SaleDate >= @S AND s.SaleDate <= @E GROUP BY k"
             Dim cogsByKey As New Dictionary(Of String, Double)()
             Using reader As DbDataReader = Utilities.ExecuteReader(cogsQuery, parameters)
                 While reader.Read()

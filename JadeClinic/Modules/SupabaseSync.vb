@@ -54,12 +54,12 @@ Public Module SupabaseSync
         "RETURNING id, local_id"
 
     Private ReadOnly SalesInsert As String = "INSERT INTO sales (local_id, sale_number, sale_date, customer_name, customer_tin, user_id, total_amount, " &
-        "amount_paid, payment_method, reference, is_void, status, discount_type, discount_amount, sales_data, created_at, synced_at)"
+        "amount_paid, payment_method, reference, status, approved_by, abort_reason, discount_type, discount_amount, sales_data, created_at, synced_at)"
     Private ReadOnly SalesSuffix As String = "ON CONFLICT (local_id) DO UPDATE SET " &
         "sale_number = EXCLUDED.sale_number, sale_date = EXCLUDED.sale_date, customer_name = EXCLUDED.customer_name, " &
         "customer_tin = EXCLUDED.customer_tin, user_id = EXCLUDED.user_id, total_amount = EXCLUDED.total_amount, " &
         "amount_paid = EXCLUDED.amount_paid, payment_method = EXCLUDED.payment_method, reference = EXCLUDED.reference, " &
-        "is_void = EXCLUDED.is_void, status = EXCLUDED.status, discount_type = EXCLUDED.discount_type, " &
+        "status = EXCLUDED.status, approved_by = EXCLUDED.approved_by, abort_reason = EXCLUDED.abort_reason, discount_type = EXCLUDED.discount_type, " &
         "discount_amount = EXCLUDED.discount_amount, sales_data = EXCLUDED.sales_data, synced_at = NOW() " &
         "RETURNING id, local_id"
 
@@ -114,7 +114,7 @@ Public Module SupabaseSync
         "sale_number TEXT, sale_date TIMESTAMPTZ DEFAULT NOW(), customer_name TEXT, customer_tin TEXT, " &
         "user_id INTEGER REFERENCES users(id), total_amount DECIMAL(10,2) DEFAULT 0, " &
         "amount_paid DECIMAL(10,2) DEFAULT 0, payment_method TEXT DEFAULT 'Cash', reference TEXT, " &
-        "is_void BOOLEAN DEFAULT FALSE, status TEXT DEFAULT 'Completed', discount_type TEXT, " &
+        "status TEXT DEFAULT 'Completed', approved_by TEXT, abort_reason TEXT, discount_type TEXT, " &
         "discount_amount DECIMAL(10,2) DEFAULT 0, sales_data JSONB, " &
         "created_at TIMESTAMPTZ DEFAULT NOW(), synced_at TIMESTAMPTZ)",
         "CREATE TABLE IF NOT EXISTS sale_items (id SERIAL PRIMARY KEY, local_id INTEGER UNIQUE NOT NULL, " &
@@ -959,7 +959,7 @@ Public Module SupabaseSync
         Dim lastSyncedId As Long = 0
         Dim selectSql As String =
             "SELECT SaleID, SaleNumber, SaleDate, CustomerName, CustomerTIN, UserID, TotalAmount, AmountPaid, PaymentMethod, " &
-            "IsVoid, Status, DiscountType, DiscountAmount, Reference, SalesData FROM Sales"
+            "Status, ApprovedBy, AbortReason, DiscountType, DiscountAmount, Reference, SalesData FROM Sales"
         If Not full Then
             lastSyncedId = GetCloudMaxLocalId(pg, "sales")
             selectSql &= " WHERE SaleID > @lastSyncedId"
@@ -995,8 +995,9 @@ Public Module SupabaseSync
                     vals.Add(New SyncVal(Dcoalesce(GetDecimalDb(reader, "AmountPaid"), 0D), NpgsqlDbType.Numeric))
                     vals.Add(New SyncVal(Dcoalesce(GetStr(reader, "PaymentMethod"), "Cash"), NpgsqlDbType.Text))
                     vals.Add(New SyncVal(GetStr(reader, "Reference"), NpgsqlDbType.Text))
-                    vals.Add(New SyncVal(Dcoalesce(GetBoolDb(reader, "IsVoid"), False), NpgsqlDbType.Boolean))
                     vals.Add(New SyncVal(Dcoalesce(GetStr(reader, "Status"), "Completed"), NpgsqlDbType.Text))
+                    vals.Add(New SyncVal(GetStr(reader, "ApprovedBy"), NpgsqlDbType.Text))
+                    vals.Add(New SyncVal(GetStr(reader, "AbortReason"), NpgsqlDbType.Text))
                     vals.Add(New SyncVal(GetStr(reader, "DiscountType"), NpgsqlDbType.Text))
                     vals.Add(New SyncVal(Dcoalesce(GetDecimalDb(reader, "DiscountAmount"), 0D), NpgsqlDbType.Numeric))
                     vals.Add(New SyncVal(salesData, NpgsqlDbType.Jsonb))

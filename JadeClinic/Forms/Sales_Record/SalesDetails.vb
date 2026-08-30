@@ -43,7 +43,8 @@ Public Class SalesDetails
             End If
 
             ShowReceiptPreviewLikeSalesForm()
-            Me.Text = $"Receipt - Sale #{DisplaySaleNumber()}"
+            Dim isAborted As Boolean = String.Equals(Convert.ToString(saleRecord("Status")), "Aborted", StringComparison.OrdinalIgnoreCase)
+            Me.Text = $"{(If(isAborted, "Aborted Sale", "Receipt"))} - Sale #{DisplaySaleNumber()}"
         Catch ex As Exception
             MessageBox.Show($"Error loading sale details: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
@@ -61,7 +62,7 @@ Public Class SalesDetails
         saleRecord = Nothing
         saleItems.Clear()
 
-        Dim saleQuery As String = "SELECT s.SaleID, IFNULL(s.SaleNumber, '') AS SaleNumber, s.SaleDate, s.CustomerName, s.CustomerTIN, s.TotalAmount, s.AmountPaid, s.PaymentMethod, s.Reference, s.SalesData, u.Username " &
+        Dim saleQuery As String = "SELECT s.SaleID, IFNULL(s.SaleNumber, '') AS SaleNumber, s.SaleDate, s.CustomerName, s.CustomerTIN, s.TotalAmount, s.AmountPaid, s.PaymentMethod, s.Reference, s.SalesData, IFNULL(s.Status, 'Completed') AS Status, s.ApprovedBy, s.AbortReason, u.Username " &
                                   "FROM Sales s LEFT JOIN Users u ON s.UserID = u.UserID WHERE s.SaleID = @SaleID"
         Using reader As DbDataReader = Utilities.ExecuteReader(saleQuery, New SqlParameter("@SaleID", saleId))
             If reader.Read() Then
@@ -76,6 +77,9 @@ Public Class SalesDetails
                     {"PaymentMethod", If(IsDBNull(reader("PaymentMethod")), "Cash", reader("PaymentMethod").ToString())},
                     {"Reference", If(IsDBNull(reader("Reference")), "", reader("Reference").ToString())},
                     {"SalesData", If(IsDBNull(reader("SalesData")), "", reader("SalesData").ToString())},
+                    {"Status", If(IsDBNull(reader("Status")), "Completed", reader("Status").ToString())},
+                    {"ApprovedBy", If(IsDBNull(reader("ApprovedBy")), "", reader("ApprovedBy").ToString())},
+                    {"AbortReason", If(IsDBNull(reader("AbortReason")), "", reader("AbortReason").ToString())},
                     {"Cashier", If(IsDBNull(reader("Username")), frmLoginvb.LoggedInUsername, reader("Username").ToString())}
                 }
             End If
@@ -187,6 +191,13 @@ Public Class SalesDetails
         Next
         data.SubtotalVatInclusive = Math.Round(subtotalVatInclusive, 2)
 
+        ' Internal view: surface the voided-items trail and abort metadata.
+        ' The printed customer receipt keeps ShowVoidedItems = False, so voided
+        ' lines never appear on the customer copy.
+        data.ShowVoidedItems = True
+        data.IsAborted = String.Equals(Convert.ToString(saleRecord("Status")), "Aborted", StringComparison.OrdinalIgnoreCase)
+        PopulateVoidedItemsFromSalesData(data, salesDataJson)
+
         Dim discountAmt As Decimal = 0D
         Dim discountTypeText As String = "None"
         data.PaymentMethod = Convert.ToString(saleRecord("PaymentMethod"))
@@ -226,4 +237,40 @@ Public Class SalesDetails
 
         Return data
     End Function
+
+    ' Reads the buffered voided lines from the SalesData JSON (voidedItems array)
+    ' and exposes them as internal-only receipt line items for the audit trail.
+    Private Sub PopulateVoidedItemsFromSalesData(data As ReceiptData, salesDataJson As String)
+        Try
+            If String.IsNullOrWhiteSpace(salesDataJson) Then Return
+            Dim j = Newtonsoft.Json.Linq.JObject.Parse(salesDataJson)
+            Dim arr = TryCast(j.SelectToken("voidedItems"), Newtonsoft.Json.Linq.JArray)
+            If arr Is Nothing Then Return
+
+            For Each token In arr
+                Dim nameTok = token.SelectToken("ProductName")
+                Dim name As String = If(nameTok IsNot Nothing, nameTok.ToString(), "Unknown")
+                Dim qtyTok = token.SelectToken("Quantity")
+                Dim qty As Integer = 0
+                If qtyTok IsNot Nothing Then Integer.TryParse(qtyTok.ToString(), qty)
+                Dim priceTok = token.SelectToken("UnitPrice")
+                Dim unitPrice As Decimal = 0D
+                If priceTok IsNot Nothing Then Decimal.TryParse(priceTok.ToString(), unitPrice)
+                Dim appTok = token.SelectToken("ApprovedBy")
+                Dim approvedBy As String = If(appTok IsNot Nothing, appTok.ToString(), "")
+                If Not String.IsNullOrWhiteSpace(approvedBy) Then
+                    name &= $" (by {approvedBy})"
+                End If
+
+                data.VoidedItems.Add(New ReceiptLineItem() With {
+                    .ProductName = name,
+                    .Quantity = qty,
+                    .UnitVatInc = unitPrice,
+                    .LineTotal = Math.Round(unitPrice * qty, 2)
+                })
+            Next
+        Catch
+            ' Malformed/legacy SalesData without a voidedItems array: ignore.
+        End Try
+    End Sub
 End Class

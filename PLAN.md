@@ -61,7 +61,7 @@ CLINIC LAN                                 ADMIN PC                             
   4. users: **drop** `PasswordHash`, `pin`, `QRCode`, `Passkeys` (never ship credentials).
   5. Image columns (`image_url`, `photo_url`, `logo_url`) filled from S3 uploads — see §5.1.
   6. Record run in `sync_log`.
-- **No deletes** — mirror the audit trail (`is_active=false`, `is_void=true`); deleted LAN rows just stop updating.
+- **No deletes** — mirror the audit trail (`is_active=false`, `status='Aborted'` for discarded carts); deleted LAN rows just stop updating.
 
 ### 5.1 Image upload (S3, implemented in Phase 1.5)
 - S3-compatible API on Supabase: endpoint `https://<ref>.storage.supabase.co/storage/v1/s3`, region `us-east-1`, path-style addressing (ForcePathStyle).

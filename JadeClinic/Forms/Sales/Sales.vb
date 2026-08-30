@@ -28,6 +28,7 @@ Public Class Sales
         Public Property SelectedCustomerType As String
         Public Property SelectedPaymentMethod As String
         Public Property PaymentReference As String
+        Public Property VoidedItems As List(Of Dictionary(Of String, Object))
     End Class
     Private originalOrderPanelControls As List(Of Control)
     Private originalTotalPanelControls As List(Of Control)
@@ -1145,7 +1146,7 @@ Public Class Sales
                 ' Provide visual feedback that action is in progress
                 Me.Cursor = Cursors.WaitCursor
                 Dim approver As String = ""
-                Dim authorized As Boolean = ShowVoidAuthorizationModal(productName, currentQuantity, approver)
+                Dim authorized As Boolean = ShowVoidAuthorizationModal(productName, currentQuantity, approver, willEmptyCart:=(currentOrderList.Count = 1))
                 Me.Cursor = Cursors.Default
 
                 If Not authorized Then
@@ -1155,6 +1156,10 @@ Public Class Sales
 
                 ' Remove the item line
                 Dim removedProductId As String = currentOrderList(itemIndex)("ProductID").ToString()
+
+                ' Record the voided line for the sale trail before removing it
+                RecordVoidedLine(currentOrderList(itemIndex), currentQuantity, approver)
+
                 currentOrderList.RemoveAt(itemIndex)
 
                 ' Update UI and counts
@@ -1168,6 +1173,9 @@ Public Class Sales
 
                 Utilities.LogAudit(frmLoginvb.LoggedInUsername, "POS Line Voided", $"Product: {productName}, Qty: {currentQuantity}, AuthorizedBy: {approver}")
                 ShowVoidSuccessNotification(productName & $" (x{currentQuantity})", approver)
+
+                ' If the cart is now empty, record it as an Aborted sale (admin already authorized)
+                PromptRecordAbortIfCartEmpty(approver)
             Finally
                 Me.Cursor = Cursors.Default
             End Try
@@ -1189,11 +1197,15 @@ Public Class Sales
 
         ' currentQuantity = 1 => removing the last unit -> require authorization
         Dim approverLocal As String = ""
-        If Not ShowVoidAuthorizationModal(productName, 1, approverLocal) Then
+        If Not ShowVoidAuthorizationModal(productName, 1, approverLocal, willEmptyCart:=(currentOrderList.Count = 1)) Then
             Return
         End If
 
         Dim removedId As String = currentOrderList(itemIndex)("ProductID").ToString()
+
+        ' Record the voided line for the sale trail before removing it
+        RecordVoidedLine(currentOrderList(itemIndex), 1, approverLocal)
+
         currentOrderList.RemoveAt(itemIndex)
         UpdateStockLabelFromDbStock(removedId)
         RefreshOrderDisplay()
@@ -1202,6 +1214,9 @@ Public Class Sales
 
         Utilities.LogAudit(frmLoginvb.LoggedInUsername, "POS Item Voided", $"Product: {productName}, Qty: 1, AuthorizedBy: {approverLocal}")
         ShowVoidSuccessNotification(productName, approverLocal)
+
+        ' If the cart is now empty, record it as an Aborted sale (admin already authorized)
+        PromptRecordAbortIfCartEmpty(approverLocal)
     End Sub
     ' Non-blocking toast notification for void success
     Private Sub ShowVoidSuccessNotification(productName As String, approver As String)
@@ -1210,6 +1225,27 @@ Public Class Sales
             extra = $"By: {approver}"
         End If
         ShowToastNotification($"Item Voided: {productName}", SuccessGreen, extra)
+    End Sub
+
+    ' Records a voided line into the current attempt's buffer so it can be
+    ' attached to the final (Completed or Aborted) sale's SalesData as a trail.
+    Private Sub RecordVoidedLine(item As Dictionary(Of String, Object), qty As Integer, approver As String)
+        Try
+            Dim unitPrice As Decimal = 0D
+            If item.ContainsKey("Price") Then
+                Decimal.TryParse(item("Price").ToString(), unitPrice)
+            End If
+            voidedItems.Add(New Dictionary(Of String, Object) From {
+                {"ProductID", If(item.ContainsKey("ProductID"), item("ProductID"), 0)},
+                {"ProductName", If(item.ContainsKey("ProductName"), item("ProductName").ToString(), "Unknown")},
+                {"Quantity", qty},
+                {"UnitPrice", unitPrice},
+                {"ApprovedBy", If(String.IsNullOrWhiteSpace(approver), frmLoginvb.LoggedInUsername, approver)},
+                {"VoidedAt", DateTime.Now}
+            })
+        Catch ex As Exception
+            Console.WriteLine($"RecordVoidedLine error: {ex.Message}")
+        End Try
     End Sub
 
     ' Non-blocking toast notification shown after a sale is created
@@ -1593,6 +1629,11 @@ Public Class Sales
 
     ' Make currentOrderList accessible
     Public currentOrderList As New List(Of Dictionary(Of String, Object))
+
+    ' Buffered voided lines for the current cart attempt. Populated as lines are
+    ' voided, attached to the final (Completed or Aborted) sale's SalesData, and
+    ' cleared when that attempt closes so voids never leak into an unrelated sale.
+    Private voidedItems As New List(Of Dictionary(Of String, Object))()
 
     ' Helper method to validate user session
     Private Function ValidateUserSession() As Boolean
@@ -4330,6 +4371,9 @@ Public Class Sales
             ' Build sales data snapshot (JSON) for Sales.SalesData column
             Dim salesDataJson As String = ""
             Try
+                ' Snapshot the buffered voided lines so they survive the buffer
+                ' being cleared at the sale boundary (ResetSale).
+                Dim voidedSnapshot As List(Of Dictionary(Of String, Object)) = CloneOrderList(voidedItems)
                 salesDataJson = Newtonsoft.Json.JsonConvert.SerializeObject(New With {
                 .payment = New With {
                     .method = selectedPaymentMethod,
@@ -4338,7 +4382,8 @@ Public Class Sales
                     .change = changeAmount,
                     .discount = New With {.type = discountType, .amount = discountAmount}
                 },
-                .items = currentOrderList
+                .items = currentOrderList,
+                .voidedItems = voidedSnapshot
             })
             Catch
                 salesDataJson = "{}"
@@ -4530,6 +4575,8 @@ Public Class Sales
         ClearPersistedCartState()
         ' Clear order
         currentOrderList.Clear()
+        ' Clear buffered voided lines for this attempt
+        voidedItems.Clear()
 
         ' Reset customer info
         selectedCustomerId = Nothing
@@ -4633,6 +4680,156 @@ Public Class Sales
 
         ' Log the reset action
         Console.WriteLine($"Sale reset completed. Next Order ID: {lblOrderId?.Text}")
+    End Sub
+
+    ' Records the current cart as a Status='Aborted' sale (with the buffered
+    ' voided lines attached to SalesData), reserves the next SaleID/SaleNumber,
+    ' then resets the cart. No stock movement and no SaleItems rows are created
+    ' because nothing was actually sold.
+    Private Sub AbortCurrentCart(approver As String, reason As String)
+        Try
+            ' Build the snapshot of the discarded cart plus its voided lines
+            Dim salesDataJson As String = ""
+            Try
+                Dim voidedSnapshot As List(Of Dictionary(Of String, Object)) = CloneOrderList(voidedItems)
+                salesDataJson = Newtonsoft.Json.JsonConvert.SerializeObject(New With {
+                    .payment = New With {
+                        .method = "Aborted",
+                        .reference = Nothing,
+                        .received = 0D,
+                        .change = 0D,
+                        .discount = New With {.type = discountType, .amount = discountAmount}
+                    },
+                    .items = currentOrderList,
+                    .voidedItems = voidedSnapshot
+                })
+            Catch
+                salesDataJson = "{}"
+            End Try
+
+            Dim connStr As String = Connection.GetConnectionString()
+            If String.IsNullOrEmpty(connStr) Then
+                Throw New Exception("Database connection string is not configured.")
+            End If
+
+            Dim saleId As Integer = 0
+            Using conn As New SqliteConnection(connStr)
+                conn.Open()
+                Using tran = conn.BeginTransaction()
+                    Try
+                        Dim userIdToUse As Object = DBNull.Value
+                        Using cmdUserCheck As New SqliteCommand("SELECT UserID FROM Users WHERE Username = @Username", conn, tran)
+                            cmdUserCheck.Parameters.AddWithValue("@Username", frmLoginvb.LoggedInUsername)
+                            Dim uidObj = cmdUserCheck.ExecuteScalar()
+                            If uidObj IsNot Nothing AndAlso Not IsDBNull(uidObj) Then
+                                userIdToUse = Convert.ToInt32(uidObj)
+                            End If
+                        End Using
+
+                        Dim insertSaleQuery As String =
+                            "INSERT INTO Sales (SaleDate, CustomerName, CustomerTIN, TotalAmount, AmountPaid, PaymentMethod, Reference, SalesData, Status, ApprovedBy, AbortReason, DiscountType, DiscountAmount, UserID) " &
+                            "VALUES (@SaleDate, @CustomerName, @CustomerTIN, @TotalAmount, @AmountPaid, @PaymentMethod, @Reference, @SalesData, 'Aborted', @ApprovedBy, @AbortReason, @DiscountType, @DiscountAmount, @UserID); SELECT last_insert_rowid();"
+
+                        Using cmdSale As New SqliteCommand(insertSaleQuery, conn, tran)
+                            cmdSale.Parameters.AddWithValue("@SaleDate", DateTime.Now)
+                            cmdSale.Parameters.AddWithValue("@CustomerName", If(String.IsNullOrWhiteSpace(selectedCustomerName), CType(DBNull.Value, Object), CType(selectedCustomerName, Object)))
+                            cmdSale.Parameters.AddWithValue("@CustomerTIN", If(String.IsNullOrWhiteSpace(selectedCustomerTIN), CType(DBNull.Value, Object), CType(selectedCustomerTIN, Object)))
+                            cmdSale.Parameters.AddWithValue("@TotalAmount", 0D)
+                            cmdSale.Parameters.AddWithValue("@AmountPaid", 0D)
+                            cmdSale.Parameters.AddWithValue("@PaymentMethod", "Aborted")
+                            cmdSale.Parameters.AddWithValue("@Reference", DBNull.Value)
+                            cmdSale.Parameters.AddWithValue("@SalesData", salesDataJson)
+                            cmdSale.Parameters.AddWithValue("@ApprovedBy", If(String.IsNullOrWhiteSpace(approver), CType(DBNull.Value, Object), CType(approver, Object)))
+                            cmdSale.Parameters.AddWithValue("@AbortReason", If(String.IsNullOrWhiteSpace(reason), CType(DBNull.Value, Object), CType(reason, Object)))
+                            cmdSale.Parameters.AddWithValue("@DiscountType", If(String.IsNullOrWhiteSpace(discountType), CType(DBNull.Value, Object), CType(discountType, Object)))
+                            cmdSale.Parameters.AddWithValue("@DiscountAmount", discountAmount)
+                            cmdSale.Parameters.AddWithValue("@UserID", If(userIdToUse Is DBNull.Value, 1, userIdToUse))
+
+                            Dim saleIdObj As Object = cmdSale.ExecuteScalar()
+                            If saleIdObj IsNot Nothing AndAlso Not IsDBNull(saleIdObj) Then
+                                saleId = Convert.ToInt32(saleIdObj)
+                            Else
+                                Throw New Exception("Failed to create aborted sale record.")
+                            End If
+                        End Using
+
+                        Dim generatedSaleNumber As String = Utilities.FormatSaleNumber(saleId)
+                        Using cmdNum As New SqliteCommand("UPDATE Sales SET SaleNumber = @SaleNumber WHERE SaleID = @SaleID", conn, tran)
+                            cmdNum.Parameters.AddWithValue("@SaleNumber", generatedSaleNumber)
+                            cmdNum.Parameters.AddWithValue("@SaleID", saleId)
+                            cmdNum.ExecuteNonQuery()
+                        End Using
+
+                        tran.Commit()
+                    Catch
+                        Try
+                            tran.Rollback()
+                        Catch
+                        End Try
+                        Throw
+                    End Try
+                End Using
+            End Using
+
+            Try
+                SyncQueue.Instance.MarkDataChanged()
+            Catch syncEx As Exception
+                Console.WriteLine($"Could not notify sync queue: {syncEx.Message}")
+            End Try
+
+            Utilities.LogAudit(frmLoginvb.LoggedInUsername, "POS Sale Aborted",
+                $"SaleID {saleId} aborted with {currentOrderList.Count} item(s) and {voidedItems.Count} voided line(s). ApprovedBy: {approver}")
+
+            ' Reset the whole cart, which also clears the buffered voided lines
+            ResetSale()
+            voidedItems.Clear()
+            ClearPersistedCartState()
+
+            ShowToastNotification("Cart Aborted", Color.FromArgb(231, 76, 60), $"Approved by {approver}")
+        Catch ex As Exception
+            MessageBox.Show($"Error aborting sale: {ex.Message}", "Abort Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+            Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Sale Abort Failed", $"Error: {ex.Message}")
+        End Try
+    End Sub
+
+    ' Small modal that asks for an optional abort reason.
+    Private Function PromptForAbortReason(ByRef reason As String) As Boolean
+        Dim input As New Form() With {
+            .Text = "Abort Reason",
+            .FormBorderStyle = FormBorderStyle.FixedDialog,
+            .StartPosition = FormStartPosition.CenterParent,
+            .ClientSize = New Size(380, 160),
+            .MaximizeBox = False,
+            .MinimizeBox = False
+        }
+        Dim lbl As New Label() With {.Text = "Reason for aborting (optional):", .Location = New Point(20, 15), .AutoSize = True}
+        Dim txt As New TextBox() With {.Location = New Point(20, 45), .Size = New Size(340, 28), .Multiline = True, .Height = 50}
+        Dim btnOk As New Button() With {.Text = "Confirm", .DialogResult = DialogResult.OK, .Location = New Point(180, 110), .Size = New Size(80, 32)}
+        Dim btnCancel As New Button() With {.Text = "Cancel", .DialogResult = DialogResult.Cancel, .Location = New Point(270, 110), .Size = New Size(80, 32)}
+        AddHandler txt.KeyDown, Sub(s, e2)
+                                   If e2.KeyCode = Keys.Escape Then btnCancel.PerformClick()
+                               End Sub
+        input.Controls.AddRange({lbl, txt, btnOk, btnCancel})
+        input.AcceptButton = btnOk
+        input.CancelButton = btnCancel
+        input.ShowDialog(Me)
+        If input.DialogResult <> DialogResult.OK Then Return False
+        reason = txt.Text.Trim()
+        Return True
+    End Function
+
+    ' Called after a line void when the cart becomes empty. The last item was
+    ' already voided with admin/manager authorization, so this directly records
+    ' the discarded cart as an Aborted sale (no re-auth, no Yes/No prompt).
+    ' The admin is only asked for an optional abort reason. If the reason dialog
+    ' is cancelled, the cart is simply left empty (silent discard).
+    Private Sub PromptRecordAbortIfCartEmpty(approver As String)
+        If currentOrderList.Count > 0 Then Return
+
+        Dim reason As String = ""
+        If Not PromptForAbortReason(reason) Then Return
+
+        AbortCurrentCart(approver, reason)
     End Sub
 
     ' ENHANCED: Initialize order ID display with better error handling
@@ -5961,7 +6158,7 @@ Public Class Sales
     End Sub
 
 
-    Private Function ShowVoidAuthorizationModal(productName As String, quantityToVoid As Integer, ByRef approverUsername As String) As Boolean
+    Private Function ShowVoidAuthorizationModal(productName As String, quantityToVoid As Integer, ByRef approverUsername As String, Optional willEmptyCart As Boolean = False) As Boolean
         If isVoidDialogOpen Then Return False
         isVoidDialogOpen = True
 
@@ -6010,6 +6207,18 @@ Public Class Sales
             .TextAlign = ContentAlignment.MiddleCenter
         }
             dlg.Controls.Add(lblQty)
+
+            Dim lblAbortWarning As New Label With {
+            .Text = "Voiding this item will clear the cart and record an Aborted sale.",
+            .Font = New Font("Poppins", 9, FontStyle.Bold),
+            .ForeColor = AlertRed,
+            .AutoSize = False,
+            .Size = New Size(520, 20),
+            .Location = New Point(20, 104),
+            .TextAlign = ContentAlignment.MiddleCenter,
+            .Visible = willEmptyCart
+        }
+            dlg.Controls.Add(lblAbortWarning)
 
             Dim btnQrMode As New Guna2Button With {
             .Text = "QR",
@@ -6437,6 +6646,7 @@ Public Class Sales
 
             Dim snapshot As New CartStateSnapshot With {
                 .CurrentOrderList = CloneOrderList(currentOrderList),
+                .VoidedItems = CloneOrderList(voidedItems),
                 .DiscountType = discountType,
                 .DiscountValue = discountValue,
                 .DiscountAmount = discountAmount,
@@ -6483,6 +6693,7 @@ Public Class Sales
             End If
 
             currentOrderList = CloneOrderList(snapshot.CurrentOrderList)
+            voidedItems = If(snapshot.VoidedItems IsNot Nothing, CloneOrderList(snapshot.VoidedItems), New List(Of Dictionary(Of String, Object))())
             discountType = If(snapshot.DiscountType, "None")
             discountValue = snapshot.DiscountValue
             discountAmount = snapshot.DiscountAmount
