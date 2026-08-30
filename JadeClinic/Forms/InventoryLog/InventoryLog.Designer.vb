@@ -105,12 +105,12 @@ Partial Class InventoryLog
         InventoryLogDataGrid.AlternatingRowsDefaultCellStyle = DataGridViewCellStyle1
         InventoryLogDataGrid.Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
         InventoryLogDataGrid.BackgroundColor = Color.FromArgb(CByte(255), CByte(255), CByte(255))
-        DataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleLeft
+        DataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleCenter
         DataGridViewCellStyle2.BackColor = Color.FromArgb(CByte(250), CByte(249), CByte(246))
-        DataGridViewCellStyle2.Font = New Font("Poppins", 9.5F, FontStyle.Bold)
+        DataGridViewCellStyle2.Font = New Font("Poppins", 8.5F, FontStyle.Bold)
         DataGridViewCellStyle2.ForeColor = Color.FromArgb(CByte(68), CByte(68), CByte(68))
-        DataGridViewCellStyle2.SelectionBackColor = SystemColors.Highlight
-        DataGridViewCellStyle2.SelectionForeColor = SystemColors.HighlightText
+        DataGridViewCellStyle2.SelectionBackColor = Color.FromArgb(CByte(250), CByte(249), CByte(246))
+        DataGridViewCellStyle2.SelectionForeColor = Color.FromArgb(CByte(68), CByte(68), CByte(68))
         DataGridViewCellStyle2.WrapMode = DataGridViewTriState.True
         InventoryLogDataGrid.ColumnHeadersDefaultCellStyle = DataGridViewCellStyle2
         InventoryLogDataGrid.ColumnHeadersHeight = 44
@@ -141,7 +141,7 @@ Partial Class InventoryLog
         InventoryLogDataGrid.ThemeStyle.GridColor = Color.FromArgb(CByte(238), CByte(236), CByte(236))
         InventoryLogDataGrid.ThemeStyle.HeaderStyle.BackColor = Color.FromArgb(CByte(250), CByte(249), CByte(246))
         InventoryLogDataGrid.ThemeStyle.HeaderStyle.BorderStyle = DataGridViewHeaderBorderStyle.None
-        InventoryLogDataGrid.ThemeStyle.HeaderStyle.Font = New Font("Poppins", 9.5F, FontStyle.Bold)
+        InventoryLogDataGrid.ThemeStyle.HeaderStyle.Font = New Font("Poppins", 8.5F, FontStyle.Bold)
         InventoryLogDataGrid.ThemeStyle.HeaderStyle.ForeColor = Color.FromArgb(CByte(68), CByte(68), CByte(68))
         InventoryLogDataGrid.ThemeStyle.HeaderStyle.HeaightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing
         InventoryLogDataGrid.ThemeStyle.HeaderStyle.Height = 44

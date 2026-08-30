@@ -11,7 +11,7 @@ Public Class SalesRecordExporter
         QuestPDF.Settings.License = LicenseType.Community
     End Sub
 
-    Public Shared Sub ExportOrderRecordsReport(Optional sortOrder As String = "", Optional userFilter As String = Nothing, Optional filterDate As DateTime? = Nothing, Optional searchTerm As String = "")
+    Public Shared Sub ExportOrderRecordsReport(Optional sortOrder As String = "", Optional filterDate As DateTime? = Nothing, Optional searchTerm As String = "", Optional paymentFilter As String = Nothing, Optional statusFilter As String = Nothing)
         Try
             Dim orderReportsPath As String = Path.Combine(Application.StartupPath, "orderreports")
             If Not Directory.Exists(orderReportsPath) Then
@@ -23,6 +23,7 @@ Public Class SalesRecordExporter
                                   "IFNULL(s.PaymentMethod, '') AS PaymentMethod, " &
                                   "IFNULL(s.DiscountType, '') AS DiscountType, " &
                                   "IFNULL(s.DiscountAmount, 0) AS DiscountAmount, " &
+                                   "IFNULL(s.Status, 'Completed') AS Status, " &
                                    "IFNULL((SELECT SUM(si.Quantity * IFNULL(p.CostPrice, 0)) " &
                                    "        FROM SaleItems si " &
                                    "        LEFT JOIN Products p ON p.ProductID = si.ProductID " &
@@ -37,11 +38,6 @@ Public Class SalesRecordExporter
             Dim whereClauses As New List(Of String)()
             Dim parameters As New List(Of SqlParameter)()
 
-            If Not String.IsNullOrWhiteSpace(userFilter) AndAlso userFilter <> "All Users" Then
-                whereClauses.Add("u.Username = @Username")
-                parameters.Add(New SqlParameter("@Username", userFilter))
-            End If
-
             If filterDate.HasValue Then
                 whereClauses.Add("DATE(s.SaleDate) = @FilterDate")
                 parameters.Add(New SqlParameter("@FilterDate", filterDate.Value.Date.ToString("yyyy-MM-dd")))
@@ -50,6 +46,22 @@ Public Class SalesRecordExporter
             If Not String.IsNullOrWhiteSpace(searchTerm) Then
                 whereClauses.Add("(IFNULL(s.SaleNumber, '') LIKE @Search OR IFNULL(u.Username, '') LIKE @Search)")
                 parameters.Add(New SqlParameter("@Search", "%" & searchTerm & "%"))
+            End If
+
+            If Not String.IsNullOrWhiteSpace(paymentFilter) AndAlso paymentFilter <> "All Methods" Then
+                If String.Equals(paymentFilter, "E-Wallet", StringComparison.OrdinalIgnoreCase) Then
+                    whereClauses.Add("(s.PaymentMethod = @PmGCash OR s.PaymentMethod = @PmMaya)")
+                    parameters.Add(New SqlParameter("@PmGCash", "GCash"))
+                    parameters.Add(New SqlParameter("@PmMaya", "Maya"))
+                Else
+                    whereClauses.Add("s.PaymentMethod = @PaymentMethod")
+                    parameters.Add(New SqlParameter("@PaymentMethod", paymentFilter))
+                End If
+            End If
+
+            If Not String.IsNullOrWhiteSpace(statusFilter) AndAlso statusFilter <> "All Status" Then
+                whereClauses.Add("IFNULL(s.Status, 'Completed') = @SaleStatus")
+                parameters.Add(New SqlParameter("@SaleStatus", statusFilter))
             End If
 
             If whereClauses.Count > 0 Then
@@ -89,6 +101,7 @@ Public Class SalesRecordExporter
                         .TotalReceived = If(IsDBNull(reader("AmountPaid")), 0D, Convert.ToDecimal(reader("AmountPaid"))),
                         .Change = If(IsDBNull(reader("ChangeAmount")), 0D, Convert.ToDecimal(reader("ChangeAmount"))),
                         .PaymentMethod = If(IsDBNull(reader("PaymentMethod")), "", reader("PaymentMethod").ToString()),
+                        .Status = If(IsDBNull(reader("Status")), "Completed", reader("Status").ToString()),
                         .DiscountType = If(IsDBNull(reader("DiscountType")), "None", reader("DiscountType").ToString()),
                         .DiscountAmount = If(IsDBNull(reader("DiscountAmount")), 0D, Convert.ToDecimal(reader("DiscountAmount"))),
                         .TotalCost = If(IsDBNull(reader("TotalCost")), 0D, Convert.ToDecimal(reader("TotalCost"))),
@@ -115,14 +128,17 @@ Public Class SalesRecordExporter
             Dim fullPath As String = Path.Combine(orderReportsPath, fileName)
 
             Dim filterDesc As String = "All Sales"
-            If Not String.IsNullOrWhiteSpace(userFilter) AndAlso userFilter <> "All Users" Then
-                filterDesc = $"User: {userFilter}"
-            End If
             If filterDate.HasValue Then
                 filterDesc &= $", Date: {filterDate.Value:yyyy-MM-dd}"
             End If
             If Not String.IsNullOrWhiteSpace(searchTerm) Then
                 filterDesc &= $", Search: ""{searchTerm}"""
+            End If
+            If Not String.IsNullOrWhiteSpace(paymentFilter) AndAlso paymentFilter <> "All Methods" Then
+                filterDesc &= $", Method: {paymentFilter}"
+            End If
+            If Not String.IsNullOrWhiteSpace(statusFilter) AndAlso statusFilter <> "All Status" Then
+                filterDesc &= $", Status: {statusFilter}"
             End If
 
             CreateQuestPDFOrderRecordsReport(orderDataList, fullPath, filterDesc, reportCapital, expectedAmount, filterDate)
@@ -220,12 +236,15 @@ Public Class SalesRecordExporter
             Dim highestSale As Decimal = If(totalCounter > 0, orderDataList.Max(Function(o) o.TotalAmount), 0D)
             Dim lowestSale As Decimal = If(totalCounter > 0, orderDataList.Min(Function(o) o.TotalAmount), 0D)
 
-            Dim cashAmount As Decimal = orderDataList.Where(Function(o) o.PaymentMethod IsNot Nothing AndAlso o.PaymentMethod.Trim().Equals("Cash", StringComparison.OrdinalIgnoreCase)).Sum(Function(o) o.TotalReceived)
-            Dim gcashAmount As Decimal = orderDataList.Where(Function(o) o.PaymentMethod IsNot Nothing AndAlso o.PaymentMethod.Trim().Equals("GCash", StringComparison.OrdinalIgnoreCase)).Sum(Function(o) o.TotalReceived)
-            Dim cardAmount As Decimal = orderDataList.Where(Function(o) o.PaymentMethod IsNot Nothing AndAlso o.PaymentMethod.Trim().Equals("Card", StringComparison.OrdinalIgnoreCase)).Sum(Function(o) o.TotalReceived)
+            Dim isAborted As Func(Of OrderReportData, Boolean) = Function(o) String.Equals(o.Status, "Aborted", StringComparison.OrdinalIgnoreCase)
+
+            Dim cashAmount As Decimal = orderDataList.Where(Function(o) Not isAborted(o) AndAlso o.PaymentMethod IsNot Nothing AndAlso o.PaymentMethod.Trim().Equals("Cash", StringComparison.OrdinalIgnoreCase)).Sum(Function(o) o.TotalReceived)
+            Dim eWalletAmount As Decimal = orderDataList.Where(Function(o) Not isAborted(o) AndAlso o.PaymentMethod IsNot Nothing AndAlso (o.PaymentMethod.Trim().Equals("GCash", StringComparison.OrdinalIgnoreCase) OrElse o.PaymentMethod.Trim().Equals("Maya", StringComparison.OrdinalIgnoreCase))).Sum(Function(o) o.TotalReceived)
+            Dim cardAmount As Decimal = orderDataList.Where(Function(o) Not isAborted(o) AndAlso o.PaymentMethod IsNot Nothing AndAlso o.PaymentMethod.Trim().Equals("Card", StringComparison.OrdinalIgnoreCase)).Sum(Function(o) o.TotalReceived)
             Dim otherPaymentAmount As Decimal = orderDataList.Where(Function(o)
+                                                                        If isAborted(o) Then Return False
                                                                         Dim pm = If(o.PaymentMethod, "").Trim().ToLowerInvariant()
-                                                                        Return pm <> "cash" AndAlso pm <> "gcash" AndAlso pm <> "card"
+                                                                        Return pm <> "cash" AndAlso pm <> "gcash" AndAlso pm <> "maya" AndAlso pm <> "card"
                                                                     End Function).Sum(Function(o) o.TotalReceived)
 
             Document.Create(Sub(container)
@@ -299,7 +318,7 @@ Public Class SalesRecordExporter
                                                                                                                         table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(sale.OrderID.ToString()).FontSize(7).AlignCenter()
                                                                                                                         table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(sale.CreatedBy).FontSize(7)
                                                                                                                         table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(sale.OrderDate.ToString("MM/dd/yy HH:mm")).FontSize(7).AlignCenter()
-                                                                                                                        table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(If(String.IsNullOrWhiteSpace(sale.PaymentMethod), "N/A", sale.PaymentMethod)).FontSize(7).AlignCenter()
+                                                                                                                         table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text(If(isAborted(sale), "Aborted", If(String.IsNullOrWhiteSpace(sale.PaymentMethod), "N/A", sale.PaymentMethod))).FontSize(7).AlignCenter()
                                                                                                                         table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text($"₱{sale.TotalAmount:F2}").FontSize(7).AlignCenter()
                                                                                                                         table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text($"₱{sale.TotalCost:F2}").FontSize(7).AlignCenter()
                                                                                                                         table.Cell().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(3).Text($"₱{sale.TotalReceived:F2}").FontSize(7).AlignCenter()
@@ -331,9 +350,9 @@ Public Class SalesRecordExporter
                                                                                                                                                                                                                                                               End Sub)
 
                                                                                                                                                                                                                              summary.Item().PaddingTop(8).Row(Sub(pmRow)
-                                                                                                                                                                                                                                                                   pmRow.RelativeItem().Text($"Cash Amount: ₱{cashAmount:N2}").FontSize(9).SemiBold()
-                                                                                                                                                                                                                                                                   pmRow.RelativeItem().Text($"GCash Amount: ₱{gcashAmount:N2}").FontSize(9).SemiBold()
-                                                                                                                                                                                                                                                                   pmRow.RelativeItem().Text($"Card Amount: ₱{cardAmount:N2}").FontSize(9).SemiBold()
+                                                                                                                                                                                                    pmRow.RelativeItem().Text($"Cash Amount: ₱{cashAmount:N2}").FontSize(9).SemiBold()
+                                                                                                                                                                                                    pmRow.RelativeItem().Text($"E-Wallet Amount: ₱{eWalletAmount:N2}").FontSize(9).SemiBold()
+                                                                                                                                                                                                    pmRow.RelativeItem().Text($"Card Amount: ₱{cardAmount:N2}").FontSize(9).SemiBold()
                                                                                                                                                                                                                                                               End Sub)
                                                                                                                                                                                                                          End Sub)
 
@@ -386,6 +405,7 @@ Public Class OrderReportData
     Public Property TotalReceived As Decimal
     Public Property Change As Decimal
     Public Property PaymentMethod As String
+    Public Property Status As String
     Public Property DiscountType As String
     Public Property DiscountAmount As Decimal
     Public Property TotalCost As Decimal

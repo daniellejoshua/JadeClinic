@@ -31,23 +31,23 @@ Partial Class SalesRecord
         Dim CustomizableEdges7 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges8 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges9 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges11 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges12 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges10 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         LabelTitle = New Label()
         DashboardPanel = New Guna.UI2.WinForms.Guna2Panel()
         PictureBox9 = New PictureBox()
         Guna2CirclePictureBox5 = New Guna.UI2.WinForms.Guna2CirclePictureBox()
         Guna2DataGridView1 = New Guna.UI2.WinForms.Guna2DataGridView()
-        SortBy = New Guna.UI2.WinForms.Guna2ComboBox()
+        FilterMethod = New Guna.UI2.WinForms.Guna2ComboBox()
+        FilterStatus = New Guna.UI2.WinForms.Guna2ComboBox()
         Exportbtn = New Guna.UI2.WinForms.Guna2Button()
-        Guna2HtmlLabel3 = New Guna.UI2.WinForms.Guna2HtmlLabel()
+        Guna2HtmlLabel5 = New Guna.UI2.WinForms.Guna2HtmlLabel()
+        Guna2HtmlLabel6 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         lblUsername = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2DateTimePicker1 = New Guna.UI2.WinForms.Guna2DateTimePicker()
         Guna2HtmlLabel4 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2Panel1 = New Guna.UI2.WinForms.Guna2Panel()
-        TxtSearch = New Guna.UI2.WinForms.Guna2TextBox()
         PaginationControl1 = New PaginationControl()
+        TxtSearch = New Guna.UI2.WinForms.Guna2TextBox()
         DashboardPanel.SuspendLayout()
         CType(PictureBox9, ComponentModel.ISupportInitialize).BeginInit()
         CType(Guna2CirclePictureBox5, ComponentModel.ISupportInitialize).BeginInit()
@@ -114,7 +114,7 @@ Partial Class SalesRecord
         Guna2DataGridView1.AlternatingRowsDefaultCellStyle = DataGridViewCellStyle1
         Guna2DataGridView1.Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
         Guna2DataGridView1.BackgroundColor = Color.FromArgb(CByte(250), CByte(249), CByte(246))
-        DataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleLeft
+        DataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleCenter
         DataGridViewCellStyle2.BackColor = Color.FromArgb(CByte(250), CByte(249), CByte(246))
         DataGridViewCellStyle2.Font = New Font("Poppins", 8.5F, FontStyle.Bold)
         DataGridViewCellStyle2.ForeColor = Color.FromArgb(CByte(68), CByte(68), CByte(68))
@@ -162,24 +162,43 @@ Partial Class SalesRecord
         Guna2DataGridView1.ThemeStyle.RowsStyle.SelectionBackColor = Color.FromArgb(CByte(235), CByte(228), CByte(200))
         Guna2DataGridView1.ThemeStyle.RowsStyle.SelectionForeColor = Color.FromArgb(CByte(51), CByte(51), CByte(51))
         ' 
-        ' SortBy
+        ' FilterMethod
         ' 
-        SortBy.BackColor = Color.Transparent
-        SortBy.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
-        SortBy.BorderRadius = 10
-        SortBy.CustomizableEdges = CustomizableEdges4
-        SortBy.DrawMode = DrawMode.OwnerDrawFixed
-        SortBy.DropDownStyle = ComboBoxStyle.DropDownList
-        SortBy.FocusedColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
-        SortBy.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
-        SortBy.Font = New Font("Poppins Light", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        SortBy.ForeColor = Color.Black
-        SortBy.ItemHeight = 40
-        SortBy.Location = New Point(449, 13)
-        SortBy.Name = "SortBy"
-        SortBy.ShadowDecoration.CustomizableEdges = CustomizableEdges5
-        SortBy.Size = New Size(176, 46)
-        SortBy.TabIndex = 65
+        FilterMethod.BackColor = Color.Transparent
+        FilterMethod.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
+        FilterMethod.BorderRadius = 10
+        FilterMethod.CustomizableEdges = CustomizableEdges4
+        FilterMethod.DrawMode = DrawMode.OwnerDrawFixed
+        FilterMethod.DropDownStyle = ComboBoxStyle.DropDownList
+        FilterMethod.FocusedColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
+        FilterMethod.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
+        FilterMethod.Font = New Font("Poppins Light", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        FilterMethod.ForeColor = Color.Black
+        FilterMethod.ItemHeight = 40
+        FilterMethod.Location = New Point(397, 13)
+        FilterMethod.Name = "FilterMethod"
+        FilterMethod.ShadowDecoration.CustomizableEdges = CustomizableEdges5
+        FilterMethod.Size = New Size(150, 46)
+        FilterMethod.TabIndex = 81
+        ' 
+        ' FilterStatus
+        ' 
+        FilterStatus.BackColor = Color.Transparent
+        FilterStatus.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
+        FilterStatus.BorderRadius = 10
+        FilterStatus.CustomizableEdges = CustomizableEdges4
+        FilterStatus.DrawMode = DrawMode.OwnerDrawFixed
+        FilterStatus.DropDownStyle = ComboBoxStyle.DropDownList
+        FilterStatus.FocusedColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
+        FilterStatus.FocusedState.BorderColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
+        FilterStatus.Font = New Font("Poppins Light", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        FilterStatus.ForeColor = Color.Black
+        FilterStatus.ItemHeight = 40
+        FilterStatus.Location = New Point(640, 13)
+        FilterStatus.Name = "FilterStatus"
+        FilterStatus.ShadowDecoration.CustomizableEdges = CustomizableEdges4
+        FilterStatus.Size = New Size(174, 46)
+        FilterStatus.TabIndex = 83
         ' 
         ' Exportbtn
         ' 
@@ -201,16 +220,27 @@ Partial Class SalesRecord
         Exportbtn.TabIndex = 66
         Exportbtn.Text = "📥 Export"
         ' 
-        ' Guna2HtmlLabel3
+        ' Guna2HtmlLabel5
         ' 
-        Guna2HtmlLabel3.BackColor = Color.Transparent
-        Guna2HtmlLabel3.Font = New Font("Poppins", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        Guna2HtmlLabel3.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
-        Guna2HtmlLabel3.Location = New Point(329, 19)
-        Guna2HtmlLabel3.Name = "Guna2HtmlLabel3"
-        Guna2HtmlLabel3.Size = New Size(114, 32)
-        Guna2HtmlLabel3.TabIndex = 68
-        Guna2HtmlLabel3.Text = "Filter by User:"
+        Guna2HtmlLabel5.BackColor = Color.Transparent
+        Guna2HtmlLabel5.Font = New Font("Poppins", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Guna2HtmlLabel5.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
+        Guna2HtmlLabel5.Location = New Point(321, 23)
+        Guna2HtmlLabel5.Name = "Guna2HtmlLabel5"
+        Guna2HtmlLabel5.Size = New Size(70, 32)
+        Guna2HtmlLabel5.TabIndex = 80
+        Guna2HtmlLabel5.Text = "Method:"
+        ' 
+        ' Guna2HtmlLabel6
+        ' 
+        Guna2HtmlLabel6.BackColor = Color.Transparent
+        Guna2HtmlLabel6.Font = New Font("Poppins", 10.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
+        Guna2HtmlLabel6.ForeColor = Color.FromArgb(CByte(49), CByte(49), CByte(49))
+        Guna2HtmlLabel6.Location = New Point(572, 19)
+        Guna2HtmlLabel6.Name = "Guna2HtmlLabel6"
+        Guna2HtmlLabel6.Size = New Size(59, 32)
+        Guna2HtmlLabel6.TabIndex = 82
+        Guna2HtmlLabel6.Text = "Status:"
         ' 
         ' lblUsername
         ' 
@@ -264,21 +294,36 @@ Partial Class SalesRecord
         Guna2Panel1.Controls.Add(PaginationControl1)
         Guna2Panel1.Controls.Add(TxtSearch)
         Guna2Panel1.Controls.Add(Guna2DataGridView1)
-        Guna2Panel1.Controls.Add(SortBy)
+        Guna2Panel1.Controls.Add(FilterMethod)
+        Guna2Panel1.Controls.Add(FilterStatus)
         Guna2Panel1.Controls.Add(Exportbtn)
-        Guna2Panel1.Controls.Add(Guna2HtmlLabel3)
+        Guna2Panel1.Controls.Add(Guna2HtmlLabel5)
+        Guna2Panel1.Controls.Add(Guna2HtmlLabel6)
         Guna2Panel1.Controls.Add(Guna2HtmlLabel4)
         Guna2Panel1.Controls.Add(Guna2DateTimePicker1)
-        Guna2Panel1.CustomizableEdges = CustomizableEdges11
+        Guna2Panel1.CustomizableEdges = CustomizableEdges5
         Guna2Panel1.FillColor = Color.White
         Guna2Panel1.Location = New Point(240, 113)
         Guna2Panel1.Name = "Guna2Panel1"
-        Guna2Panel1.Padding = New Padding(0)
-        Guna2Panel1.ShadowDecoration.CustomizableEdges = CustomizableEdges12
+        Guna2Panel1.ShadowDecoration.CustomizableEdges = CustomizableEdges4
         Guna2Panel1.ShadowDecoration.Depth = 0
         Guna2Panel1.ShadowDecoration.Shadow = New Padding(0)
         Guna2Panel1.Size = New Size(1650, 908)
         Guna2Panel1.TabIndex = 79
+        ' 
+        ' PaginationControl1
+        ' 
+        PaginationControl1.BackColor = Color.White
+        PaginationControl1.CurrentPage = 1
+        PaginationControl1.ItemsPerPage = 8
+        PaginationControl1.Location = New Point(8, 846)
+        PaginationControl1.MaximumSize = New Size(0, 62)
+        PaginationControl1.MinimumSize = New Size(360, 62)
+        PaginationControl1.Name = "PaginationControl1"
+        PaginationControl1.Size = New Size(1641, 62)
+        PaginationControl1.TabIndex = 86
+        PaginationControl1.TotalItems = 0
+        PaginationControl1.TotalPages = 1
         ' 
         ' TxtSearch
         ' 
@@ -294,22 +339,14 @@ Partial Class SalesRecord
         TxtSearch.Font = New Font("Poppins", 9.5F)
         TxtSearch.ForeColor = Color.FromArgb(CByte(51), CByte(51), CByte(51))
         TxtSearch.HoverState.BorderColor = Color.FromArgb(CByte(196), CByte(154), CByte(44))
-        TxtSearch.Location = New Point(779, 13)
+        TxtSearch.Location = New Point(829, 13)
         TxtSearch.Margin = New Padding(3, 4, 3, 4)
         TxtSearch.Name = "TxtSearch"
         TxtSearch.PlaceholderText = "🔍  Search by Sale ID or Cashier..."
         TxtSearch.SelectedText = ""
         TxtSearch.ShadowDecoration.CustomizableEdges = CustomizableEdges10
-        TxtSearch.Size = New Size(446, 42)
+        TxtSearch.Size = New Size(643, 42)
         TxtSearch.TabIndex = 85
-        ' 
-        ' PaginationControl1
-        ' 
-        PaginationControl1.BackColor = Color.White
-        PaginationControl1.Location = New Point(8, 846)
-        PaginationControl1.Name = "PaginationControl1"
-        PaginationControl1.Size = New Size(1641, 48)
-        PaginationControl1.TabIndex = 86
         ' 
         ' SalesRecord
         ' 
@@ -341,9 +378,11 @@ Partial Class SalesRecord
     Friend WithEvents PictureBox9 As PictureBox
     Friend WithEvents Guna2CirclePictureBox5 As Guna.UI2.WinForms.Guna2CirclePictureBox
     Friend WithEvents Guna2DataGridView1 As Guna.UI2.WinForms.Guna2DataGridView
-    Friend WithEvents SortBy As Guna.UI2.WinForms.Guna2ComboBox
+    Friend WithEvents FilterMethod As Guna.UI2.WinForms.Guna2ComboBox
+    Friend WithEvents FilterStatus As Guna.UI2.WinForms.Guna2ComboBox
     Friend WithEvents Exportbtn As Guna.UI2.WinForms.Guna2Button
-    Friend WithEvents Guna2HtmlLabel3 As Guna.UI2.WinForms.Guna2HtmlLabel
+    Friend WithEvents Guna2HtmlLabel5 As Guna.UI2.WinForms.Guna2HtmlLabel
+    Friend WithEvents Guna2HtmlLabel6 As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents lblUsername As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents Guna2DateTimePicker1 As Guna.UI2.WinForms.Guna2DateTimePicker
     Friend WithEvents Guna2HtmlLabel4 As Guna.UI2.WinForms.Guna2HtmlLabel

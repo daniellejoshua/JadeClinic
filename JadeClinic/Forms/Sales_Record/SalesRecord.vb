@@ -83,8 +83,9 @@ Public Class SalesRecord
 
     Private Sub SetupTabIndex()
         Guna2DateTimePicker1.TabIndex = 0
-        SortBy.TabIndex = 1
-        Exportbtn.TabIndex = 2
+        FilterMethod.TabIndex = 1
+        FilterStatus.TabIndex = 2
+        Exportbtn.TabIndex = 3
         Utilities.ApplyInputFocusEffects(Me)
     End Sub
 
@@ -231,31 +232,38 @@ Public Class SalesRecord
     End Sub
 
     Private Sub InitializeSortComboBox()
-        SortBy.Items.Clear()
-        SortBy.Items.Add("All Users")
+        ' Payment method filter: group GCash + Maya under E-Wallet
+        If FilterMethod IsNot Nothing Then
+            FilterMethod.Items.Clear()
+            FilterMethod.Items.Add("All Methods")
+            FilterMethod.Items.Add("Cash")
+            FilterMethod.Items.Add("Card")
+            FilterMethod.Items.Add("E-Wallet")
+            FilterMethod.SelectedIndex = 0
+        End If
 
-        Try
-            Dim query As String = "SELECT DISTINCT u.Username FROM Users u INNER JOIN Sales s ON s.UserID = u.UserID ORDER BY u.Username"
-            Using reader As DbDataReader = Utilities.ExecuteReader(query)
-                While reader.Read()
-                    If Not IsDBNull(reader("Username")) Then
-                        SortBy.Items.Add(reader("Username").ToString())
-                    End If
-                End While
-            End Using
-        Catch
-        End Try
-
-        If SortBy.Items.Count > 0 Then
-            SortBy.SelectedIndex = 0
+        ' Status filter (Completed / Aborted)
+        If FilterStatus IsNot Nothing Then
+            FilterStatus.Items.Clear()
+            FilterStatus.Items.Add("All Status")
+            FilterStatus.Items.Add("Completed")
+            FilterStatus.Items.Add("Aborted")
+            FilterStatus.SelectedIndex = 0
         End If
 
         Guna2DateTimePicker1.ShowCheckBox = True
         Guna2DateTimePicker1.Value = Date.Today
         Guna2DateTimePicker1.Checked = True
 
-        RemoveHandler SortBy.SelectedIndexChanged, AddressOf SortBy_SelectedIndexChanged
-        AddHandler SortBy.SelectedIndexChanged, AddressOf SortBy_SelectedIndexChanged
+        If FilterMethod IsNot Nothing Then
+            RemoveHandler FilterMethod.SelectedIndexChanged, AddressOf FilterMethod_SelectedIndexChanged
+            AddHandler FilterMethod.SelectedIndexChanged, AddressOf FilterMethod_SelectedIndexChanged
+        End If
+
+        If FilterStatus IsNot Nothing Then
+            RemoveHandler FilterStatus.SelectedIndexChanged, AddressOf FilterStatus_SelectedIndexChanged
+            AddHandler FilterStatus.SelectedIndexChanged, AddressOf FilterStatus_SelectedIndexChanged
+        End If
 
         RemoveHandler Guna2DateTimePicker1.ValueChanged, AddressOf DtpSaleDate_ValueChanged
         AddHandler Guna2DateTimePicker1.ValueChanged, AddressOf DtpSaleDate_ValueChanged
@@ -277,7 +285,7 @@ Public Class SalesRecord
             AddHandler PaginationControl1.PageChanged, AddressOf PaginationControl1_PageChanged
         End If
     End Sub
-    Private Function LoadOrderRecordsData(Optional sortOrder As String = "Sale Date (Newest First)", Optional filterDate As DateTime? = Nothing, Optional userFilter As String = Nothing, Optional searchTerm As String = "", Optional pageNumber As Integer = 1, Optional pageSize As Integer = 50) As List(Of Dictionary(Of String, Object))
+    Private Function LoadOrderRecordsData(Optional sortOrder As String = "Sale Date (Newest First)", Optional filterDate As DateTime? = Nothing, Optional searchTerm As String = "", Optional pageNumber As Integer = 1, Optional pageSize As Integer = 50, Optional paymentFilter As String = Nothing, Optional statusFilter As String = Nothing) As List(Of Dictionary(Of String, Object))
         Dim sales As New List(Of Dictionary(Of String, Object))()
         Try
             Dim query As String = "SELECT s.SaleID, IFNULL(s.SaleNumber, '') AS SaleNumber, u.Username, s.SaleDate, s.PaymentMethod, s.TotalAmount, s.AmountPaid, " &
@@ -292,14 +300,25 @@ Public Class SalesRecord
                 parameters.Add(New SqlParameter("@FilterDate", filterDate.Value.Date.ToString("yyyy-MM-dd")))
             End If
 
-            If Not String.IsNullOrWhiteSpace(userFilter) AndAlso userFilter <> "All Users" Then
-                whereClauses.Add("u.Username = @Username")
-                parameters.Add(New SqlParameter("@Username", userFilter))
-            End If
-
             If Not String.IsNullOrWhiteSpace(searchTerm) Then
                 whereClauses.Add("(IFNULL(s.SaleNumber, '') LIKE @Search OR IFNULL(u.Username, '') LIKE @Search)")
                 parameters.Add(New SqlParameter("@Search", "%" & searchTerm & "%"))
+            End If
+
+            If Not String.IsNullOrWhiteSpace(paymentFilter) AndAlso paymentFilter <> "All Methods" Then
+                If String.Equals(paymentFilter, "E-Wallet", StringComparison.OrdinalIgnoreCase) Then
+                    whereClauses.Add("(s.PaymentMethod = @PmGCash OR s.PaymentMethod = @PmMaya)")
+                    parameters.Add(New SqlParameter("@PmGCash", "GCash"))
+                    parameters.Add(New SqlParameter("@PmMaya", "Maya"))
+                Else
+                    whereClauses.Add("s.PaymentMethod = @PaymentMethod")
+                    parameters.Add(New SqlParameter("@PaymentMethod", paymentFilter))
+                End If
+            End If
+
+            If Not String.IsNullOrWhiteSpace(statusFilter) AndAlso statusFilter <> "All Status" Then
+                whereClauses.Add("IFNULL(s.Status, 'Completed') = @SaleStatus")
+                parameters.Add(New SqlParameter("@SaleStatus", statusFilter))
             End If
 
             If whereClauses.Count > 0 Then
@@ -375,7 +394,7 @@ Public Class SalesRecord
         Return sales
     End Function
 
-    Private Function CountSalesRecords(Optional filterDate As DateTime? = Nothing, Optional userFilter As String = Nothing, Optional searchTerm As String = "") As Integer
+    Private Function CountSalesRecords(Optional filterDate As DateTime? = Nothing, Optional searchTerm As String = "", Optional paymentFilter As String = Nothing, Optional statusFilter As String = Nothing) As Integer
         Dim count As Integer = 0
         Try
             Dim query As String = "SELECT COUNT(*) FROM Sales s LEFT JOIN Users u ON s.UserID = u.UserID"
@@ -387,14 +406,25 @@ Public Class SalesRecord
                 parameters.Add(New SqlParameter("@FilterDate", filterDate.Value.Date.ToString("yyyy-MM-dd")))
             End If
 
-            If Not String.IsNullOrWhiteSpace(userFilter) AndAlso userFilter <> "All Users" Then
-                whereClauses.Add("u.Username = @Username")
-                parameters.Add(New SqlParameter("@Username", userFilter))
-            End If
-
             If Not String.IsNullOrWhiteSpace(searchTerm) Then
                 whereClauses.Add("(IFNULL(s.SaleNumber, '') LIKE @Search OR IFNULL(u.Username, '') LIKE @Search)")
                 parameters.Add(New SqlParameter("@Search", "%" & searchTerm & "%"))
+            End If
+
+            If Not String.IsNullOrWhiteSpace(paymentFilter) AndAlso paymentFilter <> "All Methods" Then
+                If String.Equals(paymentFilter, "E-Wallet", StringComparison.OrdinalIgnoreCase) Then
+                    whereClauses.Add("(s.PaymentMethod = @PmGCash OR s.PaymentMethod = @PmMaya)")
+                    parameters.Add(New SqlParameter("@PmGCash", "GCash"))
+                    parameters.Add(New SqlParameter("@PmMaya", "Maya"))
+                Else
+                    whereClauses.Add("s.PaymentMethod = @PaymentMethod")
+                    parameters.Add(New SqlParameter("@PaymentMethod", paymentFilter))
+                End If
+            End If
+
+            If Not String.IsNullOrWhiteSpace(statusFilter) AndAlso statusFilter <> "All Status" Then
+                whereClauses.Add("IFNULL(s.Status, 'Completed') = @SaleStatus")
+                parameters.Add(New SqlParameter("@SaleStatus", statusFilter))
             End If
 
             If whereClauses.Count > 0 Then
@@ -431,14 +461,7 @@ Public Class SalesRecord
             Guna2DataGridView1.Rows(rowIndex).Cells("OrderID").Value = saleNumber
             Guna2DataGridView1.Rows(rowIndex).Cells("CreatedBy").Value = username
             Guna2DataGridView1.Rows(rowIndex).Cells("OrderDate").Value = If(saleDate = DateTime.MinValue, "", saleDate.ToString("MM/dd/yyyy HH:mm"))
-            Guna2DataGridView1.Rows(rowIndex).Cells("PaymentMethod").Value = If(isAborted, "Aborted", paymentMethod)
-            ' Stamp aborted rows clearly and de-emphasize their (zero) values
-            If isAborted Then
-                Guna2DataGridView1.Rows(rowIndex).Cells("OrderID").Value = saleNumber & "  (ABORTED)"
-                Guna2DataGridView1.Rows(rowIndex).Cells("OrderID").Style.ForeColor = Drawing.Color.FromArgb(170, 40, 40)
-                Guna2DataGridView1.Rows(rowIndex).Cells("OrderID").Style.Font = New Font("Poppins", 9, FontStyle.Bold)
-                Guna2DataGridView1.Rows(rowIndex).Cells("PaymentMethod").Style.ForeColor = Drawing.Color.FromArgb(190, 60, 60)
-            End If
+            Guna2DataGridView1.Rows(rowIndex).Cells("PaymentMethod").Value = paymentMethod
             Dim pmColor As Drawing.Color = GetPaymentMethodColor(paymentMethod)
             Guna2DataGridView1.Rows(rowIndex).Cells("PaymentMethod").Style.ForeColor = pmColor
             Guna2DataGridView1.Rows(rowIndex).Cells("TotalAmount").Value = ChrW(&H20B1) & totalAmount.ToString("F2")
@@ -448,6 +471,17 @@ Public Class SalesRecord
             Guna2DataGridView1.Rows(rowIndex).Cells("DiscountAmount").Value = ChrW(&H20B1) & discountAmount.ToString("F2")
             Guna2DataGridView1.Rows(rowIndex).Cells("Action").Value = "👁️"
             Guna2DataGridView1.Rows(rowIndex).Tag = record
+
+            ' Stamp aborted rows clearly and de-emphasize their (zero) values
+            If isAborted Then
+                Guna2DataGridView1.Rows(rowIndex).Cells("OrderID").Value = saleNumber & "  (ABORTED)"
+                Guna2DataGridView1.Rows(rowIndex).Cells("OrderID").Style.ForeColor = Drawing.Color.FromArgb(170, 40, 40)
+                Guna2DataGridView1.Rows(rowIndex).Cells("OrderID").Style.Font = New Font("Poppins", 9, FontStyle.Bold)
+                ' Light red row background to identify aborted transactions at a glance
+                For Each cell As DataGridViewCell In Guna2DataGridView1.Rows(rowIndex).Cells
+                    cell.Style.BackColor = Drawing.Color.FromArgb(254, 238, 238)
+                Next
+            End If
         Next
 
         If Guna2DataGridView1.Rows.Count = 0 Then
@@ -457,11 +491,6 @@ Public Class SalesRecord
         Guna2DataGridView1.ClearSelection()
     End Sub
     Private isSyncingFilters As Boolean = False
-
-    Private Sub SortBy_SelectedIndexChanged(sender As Object, e As EventArgs)
-        If isSyncingFilters Then Return
-        ApplyFilters()
-    End Sub
 
     Private Sub DtpSaleDate_ValueChanged(sender As Object, e As EventArgs)
         If isSyncingFilters Then Return
@@ -473,13 +502,19 @@ Public Class SalesRecord
         ApplyFilters()
     End Sub
 
+    Private Sub FilterMethod_SelectedIndexChanged(sender As Object, e As EventArgs)
+        If isSyncingFilters Then Return
+        ApplyFilters()
+    End Sub
+
+    Private Sub FilterStatus_SelectedIndexChanged(sender As Object, e As EventArgs)
+        If isSyncingFilters Then Return
+        ApplyFilters()
+    End Sub
+
     Private Sub ApplyFilters()
         isSyncingFilters = True
         _currentPage = 1
-
-        Dim userFilter As String = If(SortBy IsNot Nothing AndAlso SortBy.SelectedItem IsNot Nothing,
-                                       SortBy.SelectedItem.ToString(),
-                                       Nothing)
 
         If Guna2DateTimePicker1 IsNot Nothing AndAlso Guna2DateTimePicker1.Checked Then
             selectedDate = Guna2DateTimePicker1.Value.Date
@@ -492,17 +527,15 @@ Public Class SalesRecord
     End Sub
 
     Private Sub LoadPage()
-        Dim userFilter As String = If(SortBy IsNot Nothing AndAlso SortBy.SelectedItem IsNot Nothing,
-                                       SortBy.SelectedItem.ToString(),
-                                       Nothing)
+        Dim paymentFilter As String = GetFilterValue(FilterMethod, "All Methods")
+        Dim statusFilter As String = GetFilterValue(FilterStatus, "All Status")
 
         Dim hasSearch As Boolean = Not String.IsNullOrWhiteSpace(_searchTerm)
 
         Dim filterDate As DateTime? = If(hasSearch, Nothing, selectedDate)
-        Dim filterUser As String = If(hasSearch, Nothing, userFilter)
 
-        Dim totalCount As Integer = CountSalesRecords(filterDate, filterUser, _searchTerm)
-        Dim data = LoadOrderRecordsData("Sale Date (Newest First)", filterDate, filterUser, _searchTerm, _currentPage, PageSize)
+        Dim totalCount As Integer = CountSalesRecords(filterDate, _searchTerm, paymentFilter, statusFilter)
+        Dim data = LoadOrderRecordsData("Sale Date (Newest First)", filterDate, _searchTerm, _currentPage, PageSize, paymentFilter, statusFilter)
 
         PopulateGridFromData(data)
 
@@ -512,6 +545,13 @@ Public Class SalesRecord
         AlignPaginationToPanel()
         UpdateCapitalLabel(filterDate)
     End Sub
+
+    Private Function GetFilterValue(combo As Guna.UI2.WinForms.Guna2ComboBox, defaultValue As String) As String
+        If combo IsNot Nothing AndAlso combo.SelectedItem IsNot Nothing Then
+            Return combo.SelectedItem.ToString()
+        End If
+        Return defaultValue
+    End Function
 
     Private Sub InitializeCapitalLabel()
         Try
@@ -596,8 +636,8 @@ Public Class SalesRecord
 
         Dim m As String = method.ToLowerInvariant()
 
-        ' GCash -> Blue
-        If m.Contains("gcash") Then
+        ' E-Wallet (GCash / Maya / eWallet) -> Blue
+        If m.Contains("gcash") OrElse m.Contains("maya") OrElse m.Contains("ewallet") OrElse m.Contains("e-wallet") Then
             Return System.Drawing.Color.FromArgb(66, 133, 244)
         End If
 
@@ -623,11 +663,10 @@ Public Class SalesRecord
                 End If
             End If
 
-            Dim userFilter As String = If(SortBy IsNot Nothing AndAlso SortBy.SelectedItem IsNot Nothing,
-                                           SortBy.SelectedItem.ToString(),
-                                           Nothing)
+            Dim paymentFilter As String = GetFilterValue(FilterMethod, "All Methods")
+            Dim statusFilter As String = GetFilterValue(FilterStatus, "All Status")
 
-            SalesRecordExporter.ExportOrderRecordsReport("Sale Date (Newest First)", userFilter, filterDate, _searchTerm)
+            SalesRecordExporter.ExportOrderRecordsReport("Sale Date (Newest First)", filterDate, _searchTerm, paymentFilter, statusFilter)
 
         Catch ex As Exception
             MessageBox.Show($"Export failed: {ex.Message}", "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error)

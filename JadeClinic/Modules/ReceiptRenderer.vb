@@ -55,6 +55,51 @@ Public Module ReceiptRenderer
         End Try
     End Sub
 
+    ' Wraps text onto as many lines as needed so it never exceeds the available
+    ' width. Used for long values (e.g. a very long cashier username) that would
+    ' otherwise overflow the receipt's fixed paper width.
+    Public Function WrapText(g As Graphics, text As String, font As Font, maxWidth As Single) As List(Of String)
+        Dim result As New List(Of String)()
+        If String.IsNullOrWhiteSpace(text) Then
+            result.Add("")
+            Return result
+        End If
+
+        Dim words As String() = text.Split({" "c}, StringSplitOptions.RemoveEmptyEntries)
+        If words.Length = 0 Then
+            result.Add(text)
+            Return result
+        End If
+
+        Dim current As String = ""
+        For Each word As String In words
+            Dim candidate As String = If(current.Length = 0, word, current & " " & word)
+            If g.MeasureString(candidate, font).Width > maxWidth Then
+                If current.Length > 0 Then
+                    result.Add(current)
+                    current = word
+                Else
+                    ' A single word is wider than the line: hard-break it.
+                    Dim overflow As String = word
+                    While overflow.Length > 0
+                        Dim fit = 0
+                        While fit < overflow.Length AndAlso g.MeasureString(overflow.Substring(0, fit + 1), font).Width <= maxWidth
+                            fit += 1
+                        End While
+                        If fit = 0 Then fit = 1
+                        result.Add(overflow.Substring(0, fit))
+                        overflow = overflow.Substring(fit)
+                    End While
+                    current = ""
+                End If
+            Else
+                current = candidate
+            End If
+        Next
+        If current.Length > 0 Then result.Add(current)
+        Return result
+    End Function
+
     ' Renders the full receipt (header, all items, footer) onto a bitmap whose
     ' height is exactly the content height. Used by scrollable previews so the
     ' layout stays fixed and the footer is never cut off, no matter how many
@@ -156,8 +201,12 @@ Public Module ReceiptRenderer
             yPosition += 12
             g.DrawString($"Date: {data.SaleDate:MM/dd/yyyy HH:mm:ss}", regularFont, brush, marginLeft, yPosition)
             yPosition += 12
-            g.DrawString($"Cashier: {data.Cashier}", regularFont, brush, marginLeft, yPosition)
-            yPosition += 14
+            Dim cashierLabel As String = $"Cashier: {data.Cashier}"
+            For Each cashierLine As String In WrapText(g, cashierLabel, regularFont, contentWidth)
+                g.DrawString(cashierLine, regularFont, brush, marginLeft, yPosition)
+                yPosition += 12
+            Next
+            yPosition += 2
 
             ' Customer block (2x2 layout)
             g.DrawString("Customer Details:", regularFont, brush, marginLeft, yPosition)

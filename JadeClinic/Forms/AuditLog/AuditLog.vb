@@ -229,12 +229,13 @@ Public Class AuditLog
 
         InventoryLogDataGrid.ColumnHeadersDefaultCellStyle = New DataGridViewCellStyle() With {
         .BackColor = Color.FromArgb(250, 249, 246),
-        .ForeColor = Color.FromArgb(51, 51, 51),
+        .ForeColor = Color.FromArgb(68, 68, 68),
         .SelectionBackColor = Color.FromArgb(250, 249, 246),
-        .Font = New Font("Poppins SemiBold", 10.5F, FontStyle.Bold),
+        .SelectionForeColor = Color.FromArgb(68, 68, 68),
+        .Font = New Font("Poppins", 8.5F, FontStyle.Bold),
         .Alignment = DataGridViewContentAlignment.MiddleCenter
     }
-        InventoryLogDataGrid.ColumnHeadersHeight = 50
+        InventoryLogDataGrid.ColumnHeadersHeight = 44
         InventoryLogDataGrid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing
         InventoryLogDataGrid.RowTemplate.Height = 50
 

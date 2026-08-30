@@ -93,7 +93,7 @@ Public Class Sales
     Private selectedCustomerType As String = "Walk-in" ' kept for compatibility
 
     ' Add these variables at the top of the Sales class (around line 30):
-    Private selectedPaymentMethod As String = "Cash" ' Cash, GCash, Card
+    Private selectedPaymentMethod As String = "Cash" ' Cash, Card, E-Wallet (GCash/Maya)
     Private paymentReference As String = ""
     Private subtotalVatInclusive As Decimal = 0 ' Tracks VAT-inclusive subtotal for discount calculations
 
@@ -2399,8 +2399,12 @@ Public Class Sales
             yPosition += 12
             g.DrawString($"Date: {DateTime.Now:MM/dd/yyyy HH:mm:ss}", regularFont, brush, marginLeft, yPosition)
             yPosition += 12
-            g.DrawString($"Cashier: {frmLoginvb.LoggedInUsername}", regularFont, brush, marginLeft, yPosition)
-            yPosition += 14
+            Dim cashierLabel As String = $"Cashier: {frmLoginvb.LoggedInUsername}"
+            For Each cashierLine As String In ReceiptRenderer.WrapText(g, cashierLabel, regularFont, contentWidth)
+                g.DrawString(cashierLine, regularFont, brush, marginLeft, yPosition)
+                yPosition += 12
+            Next
+            yPosition += 2
 
             ' --- CUSTOMER BLOCK (2x2 layout) ---
             g.DrawString("Customer Details:", regularFont, brush, marginLeft, yPosition)
@@ -3282,7 +3286,7 @@ Public Class Sales
         paymentForm.Controls.Add(lblTotal)
 
         Dim cashColor As Color = Color.FromArgb(76, 175, 80)
-        Dim gcashColor As Color = Color.FromArgb(0, 120, 212)
+        Dim eWalletColor As Color = Color.FromArgb(0, 120, 212)
         Dim cardColor As Color = Color.FromArgb(124, 58, 237)
         Dim actionBorder As Color = Color.FromArgb(200, 198, 192)
         Dim goldAccent As Color = Color.FromArgb(191, 155, 48)
@@ -3310,24 +3314,24 @@ Public Class Sales
                                   End Sub
         paymentForm.Controls.Add(btnCash)
 
-        ' GCash button
-        Dim btnGCash As New Guna.UI2.WinForms.Guna2Button()
-        btnGCash.Text = "📱" & vbCrLf & "GCash"
-        btnGCash.Size = New Size(150, 100)
-        btnGCash.Location = New Point(buttonStartX + 190, 160)
-        btnGCash.Font = New Font("Poppins", 14, FontStyle.Bold)
-        btnGCash.ForeColor = Color.White
-        btnGCash.FillColor = gcashColor
-        btnGCash.BorderThickness = 0
-        btnGCash.BorderRadius = 15
-        btnGCash.HoverState.FillColor = Color.FromArgb(0, 102, 190)
-        btnGCash.PressedColor = Color.FromArgb(0, 85, 160)
-        AddHandler btnGCash.Click, Sub()
-                                       selectedPaymentMethod = "GCash"
-                                       paymentForm.DialogResult = DialogResult.Yes
-                                       paymentForm.Close()
-                                   End Sub
-        paymentForm.Controls.Add(btnGCash)
+        ' E-Wallet button (covers GCash + Maya; both are reference-based digital wallet payments)
+        Dim btnEWallet As New Guna.UI2.WinForms.Guna2Button()
+        btnEWallet.Text = "📱" & vbCrLf & "E-Wallet"
+        btnEWallet.Size = New Size(150, 100)
+        btnEWallet.Location = New Point(buttonStartX + 190, 160)
+        btnEWallet.Font = New Font("Poppins", 14, FontStyle.Bold)
+        btnEWallet.ForeColor = Color.White
+        btnEWallet.FillColor = eWalletColor
+        btnEWallet.BorderThickness = 0
+        btnEWallet.BorderRadius = 15
+        btnEWallet.HoverState.FillColor = Color.FromArgb(0, 102, 190)
+        btnEWallet.PressedColor = Color.FromArgb(0, 85, 160)
+        AddHandler btnEWallet.Click, Sub()
+                                      selectedPaymentMethod = "GCash"
+                                      paymentForm.DialogResult = DialogResult.Yes
+                                      paymentForm.Close()
+                                  End Sub
+        paymentForm.Controls.Add(btnEWallet)
 
         ' Card button
         Dim btnCard As New Guna.UI2.WinForms.Guna2Button()
@@ -3384,7 +3388,7 @@ Public Class Sales
         paymentForm.Controls.Add(btnCancel)
 
         ' Keyboard navigation support
-        Dim paymentButtons As New List(Of Guna.UI2.WinForms.Guna2Button) From {btnCash, btnGCash, btnCard, btnBackToCustomer, btnCancel}
+        Dim paymentButtons As New List(Of Guna.UI2.WinForms.Guna2Button) From {btnCash, btnEWallet, btnCard, btnBackToCustomer, btnCancel}
         For Each btn In paymentButtons
             AddHandler btn.GotFocus, Sub()
                                          btn.BorderColor = Color.FromArgb(191, 155, 48)
@@ -3441,8 +3445,7 @@ Public Class Sales
         End Select
     End Sub
 
-    ' NEW: Reference Input Modal for GCash/Card payments
-    ' NEW: Reference Input Modal for GCash/Card payments
+    ' Reference Input Modal for E-Wallet (GCash/Maya) / Card payments
     Private Function ShowReferenceInputModal() As Boolean
         ' Create reference input modal form
         Dim refForm As New Form()

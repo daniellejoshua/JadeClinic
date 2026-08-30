@@ -190,14 +190,16 @@ Public Class Staff
 
         Guna2DataGridView1.ColumnHeadersDefaultCellStyle = New DataGridViewCellStyle() With {
         .BackColor = System.Drawing.Color.FromArgb(250, 249, 246),
-        .ForeColor = System.Drawing.Color.FromArgb(51, 51, 51),
+        .ForeColor = System.Drawing.Color.FromArgb(68, 68, 68),
         .SelectionBackColor = System.Drawing.Color.FromArgb(250, 249, 246),
-        .Font = New Font("Poppins SemiBold", 10.5F, FontStyle.Bold),
+        .SelectionForeColor = System.Drawing.Color.FromArgb(68, 68, 68),
+        .Font = New Font("Poppins", 8.5F, FontStyle.Bold),
         .Alignment = DataGridViewContentAlignment.MiddleCenter
     }
-        Guna2DataGridView1.ColumnHeadersHeight = 50
+        Guna2DataGridView1.ColumnHeadersHeight = 44
         Guna2DataGridView1.RowTemplate.Height = 72
         Guna2DataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing
+        Guna2DataGridView1.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None
 
         ' Add columns (center aligned by default, except Username/Email/Phone)
         Guna2DataGridView1.Columns.Add(New DataGridViewTextBoxColumn() With {
@@ -210,7 +212,7 @@ Public Class Staff
         Dim photoCol As New DataGridViewImageColumn() With {
         .Name = "Photo",
         .HeaderText = "Photo",
-        .ImageLayout = DataGridViewImageCellLayout.Stretch,
+        .ImageLayout = DataGridViewImageCellLayout.Zoom,
         .ReadOnly = True,
         .Width = 90,
         .AutoSizeMode = DataGridViewAutoSizeColumnMode.None,
@@ -404,9 +406,8 @@ Public Class Staff
         Return count
     End Function
     Private Function CreateDefaultAvatarImage() As System.Drawing.Image
-        Const w As Integer = 90
-        Const h As Integer = 60
-        Dim bmp As New Bitmap(w, h)
+        Const size As Integer = 60
+        Dim bmp As New Bitmap(size, size)
         Using g As Graphics = Graphics.FromImage(bmp)
             g.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias
             g.InterpolationMode = Drawing2D.InterpolationMode.HighQualityBicubic
@@ -416,22 +417,25 @@ Public Class Staff
 
             ' Draw the shared default avatar resource centered, preserving aspect ratio
             Dim src As System.Drawing.Image = My.Resources.avatar_default_svgrepo_com
-            Dim scale As Single = Math.Min(w / src.Width, h / src.Height)
+            Dim scale As Single = Math.Min(size / src.Width, size / src.Height)
             Dim dw As Integer = CInt(src.Width * scale)
             Dim dh As Integer = CInt(src.Height * scale)
-            g.DrawImage(src, (w - dw) \ 2, (h - dh) \ 2, dw, dh)
+            g.DrawImage(src, (size - dw) \ 2, (size - dh) \ 2, dw, dh)
         End Using
         Return bmp
     End Function
 
     Private Function ResizeForCell(img As SD.Image) As SD.Image
-        Const cellW As Integer = 90
-        Const cellH As Integer = 60
-        If img.Width = cellW AndAlso img.Height = cellH Then Return img
-        Dim bmp As New Bitmap(cellW, cellH)
+        Const size As Integer = 60
+        Dim bmp As New Bitmap(size, size)
         Using g As Graphics = Graphics.FromImage(bmp)
+            g.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias
             g.InterpolationMode = Drawing2D.InterpolationMode.HighQualityBicubic
-            g.DrawImage(img, 0, 0, cellW, cellH)
+            g.Clear(System.Drawing.Color.White)
+            Dim scale As Single = Math.Min(size / img.Width, size / img.Height)
+            Dim dw As Integer = CInt(img.Width * scale)
+            Dim dh As Integer = CInt(img.Height * scale)
+            g.DrawImage(img, (size - dw) \ 2, (size - dh) \ 2, dw, dh)
         End Using
         Return bmp
     End Function

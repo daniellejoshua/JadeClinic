@@ -280,12 +280,13 @@ Public Class InventoryLog
 
             InventoryLogDataGrid.ColumnHeadersDefaultCellStyle = New DataGridViewCellStyle() With {
             .BackColor = System.Drawing.Color.FromArgb(250, 249, 246),
-            .ForeColor = System.Drawing.Color.FromArgb(51, 51, 51),
+            .ForeColor = System.Drawing.Color.FromArgb(68, 68, 68),
             .SelectionBackColor = System.Drawing.Color.FromArgb(250, 249, 246),
-            .Font = New Font("Poppins SemiBold", 10.5F, FontStyle.Bold),
+            .SelectionForeColor = System.Drawing.Color.FromArgb(68, 68, 68),
+            .Font = New Font("Poppins", 8.5F, FontStyle.Bold),
             .Alignment = DataGridViewContentAlignment.MiddleCenter
         }
-            InventoryLogDataGrid.ColumnHeadersHeight = 50
+            InventoryLogDataGrid.ColumnHeadersHeight = 44
             InventoryLogDataGrid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing
             InventoryLogDataGrid.RowTemplate.Height = 50
 
