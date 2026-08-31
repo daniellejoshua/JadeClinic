@@ -100,7 +100,7 @@ Partial Class InventoryLog
         InventoryLogDataGrid.AllowUserToResizeRows = False
         DataGridViewCellStyle1.BackColor = Color.White
         InventoryLogDataGrid.AlternatingRowsDefaultCellStyle = DataGridViewCellStyle1
-        InventoryLogDataGrid.Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
+        InventoryLogDataGrid.Anchor = AnchorStyles.Top Or AnchorStyles.Left
         InventoryLogDataGrid.BackgroundColor = Color.FromArgb(CByte(255), CByte(255), CByte(255))
         DataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleCenter
         DataGridViewCellStyle2.BackColor = Color.FromArgb(CByte(250), CByte(249), CByte(246))
@@ -253,7 +253,7 @@ Partial Class InventoryLog
         ' 
         ' Guna2Panel1
         ' 
-        Guna2Panel1.Anchor = AnchorStyles.Top Or AnchorStyles.Left Or AnchorStyles.Right
+        Guna2Panel1.Anchor = AnchorStyles.Top Or AnchorStyles.Left
         Guna2Panel1.BackColor = Color.Transparent
         Guna2Panel1.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
         Guna2Panel1.BorderRadius = 10
@@ -324,6 +324,7 @@ Partial Class InventoryLog
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
         AutoScaleMode = AutoScaleMode.Font
+        AutoScroll = True
         BackColor = Color.FromArgb(CByte(245), CByte(243), CByte(239))
         ClientSize = New Size(1902, 1033)
         Controls.Add(lblSubtitle)

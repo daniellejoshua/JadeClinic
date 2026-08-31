@@ -94,7 +94,7 @@ Partial Class Staff
         Guna2DataGridView1.AllowUserToResizeRows = False
         DataGridViewCellStyle1.BackColor = Color.White
         Guna2DataGridView1.AlternatingRowsDefaultCellStyle = DataGridViewCellStyle1
-        Guna2DataGridView1.Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
+        Guna2DataGridView1.Anchor = AnchorStyles.Top Or AnchorStyles.Left
         Guna2DataGridView1.BackgroundColor = Color.FromArgb(CByte(250), CByte(249), CByte(246))
         DataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleCenter
         DataGridViewCellStyle2.BackColor = Color.FromArgb(CByte(250), CByte(249), CByte(246))
@@ -213,7 +213,7 @@ Partial Class Staff
         ' 
         ' Guna2Panel1
         ' 
-        Guna2Panel1.Anchor = AnchorStyles.Top Or AnchorStyles.Left Or AnchorStyles.Right
+        Guna2Panel1.Anchor = AnchorStyles.Top Or AnchorStyles.Left
         Guna2Panel1.BackColor = Color.Transparent
         Guna2Panel1.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
         Guna2Panel1.BorderRadius = 10

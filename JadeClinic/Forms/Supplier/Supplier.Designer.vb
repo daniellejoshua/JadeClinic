@@ -104,7 +104,7 @@ Partial Class Supplier
         InventoryLogDataGrid.AllowUserToResizeRows = False
         DataGridViewCellStyle1.BackColor = Color.White
         InventoryLogDataGrid.AlternatingRowsDefaultCellStyle = DataGridViewCellStyle1
-        InventoryLogDataGrid.Anchor = AnchorStyles.Top Or AnchorStyles.Bottom Or AnchorStyles.Left Or AnchorStyles.Right
+        InventoryLogDataGrid.Anchor = AnchorStyles.Top Or AnchorStyles.Left
         InventoryLogDataGrid.BackgroundColor = Color.FromArgb(CByte(255), CByte(255), CByte(255))
         DataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleCenter
         DataGridViewCellStyle2.BackColor = Color.FromArgb(CByte(250), CByte(249), CByte(246))
@@ -156,7 +156,7 @@ Partial Class Supplier
         ' 
         ' Guna2Panel1
         ' 
-        Guna2Panel1.Anchor = AnchorStyles.Top Or AnchorStyles.Left Or AnchorStyles.Right
+        Guna2Panel1.Anchor = AnchorStyles.Top Or AnchorStyles.Left
         Guna2Panel1.BackColor = Color.Transparent
         Guna2Panel1.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
         Guna2Panel1.BorderRadius = 10
@@ -197,7 +197,7 @@ Partial Class Supplier
         ' 
         ' Exportbtn
         ' 
-        Exportbtn.Anchor = AnchorStyles.Top Or AnchorStyles.Right
+        Exportbtn.Anchor = AnchorStyles.Top Or AnchorStyles.Left
         Exportbtn.BorderColor = Color.FromArgb(CByte(220), CByte(220), CByte(220))
         Exportbtn.BorderRadius = 8
         Exportbtn.BorderThickness = 1
@@ -218,7 +218,7 @@ Partial Class Supplier
         ' 
         ' Guna2Button1
         ' 
-        Guna2Button1.Anchor = AnchorStyles.Top Or AnchorStyles.Right
+        Guna2Button1.Anchor = AnchorStyles.Top Or AnchorStyles.Left
         Guna2Button1.BorderRadius = 8
         Guna2Button1.CustomizableEdges = CustomizableEdges7
         Guna2Button1.DisabledState.BorderColor = Color.DarkGray
