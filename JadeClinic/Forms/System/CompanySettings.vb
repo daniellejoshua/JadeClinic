@@ -499,7 +499,7 @@ Public Class CompanySettings
             y += lineH
             g.DrawString($"Date: {DateTime.Now:MM/dd/yyyy HH:mm:ss}", regularFont, brush, leftX, y)
             y += lineH
-            g.DrawString($"Cashier: {frmLoginvb.LoggedInUsername}", regularFont, brush, leftX, y)
+            g.DrawString($"Cashier: {If(String.IsNullOrWhiteSpace(frmLoginvb.LoggedInEmployeeCode), frmLoginvb.LoggedInUsername, frmLoginvb.LoggedInEmployeeCode)}", regularFont, brush, leftX, y)
             y += lineH
 
             g.DrawString("Customer Details:", regularFont, brush, leftX, y)

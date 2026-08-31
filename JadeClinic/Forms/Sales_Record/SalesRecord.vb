@@ -32,6 +32,7 @@ Public Class SalesRecord
     Private ReadOnly AlertRed As System.Drawing.Color = System.Drawing.Color.FromArgb(220, 80, 70)
     Private ReadOnly OliveSelection As System.Drawing.Color = System.Drawing.Color.FromArgb(235, 228, 200)
     Private ReadOnly White As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 255, 255)
+    Private _headerUserControl As HeaderUserControl
 
     Private Sub SalesRecord_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         Me.BackColor = Drawing.Color.FromArgb(248, 248, 247)
@@ -604,7 +605,10 @@ Public Class SalesRecord
     ' Profile managed by ProfileManager
 
     Private Sub InitializeProfileSection()
-        ProfileManager.InitializeProfile(Me, lblUsername, Guna2CirclePictureBox5, AddressOf NavigateToProfileSettings)
+        _headerUserControl = New HeaderUserControl()
+        Me.Controls.Add(_headerUserControl)
+        _headerUserControl.BringToFront()
+        _headerUserControl.Initialize(Me, AddressOf NavigateToProfileSettings)
     End Sub
 
     ' Navigation handlers (kept as regular methods, designer does not define nav controls here)

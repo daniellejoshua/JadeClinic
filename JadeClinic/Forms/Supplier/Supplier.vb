@@ -4,6 +4,7 @@ Imports System.Reflection
 
 Public Class Supplier
     Private isNavigating As Boolean = False
+    Private _headerUserControl As HeaderUserControl
     Private ReadOnly GoldenYellow As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 254, 191, 16)
     Private ReadOnly RichOlive As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 190, 154, 48)
     Private ReadOnly DeepCharcoal As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 26, 29, 31)
@@ -469,7 +470,10 @@ Public Class Supplier
     End Sub
 
     Private Sub InitializeProfileSection()
-        ProfileManager.InitializeProfile(Me, lblUsername, Guna2CirclePictureBox5, AddressOf NavigateToProfileSettings)
+        _headerUserControl = New HeaderUserControl()
+        Me.Controls.Add(_headerUserControl)
+        _headerUserControl.BringToFront()
+        _headerUserControl.Initialize(Me, AddressOf NavigateToProfileSettings)
     End Sub
 
     Private Sub NavigateToProfileSettings()

@@ -33,11 +33,12 @@ Public Module SupabaseSync
         "is_active = EXCLUDED.is_active, updated_at = EXCLUDED.updated_at, synced_at = NOW() " &
         "RETURNING id, local_id"
 
-    Private ReadOnly UsersInsert As String = "INSERT INTO users (local_id, username, full_name, user_role, is_active, email, phone, photo_url, created_at, updated_at, synced_at)"
+    Private ReadOnly UsersInsert As String = "INSERT INTO users (local_id, username, full_name, user_role, is_active, email, phone, photo_url, employee_code, created_at, updated_at, synced_at)"
     Private ReadOnly UsersSuffix As String = "ON CONFLICT (local_id) DO UPDATE SET " &
         "username = EXCLUDED.username, full_name = EXCLUDED.full_name, user_role = EXCLUDED.user_role, " &
         "is_active = EXCLUDED.is_active, email = EXCLUDED.email, phone = EXCLUDED.phone, " &
         "photo_url = COALESCE(EXCLUDED.photo_url, users.photo_url), " &
+        "employee_code = COALESCE(EXCLUDED.employee_code, users.employee_code), " &
         "updated_at = EXCLUDED.updated_at, synced_at = NOW() " &
         "RETURNING id, local_id"
 
@@ -97,7 +98,7 @@ Public Module SupabaseSync
     Private ReadOnly EnsureSchemaStatements As String() = {
         "CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, local_id INTEGER UNIQUE NOT NULL, " &
         "username TEXT NOT NULL, full_name TEXT NOT NULL, user_role TEXT DEFAULT 'Staff', " &
-        "is_active BOOLEAN DEFAULT TRUE, email TEXT, phone TEXT, photo_url TEXT, " &
+        "is_active BOOLEAN DEFAULT TRUE, email TEXT, phone TEXT, photo_url TEXT, employee_code TEXT, " &
         "created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW(), synced_at TIMESTAMPTZ)",
         "CREATE TABLE IF NOT EXISTS suppliers (id SERIAL PRIMARY KEY, local_id INTEGER UNIQUE NOT NULL, " &
         "supplier_code TEXT NOT NULL, supplier_name TEXT NOT NULL, contact_person TEXT, phone TEXT, email TEXT, " &
@@ -630,7 +631,7 @@ Public Module SupabaseSync
         Dim chunk As New List(Of List(Of SyncVal))()
         ' IMPORTANT: PasswordHash, pin, QRCode, Passkeys are intentionally NOT synced.
         Using cmd As New SqliteCommand(
-            "SELECT UserID, Username, FullName, UserRole, IsActive, Email, Phone, PhotoPath, CreatedAt, UpdatedAt FROM Users", local)
+            "SELECT UserID, Username, FullName, UserRole, IsActive, Email, Phone, PhotoPath, EmployeeCode, CreatedAt, UpdatedAt FROM Users", local)
             Using reader As SqliteDataReader = cmd.ExecuteReader()
                 While reader.Read()
                     Dim localId As Integer = Convert.ToInt32(reader("UserID"))
@@ -655,6 +656,7 @@ Public Module SupabaseSync
                     vals.Add(New SyncVal(GetStr(reader, "Email"), NpgsqlDbType.Text))
                     vals.Add(New SyncVal(GetStr(reader, "Phone"), NpgsqlDbType.Text))
                     vals.Add(New SyncVal(photoUrl, NpgsqlDbType.Text))
+                    vals.Add(New SyncVal(GetStr(reader, "EmployeeCode"), NpgsqlDbType.Text))
                     vals.Add(New SyncVal(Dcoalesce(GetDateDb(reader, "CreatedAt"), Date.UtcNow), NpgsqlDbType.TimestampTz))
                     vals.Add(New SyncVal(Dcoalesce(GetDateDb(reader, "UpdatedAt"), Date.UtcNow), NpgsqlDbType.TimestampTz))
                     vals.Add(New SyncVal(Date.UtcNow, NpgsqlDbType.TimestampTz))

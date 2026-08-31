@@ -32,6 +32,7 @@ Public Class IdCard
             Dim email As String = If(userData.ContainsKey("Email"), If(userData("Email"), String.Empty).ToString(), String.Empty)
             Dim phone As String = If(userData.ContainsKey("Phone"), If(userData("Phone"), String.Empty).ToString(), String.Empty)
             Dim userId As String = If(userData.ContainsKey("UserID"), If(userData("UserID"), String.Empty).ToString(), String.Empty)
+            Dim employeeCode As String = If(userData.ContainsKey("EmployeeCode"), If(userData("EmployeeCode"), String.Empty).ToString(), String.Empty)
 
             ' Fill UI fields
             Try
@@ -47,7 +48,7 @@ Public Class IdCard
             lblRole.Text = role
             lblEmail.Text = email
             lblPhone.Text = phone
-            lblUserID.Text = If(String.IsNullOrWhiteSpace(userId), lblUserID.Text, userId)
+            lblUserID.Text = If(String.IsNullOrWhiteSpace(employeeCode), If(String.IsNullOrWhiteSpace(userId), lblUserID.Text, userId), employeeCode)
 
             ' Render company logo (if available) into picCompanyLogo
             Try
@@ -91,7 +92,7 @@ Public Class IdCard
 
             If (Not photoSet OrElse String.IsNullOrWhiteSpace(qrText)) AndAlso Not String.IsNullOrWhiteSpace(userId) Then
                 Try
-                    Using rdr As DbDataReader = Utilities.ExecuteReader("SELECT PhotoPath, QRCode FROM Users WHERE UserID = @UserID", New SqlParameter("@UserID", userId))
+                    Using rdr As DbDataReader = Utilities.ExecuteReader("SELECT PhotoPath, QRCode, EmployeeCode FROM Users WHERE UserID = @UserID", New SqlParameter("@UserID", userId))
                         If rdr.Read() Then
                             If (Not photoSet) AndAlso Not IsDBNull(rdr("PhotoPath")) Then
                                 Dim dbFileName = rdr("PhotoPath").ToString()
@@ -104,6 +105,10 @@ Public Class IdCard
                                         photoSet = True
                                     End If
                                 End If
+                            End If
+
+                            If String.IsNullOrWhiteSpace(employeeCode) AndAlso Not IsDBNull(rdr("EmployeeCode")) Then
+                                employeeCode = rdr("EmployeeCode").ToString()
                             End If
 
                             If String.IsNullOrWhiteSpace(qrText) AndAlso Not IsDBNull(rdr("QRCode")) Then
@@ -121,6 +126,11 @@ Public Class IdCard
                 DisposePictureBoxImage(picStaffPhoto)
                 picStaffPhoto.Image = New Bitmap(My.Resources.avatar_default_svgrepo_com)
                 picStaffPhoto.SizeMode = PictureBoxSizeMode.Zoom
+            End If
+
+            ' Apply the employee code (may have been fetched from DB in the fallback above)
+            If Not String.IsNullOrWhiteSpace(employeeCode) Then
+                lblUserID.Text = employeeCode
             End If
 
             ' If QR text present, generate QR image; otherwise generate from username/userid fallback

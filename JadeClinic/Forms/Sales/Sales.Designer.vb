@@ -60,13 +60,10 @@ Partial Class Sales
         DashboardPanel = New Guna.UI2.WinForms.Guna2Panel()
         PictureBox9 = New PictureBox()
         backCategory = New Guna.UI2.WinForms.Guna2CircleButton()
-        Guna2CirclePictureBox5 = New Guna.UI2.WinForms.Guna2CirclePictureBox()
-        lblUsername = New Guna.UI2.WinForms.Guna2HtmlLabel()
         CategoryPanel.SuspendLayout()
         totalPanel.SuspendLayout()
         DashboardPanel.SuspendLayout()
         CType(PictureBox9, ComponentModel.ISupportInitialize).BeginInit()
-        CType(Guna2CirclePictureBox5, ComponentModel.ISupportInitialize).BeginInit()
         SuspendLayout()
         ' 
         ' LabelTitle
@@ -404,28 +401,6 @@ Partial Class Sales
         backCategory.TabIndex = 39
         backCategory.Text = "<"
         ' 
-        ' Guna2CirclePictureBox5
-        ' 
-        Guna2CirclePictureBox5.ImageRotate = 0F
-        Guna2CirclePictureBox5.Location = New Point(1784, 20)
-        Guna2CirclePictureBox5.Name = "Guna2CirclePictureBox5"
-        Guna2CirclePictureBox5.ShadowDecoration.CustomizableEdges = CustomizableEdges18
-        Guna2CirclePictureBox5.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
-        Guna2CirclePictureBox5.Size = New Size(31, 28)
-        Guna2CirclePictureBox5.TabIndex = 40
-        Guna2CirclePictureBox5.TabStop = False
-        ' 
-        ' lblUsername
-        ' 
-        lblUsername.BackColor = Color.Transparent
-        lblUsername.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblUsername.ForeColor = Color.FromArgb(CByte(59), CByte(59), CByte(59))
-        lblUsername.Location = New Point(1821, 20)
-        lblUsername.Name = "lblUsername"
-        lblUsername.Size = New Size(65, 28)
-        lblUsername.TabIndex = 41
-        lblUsername.Text = "20 Items"
-        ' 
         ' Sales
         ' 
         AutoScaleDimensions = New SizeF(8F, 20F)
@@ -433,8 +408,6 @@ Partial Class Sales
         AutoScroll = True
         BackColor = Color.FromArgb(CByte(248), CByte(248), CByte(247))
         ClientSize = New Size(1902, 1033)
-        Controls.Add(lblUsername)
-        Controls.Add(Guna2CirclePictureBox5)
         Controls.Add(lblOrderId)
         Controls.Add(backCategory)
         Controls.Add(CategoryPanel)
@@ -451,7 +424,6 @@ Partial Class Sales
         totalPanel.PerformLayout()
         DashboardPanel.ResumeLayout(False)
         CType(PictureBox9, ComponentModel.ISupportInitialize).EndInit()
-        CType(Guna2CirclePictureBox5, ComponentModel.ISupportInitialize).EndInit()
         ResumeLayout(False)
         PerformLayout()
     End Sub
@@ -478,8 +450,6 @@ Partial Class Sales
     Friend WithEvents totalLbl As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents lbl2 As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents btnDiscount As Guna.UI2.WinForms.Guna2Button
-    Friend WithEvents Guna2CirclePictureBox5 As Guna.UI2.WinForms.Guna2CirclePictureBox
-    Friend WithEvents lblUsername As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents TxtSearch As Guna.UI2.WinForms.Guna2TextBox
 
 

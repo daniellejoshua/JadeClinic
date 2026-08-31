@@ -14,6 +14,7 @@ Public Class frmLoginvb
     Public Shared LoggedInFullName As String
     Public Shared LoggedInRole As String
     Public Shared LoggedInPIN As String
+    Public Shared LoggedInEmployeeCode As String = ""
 
     Private pinPanel As Guna.UI2.WinForms.Guna2Panel
     Private pinPanelButtons As List(Of Guna.UI2.WinForms.Guna2Button)
@@ -1570,7 +1571,7 @@ Public Class frmLoginvb
 
             Console.WriteLine($"Looking up user ID: {userId}")
 
-            Dim query As String = "SELECT Username, pin, IsActive, UserRole, FullName FROM Users WHERE UserID = @UserID"
+            Dim query As String = "SELECT Username, pin, IsActive, UserRole, FullName, EmployeeCode FROM Users WHERE UserID = @UserID"
             Dim parameters As SqlParameter() = {New SqlParameter("@UserID", userId)}
 
             Dim username As String = Nothing
@@ -1578,6 +1579,7 @@ Public Class frmLoginvb
             Dim isActive As Boolean = True
             Dim userRole As String = String.Empty
             Dim fullName As String = String.Empty
+            Dim employeeCode As String = String.Empty
 
             Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters)
                 If reader.Read() Then
@@ -1585,6 +1587,7 @@ Public Class frmLoginvb
                     pinValue = If(IsDBNull(reader("pin")), Nothing, reader("pin").ToString())
                     userRole = If(IsDBNull(reader("UserRole")), String.Empty, reader("UserRole").ToString())
                     fullName = If(IsDBNull(reader("FullName")), String.Empty, reader("FullName").ToString())
+                    employeeCode = If(IsDBNull(reader("EmployeeCode")), String.Empty, reader("EmployeeCode").ToString())
                     Try
                         If Not IsDBNull(reader("IsActive")) Then
                             isActive = Convert.ToBoolean(reader("IsActive"))
@@ -1606,6 +1609,7 @@ Public Class frmLoginvb
                 LoggedInUserID = userId
                 LoggedInUsername = username
                 LoggedInRole = userRole
+                LoggedInEmployeeCode = employeeCode
                 If Not String.IsNullOrEmpty(fullName) Then
                     LoggedInFullName = fullName
                 End If
@@ -1678,7 +1682,7 @@ Public Class frmLoginvb
             End If
 
             Dim query As String = "
-            SELECT UserID, Username, FullName, UserRole, pin, PasswordHash, IsActive 
+            SELECT UserID, Username, FullName, UserRole, pin, PasswordHash, IsActive, EmployeeCode
             FROM Users 
             WHERE Username = @Username"
 
@@ -1728,6 +1732,7 @@ Public Class frmLoginvb
                         LoggedInUsername = reader("Username").ToString()
                         LoggedInFullName = reader("FullName").ToString()
                         LoggedInRole = reader("UserRole").ToString()
+                        LoggedInEmployeeCode = If(Not IsDBNull(reader("EmployeeCode")), reader("EmployeeCode").ToString(), "")
                         Dim pinValue As String = reader("pin").ToString()
 
                         Utilities.LogAudit(LoggedInUsername, "Login", "User logged in successfully")

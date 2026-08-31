@@ -11,6 +11,7 @@ Imports System.IO
 Public Class Sys
     ' Navigation flag to prevent exit confirmation on programmatic close
     Private isNavigating As Boolean = False
+    Private _headerUserControl As HeaderUserControl
 
     ' Profile dropdown panel
     ' Profile managed by ProfileManager
@@ -176,7 +177,10 @@ Public Class Sys
     End Function
 
     Private Sub InitializeProfileSection()
-        ProfileManager.InitializeProfile(Me, lblUsername, Guna2CirclePictureBox1, AddressOf NavigateToProfileSettings)
+        _headerUserControl = New HeaderUserControl()
+        Me.Controls.Add(_headerUserControl)
+        _headerUserControl.BringToFront()
+        _headerUserControl.Initialize(Me, AddressOf NavigateToProfileSettings)
     End Sub
 
     Private Sub NavigateToProfileSettings()

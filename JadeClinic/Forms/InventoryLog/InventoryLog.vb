@@ -18,6 +18,7 @@ Public Class InventoryLog
 
     ' Navigation flag for proper form closing
     Private isNavigating As Boolean = False
+    Private _headerUserControl As HeaderUserControl
 
     Private ReadOnly GoldenYellow As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 254, 191, 16)
     Private ReadOnly RichOlive As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 190, 154, 48)
@@ -1309,7 +1310,10 @@ Public Class InventoryLog
     End Function
 
     Private Sub InitializeProfileSection()
-        ProfileManager.InitializeProfile(Me, lblUsername, Guna2CirclePictureBox5, AddressOf NavigateToProfileSettings)
+        _headerUserControl = New HeaderUserControl()
+        Me.Controls.Add(_headerUserControl)
+        _headerUserControl.BringToFront()
+        _headerUserControl.Initialize(Me, AddressOf NavigateToProfileSettings)
     End Sub
 
 
@@ -1401,10 +1405,6 @@ Public Class InventoryLog
             End Try
             loadingLabel = Nothing
         End If
-    End Sub
-
-    Private Sub Guna2CirclePictureBox5_Click(sender As Object, e As EventArgs) Handles Guna2CirclePictureBox5.Click
-
     End Sub
 
     Private Sub TxtSearch_KeyDown(sender As Object, e As KeyEventArgs)

@@ -19,34 +19,30 @@ Partial Class Supplier
     Private Sub InitializeComponent()
         Dim CustomizableEdges1 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges2 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges3 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim DataGridViewCellStyle1 As DataGridViewCellStyle = New DataGridViewCellStyle()
         Dim DataGridViewCellStyle2 As DataGridViewCellStyle = New DataGridViewCellStyle()
         Dim DataGridViewCellStyle3 As DataGridViewCellStyle = New DataGridViewCellStyle()
-        Dim CustomizableEdges11 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges10 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
+        Dim CustomizableEdges3 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges4 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges5 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges6 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges7 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges8 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges9 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges10 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(Supplier))
         LabelTitle = New Label()
         lblSubtitle = New Label()
         NavigationPanel = New Guna.UI2.WinForms.Guna2Panel()
         PictureBox9 = New PictureBox()
-        Guna2CirclePictureBox5 = New Guna.UI2.WinForms.Guna2CirclePictureBox()
         InventoryLogDataGrid = New Guna.UI2.WinForms.Guna2DataGridView()
         Guna2Panel1 = New Guna.UI2.WinForms.Guna2Panel()
         SortBy = New Guna.UI2.WinForms.Guna2ComboBox()
         Exportbtn = New Guna.UI2.WinForms.Guna2Button()
         Guna2Button1 = New Guna.UI2.WinForms.Guna2Button()
         TxtSearch = New Guna.UI2.WinForms.Guna2TextBox()
-        lblUsername = New Guna.UI2.WinForms.Guna2HtmlLabel()
         NavigationPanel.SuspendLayout()
         CType(PictureBox9, ComponentModel.ISupportInitialize).BeginInit()
-        CType(Guna2CirclePictureBox5, ComponentModel.ISupportInitialize).BeginInit()
         CType(InventoryLogDataGrid, ComponentModel.ISupportInitialize).BeginInit()
         Guna2Panel1.SuspendLayout()
         SuspendLayout()
@@ -99,18 +95,6 @@ Partial Class Supplier
         PictureBox9.SizeMode = PictureBoxSizeMode.StretchImage
         PictureBox9.TabIndex = 39
         PictureBox9.TabStop = False
-        ' 
-        ' Guna2CirclePictureBox5
-        ' 
-        Guna2CirclePictureBox5.Anchor = AnchorStyles.Top Or AnchorStyles.Right
-        Guna2CirclePictureBox5.ImageRotate = 0F
-        Guna2CirclePictureBox5.Location = New Point(1755, 20)
-        Guna2CirclePictureBox5.Name = "Guna2CirclePictureBox5"
-        Guna2CirclePictureBox5.ShadowDecoration.CustomizableEdges = CustomizableEdges3
-        Guna2CirclePictureBox5.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
-        Guna2CirclePictureBox5.Size = New Size(31, 28)
-        Guna2CirclePictureBox5.TabIndex = 40
-        Guna2CirclePictureBox5.TabStop = False
         ' 
         ' InventoryLogDataGrid
         ' 
@@ -182,11 +166,11 @@ Partial Class Supplier
         Guna2Panel1.Controls.Add(Exportbtn)
         Guna2Panel1.Controls.Add(Guna2Button1)
         Guna2Panel1.Controls.Add(TxtSearch)
-        Guna2Panel1.CustomizableEdges = CustomizableEdges10
+        Guna2Panel1.CustomizableEdges = CustomizableEdges9
         Guna2Panel1.FillColor = Color.White
         Guna2Panel1.Location = New Point(240, 113)
         Guna2Panel1.Name = "Guna2Panel1"
-        Guna2Panel1.ShadowDecoration.CustomizableEdges = CustomizableEdges11
+        Guna2Panel1.ShadowDecoration.CustomizableEdges = CustomizableEdges10
         Guna2Panel1.ShadowDecoration.Depth = 0
         Guna2Panel1.ShadowDecoration.Shadow = New Padding(0, 0, 4, 4)
         Guna2Panel1.Size = New Size(1650, 908)
@@ -197,7 +181,7 @@ Partial Class Supplier
         SortBy.BackColor = Color.Transparent
         SortBy.BorderColor = Color.FromArgb(CByte(220), CByte(220), CByte(220))
         SortBy.BorderRadius = 8
-        SortBy.CustomizableEdges = CustomizableEdges4
+        SortBy.CustomizableEdges = CustomizableEdges3
         SortBy.DrawMode = DrawMode.OwnerDrawFixed
         SortBy.DropDownStyle = ComboBoxStyle.DropDownList
         SortBy.FocusedColor = Color.FromArgb(CByte(196), CByte(154), CByte(44))
@@ -207,7 +191,7 @@ Partial Class Supplier
         SortBy.ItemHeight = 36
         SortBy.Location = New Point(362, 14)
         SortBy.Name = "SortBy"
-        SortBy.ShadowDecoration.CustomizableEdges = CustomizableEdges5
+        SortBy.ShadowDecoration.CustomizableEdges = CustomizableEdges4
         SortBy.Size = New Size(160, 42)
         SortBy.TabIndex = 65
         ' 
@@ -217,7 +201,7 @@ Partial Class Supplier
         Exportbtn.BorderColor = Color.FromArgb(CByte(220), CByte(220), CByte(220))
         Exportbtn.BorderRadius = 8
         Exportbtn.BorderThickness = 1
-        Exportbtn.CustomizableEdges = CustomizableEdges6
+        Exportbtn.CustomizableEdges = CustomizableEdges5
         Exportbtn.DisabledState.BorderColor = Color.DarkGray
         Exportbtn.DisabledState.CustomBorderColor = Color.DarkGray
         Exportbtn.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
@@ -227,7 +211,7 @@ Partial Class Supplier
         Exportbtn.ForeColor = Color.FromArgb(CByte(80), CByte(80), CByte(80))
         Exportbtn.Location = New Point(1312, 14)
         Exportbtn.Name = "Exportbtn"
-        Exportbtn.ShadowDecoration.CustomizableEdges = CustomizableEdges7
+        Exportbtn.ShadowDecoration.CustomizableEdges = CustomizableEdges6
         Exportbtn.Size = New Size(130, 42)
         Exportbtn.TabIndex = 66
         Exportbtn.Text = "📥 Export"
@@ -236,7 +220,7 @@ Partial Class Supplier
         ' 
         Guna2Button1.Anchor = AnchorStyles.Top Or AnchorStyles.Right
         Guna2Button1.BorderRadius = 8
-        Guna2Button1.CustomizableEdges = CustomizableEdges8
+        Guna2Button1.CustomizableEdges = CustomizableEdges7
         Guna2Button1.DisabledState.BorderColor = Color.DarkGray
         Guna2Button1.DisabledState.CustomBorderColor = Color.DarkGray
         Guna2Button1.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
@@ -246,7 +230,7 @@ Partial Class Supplier
         Guna2Button1.ForeColor = Color.White
         Guna2Button1.Location = New Point(1458, 14)
         Guna2Button1.Name = "Guna2Button1"
-        Guna2Button1.ShadowDecoration.CustomizableEdges = CustomizableEdges9
+        Guna2Button1.ShadowDecoration.CustomizableEdges = CustomizableEdges8
         Guna2Button1.Size = New Size(182, 42)
         Guna2Button1.TabIndex = 85
         Guna2Button1.Text = "＋ Add Supplier"
@@ -255,7 +239,7 @@ Partial Class Supplier
         ' 
         TxtSearch.BorderColor = Color.FromArgb(CByte(220), CByte(220), CByte(220))
         TxtSearch.BorderRadius = 8
-        TxtSearch.CustomizableEdges = CustomizableEdges10
+        TxtSearch.CustomizableEdges = CustomizableEdges9
         TxtSearch.DefaultText = ""
         TxtSearch.DisabledState.BorderColor = Color.FromArgb(CByte(208), CByte(208), CByte(208))
         TxtSearch.DisabledState.FillColor = Color.FromArgb(CByte(226), CByte(226), CByte(226))
@@ -270,21 +254,9 @@ Partial Class Supplier
         TxtSearch.Name = "TxtSearch"
         TxtSearch.PlaceholderText = "🔍  Search suppliers..."
         TxtSearch.SelectedText = ""
-        TxtSearch.ShadowDecoration.CustomizableEdges = CustomizableEdges10
+        TxtSearch.ShadowDecoration.CustomizableEdges = CustomizableEdges9
         TxtSearch.Size = New Size(330, 42)
         TxtSearch.TabIndex = 84
-        ' 
-        ' lblUsername
-        ' 
-        lblUsername.Anchor = AnchorStyles.Top Or AnchorStyles.Right
-        lblUsername.BackColor = Color.Transparent
-        lblUsername.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblUsername.ForeColor = Color.FromArgb(CByte(59), CByte(59), CByte(59))
-        lblUsername.Location = New Point(1793, 20)
-        lblUsername.Name = "lblUsername"
-        lblUsername.Size = New Size(65, 28)
-        lblUsername.TabIndex = 75
-        lblUsername.Text = "20 Items"
         ' 
         ' Supplier
         ' 
@@ -294,8 +266,6 @@ Partial Class Supplier
         BackColor = Color.FromArgb(CByte(245), CByte(243), CByte(239))
         ClientSize = New Size(1902, 1033)
         Controls.Add(lblSubtitle)
-        Controls.Add(lblUsername)
-        Controls.Add(Guna2CirclePictureBox5)
         Controls.Add(NavigationPanel)
         Controls.Add(LabelTitle)
         Controls.Add(Guna2Panel1)
@@ -306,7 +276,6 @@ Partial Class Supplier
         Text = "Orders"
         NavigationPanel.ResumeLayout(False)
         CType(PictureBox9, ComponentModel.ISupportInitialize).EndInit()
-        CType(Guna2CirclePictureBox5, ComponentModel.ISupportInitialize).EndInit()
         CType(InventoryLogDataGrid, ComponentModel.ISupportInitialize).EndInit()
         Guna2Panel1.ResumeLayout(False)
         ResumeLayout(False)
@@ -317,11 +286,9 @@ Partial Class Supplier
     Friend WithEvents lblSubtitle As Label
     Friend WithEvents NavigationPanel As Guna.UI2.WinForms.Guna2Panel
     Friend WithEvents PictureBox9 As PictureBox
-    Friend WithEvents Guna2CirclePictureBox5 As Guna.UI2.WinForms.Guna2CirclePictureBox
     Friend WithEvents InventoryLogDataGrid As Guna.UI2.WinForms.Guna2DataGridView
     Friend WithEvents SortBy As Guna.UI2.WinForms.Guna2ComboBox
     Friend WithEvents Exportbtn As Guna.UI2.WinForms.Guna2Button
-    Friend WithEvents lblUsername As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents Guna2Panel1 As Guna.UI2.WinForms.Guna2Panel
     Friend WithEvents TxtSearch As Guna.UI2.WinForms.Guna2TextBox
     Friend WithEvents Guna2Button1 As Guna.UI2.WinForms.Guna2Button

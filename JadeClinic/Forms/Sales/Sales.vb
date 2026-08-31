@@ -59,6 +59,7 @@ Public Class Sales
     Private _paginationContext As PaginationContext = PaginationContext.None
     Private _paginationCategory As String = ""
     Private _paginationSearchTerm As String = ""
+    Private _headerUserControl As HeaderUserControl
 
     ' Unit filter for product listings
     Private _selectedUnitFilter As String = ""
@@ -1582,7 +1583,7 @@ Public Class Sales
     Private Sub AttachClickHandlersToAllControls(parentControl As Control)
         For Each ctrl As Control In parentControl.Controls
             ' Skip the profile controls to avoid immediate hide after toggle
-            If ctrl Is Guna2CirclePictureBox5 OrElse ctrl Is lblUsername Then
+            If _headerUserControl IsNot Nothing AndAlso (ctrl Is _headerUserControl.AvatarPictureBox OrElse ctrl Is _headerUserControl.UsernameLabel) Then
                 If ctrl.HasChildren Then
                     AttachClickHandlersToAllControls(ctrl)
                 End If
@@ -2399,7 +2400,7 @@ Public Class Sales
             yPosition += 12
             g.DrawString($"Date: {DateTime.Now:MM/dd/yyyy HH:mm:ss}", regularFont, brush, marginLeft, yPosition)
             yPosition += 12
-            Dim cashierLabel As String = $"Cashier: {frmLoginvb.LoggedInUsername}"
+            Dim cashierLabel As String = $"Cashier: {If(String.IsNullOrWhiteSpace(frmLoginvb.LoggedInEmployeeCode), frmLoginvb.LoggedInUsername, frmLoginvb.LoggedInEmployeeCode)}"
             For Each cashierLine As String In ReceiptRenderer.WrapText(g, cashierLabel, regularFont, contentWidth)
                 g.DrawString(cashierLine, regularFont, brush, marginLeft, yPosition)
                 yPosition += 12
@@ -2655,7 +2656,7 @@ Public Class Sales
         lines.Add(New EscPosPrinter.EscLine("SALES INVOICE", 1, True))
         lines.Add(New EscPosPrinter.EscLine("Receipt #: " & receiptOrderId, 0))
         lines.Add(New EscPosPrinter.EscLine("Date: " & DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss"), 0))
-        lines.Add(New EscPosPrinter.EscLine("Cashier: " & frmLoginvb.LoggedInUsername, 0))
+        lines.Add(New EscPosPrinter.EscLine("Cashier: " & If(String.IsNullOrWhiteSpace(frmLoginvb.LoggedInEmployeeCode), frmLoginvb.LoggedInUsername, frmLoginvb.LoggedInEmployeeCode), 0))
         lines.Add(New EscPosPrinter.EscLine("", 0))
 
         ' Customer block
@@ -2764,7 +2765,7 @@ Public Class Sales
         Dim data As New ReceiptData()
         data.ReceiptNumber = receiptOrderId
         data.SaleDate = DateTime.Now
-        data.Cashier = frmLoginvb.LoggedInUsername
+        data.Cashier = If(String.IsNullOrWhiteSpace(frmLoginvb.LoggedInEmployeeCode), frmLoginvb.LoggedInUsername, frmLoginvb.LoggedInEmployeeCode)
 
         data.CustomerName = If(Not String.IsNullOrWhiteSpace(receiptCustomerName), receiptCustomerName, If(Not String.IsNullOrWhiteSpace(selectedCustomerName), selectedCustomerName, "________________"))
         data.CustomerTIN = If(Not String.IsNullOrWhiteSpace(selectedCustomerTIN), selectedCustomerTIN, "________________")
@@ -5175,7 +5176,10 @@ Public Class Sales
     End Sub
 
     Private Sub InitializeProfileSection()
-        ProfileManager.InitializeProfile(Me, lblUsername, Guna2CirclePictureBox5, AddressOf NavigateToProfileSettings)
+        _headerUserControl = New HeaderUserControl()
+        Me.Controls.Add(_headerUserControl)
+        _headerUserControl.BringToFront()
+        _headerUserControl.Initialize(Me, AddressOf NavigateToProfileSettings)
     End Sub
     ' Navigation event handlers
     Private Sub NavDashboard_Click(sender As Object, e As EventArgs)

@@ -15,6 +15,7 @@ Public Class Inventory
 
     ' Navigation flag to prevent exit confirmation on programmatic close
     Private isNavigating As Boolean = False
+    Private _headerUserControl As HeaderUserControl
 
     ' Profile managed by ProfileManager
 
@@ -1443,7 +1444,10 @@ Public Class Inventory
     End Sub
 
     Private Sub InitializeProfileSection()
-        ProfileManager.InitializeProfile(Me, lblUsername, Guna2CirclePictureBox5, AddressOf NavigateToProfileSettings)
+        _headerUserControl = New HeaderUserControl()
+        Me.Controls.Add(_headerUserControl)
+        _headerUserControl.BringToFront()
+        _headerUserControl.Initialize(Me, AddressOf NavigateToProfileSettings)
     End Sub
 
 

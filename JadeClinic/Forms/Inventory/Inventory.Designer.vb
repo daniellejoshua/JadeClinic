@@ -61,8 +61,6 @@ Partial Class Inventory
         PictureBox9 = New PictureBox()
         Guna2Button1 = New Guna.UI2.WinForms.Guna2Button()
         Exportbtn = New Guna.UI2.WinForms.Guna2Button()
-        lblUsername = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        Guna2CirclePictureBox5 = New Guna.UI2.WinForms.Guna2CirclePictureBox()
         Guna2HtmlLabel1 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2DataGridView1 = New Guna.UI2.WinForms.Guna2DataGridView()
         Guna2ComboBox1 = New Guna.UI2.WinForms.Guna2ComboBox()
@@ -90,7 +88,6 @@ Partial Class Inventory
         Guna2Panel1 = New Guna.UI2.WinForms.Guna2Panel()
         DashboardPanel.SuspendLayout()
         CType(PictureBox9, ComponentModel.ISupportInitialize).BeginInit()
-        CType(Guna2CirclePictureBox5, ComponentModel.ISupportInitialize).BeginInit()
         CType(Guna2DataGridView1, ComponentModel.ISupportInitialize).BeginInit()
         FilterPanel.SuspendLayout()
         Guna2Panel1.SuspendLayout()
@@ -146,22 +143,6 @@ Partial Class Inventory
         Exportbtn.ForeColor = Color.FromArgb(CByte(64), CByte(64), CByte(64))
         Exportbtn.Name = "Exportbtn"
         Exportbtn.ShadowDecoration.CustomizableEdges = CustomizableEdges6
-        ' 
-        ' lblUsername
-        ' 
-        lblUsername.BackColor = Color.Transparent
-        resources.ApplyResources(lblUsername, "lblUsername")
-        lblUsername.ForeColor = Color.FromArgb(CByte(59), CByte(59), CByte(59))
-        lblUsername.Name = "lblUsername"
-        ' 
-        ' Guna2CirclePictureBox5
-        ' 
-        Guna2CirclePictureBox5.ImageRotate = 0F
-        resources.ApplyResources(Guna2CirclePictureBox5, "Guna2CirclePictureBox5")
-        Guna2CirclePictureBox5.Name = "Guna2CirclePictureBox5"
-        Guna2CirclePictureBox5.ShadowDecoration.CustomizableEdges = CustomizableEdges7
-        Guna2CirclePictureBox5.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
-        Guna2CirclePictureBox5.TabStop = False
         ' 
         ' Guna2HtmlLabel1
         ' 
@@ -521,8 +502,6 @@ Partial Class Inventory
         AutoScaleMode = AutoScaleMode.Font
         BackColor = Color.White
         Controls.Add(Guna2Panel1)
-        Controls.Add(lblUsername)
-        Controls.Add(Guna2CirclePictureBox5)
         Controls.Add(Exportbtn)
         Controls.Add(Guna2Button1)
         Controls.Add(Guna2HtmlLabel1)
@@ -531,7 +510,6 @@ Partial Class Inventory
         Name = "Inventory"
         DashboardPanel.ResumeLayout(False)
         CType(PictureBox9, ComponentModel.ISupportInitialize).EndInit()
-        CType(Guna2CirclePictureBox5, ComponentModel.ISupportInitialize).EndInit()
         CType(Guna2DataGridView1, ComponentModel.ISupportInitialize).EndInit()
         FilterPanel.ResumeLayout(False)
         FilterPanel.PerformLayout()
@@ -551,8 +529,6 @@ Partial Class Inventory
     Friend WithEvents Guna2HtmlLabel5 As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents Guna2Button1 As Guna.UI2.WinForms.Guna2Button
     Friend WithEvents Exportbtn As Guna.UI2.WinForms.Guna2Button
-    Friend WithEvents lblUsername As Guna.UI2.WinForms.Guna2HtmlLabel
-    Friend WithEvents Guna2CirclePictureBox5 As Guna.UI2.WinForms.Guna2CirclePictureBox
     Friend WithEvents Guna2HtmlLabel1 As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents Guna2DataGridView1 As Guna.UI2.WinForms.Guna2DataGridView
     Friend WithEvents Guna2ComboBox1 As Guna.UI2.WinForms.Guna2ComboBox

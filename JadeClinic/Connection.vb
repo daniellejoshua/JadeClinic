@@ -75,6 +75,10 @@ Module Connection
                             SalesStatusMigration.UpdateDatabaseForSalesStatus()
                         Catch
                         End Try
+                        Try
+                            EmployeeCodeMigration.UpdateDatabaseForEmployeeCode()
+                        Catch
+                        End Try
                     End If
                 End Using
             End Using

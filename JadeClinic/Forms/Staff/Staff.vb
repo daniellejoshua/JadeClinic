@@ -15,6 +15,7 @@ Public Class Staff
 
     Private Const PageSize As Integer = 50
     Private _currentPage As Integer = 1
+    Private _headerUserControl As HeaderUserControl
 
     Private Sub Staff_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         Me.BackColor = Drawing.Color.FromArgb(248, 248, 247)
@@ -75,9 +76,6 @@ Public Class Staff
             AddHandler PaginationControl1.PageChanged, AddressOf PaginationControl1_PageChanged
         End If
 
-        ' Load logged-in user's profile picture
-        ProfileManager.LoadUserProfilePicture(Me, Guna2CirclePictureBox5)
-
         ' Update form title to show logged-in user
         Me.Text = $"Staff Management - {frmLoginvb.LoggedInUsername}"
 
@@ -89,7 +87,10 @@ Public Class Staff
     ' Profile managed by ProfileManager
 
     Private Sub InitializeProfileSection()
-        ProfileManager.InitializeProfile(Me, lblUsername, Guna2CirclePictureBox5, AddressOf NavigateToProfileSettings)
+        _headerUserControl = New HeaderUserControl()
+        Me.Controls.Add(_headerUserControl)
+        _headerUserControl.BringToFront()
+        _headerUserControl.Initialize(Me, AddressOf NavigateToProfileSettings)
     End Sub
 
     ' Helper method to validate user session
@@ -201,6 +202,12 @@ Public Class Staff
         Guna2DataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing
         Guna2DataGridView1.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None
 
+        Guna2DataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
+        Guna2DataGridView1.AllowUserToAddRows = False
+        Guna2DataGridView1.AllowUserToDeleteRows = False
+        Guna2DataGridView1.SelectionMode = DataGridViewSelectionMode.FullRowSelect
+        Guna2DataGridView1.MultiSelect = False
+
         ' Add columns (center aligned by default, except Username/Email/Phone)
         Guna2DataGridView1.Columns.Add(New DataGridViewTextBoxColumn() With {
         .Name = "UserID",
@@ -209,7 +216,7 @@ Public Class Staff
         .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter}
     })
 
-        Dim photoCol As New DataGridViewImageColumn() With {
+Dim photoCol As New DataGridViewImageColumn() With {
         .Name = "Photo",
         .HeaderText = "Photo",
         .ImageLayout = DataGridViewImageCellLayout.Zoom,
@@ -218,7 +225,7 @@ Public Class Staff
         .AutoSizeMode = DataGridViewAutoSizeColumnMode.None,
         .Resizable = DataGridViewTriState.False,
         .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter,
-                                                              .Padding = New Padding(0)}
+                                                               .Padding = New Padding(0)}
     }
         Guna2DataGridView1.Columns.Add(photoCol)
 
@@ -269,13 +276,6 @@ Public Class Staff
         }
     }
         Guna2DataGridView1.Columns.Add(actionsCol)
-
-        ' Grid behavior
-        Guna2DataGridView1.AllowUserToAddRows = False
-        Guna2DataGridView1.AllowUserToDeleteRows = False
-        Guna2DataGridView1.SelectionMode = DataGridViewSelectionMode.FullRowSelect
-        Guna2DataGridView1.MultiSelect = False
-        Guna2DataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
     End Sub
 
     Private Sub LoadUsersData(Optional sortOrder As String = "", Optional pageNumber As Integer = -1)
@@ -307,7 +307,7 @@ Public Class Staff
             End If
 
             Dim offset As Integer = (_currentPage - 1) * PageSize
-            Dim query As String = "SELECT UserID, Username, PIN, Email, Phone, UserRole, PhotoPath, IsActive FROM Users" &
+            Dim query As String = "SELECT UserID, Username, PIN, Email, Phone, UserRole, PhotoPath, IsActive, EmployeeCode FROM Users" &
                                   whereClause &
                                   " ORDER BY UserID ASC" &
                                   $" LIMIT {PageSize} OFFSET {offset}"
@@ -321,6 +321,7 @@ Public Class Staff
                     Dim phone As String = If(IsDBNull(reader("Phone")), "", reader("Phone").ToString())
                     Dim userRole As String = If(IsDBNull(reader("UserRole")), "Staff", reader("UserRole").ToString())
                     Dim isActive As Boolean = If(IsDBNull(reader("IsActive")), True, Convert.ToBoolean(reader("IsActive")))
+                    Dim employeeCode As String = If(IsDBNull(reader("EmployeeCode")), "", reader("EmployeeCode").ToString())
 
                     Dim userPhoto As System.Drawing.Image = Nothing
                     Dim photoFileName As String = If(Not IsDBNull(reader("PhotoPath")), reader("PhotoPath").ToString(), Nothing)
@@ -340,7 +341,7 @@ Public Class Staff
                     Dim rowIndex As Integer = Guna2DataGridView1.Rows.Add()
 
                     ' Set individual column values (Email and Phone replace FullName)
-                    Guna2DataGridView1.Rows(rowIndex).Cells("UserID").Value = userId
+                    Guna2DataGridView1.Rows(rowIndex).Cells("UserID").Value = employeeCode
                     Guna2DataGridView1.Rows(rowIndex).Cells("Photo").Value = userPhoto
                     Guna2DataGridView1.Rows(rowIndex).Cells("Username").Value = username
                     Guna2DataGridView1.Rows(rowIndex).Cells("Email").Value = email
@@ -362,7 +363,8 @@ Public Class Staff
                     {"Phone", phone},
                     {"UserRole", userRole},
                     {"PhotoPath", photoFileName},
-                    {"IsActive", isActive}
+                    {"IsActive", isActive},
+                    {"EmployeeCode", employeeCode}
                 }
                 End While
             End Using

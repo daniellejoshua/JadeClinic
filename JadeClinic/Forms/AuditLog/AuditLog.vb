@@ -7,6 +7,7 @@ Imports System.Data.Common
 Public Class AuditLog
     Private overlayPanel As Panel
     Private isNavigating As Boolean = False
+    Private _headerUserControl As HeaderUserControl
 
     ' Pagination state
     Private Const PageSize As Integer = 50
@@ -594,7 +595,10 @@ Public Class AuditLog
     End Sub
 
     Private Sub InitializeProfileSection()
-        ProfileManager.InitializeProfile(Me, lblUsername, Guna2CirclePictureBox5, AddressOf NavigateToProfileSettings)
+        _headerUserControl = New HeaderUserControl()
+        Me.Controls.Add(_headerUserControl)
+        _headerUserControl.BringToFront()
+        _headerUserControl.Initialize(Me, AddressOf NavigateToProfileSettings)
     End Sub
 
     Private Sub NavigateToProfileSettings()

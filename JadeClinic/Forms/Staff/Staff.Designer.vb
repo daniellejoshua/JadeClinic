@@ -36,18 +36,15 @@ Partial Class Staff
         LabelTitle = New Label()
         DashboardPanel = New Guna.UI2.WinForms.Guna2Panel()
         PictureBox9 = New PictureBox()
-        Guna2CirclePictureBox5 = New Guna.UI2.WinForms.Guna2CirclePictureBox()
         Guna2DataGridView1 = New Guna.UI2.WinForms.Guna2DataGridView()
         btnDiscount = New Guna.UI2.WinForms.Guna2Button()
         SortBy = New Guna.UI2.WinForms.Guna2ComboBox()
         Exportbtn = New Guna.UI2.WinForms.Guna2Button()
-        lblUsername = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2HtmlLabel3 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2Panel1 = New Guna.UI2.WinForms.Guna2Panel()
         PaginationControl1 = New PaginationControl()
         DashboardPanel.SuspendLayout()
         CType(PictureBox9, ComponentModel.ISupportInitialize).BeginInit()
-        CType(Guna2CirclePictureBox5, ComponentModel.ISupportInitialize).BeginInit()
         CType(Guna2DataGridView1, ComponentModel.ISupportInitialize).BeginInit()
         Guna2Panel1.SuspendLayout()
         SuspendLayout()
@@ -88,19 +85,6 @@ Partial Class Staff
         PictureBox9.SizeMode = PictureBoxSizeMode.StretchImage
         PictureBox9.TabIndex = 76
         PictureBox9.TabStop = False
-        ' 
-        ' Guna2CirclePictureBox5
-        ' 
-        Guna2CirclePictureBox5.FillColor = Color.Transparent
-        Guna2CirclePictureBox5.Image = My.Resources.Resources.avatar_default_svgrepo_com
-        Guna2CirclePictureBox5.ImageRotate = 0F
-        Guna2CirclePictureBox5.Location = New Point(1742, 26)
-        Guna2CirclePictureBox5.Name = "Guna2CirclePictureBox5"
-        Guna2CirclePictureBox5.ShadowDecoration.CustomizableEdges = CustomizableEdges3
-        Guna2CirclePictureBox5.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
-        Guna2CirclePictureBox5.Size = New Size(31, 28)
-        Guna2CirclePictureBox5.TabIndex = 40
-        Guna2CirclePictureBox5.TabStop = False
         ' 
         ' Guna2DataGridView1
         ' 
@@ -216,17 +200,6 @@ Partial Class Staff
         Exportbtn.TabIndex = 66
         Exportbtn.Text = "📥 Export"
         ' 
-        ' lblUsername
-        ' 
-        lblUsername.BackColor = Color.Transparent
-        lblUsername.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblUsername.ForeColor = Color.FromArgb(CByte(59), CByte(59), CByte(59))
-        lblUsername.Location = New Point(1821, 20)
-        lblUsername.Name = "lblUsername"
-        lblUsername.Size = New Size(65, 28)
-        lblUsername.TabIndex = 74
-        lblUsername.Text = "20 Items"
-        ' 
         ' Guna2HtmlLabel3
         ' 
         Guna2HtmlLabel3.BackColor = Color.Transparent
@@ -283,8 +256,6 @@ Partial Class Staff
         BackColor = Color.FromArgb(CByte(245), CByte(243), CByte(239))
         ClientSize = New Size(1902, 1033)
         Controls.Add(Guna2Panel1)
-        Controls.Add(lblUsername)
-        Controls.Add(Guna2CirclePictureBox5)
         Controls.Add(DashboardPanel)
         Controls.Add(LabelTitle)
         Name = "Staff"
@@ -292,7 +263,6 @@ Partial Class Staff
         Text = "Orders"
         DashboardPanel.ResumeLayout(False)
         CType(PictureBox9, ComponentModel.ISupportInitialize).EndInit()
-        CType(Guna2CirclePictureBox5, ComponentModel.ISupportInitialize).EndInit()
         CType(Guna2DataGridView1, ComponentModel.ISupportInitialize).EndInit()
         Guna2Panel1.ResumeLayout(False)
         Guna2Panel1.PerformLayout()
@@ -302,12 +272,10 @@ Partial Class Staff
 
     Friend WithEvents LabelTitle As Label
     Friend WithEvents DashboardPanel As Guna.UI2.WinForms.Guna2Panel
-    Friend WithEvents Guna2CirclePictureBox5 As Guna.UI2.WinForms.Guna2CirclePictureBox
     Friend WithEvents Guna2DataGridView1 As Guna.UI2.WinForms.Guna2DataGridView
     Friend WithEvents btnDiscount As Guna.UI2.WinForms.Guna2Button
     Friend WithEvents SortBy As Guna.UI2.WinForms.Guna2ComboBox
     Friend WithEvents Exportbtn As Guna.UI2.WinForms.Guna2Button
-    Friend WithEvents lblUsername As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents Guna2HtmlLabel3 As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents PictureBox9 As PictureBox
     Friend WithEvents Guna2Panel1 As Guna.UI2.WinForms.Guna2Panel

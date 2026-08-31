@@ -656,6 +656,18 @@ Public Class AddStaff
         ' Execute insert and get new user ID
         Dim newUserId As Integer = Convert.ToInt32(Utilities.ExecuteScalar(insertQuery, parameters))
 
+        ' Assign the unique numbers-only employee code (UserID + registration date/time)
+        Dim employeeCode As String = Utilities.FormatEmployeeCode(newUserId, Date.Now)
+        Try
+            Dim codeQuery As String = "UPDATE Users SET EmployeeCode = @EmployeeCode WHERE UserID = @UserID"
+            Utilities.ExecuteNonQuery(codeQuery, {
+                New SqlParameter("@UserID", newUserId),
+                New SqlParameter("@EmployeeCode", employeeCode)
+            })
+        Catch ex As Exception
+            Console.WriteLine($"Error saving employee code for user {newUserId}: {ex.Message}")
+        End Try
+
         ' Generate and save passkeys for forgot password functionality
         Dim passkeys As String() = GenerateUserPasskeys(newUserId)
 

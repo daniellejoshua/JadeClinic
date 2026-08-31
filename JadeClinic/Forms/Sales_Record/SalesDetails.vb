@@ -62,7 +62,7 @@ Public Class SalesDetails
         saleRecord = Nothing
         saleItems.Clear()
 
-        Dim saleQuery As String = "SELECT s.SaleID, IFNULL(s.SaleNumber, '') AS SaleNumber, s.SaleDate, s.CustomerName, s.CustomerTIN, s.TotalAmount, s.AmountPaid, s.PaymentMethod, s.Reference, s.SalesData, IFNULL(s.Status, 'Completed') AS Status, s.ApprovedBy, s.AbortReason, u.Username " &
+        Dim saleQuery As String = "SELECT s.SaleID, IFNULL(s.SaleNumber, '') AS SaleNumber, s.SaleDate, s.CustomerName, s.CustomerTIN, s.TotalAmount, s.AmountPaid, s.PaymentMethod, s.Reference, s.SalesData, IFNULL(s.Status, 'Completed') AS Status, s.ApprovedBy, s.AbortReason, IFNULL(u.EmployeeCode, u.Username) AS Cashier " &
                                   "FROM Sales s LEFT JOIN Users u ON s.UserID = u.UserID WHERE s.SaleID = @SaleID"
         Using reader As DbDataReader = Utilities.ExecuteReader(saleQuery, New SqlParameter("@SaleID", saleId))
             If reader.Read() Then
@@ -80,7 +80,7 @@ Public Class SalesDetails
                     {"Status", If(IsDBNull(reader("Status")), "Completed", reader("Status").ToString())},
                     {"ApprovedBy", If(IsDBNull(reader("ApprovedBy")), "", reader("ApprovedBy").ToString())},
                     {"AbortReason", If(IsDBNull(reader("AbortReason")), "", reader("AbortReason").ToString())},
-                    {"Cashier", If(IsDBNull(reader("Username")), frmLoginvb.LoggedInUsername, reader("Username").ToString())}
+                    {"Cashier", If(IsDBNull(reader("Cashier")), frmLoginvb.LoggedInUsername, reader("Cashier").ToString())}
                 }
             End If
         End Using

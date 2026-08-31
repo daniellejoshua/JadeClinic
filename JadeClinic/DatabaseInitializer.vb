@@ -34,6 +34,12 @@ Public Class DatabaseInitializer
             Catch
             End Try
 
+            ' Add the EmployeeCode column and backfill it on existing databases
+            Try
+                EmployeeCodeMigration.UpdateDatabaseForEmployeeCode()
+            Catch
+            End Try
+
             Console.WriteLine("?? Database schema created successfully!")
         Catch ex As Exception
             Console.WriteLine($"? Error creating database schema: {ex.Message}")
@@ -56,6 +62,7 @@ Public Class DatabaseInitializer
             "QRCode TEXT NULL, " &
             "Email TEXT NULL, " &
             "Phone TEXT NULL, " &
+            "EmployeeCode TEXT NULL, " &
             "Passkeys TEXT NULL)"
 
         DatabaseHelper.ExecuteNonQuery(query, Nothing)
@@ -480,6 +487,17 @@ Public Class DatabaseInitializer
 
                 Console.WriteLine("? Default admin user created (username: admin, password: admin123, PIN: 1234)")
             End If
+
+            ' Backfill EmployeeCode for any admin row that is still missing one.
+            Try
+                DatabaseHelper.ExecuteNonQuery(
+                    "UPDATE Users SET EmployeeCode = " &
+                    "(SELECT printf('%d%s', UserID, strftime('%Y%m%d%H%M%S', CreatedAt))) " &
+                    "WHERE Username = 'admin' AND (EmployeeCode IS NULL OR Trim(EmployeeCode) = '')",
+                    Nothing)
+            Catch ex As Exception
+                Console.WriteLine($"Note: could not backfill admin EmployeeCode: {ex.Message}")
+            End Try
         Catch ex As Exception
             Console.WriteLine($"Warning: Could not create default admin user: {ex.Message}")
         End Try

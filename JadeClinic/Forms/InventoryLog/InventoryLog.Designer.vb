@@ -43,20 +43,17 @@ Partial Class InventoryLog
         SortBy = New Guna.UI2.WinForms.Guna2ComboBox()
         Exportbtn = New Guna.UI2.WinForms.Guna2Button()
         Guna2HtmlLabel3 = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        lblUsername = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2DateTimePicker1 = New Guna.UI2.WinForms.Guna2DateTimePicker()
         Guna2HtmlLabel4 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         AddInventoryLog = New Guna.UI2.WinForms.Guna2Button()
         Guna2Panel1 = New Guna.UI2.WinForms.Guna2Panel()
         TxtSearch = New Guna.UI2.WinForms.Guna2TextBox()
-        Guna2CirclePictureBox5 = New Guna.UI2.WinForms.Guna2CirclePictureBox()
         PaginationControl1 = New PaginationControl()
         lblSubtitle = New Label()
         DashboardPanel.SuspendLayout()
         CType(PictureBox9, ComponentModel.ISupportInitialize).BeginInit()
         CType(InventoryLogDataGrid, ComponentModel.ISupportInitialize).BeginInit()
         Guna2Panel1.SuspendLayout()
-        CType(Guna2CirclePictureBox5, ComponentModel.ISupportInitialize).BeginInit()
         SuspendLayout()
         ' 
         ' LabelTitle
@@ -204,17 +201,6 @@ Partial Class InventoryLog
         Guna2HtmlLabel3.TabIndex = 68
         Guna2HtmlLabel3.Text = "Sort by:"
         ' 
-        ' lblUsername
-        ' 
-        lblUsername.BackColor = Color.Transparent
-        lblUsername.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblUsername.ForeColor = Color.FromArgb(CByte(59), CByte(59), CByte(59))
-        lblUsername.Location = New Point(1821, 20)
-        lblUsername.Name = "lblUsername"
-        lblUsername.Size = New Size(65, 28)
-        lblUsername.TabIndex = 75
-        lblUsername.Text = "20 Items"
-        ' 
         ' Guna2DateTimePicker1
         ' 
         Guna2DateTimePicker1.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
@@ -315,17 +301,6 @@ Partial Class InventoryLog
         TxtSearch.Size = New Size(446, 42)
         TxtSearch.TabIndex = 85
         ' 
-        ' Guna2CirclePictureBox5
-        ' 
-        Guna2CirclePictureBox5.ImageRotate = 0F
-        Guna2CirclePictureBox5.Location = New Point(1784, 20)
-        Guna2CirclePictureBox5.Name = "Guna2CirclePictureBox5"
-        Guna2CirclePictureBox5.ShadowDecoration.CustomizableEdges = CustomizableEdges14
-        Guna2CirclePictureBox5.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
-        Guna2CirclePictureBox5.Size = New Size(31, 28)
-        Guna2CirclePictureBox5.TabIndex = 80
-        Guna2CirclePictureBox5.TabStop = False
-        ' 
         ' lblSubtitle
         ' 
         lblSubtitle.AutoSize = True
@@ -352,9 +327,7 @@ Partial Class InventoryLog
         BackColor = Color.FromArgb(CByte(245), CByte(243), CByte(239))
         ClientSize = New Size(1902, 1033)
         Controls.Add(lblSubtitle)
-        Controls.Add(Guna2CirclePictureBox5)
         Controls.Add(Guna2Panel1)
-        Controls.Add(lblUsername)
         Controls.Add(DashboardPanel)
         Controls.Add(LabelTitle)
         Name = "InventoryLog"
@@ -366,7 +339,6 @@ Partial Class InventoryLog
         CType(InventoryLogDataGrid, ComponentModel.ISupportInitialize).EndInit()
         Guna2Panel1.ResumeLayout(False)
         Guna2Panel1.PerformLayout()
-        CType(Guna2CirclePictureBox5, ComponentModel.ISupportInitialize).EndInit()
         ResumeLayout(False)
         PerformLayout()
     End Sub
@@ -380,12 +352,10 @@ Partial Class InventoryLog
     Friend WithEvents filtertype As Guna.UI2.WinForms.Guna2ComboBox
     Friend WithEvents Guna2HtmlLabel2 As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents Guna2HtmlLabel3 As Guna.UI2.WinForms.Guna2HtmlLabel
-    Friend WithEvents lblUsername As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents Guna2DateTimePicker1 As Guna.UI2.WinForms.Guna2DateTimePicker
     Friend WithEvents Guna2HtmlLabel4 As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents AddInventoryLog As Guna.UI2.WinForms.Guna2Button
     Friend WithEvents Guna2Panel1 As Guna.UI2.WinForms.Guna2Panel
-    Friend WithEvents Guna2CirclePictureBox5 As Guna.UI2.WinForms.Guna2CirclePictureBox
     Friend WithEvents TxtSearch As Guna.UI2.WinForms.Guna2TextBox
     Friend WithEvents lblSubtitle As Label
     Friend WithEvents PaginationControl1 As PaginationControl

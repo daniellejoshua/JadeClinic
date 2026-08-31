@@ -280,6 +280,12 @@ Module Utilities
         Return Date.Now.ToString("yyyyMMdd") & saleId.ToString("D6")
     End Function
 
+    ' Generates a numbers-only employee code from a UserID and their registration
+    ' date/time. Format: UserID + yyyyMMddHHmmss (e.g. 1 + 20260831143025 -> 120260831143025).
+    Public Function FormatEmployeeCode(userId As Integer, createdAt As Date) As String
+        Return userId.ToString() & createdAt.ToString("yyyyMMddHHmmss")
+    End Function
+
     ' Log audit trail - Updated for new AuditLog structure (UserID only, no Username column)
     Public Sub LogAudit(username As String, action As String, details As String, Optional userID As Integer? = Nothing)
         Try

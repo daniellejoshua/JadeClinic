@@ -35,14 +35,12 @@ Partial Class SalesRecord
         LabelTitle = New Label()
         DashboardPanel = New Guna.UI2.WinForms.Guna2Panel()
         PictureBox9 = New PictureBox()
-        Guna2CirclePictureBox5 = New Guna.UI2.WinForms.Guna2CirclePictureBox()
         Guna2DataGridView1 = New Guna.UI2.WinForms.Guna2DataGridView()
         FilterMethod = New Guna.UI2.WinForms.Guna2ComboBox()
         FilterStatus = New Guna.UI2.WinForms.Guna2ComboBox()
         Exportbtn = New Guna.UI2.WinForms.Guna2Button()
         Guna2HtmlLabel5 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2HtmlLabel6 = New Guna.UI2.WinForms.Guna2HtmlLabel()
-        lblUsername = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2DateTimePicker1 = New Guna.UI2.WinForms.Guna2DateTimePicker()
         Guna2HtmlLabel4 = New Guna.UI2.WinForms.Guna2HtmlLabel()
         Guna2Panel1 = New Guna.UI2.WinForms.Guna2Panel()
@@ -50,7 +48,6 @@ Partial Class SalesRecord
         TxtSearch = New Guna.UI2.WinForms.Guna2TextBox()
         DashboardPanel.SuspendLayout()
         CType(PictureBox9, ComponentModel.ISupportInitialize).BeginInit()
-        CType(Guna2CirclePictureBox5, ComponentModel.ISupportInitialize).BeginInit()
         CType(Guna2DataGridView1, ComponentModel.ISupportInitialize).BeginInit()
         Guna2Panel1.SuspendLayout()
         SuspendLayout()
@@ -92,17 +89,6 @@ Partial Class SalesRecord
         PictureBox9.SizeMode = PictureBoxSizeMode.StretchImage
         PictureBox9.TabIndex = 76
         PictureBox9.TabStop = False
-        ' 
-        ' Guna2CirclePictureBox5
-        ' 
-        Guna2CirclePictureBox5.ImageRotate = 0F
-        Guna2CirclePictureBox5.Location = New Point(1784, 20)
-        Guna2CirclePictureBox5.Name = "Guna2CirclePictureBox5"
-        Guna2CirclePictureBox5.ShadowDecoration.CustomizableEdges = CustomizableEdges3
-        Guna2CirclePictureBox5.ShadowDecoration.Mode = Guna.UI2.WinForms.Enums.ShadowMode.Circle
-        Guna2CirclePictureBox5.Size = New Size(31, 28)
-        Guna2CirclePictureBox5.TabIndex = 40
-        Guna2CirclePictureBox5.TabStop = False
         ' 
         ' Guna2DataGridView1
         ' 
@@ -242,17 +228,6 @@ Partial Class SalesRecord
         Guna2HtmlLabel6.TabIndex = 82
         Guna2HtmlLabel6.Text = "Status:"
         ' 
-        ' lblUsername
-        ' 
-        lblUsername.BackColor = Color.Transparent
-        lblUsername.Font = New Font("Poppins Light", 9F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
-        lblUsername.ForeColor = Color.FromArgb(CByte(59), CByte(59), CByte(59))
-        lblUsername.Location = New Point(1821, 20)
-        lblUsername.Name = "lblUsername"
-        lblUsername.Size = New Size(65, 28)
-        lblUsername.TabIndex = 75
-        lblUsername.Text = "20 Items"
-        ' 
         ' Guna2DateTimePicker1
         ' 
         Guna2DateTimePicker1.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
@@ -355,8 +330,6 @@ Partial Class SalesRecord
         BackColor = Color.FromArgb(CByte(245), CByte(243), CByte(239))
         ClientSize = New Size(1902, 1033)
         Controls.Add(Guna2Panel1)
-        Controls.Add(lblUsername)
-        Controls.Add(Guna2CirclePictureBox5)
         Controls.Add(DashboardPanel)
         Controls.Add(LabelTitle)
         Name = "SalesRecord"
@@ -365,7 +338,6 @@ Partial Class SalesRecord
         Text = "Sales Records"
         DashboardPanel.ResumeLayout(False)
         CType(PictureBox9, ComponentModel.ISupportInitialize).EndInit()
-        CType(Guna2CirclePictureBox5, ComponentModel.ISupportInitialize).EndInit()
         CType(Guna2DataGridView1, ComponentModel.ISupportInitialize).EndInit()
         Guna2Panel1.ResumeLayout(False)
         Guna2Panel1.PerformLayout()
@@ -376,14 +348,12 @@ Partial Class SalesRecord
     Friend WithEvents LabelTitle As Label
     Friend WithEvents DashboardPanel As Guna.UI2.WinForms.Guna2Panel
     Friend WithEvents PictureBox9 As PictureBox
-    Friend WithEvents Guna2CirclePictureBox5 As Guna.UI2.WinForms.Guna2CirclePictureBox
     Friend WithEvents Guna2DataGridView1 As Guna.UI2.WinForms.Guna2DataGridView
     Friend WithEvents FilterMethod As Guna.UI2.WinForms.Guna2ComboBox
     Friend WithEvents FilterStatus As Guna.UI2.WinForms.Guna2ComboBox
     Friend WithEvents Exportbtn As Guna.UI2.WinForms.Guna2Button
     Friend WithEvents Guna2HtmlLabel5 As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents Guna2HtmlLabel6 As Guna.UI2.WinForms.Guna2HtmlLabel
-    Friend WithEvents lblUsername As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents Guna2DateTimePicker1 As Guna.UI2.WinForms.Guna2DateTimePicker
     Friend WithEvents Guna2HtmlLabel4 As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents Guna2Panel1 As Guna.UI2.WinForms.Guna2Panel
