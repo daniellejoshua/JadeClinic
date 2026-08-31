@@ -29,6 +29,9 @@ Partial Class SalesDetails
         AutoScaleDimensions = New SizeF(8.0F, 20.0F)
         AutoScaleMode = AutoScaleMode.Font
         ClientSize = New Size(400, 875)
+        FormBorderStyle = FormBorderStyle.FixedDialog
+        MaximizeBox = False
+        MinimizeBox = False
         Margin = New Padding(3, 4, 3, 4)
         Name = "SalesDetails"
         Text = "Order Details"

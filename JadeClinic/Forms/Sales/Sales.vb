@@ -2400,7 +2400,7 @@ Public Class Sales
             yPosition += 12
             g.DrawString($"Date: {DateTime.Now:MM/dd/yyyy HH:mm:ss}", regularFont, brush, marginLeft, yPosition)
             yPosition += 12
-            Dim cashierLabel As String = $"Cashier: {If(String.IsNullOrWhiteSpace(frmLoginvb.LoggedInEmployeeCode), frmLoginvb.LoggedInUsername, frmLoginvb.LoggedInEmployeeCode)}"
+            Dim cashierLabel As String = $"Cashier: {frmLoginvb.LoggedInEmployeeCode}"
             For Each cashierLine As String In ReceiptRenderer.WrapText(g, cashierLabel, regularFont, contentWidth)
                 g.DrawString(cashierLine, regularFont, brush, marginLeft, yPosition)
                 yPosition += 12
@@ -2656,7 +2656,7 @@ Public Class Sales
         lines.Add(New EscPosPrinter.EscLine("SALES INVOICE", 1, True))
         lines.Add(New EscPosPrinter.EscLine("Receipt #: " & receiptOrderId, 0))
         lines.Add(New EscPosPrinter.EscLine("Date: " & DateTime.Now.ToString("MM/dd/yyyy HH:mm:ss"), 0))
-        lines.Add(New EscPosPrinter.EscLine("Cashier: " & If(String.IsNullOrWhiteSpace(frmLoginvb.LoggedInEmployeeCode), frmLoginvb.LoggedInUsername, frmLoginvb.LoggedInEmployeeCode), 0))
+            lines.Add(New EscPosPrinter.EscLine("Cashier: " & frmLoginvb.LoggedInEmployeeCode, 0))
         lines.Add(New EscPosPrinter.EscLine("", 0))
 
         ' Customer block
@@ -2765,7 +2765,7 @@ Public Class Sales
         Dim data As New ReceiptData()
         data.ReceiptNumber = receiptOrderId
         data.SaleDate = DateTime.Now
-        data.Cashier = If(String.IsNullOrWhiteSpace(frmLoginvb.LoggedInEmployeeCode), frmLoginvb.LoggedInUsername, frmLoginvb.LoggedInEmployeeCode)
+            data.Cashier = frmLoginvb.LoggedInEmployeeCode
 
         data.CustomerName = If(Not String.IsNullOrWhiteSpace(receiptCustomerName), receiptCustomerName, If(Not String.IsNullOrWhiteSpace(selectedCustomerName), selectedCustomerName, "________________"))
         data.CustomerTIN = If(Not String.IsNullOrWhiteSpace(selectedCustomerTIN), selectedCustomerTIN, "________________")
