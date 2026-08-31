@@ -562,10 +562,10 @@ Public Class SalesRecord
                 .Font = New Font("Poppins", 10, FontStyle.Bold),
                 .ForeColor = DarkText,
                 .BackColor = System.Drawing.Color.Transparent,
-                .Anchor = AnchorStyles.Top Or AnchorStyles.Right,
-                .Text = "Capital: --"
+                .Anchor = AnchorStyles.Top Or AnchorStyles.Left,
+                .Text = "Capital: --",
+                .Location = New Point(1622, 82)
             }
-            lblCapital.Location = New Point(Me.ClientSize.Width - 280, 82)
             Me.Controls.Add(lblCapital)
             lblCapital.BringToFront()
         Catch

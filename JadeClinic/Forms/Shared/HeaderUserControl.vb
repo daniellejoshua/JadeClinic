@@ -11,6 +11,7 @@ Public Class HeaderUserControl
     Private _hostForm As Form
     Private _dropdown As Panel
     Private _dropdownVisible As Boolean = False
+    Private _layoutHandlerWired As Boolean = False
     Private _maxUsernameWidth As Integer = 65
     Private Const RightMargin As Integer = 30
 
@@ -24,7 +25,7 @@ Public Class HeaderUserControl
         Me.BackColor = Color.Transparent
         Me.AutoScaleMode = AutoScaleMode.None
         Me.Size = New Size(105, 50)
-        Me.Anchor = AnchorStyles.Top Or AnchorStyles.Right
+        Me.Anchor = AnchorStyles.Top Or AnchorStyles.Left
 
         _picAvatar = New Guna2CirclePictureBox() With {
             .Name = "picAvatar",
@@ -76,13 +77,29 @@ Public Class HeaderUserControl
 
     Public Sub PinToTopRight(host As Control)
         If host Is Nothing Then Return
-        Me.Anchor = AnchorStyles.Top Or AnchorStyles.Right
+        ' The header stays at a fixed full-screen top-right position and does NOT
+        ' follow the shrinking form edge on minimize. Anchoring Top|Left (not
+        ' Top|Right) plus a fixed Location keeps it from drifting over the grid.
+        Me.Anchor = AnchorStyles.Top Or AnchorStyles.Left
         Me.Location = New Point(host.ClientSize.Width - Me.Width - RightMargin, 20)
 
-        ' Keep the header pinned to the top-right corner on resize
-        AddHandler host.Resize, Sub(s, e)
-                                    Me.Location = New Point(host.ClientSize.Width - Me.Width - RightMargin, 20)
-                                End Sub
+        ' Force the host's scroll position back to the top after every layout pass.
+        ' Without this, the form's AutoScroll drifts to the middle/bottom whenever
+        ' the window is minimized and restored.
+        If Not _layoutHandlerWired Then
+            _layoutHandlerWired = True
+            AddHandler host.Layout, Sub(s, e)
+                                        Dim sc As ScrollableControl = TryCast(host, ScrollableControl)
+                                        If sc IsNot Nothing Then
+                                            Try
+                                                If sc.AutoScrollPosition.X <> 0 OrElse sc.AutoScrollPosition.Y <> 0 Then
+                                                    sc.AutoScrollPosition = New Point(0, 0)
+                                                End If
+                                            Catch
+                                            End Try
+                                        End If
+                                    End Sub
+        End If
     End Sub
 
     Private Sub OnHeaderClick(sender As Object, e As EventArgs)

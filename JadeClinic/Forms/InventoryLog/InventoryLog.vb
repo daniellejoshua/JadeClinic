@@ -120,7 +120,16 @@ Public Class InventoryLog
             ' Hide loading panel
             If loadingPanel IsNot Nothing Then
                 loadingPanel.Visible = False
+                ' Remove it from the layout entirely so its Dock=Fill overlay does not
+                ' interfere with AutoScroll positioning when the form is minimized.
+                Me.Controls.Remove(loadingPanel)
             End If
+
+            ' Re-pin the header now that the loading overlay is gone and the form is
+            ' in its stable full-screen state (its position was computed while the
+            ' overlay's Dock=Fill panel put the scrollbar in the middle).
+            If _headerUserControl IsNot Nothing Then _headerUserControl.PinToTopRight(Me)
+
             If DashboardPanel IsNot Nothing Then DashboardPanel.ShadowDecoration.Enabled = False
             If Guna2Panel1 IsNot Nothing Then Guna2Panel1.ShadowDecoration.Enabled = False
 
@@ -136,6 +145,7 @@ Public Class InventoryLog
             ' Hide loading panel in case of error
             If loadingPanel IsNot Nothing Then
                 loadingPanel.Visible = False
+                Me.Controls.Remove(loadingPanel)
             End If
             If DashboardPanel IsNot Nothing Then DashboardPanel.ShadowDecoration.Enabled = False
             If Guna2Panel1 IsNot Nothing Then Guna2Panel1.ShadowDecoration.Enabled = False
