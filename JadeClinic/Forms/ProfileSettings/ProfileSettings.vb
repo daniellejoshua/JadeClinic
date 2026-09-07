@@ -362,11 +362,23 @@ Public Class ProfileSettings
     End Sub
 
     Private Function ValidateAllFields() As Boolean
-        ' Validate email
-        If Not String.IsNullOrEmpty(txtEmail.Text) AndAlso Not txtEmail.Text.EndsWith("@gmail.com") Then
-            MessageBox.Show("Email must be a valid @gmail.com address.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
-            txtEmail.Focus()
-            Return False
+        ' Validate email (must be a well-formed @gmail.com address)
+        If Not String.IsNullOrWhiteSpace(txtEmail.Text) Then
+            Dim email As String = txtEmail.Text.Trim()
+            ' Must end with @gmail.com and contain exactly one '@' sign
+            If Not email.EndsWith("@gmail.com", StringComparison.OrdinalIgnoreCase) OrElse email.Count(Function(c) c = "@"c) <> 1 Then
+                MessageBox.Show("Email must be a valid @gmail.com address.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                txtEmail.Focus()
+                Return False
+            End If
+
+            ' Local part (everything before '@') must be non-empty and free of spaces/invalid sequences
+            Dim localPart As String = email.Substring(0, email.Length - "@gmail.com".Length)
+            If String.IsNullOrEmpty(localPart) OrElse localPart.Contains(" ") OrElse localPart.Contains("..") Then
+                MessageBox.Show("Email must be a valid @gmail.com address.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                txtEmail.Focus()
+                Return False
+            End If
         End If
 
         ' Validate phone (must start with 09 and be 11 characters)
@@ -493,10 +505,11 @@ Public Class ProfileSettings
                 changedFields.Add($"Username changed from '{currentUserData("Username")}' to '{txtUserName.Text}'")
             End If
 
-            If txtEmail.Text <> currentUserData("Email").ToString() Then
+            Dim emailToSave As String = txtEmail.Text.Trim()
+            If emailToSave <> currentUserData("Email").ToString() Then
                 updates.Add("Email = @Email")
-                parameters.Add(New SqlParameter("@Email", txtEmail.Text))
-                changedFields.Add($"Email changed from '{currentUserData("Email")}' to '{txtEmail.Text}'")
+                parameters.Add(New SqlParameter("@Email", emailToSave))
+                changedFields.Add($"Email changed from '{currentUserData("Email")}' to '{emailToSave}'")
             End If
 
             If txtPhone.Text <> currentUserData("Phone").ToString() Then

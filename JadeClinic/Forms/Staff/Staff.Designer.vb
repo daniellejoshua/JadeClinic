@@ -21,10 +21,10 @@ Partial Class Staff
     Private Sub InitializeComponent()
         Dim CustomizableEdges1 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges2 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges3 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim DataGridViewCellStyle1 As DataGridViewCellStyle = New DataGridViewCellStyle()
         Dim DataGridViewCellStyle2 As DataGridViewCellStyle = New DataGridViewCellStyle()
         Dim DataGridViewCellStyle3 As DataGridViewCellStyle = New DataGridViewCellStyle()
+        Dim CustomizableEdges3 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges4 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges5 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges6 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
@@ -32,7 +32,6 @@ Partial Class Staff
         Dim CustomizableEdges8 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges9 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Dim CustomizableEdges10 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
-        Dim CustomizableEdges11 As Guna.UI2.WinForms.Suite.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         LabelTitle = New Label()
         DashboardPanel = New Guna.UI2.WinForms.Guna2Panel()
         PictureBox9 = New PictureBox()
@@ -94,7 +93,6 @@ Partial Class Staff
         Guna2DataGridView1.AllowUserToResizeRows = False
         DataGridViewCellStyle1.BackColor = Color.White
         Guna2DataGridView1.AlternatingRowsDefaultCellStyle = DataGridViewCellStyle1
-        Guna2DataGridView1.Anchor = AnchorStyles.Top Or AnchorStyles.Left
         Guna2DataGridView1.BackgroundColor = Color.FromArgb(CByte(250), CByte(249), CByte(246))
         DataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleCenter
         DataGridViewCellStyle2.BackColor = Color.FromArgb(CByte(250), CByte(249), CByte(246))
@@ -105,7 +103,6 @@ Partial Class Staff
         DataGridViewCellStyle2.WrapMode = DataGridViewTriState.True
         Guna2DataGridView1.ColumnHeadersDefaultCellStyle = DataGridViewCellStyle2
         Guna2DataGridView1.ColumnHeadersHeight = 44
-        Guna2DataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing
         DataGridViewCellStyle3.Alignment = DataGridViewContentAlignment.MiddleCenter
         DataGridViewCellStyle3.BackColor = Color.White
         DataGridViewCellStyle3.Font = New Font("Poppins", 9.5F)
@@ -119,7 +116,8 @@ Partial Class Staff
         Guna2DataGridView1.Name = "Guna2DataGridView1"
         Guna2DataGridView1.RowHeadersVisible = False
         Guna2DataGridView1.RowHeadersWidth = 51
-        Guna2DataGridView1.Size = New Size(1641, 800)
+        Guna2DataGridView1.RowTemplate.Height = 72
+        Guna2DataGridView1.Size = New Size(1641, 801)
         Guna2DataGridView1.TabIndex = 41
         Guna2DataGridView1.ThemeStyle.AlternatingRowsStyle.BackColor = Color.White
         Guna2DataGridView1.ThemeStyle.AlternatingRowsStyle.Font = Nothing
@@ -146,7 +144,7 @@ Partial Class Staff
         ' btnDiscount
         ' 
         btnDiscount.BorderRadius = 10
-        btnDiscount.CustomizableEdges = CustomizableEdges4
+        btnDiscount.CustomizableEdges = CustomizableEdges3
         btnDiscount.DisabledState.BorderColor = Color.DarkGray
         btnDiscount.DisabledState.CustomBorderColor = Color.DarkGray
         btnDiscount.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
@@ -156,7 +154,7 @@ Partial Class Staff
         btnDiscount.ForeColor = Color.White
         btnDiscount.Location = New Point(1284, 13)
         btnDiscount.Name = "btnDiscount"
-        btnDiscount.ShadowDecoration.CustomizableEdges = CustomizableEdges5
+        btnDiscount.ShadowDecoration.CustomizableEdges = CustomizableEdges4
         btnDiscount.Size = New Size(206, 44)
         btnDiscount.TabIndex = 64
         btnDiscount.Text = "＋ Add Staff"
@@ -166,7 +164,7 @@ Partial Class Staff
         SortBy.BackColor = Color.Transparent
         SortBy.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
         SortBy.BorderRadius = 10
-        SortBy.CustomizableEdges = CustomizableEdges6
+        SortBy.CustomizableEdges = CustomizableEdges5
         SortBy.DrawMode = DrawMode.OwnerDrawFixed
         SortBy.DropDownStyle = ComboBoxStyle.DropDownList
         SortBy.FocusedColor = Color.FromArgb(CByte(94), CByte(148), CByte(255))
@@ -176,7 +174,7 @@ Partial Class Staff
         SortBy.ItemHeight = 40
         SortBy.Location = New Point(115, 11)
         SortBy.Name = "SortBy"
-        SortBy.ShadowDecoration.CustomizableEdges = CustomizableEdges7
+        SortBy.ShadowDecoration.CustomizableEdges = CustomizableEdges6
         SortBy.Size = New Size(200, 46)
         SortBy.TabIndex = 65
         ' 
@@ -185,7 +183,7 @@ Partial Class Staff
         Exportbtn.BorderColor = Color.Gainsboro
         Exportbtn.BorderRadius = 10
         Exportbtn.BorderThickness = 1
-        Exportbtn.CustomizableEdges = CustomizableEdges8
+        Exportbtn.CustomizableEdges = CustomizableEdges7
         Exportbtn.DisabledState.BorderColor = Color.DarkGray
         Exportbtn.DisabledState.CustomBorderColor = Color.DarkGray
         Exportbtn.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
@@ -195,7 +193,7 @@ Partial Class Staff
         Exportbtn.ForeColor = Color.FromArgb(CByte(80), CByte(80), CByte(80))
         Exportbtn.Location = New Point(1505, 13)
         Exportbtn.Name = "Exportbtn"
-        Exportbtn.ShadowDecoration.CustomizableEdges = CustomizableEdges9
+        Exportbtn.ShadowDecoration.CustomizableEdges = CustomizableEdges8
         Exportbtn.Size = New Size(130, 42)
         Exportbtn.TabIndex = 66
         Exportbtn.Text = "📥 Export"
@@ -213,7 +211,6 @@ Partial Class Staff
         ' 
         ' Guna2Panel1
         ' 
-        Guna2Panel1.Anchor = AnchorStyles.Top Or AnchorStyles.Left
         Guna2Panel1.BackColor = Color.Transparent
         Guna2Panel1.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
         Guna2Panel1.BorderRadius = 10
@@ -224,11 +221,11 @@ Partial Class Staff
         Guna2Panel1.Controls.Add(Guna2HtmlLabel3)
         Guna2Panel1.Controls.Add(btnDiscount)
         Guna2Panel1.Controls.Add(Exportbtn)
-        Guna2Panel1.CustomizableEdges = CustomizableEdges10
+        Guna2Panel1.CustomizableEdges = CustomizableEdges9
         Guna2Panel1.FillColor = Color.White
         Guna2Panel1.Location = New Point(240, 113)
         Guna2Panel1.Name = "Guna2Panel1"
-        Guna2Panel1.ShadowDecoration.CustomizableEdges = CustomizableEdges11
+        Guna2Panel1.ShadowDecoration.CustomizableEdges = CustomizableEdges10
         Guna2Panel1.ShadowDecoration.Depth = 0
         Guna2Panel1.ShadowDecoration.Shadow = New Padding(0)
         Guna2Panel1.Size = New Size(1650, 908)
