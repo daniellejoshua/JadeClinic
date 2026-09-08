@@ -1564,7 +1564,7 @@ Public Class frmLoginvb
                     MessageBox.Show("Too many incorrect login attempts. The application will now close.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Error)
                     Application.Exit()
                 Else
-                    MessageBox.Show("Invalid QR code format.", "QR Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                    MessageBox.Show($"Invalid QR code format.{vbCrLf}Login attempt {failedLoginAttempts} of {MaxLoginAttempts}.", "QR Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)
                 End If
                 Return False
             End If
@@ -1632,7 +1632,7 @@ Public Class frmLoginvb
                     MessageBox.Show("Too many incorrect login attempts. The application will now close.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Error)
                     Application.Exit()
                 Else
-                    MessageBox.Show("Invalid QR code or user not found.", "QR Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                    MessageBox.Show($"Invalid QR code or user not found.{vbCrLf}Login attempt {failedLoginAttempts} of {MaxLoginAttempts}.", "QR Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)
                 End If
                 Return False
             End If
@@ -1750,7 +1750,7 @@ Public Class frmLoginvb
                             MessageBox.Show("Too many incorrect login attempts. The application will now close.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Error)
                             Application.Exit()
                         Else
-                            MessageBox.Show("Invalid username or password.", "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                            MessageBox.Show($"Invalid username or password.{vbCrLf}Login attempt {failedLoginAttempts} of {MaxLoginAttempts}.", "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)
                         End If
                     End If
                 Else
@@ -1766,7 +1766,7 @@ Public Class frmLoginvb
                         MessageBox.Show("Too many incorrect login attempts. The application will now close.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Error)
                         Application.Exit()
                     Else
-                        MessageBox.Show("Invalid username or password.", "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                        MessageBox.Show($"Invalid username or password.{vbCrLf}Login attempt {failedLoginAttempts} of {MaxLoginAttempts}.", "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error)
                     End If
                 End If
             End Using
