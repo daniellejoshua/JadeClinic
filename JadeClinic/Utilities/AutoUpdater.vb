@@ -17,17 +17,57 @@ Public Class AutoUpdater
         Return remoteVersion
     End Function
 
-    Public Shared Sub DownloadUpdate(updatePath As String, destDir As String)
+    Public Shared Sub DownloadUpdate(updatePath As String, destDir As String,
+                                     Optional progress As Action(Of Integer, String) = Nothing)
         Directory.CreateDirectory(destDir)
-        CopyFile(Path.Combine(updatePath, "JadeClinic.exe"), Path.Combine(destDir, "JadeClinic.exe"))
+        Report(progress, 0, "Preparing update...")
+
+        ' The main executable is the bulk of the download (self-contained
+        ' single file), so map it to 0-90% and the rest to 90-100%.
+        CopyFileWithProgress(Path.Combine(updatePath, "JadeClinic.exe"),
+                             Path.Combine(destDir, "JadeClinic.exe"),
+                             Sub(pct) Report(progress, CInt(pct * 0.9), $"Downloading application... {pct}%"))
+
+        Report(progress, 92, "Downloading settings...")
         Dim configSrc As String = Path.Combine(updatePath, "JadeClinic.dll.config")
         If File.Exists(configSrc) Then
             CopyFile(configSrc, Path.Combine(destDir, "JadeClinic.dll.config"))
         End If
+
+        Report(progress, 96, "Downloading fonts...")
         Dim fontsSrc As String = Path.Combine(updatePath, "LatoFont")
         If Directory.Exists(fontsSrc) Then
             CopyDirectory(fontsSrc, Path.Combine(destDir, "LatoFont"))
         End If
+
+        Report(progress, 100, "Ready to install")
+    End Sub
+
+    Private Shared Sub Report(progress As Action(Of Integer, String), pct As Integer, text As String)
+        If progress IsNot Nothing Then progress(Math.Max(0, Math.Min(100, pct)), text)
+    End Sub
+
+    Private Shared Sub CopyFileWithProgress(src As String, dst As String, onProgress As Action(Of Integer))
+        If File.Exists(dst) Then File.Delete(dst)
+        Using input As New FileStream(src, FileMode.Open, FileAccess.Read, FileShare.Read)
+            Using output As New FileStream(dst, FileMode.Create, FileAccess.Write, FileShare.None)
+                Dim buffer(81919) As Byte ' 80 KB
+                Dim total As Long = input.Length
+                Dim copied As Long = 0L
+                Dim lastPct As Integer = -1
+                While True
+                    Dim read As Integer = input.Read(buffer, 0, buffer.Length)
+                    If read <= 0 Then Exit While
+                    output.Write(buffer, 0, read)
+                    copied += read
+                    Dim pct As Integer = If(total > 0L, CInt(copied * 100L \ total), 0)
+                    If pct <> lastPct Then
+                        lastPct = pct
+                        If onProgress IsNot Nothing Then onProgress(pct)
+                    End If
+                End While
+            End Using
+        End Using
     End Sub
 
     Public Shared Sub ApplyUpdateAndRestart(updateDir As String, appDir As String)

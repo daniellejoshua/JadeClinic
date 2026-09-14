@@ -23,6 +23,9 @@ Public Class MainShell
     Private _approvalPromptOpen As Boolean = False
     Private _approvalPromptedIds As New HashSet(Of String)()
 
+    ' Transparent version tag shown in the bottom-right of every page.
+    Private _versionLabel As Label
+
     Private titleBarPanel As Guna.UI2.WinForms.Guna2Panel
     Private btnMinimize As Guna.UI2.WinForms.Guna2Button
     Private btnMaximize As Guna.UI2.WinForms.Guna2Button
@@ -324,6 +327,11 @@ Public Class MainShell
                 _childFormHook.ReleaseHandle()
                 _childFormHook = Nothing
             End If
+            ' Detach the version label BEFORE disposing the page, otherwise it
+            ' would be disposed along with the page's child controls.
+            If _versionLabel IsNot Nothing AndAlso _versionLabel.Parent Is _currentPage Then
+                _currentPage.Controls.Remove(_versionLabel)
+            End If
             ContentPanel.Controls.Remove(_currentPage)
             _currentPage.Hide()
             _currentPage.Dispose()
@@ -346,6 +354,46 @@ Public Class MainShell
         _isShowingPage = False
 
         _childFormHook = New EdgeHitHook(Me, page)
+        AttachVersionLabel(page)
+    End Sub
+
+    ' Pins the current app version in the bottom-right of the given page. The
+    ' label is reparented on every navigation so its transparent background
+    ' matches whichever page is showing.
+    Private Sub AttachVersionLabel(page As Form)
+        If page Is Nothing Then Return
+
+        If _versionLabel Is Nothing Then
+            _versionLabel = New Label() With {
+                .Text = "v" & AutoUpdater.GetCurrentVersion().ToString(),
+                .Font = New Font("Segoe UI", 8, FontStyle.Regular),
+                .ForeColor = Color.FromArgb(160, 160, 160),
+                .BackColor = Color.Transparent,
+                .AutoSize = True
+            }
+        End If
+
+        If _versionLabel.Parent IsNot Nothing AndAlso _versionLabel.Parent IsNot page Then
+            _versionLabel.Parent.Controls.Remove(_versionLabel)
+        End If
+        If Not page.Controls.Contains(_versionLabel) Then
+            page.Controls.Add(_versionLabel)
+        End If
+
+        _versionLabel.Anchor = AnchorStyles.Bottom Or AnchorStyles.Right
+        PositionVersionLabel(page)
+        _versionLabel.BringToFront()
+
+        ' Keep it pinned when the page resizes (maximize/restore).
+        AddHandler page.Resize, Sub(s, ev) PositionVersionLabel(page)
+    End Sub
+
+    Private Sub PositionVersionLabel(page As Form)
+        If _versionLabel Is Nothing OrElse page Is Nothing Then Return
+        If _versionLabel.Parent IsNot page Then Return
+        _versionLabel.Location = New Point(
+            Math.Max(0, page.ClientSize.Width - _versionLabel.Width - 12),
+            Math.Max(0, page.ClientSize.Height - _versionLabel.Height - 8))
     End Sub
 
     ' Persist the current page's draft (e.g. the POS cart) when the shell closes.

@@ -86,6 +86,11 @@ Public Class frmLoginvb
     Private splashLogoImg As Image = Nothing
     Private splashBuffer As Bitmap = Nothing
 
+    ' Update check runs once, right after the splash screen disappears and
+    ' before the user logs in.
+    Private _preLoginUpdateChecked As Boolean = False
+    Private _versionLabel As Label
+
     Private Sub EnableTitleBarHover()
         Me.FormBorderStyle = FormBorderStyle.None
         Me.ControlBox = False
@@ -380,6 +385,11 @@ Public Class frmLoginvb
                 splashBuffer.Dispose()
                 splashBuffer = Nothing
             End If
+
+            ' Splash is gone and the login UI is visible: check for updates now,
+            ' before the user logs in.
+            AddVersionLabel()
+            StartPreLoginUpdateCheck()
         Else
             splashProgress += 0.008F
             If splashProgress >= 1.0F Then
@@ -393,6 +403,33 @@ Public Class frmLoginvb
         If splashPanel IsNot Nothing Then
             splashPanel.Invalidate()
         End If
+    End Sub
+
+    ' Kicks off the update check exactly once, after the splash screen has
+    ' finished. Runs on a background thread so the login UI stays responsive;
+    ' the result (if any) is marshalled back to the UI inside the check.
+    Private Sub StartPreLoginUpdateCheck()
+        If _preLoginUpdateChecked Then Return
+        _preLoginUpdateChecked = True
+        Task.Run(Sub() CheckForUpdateInternal())
+    End Sub
+
+    ' Small transparent version tag pinned to the bottom-right corner.
+    Private Sub AddVersionLabel()
+        If _versionLabel IsNot Nothing Then Return
+        _versionLabel = New Label() With {
+            .Text = "v" & AutoUpdater.GetCurrentVersion().ToString(),
+            .Font = New Font("Segoe UI", 8, FontStyle.Regular),
+            .ForeColor = Color.FromArgb(160, 160, 160),
+            .BackColor = Color.Transparent,
+            .AutoSize = True,
+            .Anchor = AnchorStyles.Bottom Or AnchorStyles.Right
+        }
+        Me.Controls.Add(_versionLabel)
+        _versionLabel.Location = New Point(
+            Me.ClientSize.Width - _versionLabel.Width - 12,
+            Me.ClientSize.Height - _versionLabel.Height - 8)
+        _versionLabel.BringToFront()
     End Sub
 
     Private Sub splashPanel_Paint(sender As Object, e As PaintEventArgs)
@@ -950,50 +987,21 @@ Public Class frmLoginvb
 
     Private Sub CheckForUpdateInternal()
         Try
-            Dim role As String = If(LoggedInRole, "").ToUpper()
-            Dim isPrivileged As Boolean = role = "ADMIN" OrElse role = "MANAGER" OrElse role = "ADMINISTRATOR"
-
             Dim updatePath As String = ConfigurationManager.AppSettings("UpdatePath")
             If String.IsNullOrWhiteSpace(updatePath) OrElse Not Directory.Exists(updatePath) Then Return
 
             Dim remoteVersion As Version = AutoUpdater.CheckForUpdate(updatePath)
             If remoteVersion Is Nothing Then Return
 
-            Dim localVersion As Version = AutoUpdater.GetCurrentVersion()
+            ' Always auto-update (no prompt). The progress dialog owns the
+            ' download and restarts the app into the new build when it finishes.
             Me.Invoke(Sub()
-                          If isPrivileged Then
-                              Dim result As DialogResult = MessageBox.Show(
-                                  $"New version {remoteVersion} available (current: {localVersion}). Update now?" & vbCrLf &
-                                  "The application will restart after update.",
-                                  "Update Available", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
-                              If result <> DialogResult.Yes Then Return
-                          Else
-                              ' Staff users update automatically (no choice) with a
-                              ' short heads-up before the app restarts itself.
-                              MessageBox.Show(
-                                  $"A new version ({remoteVersion}) is available." & vbCrLf &
-                                  "Updating now... The app will restart automatically.",
-                                  "Update Available", MessageBoxButtons.OK, MessageBoxIcon.Information)
-                          End If
-                          PerformUpdate()
+                          Using dlg As New UpdateProgressForm(remoteVersion, updatePath)
+                              dlg.ShowDialog(Me)
+                          End Using
                       End Sub)
         Catch ex As Exception
             Console.WriteLine($"Update check failed: {ex.Message}")
-        End Try
-    End Sub
-
-    Private Sub PerformUpdate()
-        Try
-            Dim updatePath As String = ConfigurationManager.AppSettings("UpdatePath")
-            Dim updateDir As String = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "JadeClinic", "Update")
-            If Directory.Exists(updateDir) Then Directory.Delete(updateDir, True)
-            AutoUpdater.DownloadUpdate(updatePath, updateDir)
-            Dim appDir As String = AppDomain.CurrentDomain.BaseDirectory
-            AutoUpdater.ApplyUpdateAndRestart(updateDir, appDir)
-        Catch ex As Exception
-            MessageBox.Show($"Update failed: {ex.Message}", "Update Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
 
@@ -2332,8 +2340,6 @@ Public Class frmLoginvb
                 Dim shell As New MainShell()
                 shell.Show()
                 shell.ShowInitialPage()
-
-                Task.Run(Sub() CheckForUpdateInternal())
 
             Catch ex As Exception
                 Console.WriteLine($"Error showing target form: {ex.Message}")
