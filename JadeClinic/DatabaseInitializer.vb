@@ -40,6 +40,12 @@ Public Class DatabaseInitializer
             Catch
             End Try
 
+            ' Create the shared Terminals table (multi-PC access control)
+            Try
+                TerminalMigration.EnsureTable()
+            Catch
+            End Try
+
             Console.WriteLine("?? Database schema created successfully!")
         Catch ex As Exception
             Console.WriteLine($"? Error creating database schema: {ex.Message}")

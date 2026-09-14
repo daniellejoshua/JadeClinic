@@ -148,55 +148,62 @@ AddHandler btn.MouseEnter, Sub()
                                                                             dashboardPanel.Controls.Add(btn)
                                                                         End Sub
 
-            ' Navigation buttons (emoji icons preserved) - use target types so active state is computed automatically
-            createBtn("🏠 Dashboard", GetType(Dashboard), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
-                                                                                                                     NavigateToForm(owner, GetType(Dashboard))
-                                                                                                                 End Sub)
-            buttonIndex += 1
+' Navigation buttons - role based. Staff only get POS / Sales. Managers get
+            ' everything except System Settings. Admins get everything.
+            Dim isStaff As Boolean = currentRole = "STAFF"
+            Dim isManagerOrAbove As Boolean = currentRole = "MANAGER" OrElse currentRole = "ADMIN" OrElse currentRole = "ADMINISTRATOR"
+            Dim isAdmin As Boolean = currentRole = "ADMIN" OrElse currentRole = "ADMINISTRATOR"
 
             createBtn("🛒 POS / Sales", GetType(Sales), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
-                                                                                                                   NavigateToForm(owner, GetType(Sales))
-                                                                                                               End Sub)
+                                                                                                                  NavigateToFormImpl(owner, GetType(Sales))
+                                                                                                              End Sub)
             buttonIndex += 1
 
-            ' Inventory
-            createBtn("📦 Inventory", GetType(Inventory), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
-                                                                                                                     NavigateToForm(owner, GetType(Inventory))
-                                                                                                                 End Sub)
-            buttonIndex += 1
-
-            createBtn("📊 Sales Records", GetType(SalesRecord), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
-                                                                                                                           NavigateToForm(owner, GetType(SalesRecord))
-                                                                                                                       End Sub)
-            buttonIndex += 1
-
-            If currentRole = "MANAGER" Or currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
-                createBtn("👥 Staff", GetType(Staff), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
-                                                                                                                 NavigateToForm(owner, GetType(Staff))
-                                                                                                             End Sub)
+            If Not isStaff Then
+                createBtn("🏠 Dashboard", GetType(Dashboard), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
+                                                                                                                      NavigateToFormImpl(owner, GetType(Dashboard))
+                                                                                                                  End Sub)
                 buttonIndex += 1
-            End If
 
-            createBtn("📋 Inventory Logs", GetType(InventoryLog), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
-                                                                                                                             NavigateToForm(owner, GetType(InventoryLog))
-                                                                                                                         End Sub)
-            buttonIndex += 1
-
-            createBtn("🏷️ Suppliers", GetType(Supplier), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
-                                                                                                                     NavigateToForm(owner, GetType(Supplier))
-                                                                                                                 End Sub)
-            buttonIndex += 1
-
-            createBtn("🔍 Audit Logs", GetType(AuditLog), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
-                                                                                                                     NavigateToForm(owner, GetType(AuditLog))
-                                                                                                                 End Sub)
-            buttonIndex += 1
-
-            If currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Then
-                createBtn("⚙️ System", GetType(Sys), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
-                                                                                                                NavigateToForm(owner, GetType(Sys))
-                                                                                                            End Sub)
+                ' Inventory
+                createBtn("📦 Inventory", GetType(Inventory), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
+                                                                                                                       NavigateToFormImpl(owner, GetType(Inventory))
+                                                                                                                   End Sub)
                 buttonIndex += 1
+
+                createBtn("📊 Sales Records", GetType(SalesRecord), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
+                                                                                                                              NavigateToFormImpl(owner, GetType(SalesRecord))
+                                                                                                                          End Sub)
+                buttonIndex += 1
+
+                If isManagerOrAbove Then
+                    createBtn("👥 Staff", GetType(Staff), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
+                                                                                                                  NavigateToFormImpl(owner, GetType(Staff))
+                                                                                                              End Sub)
+                    buttonIndex += 1
+                End If
+
+                createBtn("📋 Inventory Logs", GetType(InventoryLog), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
+                                                                                                                               NavigateToFormImpl(owner, GetType(InventoryLog))
+                                                                                                                           End Sub)
+                buttonIndex += 1
+
+                createBtn("🏷️ Suppliers", GetType(Supplier), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
+                                                                                                                       NavigateToFormImpl(owner, GetType(Supplier))
+                                                                                                                   End Sub)
+                buttonIndex += 1
+
+                createBtn("🔍 Audit Logs", GetType(AuditLog), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
+                                                                                                                       NavigateToFormImpl(owner, GetType(AuditLog))
+                                                                                                                   End Sub)
+                buttonIndex += 1
+
+                If isAdmin Then
+                    createBtn("⚙️ System Settings", GetType(Sys), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
+                                                                                                                          NavigateToFormImpl(owner, GetType(Sys))
+                                                                                                                      End Sub)
+                    buttonIndex += 1
+                End If
             End If
 
         Catch ex As Exception
@@ -204,7 +211,15 @@ AddHandler btn.MouseEnter, Sub()
         End Try
     End Sub
 
-    Private Shared Sub NavigateToForm(owner As Form, targetType As Type)
+    ' Public entry point so pages (e.g. Sys) can open other pages that are not
+    ' listed in the sidebar (PC Terminals, Sync Logs).
+    ' Public entry point so any form can open any other form (used for admin pages
+    ' that are not listed in the main navigation sidebar).
+    Public Shared Sub NavigateToForm(owner As Form, targetType As Type)
+        NavigateToFormImpl(owner, targetType)
+    End Sub
+
+    Private Shared Sub NavigateToFormImpl(owner As Form, targetType As Type)
         Try
             Try
                 Dim fld = owner.GetType().GetField("isNavigating", BindingFlags.Instance Or BindingFlags.NonPublic)

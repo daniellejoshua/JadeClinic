@@ -20,6 +20,11 @@ Public Class InventoryLog
     Private isNavigating As Boolean = False
     Private _headerUserControl As HeaderUserControl
 
+    ' Realtime stock polling via the shared SyncMarker table + Products triggers.
+    Private WithEvents _realtimeTimer As Timer
+    Private _realtimeTracker As New SyncMarkerTracker()
+    Private _realtimeReloading As Boolean = False
+
     Private ReadOnly GoldenYellow As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 254, 191, 16)
     Private ReadOnly RichOlive As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 190, 154, 48)
     Private ReadOnly DeepCharcoal As System.Drawing.Color = System.Drawing.Color.FromArgb(255, 26, 29, 31)
@@ -129,6 +134,9 @@ Public Class InventoryLog
             ' in its stable full-screen state (its position was computed while the
             ' overlay's Dock=Fill panel put the scrollbar in the middle).
             If _headerUserControl IsNot Nothing Then _headerUserControl.PinToTopRight(Me)
+
+            ' Realtime stock polling: every 2s check whether another PC changed stock
+            RealtimeStartPolling()
 
             If DashboardPanel IsNot Nothing Then DashboardPanel.ShadowDecoration.Enabled = False
             If Guna2Panel1 IsNot Nothing Then Guna2Panel1.ShadowDecoration.Enabled = False
@@ -728,6 +736,48 @@ Public Class InventoryLog
         Await LoadInventoryLogsAsync()
     End Sub
 
+    Private Sub RealtimeStartPolling()
+        Try
+            If _realtimeTimer Is Nothing Then
+                _realtimeTimer = New Timer With {.Interval = 2000}
+            End If
+            _realtimeTracker.Reset()
+            _realtimeTimer.Start()
+        Catch
+        End Try
+    End Sub
+
+    Private Sub RealtimeStopPolling()
+        Try
+            If _realtimeTimer IsNot Nothing Then _realtimeTimer.Stop()
+        Catch
+        End Try
+    End Sub
+
+    Private Sub _realtimeTimer_Tick(sender As Object, e As EventArgs) Handles _realtimeTimer.Tick
+        Try
+            If Not Me.Visible Then Return
+            If _realtimeReloading Then Return
+            If _realtimeTracker.HasChanged() Then
+                RealtimeRefreshLogs()
+            End If
+        Catch
+        End Try
+    End Sub
+
+    ' Admin-only log screen: simply reload the current view when stock changed.
+    Private Async Sub RealtimeRefreshLogs()
+        If _realtimeReloading Then Return
+        _realtimeReloading = True
+        Try
+            Await LoadInventoryLogsAsync()
+        Catch ex As Exception
+            Console.WriteLine($"Realtime InventoryLog refresh error: {ex.Message}")
+        Finally
+            _realtimeReloading = False
+        End Try
+    End Sub
+
     Private Function GetInventoryLogsData(sortOrder As String, Optional filterDate As DateTime? = Nothing, Optional searchTerm As String = "", Optional pageNumber As Integer = 1, Optional pageSize As Integer = 50) As List(Of Dictionary(Of String, Object))
         Dim inventoryLogs As New List(Of Dictionary(Of String, Object))()
         Dim query As String = "SELECT il.LogID, il.ProductID, p.ProductName, il.TransactionType, " &
@@ -1251,6 +1301,8 @@ Public Class InventoryLog
     Private Sub InventoryLog_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
         ' Stop idle timeout monitoring
         IdleTimeoutManager.Instance.StopMonitoring(Me)
+
+        RealtimeStopPolling()
 
         ' If this is programmatic navigation, don't show confirmation
         If isNavigating Then

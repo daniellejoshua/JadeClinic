@@ -951,7 +951,7 @@ Public Class frmLoginvb
     Private Sub CheckForUpdateInternal()
         Try
             Dim role As String = If(LoggedInRole, "").ToUpper()
-            If role <> "ADMIN" AndAlso role <> "MANAGER" Then Return
+            Dim isPrivileged As Boolean = role = "ADMIN" OrElse role = "MANAGER" OrElse role = "ADMINISTRATOR"
 
             Dim updatePath As String = ConfigurationManager.AppSettings("UpdatePath")
             If String.IsNullOrWhiteSpace(updatePath) OrElse Not Directory.Exists(updatePath) Then Return
@@ -961,22 +961,39 @@ Public Class frmLoginvb
 
             Dim localVersion As Version = AutoUpdater.GetCurrentVersion()
             Me.Invoke(Sub()
-                          Dim result As DialogResult = MessageBox.Show(
-                              $"New version {remoteVersion} available (current: {localVersion}). Update now?" & vbCrLf &
-                              "The application will restart after update.",
-                              "Update Available", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
-                          If result = DialogResult.Yes Then
-                              Dim updateDir As String = Path.Combine(
-                                  Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                                  "JadeClinic", "Update")
-                              If Directory.Exists(updateDir) Then Directory.Delete(updateDir, True)
-                              AutoUpdater.DownloadUpdate(updatePath, updateDir)
-                              Dim appDir As String = AppDomain.CurrentDomain.BaseDirectory
-                              AutoUpdater.ApplyUpdateAndRestart(updateDir, appDir)
+                          If isPrivileged Then
+                              Dim result As DialogResult = MessageBox.Show(
+                                  $"New version {remoteVersion} available (current: {localVersion}). Update now?" & vbCrLf &
+                                  "The application will restart after update.",
+                                  "Update Available", MessageBoxButtons.YesNo, MessageBoxIcon.Question)
+                              If result <> DialogResult.Yes Then Return
+                          Else
+                              ' Staff users update automatically (no choice) with a
+                              ' short heads-up before the app restarts itself.
+                              MessageBox.Show(
+                                  $"A new version ({remoteVersion}) is available." & vbCrLf &
+                                  "Updating now... The app will restart automatically.",
+                                  "Update Available", MessageBoxButtons.OK, MessageBoxIcon.Information)
                           End If
+                          PerformUpdate()
                       End Sub)
         Catch ex As Exception
             Console.WriteLine($"Update check failed: {ex.Message}")
+        End Try
+    End Sub
+
+    Private Sub PerformUpdate()
+        Try
+            Dim updatePath As String = ConfigurationManager.AppSettings("UpdatePath")
+            Dim updateDir As String = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "JadeClinic", "Update")
+            If Directory.Exists(updateDir) Then Directory.Delete(updateDir, True)
+            AutoUpdater.DownloadUpdate(updatePath, updateDir)
+            Dim appDir As String = AppDomain.CurrentDomain.BaseDirectory
+            AutoUpdater.ApplyUpdateAndRestart(updateDir, appDir)
+        Catch ex As Exception
+            MessageBox.Show($"Update failed: {ex.Message}", "Update Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
 

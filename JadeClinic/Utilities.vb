@@ -175,6 +175,7 @@ Module Utilities
             Dim connStr As String = Connection.GetConnectionString()
             Dim conn As DbConnection = DbProvider.CreateConnection(connStr)
             conn.Open()
+            ApplyBusyTimeout(conn)
 
             Dim cmd As DbCommand = conn.CreateCommand()
             cmd.CommandText = query
@@ -201,6 +202,7 @@ Module Utilities
                         cmd.Parameters.AddRange(dbParams)
                     End If
                     conn.Open()
+                    ApplyBusyTimeout(conn)
                     Return cmd.ExecuteNonQuery()
                 End Using
             End Using
@@ -221,6 +223,7 @@ Module Utilities
                         cmd.Parameters.AddRange(dbParams)
                     End If
                     conn.Open()
+                    ApplyBusyTimeout(conn)
                     Return cmd.ExecuteScalar()
                 End Using
             End Using
@@ -412,5 +415,20 @@ Module Utilities
                                         frm.Close()
                                     End If
                                 End Sub
+    End Sub
+
+    ''' <summary>
+    ''' Sets a SQLite busy timeout so concurrent writers (2-3 staff PCs on the
+    ''' same shared database) wait briefly instead of throwing "database is locked"
+    ''' immediately when a write lock is briefly contested.
+    ''' </summary>
+    Private Sub ApplyBusyTimeout(conn As DbConnection)
+        Try
+            Using cmd As DbCommand = conn.CreateCommand()
+                cmd.CommandText = "PRAGMA busy_timeout = 5000"
+                cmd.ExecuteNonQuery()
+            End Using
+        Catch
+        End Try
     End Sub
 End Module

@@ -32,6 +32,10 @@ Public Class Inventory
     Private _currentPage As Integer = 1
     Private _pageSize As Integer = 10
 
+    ' Realtime stock polling via the shared SyncMarker table + Products triggers.
+    Private WithEvents _realtimeTimer As Timer
+    Private _realtimeTracker As New SyncMarkerTracker()
+
     Private Async Sub Inventory_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         Me.BackColor = Color.FromArgb(248, 248, 247)
         btnActive.BorderRadius = 10
@@ -91,6 +95,9 @@ Public Class Inventory
 
         ' Load products asynchronously (ShowLoadingOverlay is now called inside LoadProductsAsync)
         Await LoadProductsAsync()
+
+        ' Realtime stock polling: every 2s check whether another PC changed stock
+        RealtimeStartPolling()
     End Sub
     ' Helper: find a control by name anywhere in the form (recursive)
     Private Function FindControlRecursive(parent As Control, name As String) As Control
@@ -829,6 +836,107 @@ Public Class Inventory
         _currentPage = page
         LoadProductsIntoDataGrid()
     End Sub
+
+    ' Re-fetches stock for ALL products and updates the visible grid rows in place
+    ' (no reload, preserves scroll/selection). Called by the 2s realtime timer when
+    ' the shared SyncMarker moves (any PC sold or restocked).
+    Private Sub RefreshStockSilently()
+        Try
+            Dim stockMap As New Dictionary(Of String, Integer)()
+            Dim reorderMap As New Dictionary(Of String, Integer)()
+            Using reader As DbDataReader = Utilities.ExecuteReader(
+                "SELECT ProductID, CurrentStock, ReorderLevel FROM Products", Nothing)
+                While reader.Read()
+                    Dim pid As String = reader("ProductID").ToString()
+                    stockMap(pid) = Convert.ToInt32(reader("CurrentStock"))
+                    reorderMap(pid) = Convert.ToInt32(If(IsDBNull(reader("ReorderLevel")), 0, reader("ReorderLevel")))
+                End While
+            End Using
+            If stockMap.Count = 0 Then Return
+
+            ' Update the in-memory product dictionaries. filteredProducts holds the
+            ' same Dictionary instances as allProducts, so both stay in sync.
+            For Each pd In allProducts
+                Dim pid As String = pd("ProductID").ToString()
+                If stockMap.ContainsKey(pid) Then
+                    Dim stock As Integer = stockMap(pid)
+                    Dim rl As Integer = reorderMap(pid)
+                    pd("CurrentStock") = stock
+                    pd("StockQty") = stock
+                    pd("ReorderLevel") = rl
+                    If stock = 0 Then
+                        pd("Status") = "Out of Stock"
+                    ElseIf rl > 0 AndAlso stock <= rl Then
+                        pd("Status") = "Below Reorder Level"
+                    Else
+                        pd("Status") = "Above Reorder Level"
+                    End If
+                End If
+            Next
+
+            ' Update only the visible grid rows in place.
+            Dim productDataGrid As Guna.UI2.WinForms.Guna2DataGridView = Guna2DataGridView1
+            Dim LightRed As Color = Color.FromArgb(220, 80, 70)
+            Dim LightOrange As Color = Color.FromArgb(230, 150, 40)
+            Dim LightGreen As Color = Color.FromArgb(80, 160, 80)
+            For Each row As DataGridViewRow In productDataGrid.Rows
+                Dim tagData = TryCast(row.Tag, Dictionary(Of String, Object))
+                If tagData Is Nothing OrElse Not tagData.ContainsKey("ProductID") Then Continue For
+                Dim pid As String = tagData("ProductID").ToString()
+                If Not stockMap.ContainsKey(pid) Then Continue For
+                Dim stock As Integer = stockMap(pid)
+                Dim rl As Integer = reorderMap(pid)
+                tagData("CurrentStock") = stock
+
+                Dim cell As DataGridViewCell = row.Cells("CurrentStock")
+                cell.Value = stock.ToString()
+                If stock = 0 Then
+                    cell.Style.ForeColor = LightRed
+                    cell.Style.Font = New Font("Poppins", 9.5F, FontStyle.Bold)
+                    cell.Tag = "OUT_OF_STOCK"
+                ElseIf rl > 0 AndAlso stock <= rl Then
+                    cell.Style.ForeColor = LightOrange
+                    cell.Style.Font = New Font("Poppins", 9.5F, FontStyle.Bold)
+                    cell.Tag = "LOW_STOCK"
+                Else
+                    cell.Style.ForeColor = LightGreen
+                    cell.Style.Font = New Font("Poppins", 9.5F, FontStyle.Bold)
+                    cell.Tag = "IN_STOCK"
+                End If
+                productDataGrid.InvalidateRow(row.Index)
+            Next
+        Catch ex As Exception
+            Console.WriteLine($"Realtime Inventory refresh error: {ex.Message}")
+        End Try
+    End Sub
+
+    Private Sub RealtimeStartPolling()
+        Try
+            If _realtimeTimer Is Nothing Then
+                _realtimeTimer = New Timer With {.Interval = 2000}
+            End If
+            _realtimeTracker.Reset()
+            _realtimeTimer.Start()
+        Catch
+        End Try
+    End Sub
+
+    Private Sub RealtimeStopPolling()
+        Try
+            If _realtimeTimer IsNot Nothing Then _realtimeTimer.Stop()
+        Catch
+        End Try
+    End Sub
+
+    Private Sub _realtimeTimer_Tick(sender As Object, e As EventArgs) Handles _realtimeTimer.Tick
+        Try
+            If Not Me.Visible Then Return
+            If _realtimeTracker.HasChanged() Then
+                RefreshStockSilently()
+            End If
+        Catch
+        End Try
+    End Sub
     Private Sub ProductDataGrid_CellContentClick(sender As Object, e As DataGridViewCellEventArgs)
         Try
             If e.RowIndex >= 0 AndAlso e.ColumnIndex >= 0 Then
@@ -1280,6 +1388,8 @@ Public Class Inventory
     Private Sub Inventory_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
         ' Stop idle timeout monitoring
         IdleTimeoutManager.Instance.StopMonitoring(Me)
+
+        RealtimeStopPolling()
 
         ' Hide loading overlay if it's still visible
         HideLoadingOverlay()

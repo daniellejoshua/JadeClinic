@@ -66,6 +66,12 @@ Public Class Sales
     Private _cmbUnitFilter As Guna2ComboBox
     Private _lblUnitFilter As Label
 
+    ' Realtime stock polling: detects when ANY PC sharing the database changes
+    ' a product's CurrentStock via the SyncMarker triggers, then silently
+    ' refreshes the visible product cards' stock labels without a page reload.
+    Private WithEvents _realtimeTimer As Timer
+    Private _realtimeTracker As New SyncMarkerTracker()
+
     ' Receipt printing variables
     Private printDocument As PrintDocument
     Private receiptOrderId As String
@@ -624,6 +630,9 @@ Public Class Sales
 
         SetupTabIndex()
 
+        ' Realtime stock polling: every 2s check whether another PC changed stock
+        RealtimeStartPolling()
+
         ' ... rest of the method ...
         ' Add keyboard instructions for users
     End Sub
@@ -805,6 +814,7 @@ Public Class Sales
         flowPanel.ResumeLayout(True)
         flowPanel.AutoScrollPosition = New Point(0, 0)
         LogDiagnostic($"CAT category='{categoryName}' page={page} cards={flowPanel.Controls.Count}")
+        If _realtimeTracker IsNot Nothing Then _realtimeTracker.Reset()
     End Sub
 
     ' Lazily creates the shared pagination footer so it can be re-docked across views
@@ -1333,6 +1343,90 @@ Public Class Sales
             End If
         Next
         UpdateStockLabel(productId, Math.Max(0, dbStock - reservedQty))
+    End Sub
+
+    ' Re-fetches CurrentStock for the currently visible product page and updates
+    ' each visible card's label in place (available = fresh stock - cart reserved).
+    ' Called by the 2s realtime timer when the shared SyncMarker moves.
+    Private Sub RefreshVisibleStockSilently()
+        Try
+            If _paginationContext = PaginationContext.None Then Return
+
+            Dim currentPage As Integer = If(_pagination IsNot Nothing, _pagination.CurrentPage, 1)
+            Dim offset As Integer = (currentPage - 1) * ProductPageSize
+            Dim query As String = ""
+            Dim paramList As New List(Of SqlParameter)
+
+            If _paginationContext = PaginationContext.Category AndAlso Not String.IsNullOrEmpty(_paginationCategory) Then
+                Dim baseWhere As String = "WHERE Category = @Category AND IsActive = 1"
+                If Not String.IsNullOrEmpty(_selectedUnitFilter) Then
+                    baseWhere &= " AND Unit = @Unit"
+                End If
+                query = $"SELECT ProductID, CurrentStock FROM Products {baseWhere} ORDER BY ProductName LIMIT @Limit OFFSET @Offset"
+                paramList.Add(New SqlParameter("@Category", _paginationCategory))
+            ElseIf _paginationContext = PaginationContext.Search AndAlso Not String.IsNullOrEmpty(_paginationSearchTerm) Then
+                Dim baseWhere As String = "WHERE IsActive = 1 AND (ProductCode = @term OR ProductName LIKE @like)"
+                If Not String.IsNullOrEmpty(_selectedUnitFilter) Then
+                    baseWhere &= " AND Unit = @Unit"
+                End If
+                query = $"SELECT ProductID, CurrentStock FROM Products {baseWhere} ORDER BY CASE WHEN ProductCode = @term THEN 0 ELSE 1 END, ProductName LIMIT @Limit OFFSET @Offset"
+                paramList.Add(New SqlParameter("@term", _paginationSearchTerm))
+                paramList.Add(New SqlParameter("@like", "%" & _paginationSearchTerm & "%"))
+            Else
+                Return
+            End If
+
+            paramList.Add(New SqlParameter("@Limit", ProductPageSize))
+            paramList.Add(New SqlParameter("@Offset", offset))
+            If Not String.IsNullOrEmpty(_selectedUnitFilter) Then
+                paramList.Add(New SqlParameter("@Unit", _selectedUnitFilter))
+            End If
+
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, paramList.ToArray())
+                While reader.Read()
+                    Dim pid As String = reader("ProductID").ToString()
+                    productDbStock(pid) = Convert.ToInt32(reader("CurrentStock"))
+                End While
+            End Using
+
+            ' Update only the visible cards (productDbStock holds just this page).
+            For Each card In productCardControls
+                Dim pid As String = ProductCardBuilder.GetProductId(card)
+                If productDbStock.ContainsKey(pid) Then
+                    UpdateStockLabelFromDbStock(pid)
+                End If
+            Next
+        Catch ex As Exception
+            Console.WriteLine($"Realtime stock refresh error: {ex.Message}")
+        End Try
+    End Sub
+
+    Private Sub _realtimeTimer_Tick(sender As Object, e As EventArgs) Handles _realtimeTimer.Tick
+        Try
+            If Not Me.Visible Then Return
+            If _realtimeTracker.HasChanged() Then
+                RefreshVisibleStockSilently()
+            End If
+        Catch
+        End Try
+    End Sub
+
+    Private Sub RealtimeStartPolling()
+        Try
+            If _realtimeTimer Is Nothing Then
+                _realtimeTimer = New Timer With {.Interval = 2000}
+            End If
+            _realtimeTracker.Reset()
+            _realtimeTimer.Start()
+        Catch
+        End Try
+    End Sub
+
+    Private Sub RealtimeStopPolling()
+        Try
+            If _realtimeTimer IsNot Nothing Then _realtimeTimer.Stop()
+        Catch
+        End Try
     End Sub
 
     Private Sub UpdateCategoryItemCounts()
@@ -2890,6 +2984,8 @@ Public Class Sales
     Private Sub Sales_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
         ' Save draft cart on any close/navigation/app exit
         PersistCartState()
+
+        RealtimeStopPolling()
 
         IdleTimeoutManager.Instance.OnBeforeLogout = Nothing
         IdleTimeoutManager.Instance.StopMonitoring(Me)
@@ -5913,6 +6009,7 @@ Public Class Sales
         flowPanel.ResumeLayout(True)
         flowPanel.AutoScrollPosition = New Point(0, 0)
         LogDiagnostic($"SRCH term='{term}' page={page} cards={flowPanel.Controls.Count}")
+        If _realtimeTracker IsNot Nothing Then _realtimeTracker.Reset()
     End Sub
 
     ' Show only the matching product card from search

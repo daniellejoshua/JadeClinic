@@ -5,6 +5,20 @@ Imports System.IO
 Module Connection
 
     Private Function GetDefaultDatabasePath() As String
+        ' If a shared DB path is configured (LAN multi-PC setup), use it so every
+        ' PC opens the same database file on the network share.
+        Dim configuredPath As String = ConfigurationManager.AppSettings("DBPath")
+        If Not String.IsNullOrWhiteSpace(configuredPath) Then
+            Try
+                If Not Directory.Exists(configuredPath) Then
+                    Directory.CreateDirectory(configuredPath)
+                End If
+                Return Path.Combine(configuredPath, "jadeclinic.db")
+            Catch ex As Exception
+                Console.WriteLine($"? DBPath failure ({configuredPath}), falling back to local DB: {ex.Message}")
+            End Try
+        End If
+
         Dim dataDir As String = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "JadeClinic")
         If Not Directory.Exists(dataDir) Then
             Directory.CreateDirectory(dataDir)
@@ -77,6 +91,14 @@ Module Connection
                         End Try
                         Try
                             EmployeeCodeMigration.UpdateDatabaseForEmployeeCode()
+                        Catch
+                        End Try
+                        Try
+                            SyncMarkerMigration.UpdateDatabaseForSyncMarker()
+                        Catch
+                        End Try
+                        Try
+                            TerminalMigration.EnsureTable()
                         Catch
                         End Try
                     End If

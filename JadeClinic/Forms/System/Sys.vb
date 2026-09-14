@@ -97,68 +97,100 @@ Public Class Sys
 
     Private Sub InitializeButtons()
         ' Company Settings button
-        btnCompanySettings.BorderRadius = 15
-        btnCompanySettings.ShadowDecoration.Enabled = True
-        btnCompanySettings.ShadowDecoration.Depth = 8
-        btnCompanySettings.FillColor = DarkSlate
+        btnCompanySettings.FillColor = PureWhite
 
         AddHandler btnCompanySettings.MouseEnter, Sub()
-                                                      btnCompanySettings.FillColor = SteelGray
-                                                      btnCompanySettings.BorderThickness = 2
+                                                      btnCompanySettings.FillColor = GoldenYellow
+                                                      btnCompanySettings.ForeColor = DeepCharcoal
                                                       btnCompanySettings.BorderColor = GoldenYellow
+                                                      btnCompanySettings.BorderThickness = 1
                                                   End Sub
         AddHandler btnCompanySettings.MouseLeave, Sub()
-                                                      btnCompanySettings.FillColor = DarkSlate
-                                                      btnCompanySettings.BorderThickness = 0
+                                                      btnCompanySettings.FillColor = PureWhite
+                                                      btnCompanySettings.ForeColor = Color.FromArgb(51, 51, 51)
+                                                      btnCompanySettings.BorderColor = Color.FromArgb(232, 232, 232)
+                                                      btnCompanySettings.BorderThickness = 1
                                                   End Sub
 
         ' Database Backup button
-        btnDatabaseBackup.BorderRadius = 15
-        btnDatabaseBackup.ShadowDecoration.Enabled = True
-        btnDatabaseBackup.ShadowDecoration.Depth = 8
-        btnDatabaseBackup.FillColor = DarkSlate
+        btnDatabaseBackup.FillColor = PureWhite
 
         AddHandler btnDatabaseBackup.MouseEnter, Sub()
-                                                     btnDatabaseBackup.FillColor = SteelGray
-                                                     btnDatabaseBackup.BorderThickness = 2
+                                                     btnDatabaseBackup.FillColor = GoldenYellow
+                                                     btnDatabaseBackup.ForeColor = DeepCharcoal
                                                      btnDatabaseBackup.BorderColor = GoldenYellow
+                                                     btnDatabaseBackup.BorderThickness = 1
                                                  End Sub
         AddHandler btnDatabaseBackup.MouseLeave, Sub()
-                                                     btnDatabaseBackup.FillColor = DarkSlate
-                                                     btnDatabaseBackup.BorderThickness = 0
+                                                     btnDatabaseBackup.FillColor = PureWhite
+                                                     btnDatabaseBackup.ForeColor = Color.FromArgb(51, 51, 51)
+                                                     btnDatabaseBackup.BorderColor = Color.FromArgb(232, 232, 232)
+                                                     btnDatabaseBackup.BorderThickness = 1
                                                  End Sub
 
         ' Sync to Cloud button
-        btnSyncCloud.BorderRadius = 15
-        btnSyncCloud.ShadowDecoration.Enabled = True
-        btnSyncCloud.ShadowDecoration.Depth = 8
-        btnSyncCloud.FillColor = DarkSlate
+        btnSyncCloud.FillColor = PureWhite
 
         AddHandler btnSyncCloud.MouseEnter, Sub()
-                                                btnSyncCloud.FillColor = SteelGray
-                                                btnSyncCloud.BorderThickness = 2
+                                                btnSyncCloud.FillColor = GoldenYellow
+                                                btnSyncCloud.ForeColor = DeepCharcoal
                                                 btnSyncCloud.BorderColor = GoldenYellow
+                                                btnSyncCloud.BorderThickness = 1
                                             End Sub
         AddHandler btnSyncCloud.MouseLeave, Sub()
-                                                btnSyncCloud.FillColor = DarkSlate
-                                                btnSyncCloud.BorderThickness = 0
+                                                btnSyncCloud.FillColor = PureWhite
+                                                btnSyncCloud.ForeColor = Color.FromArgb(51, 51, 51)
+                                                btnSyncCloud.BorderColor = Color.FromArgb(232, 232, 232)
+                                                btnSyncCloud.BorderThickness = 1
                                             End Sub
 
         ' Load Demo Data button
-        btnLoadDemoData.BorderRadius = 15
-        btnLoadDemoData.ShadowDecoration.Enabled = True
-        btnLoadDemoData.ShadowDecoration.Depth = 8
-        btnLoadDemoData.FillColor = DarkSlate
+        btnLoadDemoData.FillColor = PureWhite
 
         AddHandler btnLoadDemoData.MouseEnter, Sub()
-                                                   btnLoadDemoData.FillColor = SteelGray
-                                                   btnLoadDemoData.BorderThickness = 2
+                                                   btnLoadDemoData.FillColor = GoldenYellow
+                                                   btnLoadDemoData.ForeColor = DeepCharcoal
                                                    btnLoadDemoData.BorderColor = GoldenYellow
+                                                   btnLoadDemoData.BorderThickness = 1
                                                End Sub
         AddHandler btnLoadDemoData.MouseLeave, Sub()
-                                                   btnLoadDemoData.FillColor = DarkSlate
-                                                   btnLoadDemoData.BorderThickness = 0
+                                                   btnLoadDemoData.FillColor = PureWhite
+                                                   btnLoadDemoData.ForeColor = Color.FromArgb(51, 51, 51)
+                                                   btnLoadDemoData.BorderColor = Color.FromArgb(232, 232, 232)
+                                                   btnLoadDemoData.BorderThickness = 1
                                                End Sub
+
+        ' PC Terminals button
+        btnTerminalSetup.FillColor = PureWhite
+
+        AddHandler btnTerminalSetup.MouseEnter, Sub()
+                                                    btnTerminalSetup.FillColor = GoldenYellow
+                                                    btnTerminalSetup.ForeColor = DeepCharcoal
+                                                    btnTerminalSetup.BorderColor = GoldenYellow
+                                                    btnTerminalSetup.BorderThickness = 1
+                                                End Sub
+        AddHandler btnTerminalSetup.MouseLeave, Sub()
+                                                    btnTerminalSetup.FillColor = PureWhite
+                                                    btnTerminalSetup.ForeColor = Color.FromArgb(51, 51, 51)
+                                                    btnTerminalSetup.BorderColor = Color.FromArgb(232, 232, 232)
+                                                    btnTerminalSetup.BorderThickness = 1
+                                                End Sub
+
+        ' Sync Logs button
+        btnSyncLogs.FillColor = PureWhite
+
+        AddHandler btnSyncLogs.MouseEnter, Sub()
+                                               btnSyncLogs.FillColor = GoldenYellow
+                                               btnSyncLogs.ForeColor = DeepCharcoal
+                                               btnSyncLogs.BorderColor = GoldenYellow
+                                               btnSyncLogs.BorderThickness = 1
+                                           End Sub
+        AddHandler btnSyncLogs.MouseLeave, Sub()
+                                               btnSyncLogs.FillColor = PureWhite
+                                               btnSyncLogs.ForeColor = Color.FromArgb(51, 51, 51)
+                                               btnSyncLogs.BorderColor = Color.FromArgb(232, 232, 232)
+                                               btnSyncLogs.BorderThickness = 1
+                                           End Sub
 
     End Sub
 
@@ -212,6 +244,22 @@ Public Class Sys
         End Try
     End Sub
 
+    Private Sub btnTerminalSetup_Click(sender As Object, e As EventArgs) Handles btnTerminalSetup.Click
+        Try
+            NavigationBuilder.NavigateToForm(Me, GetType(TerminalSetup))
+        Catch ex As Exception
+            MessageBox.Show($"Error opening PC Terminals: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
+
+    Private Sub btnSyncLogs_Click(sender As Object, e As EventArgs) Handles btnSyncLogs.Click
+        Try
+            NavigationBuilder.NavigateToForm(Me, GetType(SyncLogs))
+        Catch ex As Exception
+            MessageBox.Show($"Error opening Sync Logs: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+        End Try
+    End Sub
+
     Private Sub btnDatabaseBackup_Click(sender As Object, e As EventArgs) Handles btnDatabaseBackup.Click
         Try
             ShowDatabaseBackupDialog()
@@ -226,7 +274,7 @@ Public Class Sys
             lblSyncStatus.Text = If(chkForceFull.Checked,
                 "Cloud sync queued (full) - running in the background...",
                 "Cloud sync queued - running in the background...")
-            lblSyncStatus.ForeColor = LightSilver
+            lblSyncStatus.ForeColor = Color.FromArgb(70, 70, 70)
         Catch ex As Exception
             lblSyncStatus.Text = "Could not start cloud sync: " & ex.Message
             lblSyncStatus.ForeColor = AlertRed
@@ -250,7 +298,7 @@ Public Class Sys
 
             btnLoadDemoData.Enabled = False
             lblSyncStatus.Text = "Loading demo data... (this may take a minute or two)"
-            lblSyncStatus.ForeColor = LightSilver
+            lblSyncStatus.ForeColor = Color.FromArgb(70, 70, 70)
 
             Dim summary As String = ""
             Dim errorMsg As String = ""
@@ -317,7 +365,7 @@ Public Class Sys
         If IsDisposed Then Return
         BeginInvoke(New Action(Sub()
                                    lblSyncStatus.Text = message
-                                   lblSyncStatus.ForeColor = LightSilver
+                                   lblSyncStatus.ForeColor = Color.FromArgb(70, 70, 70)
                                End Sub))
     End Sub
 
@@ -348,13 +396,13 @@ Public Class Sys
         backupForm.FormBorderStyle = FormBorderStyle.FixedDialog
         backupForm.MaximizeBox = False
         backupForm.MinimizeBox = False
-        backupForm.BackColor = DarkSlate
+        backupForm.BackColor = Color.FromArgb(250, 249, 246)
 
         ' Title
         Dim lblTitle As New Label()
         lblTitle.Text = "DATABASE BACKUP & RESTORE"
         lblTitle.Font = New Font("Poppins", 16, FontStyle.Bold)
-        lblTitle.ForeColor = PureWhite
+        lblTitle.ForeColor = DeepCharcoal
         lblTitle.Location = New Point(20, 20)
         lblTitle.Size = New Size(460, 30)
         lblTitle.TextAlign = ContentAlignment.MiddleCenter
@@ -364,7 +412,7 @@ Public Class Sys
         Dim lblBackup As New Label()
         lblBackup.Text = "Backup Database"
         lblBackup.Font = New Font("Poppins", 12, FontStyle.Bold)
-        lblBackup.ForeColor = GoldenYellow
+        lblBackup.ForeColor = RichOlive
         lblBackup.Location = New Point(20, 70)
         lblBackup.Size = New Size(200, 25)
         backupForm.Controls.Add(lblBackup)
@@ -372,13 +420,13 @@ Public Class Sys
         Dim lblBackupDesc As New Label()
         lblBackupDesc.Text = "Create a backup copy of your database"
         lblBackupDesc.Font = New Font("Poppins", 9, FontStyle.Regular)
-        lblBackupDesc.ForeColor = LightSilver
+        lblBackupDesc.ForeColor = Color.FromArgb(119, 119, 119)
         lblBackupDesc.Location = New Point(20, 95)
         lblBackupDesc.Size = New Size(300, 20)
         backupForm.Controls.Add(lblBackupDesc)
 
         Dim btnBackup As New Guna.UI2.WinForms.Guna2Button()
-        btnBackup.Text = "?? Create Backup"
+        btnBackup.Text = "Create Backup"
         btnBackup.Size = New Size(200, 40)
         btnBackup.Location = New Point(20, 125)
         btnBackup.BorderRadius = 8
@@ -392,7 +440,7 @@ Public Class Sys
         Dim lblRestore As New Label()
         lblRestore.Text = "Restore Database"
         lblRestore.Font = New Font("Poppins", 12, FontStyle.Bold)
-        lblRestore.ForeColor = GoldenYellow
+        lblRestore.ForeColor = RichOlive
         lblRestore.Location = New Point(20, 190)
         lblRestore.Size = New Size(200, 25)
         backupForm.Controls.Add(lblRestore)
@@ -400,13 +448,13 @@ Public Class Sys
         Dim lblRestoreDesc As New Label()
         lblRestoreDesc.Text = "Restore database from backup file"
         lblRestoreDesc.Font = New Font("Poppins", 9, FontStyle.Regular)
-        lblRestoreDesc.ForeColor = LightSilver
+        lblRestoreDesc.ForeColor = Color.FromArgb(119, 119, 119)
         lblRestoreDesc.Location = New Point(20, 215)
         lblRestoreDesc.Size = New Size(300, 20)
         backupForm.Controls.Add(lblRestoreDesc)
 
         Dim btnRestore As New Guna.UI2.WinForms.Guna2Button()
-        btnRestore.Text = "?? Restore Backup"
+        btnRestore.Text = "Restore Backup"
         btnRestore.Size = New Size(200, 40)
         btnRestore.Location = New Point(20, 245)
         btnRestore.BorderRadius = 8

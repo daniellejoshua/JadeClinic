@@ -19,6 +19,9 @@ Public Class MainShell
     Private _lastReloadTick As Integer = 0
     Private WithEvents _hoverTimer As New Timer() With {.Interval = 100}
     Private WithEvents _resizeDebounceTimer As New Timer() With {.Interval = 300, .Enabled = False}
+    Private WithEvents _approvalTimer As New Timer() With {.Interval = 10000}
+    Private _approvalPromptOpen As Boolean = False
+    Private _approvalPromptedIds As New HashSet(Of String)()
 
     Private titleBarPanel As Guna.UI2.WinForms.Guna2Panel
     Private btnMinimize As Guna.UI2.WinForms.Guna2Button
@@ -61,6 +64,7 @@ Public Class MainShell
         AddHandler ContentPanel.Resize, AddressOf ContentPanel_Resize
         SetupDragStrip()
         _hoverTimer.Start()
+        _approvalTimer.Start()
     End Sub
 
     Private WithEvents dragStrip As Panel
@@ -307,6 +311,7 @@ Public Class MainShell
 
     Public Sub ShowPage(pageType As Type)
         If pageType Is Nothing Then Return
+        pageType = EnforceRoleAccess(pageType)
         _isShowingPage = True
 
         If _currentPage IsNot Nothing Then
@@ -370,6 +375,150 @@ Public Class MainShell
         Dim role As String = If(frmLoginvb.LoggedInRole, String.Empty).ToUpperInvariant()
         Dim startType As Type = If(role = "STAFF", GetType(Sales), GetType(Dashboard))
         ShowPage(startType)
+    End Sub
+
+    ' Central role guard: Staff can only ever open the POS/Sales page and
+    ' Managers can open everything except the System Settings tools. Admin is
+    ' unrestricted. Guards even programmatic navigation attempts.
+    Private Function EnforceRoleAccess(pageType As Type) As Type
+        Try
+            Dim role As String = If(frmLoginvb.LoggedInRole, String.Empty).ToUpperInvariant()
+            If role = "ADMIN" OrElse role = "ADMINISTRATOR" Then Return pageType
+
+            If role = "MANAGER" Then
+                If pageType Is GetType(Sys) OrElse
+                   pageType Is GetType(TerminalSetup) OrElse
+                   pageType Is GetType(SyncLogs) Then
+                    Return GetType(Dashboard)
+                End If
+                Return pageType
+            End If
+
+            ' Staff - only POS/Sales is reachable.
+            If pageType IsNot GetType(Sales) Then
+                Return GetType(Sales)
+            End If
+        Catch
+        End Try
+        Return pageType
+    End Function
+
+    ' On the admin PC, periodically check for computers waiting for approval and
+    ' ask the admin whether to allow or block each one.
+    Private Sub _approvalTimer_Tick(sender As Object, e As EventArgs) Handles _approvalTimer.Tick
+        Try
+            If _approvalPromptOpen Then Return
+            If Not TerminalManager.IsSharedMode() Then Return
+            If Not TerminalManager.IsAdminMachine() Then Return
+            If String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then Return
+
+            Dim pendingList As List(Of TerminalManager.TerminalInfo) = TerminalManager.GetPendingTerminals()
+            Dim target As TerminalManager.TerminalInfo = pendingList.FirstOrDefault(Function(t) Not _approvalPromptedIds.Contains(t.TerminalID))
+            If target Is Nothing Then Return
+
+            Dim displayName As String = If(String.IsNullOrWhiteSpace(target.TerminalName), target.HostName, target.TerminalName)
+
+            _approvalPromptOpen = True
+            Try
+                Using prompt As New Form() With {
+                    .Text = "Access Request",
+                    .Size = New Size(560, 320),
+                    .StartPosition = FormStartPosition.CenterParent,
+                    .FormBorderStyle = FormBorderStyle.FixedDialog,
+                    .MaximizeBox = False,
+                    .MinimizeBox = False,
+                    .ShowInTaskbar = False,
+                    .BackColor = System.Drawing.Color.White
+                }
+                    Dim lblTitle As New Label() With {
+                        .Text = "🔐 New Access Request",
+                        .Font = New Font("Segoe UI", 15, FontStyle.Bold),
+                        .ForeColor = System.Drawing.Color.FromArgb(190, 154, 48),
+                        .AutoSize = True,
+                        .BackColor = System.Drawing.Color.Transparent
+                    }
+                    lblTitle.Location = New Point((prompt.ClientSize.Width - lblTitle.Width) \ 2, 24)
+                    prompt.Controls.Add(lblTitle)
+
+                    Dim lblMessage As New Label() With {
+                        .Text = "PC '" & displayName & "' (" & target.HostName & ")" & vbCrLf &
+                                "is requesting access to the clinic system.",
+                        .Font = New Font("Segoe UI", 11, FontStyle.Regular),
+                        .ForeColor = System.Drawing.Color.FromArgb(51, 51, 51),
+                        .BackColor = System.Drawing.Color.Transparent,
+                        .AutoSize = False,
+                        .Size = New Size(480, 70),
+                        .Location = New Point(40, 80),
+                        .TextAlign = ContentAlignment.MiddleCenter
+                    }
+                    prompt.Controls.Add(lblMessage)
+
+                    Dim btnAllow As New Button() With {
+                        .Text = "Allow Access",
+                        .Font = New Font("Segoe UI", 11, FontStyle.Bold),
+                        .BackColor = System.Drawing.Color.FromArgb(190, 154, 48),
+                        .ForeColor = System.Drawing.Color.White,
+                        .FlatStyle = FlatStyle.Flat,
+                        .Size = New Size(140, 42),
+                        .Cursor = Cursors.Hand,
+                        .DialogResult = DialogResult.Yes
+                    }
+                    btnAllow.FlatAppearance.BorderSize = 0
+                    btnAllow.Location = New Point(70, 190)
+                    prompt.Controls.Add(btnAllow)
+
+                    Dim btnBlock As New Button() With {
+                        .Text = "Block",
+                        .Font = New Font("Segoe UI", 11, FontStyle.Regular),
+                        .BackColor = System.Drawing.Color.FromArgb(255, 71, 87),
+                        .ForeColor = System.Drawing.Color.White,
+                        .FlatStyle = FlatStyle.Flat,
+                        .Size = New Size(140, 42),
+                        .Cursor = Cursors.Hand,
+                        .DialogResult = DialogResult.No
+                    }
+                    btnBlock.FlatAppearance.BorderSize = 0
+                    btnBlock.Location = New Point(210, 190)
+                    prompt.Controls.Add(btnBlock)
+
+                    Dim btnNotNow As New Button() With {
+                        .Text = "Not Now",
+                        .Font = New Font("Segoe UI", 11, FontStyle.Regular),
+                        .BackColor = System.Drawing.Color.FromArgb(237, 237, 237),
+                        .ForeColor = System.Drawing.Color.FromArgb(80, 80, 80),
+                        .FlatStyle = FlatStyle.Flat,
+                        .Size = New Size(140, 42),
+                        .Cursor = Cursors.Hand,
+                        .DialogResult = DialogResult.Cancel
+                    }
+                    btnNotNow.FlatAppearance.BorderSize = 0
+                    btnNotNow.Location = New Point(350, 190)
+                    prompt.Controls.Add(btnNotNow)
+
+                    Utilities.EnableEscCloseModal(prompt)
+
+                    Dim result As DialogResult = prompt.ShowDialog(Me)
+
+                    ' Never ask about this PC again this session, even if the
+                    ' admin chose 'Not Now' (they can use the PC Terminals page).
+                    _approvalPromptedIds.Add(target.TerminalID)
+
+                    If result = DialogResult.Yes Then
+                        TerminalManager.ApproveTerminal(target.TerminalID)
+                        Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Terminal Allowed",
+                                           $"Access allowed for PC '{displayName}' ({target.HostName})")
+                    ElseIf result = DialogResult.No Then
+                        TerminalManager.BlockTerminal(target.TerminalID)
+                        Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Terminal Blocked",
+                                           $"Access blocked for PC '{displayName}' ({target.HostName})")
+                    End If
+                End Using
+            Finally
+                _approvalPromptOpen = False
+            End Try
+        Catch ex As Exception
+            Console.WriteLine($"MainShell approval prompt error: {ex.Message}")
+        End Try
     End Sub
 End Class
 

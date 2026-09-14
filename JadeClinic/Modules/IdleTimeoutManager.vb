@@ -25,6 +25,7 @@ Public Class IdleTimeoutManager
     Private passwordDialog As Form
     Private logoutPending As Boolean = False
     Private pendingFormToClose As Form = Nothing
+    Private _allowPasswordDialogClose As Boolean = False
 
     Private Sub New()
         ' Initialize the idle timer
@@ -318,7 +319,7 @@ Public Class IdleTimeoutManager
 
             ' Title label with Golden Yellow
             Dim lblTitle As New Label()
-            lblTitle.Text = "?? Session Timeout"
+            lblTitle.Text = "⏰ Session Timeout"
             lblTitle.Font = New Font("Segoe UI", 18, FontStyle.Bold)
             lblTitle.ForeColor = System.Drawing.Color.FromArgb(254, 191, 16)
             lblTitle.BackColor = System.Drawing.Color.Transparent
@@ -362,7 +363,7 @@ Public Class IdleTimeoutManager
 
             ' Password textbox
             Dim txtPassword As New TextBox()
-            txtPassword.PasswordChar = "�"c
+            txtPassword.PasswordChar = "●"c
             txtPassword.Font = New Font("Segoe UI", 12, FontStyle.Regular)
             txtPassword.BackColor = System.Drawing.Color.FromArgb(237, 237, 237)
             txtPassword.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51)
@@ -427,7 +428,12 @@ Public Class IdleTimeoutManager
                                             End Sub
 
             txtPassword.Focus()
-            Utilities.EnableEscCloseModal(passwordDialog)
+            ' The timeout dialog cannot be dismissed with ESC (or Alt+F4): the
+            ' user must either re-authenticate or confirm logout.
+            _allowPasswordDialogClose = False
+            AddHandler passwordDialog.FormClosing, Sub(s, e)
+                                                       e.Cancel = Not _allowPasswordDialogClose
+                                                   End Sub
             passwordDialog.ShowDialog(currentForm)
 
             ' After dialog closes, handle any pending logout (form-hide and login-show must happen OUTSIDE modal pump)
@@ -506,6 +512,7 @@ Public Class IdleTimeoutManager
 
                     If isPasswordValid Then
                         ' Password is correct - continue session
+                        _allowPasswordDialogClose = True
                         dialog.Close()
                         RemoveOverlay()
 
@@ -530,6 +537,7 @@ Public Class IdleTimeoutManager
                     If currentForm IsNot Nothing Then StopMonitoring(currentForm)
                     logoutPending = True
                     RemoveOverlay()
+                    _allowPasswordDialogClose = True
                     dialog.Close()
                 End If
             End Using
@@ -541,6 +549,7 @@ Public Class IdleTimeoutManager
             If currentForm IsNot Nothing Then StopMonitoring(currentForm)
             logoutPending = True
             RemoveOverlay()
+            _allowPasswordDialogClose = True
             dialog.Close()
         End Try
     End Sub
@@ -572,6 +581,7 @@ Public Class IdleTimeoutManager
 
             ' Remove overlay first, then close dialog
             RemoveOverlay()
+            _allowPasswordDialogClose = True
             If dialog IsNot Nothing AndAlso Not dialog.IsDisposed Then
                 dialog.Close()
             End If
