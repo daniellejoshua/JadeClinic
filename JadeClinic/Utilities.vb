@@ -277,10 +277,30 @@ Module Utilities
         End Try
     End Function
 
-    ' Generates a readable, numbers-only sale number from a SaleID.
-    ' Format: yyyyMMdd + 6-digit zero-padded SaleID (e.g. 20260808000123).
-    Public Function FormatSaleNumber(saleId As Integer) As String
-        Return Date.Now.ToString("yyyyMMdd") & saleId.ToString("D6")
+    ' Generates a readable SaleNumber from a SaleID.
+    ' Without a terminal code: yyyyMMdd + 6-digit zero-padded SaleID
+    ' (e.g. 20260808000123) - kept for legacy/backfill compatibility.
+    ' With a terminal code: {CODE}-yyyyMMdd-6-digit SaleID
+    ' (e.g. PC1-20260808-000123) so every sale is identifiable per terminal.
+    Public Function FormatSaleNumber(saleId As Integer, Optional terminalCode As String = "") As String
+        If String.IsNullOrWhiteSpace(terminalCode) Then
+            ' Legacy numeric-only format (kept when no terminal code is available).
+            Return Date.Now.ToString("yyyyMMdd") & saleId.ToString("D6")
+        End If
+        Return SanitizeTerminalCode(terminalCode) & "-" & Date.Now.ToString("yyyyMMdd") & "-" & saleId.ToString("D6")
+    End Function
+
+    ' Normalises a terminal name into a short, safe code for use inside a
+    ' SaleNumber (uppercase alphanumerics only, max 10 chars).
+    Public Function SanitizeTerminalCode(terminalName As String) As String
+        If String.IsNullOrWhiteSpace(terminalName) Then Return ""
+        Dim sb As New System.Text.StringBuilder()
+        For Each ch As Char In terminalName
+            If Char.IsLetterOrDigit(ch) Then sb.Append(Char.ToUpperInvariant(ch))
+        Next
+        Dim code As String = sb.ToString()
+        If code.Length > 10 Then code = code.Substring(0, 10)
+        Return code
     End Function
 
     ' Generates a numbers-only employee code from a UserID and their registration

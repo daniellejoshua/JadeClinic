@@ -72,6 +72,10 @@ Public Class Sales
     Private WithEvents _realtimeTimer As Timer
     Private _realtimeTracker As New SyncMarkerTracker()
 
+    ' Short terminal code (e.g. "PC1") used to tag Sale IDs so each PC's sales
+    ' are identifiable. Resolved from the PC Terminals page / hostname on load.
+    Private _terminalCode As String = ""
+
     ' Receipt printing variables
     Private printDocument As PrintDocument
     Private receiptOrderId As String
@@ -608,8 +612,16 @@ Public Class Sales
             nextSaleId = 1
         End Try
 
+        ' Resolve this terminal's short code once per load so Sale IDs are tagged
+        ' with the PC name (e.g. PC1-20260914-000123).
+        Try
+            _terminalCode = Utilities.SanitizeTerminalCode(TerminalManager.GetCurrentTerminalName())
+        Catch
+            _terminalCode = ""
+        End Try
+
         If lblOrderId IsNot Nothing Then
-            lblOrderId.Text = "Sale ID: " & nextSaleId.ToString()
+            lblOrderId.Text = "Sale ID: " & Utilities.FormatSaleNumber(nextSaleId, _terminalCode)
         End If
 
         If lblSubTotal IsNot Nothing Then lblSubTotal.Text = "0.00"
@@ -1404,11 +1416,34 @@ Public Class Sales
     Private Sub _realtimeTimer_Tick(sender As Object, e As EventArgs) Handles _realtimeTimer.Tick
         Try
             If Not Me.Visible Then Return
+
+            ' If the POS is locked for missing opening capital, keep checking the
+            ' shared DailyOpeningCapital table so the PC unlocks automatically as
+            ' soon as a manager/admin sets it from another terminal - no logout
+            ' or page refresh needed. Only queried while locked (zero overhead
+            ' once the POS is open).
+            If posLockedForCapital Then
+                CheckCapitalUnlock()
+            End If
+
             If _realtimeTracker.HasChanged() Then
                 RefreshVisibleStockSilently()
             End If
         Catch
         End Try
+    End Sub
+
+    ' Runs from the realtime poll while the POS is locked. When opening capital
+    ' for today appears in the shared DB (set by Manager/Admin on any PC), unlock
+    ' the POS in place and notify the cashier.
+    Private Sub CheckCapitalUnlock()
+        Dim amount As Decimal = 0D
+        If Not TryGetTodayOpeningCapital(amount) Then Return
+
+        currentOpeningCapital = amount
+        UpdateCapitalHeaderUI()
+        ApplyCapitalLockState(False)
+        ShowToastNotification("POS Unlocked", SuccessGreen, "Opening capital set by Manager")
     End Sub
 
     Private Sub RealtimeStartPolling()
@@ -2095,7 +2130,9 @@ Public Class Sales
             End If
         Else
             ApplyCapitalLockState(True)
-            MessageBox.Show("POS is locked. Manager/Admin must set opening capital for today.", "Opening Capital Required", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            ' Non-modal notice so the realtime poll keeps running and the POS can
+            ' auto-unlock the moment a Manager/Admin sets the capital elsewhere.
+            ShowToastNotification("POS Locked", AlertRed, "Manager/Admin must set opening capital for today")
         End If
     End Sub
 
@@ -4550,7 +4587,7 @@ Public Class Sales
                             End If
 
                             ' Generate a readable, numbers-only SaleNumber for this sale
-                            Dim generatedSaleNumber As String = Utilities.FormatSaleNumber(saleId)
+                            Dim generatedSaleNumber As String = Utilities.FormatSaleNumber(saleId, _terminalCode)
                             Using cmdNum As New SqliteCommand("UPDATE Sales SET SaleNumber = @SaleNumber WHERE SaleID = @SaleID", conn, tran)
                                 cmdNum.Parameters.AddWithValue("@SaleNumber", generatedSaleNumber)
                                 cmdNum.Parameters.AddWithValue("@SaleID", saleId)
@@ -4853,7 +4890,7 @@ Public Class Sales
                             End If
                         End Using
 
-                        Dim generatedSaleNumber As String = Utilities.FormatSaleNumber(saleId)
+                        Dim generatedSaleNumber As String = Utilities.FormatSaleNumber(saleId, _terminalCode)
                         Using cmdNum As New SqliteCommand("UPDATE Sales SET SaleNumber = @SaleNumber WHERE SaleID = @SaleID", conn, tran)
                             cmdNum.Parameters.AddWithValue("@SaleNumber", generatedSaleNumber)
                             cmdNum.Parameters.AddWithValue("@SaleID", saleId)
@@ -4945,7 +4982,7 @@ Public Class Sales
 
             ' ENHANCED: Update order ID display with proper formatting
             If lblOrderId IsNot Nothing Then
-                lblOrderId.Text = $"Sale ID: {nextOrderId}"
+                lblOrderId.Text = $"Sale ID: {Utilities.FormatSaleNumber(nextOrderId, _terminalCode)}"
                 lblOrderId.Refresh()
             End If
 
@@ -4954,7 +4991,7 @@ Public Class Sales
         Catch ex As Exception
             ' Fallback to default if database error
             If lblOrderId IsNot Nothing Then
-                lblOrderId.Text = "Sale ID: 1"
+                lblOrderId.Text = "Sale ID: " & Utilities.FormatSaleNumber(1, _terminalCode)
             End If
             Console.WriteLine($"Error initializing Order ID: {ex.Message}")
         End Try

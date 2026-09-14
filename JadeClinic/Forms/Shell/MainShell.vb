@@ -420,99 +420,21 @@ Public Class MainShell
 
             _approvalPromptOpen = True
             Try
-                Using prompt As New Form() With {
-                    .Text = "Access Request",
-                    .Size = New Size(560, 320),
-                    .StartPosition = FormStartPosition.CenterParent,
-                    .FormBorderStyle = FormBorderStyle.FixedDialog,
-                    .MaximizeBox = False,
-                    .MinimizeBox = False,
-                    .ShowInTaskbar = False,
-                    .BackColor = System.Drawing.Color.White
-                }
-                    Dim lblTitle As New Label() With {
-                        .Text = "🔐 New Access Request",
-                        .Font = New Font("Segoe UI", 15, FontStyle.Bold),
-                        .ForeColor = System.Drawing.Color.FromArgb(190, 154, 48),
-                        .AutoSize = True,
-                        .BackColor = System.Drawing.Color.Transparent
-                    }
-                    lblTitle.Location = New Point((prompt.ClientSize.Width - lblTitle.Width) \ 2, 24)
-                    prompt.Controls.Add(lblTitle)
+                Dim result As DialogResult = ShowAccessRequestDialog(displayName, target.HostName)
 
-                    Dim lblMessage As New Label() With {
-                        .Text = "PC '" & displayName & "' (" & target.HostName & ")" & vbCrLf &
-                                "is requesting access to the clinic system.",
-                        .Font = New Font("Segoe UI", 11, FontStyle.Regular),
-                        .ForeColor = System.Drawing.Color.FromArgb(51, 51, 51),
-                        .BackColor = System.Drawing.Color.Transparent,
-                        .AutoSize = False,
-                        .Size = New Size(480, 70),
-                        .Location = New Point(40, 80),
-                        .TextAlign = ContentAlignment.MiddleCenter
-                    }
-                    prompt.Controls.Add(lblMessage)
+                ' Never ask about this PC again this session, even if the
+                ' admin chose 'Not Now' (they can use the PC Terminals page).
+                _approvalPromptedIds.Add(target.TerminalID)
 
-                    Dim btnAllow As New Button() With {
-                        .Text = "Allow Access",
-                        .Font = New Font("Segoe UI", 11, FontStyle.Bold),
-                        .BackColor = System.Drawing.Color.FromArgb(190, 154, 48),
-                        .ForeColor = System.Drawing.Color.White,
-                        .FlatStyle = FlatStyle.Flat,
-                        .Size = New Size(140, 42),
-                        .Cursor = Cursors.Hand,
-                        .DialogResult = DialogResult.Yes
-                    }
-                    btnAllow.FlatAppearance.BorderSize = 0
-                    btnAllow.Location = New Point(70, 190)
-                    prompt.Controls.Add(btnAllow)
-
-                    Dim btnBlock As New Button() With {
-                        .Text = "Block",
-                        .Font = New Font("Segoe UI", 11, FontStyle.Regular),
-                        .BackColor = System.Drawing.Color.FromArgb(255, 71, 87),
-                        .ForeColor = System.Drawing.Color.White,
-                        .FlatStyle = FlatStyle.Flat,
-                        .Size = New Size(140, 42),
-                        .Cursor = Cursors.Hand,
-                        .DialogResult = DialogResult.No
-                    }
-                    btnBlock.FlatAppearance.BorderSize = 0
-                    btnBlock.Location = New Point(210, 190)
-                    prompt.Controls.Add(btnBlock)
-
-                    Dim btnNotNow As New Button() With {
-                        .Text = "Not Now",
-                        .Font = New Font("Segoe UI", 11, FontStyle.Regular),
-                        .BackColor = System.Drawing.Color.FromArgb(237, 237, 237),
-                        .ForeColor = System.Drawing.Color.FromArgb(80, 80, 80),
-                        .FlatStyle = FlatStyle.Flat,
-                        .Size = New Size(140, 42),
-                        .Cursor = Cursors.Hand,
-                        .DialogResult = DialogResult.Cancel
-                    }
-                    btnNotNow.FlatAppearance.BorderSize = 0
-                    btnNotNow.Location = New Point(350, 190)
-                    prompt.Controls.Add(btnNotNow)
-
-                    Utilities.EnableEscCloseModal(prompt)
-
-                    Dim result As DialogResult = prompt.ShowDialog(Me)
-
-                    ' Never ask about this PC again this session, even if the
-                    ' admin chose 'Not Now' (they can use the PC Terminals page).
-                    _approvalPromptedIds.Add(target.TerminalID)
-
-                    If result = DialogResult.Yes Then
-                        TerminalManager.ApproveTerminal(target.TerminalID)
-                        Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Terminal Allowed",
-                                           $"Access allowed for PC '{displayName}' ({target.HostName})")
-                    ElseIf result = DialogResult.No Then
-                        TerminalManager.BlockTerminal(target.TerminalID)
-                        Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Terminal Blocked",
-                                           $"Access blocked for PC '{displayName}' ({target.HostName})")
-                    End If
-                End Using
+                If result = DialogResult.Yes Then
+                    TerminalManager.ApproveTerminal(target.TerminalID)
+                    Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Terminal Allowed",
+                                       $"Access allowed for PC '{displayName}' ({target.HostName})")
+                ElseIf result = DialogResult.No Then
+                    TerminalManager.BlockTerminal(target.TerminalID)
+                    Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Terminal Blocked",
+                                       $"Access blocked for PC '{displayName}' ({target.HostName})")
+                End If
             Finally
                 _approvalPromptOpen = False
             End Try
@@ -520,6 +442,118 @@ Public Class MainShell
             Console.WriteLine($"MainShell approval prompt error: {ex.Message}")
         End Try
     End Sub
+
+    ' Modal shown on the admin PC when a new computer asks for access. Laid out
+    ' from the client area so the three action buttons stay fully visible and
+    ' evenly spaced at any DPI / window size.
+    Private Function ShowAccessRequestDialog(displayName As String, hostName As String) As DialogResult
+        Dim dlg As New Form() With {
+            .Text = "Access Request",
+            .StartPosition = FormStartPosition.CenterParent,
+            .FormBorderStyle = FormBorderStyle.FixedDialog,
+            .MaximizeBox = False,
+            .MinimizeBox = False,
+            .ShowInTaskbar = False,
+            .BackColor = Color.White,
+            .ClientSize = New Size(620, 380)
+        }
+
+        ' Coloured header band with title + subtitle
+        Dim header As New Panel() With {
+            .Dock = DockStyle.Top,
+            .Height = 86,
+            .BackColor = Color.FromArgb(190, 154, 48)
+        }
+        Dim lblTitle As New Label() With {
+            .Text = "🔐 New Access Request",
+            .Font = New Font("Segoe UI", 16, FontStyle.Bold),
+            .ForeColor = Color.White,
+            .BackColor = Color.Transparent,
+            .AutoSize = True,
+            .Location = New Point(28, 16)
+        }
+        Dim lblSub As New Label() With {
+            .Text = "A computer is requesting access to the clinic system",
+            .Font = New Font("Segoe UI", 9.5, FontStyle.Regular),
+            .ForeColor = Color.FromArgb(255, 246, 222),
+            .BackColor = Color.Transparent,
+            .AutoSize = True,
+            .Location = New Point(31, 50)
+        }
+        header.Controls.Add(lblTitle)
+        header.Controls.Add(lblSub)
+
+        Dim lblMessage As New Label() With {
+            .Text = "PC '" & displayName & "' (" & hostName & ")" & vbCrLf &
+                    "is requesting access to the clinic system." & vbCrLf & vbCrLf &
+                    "Allow it only if this is a clinic computer you recognise.",
+            .Font = New Font("Segoe UI", 11, FontStyle.Regular),
+            .ForeColor = Color.FromArgb(51, 51, 51),
+            .BackColor = Color.Transparent,
+            .AutoSize = False,
+            .Size = New Size(560, 130),
+            .Location = New Point((620 - 560) \ 2, 110),
+            .TextAlign = ContentAlignment.MiddleCenter
+        }
+
+        ' Three buttons, centred with even gaps, pinned near the bottom
+        Dim btnW As Integer = 160
+        Dim btnH As Integer = 48
+        Dim gap As Integer = 22
+        Dim totalW As Integer = (btnW * 3) + (gap * 2)
+        Dim startX As Integer = (620 - totalW) \ 2
+        Dim btnY As Integer = 380 - btnH - 30
+
+        Dim btnAllow As New Button() With {
+            .Text = "Allow Access",
+            .Font = New Font("Segoe UI", 11, FontStyle.Bold),
+            .BackColor = Color.FromArgb(190, 154, 48),
+            .ForeColor = Color.White,
+            .FlatStyle = FlatStyle.Flat,
+            .Size = New Size(btnW, btnH),
+            .Location = New Point(startX, btnY),
+            .Cursor = Cursors.Hand,
+            .DialogResult = DialogResult.Yes
+        }
+        btnAllow.FlatAppearance.BorderSize = 0
+
+        Dim btnBlock As New Button() With {
+            .Text = "Block",
+            .Font = New Font("Segoe UI", 11, FontStyle.Bold),
+            .BackColor = Color.FromArgb(255, 71, 87),
+            .ForeColor = Color.White,
+            .FlatStyle = FlatStyle.Flat,
+            .Size = New Size(btnW, btnH),
+            .Location = New Point(startX + btnW + gap, btnY),
+            .Cursor = Cursors.Hand,
+            .DialogResult = DialogResult.No
+        }
+        btnBlock.FlatAppearance.BorderSize = 0
+
+        Dim btnNotNow As New Button() With {
+            .Text = "Not Now",
+            .Font = New Font("Segoe UI", 11, FontStyle.Regular),
+            .BackColor = Color.FromArgb(237, 237, 237),
+            .ForeColor = Color.FromArgb(80, 80, 80),
+            .FlatStyle = FlatStyle.Flat,
+            .Size = New Size(btnW, btnH),
+            .Location = New Point(startX + (btnW + gap) * 2, btnY),
+            .Cursor = Cursors.Hand,
+            .DialogResult = DialogResult.Cancel
+        }
+        btnNotNow.FlatAppearance.BorderSize = 0
+
+        dlg.Controls.Add(header)
+        dlg.Controls.Add(lblMessage)
+        dlg.Controls.Add(btnAllow)
+        dlg.Controls.Add(btnBlock)
+        dlg.Controls.Add(btnNotNow)
+        dlg.AcceptButton = btnAllow
+        dlg.CancelButton = btnNotNow
+
+        Utilities.EnableEscCloseModal(dlg)
+        Return dlg.ShowDialog(Me)
+    End Function
 End Class
 
 Friend Class EdgeHitHook

@@ -260,6 +260,36 @@ Public Class TerminalManager
         Return _currentTerminalId
     End Function
 
+    ' The current PC's display name. Prefers the administrator-editable
+    ' TerminalName from the shared Terminals table (so renames in the PC
+    ' Terminals page show up without a restart), then the cached identity,
+    ' then the Windows hostname as a last resort.
+    Public Shared Function GetCurrentTerminalName() As String
+        Try
+            If Not String.IsNullOrWhiteSpace(_currentTerminalId) Then
+                TerminalMigration.EnsureTable()
+                Using conn As DbConnection = DbProvider.CreateConnection(Connection.GetConnectionString())
+                    conn.Open()
+                    Using cmd As DbCommand = conn.CreateCommand()
+                        cmd.CommandText = "SELECT TerminalName FROM Terminals WHERE TerminalID = @id"
+                        cmd.Parameters.Add(New SqliteParameter("@id", _currentTerminalId))
+                        Dim value As Object = cmd.ExecuteScalar()
+                        If value IsNot Nothing AndAlso Not IsDBNull(value) AndAlso
+                           Not String.IsNullOrWhiteSpace(Convert.ToString(value)) Then
+                            _currentTerminalName = Convert.ToString(value)
+                            Return _currentTerminalName
+                        End If
+                    End Using
+                End Using
+            End If
+        Catch ex As Exception
+            Console.WriteLine($"TerminalManager.GetCurrentTerminalName error: {ex.Message}")
+        End Try
+
+        If Not String.IsNullOrWhiteSpace(_currentTerminalName) Then Return _currentTerminalName
+        Return Environment.MachineName
+    End Function
+
     Public Shared Function GetAllTerminals() As List(Of TerminalInfo)
         Dim list As New List(Of TerminalInfo)()
         Try
