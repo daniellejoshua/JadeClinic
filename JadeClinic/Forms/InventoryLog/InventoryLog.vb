@@ -1,4 +1,4 @@
-Imports Microsoft.Data.Sqlite
+Imports Npgsql
 Imports System.Data.Common
 Imports System.Data
 Imports System.IO
@@ -598,12 +598,12 @@ Public Class InventoryLog
                 Try
                     Dim connStr = Connection.GetConnectionString()
                     If Not String.IsNullOrEmpty(connStr) Then
-                        Using conn As New SqliteConnection(connStr)
+                        Using conn As New NpgsqlConnection(connStr)
                             conn.Open()
                             Dim q As String = "SELECT p.Category, il.BatchNumber, il.ExpiryDate " &
                                           "FROM InventoryLog il LEFT JOIN Products p ON il.ProductID = p.ProductID " &
                                           "WHERE il.LogID = @LogID"
-                            Using cmd As New SqliteCommand(q, conn)
+                            Using cmd As New NpgsqlCommand(q, conn)
                                 cmd.Parameters.AddWithValue("@LogID", Convert.ToInt32(logId))
                                 Using r As DbDataReader = cmd.ExecuteReader()
                                     If r.Read() Then
@@ -788,21 +788,21 @@ Public Class InventoryLog
              "LEFT JOIN Suppliers s ON il.SupplierID = s.SupplierID"
 
         Dim whereClauses As New List(Of String)()
-        Dim parameters As New List(Of SqlParameter)()
+        Dim parameters As New List(Of NpgsqlParameter)()
 
         If filterDate.HasValue Then
-            whereClauses.Add("DATE(il.CreatedAt) = @FilterDate")
-            parameters.Add(New SqlParameter("@FilterDate", filterDate.Value.Date.ToString("yyyy-MM-dd")))
+            whereClauses.Add("DATE(il.CreatedAt) = @FilterDate::date")
+            parameters.Add(New NpgsqlParameter("@FilterDate", filterDate.Value.Date.ToString("yyyy-MM-dd")))
         End If
 
         If Not String.IsNullOrWhiteSpace(sortOrder) AndAlso sortOrder <> "All Types" Then
             whereClauses.Add("il.TransactionType = @TransType")
-            parameters.Add(New SqlParameter("@TransType", sortOrder))
+            parameters.Add(New NpgsqlParameter("@TransType", sortOrder))
         End If
 
         If Not String.IsNullOrWhiteSpace(searchTerm) Then
-            whereClauses.Add("(CAST(il.LogID AS TEXT) LIKE @Search OR IFNULL(il.Reference, '') LIKE @Search OR IFNULL(p.ProductName, '') LIKE @Search)")
-            parameters.Add(New SqlParameter("@Search", "%" & searchTerm & "%"))
+            whereClauses.Add("(CAST(il.LogID AS TEXT) LIKE @Search OR COALESCE(il.Reference, '') LIKE @Search OR COALESCE(p.ProductName, '') LIKE @Search)")
+            parameters.Add(New NpgsqlParameter("@Search", "%" & searchTerm & "%"))
         End If
 
         If whereClauses.Count > 0 Then
@@ -821,11 +821,11 @@ Public Class InventoryLog
                 Return inventoryLogs
             End If
 
-            Using conn As New SqliteConnection(connStr)
+            Using conn As New NpgsqlConnection(connStr)
                 conn.Open()
-                Using cmd As New SqliteCommand(query, conn)
+                Using cmd As New NpgsqlCommand(query, conn)
                     ' Add parameters
-                    Dim dbParams = DbProvider.ConvertSqlParameters(parameters.ToArray())
+                    Dim dbParams = DbProvider.ConvertNpgsqlParameters(parameters.ToArray())
                     For Each param In dbParams
                         cmd.Parameters.Add(param)
                     Next
@@ -869,21 +869,21 @@ Public Class InventoryLog
                                   "LEFT JOIN Suppliers s ON il.SupplierID = s.SupplierID"
 
             Dim whereClauses As New List(Of String)()
-            Dim parameters As New List(Of SqlParameter)()
+            Dim parameters As New List(Of NpgsqlParameter)()
 
             If filterDate.HasValue Then
-                whereClauses.Add("DATE(il.CreatedAt) = @FilterDate")
-                parameters.Add(New SqlParameter("@FilterDate", filterDate.Value.Date.ToString("yyyy-MM-dd")))
+                whereClauses.Add("DATE(il.CreatedAt) = @FilterDate::date")
+                parameters.Add(New NpgsqlParameter("@FilterDate", filterDate.Value.Date.ToString("yyyy-MM-dd")))
             End If
 
             If Not String.IsNullOrWhiteSpace(sortOrder) AndAlso sortOrder <> "All Types" Then
                 whereClauses.Add("il.TransactionType = @TransType")
-                parameters.Add(New SqlParameter("@TransType", sortOrder))
+                parameters.Add(New NpgsqlParameter("@TransType", sortOrder))
             End If
 
             If Not String.IsNullOrWhiteSpace(searchTerm) Then
-                whereClauses.Add("(CAST(il.LogID AS TEXT) LIKE @Search OR IFNULL(il.Reference, '') LIKE @Search OR IFNULL(p.ProductName, '') LIKE @Search)")
-                parameters.Add(New SqlParameter("@Search", "%" & searchTerm & "%"))
+                whereClauses.Add("(CAST(il.LogID AS TEXT) LIKE @Search OR COALESCE(il.Reference, '') LIKE @Search OR COALESCE(p.ProductName, '') LIKE @Search)")
+                parameters.Add(New NpgsqlParameter("@Search", "%" & searchTerm & "%"))
             End If
 
             If whereClauses.Count > 0 Then

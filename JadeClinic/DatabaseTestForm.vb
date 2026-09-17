@@ -1,4 +1,4 @@
-Imports Microsoft.Data.Sqlite
+﻿Imports Npgsql
 Imports System.Data.Common
 
 Public Class DatabaseTestForm
@@ -69,11 +69,11 @@ Public Class DatabaseTestForm
             ' Test 5: Check Tables
             txtResults.AppendText("5. Checking Database Tables..." & vbCrLf)
             Try
-                Using conn As New SqliteConnection(Connection.GetConnectionString())
+                Using conn As New NpgsqlConnection(Connection.GetConnectionString())
                     conn.Open()
 
                     Dim query As String = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE' ORDER BY TABLE_NAME"
-                    Using cmd As New SqliteCommand(query, conn)
+                    Using cmd As New NpgsqlCommand(query, conn)
                         Using reader As DbDataReader = cmd.ExecuteReader()
                             Dim tableCount As Integer = 0
                             While reader.Read()

@@ -39,7 +39,7 @@ Public Class EmployeeCodeMigration
                 ' Backfill any rows still missing an employee code.
                 Using cmd As DbCommand = conn.CreateCommand()
                     cmd.CommandText =
-                        "UPDATE Users SET EmployeeCode = printf('%d%s', UserID, strftime('%Y%m%d%H%M%S', CreatedAt)) " &
+                        "UPDATE Users SET EmployeeCode = UserID::TEXT || to_char((CreatedAt AT TIME ZONE 'UTC'), 'YYYYMMDDHH24MISS') " &
                         "WHERE EmployeeCode IS NULL OR Trim(EmployeeCode) = ''"
                     cmd.ExecuteNonQuery()
                 End Using

@@ -1,4 +1,4 @@
-Imports System.Data.Common
+﻿Imports System.Data.Common
 Imports System.IO
 Imports System.Text.RegularExpressions
 Imports System.Security.Cryptography
@@ -6,6 +6,8 @@ Imports System.Text
 Imports System.Threading.Tasks
 Imports System.Configuration
 Imports BCrypt.Net
+
+Imports Npgsql
 
 Public Class frmLoginvb
     ' Shared variables to store logged-in user information
@@ -1147,7 +1149,7 @@ Public Class frmLoginvb
             If String.IsNullOrWhiteSpace(username) Then Return
 
             Dim query As String = "SELECT UserID, FullName FROM Users WHERE Username = @Username AND IsActive = 1"
-            Dim parameters As SqlParameter() = {New SqlParameter("@Username", username)}
+            Dim parameters As NpgsqlParameter() = {New NpgsqlParameter("@Username", username)}
 
             Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters)
                 If reader.Read() Then
@@ -1597,7 +1599,7 @@ Public Class frmLoginvb
             Console.WriteLine($"Looking up user ID: {userId}")
 
             Dim query As String = "SELECT Username, pin, IsActive, UserRole, FullName, EmployeeCode FROM Users WHERE UserID = @UserID"
-            Dim parameters As SqlParameter() = {New SqlParameter("@UserID", userId)}
+            Dim parameters As NpgsqlParameter() = {New NpgsqlParameter("@UserID", userId)}
 
             Dim username As String = Nothing
             Dim pinValue As String = Nothing
@@ -1711,8 +1713,8 @@ Public Class frmLoginvb
             FROM Users 
             WHERE Username = @Username"
 
-            Dim parameters As SqlParameter() = {
-            New SqlParameter("@Username", txtUsername.Text.Trim())
+            Dim parameters As NpgsqlParameter() = {
+            New NpgsqlParameter("@Username", txtUsername.Text.Trim())
         }
 
             Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters)
@@ -1817,9 +1819,9 @@ Public Class frmLoginvb
         Try
             Dim newBCryptHash As String = HashPassword(plainPassword)
             Dim updateQuery As String = "UPDATE Users SET PasswordHash = @NewHash WHERE Username = @Username"
-            Dim updateParams As SqlParameter() = {
-                New SqlParameter("@NewHash", newBCryptHash),
-                New SqlParameter("@Username", username)
+            Dim updateParams As NpgsqlParameter() = {
+                New NpgsqlParameter("@NewHash", newBCryptHash),
+                New NpgsqlParameter("@Username", username)
             }
             Utilities.ExecuteNonQuery(updateQuery, updateParams)
             Console.WriteLine($"Successfully upgraded password for user: {username} to BCrypt")
@@ -2278,7 +2280,7 @@ Public Class frmLoginvb
             Dim query As String = "SELECT Passkeys FROM Users WHERE Username = @Username AND IsActive = 1"
             Dim stored As New List(Of String)()
 
-            Using reader As DbDataReader = Utilities.ExecuteReader(query, {New SqlParameter("@Username", targetUsername)})
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, {New NpgsqlParameter("@Username", targetUsername)})
                 If reader.Read() Then
                     If IsDBNull(reader("Passkeys")) Then Return False
                     Dim raw As String = reader("Passkeys").ToString()
@@ -2311,8 +2313,8 @@ Public Class frmLoginvb
         Try
             Dim q As String = "UPDATE Users SET pin = @Pin WHERE Username = @Username"
             Dim rows = Utilities.ExecuteNonQuery(q, {
-                New SqlParameter("@Pin", Convert.ToInt32(newPin)),
-                New SqlParameter("@Username", targetUsername)
+                New NpgsqlParameter("@Pin", Convert.ToInt32(newPin)),
+                New NpgsqlParameter("@Username", targetUsername)
             })
             Return rows > 0
         Catch

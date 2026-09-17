@@ -154,16 +154,17 @@ AddHandler btn.MouseEnter, Sub()
             Dim isManagerOrAbove As Boolean = currentRole = "MANAGER" OrElse currentRole = "ADMIN" OrElse currentRole = "ADMINISTRATOR"
             Dim isAdmin As Boolean = currentRole = "ADMIN" OrElse currentRole = "ADMINISTRATOR"
 
-            createBtn("🛒 POS / Sales", GetType(Sales), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
-                                                                                                                  NavigateToFormImpl(owner, GetType(Sales))
-                                                                                                              End Sub)
-            buttonIndex += 1
-
             If Not isStaff Then
                 createBtn("🏠 Dashboard", GetType(Dashboard), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
                                                                                                                       NavigateToFormImpl(owner, GetType(Dashboard))
                                                                                                                   End Sub)
                 buttonIndex += 1
+            End If
+
+            createBtn("🛒 POS / Sales", GetType(Sales), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
+                                                                                                                  NavigateToFormImpl(owner, GetType(Sales))
+                                                                                                              End Sub)
+            buttonIndex += 1
 
                 ' Inventory
                 createBtn("📦 Inventory", GetType(Inventory), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
@@ -204,7 +205,6 @@ AddHandler btn.MouseEnter, Sub()
                                                                                                                       End Sub)
                     buttonIndex += 1
                 End If
-            End If
 
         Catch ex As Exception
             Console.WriteLine($"NavigationBuilder error: {ex.Message}")

@@ -6,6 +6,8 @@ Imports QuestPDF.Fluent
 Imports QuestPDF.Helpers
 Imports QuestPDF.Infrastructure
 
+Imports Npgsql
+
 Public Class AuditExporter
 
     Shared Sub New()
@@ -22,11 +24,11 @@ Public Class AuditExporter
                 Directory.CreateDirectory(reportsPath)
             End If
 
-            Dim query As String = "SELECT a.AuditID, IFNULL(u.Username, '') AS Username, IFNULL(a.Action, '') AS Action, IFNULL(a.Details, '') AS Details, a.ActionTime " &
+            Dim query As String = "SELECT a.AuditID, COALESCE(u.Username, '') AS Username, COALESCE(a.Action, '') AS Action, COALESCE(a.Details, '') AS Details, a.ActionTime " &
                                   "FROM AuditLog a LEFT JOIN Users u ON a.UserID = u.UserID"
 
             Dim whereClauses As New List(Of String)()
-            Dim parameters As New List(Of SqlParameter)()
+            Dim parameters As New List(Of NpgsqlParameter)()
 
             Dim ft As String = If(filterType, "").Trim().ToLowerInvariant()
             Select Case ft
@@ -55,13 +57,13 @@ Public Class AuditExporter
             End Select
 
             If filterDate.HasValue Then
-                whereClauses.Add("DATE(a.ActionTime) = @FilterDate")
-                parameters.Add(New SqlParameter("@FilterDate", System.Data.SqlDbType.Date) With {.Value = filterDate.Value.Date})
+                whereClauses.Add("DATE(a.ActionTime) = @FilterDate::date")
+                parameters.Add(New NpgsqlParameter("@FilterDate", System.Data.SqlDbType.Date) With {.Value = filterDate.Value.Date})
             End If
 
             If Not String.IsNullOrWhiteSpace(selectedUser) AndAlso Not selectedUser.Equals("All Accounts", StringComparison.OrdinalIgnoreCase) Then
                 whereClauses.Add("u.Username = @Username")
-                parameters.Add(New SqlParameter("@Username", selectedUser.Trim()))
+                parameters.Add(New NpgsqlParameter("@Username", selectedUser.Trim()))
             End If
 
             If whereClauses.Count > 0 Then

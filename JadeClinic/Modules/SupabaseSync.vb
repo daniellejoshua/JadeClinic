@@ -1,9 +1,8 @@
-Imports System.Configuration
+﻿Imports System.Configuration
 Imports System.Globalization
 Imports System.IO
 Imports System.Collections.Generic
 Imports System.Threading.Tasks
-Imports Microsoft.Data.Sqlite
 Imports Npgsql
 Imports NpgsqlTypes
 Imports Amazon.S3
@@ -439,7 +438,7 @@ Public Module SupabaseSync
                 logId = Convert.ToInt32(logCmd.ExecuteScalar())
             End Using
 
-            Using local As New SqliteConnection(localConnStr)
+            Using local As New NpgsqlConnection(localConnStr)
                 local.Open()
 
                 ' Local audit trail for this run
@@ -583,14 +582,14 @@ Public Module SupabaseSync
     ' ------------------------------------------------------------
     ' Table syncs
     ' ------------------------------------------------------------
-    Private Function SyncSuppliers(local As SqliteConnection, pg As NpgsqlConnection,
+    Private Function SyncSuppliers(local As NpgsqlConnection, pg As NpgsqlConnection,
                                    idMap As Dictionary(Of Integer, Integer),
                                    progress As Action(Of String)) As Integer
         Dim count As Integer = 0
         Dim chunk As New List(Of List(Of SyncVal))()
-        Using cmd As New SqliteCommand(
+        Using cmd As New NpgsqlCommand(
             "SELECT SupplierID, SupplierCode, SupplierName, ContactPerson, Phone, Email, IsActive FROM Suppliers", local)
-            Using reader As SqliteDataReader = cmd.ExecuteReader()
+            Using reader As NpgsqlDataReader = cmd.ExecuteReader()
                 While reader.Read()
                     Dim vals As New List(Of SyncVal)()
                     vals.Add(New SyncVal(Convert.ToInt32(reader("SupplierID")), NpgsqlDbType.Integer))
@@ -624,15 +623,15 @@ Public Module SupabaseSync
         Return count
     End Function
 
-    Private Function SyncUsers(local As SqliteConnection, pg As NpgsqlConnection,
+    Private Function SyncUsers(local As NpgsqlConnection, pg As NpgsqlConnection,
                                idMap As Dictionary(Of Integer, Integer),
                                progress As Action(Of String)) As Integer
         Dim count As Integer = 0
         Dim chunk As New List(Of List(Of SyncVal))()
         ' IMPORTANT: PasswordHash, pin, QRCode, Passkeys are intentionally NOT synced.
-        Using cmd As New SqliteCommand(
+        Using cmd As New NpgsqlCommand(
             "SELECT UserID, Username, FullName, UserRole, IsActive, Email, Phone, PhotoPath, EmployeeCode, CreatedAt, UpdatedAt FROM Users", local)
-            Using reader As SqliteDataReader = cmd.ExecuteReader()
+            Using reader As NpgsqlDataReader = cmd.ExecuteReader()
                 While reader.Read()
                     Dim localId As Integer = Convert.ToInt32(reader("UserID"))
 
@@ -687,13 +686,13 @@ Public Module SupabaseSync
     ' PasswordHash is stored ONLY in auth.users.encrypted_password — never in
     ' the synced public.users table. OAuth links to the same account by email.
     ' ------------------------------------------------------------
-    Private Function SyncAuthUsers(local As SqliteConnection, pg As NpgsqlConnection) As Integer
+    Private Function SyncAuthUsers(local As NpgsqlConnection, pg As NpgsqlConnection) As Integer
         Dim count As Integer = 0
         Dim activeLocalIds As New HashSet(Of Integer)()
 
-        Using cmd As New SqliteCommand(
+        Using cmd As New NpgsqlCommand(
             "SELECT UserID, Username, FullName, UserRole, IsActive, Email, PasswordHash FROM Users", local)
-            Using reader As SqliteDataReader = cmd.ExecuteReader()
+            Using reader As NpgsqlDataReader = cmd.ExecuteReader()
                 While reader.Read()
                     Dim role As String = If(IsDBNull(reader("UserRole")), "Staff", reader("UserRole").ToString())
                     If Not role.Equals("Admin", StringComparison.OrdinalIgnoreCase) Then Continue While
@@ -874,16 +873,16 @@ Public Module SupabaseSync
         Return """" & s & """"
     End Function
 
-    Private Function SyncProducts(local As SqliteConnection, pg As NpgsqlConnection,
+    Private Function SyncProducts(local As NpgsqlConnection, pg As NpgsqlConnection,
                                   supplierIdMap As Dictionary(Of Integer, Integer),
                                   idMap As Dictionary(Of Integer, Integer),
                                   progress As Action(Of String)) As Integer
         Dim count As Integer = 0
         Dim chunk As New List(Of List(Of SyncVal))()
-        Using cmd As New SqliteCommand(
+        Using cmd As New NpgsqlCommand(
             "SELECT ProductID, ProductCode, ProductName, Category, Unit, CurrentStock, ReorderLevel, CostPrice, " &
             "SellingPrice, WholesalePrice, SupplierID, IsActive, Created, UpdatedAt FROM Products", local)
-            Using reader As SqliteDataReader = cmd.ExecuteReader()
+            Using reader As NpgsqlDataReader = cmd.ExecuteReader()
                 While reader.Read()
                     Dim localId As Integer = Convert.ToInt32(reader("ProductID"))
 
@@ -951,7 +950,7 @@ Public Module SupabaseSync
         Return count
     End Function
 
-    Private Function SyncSales(local As SqliteConnection, pg As NpgsqlConnection,
+    Private Function SyncSales(local As NpgsqlConnection, pg As NpgsqlConnection,
                                userIdMap As Dictionary(Of Integer, Integer),
                                idMap As Dictionary(Of Integer, Integer),
                                progress As Action(Of String),
@@ -966,11 +965,11 @@ Public Module SupabaseSync
             lastSyncedId = GetCloudMaxLocalId(pg, "sales")
             selectSql &= " WHERE SaleID > @lastSyncedId"
         End If
-        Using cmd As New SqliteCommand(selectSql, local)
+        Using cmd As New NpgsqlCommand(selectSql, local)
             If Not full Then
                 cmd.Parameters.AddWithValue("@lastSyncedId", lastSyncedId)
             End If
-            Using reader As SqliteDataReader = cmd.ExecuteReader()
+            Using reader As NpgsqlDataReader = cmd.ExecuteReader()
                 While reader.Read()
                     Dim localId As Integer = Convert.ToInt32(reader("SaleID"))
 
@@ -1026,7 +1025,7 @@ Public Module SupabaseSync
         Return count
     End Function
 
-    Private Function SyncSaleItems(local As SqliteConnection, pg As NpgsqlConnection,
+    Private Function SyncSaleItems(local As NpgsqlConnection, pg As NpgsqlConnection,
                                    saleIdMap As Dictionary(Of Integer, Integer),
                                    productIdMap As Dictionary(Of Integer, Integer),
                                    progress As Action(Of String),
@@ -1040,11 +1039,11 @@ Public Module SupabaseSync
             lastSyncedId = GetCloudMaxLocalId(pg, "sale_items")
             selectSql &= " WHERE SaleItemID > @lastSyncedId"
         End If
-        Using cmd As New SqliteCommand(selectSql, local)
+        Using cmd As New NpgsqlCommand(selectSql, local)
             If Not full Then
                 cmd.Parameters.AddWithValue("@lastSyncedId", lastSyncedId)
             End If
-            Using reader As SqliteDataReader = cmd.ExecuteReader()
+            Using reader As NpgsqlDataReader = cmd.ExecuteReader()
                 While reader.Read()
                     Dim localId As Integer = Convert.ToInt32(reader("SaleItemID"))
 
@@ -1094,7 +1093,7 @@ Public Module SupabaseSync
         Return count
     End Function
 
-    Private Function SyncInventoryLogs(local As SqliteConnection, pg As NpgsqlConnection,
+    Private Function SyncInventoryLogs(local As NpgsqlConnection, pg As NpgsqlConnection,
                                        productIdMap As Dictionary(Of Integer, Integer),
                                        supplierIdMap As Dictionary(Of Integer, Integer),
                                        userIdMap As Dictionary(Of Integer, Integer),
@@ -1110,11 +1109,11 @@ Public Module SupabaseSync
             lastSyncedId = GetCloudMaxLocalId(pg, "inventory_logs")
             selectSql &= " WHERE LogID > @lastSyncedId"
         End If
-        Using cmd As New SqliteCommand(selectSql, local)
+        Using cmd As New NpgsqlCommand(selectSql, local)
             If Not full Then
                 cmd.Parameters.AddWithValue("@lastSyncedId", lastSyncedId)
             End If
-            Using reader As SqliteDataReader = cmd.ExecuteReader()
+            Using reader As NpgsqlDataReader = cmd.ExecuteReader()
                 While reader.Read()
                     Dim localId As Integer = Convert.ToInt32(reader("LogID"))
 
@@ -1152,7 +1151,7 @@ Public Module SupabaseSync
         Return count
     End Function
 
-    Private Function SyncAuditLogs(local As SqliteConnection, pg As NpgsqlConnection,
+    Private Function SyncAuditLogs(local As NpgsqlConnection, pg As NpgsqlConnection,
                                    userIdMap As Dictionary(Of Integer, Integer),
                                    progress As Action(Of String),
                                    full As Boolean) As Integer
@@ -1164,11 +1163,11 @@ Public Module SupabaseSync
             lastSyncedId = GetCloudMaxLocalId(pg, "audit_logs")
             selectSql &= " WHERE AuditID > @lastSyncedId"
         End If
-        Using cmd As New SqliteCommand(selectSql, local)
+        Using cmd As New NpgsqlCommand(selectSql, local)
             If Not full Then
                 cmd.Parameters.AddWithValue("@lastSyncedId", lastSyncedId)
             End If
-            Using reader As SqliteDataReader = cmd.ExecuteReader()
+            Using reader As NpgsqlDataReader = cmd.ExecuteReader()
                 While reader.Read()
                     Dim localId As Integer = Convert.ToInt32(reader("AuditID"))
 
@@ -1198,16 +1197,16 @@ Public Module SupabaseSync
         Return count
     End Function
 
-    Private Function SyncCompanySettings(local As SqliteConnection, pg As NpgsqlConnection,
+    Private Function SyncCompanySettings(local As NpgsqlConnection, pg As NpgsqlConnection,
                                          progress As Action(Of String)) As Integer
         Dim count As Integer = 0
         Dim chunk As New List(Of List(Of SyncVal))()
         ' Only the active settings row is synced (SettingID becomes local_id)
-        Using cmd As New SqliteCommand(
+        Using cmd As New NpgsqlCommand(
             "SELECT SettingID, CompanyName, TIN, Address, Phone, Email, Website, LogoPath, BIRAuthNumber, PTUNumber, " &
             "ValidityYears, ReceiptFooter, CompanyHours, IsActive, DateCreated, LastModified " &
             "FROM CompanySettings WHERE IsActive = 1 ORDER BY DateCreated DESC LIMIT 1", local)
-            Using reader As SqliteDataReader = cmd.ExecuteReader()
+            Using reader As NpgsqlDataReader = cmd.ExecuteReader()
                 While reader.Read()
                     Dim localId As Integer = Convert.ToInt32(reader("SettingID"))
 
@@ -1326,7 +1325,7 @@ Public Module SupabaseSync
     ' PC (holding the DB) writes to the cloud. Runs silently on every sync.
     ' Order is child-first to satisfy FK constraints.
     ' ------------------------------------------------------------
-    Private Function ReconcileCloudToLocal(local As SqliteConnection, pg As NpgsqlConnection,
+    Private Function ReconcileCloudToLocal(local As NpgsqlConnection, pg As NpgsqlConnection,
                                            progress As Action(Of String)) As Integer
         Dim total As Integer = 0
         ReconcileSimpleTable(local, pg, "sale_items", "SaleItemID", progress, total, Nothing)
@@ -1343,7 +1342,7 @@ Public Module SupabaseSync
         Return total
     End Function
 
-    Private Sub ReconcileSimpleTable(local As SqliteConnection, pg As NpgsqlConnection,
+    Private Sub ReconcileSimpleTable(local As NpgsqlConnection, pg As NpgsqlConnection,
                                      cloudTable As String, localIdColumn As String,
                                      progress As Action(Of String), ByRef total As Integer,
                                      guardRefs As String())
@@ -1358,8 +1357,8 @@ Public Module SupabaseSync
         If cloudIds.Count = 0 Then Return
 
         Dim localIds As New HashSet(Of Integer)()
-        Using cmd As New SqliteCommand("SELECT " & localIdColumn & " FROM " & GetLocalTableName(cloudTable), local)
-            Using rdr As SqliteDataReader = cmd.ExecuteReader()
+        Using cmd As New NpgsqlCommand("SELECT " & localIdColumn & " FROM " & GetLocalTableName(cloudTable), local)
+            Using rdr As NpgsqlDataReader = cmd.ExecuteReader()
                 While rdr.Read()
                     If Not rdr.IsDBNull(0) Then localIds.Add(Convert.ToInt32(rdr(0)))
                 End While
@@ -1394,9 +1393,9 @@ Public Module SupabaseSync
         ReportProgress(progress, $"{cloudTable}: reconcile - deleted {actuallyDeleted} row(s) removed locally")
     End Sub
 
-    Private Sub ReconcileCompanySettings(local As SqliteConnection, pg As NpgsqlConnection, ByRef total As Integer)
+    Private Sub ReconcileCompanySettings(local As NpgsqlConnection, pg As NpgsqlConnection, ByRef total As Integer)
         Dim activeId As Integer = -1
-        Using cmd As New SqliteCommand(
+        Using cmd As New NpgsqlCommand(
             "SELECT SettingID FROM CompanySettings WHERE IsActive = 1 ORDER BY DateCreated DESC LIMIT 1", local)
             Dim res As Object = cmd.ExecuteScalar()
             If res IsNot Nothing AndAlso Not IsDBNull(res) Then activeId = Convert.ToInt32(res)
@@ -1543,9 +1542,9 @@ Public Module SupabaseSync
         End Try
     End Function
 
-    Private Function GetFirstProductImagePath(local As SqliteConnection, productId As Integer) As String
+    Private Function GetFirstProductImagePath(local As NpgsqlConnection, productId As Integer) As String
         Try
-            Using cmd As New SqliteCommand(
+            Using cmd As New NpgsqlCommand(
                 "SELECT pi.FilePath FROM ProductImages pi " &
                 "INNER JOIN ProductImageMapping pim ON pim.ImageID = pi.ImageID " &
                 "WHERE pim.ProductID = @pid ORDER BY pi.ImageID LIMIT 1", local)
@@ -1560,7 +1559,7 @@ Public Module SupabaseSync
         End Try
     End Function
 
-    Private Function ResolveMapId(reader As SqliteDataReader, column As String,
+    Private Function ResolveMapId(reader As NpgsqlDataReader, column As String,
                                   idMap As Dictionary(Of Integer, Integer)) As Object
         Dim raw = GetValue(reader, column)
         If IsDBNull(raw) Then
@@ -1592,7 +1591,7 @@ Public Module SupabaseSync
         End If
     End Sub
 
-    Private Function GetValue(reader As SqliteDataReader, name As String) As Object
+    Private Function GetValue(reader As NpgsqlDataReader, name As String) As Object
         Try
             If reader.GetOrdinal(name) >= 0 Then
                 Return reader(name)
@@ -1602,7 +1601,7 @@ Public Module SupabaseSync
         Return DBNull.Value
     End Function
 
-    Private Function GetStr(reader As SqliteDataReader, name As String) As Object
+    Private Function GetStr(reader As NpgsqlDataReader, name As String) As Object
         Dim v As Object = GetValue(reader, name)
         If v Is Nothing OrElse IsDBNull(v) Then
             Return DBNull.Value
@@ -1614,7 +1613,7 @@ Public Module SupabaseSync
         Return CObj(s)
     End Function
 
-    Private Function GetIntDb(reader As SqliteDataReader, name As String) As Object
+    Private Function GetIntDb(reader As NpgsqlDataReader, name As String) As Object
         Dim v As Object = GetValue(reader, name)
         If v Is Nothing OrElse IsDBNull(v) Then
             Return DBNull.Value
@@ -1622,7 +1621,7 @@ Public Module SupabaseSync
         Return CObj(Convert.ToInt32(v))
     End Function
 
-    Private Function GetDecimalDb(reader As SqliteDataReader, name As String) As Object
+    Private Function GetDecimalDb(reader As NpgsqlDataReader, name As String) As Object
         Dim v As Object = GetValue(reader, name)
         If v Is Nothing OrElse IsDBNull(v) Then
             Return DBNull.Value
@@ -1630,7 +1629,7 @@ Public Module SupabaseSync
         Return CObj(Convert.ToDecimal(v))
     End Function
 
-    Private Function GetBoolDb(reader As SqliteDataReader, name As String) As Object
+    Private Function GetBoolDb(reader As NpgsqlDataReader, name As String) As Object
         Dim v As Object = GetValue(reader, name)
         If v Is Nothing OrElse IsDBNull(v) Then
             Return DBNull.Value
@@ -1638,7 +1637,7 @@ Public Module SupabaseSync
         Return CObj(Convert.ToInt32(v) <> 0)
     End Function
 
-    Private Function GetDateDb(reader As SqliteDataReader, name As String) As Object
+    Private Function GetDateDb(reader As NpgsqlDataReader, name As String) As Object
         Dim v As Object = GetValue(reader, name)
         If v Is Nothing OrElse IsDBNull(v) Then
             Return DBNull.Value

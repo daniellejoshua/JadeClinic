@@ -1,12 +1,14 @@
-Imports System.Drawing
+﻿Imports System.Drawing
 Imports System.Drawing.Drawing2D
 Imports System.Windows.Forms
 Imports System.Linq
 Imports System.Threading.Tasks
 Imports Guna.UI2.WinForms
-Imports Microsoft.Data.Sqlite
+Imports Npgsql
 Imports System.Data.Common
 Imports System.IO
+Imports System.Diagnostics
+Imports System.Configuration
 
 Public Class Sys
     ' Navigation flag to prevent exit confirmation on programmatic close
@@ -484,7 +486,7 @@ Public Class Sys
     Private Sub PerformDatabaseBackup()
         Try
             Dim saveDialog As New SaveFileDialog()
-            saveDialog.Filter = "Backup files (*.bak)|*.bak|All files (*.*)|*.*"
+            saveDialog.Filter = "PostgreSQL backup files (*.bak)|*.bak|All files (*.*)|*.*"
             saveDialog.Title = "Save Database Backup"
             saveDialog.FileName = $"JadeDentalSupply_Backup_{DateTime.Now:yyyyMMdd_HHmmss}.bak"
 
@@ -499,14 +501,38 @@ Public Class Sys
                     Directory.CreateDirectory(backupDir)
                 End If
 
-                Dim connBuilder As New SqliteConnectionStringBuilder(Connection.GetConnectionString())
-                Dim dbPath As String = connBuilder.DataSource
-                If Not String.IsNullOrWhiteSpace(dbPath) AndAlso File.Exists(dbPath) Then
-                    File.Copy(dbPath, backupPath, overwrite:=True)
+                ' Use pg_dump for PostgreSQL backup
+                Dim host As String = ConfigurationManager.AppSettings("PgHost")
+                Dim port As String = ConfigurationManager.AppSettings("PgPort")
+                Dim db As String = ConfigurationManager.AppSettings("PgDatabase")
+                Dim user As String = ConfigurationManager.AppSettings("PgUser")
+                Dim password As String = ConfigurationManager.AppSettings("PgPassword")
+
+                Dim pgBin As String = "C:\Program Files\PostgreSQL\18\bin\pg_dump.exe"
+                If Not File.Exists(pgBin) Then pgBin = "pg_dump"
+
+                Dim psi As New ProcessStartInfo()
+                psi.FileName = pgBin
+                psi.Arguments = $"--host={host} --port={port} --username={user} --dbname={db} --format=custom --file=""{backupPath}"""
+                psi.UseShellExecute = False
+                psi.CreateNoWindow = True
+                psi.EnvironmentVariables("PGPASSWORD") = password
+
+                Dim success As Boolean = False
+                Try
+                    Using p As Process = Process.Start(psi)
+                        p.WaitForExit(120000)
+                        success = p.HasExited AndAlso p.ExitCode = 0
+                    End Using
+                Catch ex As Exception
+                    Console.WriteLine($"pg_dump failed: {ex.Message}")
+                End Try
+
+                If success Then
                     MessageBox.Show($"Database backup created successfully!{vbCrLf}Location: {backupPath}", "Backup Complete", MessageBoxButtons.OK, MessageBoxIcon.Information)
                     Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Database Backup", $"Database backed up to: {backupPath}")
                 Else
-                    MessageBox.Show("Database file not found.", "Backup Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                    MessageBox.Show("Backup failed. Check console for details.", "Backup Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
                 End If
             End If
         Catch ex As Exception
@@ -531,20 +557,44 @@ Public Class Sys
                         Throw New FileNotFoundException("Selected backup file was not found.")
                     End If
 
-                    Dim connBuilder As New SqliteConnectionStringBuilder(Connection.GetConnectionString())
-                    Dim dbPath As String = connBuilder.DataSource
-                    If Not String.IsNullOrWhiteSpace(dbPath) Then
-                        File.Copy(backupPath, dbPath, overwrite:=True)
-                    End If
+                    ' Use pg_restore for PostgreSQL restore
+                    Dim host As String = ConfigurationManager.AppSettings("PgHost")
+                    Dim port As String = ConfigurationManager.AppSettings("PgPort")
+                    Dim db As String = ConfigurationManager.AppSettings("PgDatabase")
+                    Dim user As String = ConfigurationManager.AppSettings("PgUser")
+                    Dim password As String = ConfigurationManager.AppSettings("PgPassword")
 
-                    MessageBox.Show("Database restored successfully! The application will now close.", "Restore Complete", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                    Dim pgBin As String = "C:\Program Files\PostgreSQL\18\bin\pg_restore.exe"
+                    If Not File.Exists(pgBin) Then pgBin = "pg_restore"
 
+                    Dim psi As New ProcessStartInfo()
+                    psi.FileName = pgBin
+                    psi.Arguments = $"--host={host} --port={port} --username={user} --dbname={db} --clean --if-exists --no-owner --no-privileges ""{backupPath}"""
+                    psi.UseShellExecute = False
+                    psi.CreateNoWindow = True
+                    psi.EnvironmentVariables("PGPASSWORD") = password
+
+                    Dim success As Boolean = False
                     Try
-                        Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Database Restore", $"Database restored from: {backupPath}")
-                    Catch
+                        Using p As Process = Process.Start(psi)
+                            p.WaitForExit(180000)
+                            success = p.HasExited AndAlso p.ExitCode = 0
+                        End Using
+                    Catch ex As Exception
+                        Console.WriteLine($"pg_restore failed: {ex.Message}")
                     End Try
 
-                    Application.Exit()
+                    If success Then
+                        MessageBox.Show("Database restored successfully! The application will now close.", "Restore Complete", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                        Try
+                            Utilities.LogAudit(frmLoginvb.LoggedInUsername, "Database Restore", $"Database restored from: {backupPath}")
+                        Catch
+                        End Try
+
+                        Application.Exit()
+                    Else
+                        MessageBox.Show("Restore failed. Check console for details.", "Restore Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                    End If
                 End If
             End If
         Catch ex As Exception

@@ -1,7 +1,9 @@
-Imports System.IO
+﻿Imports System.IO
 Imports System.IO.Compression
 Imports System.Linq
-Imports Microsoft.Data.Sqlite
+Imports System.Configuration
+Imports System.Diagnostics
+Imports Npgsql
 
 ' Automatic database backups:
 '   - Rolling snapshots on every sync (FIFO-keep 5, local + cloud gzip).
@@ -34,12 +36,12 @@ Public Module DatabaseSnapshot
     End Structure
 
     Public Function GetDbPath() As String
-        Dim builder As New SqliteConnectionStringBuilder(Connection.GetConnectionString())
-        Return builder.DataSource
+        Dim builder As New NpgsqlConnectionStringBuilder(Connection.GetConnectionString())
+        Return builder.Host
     End Function
 
     Private Function GetBackupRoot() As String
-        Return Path.Combine(Connection.GetDatabaseFolder(), "Backups")
+        Return Connection.GetBackupFolder()
     End Function
 
     Private Function GetSnapshotDir() As String
@@ -62,13 +64,17 @@ Public Module DatabaseSnapshot
         Try
             Dim dir As String = GetSnapshotDir()
             Dim dbPath As String = GetDbPath()
-            If String.IsNullOrWhiteSpace(dbPath) OrElse Not File.Exists(dbPath) Then Return outcome
 
             Dim latest As FileInfo = GetLatestSnapshot(dir)
             If latest IsNot Nothing AndAlso Not force Then
-                Dim dbInfo As New FileInfo(dbPath)
                 Dim recentlyMade As Boolean = (DateTime.Now - latest.LastWriteTime).TotalMinutes < 10
-                Dim unchanged As Boolean = dbInfo.LastWriteTimeUtc <= latest.LastWriteTimeUtc
+                Dim unchanged As Boolean = False
+                If Directory.Exists(dbPath) = False AndAlso File.Exists(dbPath) Then
+                    ' SQLite-style local file databases can be skipped when
+                    ' unchanged; PostgreSQL snapshots are purely time-based.
+                    Dim dbInfo As New FileInfo(dbPath)
+                    unchanged = dbInfo.LastWriteTimeUtc <= latest.LastWriteTimeUtc
+                End If
                 If recentlyMade OrElse unchanged Then Return outcome
             End If
 
@@ -241,33 +247,47 @@ Public Module DatabaseSnapshot
 
     ' Consistent copy via VACUUM INTO (busy-safe); falls back to File.Copy.
     ' Never throws - returns False when the database is busy.
+    ' Consistent copy via pg_dump (custom format), safe under concurrency.
+    ' Never throws - returns False when the dump fails.
     Private Function CreateConsistentCopy(dest As String) As Boolean
-        Dim dbPath As String = GetDbPath()
         Try
-            Using conn As New SqliteConnection(Connection.GetConnectionString())
+            Using conn As New NpgsqlConnection(Connection.GetConnectionString())
                 conn.Open()
-                Using cmd As New SqliteCommand("PRAGMA busy_timeout = 5000", conn)
-                    cmd.ExecuteNonQuery()
-                End Using
-                Using cmd As New SqliteCommand("VACUUM INTO '" & dest.Replace("'", "''") & "'", conn)
+                Using cmd As New NpgsqlCommand("SET application_name = 'jadeclinic snapshot'", conn)
                     cmd.ExecuteNonQuery()
                 End Using
             End Using
-            Return True
         Catch ex As Exception
-            Console.WriteLine($"VACUUM INTO failed ({ex.Message}) - falling back to file copy")
-            Try
-                If File.Exists(dest) Then File.Delete(dest)
-                File.Copy(dbPath, dest)
-                Return True
-            Catch ex2 As Exception
-                Console.WriteLine($"File copy fallback failed (database busy?): {ex2.Message}")
-                If File.Exists(dest) Then
-                    Try : File.Delete(dest) : Catch : End Try
-                End If
-                Return False
-            End Try
+            Console.WriteLine($"Snapshot connection check failed: {ex.Message}")
         End Try
+
+        Dim host As String = ConfigurationManager.AppSettings("PgHost")
+        Dim port As String = ConfigurationManager.AppSettings("PgPort")
+        Dim db As String = ConfigurationManager.AppSettings("PgDatabase")
+        Dim user As String = ConfigurationManager.AppSettings("PgUser")
+        Dim password As String = ConfigurationManager.AppSettings("PgPassword")
+
+        Dim pgBin As String = "C:\Program Files\PostgreSQL\18\bin\pg_dump.exe"
+        If Not File.Exists(pgBin) Then pgBin = "pg_dump"
+
+        Dim psi As New ProcessStartInfo()
+        psi.FileName = pgBin
+        psi.Arguments =
+            "--host=" & host & " --port=" & port & " --username=" & user &
+            " --dbname=" & db & " --format=custom --file=""" & dest & """"
+        psi.UseShellExecute = False
+        psi.CreateNoWindow = True
+        psi.EnvironmentVariables("PGPASSWORD") = password
+
+        Try
+            Using p As Process = Process.Start(psi)
+                p.WaitForExit(60000)
+                If p.HasExited Then Return p.ExitCode = 0
+            End Using
+        Catch ex As Exception
+            Console.WriteLine($"pg_dump failed ({ex.Message})")
+        End Try
+        Return False
     End Function
 
     Private Sub GzipFile(src As String, dest As String)

@@ -1,10 +1,12 @@
-Imports Guna.UI2.WinForms
+﻿Imports Guna.UI2.WinForms
 Imports System.Data.Common
 Imports System.IO
 Imports LiveChartsCore
 Imports LiveChartsCore.SkiaSharpView
 Imports LiveChartsCore.SkiaSharpView.WinForms
 Imports SkiaSharp
+' Extension method for creating rounded rectangles
+Imports Npgsql
 ' Extension method for creating rounded rectangles
 Public Module GraphicsExtensions
     <System.Runtime.CompilerServices.Extension()>
@@ -38,9 +40,14 @@ Public Class Dashboard
     Private legendPanel As Panel
     Private chartPanel As Panel
     Private lastProductCount As Integer = -1
+    ' Realtime stock polling: refreshes the stock KPI card and inventory status
+    ' chart when any PC sharing the database changes product stock.
+    Private WithEvents _stockRealtimeTimer As Timer
+    Private _stockTracker As New SyncMarkerTracker()
     ' Navigation flag to prevent exit confirmation on programmatic close
     Private isNavigating As Boolean = False
     Private salesChart As CartesianChart
+    Private _liveChartsConfigured As Boolean
     Private currentChartMode As String = "Today"
     ' Loading panel fields
     Private loadingPanel As Panel
@@ -234,6 +241,8 @@ Public Class Dashboard
 
             SetupTabIndex()
 
+            StartStockRealtimePolling()
+
         Catch ex As Exception
             Console.WriteLine($"Error in Dashboard_Load: {ex.Message}")
             Console.WriteLine($"Stack trace: {ex.StackTrace}")
@@ -313,6 +322,37 @@ Public Class Dashboard
         LoadKPIData()
         LoadAllPopularProducts()
         LoadInventoryStatusChart()
+    End Sub
+
+    ' Realtime stock polling for the dashboard — refreshes the stock value card
+    ' and the inventory status chart when any PC changes product stock.
+    Private Sub StartStockRealtimePolling()
+        Try
+            If _stockRealtimeTimer Is Nothing Then
+                _stockRealtimeTimer = New Timer With {.Interval = 5000}
+            End If
+            _stockTracker.Reset()
+            _stockRealtimeTimer.Start()
+        Catch
+        End Try
+    End Sub
+
+    Private Sub StopStockRealtimePolling()
+        Try
+            If _stockRealtimeTimer IsNot Nothing Then _stockRealtimeTimer.Stop()
+        Catch
+        End Try
+    End Sub
+
+    Private Sub _stockRealtimeTimer_Tick(sender As Object, e As EventArgs) Handles _stockRealtimeTimer.Tick
+        Try
+            If Not Me.Visible Then Return
+            If _stockTracker.HasChanged() Then
+                LoadKPIData()
+                LoadInventoryStatusChart()
+            End If
+        Catch
+        End Try
     End Sub
 
     Private Sub OnPeriodChanged(sender As Object, e As EventArgs)
@@ -398,11 +438,11 @@ Public Class Dashboard
             ' Orders + Revenue + COGS in one query
             Dim query As String = $"
                 SELECT
-                    IFNULL((SELECT COUNT(*) FROM Sales s WHERE 1=1 {dateFilter}), 0) AS TotalOrders,
-                    IFNULL((SELECT SUM(TotalAmount) FROM Sales s WHERE 1=1 {dateFilter}), 0) AS TotalRevenue,
-                    IFNULL((SELECT SUM(si.Quantity * p.CostPrice) FROM SaleItems si JOIN Products p ON si.ProductID = p.ProductID {orderFilter}), 0) AS TotalCOGS,
-                    IFNULL((SELECT SUM(CostPrice * CurrentStock) FROM Products WHERE IsActive = 1), 0) AS ActiveStockValue,
-                    IFNULL((SELECT COUNT(*) FROM Products WHERE IsActive = 1), 0) AS ActiveProductCount"
+                    COALESCE((SELECT COUNT(*) FROM Sales s WHERE 1=1 {dateFilter}), 0) AS TotalOrders,
+                    COALESCE((SELECT SUM(TotalAmount) FROM Sales s WHERE 1=1 {dateFilter}), 0) AS TotalRevenue,
+                    COALESCE((SELECT SUM(si.Quantity * p.CostPrice) FROM SaleItems si JOIN Products p ON si.ProductID = p.ProductID {orderFilter}), 0) AS TotalCOGS,
+                    COALESCE((SELECT SUM(CostPrice * CurrentStock) FROM Products WHERE IsActive = 1), 0) AS ActiveStockValue,
+                    COALESCE((SELECT COUNT(*) FROM Products WHERE IsActive = 1), 0) AS ActiveProductCount"
 
             Using reader As DbDataReader = Utilities.ExecuteReader(query, Nothing)
                 If reader.Read() Then
@@ -782,7 +822,7 @@ Public Class Dashboard
                 p.ProductName,
                 p.Category,
                 p.SellingPrice,
-                IFNULL(SUM(si.Quantity), 0) AS TimesSold
+                COALESCE(SUM(si.Quantity), 0) AS TimesSold
             FROM Products p
             LEFT JOIN SaleItems si ON p.ProductID = si.ProductID
             WHERE p.IsActive = 1
@@ -793,13 +833,13 @@ Public Class Dashboard
                     OR p.Category LIKE @SearchLike
                   )
             GROUP BY p.ProductID, p.ProductCode, p.ProductName, p.Category, p.SellingPrice
-            ORDER BY IFNULL(SUM(si.Quantity), 0) DESC, p.ProductName
+            ORDER BY COALESCE(SUM(si.Quantity), 0) DESC, p.ProductName
             LIMIT 20"
 
             Dim rowIndex As Integer = 1
-            Dim parameters As SqlParameter() = {
-            New SqlParameter("@Search", searchText),
-            New SqlParameter("@SearchLike", "%" & searchText & "%")
+            Dim parameters As NpgsqlParameter() = {
+            New NpgsqlParameter("@Search", searchText),
+            New NpgsqlParameter("@SearchLike", "%" & searchText & "%")
         }
 
             Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters)
@@ -999,6 +1039,24 @@ Public Class Dashboard
     End Sub
     Private Sub LoadChartInterface()
         Try
+            ' LiveCharts 2.x requires a one-time global configuration before any chart is
+            ' created: this registers the SkiaSharp renderer and the default mappers that let
+            ' a bare LineSeries(Of Double) With { .Values = ... } map onto the axes. Without it
+            ' the CartesianChart renders as a completely white / blank control (no axes, no grid).
+            If Not _liveChartsConfigured Then
+                Try
+                    LiveCharts.Configure(Function(config)
+                                             config.AddSkiaSharp()
+                                             config.AddDefaultMappers()
+                                             Return config
+                                         End Function)
+                    _liveChartsConfigured = True
+                    Console.WriteLine("LiveCharts configured with SkiaSharp renderer")
+                Catch configEx As Exception
+                    Console.WriteLine($"Failed to configure LiveCharts: {configEx.Message}")
+                End Try
+            End If
+
             AreaChart.Controls.Clear()
 
             ' Header band: title on the left, margin KPI cards on the right
@@ -1148,6 +1206,17 @@ Public Class Dashboard
                                    End Function
                     }
                 }
+
+                ' Guarantee a real client-area render surface so LiveCharts isn't given a
+                ' near-zero (scroll-virtual) size inside the auto-scrolling parent, which
+                ' otherwise renders the area chart as a blank white panel.
+                If chartPanel IsNot Nothing AndAlso salesChart IsNot Nothing Then
+                    Dim w As Integer = Math.Max(chartPanel.ClientSize.Width - chartPanel.Padding.Horizontal, 1)
+                    Dim h As Integer = Math.Max(chartPanel.ClientSize.Height - chartPanel.Padding.Vertical, 1)
+                    salesChart.Size = New Size(w, h)
+                    salesChart.PerformLayout()
+                    salesChart.Invalidate()
+                End If
                 Catch chartEx As Exception
                     Console.WriteLine($"Error setting up LiveCharts: {chartEx.Message}")
                     ' Create fallback display
@@ -1210,13 +1279,13 @@ Public Class Dashboard
             Dim keyExpr As String
             Select Case granularity
                 Case "hourly"
-                    keyExpr = "strftime('%Y-%m-%d %H', SaleDate)"
+                    keyExpr = "to_char((SaleDate AT TIME ZONE 'Asia/Manila'), 'YYYY-MM-DD HH24')"
                 Case "daily"
-                    keyExpr = "date(SaleDate)"
+                    keyExpr = "to_char((SaleDate AT TIME ZONE 'Asia/Manila'), 'YYYY-MM-DD')"
                 Case "weekly"
-                    keyExpr = "date(SaleDate)" ' aggregated to ISO week in VB
+                    keyExpr = "to_char((SaleDate AT TIME ZONE 'Asia/Manila'), 'YYYY-MM-DD')" ' aggregated to ISO week in VB
                 Case Else
-                    keyExpr = "strftime('%Y-%m', SaleDate)"
+                    keyExpr = "to_char((SaleDate AT TIME ZONE 'Asia/Manila'), 'YYYY-MM')"
             End Select
 
             ' Build the continuous bucket list + labels
@@ -1251,15 +1320,18 @@ Public Class Dashboard
                     End While
             End Select
 
-            Dim startSql As String = startDt.ToString("yyyy-MM-dd HH:mm:ss")
-            Dim endSql As String = endDt.ToString("yyyy-MM-dd HH:mm:ss")
-            Dim parameters As SqlParameter() = {
-                New SqlParameter("@S", startSql),
-                New SqlParameter("@E", endSql)
+            ' SaleDate is TIMESTAMPTZ. Send actual instants instead of text parameters;
+            ' PostgreSQL does not compare timestamptz and text, which previously made this
+            ' query fail and left the chart with an empty series.
+            Dim startInstant As DateTime = startDt.ToUniversalTime()
+            Dim endInstant As DateTime = endDt.ToUniversalTime()
+            Dim parameters As NpgsqlParameter() = {
+                New NpgsqlParameter("@S", startInstant),
+                New NpgsqlParameter("@E", endInstant)
             }
 
             ' Revenue per bucket (exclude aborted)
-            Dim revenueQuery As String = "SELECT " & keyExpr & " AS k, IFNULL(SUM(TotalAmount),0) AS Rev " &
+            Dim revenueQuery As String = "SELECT " & keyExpr & " AS k, COALESCE(SUM(TotalAmount),0) AS Rev " &
                 "FROM Sales WHERE Status <> 'Aborted' AND SaleDate >= @S AND SaleDate <= @E GROUP BY k"
             Dim revenueByKey As New Dictionary(Of String, Double)()
             Using reader As DbDataReader = Utilities.ExecuteReader(revenueQuery, parameters)
@@ -1270,8 +1342,8 @@ Public Class Dashboard
             End Using
 
             ' COGS per bucket — join SaleItems x Products via Sales for the date
-            Dim dailyKeyExpr As String = If(granularity = "weekly", "date(s.SaleDate)", keyExpr)
-            Dim cogsQuery As String = "SELECT " & dailyKeyExpr & " AS k, IFNULL(SUM(si.Quantity * p.CostPrice),0) AS C " &
+            Dim dailyKeyExpr As String = If(granularity = "weekly", "to_char((s.SaleDate AT TIME ZONE 'Asia/Manila'), 'YYYY-MM-DD')", keyExpr.Replace("SaleDate", "s.SaleDate"))
+            Dim cogsQuery As String = "SELECT " & dailyKeyExpr & " AS k, COALESCE(SUM(si.Quantity * p.CostPrice),0) AS C " &
                 "FROM SaleItems si " &
                 "JOIN Sales s ON si.SaleID = s.SaleID " &
                 "JOIN Products p ON si.ProductID = p.ProductID " &
@@ -1298,7 +1370,19 @@ Public Class Dashboard
                         key = b.ToString("yyyy-MM")
                 End Select
 
-                Dim rev As Double = If(revenueByKey.ContainsKey(key), revenueByKey(key), 0)
+                ' Revenue: aggregate the full week for weekly buckets (this MUST mirror the
+                ' COGS aggregation below — previously only the Monday key was used, so the
+                ' Revenue line collapsed toward zero and the chart looked blank in
+                ' weekly/monthly period modes).
+                Dim rev As Double = 0
+                If granularity = "weekly" Then
+                    For i As Integer = 0 To 6
+                        Dim dayKey As String = b.AddDays(i).ToString("yyyy-MM-dd")
+                        If revenueByKey.ContainsKey(dayKey) Then rev += revenueByKey(dayKey)
+                    Next
+                Else
+                    rev = If(revenueByKey.ContainsKey(key), revenueByKey(key), 0)
+                End If
 
                 ' For weekly we aggregate COGS across the 7 days of the bucket's week
                 Dim cogs As Double = 0
@@ -1415,15 +1499,15 @@ Public Class Dashboard
 
         ' Single query for all 12 months
         Dim query As String = "
-            SELECT CAST(strftime('%m', SaleDate) AS INTEGER) AS MonthNum,
-                   IFNULL(SUM(TotalAmount), 0) AS Revenue
+            SELECT EXTRACT(MONTH FROM SaleDate AT TIME ZONE 'UTC')::int AS MonthNum,
+                   COALESCE(SUM(TotalAmount), 0) AS Revenue
             FROM Sales
-            WHERE CAST(strftime('%Y', SaleDate) AS INTEGER) = @Year
+            WHERE EXTRACT(YEAR FROM SaleDate AT TIME ZONE 'UTC')::int = @Year
             GROUP BY MonthNum
             ORDER BY MonthNum"
 
-        Dim parameters As SqlParameter() = {
-            New SqlParameter("@Year", currentYear)
+        Dim parameters As NpgsqlParameter() = {
+            New NpgsqlParameter("@Year", currentYear)
         }
 
         Dim monthlyData As New Dictionary(Of Integer, Double)()
@@ -1453,14 +1537,14 @@ Public Class Dashboard
         ' Single query for last 7 days
         Dim query As String = "
             SELECT DATE(SaleDate) AS SaleDay,
-                   IFNULL(SUM(TotalAmount), 0) AS Revenue
+                   COALESCE(SUM(TotalAmount), 0) AS Revenue
             FROM Sales
             WHERE DATE(SaleDate) >= @StartDate
             GROUP BY SaleDay
             ORDER BY SaleDay"
 
-        Dim parameters As SqlParameter() = {
-            New SqlParameter("@StartDate", startDate)
+        Dim parameters As NpgsqlParameter() = {
+            New NpgsqlParameter("@StartDate", startDate)
         }
 
         Dim dailyData As New Dictionary(Of String, Double)()
@@ -1487,14 +1571,14 @@ Public Class Dashboard
         ' Single query for last 12 days
         Dim query As String = "
             SELECT DATE(SaleDate) AS SaleDay,
-                   IFNULL(SUM(TotalAmount), 0) AS Revenue
+                   COALESCE(SUM(TotalAmount), 0) AS Revenue
             FROM Sales
             WHERE DATE(SaleDate) >= @StartDate
             GROUP BY SaleDay
             ORDER BY SaleDay"
 
-        Dim parameters As SqlParameter() = {
-            New SqlParameter("@StartDate", startDate)
+        Dim parameters As NpgsqlParameter() = {
+            New NpgsqlParameter("@StartDate", startDate)
         }
 
         Dim dailyData As New Dictionary(Of String, Double)()
@@ -1520,15 +1604,15 @@ Public Class Dashboard
 
         ' Single query for 6 years
         Dim query As String = "
-            SELECT CAST(strftime('%Y', SaleDate) AS INTEGER) AS SaleYear,
-                   IFNULL(SUM(TotalAmount), 0) AS Revenue
+            SELECT EXTRACT(YEAR FROM SaleDate AT TIME ZONE 'UTC')::int AS SaleYear,
+                   COALESCE(SUM(TotalAmount), 0) AS Revenue
             FROM Sales
-            WHERE CAST(strftime('%Y', SaleDate) AS INTEGER) >= @StartYear
+            WHERE EXTRACT(YEAR FROM SaleDate AT TIME ZONE 'UTC')::int >= @StartYear
             GROUP BY SaleYear
             ORDER BY SaleYear"
 
-        Dim parameters As SqlParameter() = {
-            New SqlParameter("@StartYear", startYear)
+        Dim parameters As NpgsqlParameter() = {
+            New NpgsqlParameter("@StartYear", startYear)
         }
 
         Dim yearlyData As New Dictionary(Of Integer, Double)()
@@ -1549,7 +1633,7 @@ Public Class Dashboard
 
     Private Sub LoadAllTimeData(salesData As List(Of Double), revenueData As List(Of Double), labels As List(Of String))
         Dim query As String = "
-            SELECT CAST(strftime('%Y', SaleDate) AS INTEGER) AS SaleYear, IFNULL(SUM(TotalAmount), 0) AS Revenue
+            SELECT EXTRACT(YEAR FROM SaleDate AT TIME ZONE 'UTC')::int AS SaleYear, COALESCE(SUM(TotalAmount), 0) AS Revenue
             FROM Sales
             GROUP BY SaleYear
             ORDER BY SaleYear"
@@ -1622,16 +1706,16 @@ Public Class Dashboard
 
         ' Single query grouped by hour
         Dim query As String = "
-            SELECT CAST(strftime('%H', SaleDate) AS INTEGER) AS HourNum,
-                   IFNULL(SUM(TotalAmount), 0) AS Revenue
+            SELECT EXTRACT(HOUR FROM SaleDate AT TIME ZONE 'UTC')::int AS HourNum,
+                   COALESCE(SUM(TotalAmount), 0) AS Revenue
             FROM Sales
             WHERE SaleDate >= @StartDateTime AND SaleDate < @EndDateTime
             GROUP BY HourNum
             ORDER BY HourNum"
 
-        Dim parameters As SqlParameter() = {
-            New SqlParameter("@StartDateTime", startDateTime),
-            New SqlParameter("@EndDateTime", endDateTime)
+        Dim parameters As NpgsqlParameter() = {
+            New NpgsqlParameter("@StartDateTime", startDateTime),
+            New NpgsqlParameter("@EndDateTime", endDateTime)
         }
 
         Dim hourlyData As New Dictionary(Of Integer, Double)()

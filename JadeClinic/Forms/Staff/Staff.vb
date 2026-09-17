@@ -1,4 +1,4 @@
-Imports System.Data.Common
+﻿Imports System.Data.Common
 Imports System.IO
 Imports QuestPDF.Fluent
 Imports QuestPDF.Helpers
@@ -7,6 +7,8 @@ Imports System.Drawing
 Imports System.Drawing.Imaging
 Imports System.Linq
 Imports SD = System.Drawing  ' <-- added alias for System.Drawing
+
+Imports Npgsql
 
 
 Public Class Staff
@@ -519,7 +521,7 @@ Dim photoCol As New DataGridViewImageColumn() With {
                     Dim userId As Integer = Convert.ToInt32(userData("UserID"))
                     Using reader As DbDataReader = Utilities.ExecuteReader(
                     "SELECT QRCode, Email, Phone FROM Users WHERE UserID = @UserID",
-                    New SqlParameter("@UserID", userId))
+                    New NpgsqlParameter("@UserID", userId))
                         If reader.Read() Then
                             If needsQr AndAlso Not IsDBNull(reader("QRCode")) Then
                                 userData("QRCode") = reader("QRCode").ToString()
@@ -876,7 +878,7 @@ Dim photoCol As New DataGridViewImageColumn() With {
                 If rowTag.ContainsKey("UserID") Then
                     Try
                         Dim userId As Integer = Convert.ToInt32(rowTag("UserID"))
-                        Using reader As DbDataReader = Utilities.ExecuteReader("SELECT QRCode FROM Users WHERE UserID = @UserID", New SqlParameter("@UserID", userId))
+                        Using reader As DbDataReader = Utilities.ExecuteReader("SELECT QRCode FROM Users WHERE UserID = @UserID", New NpgsqlParameter("@UserID", userId))
                             If reader.Read() Then
                                 If Not IsDBNull(reader("QRCode")) Then
                                     rowTag("QRCode") = reader("QRCode").ToString()

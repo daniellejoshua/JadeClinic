@@ -1,3 +1,5 @@
+﻿' (entire file with edits)
+Imports Npgsql
 ' (entire file with edits)
 Imports System.Data.Common
 Imports System.Configuration
@@ -55,14 +57,14 @@ Public Class DatabaseInitializer
 
     Private Shared Sub CreateUsersTableActual()
         Dim query As String = "CREATE TABLE IF NOT EXISTS Users (" &
-            "UserID INTEGER PRIMARY KEY AUTOINCREMENT, " &
+            "UserID BIGSERIAL PRIMARY KEY, " &
             "Username TEXT NOT NULL UNIQUE, " &
             "PasswordHash TEXT NOT NULL, " &
             "FullName TEXT NOT NULL, " &
             "UserRole TEXT DEFAULT 'Staff', " &
             "IsActive INTEGER DEFAULT 1, " &
-            "CreatedAt DATETIME DEFAULT (CURRENT_TIMESTAMP), " &
-            "UpdatedAt DATETIME DEFAULT (CURRENT_TIMESTAMP), " &
+            "CreatedAt TIMESTAMPTZ DEFAULT (now()), " &
+            "UpdatedAt TIMESTAMPTZ DEFAULT (now()), " &
             "pin INTEGER NULL, " &
             "PhotoPath TEXT NULL, " &
             "QRCode TEXT NULL, " &
@@ -97,7 +99,7 @@ Public Class DatabaseInitializer
 
     Private Shared Sub CreateSuppliersTableActual()
         Dim query As String = "CREATE TABLE IF NOT EXISTS Suppliers (" &
-            "SupplierID INTEGER PRIMARY KEY AUTOINCREMENT, " &
+            "SupplierID BIGSERIAL PRIMARY KEY, " &
             "SupplierCode TEXT NOT NULL UNIQUE, " &
             "SupplierName TEXT NOT NULL, " &
             "ContactPerson TEXT NULL, " &
@@ -110,20 +112,20 @@ Public Class DatabaseInitializer
 
     Private Shared Sub CreateProductsTableActual()
         Dim query As String = "CREATE TABLE IF NOT EXISTS Products (" &
-            "ProductID INTEGER PRIMARY KEY AUTOINCREMENT, " &
+            "ProductID BIGSERIAL PRIMARY KEY, " &
             "ProductCode TEXT NOT NULL UNIQUE, " &
             "ProductName TEXT NOT NULL, " &
             "Category TEXT NULL, " &
             "Unit TEXT DEFAULT 'PCS', " &
             "CurrentStock INTEGER DEFAULT 0, " &
             "ReorderLevel INTEGER DEFAULT 10, " &
-            "CostPrice REAL NOT NULL, " &
-            "SellingPrice REAL NOT NULL, " &
+            "CostPrice DOUBLE PRECISION NOT NULL, " &
+            "SellingPrice DOUBLE PRECISION NOT NULL, " &
             "SupplierID INTEGER NULL, " &
             "IsActive INTEGER DEFAULT 1, " &
-            "Created DATETIME DEFAULT (CURRENT_TIMESTAMP), " &
-            "WholesalePrice REAL NULL, " &
-            "UpdatedAt DATETIME DEFAULT (CURRENT_TIMESTAMP), " &
+            "Created TIMESTAMPTZ DEFAULT (now()), " &
+            "WholesalePrice DOUBLE PRECISION NULL, " &
+            "UpdatedAt TIMESTAMPTZ DEFAULT (now()), " &
             "FOREIGN KEY (SupplierID) REFERENCES Suppliers(SupplierID))"
 
         DatabaseHelper.ExecuteNonQuery(query, Nothing)
@@ -168,22 +170,22 @@ Public Class DatabaseInitializer
 
     Private Shared Sub CreateProductImagesTableActual()
         Dim query As String = "CREATE TABLE IF NOT EXISTS ProductImages (" &
-            "ImageID INTEGER PRIMARY KEY AUTOINCREMENT, " &
+            "ImageID BIGSERIAL PRIMARY KEY, " &
             "ImageHash TEXT NOT NULL UNIQUE, " &
             "ImageType TEXT DEFAULT 'thumb', " &
             "FilePath TEXT NOT NULL, " &
-            "CreatedAt DATETIME DEFAULT (CURRENT_TIMESTAMP), " &
-            "UpdatedAt DATETIME DEFAULT (CURRENT_TIMESTAMP)" &
+            "CreatedAt TIMESTAMPTZ DEFAULT (now()), " &
+            "UpdatedAt TIMESTAMPTZ DEFAULT (now())" &
             ")"
 
         DatabaseHelper.ExecuteNonQuery(query, Nothing)
 
         ' Create ProductImageMapping table for many-to-many relationship
         Dim mappingQuery As String = "CREATE TABLE IF NOT EXISTS ProductImageMapping (" &
-            "MappingID INTEGER PRIMARY KEY AUTOINCREMENT, " &
+            "MappingID BIGSERIAL PRIMARY KEY, " &
             "ProductID INTEGER NOT NULL, " &
             "ImageID INTEGER NOT NULL, " &
-            "CreatedAt DATETIME DEFAULT (CURRENT_TIMESTAMP), " &
+            "CreatedAt TIMESTAMPTZ DEFAULT (now()), " &
             "FOREIGN KEY (ProductID) REFERENCES Products(ProductID), " &
             "FOREIGN KEY (ImageID) REFERENCES ProductImages(ImageID), " &
             "UNIQUE(ProductID, ImageID)" &
@@ -212,14 +214,14 @@ Public Class DatabaseInitializer
 
     Private Shared Sub CreateSalesTableActual()
         Dim query As String = "CREATE TABLE IF NOT EXISTS Sales (" &
-            "SaleID INTEGER PRIMARY KEY AUTOINCREMENT, " &
+            "SaleID BIGSERIAL PRIMARY KEY, " &
             "SaleNumber TEXT, " &
-            "SaleDate DATETIME DEFAULT (CURRENT_TIMESTAMP), " &
+            "SaleDate TIMESTAMPTZ DEFAULT (now()), " &
             "CustomerName TEXT NULL, " &
             "CustomerTIN TEXT NULL, " &
             "UserID INTEGER NULL, " &
-            "TotalAmount REAL DEFAULT 0, " &
-            "AmountPaid REAL DEFAULT 0, " &
+            "TotalAmount DOUBLE PRECISION DEFAULT 0, " &
+            "AmountPaid DOUBLE PRECISION DEFAULT 0, " &
             "PaymentMethod TEXT DEFAULT 'Cash', " &
             "Reference TEXT NULL, " &
             "SalesData TEXT NOT NULL, " &
@@ -227,7 +229,7 @@ Public Class DatabaseInitializer
             "ApprovedBy TEXT NULL, " &
             "AbortReason TEXT NULL, " &
             "DiscountType TEXT NULL, " &
-            "DiscountAmount REAL NOT NULL DEFAULT 0, " &
+            "DiscountAmount DOUBLE PRECISION NOT NULL DEFAULT 0, " &
             "FOREIGN KEY (UserID) REFERENCES Users(UserID)" &
             ")"
 
@@ -266,8 +268,8 @@ Public Class DatabaseInitializer
         Try
             DatabaseHelper.ExecuteNonQuery(
                 "UPDATE Sales SET SaleNumber = " &
-                "strftime('%Y%m%d', SaleDate) || substr('000000', 1, MAX(0, 6 - length(Cast(SaleID As Text)))) || Cast(SaleID As Text) " &
-                "WHERE SaleNumber IS NULL OR Trim(SaleNumber) = '' OR SaleNumber NOT GLOB '[0-9A-Za-z]*'", Nothing)
+                "to_char((SaleDate AT TIME ZONE 'UTC'), 'YYYYMMDD') || lpad(SaleID::TEXT, 6, '0') " &
+                "WHERE SaleNumber IS NULL OR Trim(SaleNumber) = '' OR SaleNumber !~ '^[0-9A-Za-z]*$'", Nothing)
         Catch ex As Exception
             Console.WriteLine($"Note: Could not backfill SaleNumber on Sales: {ex.Message}")
         End Try
@@ -277,14 +279,14 @@ Public Class DatabaseInitializer
 
     Private Shared Sub CreateSaleItemsTableActual()
         Dim query As String = "CREATE TABLE IF NOT EXISTS SaleItems (" &
-            "SaleItemID INTEGER PRIMARY KEY AUTOINCREMENT, " &
+            "SaleItemID BIGSERIAL PRIMARY KEY, " &
             "SaleID INTEGER NOT NULL, " &
             "ProductID INTEGER NOT NULL, " &
             "Quantity INTEGER NOT NULL, " &
-            "UnitPrice REAL NOT NULL, " &
-            "OriginalUnitPrice REAL NULL, " &
-            "LineDiscountAmount REAL NOT NULL DEFAULT 0, " &
-            "SubTotal REAL, " &
+            "UnitPrice DOUBLE PRECISION NOT NULL, " &
+            "OriginalUnitPrice DOUBLE PRECISION NULL, " &
+            "LineDiscountAmount DOUBLE PRECISION NOT NULL DEFAULT 0, " &
+            "SubTotal DOUBLE PRECISION, " &
             "FOREIGN KEY (SaleID) REFERENCES Sales(SaleID), " &
             "FOREIGN KEY (ProductID) REFERENCES Products(ProductID)" &
             ")"
@@ -318,7 +320,7 @@ Public Class DatabaseInitializer
 
     Private Shared Sub CreateInventoryLogTableActual()
         Dim query As String = "CREATE TABLE IF NOT EXISTS InventoryLog (" &
-            "LogID INTEGER PRIMARY KEY AUTOINCREMENT, " &
+            "LogID BIGSERIAL PRIMARY KEY, " &
             "ProductID INTEGER NOT NULL, " &
             "TransactionType TEXT NOT NULL CHECK (TransactionType IN ('IN','OUT','ADJUST')), " &
             "Quantity INTEGER NOT NULL CHECK (Quantity > 0), " &
@@ -330,7 +332,7 @@ Public Class DatabaseInitializer
             "UserID INTEGER NOT NULL, " &
             "Reference TEXT NULL, " &
             "Notes TEXT NULL, " &
-            "CreatedAt DATETIME DEFAULT (CURRENT_TIMESTAMP), " &
+            "CreatedAt TIMESTAMPTZ DEFAULT (now()), " &
             "FOREIGN KEY (ProductID) REFERENCES Products(ProductID), " &
             "FOREIGN KEY (SupplierID) REFERENCES Suppliers(SupplierID), " &
             "FOREIGN KEY (UserID) REFERENCES Users(UserID)" &
@@ -378,10 +380,10 @@ Public Class DatabaseInitializer
 
     Private Shared Sub CreateAuditLogTableActual()
         Dim query As String = "CREATE TABLE IF NOT EXISTS AuditLog (" &
-            "AuditID INTEGER PRIMARY KEY AUTOINCREMENT, " &
+            "AuditID BIGSERIAL PRIMARY KEY, " &
             "Action TEXT NOT NULL, " &
             "Details TEXT NULL, " &
-            "ActionTime DATETIME DEFAULT (CURRENT_TIMESTAMP), " &
+            "ActionTime TIMESTAMPTZ DEFAULT (now()), " &
             "UserID INTEGER NULL, " &
             "FOREIGN KEY (UserID) REFERENCES Users(UserID))"
 
@@ -397,7 +399,7 @@ Public Class DatabaseInitializer
     ' FIXED: Restore the proper function name and add the actual logo resource conversion
     Private Shared Sub CreateCompanySettingsTableActual()
         Dim query As String = "CREATE TABLE IF NOT EXISTS CompanySettings (" &
-        "SettingID INTEGER PRIMARY KEY AUTOINCREMENT, " &
+        "SettingID BIGSERIAL PRIMARY KEY, " &
         "CompanyName TEXT NOT NULL, " &
         "TIN TEXT NULL, " &
         "Address TEXT NULL, " &
@@ -411,8 +413,8 @@ Public Class DatabaseInitializer
         "ReceiptFooter TEXT NULL, " &
         "CompanyHours TEXT NULL, " &          ' <-- new column
         "IsActive INTEGER NOT NULL DEFAULT 1, " &
-        "DateCreated DATETIME NOT NULL DEFAULT (CURRENT_TIMESTAMP), " &
-        "LastModified DATETIME NOT NULL DEFAULT (CURRENT_TIMESTAMP)" &
+        "DateCreated TIMESTAMPTZ NOT NULL DEFAULT (now()), " &
+        "LastModified TIMESTAMPTZ NOT NULL DEFAULT (now())" &
         ")"
 
         DatabaseHelper.ExecuteNonQuery(query, Nothing)
@@ -439,18 +441,18 @@ Public Class DatabaseInitializer
                 End Try
 
                 Dim sql As String = "INSERT INTO CompanySettings (CompanyName, TIN, Address, Phone, Email, Website, LogoPath, BIRAuthNumber, PTUNumber, ReceiptFooter, CompanyHours) VALUES (@CompanyName, @TIN, @Address, @Phone, @Email, @Website, @LogoPath, @BIRAuthNumber, @PTUNumber, @ReceiptFooter, @CompanyHours)"
-                Dim params As SqlParameter() = {
-                New SqlParameter("@CompanyName", "JADE CLINIC"),
-                New SqlParameter("@TIN", "123-456-789-000"),
-                New SqlParameter("@Address", "123 Medical Plaza, Makati City, Philippines"),
-                New SqlParameter("@Phone", "(02) 8123-4567"),
-                New SqlParameter("@Email", "admin@jadeclinic.com"),
-                New SqlParameter("@Website", "www.jadeclinic.com"),
-                New SqlParameter("@LogoPath", logoPath),
-                New SqlParameter("@BIRAuthNumber", "ATP-2024-000001"),
-                New SqlParameter("@PTUNumber", "PTU-2024-001"),
-                New SqlParameter("@ReceiptFooter", "Thank you for your business!" & vbCrLf & "Have a great day!"),
-                New SqlParameter("@CompanyHours", "Mon-Fri: 9:00 AM - 5:00 PM" & vbCrLf & "Sat: 9:00 AM - 1:00 PM" & vbCrLf & "Sun: Closed")
+                Dim params As NpgsqlParameter() = {
+                New NpgsqlParameter("@CompanyName", "JADE CLINIC"),
+                New NpgsqlParameter("@TIN", "123-456-789-000"),
+                New NpgsqlParameter("@Address", "123 Medical Plaza, Makati City, Philippines"),
+                New NpgsqlParameter("@Phone", "(02) 8123-4567"),
+                New NpgsqlParameter("@Email", "admin@jadeclinic.com"),
+                New NpgsqlParameter("@Website", "www.jadeclinic.com"),
+                New NpgsqlParameter("@LogoPath", logoPath),
+                New NpgsqlParameter("@BIRAuthNumber", "ATP-2024-000001"),
+                New NpgsqlParameter("@PTUNumber", "PTU-2024-001"),
+                New NpgsqlParameter("@ReceiptFooter", "Thank you for your business!" & vbCrLf & "Have a great day!"),
+                New NpgsqlParameter("@CompanyHours", "Mon-Fri: 9:00 AM - 5:00 PM" & vbCrLf & "Sat: 9:00 AM - 1:00 PM" & vbCrLf & "Sun: Closed")
             }
 
                 Utilities.ExecuteNonQuery(sql, params)
@@ -479,8 +481,8 @@ Public Class DatabaseInitializer
 
                 Dim insertQuery As String = "INSERT INTO Users (Username, PasswordHash, FullName, Email, Phone, UserRole, IsActive, pin, QRCode) VALUES ('admin', @Password, 'System Administrator', 'admin@jadeclinic.com', '555-0100', 'Admin', 1, 1234, 'User-00001')"
 
-                Dim parameters() As SqlParameter = {
-                    New SqlParameter("@Password", hashedPassword)
+                Dim parameters() As NpgsqlParameter = {
+                    New NpgsqlParameter("@Password", hashedPassword)
                 }
 
                 DatabaseHelper.ExecuteNonQuery(insertQuery, parameters)
@@ -499,7 +501,7 @@ Public Class DatabaseInitializer
             Try
                 DatabaseHelper.ExecuteNonQuery(
                     "UPDATE Users SET EmployeeCode = " &
-                    "(SELECT printf('%d%s', UserID, strftime('%Y%m%d%H%M%S', CreatedAt))) " &
+                    "(SELECT UserID::TEXT || to_char((CreatedAt AT TIME ZONE 'UTC'), 'YYYYMMDDHH24MISS')) " &
                     "WHERE Username = 'admin' AND (EmployeeCode IS NULL OR Trim(EmployeeCode) = '')",
                     Nothing)
             Catch ex As Exception
@@ -518,9 +520,9 @@ Public Class DatabaseInitializer
             ' Update the Users table with the passkeys
             Dim updatePasskeysQuery As String = "UPDATE Users SET Passkeys = @Passkeys WHERE UserID = @UserID"
 
-            Dim passkeyParams() As SqlParameter = {
-                New SqlParameter("@UserID", userId),
-                New SqlParameter("@Passkeys", String.Join(",", passkeys))
+            Dim passkeyParams() As NpgsqlParameter = {
+                New NpgsqlParameter("@UserID", userId),
+                New NpgsqlParameter("@Passkeys", String.Join(",", passkeys))
             }
 
             DatabaseHelper.ExecuteNonQuery(updatePasskeysQuery, passkeyParams)
@@ -573,14 +575,14 @@ Public Class DatabaseInitializer
                 Dim supplierName As String = suppliers(i, 1)
 
                 Dim checkQuery As String = "SELECT COUNT(*) FROM Suppliers WHERE SupplierCode = @SupplierCode"
-                Dim parameters() As SqlParameter = {New SqlParameter("@SupplierCode", supplierCode)}
+                Dim parameters() As NpgsqlParameter = {New NpgsqlParameter("@SupplierCode", supplierCode)}
                 Dim count As Integer = CInt(DatabaseHelper.ExecuteScalar(checkQuery, parameters))
 
                 If count = 0 Then
                     Dim insertQuery As String = "INSERT INTO Suppliers (SupplierCode, SupplierName, IsActive) VALUES (@SupplierCode, @SupplierName, 1)"
-                    Dim insertParams() As SqlParameter = {
-                        New SqlParameter("@SupplierCode", supplierCode),
-                        New SqlParameter("@SupplierName", supplierName)
+                    Dim insertParams() As NpgsqlParameter = {
+                        New NpgsqlParameter("@SupplierCode", supplierCode),
+                        New NpgsqlParameter("@SupplierName", supplierName)
                     }
                     DatabaseHelper.ExecuteNonQuery(insertQuery, insertParams)
                 End If

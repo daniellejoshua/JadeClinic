@@ -1,6 +1,8 @@
-Imports System.Data.Common
+﻿Imports System.Data.Common
 Imports System.Text
 Imports System.Drawing.Printing
+
+Imports Npgsql
 
 Public Class SalesDetails
     Private ReadOnly _saleId As Integer
@@ -62,9 +64,9 @@ Public Class SalesDetails
         saleRecord = Nothing
         saleItems.Clear()
 
-        Dim saleQuery As String = "SELECT s.SaleID, IFNULL(s.SaleNumber, '') AS SaleNumber, s.SaleDate, s.CustomerName, s.CustomerTIN, s.TotalAmount, s.AmountPaid, s.PaymentMethod, s.Reference, s.SalesData, IFNULL(s.Status, 'Completed') AS Status, s.ApprovedBy, s.AbortReason, IFNULL(u.EmployeeCode, '') AS Cashier " &
+        Dim saleQuery As String = "SELECT s.SaleID, COALESCE(s.SaleNumber, '') AS SaleNumber, s.SaleDate, s.CustomerName, s.CustomerTIN, s.TotalAmount, s.AmountPaid, s.PaymentMethod, s.Reference, s.SalesData, COALESCE(s.Status, 'Completed') AS Status, s.ApprovedBy, s.AbortReason, COALESCE(u.EmployeeCode, '') AS Cashier " &
                                   "FROM Sales s LEFT JOIN Users u ON s.UserID = u.UserID WHERE s.SaleID = @SaleID"
-        Using reader As DbDataReader = Utilities.ExecuteReader(saleQuery, New SqlParameter("@SaleID", saleId))
+        Using reader As DbDataReader = Utilities.ExecuteReader(saleQuery, New NpgsqlParameter("@SaleID", saleId))
             If reader.Read() Then
                 saleRecord = New Dictionary(Of String, Object) From {
                     {"SaleID", If(IsDBNull(reader("SaleID")), saleId, reader("SaleID"))},
@@ -87,9 +89,9 @@ Public Class SalesDetails
 
         If saleRecord Is Nothing Then Return
 
-        Dim itemsQuery As String = "SELECT si.SaleItemID, si.ProductID, IFNULL(p.ProductName, 'Unknown') AS ProductName, si.Quantity, si.UnitPrice " &
+        Dim itemsQuery As String = "SELECT si.SaleItemID, si.ProductID, COALESCE(p.ProductName, 'Unknown') AS ProductName, si.Quantity, si.UnitPrice " &
                                    "FROM SaleItems si LEFT JOIN Products p ON si.ProductID = p.ProductID WHERE si.SaleID = @SaleID ORDER BY si.SaleItemID"
-        Using reader As DbDataReader = Utilities.ExecuteReader(itemsQuery, New SqlParameter("@SaleID", saleId))
+        Using reader As DbDataReader = Utilities.ExecuteReader(itemsQuery, New NpgsqlParameter("@SaleID", saleId))
             While reader.Read()
                 Dim it As New Dictionary(Of String, Object) From {
                     {"SaleItemID", If(IsDBNull(reader("SaleItemID")), 0, Convert.ToInt32(reader("SaleItemID")))},

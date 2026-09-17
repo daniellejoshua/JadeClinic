@@ -99,7 +99,7 @@ Partial Class Dashboard
         ' 
         ' AreaChart
         ' 
-        AreaChart.AutoScroll = True
+        AreaChart.AutoScroll = False
         AreaChart.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
         AreaChart.BorderRadius = 10
         AreaChart.BorderThickness = 2

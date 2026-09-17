@@ -1,5 +1,7 @@
-Imports System.Data.Common
+﻿Imports System.Data.Common
 Imports System.IO
+
+Imports Npgsql
 
 Public Module ProfileManager
     Private profileDropdownPanels As New Dictionary(Of Form, Panel)()
@@ -43,8 +45,8 @@ Public Module ProfileManager
         Try
             If Not String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) AndAlso profilePic IsNot Nothing Then
                 Dim query As String = "SELECT PhotoPath FROM Users WHERE Username = @Username"
-                Dim parameters As SqlParameter() = {
-                    New SqlParameter("@Username", frmLoginvb.LoggedInUsername)
+                Dim parameters As NpgsqlParameter() = {
+                    New NpgsqlParameter("@Username", frmLoginvb.LoggedInUsername)
                 }
 
                 Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters)

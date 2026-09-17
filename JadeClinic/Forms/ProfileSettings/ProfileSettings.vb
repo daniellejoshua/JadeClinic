@@ -1,8 +1,10 @@
-Imports System.Data.Common
+﻿Imports System.Data.Common
 Imports System.IO
 Imports System.Text.RegularExpressions
 Imports System.Drawing.Imaging
 Imports System.Linq
+
+Imports Npgsql
 
 Public Class ProfileSettings
     ' Store original panel controls for PIN change functionality
@@ -109,8 +111,8 @@ Public Class ProfileSettings
                 "SELECT UserID, Username, FullName, Email, Phone, PhotoPath, PasswordHash, pin, Passkeys, UserRole " &
                 "FROM Users WHERE Username = @Username AND IsActive = 1"
 
-                Dim parameters As SqlParameter() = {
-                New SqlParameter("@Username", frmLoginvb.LoggedInUsername)
+                Dim parameters As NpgsqlParameter() = {
+                New NpgsqlParameter("@Username", frmLoginvb.LoggedInUsername)
             }
 
                 Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters)
@@ -141,8 +143,8 @@ Public Class ProfileSettings
             If ex.Message.Contains("Invalid column name") Then
                 Try
                     Dim fallbackQuery As String = "SELECT UserID, Username, FullName, Email, Phone, PhotoPath, PasswordHash, pin, UserRole FROM Users WHERE Username = @Username AND IsActive = 1"
-                    Dim parameters As SqlParameter() = {
-                    New SqlParameter("@Username", frmLoginvb.LoggedInUsername)
+                    Dim parameters As NpgsqlParameter() = {
+                    New NpgsqlParameter("@Username", frmLoginvb.LoggedInUsername)
                 }
                     Using reader As DbDataReader = Utilities.ExecuteReader(fallbackQuery, parameters)
                         If reader.Read() Then
@@ -494,27 +496,27 @@ Public Class ProfileSettings
     Private Sub SaveUserChanges()
         Try
             Dim updateQuery As New Text.StringBuilder("UPDATE Users SET ")
-            Dim parameters As New List(Of SqlParameter)
+            Dim parameters As New List(Of NpgsqlParameter)
             Dim updates As New List(Of String)
             Dim changedFields As New List(Of String)
 
             ' Track what fields are being changed for audit logging
             If txtUserName.Text <> currentUserData("Username").ToString() Then
                 updates.Add("Username = @Username")
-                parameters.Add(New SqlParameter("@Username", txtUserName.Text))
+                parameters.Add(New NpgsqlParameter("@Username", txtUserName.Text))
                 changedFields.Add($"Username changed from '{currentUserData("Username")}' to '{txtUserName.Text}'")
             End If
 
             Dim emailToSave As String = txtEmail.Text.Trim()
             If emailToSave <> currentUserData("Email").ToString() Then
                 updates.Add("Email = @Email")
-                parameters.Add(New SqlParameter("@Email", emailToSave))
+                parameters.Add(New NpgsqlParameter("@Email", emailToSave))
                 changedFields.Add($"Email changed from '{currentUserData("Email")}' to '{emailToSave}'")
             End If
 
             If txtPhone.Text <> currentUserData("Phone").ToString() Then
                 updates.Add("Phone = @Phone")
-                parameters.Add(New SqlParameter("@Phone", txtPhone.Text))
+                parameters.Add(New NpgsqlParameter("@Phone", txtPhone.Text))
                 changedFields.Add($"Phone changed from '{currentUserData("Phone")}' to '{txtPhone.Text}'")
             End If
 
@@ -522,7 +524,7 @@ Public Class ProfileSettings
                 ' Hash the new password using the project's hash helper
                 Dim hashed As String = frmLoginvb.HashPassword(txtNewPassword.Text)
                 updates.Add("PasswordHash = @PasswordHash")
-                parameters.Add(New SqlParameter("@PasswordHash", hashed))
+                parameters.Add(New NpgsqlParameter("@PasswordHash", hashed))
                 changedFields.Add("Password updated")
             End If
 
@@ -530,7 +532,7 @@ Public Class ProfileSettings
                 Dim userId As Integer = Convert.ToInt32(currentUserData("UserID"))
                 Dim fileName As String = $"user_{userId}.jpg"
                 updates.Add("PhotoPath = @PhotoPath")
-                parameters.Add(New SqlParameter("@PhotoPath", fileName))
+                parameters.Add(New NpgsqlParameter("@PhotoPath", fileName))
                 changedFields.Add("Profile picture updated")
             End If
 
@@ -542,7 +544,7 @@ Public Class ProfileSettings
             ' Complete the query
             updateQuery.Append(String.Join(", ", updates))
             updateQuery.Append(" WHERE UserID = @UserID")
-            parameters.Add(New SqlParameter("@UserID", currentUserData("UserID")))
+            parameters.Add(New NpgsqlParameter("@UserID", currentUserData("UserID")))
 
             ' Execute update
             Dim rowsAffected As Integer = Utilities.ExecuteNonQuery(updateQuery.ToString(), parameters.ToArray())
@@ -780,9 +782,9 @@ Public Class ProfileSettings
     Private Sub SaveNewPin(newPin As String)
         Try
             Dim query As String = "UPDATE Users SET pin = @PIN WHERE UserID = @UserID"
-            Dim parameters As SqlParameter() = {
-                New SqlParameter("@PIN", newPin),
-                New SqlParameter("@UserID", currentUserData("UserID"))
+            Dim parameters As NpgsqlParameter() = {
+                New NpgsqlParameter("@PIN", newPin),
+                New NpgsqlParameter("@UserID", currentUserData("UserID"))
             }
 
             Dim rowsAffected As Integer = Utilities.ExecuteNonQuery(query, parameters)

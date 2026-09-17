@@ -5,6 +5,8 @@ Imports QuestPDF.Fluent
 Imports QuestPDF.Helpers
 Imports QuestPDF.Infrastructure
 
+Imports Npgsql
+
 Public Class StaffExporter
 
     Shared Sub New()
@@ -33,13 +35,13 @@ Public Class StaffExporter
                 Case "Staff Only"
                     whereClauses.Add("UserRole = 'Staff'")
                 Case "Recently Added (Last 30 Days)"
-                    whereClauses.Add("CreatedAt >= datetime('now', '-30 days')")
+                    whereClauses.Add("CreatedAt >= (now() AT TIME ZONE 'UTC') - interval '30 days'")
                 Case Else
                     ' All Staff
             End Select
 
             If filterDate.HasValue Then
-                whereClauses.Add("DATE(CreatedAt) = @FilterDate")
+                whereClauses.Add("(CreatedAt AT TIME ZONE 'UTC')::date = @FilterDate::date")
             End If
 
             If whereClauses.Count > 0 Then
@@ -72,9 +74,9 @@ Public Class StaffExporter
             End Select
 
             Dim staffDataList As New List(Of StaffReportData)()
-            Dim parameters As New List(Of SqlParameter)()
+            Dim parameters As New List(Of NpgsqlParameter)()
             If filterDate.HasValue Then
-                parameters.Add(New SqlParameter("@FilterDate", filterDate.Value.Date))
+                parameters.Add(New NpgsqlParameter("@FilterDate", filterDate.Value.Date))
             End If
 
             Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters.ToArray())

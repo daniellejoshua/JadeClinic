@@ -1,21 +1,28 @@
-Imports Microsoft.Data.Sqlite
+Imports Npgsql
 Imports System.Configuration
 Imports System.IO
 
 Module Connection
 
-    Private Function GetDefaultDatabasePath() As String
-        ' If a shared DB path is configured (LAN multi-PC setup), use it so every
-        ' PC opens the same database file on the network share.
-        Dim configuredPath As String = ConfigurationManager.AppSettings("DBPath")
+    Private Function GetConfigValue(key As String, defaultValue As String) As String
+        Try
+            Return ConfigurationManager.AppSettings(key)
+        Catch
+            Return defaultValue
+        End Try
+    End Function
+
+    Private Function GetImagesFolderRoot() As String
+        ' Shared images folder so every terminal sees the same product images.
+        Dim configuredPath As String = GetConfigValue("ImagesPath", "")
         If Not String.IsNullOrWhiteSpace(configuredPath) Then
             Try
                 If Not Directory.Exists(configuredPath) Then
                     Directory.CreateDirectory(configuredPath)
                 End If
-                Return Path.Combine(configuredPath, "jadeclinic.db")
+                Return configuredPath
             Catch ex As Exception
-                Console.WriteLine($"? DBPath failure ({configuredPath}), falling back to local DB: {ex.Message}")
+                Console.WriteLine($"? ImagesPath failure ({configuredPath}), falling back to local folder: {ex.Message}")
             End Try
         End If
 
@@ -23,20 +30,24 @@ Module Connection
         If Not Directory.Exists(dataDir) Then
             Directory.CreateDirectory(dataDir)
         End If
-        Return Path.Combine(dataDir, "jadeclinic.db")
+        Return dataDir
     End Function
 
     Public Function GetConnectionString() As String
-        Dim dbPath As String = GetDefaultDatabasePath()
-        Return $"Data Source={dbPath};Cache=Shared;Mode=ReadWriteCreate"
-    End Function
-
-    Public Function GetDatabaseFolder() As String
-        Return Path.GetDirectoryName(GetDefaultDatabasePath())
+        Dim builder As New NpgsqlConnectionStringBuilder()
+        builder.Host = GetConfigValue("PgHost", "localhost")
+        builder.Port = CInt(GetConfigValue("PgPort", "5432"))
+        builder.Database = GetConfigValue("PgDatabase", "jadeclinic")
+        builder.Username = GetConfigValue("PgUser", "jadeclinic")
+        builder.Password = GetConfigValue("PgPassword", "")
+        builder.SSLMode = SslMode.Disable
+        builder.Timeout = 15
+        builder.CommandTimeout = 30
+        Return builder.ConnectionString
     End Function
 
     Public Function GetImagesFolder(Optional subfolder As String = "") As String
-        Dim folder As String = Path.Combine(GetDatabaseFolder(), "Images")
+        Dim folder As String = Path.Combine(GetImagesFolderRoot(), "Images")
         If Not String.IsNullOrEmpty(subfolder) Then
             folder = Path.Combine(folder, subfolder)
         End If
@@ -46,12 +57,40 @@ Module Connection
         Return folder
     End Function
 
+    Public Function GetBackupFolder() As String
+        Dim configuredPath As String = GetConfigValue("BackupPath", "")
+        If Not String.IsNullOrWhiteSpace(configuredPath) Then
+            Try
+                If Not Directory.Exists(configuredPath) Then
+                    Directory.CreateDirectory(configuredPath)
+                End If
+                Return configuredPath
+            Catch ex As Exception
+                Console.WriteLine($"? BackupPath failure ({configuredPath}), falling back to local folder: {ex.Message}")
+            End Try
+        End If
+
+        Dim dataDir As String = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "JadeClinic", "Backups")
+        If Not Directory.Exists(dataDir) Then
+            Directory.CreateDirectory(dataDir)
+        End If
+        Return dataDir
+    End Function
+
+    Public Function GetDatabaseFolder() As String
+        Dim dataDir As String = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "JadeClinic")
+        If Not Directory.Exists(dataDir) Then
+            Directory.CreateDirectory(dataDir)
+        End If
+        Return dataDir
+    End Function
+
     Public Function TestConnection(Optional serverName As String = "") As Boolean
         Try
             Dim connStr As String = GetConnectionString()
-            Using conn As New SqliteConnection(connStr)
+            Using conn As New NpgsqlConnection(connStr)
                 conn.Open()
-                Console.WriteLine($"? Connected to SQLite DB: {conn.DataSource}")
+                Console.WriteLine($"? Connected to PostgreSQL: {conn.DataSource}")
                 Return True
             End Using
         Catch ex As Exception
@@ -65,26 +104,26 @@ Module Connection
     End Function
 
     Public Sub SaveConnectionString(Optional serverName As String = "")
-        Console.WriteLine("SaveConnectionString: SQLite uses local file; no action taken.")
+        Console.WriteLine("SaveConnectionString: PostgreSQL strings are read from app.config; no file-based save required.")
     End Sub
 
     Public Function InitializeDatabase() As Boolean
         Try
-            Using conn As New SqliteConnection(GetConnectionString())
+            Using conn As New NpgsqlConnection(GetConnectionString())
                 conn.Open()
 
-                Dim checkTablesQuery As String = "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
-                Using cmd As New SqliteCommand(checkTablesQuery, conn)
-                    Dim tableCount As Integer = Convert.ToInt32(cmd.ExecuteScalar())
+                ' Deployment check: no tables exist yet -> create full schema + seed.
+                Dim checkTablesQuery As String = "SELECT to_regclass('public.users') IS NULL"
+                Using cmd As New NpgsqlCommand(checkTablesQuery, conn)
+                    Dim noSchema As Boolean = Convert.ToBoolean(cmd.ExecuteScalar())
 
-                    If tableCount = 0 Then
+                    If noSchema Then
                         Console.WriteLine("No tables found. Creating database schema...")
                         DatabaseInitializer.CreateDatabaseSchema()
                         Console.WriteLine("? Database schema initialized successfully!")
                     Else
                         ' Existing database: run schema maintenance/migrations so new
-                        ' columns land on already-created tables too (e.g. Sales
-                        ' ApprovedBy/AbortReason and the IsVoid drop).
+                        ' columns land on already-created tables too.
                         Try
                             SalesStatusMigration.UpdateDatabaseForSalesStatus()
                         Catch
@@ -123,12 +162,12 @@ Module Connection
 
     Public Function GetDatabaseInfo() As String
         Try
-            Using conn As New SqliteConnection(GetConnectionString())
+            Using conn As New NpgsqlConnection(GetConnectionString())
                 conn.Open()
-                Return $"Database file: {conn.DataSource} | State: Connected"
+                Return $"PostgreSQL: {conn.Host}:{conn.Port}/{conn.Database} | State: Connected"
             End Using
         Catch ex As Exception
-            Return $"Database: Disconnected | Error: {ex.Message}"
+            Return $"PostgreSQL: Disconnected | Error: {ex.Message}"
         End Try
     End Function
 End Module

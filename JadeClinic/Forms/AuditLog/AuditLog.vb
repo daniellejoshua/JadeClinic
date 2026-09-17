@@ -4,6 +4,8 @@ Imports System.Linq
 Imports Guna.UI2.WinForms
 Imports System.Data.Common
 
+Imports Npgsql
+
 Public Class AuditLog
     Private overlayPanel As Panel
     Private isNavigating As Boolean = False
@@ -339,7 +341,7 @@ Public Class AuditLog
 
                                   Dim query As String = "SELECT a.AuditID, u.Username, a.Action, a.Details, a.ActionTime FROM AuditLog a LEFT JOIN Users u ON a.UserID = u.UserID"
                                   Dim whereClauses As New List(Of String)()
-                                  Dim parameters As New List(Of SqlParameter)()
+                                  Dim parameters As New List(Of NpgsqlParameter)()
 
                                   ' Build filter clauses
                                   Select Case ft
@@ -367,14 +369,14 @@ Public Class AuditLog
 
                                   ' Date filter
                                   If filterDate.HasValue Then
-                                      whereClauses.Add("DATE(a.ActionTime) = @FilterDate")
-                                      parameters.Add(New SqlParameter("@FilterDate", filterDate.Value.Date.ToString("yyyy-MM-dd")))
+                                      whereClauses.Add("DATE(a.ActionTime) = @FilterDate::date")
+                                      parameters.Add(New NpgsqlParameter("@FilterDate", filterDate.Value.Date.ToString("yyyy-MM-dd")))
                                   End If
 
                                   ' User filter
                                   If Not String.IsNullOrWhiteSpace(selectedUser) AndAlso selectedUser <> "All Accounts" Then
                                       whereClauses.Add("u.Username = @Username")
-                                      parameters.Add(New SqlParameter("@Username", selectedUser))
+                                      parameters.Add(New NpgsqlParameter("@Username", selectedUser))
                                   End If
 
                                   If whereClauses.Count > 0 Then
@@ -409,7 +411,7 @@ Public Class AuditLog
                                   Dim ft As String = StripLeadingEmoji(filterType).Trim().ToLowerInvariant()
                                   Dim query As String = "SELECT COUNT(*) FROM AuditLog a LEFT JOIN Users u ON a.UserID = u.UserID"
                                   Dim whereClauses As New List(Of String)()
-                                  Dim parameters As New List(Of SqlParameter)()
+                                  Dim parameters As New List(Of NpgsqlParameter)()
 
                                   Select Case ft
                                       Case "authentication events"
@@ -431,13 +433,13 @@ Public Class AuditLog
                                   End Select
 
                                   If filterDate.HasValue Then
-                                      whereClauses.Add("DATE(a.ActionTime) = @FilterDate")
-                                      parameters.Add(New SqlParameter("@FilterDate", filterDate.Value.Date.ToString("yyyy-MM-dd")))
+                                      whereClauses.Add("DATE(a.ActionTime) = @FilterDate::date")
+                                      parameters.Add(New NpgsqlParameter("@FilterDate", filterDate.Value.Date.ToString("yyyy-MM-dd")))
                                   End If
 
                                   If Not String.IsNullOrWhiteSpace(selectedUser) AndAlso selectedUser <> "All Accounts" Then
                                       whereClauses.Add("u.Username = @Username")
-                                      parameters.Add(New SqlParameter("@Username", selectedUser))
+                                      parameters.Add(New NpgsqlParameter("@Username", selectedUser))
                                   End If
 
                                   If whereClauses.Count > 0 Then

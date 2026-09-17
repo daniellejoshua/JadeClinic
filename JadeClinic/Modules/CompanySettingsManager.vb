@@ -1,6 +1,8 @@
-Imports System.Data.Common
+﻿Imports System.Data.Common
 Imports System.IO
 Imports System.Drawing
+
+Imports Npgsql
 
 ''' <summary>
 ''' Utility class for managing company settings throughout the application
@@ -237,7 +239,7 @@ Public Class CompanySettingsManager
             _cachedSettings = New Dictionary(Of String, Object)()
             
             Dim query As String = "SELECT * FROM CompanySettings WHERE IsActive = 1 ORDER BY DateCreated DESC"
-            Using reader As DbDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, New NpgsqlParameter() {})
                 If reader.Read() Then
                     For i = 0 To reader.FieldCount - 1
                         Dim fieldName = reader.GetName(i)
@@ -264,7 +266,7 @@ Public Class CompanySettingsManager
             _cachedColors = New Dictionary(Of String, Color)()
 
             Dim query As String = "SELECT * FROM ColorSettings WHERE IsActive = 1 ORDER BY DateCreated DESC"
-            Using reader As DbDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, New NpgsqlParameter() {})
                 If reader.Read() Then
                     Console.WriteLine("? Found active ColorSettings record")
                     For i = 0 To reader.FieldCount - 1
@@ -319,7 +321,7 @@ Public Class CompanySettingsManager
             _cachedColors = New Dictionary(Of String, Color)()
 
             Dim query As String = "SELECT * FROM ColorSettings WHERE IsActive = 1 ORDER BY DateCreated DESC"
-            Using reader As DbDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, New NpgsqlParameter() {})
                 If reader.Read() Then
                     Console.WriteLine("? Found ColorSettings record in database")
                     For i = 0 To reader.FieldCount - 1
@@ -366,7 +368,7 @@ Public Class CompanySettingsManager
             _cachedColors = New Dictionary(Of String, Color)()
 
             Dim query As String = "SELECT * FROM ColorSettings WHERE IsActive = 1 ORDER BY DateCreated DESC"
-            Using reader As DbDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, New NpgsqlParameter() {})
                 If reader.Read() Then
                     debugMsg &= "? Found ColorSettings record in database" & vbCrLf
                     For i = 0 To reader.FieldCount - 1

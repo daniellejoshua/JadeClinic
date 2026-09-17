@@ -1,10 +1,12 @@
-Imports System.Drawing
+﻿Imports System.Drawing
 Imports System.Drawing.Printing
 Imports System.IO
 Imports System.Windows.Forms
 Imports Guna.UI2.WinForms
 Imports System.Data.Common
 Imports System.Linq
+
+Imports Npgsql
 
 Public Class CompanySettings
     Private currentCompanyData As Dictionary(Of String, Object) = Nothing
@@ -172,7 +174,7 @@ Public Class CompanySettings
     Private Sub LoadCompanySettings()
         Try
             Dim query As String = "SELECT * FROM CompanySettings WHERE IsActive = 1 ORDER BY DateCreated DESC"
-            Using reader As DbDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, New NpgsqlParameter() {})
                 If reader.Read() Then
                     ' Store current data
                     currentCompanyData = New Dictionary(Of String, Object)
@@ -612,7 +614,7 @@ Public Class CompanySettings
         Try
             Dim existingCount As Integer = 0
             Dim countQuery As String = "SELECT COUNT(*) FROM CompanySettings WHERE IsActive = 1"
-            Dim countResult = Utilities.ExecuteScalar(countQuery, New SqlParameter() {})
+            Dim countResult = Utilities.ExecuteScalar(countQuery, New NpgsqlParameter() {})
             If countResult IsNot Nothing Then
                 existingCount = Convert.ToInt32(countResult)
             End If
@@ -620,7 +622,7 @@ Public Class CompanySettings
             Dim isUpdate As Boolean = (existingCount > 0)
 
             Dim sql As String
-            Dim parameters As New List(Of SqlParameter)()
+            Dim parameters As New List(Of NpgsqlParameter)()
 
             If logoChanged Then
                 Dim destDir As String = Connection.GetImagesFolder("company")
@@ -667,21 +669,21 @@ Public Class CompanySettings
                   "@BIRAuthNumber, @PTUNumber, @ValidityYears, @ReceiptFooter, @CompanyHours, " &
                   "1, @DateCreated, @LastModified)"
 
-                parameters.Add(New SqlParameter("@DateCreated", DateTime.Now))
+                parameters.Add(New NpgsqlParameter("@DateCreated", DateTime.Now))
             End If
 
-            parameters.Add(New SqlParameter("@CompanyName", If(String.IsNullOrWhiteSpace(txtCompanyName.Text), "JADE CLINIC", txtCompanyName.Text.Trim())))
-            parameters.Add(New SqlParameter("@TIN", If(txtTIN.Text, "").Trim()))
-            parameters.Add(New SqlParameter("@Address", If(txtAddress.Text, "").Trim()))
-            parameters.Add(New SqlParameter("@Phone", If(txtPhone.Text, "").Trim()))
-            parameters.Add(New SqlParameter("@Email", If(txtEmail.Text, "").Trim()))
-            parameters.Add(New SqlParameter("@Website", If(txtWebsite.Text, "").Trim()))
-            parameters.Add(New SqlParameter("@BIRAuthNumber", If(txtBIRAuth.Text, "ATP-2024-000001").Trim()))
-            parameters.Add(New SqlParameter("@PTUNumber", If(txtPTUNumber.Text, "PTU-2024-001").Trim()))
-            parameters.Add(New SqlParameter("@ValidityYears", CInt(nudValidityYears.Value)))
-            parameters.Add(New SqlParameter("@ReceiptFooter", If(txtReceiptFooter.Text, "Thank you for your business!").Trim()))
-            parameters.Add(New SqlParameter("@CompanyHours", If(txtCompanyHours.Text, "").Trim()))
-            parameters.Add(New SqlParameter("@LastModified", DateTime.Now))
+            parameters.Add(New NpgsqlParameter("@CompanyName", If(String.IsNullOrWhiteSpace(txtCompanyName.Text), "JADE CLINIC", txtCompanyName.Text.Trim())))
+            parameters.Add(New NpgsqlParameter("@TIN", If(txtTIN.Text, "").Trim()))
+            parameters.Add(New NpgsqlParameter("@Address", If(txtAddress.Text, "").Trim()))
+            parameters.Add(New NpgsqlParameter("@Phone", If(txtPhone.Text, "").Trim()))
+            parameters.Add(New NpgsqlParameter("@Email", If(txtEmail.Text, "").Trim()))
+            parameters.Add(New NpgsqlParameter("@Website", If(txtWebsite.Text, "").Trim()))
+            parameters.Add(New NpgsqlParameter("@BIRAuthNumber", If(txtBIRAuth.Text, "ATP-2024-000001").Trim()))
+            parameters.Add(New NpgsqlParameter("@PTUNumber", If(txtPTUNumber.Text, "PTU-2024-001").Trim()))
+            parameters.Add(New NpgsqlParameter("@ValidityYears", CInt(nudValidityYears.Value)))
+            parameters.Add(New NpgsqlParameter("@ReceiptFooter", If(txtReceiptFooter.Text, "Thank you for your business!").Trim()))
+            parameters.Add(New NpgsqlParameter("@CompanyHours", If(txtCompanyHours.Text, "").Trim()))
+            parameters.Add(New NpgsqlParameter("@LastModified", DateTime.Now))
 
             If logoChanged OrElse Not isUpdate Then
                 Dim logoPathValue As Object = DBNull.Value
@@ -689,7 +691,7 @@ Public Class CompanySettings
                 If IO.File.Exists(destPath) Then
                     logoPathValue = "logo.png"
                 End If
-                parameters.Add(New SqlParameter("@LogoPath", logoPathValue))
+                parameters.Add(New NpgsqlParameter("@LogoPath", logoPathValue))
             End If
 
             Dim rowsAffected As Integer = Utilities.ExecuteNonQuery(sql, parameters.ToArray())

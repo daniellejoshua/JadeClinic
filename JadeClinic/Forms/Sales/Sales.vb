@@ -1,11 +1,11 @@
-Imports System.Drawing
+﻿Imports System.Drawing
 Imports System.Drawing.Drawing2D
 Imports System.Drawing.Printing
 Imports System.IO
 Imports System.Text.RegularExpressions
 Imports System.Windows.Forms
 Imports Guna.UI2.WinForms
-Imports Microsoft.Data.Sqlite
+Imports Npgsql
 Imports System.Data.Common
 Imports Newtonsoft.Json
 
@@ -497,7 +497,7 @@ Public Class Sales
 
             ' Look for product by ProductCode
             Dim query As String = "SELECT ProductID, ProductName, SellingPrice, ProductCode, CurrentStock, Category FROM Products WHERE ProductCode = @ProductCode AND IsActive = 1"
-            Dim param As New SqlParameter("@ProductCode", barcode)
+            Dim param As New NpgsqlParameter("@ProductCode", barcode)
 
             Using reader As DbDataReader = Utilities.ExecuteReader(query, {param})
                 If reader.Read() Then
@@ -602,8 +602,8 @@ Public Class Sales
         ' Show next possible Sale ID in lblOrderId
         Dim nextSaleId As Integer = 1
         Try
-            Dim query As String = "SELECT IFNULL(MAX(SaleID), 0) + 1 AS NextSaleID FROM Sales"
-            Using reader As DbDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
+            Dim query As String = "SELECT COALESCE(MAX(SaleID), 0) + 1 AS NextSaleID FROM Sales"
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, New NpgsqlParameter() {})
                 If reader.Read() Then
                     nextSaleId = Convert.ToInt32(reader("NextSaleID"))
                 End If
@@ -671,8 +671,8 @@ Public Class Sales
     Private Function HasSalesForToday() As Boolean
         Try
             Dim sql As String = "SELECT COUNT(1) FROM Sales WHERE CAST(SaleDate AS date) = @Today"
-            Dim result = Utilities.ExecuteScalar(sql, New SqlParameter() {
-                New SqlParameter("@Today", Date.Today)
+            Dim result = Utilities.ExecuteScalar(sql, New NpgsqlParameter() {
+                New NpgsqlParameter("@Today", Date.Today)
             })
             If result Is Nothing OrElse result Is DBNull.Value Then
                 Return False
@@ -735,7 +735,7 @@ Public Class Sales
         Dim totalItems As Integer = 0
         Try
             Dim countQuery As String = "SELECT COUNT(*) FROM Products WHERE Category = @Category AND IsActive = 1"
-            Dim countResult As Object = Utilities.ExecuteScalar(countQuery, {New SqlParameter("@Category", categoryName)})
+            Dim countResult As Object = Utilities.ExecuteScalar(countQuery, {New NpgsqlParameter("@Category", categoryName)})
             LogDiagnostic($"CAT category='{categoryName}' countResult={If(countResult Is Nothing, "Nothing", countResult.ToString())} type={If(countResult Is Nothing, "-", countResult.GetType().Name)}")
             If countResult IsNot Nothing Then
                 totalItems = Convert.ToInt32(countResult)
@@ -778,15 +778,15 @@ Public Class Sales
             baseWhere &= " AND Unit = @Unit"
         End If
         Dim query As String = $"SELECT ProductID, ProductName, SellingPrice, ProductCode, ReorderLevel, CurrentStock, Category, Unit FROM Products {baseWhere} ORDER BY ProductName LIMIT @Limit OFFSET @Offset"
-        Dim paramList As New List(Of SqlParameter) From {
-            New SqlParameter("@Category", categoryName),
-            New SqlParameter("@Limit", ProductPageSize),
-            New SqlParameter("@Offset", offset)
+        Dim paramList As New List(Of NpgsqlParameter) From {
+            New NpgsqlParameter("@Category", categoryName),
+            New NpgsqlParameter("@Limit", ProductPageSize),
+            New NpgsqlParameter("@Offset", offset)
         }
         If Not String.IsNullOrEmpty(_selectedUnitFilter) Then
-            paramList.Add(New SqlParameter("@Unit", _selectedUnitFilter))
+            paramList.Add(New NpgsqlParameter("@Unit", _selectedUnitFilter))
         End If
-        Dim parameters As SqlParameter() = paramList.ToArray()
+        Dim parameters As NpgsqlParameter() = paramList.ToArray()
         Try
             Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters)
                 While reader.Read()
@@ -917,10 +917,10 @@ Public Class Sales
         Dim totalItems As Integer = 0
         Try
             Dim countQuery As String = "SELECT COUNT(*) FROM Products WHERE Category = @Category AND IsActive = 1"
-            Dim countParams As New List(Of SqlParameter) From {New SqlParameter("@Category", _paginationCategory)}
+            Dim countParams As New List(Of NpgsqlParameter) From {New NpgsqlParameter("@Category", _paginationCategory)}
             If Not String.IsNullOrEmpty(_selectedUnitFilter) Then
                 countQuery &= " AND Unit = @Unit"
-                countParams.Add(New SqlParameter("@Unit", _selectedUnitFilter))
+                countParams.Add(New NpgsqlParameter("@Unit", _selectedUnitFilter))
             End If
             Dim countResult = Utilities.ExecuteScalar(countQuery, countParams.ToArray())
             If countResult IsNot Nothing Then totalItems = Convert.ToInt32(countResult)
@@ -936,13 +936,13 @@ Public Class Sales
         Dim totalItems As Integer = 0
         Try
             Dim countQuery As String = "SELECT COUNT(*) FROM Products WHERE IsActive = 1 AND (ProductCode = @term OR ProductName LIKE @like)"
-            Dim countParams As New List(Of SqlParameter) From {
-                New SqlParameter("@term", _paginationSearchTerm),
-                New SqlParameter("@like", "%" & _paginationSearchTerm & "%")
+            Dim countParams As New List(Of NpgsqlParameter) From {
+                New NpgsqlParameter("@term", _paginationSearchTerm),
+                New NpgsqlParameter("@like", "%" & _paginationSearchTerm & "%")
             }
             If Not String.IsNullOrEmpty(_selectedUnitFilter) Then
                 countQuery &= " AND Unit = @Unit"
-                countParams.Add(New SqlParameter("@Unit", _selectedUnitFilter))
+                countParams.Add(New NpgsqlParameter("@Unit", _selectedUnitFilter))
             End If
             Dim countResult = Utilities.ExecuteScalar(countQuery, countParams.ToArray())
             If countResult IsNot Nothing Then totalItems = Convert.ToInt32(countResult)
@@ -1367,7 +1367,7 @@ Public Class Sales
             Dim currentPage As Integer = If(_pagination IsNot Nothing, _pagination.CurrentPage, 1)
             Dim offset As Integer = (currentPage - 1) * ProductPageSize
             Dim query As String = ""
-            Dim paramList As New List(Of SqlParameter)
+            Dim paramList As New List(Of NpgsqlParameter)
 
             If _paginationContext = PaginationContext.Category AndAlso Not String.IsNullOrEmpty(_paginationCategory) Then
                 Dim baseWhere As String = "WHERE Category = @Category AND IsActive = 1"
@@ -1375,23 +1375,23 @@ Public Class Sales
                     baseWhere &= " AND Unit = @Unit"
                 End If
                 query = $"SELECT ProductID, CurrentStock FROM Products {baseWhere} ORDER BY ProductName LIMIT @Limit OFFSET @Offset"
-                paramList.Add(New SqlParameter("@Category", _paginationCategory))
+                paramList.Add(New NpgsqlParameter("@Category", _paginationCategory))
             ElseIf _paginationContext = PaginationContext.Search AndAlso Not String.IsNullOrEmpty(_paginationSearchTerm) Then
                 Dim baseWhere As String = "WHERE IsActive = 1 AND (ProductCode = @term OR ProductName LIKE @like)"
                 If Not String.IsNullOrEmpty(_selectedUnitFilter) Then
                     baseWhere &= " AND Unit = @Unit"
                 End If
                 query = $"SELECT ProductID, CurrentStock FROM Products {baseWhere} ORDER BY CASE WHEN ProductCode = @term THEN 0 ELSE 1 END, ProductName LIMIT @Limit OFFSET @Offset"
-                paramList.Add(New SqlParameter("@term", _paginationSearchTerm))
-                paramList.Add(New SqlParameter("@like", "%" & _paginationSearchTerm & "%"))
+                paramList.Add(New NpgsqlParameter("@term", _paginationSearchTerm))
+                paramList.Add(New NpgsqlParameter("@like", "%" & _paginationSearchTerm & "%"))
             Else
                 Return
             End If
 
-            paramList.Add(New SqlParameter("@Limit", ProductPageSize))
-            paramList.Add(New SqlParameter("@Offset", offset))
+            paramList.Add(New NpgsqlParameter("@Limit", ProductPageSize))
+            paramList.Add(New NpgsqlParameter("@Offset", offset))
             If Not String.IsNullOrEmpty(_selectedUnitFilter) Then
-                paramList.Add(New SqlParameter("@Unit", _selectedUnitFilter))
+                paramList.Add(New NpgsqlParameter("@Unit", _selectedUnitFilter))
             End If
 
             Using reader As DbDataReader = Utilities.ExecuteReader(query, paramList.ToArray())
@@ -1468,7 +1468,7 @@ Public Class Sales
         ' Query the database to get the count of distinct products for each category
         Try
             Dim query As String = "SELECT Category, COUNT(*) AS TotalProducts FROM Products WHERE IsActive = 1 GROUP BY Category"
-            Using reader As DbDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, New NpgsqlParameter() {})
                 While reader.Read()
                     Dim category As String = reader("Category").ToString().ToUpper()
                     Dim totalProducts As Integer = Convert.ToInt32(reader("TotalProducts"))
@@ -1512,7 +1512,7 @@ Public Class Sales
         Dim categories As New List(Of String)(_preferredCategoryOrder)
         Try
             Dim query As String = "SELECT DISTINCT Category FROM Products WHERE Category IS NOT NULL AND Category <> '' AND IsActive = 1"
-            Using reader As DbDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, New NpgsqlParameter() {})
                 While reader.Read()
                     Dim catName As String = reader("Category").ToString().ToUpper()
                     If Not categories.Any(Function(c) NormalizeCategory(c) = NormalizeCategory(catName)) Then
@@ -1786,14 +1786,14 @@ Public Class Sales
         "CashDate TEXT PRIMARY KEY, " &
         "OpeningAmount REAL NOT NULL, " &
         "SetByUserID INTEGER NULL, " &
-        "SetAt TEXT NOT NULL DEFAULT (datetime('now')))"
-        Utilities.ExecuteNonQuery(sql, New SqlParameter() {})
+        "SetAt TIMESTAMPTZ NOT NULL DEFAULT ((now() AT TIME ZONE 'UTC')))"
+        Utilities.ExecuteNonQuery(sql, New NpgsqlParameter() {})
     End Sub
 
     Private Function TryGetTodayOpeningCapital(ByRef amount As Decimal) As Boolean
-        Dim sql As String = "SELECT OpeningAmount FROM DailyOpeningCapital WHERE CashDate = @CashDate"
-        Dim result = Utilities.ExecuteScalar(sql, New SqlParameter() {
-        New SqlParameter("@CashDate", Date.Today)
+        Dim sql As String = "SELECT OpeningAmount FROM DailyOpeningCapital WHERE CashDate = @CashDate::text"
+        Dim result = Utilities.ExecuteScalar(sql, New NpgsqlParameter() {
+New NpgsqlParameter("@CashDate", Date.Today.ToString("yyyy-MM-dd"))
     })
 
         If result Is Nothing OrElse result Is DBNull.Value Then
@@ -1808,14 +1808,14 @@ Public Class Sales
     Private Sub UpsertTodayOpeningCapital(amount As Decimal)
         Dim sql As String =
         "INSERT INTO DailyOpeningCapital (CashDate, OpeningAmount, SetByUserID, SetAt) " &
-        "VALUES (@CashDate, @OpeningAmount, @SetByUserID, datetime('now')) " &
+        "VALUES (@CashDate, @OpeningAmount, @SetByUserID, (now() AT TIME ZONE 'UTC')) " &
         "ON CONFLICT(CashDate) DO UPDATE SET " &
-        "OpeningAmount = @OpeningAmount, SetByUserID = @SetByUserID, SetAt = datetime('now')"
+        "OpeningAmount = @OpeningAmount, SetByUserID = @SetByUserID, SetAt = (now() AT TIME ZONE 'UTC')"
 
-        Utilities.ExecuteNonQuery(sql, New SqlParameter() {
-        New SqlParameter("@CashDate", Date.Today),
-        New SqlParameter("@OpeningAmount", amount),
-        New SqlParameter("@SetByUserID", If(frmLoginvb.LoggedInUserID > 0, CType(frmLoginvb.LoggedInUserID, Object), DBNull.Value))
+        Utilities.ExecuteNonQuery(sql, New NpgsqlParameter() {
+        New NpgsqlParameter("@CashDate", Date.Today.ToString("yyyy-MM-dd")),
+        New NpgsqlParameter("@OpeningAmount", amount),
+        New NpgsqlParameter("@SetByUserID", If(frmLoginvb.LoggedInUserID > 0, CType(frmLoginvb.LoggedInUserID, Object), DBNull.Value))
     })
     End Sub
 
@@ -3116,6 +3116,12 @@ Public Class Sales
             Return
         End If
 
+        ' Re-check live stock now (another PC may have sold the last unit while
+        ' this cart was open) so the cashier isn't surprised at the end.
+        If Not ValidateCartStockBeforePayment() Then
+            Return
+        End If
+
         ' STEP 1: Show customer information modal FIRST
         ShowCustomerInformationModal()
     End Sub
@@ -4367,6 +4373,69 @@ Public Class Sales
         _emptyCartPanel.Visible = Not hasItems
     End Sub
 
+    ' Re-checks the cart against live database stock right before payment so the
+    ' cashier is never surprised by an "insufficient stock" error at the very end
+    ' of checkout (e.g. another PC sold the last unit while this cart was open).
+    ' Returns False when the cart needs adjusting first.
+    Private Function ValidateCartStockBeforePayment() As Boolean
+        Try
+            If currentOrderList.Count = 0 Then Return True
+
+            ' Total quantity wanted per product
+            Dim required As New Dictionary(Of String, Integer)(StringComparer.OrdinalIgnoreCase)
+            Dim names As New Dictionary(Of String, String)(StringComparer.OrdinalIgnoreCase)
+            For Each item In currentOrderList
+                Dim pid As String = item("ProductID").ToString()
+                Dim q As Integer = CInt(item("Quantity"))
+                If required.ContainsKey(pid) Then
+                    required(pid) += q
+                Else
+                    required(pid) = q
+                End If
+                names(pid) = item("ProductName").ToString()
+            Next
+
+            ' Fresh stock straight from the database (ignore cached page values)
+            Dim freshStock As New Dictionary(Of String, Integer)(StringComparer.OrdinalIgnoreCase)
+            For Each pid In required.Keys
+                Dim value As Object = Utilities.ExecuteScalar(
+                    "SELECT COALESCE(CurrentStock, 0) FROM Products WHERE ProductID = @ProductID",
+                    New NpgsqlParameter("@ProductID", pid))
+                freshStock(pid) = If(value Is Nothing OrElse IsDBNull(value), 0, Convert.ToInt32(value))
+            Next
+
+            Dim shortfalls As New List(Of String)()
+            For Each pid In required.Keys
+                Dim have As Integer = freshStock(pid)
+                Dim want As Integer = required(pid)
+                If want > have Then
+                    shortfalls.Add($"- {names(pid)}: only {have} left (in cart: {want})")
+                End If
+            Next
+
+            ' Refresh the card labels with the numbers we validated against so the
+            ' cashier sees the same values.
+            For Each pid In required.Keys
+                productDbStock(pid) = freshStock(pid)
+                UpdateStockLabelFromDbStock(pid)
+            Next
+
+            If shortfalls.Count > 0 Then
+                MessageBox.Show(
+                    "Some items no longer have enough stock:" & vbCrLf & vbCrLf &
+                    String.Join(vbCrLf, shortfalls) & vbCrLf & vbCrLf &
+                    "Please adjust the quantities before taking payment.",
+                    "Stock Changed", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                Return False
+            End If
+            Return True
+        Catch ex As Exception
+            ' Never block a sale because the pre-check itself failed.
+            Console.WriteLine($"ValidateCartStockBeforePayment error: {ex.Message}")
+            Return True
+        End Try
+    End Function
+
     ' Refresh the order display in the order summary panel
     ' FIXED: Refresh the order display with correct VAT calculations
     ' Refresh the order display in the order summary panel
@@ -4532,13 +4601,13 @@ Public Class Sales
                 Throw New Exception("Database connection string is not configured.")
             End If
 
-            Using conn As New SqliteConnection(connStr)
+            Using conn As New NpgsqlConnection(connStr)
                 conn.Open()
                 Using tran = conn.BeginTransaction()
                     Try
                         ' Resolve UserID inside the transaction (ensure non-NULL value for InventoryLog.UserID)
                         Dim userIdToUse As Object = DBNull.Value
-                        Using cmdUserCheck As New SqliteCommand("SELECT UserID FROM Users WHERE Username = @Username", conn, tran)
+                        Using cmdUserCheck As New NpgsqlCommand("SELECT UserID FROM Users WHERE Username = @Username", conn, tran)
                             cmdUserCheck.Parameters.AddWithValue("@Username", frmLoginvb.LoggedInUsername)
                             Dim uidObj = cmdUserCheck.ExecuteScalar()
                             If uidObj IsNot Nothing AndAlso Not IsDBNull(uidObj) Then
@@ -4548,7 +4617,7 @@ Public Class Sales
 
                         ' If still not found, fallback to any existing user (first row)
                         If userIdToUse Is DBNull.Value Then
-                            Using cmdFb As New SqliteCommand("SELECT * LIMIT 1 UserID FROM Users ORDER BY UserID", conn, tran)
+                            Using cmdFb As New NpgsqlCommand("SELECT * LIMIT 1 UserID FROM Users ORDER BY UserID", conn, tran)
                                 Dim fb = cmdFb.ExecuteScalar()
                                 If fb IsNot Nothing AndAlso Not IsDBNull(fb) Then
                                     userIdToUse = Convert.ToInt32(fb)
@@ -4563,9 +4632,9 @@ Public Class Sales
                         ' Insert Sale and get SaleID
                         Dim insertSaleQuery As String =
                     "INSERT INTO Sales (SaleDate, CustomerName, CustomerTIN, TotalAmount, AmountPaid, PaymentMethod, Reference, DiscountAmount, DiscountType, SalesData, UserID) " &
-                    "VALUES (@SaleDate, @CustomerName, @CustomerTIN, @TotalAmount, @AmountPaid, @PaymentMethod, @Reference, @DiscountAmount, @DiscountType, @SalesData, @UserID); SELECT last_insert_rowid();"
+                    "VALUES (@SaleDate, @CustomerName, @CustomerTIN, @TotalAmount, @AmountPaid, @PaymentMethod, @Reference, @DiscountAmount, @DiscountType, @SalesData, @UserID) RETURNING SaleID"
 
-                        Using cmdSale As New SqliteCommand(insertSaleQuery, conn, tran)
+                        Using cmdSale As New NpgsqlCommand(insertSaleQuery, conn, tran)
                             cmdSale.Parameters.AddWithValue("@SaleDate", DateTime.Now)
                             cmdSale.Parameters.AddWithValue("@CustomerName", If(String.IsNullOrWhiteSpace(selectedCustomerName), CType(DBNull.Value, Object), CType(selectedCustomerName, Object)))
                             cmdSale.Parameters.AddWithValue("@CustomerTIN", If(String.IsNullOrWhiteSpace(selectedCustomerTIN), CType(DBNull.Value, Object), CType(selectedCustomerTIN, Object)))
@@ -4588,7 +4657,7 @@ Public Class Sales
 
                             ' Generate a readable, numbers-only SaleNumber for this sale
                             Dim generatedSaleNumber As String = Utilities.FormatSaleNumber(saleId, _terminalCode)
-                            Using cmdNum As New SqliteCommand("UPDATE Sales SET SaleNumber = @SaleNumber WHERE SaleID = @SaleID", conn, tran)
+                            Using cmdNum As New NpgsqlCommand("UPDATE Sales SET SaleNumber = @SaleNumber WHERE SaleID = @SaleID", conn, tran)
                                 cmdNum.Parameters.AddWithValue("@SaleNumber", generatedSaleNumber)
                                 cmdNum.Parameters.AddWithValue("@SaleID", saleId)
                                 cmdNum.ExecuteNonQuery()
@@ -4607,7 +4676,7 @@ Public Class Sales
                                 Else
                                     origPrice = unitPrice
                                 End If
-                                Using cmdItem As New SqliteCommand("INSERT INTO SaleItems (SaleID, ProductID, Quantity, UnitPrice, OriginalUnitPrice) VALUES (@SaleID, @ProductID, @Quantity, @UnitPrice, @OriginalUnitPrice)", conn, tran)
+                                Using cmdItem As New NpgsqlCommand("INSERT INTO SaleItems (SaleID, ProductID, Quantity, UnitPrice, OriginalUnitPrice) VALUES (@SaleID, @ProductID, @Quantity, @UnitPrice, @OriginalUnitPrice)", conn, tran)
                                     cmdItem.Parameters.AddWithValue("@SaleID", saleId)
                                     cmdItem.Parameters.AddWithValue("@ProductID", prodId)
                                     cmdItem.Parameters.AddWithValue("@Quantity", qty)
@@ -4618,7 +4687,7 @@ Public Class Sales
 
                                 ' Read previous stock (source of truth)
                                 Dim previousStock As Integer = 0
-                                Using cmdPrev As New SqliteCommand("SELECT IFNULL(CurrentStock, 0) FROM Products WHERE ProductID = @ProductID", conn, tran)
+                                Using cmdPrev As New NpgsqlCommand("SELECT COALESCE(CurrentStock, 0) FROM Products WHERE ProductID = @ProductID", conn, tran)
                                     cmdPrev.Parameters.AddWithValue("@ProductID", prodId)
                                     Dim prevObj = cmdPrev.ExecuteScalar()
                                     If prevObj IsNot Nothing AndAlso Not IsDBNull(prevObj) Then
@@ -4629,7 +4698,7 @@ Public Class Sales
                                 ' Decrease stock atomically; block the sale when there is not enough stock
                                 ' so stock can never be driven negative by a stale cart or concurrent write.
                                 Dim newStock As Integer = previousStock - qty
-                                Using cmdUpdate As New SqliteCommand("UPDATE Products SET CurrentStock = CurrentStock - @Qty WHERE ProductID = @ProductID AND CurrentStock >= @Qty", conn, tran)
+                                Using cmdUpdate As New NpgsqlCommand("UPDATE Products SET CurrentStock = CurrentStock - @Qty WHERE ProductID = @ProductID AND CurrentStock >= @Qty", conn, tran)
                                     cmdUpdate.Parameters.AddWithValue("@Qty", qty)
                                     cmdUpdate.Parameters.AddWithValue("@ProductID", prodId)
                                     If cmdUpdate.ExecuteNonQuery() = 0 Then
@@ -4642,7 +4711,7 @@ Public Class Sales
                                 Dim insertLogQuery As String =
                             "INSERT INTO InventoryLog (ProductID, TransactionType, Quantity, PreviousStock, NewStock, SupplierID, Reference, Notes, UserID, CreatedAt) " &
                             "VALUES (@ProductID, @TransactionType, @Quantity, @PreviousStock, @NewStock, @SupplierID, @Reference, @Notes, @UserID, @CreatedAt)"
-                                Using cmdLog As New SqliteCommand(insertLogQuery, conn, tran)
+                                Using cmdLog As New NpgsqlCommand(insertLogQuery, conn, tran)
                                     cmdLog.Parameters.AddWithValue("@ProductID", prodId)
                                     ' IMPORTANT: use 'OUT' (not 'Stock Out') to conform to InventoryLog CHECK constraint
                                     cmdLog.Parameters.AddWithValue("@TransactionType", "OUT")
@@ -4850,12 +4919,12 @@ Public Class Sales
             End If
 
             Dim saleId As Integer = 0
-            Using conn As New SqliteConnection(connStr)
+            Using conn As New NpgsqlConnection(connStr)
                 conn.Open()
                 Using tran = conn.BeginTransaction()
                     Try
                         Dim userIdToUse As Object = DBNull.Value
-                        Using cmdUserCheck As New SqliteCommand("SELECT UserID FROM Users WHERE Username = @Username", conn, tran)
+                        Using cmdUserCheck As New NpgsqlCommand("SELECT UserID FROM Users WHERE Username = @Username", conn, tran)
                             cmdUserCheck.Parameters.AddWithValue("@Username", frmLoginvb.LoggedInUsername)
                             Dim uidObj = cmdUserCheck.ExecuteScalar()
                             If uidObj IsNot Nothing AndAlso Not IsDBNull(uidObj) Then
@@ -4865,9 +4934,9 @@ Public Class Sales
 
                         Dim insertSaleQuery As String =
                             "INSERT INTO Sales (SaleDate, CustomerName, CustomerTIN, TotalAmount, AmountPaid, PaymentMethod, Reference, SalesData, Status, ApprovedBy, AbortReason, DiscountType, DiscountAmount, UserID) " &
-                            "VALUES (@SaleDate, @CustomerName, @CustomerTIN, @TotalAmount, @AmountPaid, @PaymentMethod, @Reference, @SalesData, 'Aborted', @ApprovedBy, @AbortReason, @DiscountType, @DiscountAmount, @UserID); SELECT last_insert_rowid();"
+                            "VALUES (@SaleDate, @CustomerName, @CustomerTIN, @TotalAmount, @AmountPaid, @PaymentMethod, @Reference, @SalesData, 'Aborted', @ApprovedBy, @AbortReason, @DiscountType, @DiscountAmount, @UserID) RETURNING SaleID"
 
-                        Using cmdSale As New SqliteCommand(insertSaleQuery, conn, tran)
+                        Using cmdSale As New NpgsqlCommand(insertSaleQuery, conn, tran)
                             cmdSale.Parameters.AddWithValue("@SaleDate", DateTime.Now)
                             cmdSale.Parameters.AddWithValue("@CustomerName", If(String.IsNullOrWhiteSpace(selectedCustomerName), CType(DBNull.Value, Object), CType(selectedCustomerName, Object)))
                             cmdSale.Parameters.AddWithValue("@CustomerTIN", If(String.IsNullOrWhiteSpace(selectedCustomerTIN), CType(DBNull.Value, Object), CType(selectedCustomerTIN, Object)))
@@ -4891,7 +4960,7 @@ Public Class Sales
                         End Using
 
                         Dim generatedSaleNumber As String = Utilities.FormatSaleNumber(saleId, _terminalCode)
-                        Using cmdNum As New SqliteCommand("UPDATE Sales SET SaleNumber = @SaleNumber WHERE SaleID = @SaleID", conn, tran)
+                        Using cmdNum As New NpgsqlCommand("UPDATE Sales SET SaleNumber = @SaleNumber WHERE SaleID = @SaleID", conn, tran)
                             cmdNum.Parameters.AddWithValue("@SaleNumber", generatedSaleNumber)
                             cmdNum.Parameters.AddWithValue("@SaleID", saleId)
                             cmdNum.ExecuteNonQuery()
@@ -4973,8 +5042,8 @@ Public Class Sales
     Private Sub InitializeOrderId()
         Try
             Dim nextOrderId As Integer = 1
-            Dim query As String = "SELECT IFNULL(MAX(SaleID), 0) + 1 AS NextOrderID FROM Sales"
-            Using reader As DbDataReader = Utilities.ExecuteReader(query, New SqlParameter() {})
+            Dim query As String = "SELECT COALESCE(MAX(SaleID), 0) + 1 AS NextOrderID FROM Sales"
+            Using reader As DbDataReader = Utilities.ExecuteReader(query, New NpgsqlParameter() {})
                 If reader.Read() Then
                     nextOrderId = Convert.ToInt32(reader("NextOrderID"))
                 End If
@@ -5805,7 +5874,7 @@ Public Class Sales
             Dim query As String = "SELECT pi.FilePath FROM ProductImageMapping pim " &
                                   "JOIN ProductImages pi ON pim.ImageID = pi.ImageID " &
                                   "WHERE pim.ProductID = @ProductID AND pi.FilePath IS NOT NULL AND pi.FilePath != '' LIMIT 1"
-            Dim param As New SqlParameter("@ProductID", productId)
+            Dim param As New NpgsqlParameter("@ProductID", productId)
             Using reader As DbDataReader = Utilities.ExecuteReader(query, {param})
                 If reader.Read() Then
                     If Not IsDBNull(reader("FilePath")) Then
@@ -5942,9 +6011,9 @@ Public Class Sales
         Dim totalItems As Integer = 0
         Try
             Dim countQuery As String = "SELECT COUNT(*) FROM Products WHERE IsActive = 1 AND (ProductCode = @term OR ProductName LIKE @like)"
-            Dim countParameters As SqlParameter() = {
-                New SqlParameter("@term", term),
-                New SqlParameter("@like", "%" & term & "%")
+            Dim countParameters As NpgsqlParameter() = {
+                New NpgsqlParameter("@term", term),
+                New NpgsqlParameter("@like", "%" & term & "%")
             }
             Dim countResult As Object = Utilities.ExecuteScalar(countQuery, countParameters)
             LogDiagnostic($"SRCH term='{term}' countResult={If(countResult Is Nothing, "Nothing", countResult.ToString())} type={If(countResult Is Nothing, "-", countResult.GetType().Name)}")
@@ -5986,16 +6055,16 @@ Public Class Sales
             baseWhere &= " AND Unit = @Unit"
         End If
         Dim query As String = $"SELECT ProductID, ProductName, SellingPrice, ProductCode, ReorderLevel, CurrentStock, Category, Unit FROM Products {baseWhere} ORDER BY CASE WHEN ProductCode = @term THEN 0 ELSE 1 END, ProductName LIMIT @Limit OFFSET @Offset"
-        Dim paramList As New List(Of SqlParameter) From {
-            New SqlParameter("@term", term),
-            New SqlParameter("@like", "%" & term & "%"),
-            New SqlParameter("@Limit", ProductPageSize),
-            New SqlParameter("@Offset", offset)
+        Dim paramList As New List(Of NpgsqlParameter) From {
+            New NpgsqlParameter("@term", term),
+            New NpgsqlParameter("@like", "%" & term & "%"),
+            New NpgsqlParameter("@Limit", ProductPageSize),
+            New NpgsqlParameter("@Offset", offset)
         }
         If Not String.IsNullOrEmpty(_selectedUnitFilter) Then
-            paramList.Add(New SqlParameter("@Unit", _selectedUnitFilter))
+            paramList.Add(New NpgsqlParameter("@Unit", _selectedUnitFilter))
         End If
-        Dim parameters As SqlParameter() = paramList.ToArray()
+        Dim parameters As NpgsqlParameter() = paramList.ToArray()
         Try
             Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters)
                 While reader.Read()
@@ -6059,7 +6128,7 @@ Public Class Sales
         LabelTitle.Text = $"Search: {productName}"
 
         Dim query As String = "SELECT ProductID, ProductName, SellingPrice, ProductCode, ReorderLevel, CurrentStock, Category, Unit FROM Products WHERE ProductID = @ProductID AND IsActive = 1"
-        Dim param As New SqlParameter("@ProductID", productId)
+        Dim param As New NpgsqlParameter("@ProductID", productId)
         Using reader As DbDataReader = Utilities.ExecuteReader(query, {param})
             If reader.Read() Then
                 Dim stock As Integer = Convert.ToInt32(reader("CurrentStock"))
@@ -6169,9 +6238,9 @@ Public Class Sales
 
                            Try
                                Dim query As String = "SELECT ProductID, ProductName, Category FROM Products WHERE IsActive = 1 AND (ProductCode = @term OR ProductName LIKE @like) ORDER BY CASE WHEN ProductCode = @term THEN 0 ELSE 1 END, ProductName"
-                               Dim parameters As SqlParameter() = {
-                                   New SqlParameter("@term", term),
-                                   New SqlParameter("@like", "%" & term & "%")
+                               Dim parameters As NpgsqlParameter() = {
+                                   New NpgsqlParameter("@term", term),
+                                   New NpgsqlParameter("@like", "%" & term & "%")
                                }
 
                                Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters)
@@ -6652,7 +6721,7 @@ Public Class Sales
         If String.IsNullOrWhiteSpace(token) Then Return False
 
         Dim sql As String = "SELECT Username, UserRole, IsActive FROM Users WHERE QRCode = @QRCode LIMIT 1"
-        Using reader As DbDataReader = Utilities.ExecuteReader(sql, New SqlParameter("@QRCode", token))
+        Using reader As DbDataReader = Utilities.ExecuteReader(sql, New NpgsqlParameter("@QRCode", token))
             If reader.Read() Then
                 Dim userName As String = If(IsDBNull(reader("Username")), "", reader("Username").ToString())
                 Dim role As String = If(IsDBNull(reader("UserRole")), "", reader("UserRole").ToString())
@@ -6673,7 +6742,7 @@ Public Class Sales
         If String.IsNullOrWhiteSpace(managerUsername) OrElse String.IsNullOrWhiteSpace(managerPassword) Then Return False
 
         Dim sql As String = "SELECT Username, UserRole, IsActive, PasswordHash FROM Users WHERE Username = @Username LIMIT 1"
-        Using reader As DbDataReader = Utilities.ExecuteReader(sql, New SqlParameter("@Username", managerUsername))
+        Using reader As DbDataReader = Utilities.ExecuteReader(sql, New NpgsqlParameter("@Username", managerUsername))
             If reader.Read() Then
                 Dim role As String = If(IsDBNull(reader("UserRole")), "", reader("UserRole").ToString())
                 Dim active As Boolean = If(IsDBNull(reader("IsActive")), False, Convert.ToBoolean(reader("IsActive")))

@@ -5,6 +5,44 @@ Imports System.Windows.Forms
 Namespace My
     Partial Friend Class MyApplication
         Private Sub MyApplication_Startup(sender As Object, e As StartupEventArgs) Handles Me.Startup
+            ' Updater mode (--apply-update "<updateDir>" "<appDir>" <oldPid>):
+            ' launched by the previous instance to install a downloaded build.
+            ' Runs before any database or terminal initialization, then exits.
+            Dim cliArgs As String() = Environment.GetCommandLineArgs()
+            If cliArgs.Length >= 5 AndAlso
+               String.Equals(cliArgs(1), "--apply-update", StringComparison.OrdinalIgnoreCase) Then
+                Dim updateDir As String = cliArgs(2)
+                Dim appDir As String = cliArgs(3)
+                Dim oldPid As Integer = 0
+                Integer.TryParse(cliArgs(4), oldPid)
+                Using form As New ApplyingUpdateForm(updateDir, appDir, oldPid)
+                    form.ShowDialog()
+                End Using
+                e.Cancel = True
+                Return
+            End If
+
+            ' Headless demo-data seed (--seed-demo):
+            ' Initializes the PostgreSQL schema then loads the full demo store,
+            ' the same as the "Load Demo Data" button in System Settings.
+            If cliArgs.Length >= 2 AndAlso
+               String.Equals(cliArgs(1), "--seed-demo", StringComparison.OrdinalIgnoreCase) Then
+                Try
+                    Console.WriteLine("Seeding demo data...")
+                    If Not AutoInitializeDatabase() Then
+                        Console.WriteLine("SEED FAILED: could not initialize the database.")
+                        e.Cancel = True
+                        Return
+                    End If
+                    Dim summary As String = DemoDataSeeder.SeedDemoData()
+                    Console.WriteLine("SEED DONE: " & summary)
+                Catch ex As Exception
+                    Console.WriteLine("SEED FAILED: " & ex.ToString())
+                End Try
+                e.Cancel = True
+                Return
+            End If
+
             Dim appPath As String = AppDomain.CurrentDomain.BaseDirectory
             AppDomain.CurrentDomain.SetData("DataDirectory", appPath)
 

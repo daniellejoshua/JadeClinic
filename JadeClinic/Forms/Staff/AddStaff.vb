@@ -1,10 +1,12 @@
-Imports System.Drawing
+﻿Imports System.Drawing
 Imports System.Drawing.Printing
 Imports System.IO
 Imports System.Security.Cryptography
 Imports System.Text
 Imports Guna.UI2.WinForms
 Imports System.Data.Common
+
+Imports Npgsql
 
 Public Class AddStaff
     Private staffPhotoPath As String = Nothing
@@ -542,8 +544,8 @@ Public Class AddStaff
     Private Function CheckDuplicateUsername(username As String) As Boolean
         Try
             Dim query As String = "SELECT COUNT(*) FROM Users WHERE Username = @Username"
-            Dim parameters() As SqlParameter = {
-                New SqlParameter("@Username", username)
+            Dim parameters() As NpgsqlParameter = {
+                New NpgsqlParameter("@Username", username)
             }
 
             Dim count As Integer = CInt(Utilities.ExecuteScalar(query, parameters))
@@ -557,8 +559,8 @@ Public Class AddStaff
     Private Function CheckDuplicateEmail(email As String) As Boolean
         Try
             Dim query As String = "SELECT COUNT(*) FROM Users WHERE Email = @Email"
-            Dim parameters() As SqlParameter = {
-                New SqlParameter("@Email", email)
+            Dim parameters() As NpgsqlParameter = {
+                New NpgsqlParameter("@Email", email)
             }
             Dim count As Integer = CInt(Utilities.ExecuteScalar(query, parameters))
             Return count > 0
@@ -571,8 +573,8 @@ Public Class AddStaff
     Private Function CheckDuplicatePhone(phone As String) As Boolean
         Try
             Dim query As String = "SELECT COUNT(*) FROM Users WHERE Phone = @Phone"
-            Dim parameters() As SqlParameter = {
-                New SqlParameter("@Phone", phone)
+            Dim parameters() As NpgsqlParameter = {
+                New NpgsqlParameter("@Phone", phone)
             }
             Dim count As Integer = CInt(Utilities.ExecuteScalar(query, parameters))
             Return count > 0
@@ -636,21 +638,21 @@ Public Class AddStaff
         ' Insert staff member into Users table (matching your actual schema)
         Dim insertQuery As String = "
         INSERT INTO Users (Username, PasswordHash, FullName, Email, Phone, UserRole, pin, QRCode, IsActive, CreatedAt, UpdatedAt) 
-        VALUES (@Username, @PasswordHash, @FullName, @Email, @Phone, @UserRole, @Pin, @QRCode, @IsActive, @CreatedAt, @UpdatedAt);
-        SELECT last_insert_rowid();"
+        VALUES (@Username, @PasswordHash, @FullName, @Email, @Phone, @UserRole, @Pin, @QRCode, @IsActive, @CreatedAt, @UpdatedAt) 
+        RETURNING UserID"
 
-        Dim parameters() As SqlParameter = {
-        New SqlParameter("@Username", username),
-        New SqlParameter("@PasswordHash", hashedPassword),
-        New SqlParameter("@FullName", fullName),
-        New SqlParameter("@Email", email),
-        New SqlParameter("@Phone", phone),
-        New SqlParameter("@UserRole", role),
-        New SqlParameter("@Pin", Convert.ToInt32(pin)),
-        New SqlParameter("@QRCode", userCode),
-        New SqlParameter("@IsActive", True),
-        New SqlParameter("@CreatedAt", DateTime.Now),
-        New SqlParameter("@UpdatedAt", DateTime.Now)
+        Dim parameters() As NpgsqlParameter = {
+        New NpgsqlParameter("@Username", username),
+        New NpgsqlParameter("@PasswordHash", hashedPassword),
+        New NpgsqlParameter("@FullName", fullName),
+        New NpgsqlParameter("@Email", email),
+        New NpgsqlParameter("@Phone", phone),
+        New NpgsqlParameter("@UserRole", role),
+        New NpgsqlParameter("@Pin", Convert.ToInt32(pin)),
+        New NpgsqlParameter("@QRCode", userCode),
+        New NpgsqlParameter("@IsActive", True),
+        New NpgsqlParameter("@CreatedAt", DateTime.Now),
+        New NpgsqlParameter("@UpdatedAt", DateTime.Now)
     }
 
         ' Execute insert and get new user ID
@@ -661,8 +663,8 @@ Public Class AddStaff
         Try
             Dim codeQuery As String = "UPDATE Users SET EmployeeCode = @EmployeeCode WHERE UserID = @UserID"
             Utilities.ExecuteNonQuery(codeQuery, {
-                New SqlParameter("@UserID", newUserId),
-                New SqlParameter("@EmployeeCode", employeeCode)
+                New NpgsqlParameter("@UserID", newUserId),
+                New NpgsqlParameter("@EmployeeCode", employeeCode)
             })
         Catch ex As Exception
             Console.WriteLine($"Error saving employee code for user {newUserId}: {ex.Message}")
@@ -990,7 +992,7 @@ Public Class AddStaff
 
         ' Build update query - only update password if provided
         Dim updateQuery As String
-        Dim parameters As New List(Of SqlParameter)
+        Dim parameters As New List(Of NpgsqlParameter)
 
         ' Determine IsActive from status combobox (default to original if control missing)
         Dim isActiveValue As Boolean = originalIsActive
@@ -1012,26 +1014,26 @@ Public Class AddStaff
             Dim hashedPassword As String = frmLoginvb.HashPassword(txtPassword.Text.Trim())
             updateQuery = "UPDATE Users SET Email = @Email, Phone = @Phone, UserRole = @UserRole, pin = @Pin, PasswordHash = @PasswordHash, IsActive = @IsActive, UpdatedAt = @UpdatedAt WHERE UserID = @UserID"
             parameters.AddRange({
-            New SqlParameter("@Email", email),
-            New SqlParameter("@Phone", phone),
-            New SqlParameter("@UserRole", role),
-            New SqlParameter("@Pin", resolvedPin),
-            New SqlParameter("@PasswordHash", hashedPassword),
-            New SqlParameter("@IsActive", isActiveValue),
-            New SqlParameter("@UpdatedAt", DateTime.Now),
-            New SqlParameter("@UserID", editingStaffId)
+            New NpgsqlParameter("@Email", email),
+            New NpgsqlParameter("@Phone", phone),
+            New NpgsqlParameter("@UserRole", role),
+            New NpgsqlParameter("@Pin", resolvedPin),
+            New NpgsqlParameter("@PasswordHash", hashedPassword),
+            New NpgsqlParameter("@IsActive", isActiveValue),
+            New NpgsqlParameter("@UpdatedAt", DateTime.Now),
+            New NpgsqlParameter("@UserID", editingStaffId)
         })
         Else
             ' Update without changing password
             updateQuery = "UPDATE Users SET Email = @Email, Phone = @Phone, UserRole = @UserRole, pin = @Pin, IsActive = @IsActive, UpdatedAt = @UpdatedAt WHERE UserID = @UserID"
             parameters.AddRange({
-            New SqlParameter("@Email", email),
-            New SqlParameter("@Phone", phone),
-            New SqlParameter("@UserRole", role),
-            New SqlParameter("@Pin", resolvedPin),
-            New SqlParameter("@IsActive", isActiveValue),
-            New SqlParameter("@UpdatedAt", DateTime.Now),
-            New SqlParameter("@UserID", editingStaffId)
+            New NpgsqlParameter("@Email", email),
+            New NpgsqlParameter("@Phone", phone),
+            New NpgsqlParameter("@UserRole", role),
+            New NpgsqlParameter("@Pin", resolvedPin),
+            New NpgsqlParameter("@IsActive", isActiveValue),
+            New NpgsqlParameter("@UpdatedAt", DateTime.Now),
+            New NpgsqlParameter("@UserID", editingStaffId)
         })
         End If
 
@@ -1061,8 +1063,8 @@ Public Class AddStaff
     Private Function IsPasskeyUnique(passkey As String) As Boolean
         Try
             Dim query As String = "SELECT COUNT(*) FROM Users WHERE Passkey1 = @p OR Passkey2 = @p OR Passkey3 = @p"
-            Dim param As New SqlParameter("@p", passkey)
-            Dim count As Integer = CInt(Utilities.ExecuteScalar(query, New SqlParameter() {param}))
+            Dim param As New NpgsqlParameter("@p", passkey)
+            Dim count As Integer = CInt(Utilities.ExecuteScalar(query, New NpgsqlParameter() {param}))
             Return count = 0
         Catch ex As Exception
             ' Log and treat as unique to avoid blocking generation when DB is unavailable or schema doesn't contain columns.
@@ -1116,9 +1118,9 @@ Public Class AddStaff
             Try
                 Dim passkeysCombined As String = String.Join(",", passkeys)
                 Dim updateQuery As String = "UPDATE Users SET Passkeys = @Passkeys WHERE UserID = @UserID"
-                Dim sqlParams() As SqlParameter = {
-                New SqlParameter("@Passkeys", passkeysCombined),
-                New SqlParameter("@UserID", userId)
+                Dim sqlParams() As NpgsqlParameter = {
+                New NpgsqlParameter("@Passkeys", passkeysCombined),
+                New NpgsqlParameter("@UserID", userId)
             }
                 Utilities.ExecuteNonQuery(updateQuery, sqlParams)
                 Console.WriteLine($"Successfully saved passkeys for user {userId}: {passkeysCombined}")
@@ -1144,9 +1146,9 @@ Public Class AddStaff
     Private Function IsPasskeyUniqueInPasskeysColumn(passkey As String) As Boolean
         Try
             ' Check if the passkey exists in the comma-separated Passkeys column
-            Dim query As String = "SELECT COUNT(*) FROM Users WHERE (',' + IFNULL(Passkeys, '') + ',') LIKE '%,' + @p + ',%'"
-            Dim param As New SqlParameter("@p", passkey)
-            Dim count As Integer = CInt(Utilities.ExecuteScalar(query, New SqlParameter() {param}))
+            Dim query As String = "SELECT COUNT(*) FROM Users WHERE (',' || COALESCE(Passkeys, '') || ',') LIKE '%,' || @p || ',%'"
+            Dim param As New NpgsqlParameter("@p", passkey)
+            Dim count As Integer = CInt(Utilities.ExecuteScalar(query, New NpgsqlParameter() {param}))
             Return count = 0
         Catch ex As Exception
             Console.WriteLine($"Passkey uniqueness check failed (treating as unique): {ex.Message}")
@@ -1173,9 +1175,9 @@ Public Class AddStaff
         Try
             Dim updatePhotoQuery As String = "UPDATE Users SET PhotoPath = @PhotoPath WHERE UserID = @UserID"
 
-            Dim photoParams() As SqlParameter = {
-                New SqlParameter("@UserID", userId),
-                New SqlParameter("@PhotoPath", If(staffPhotoPath, CObj(DBNull.Value)))
+            Dim photoParams() As NpgsqlParameter = {
+                New NpgsqlParameter("@UserID", userId),
+                New NpgsqlParameter("@PhotoPath", If(staffPhotoPath, CObj(DBNull.Value)))
             }
 
             Utilities.ExecuteNonQuery(updatePhotoQuery, photoParams)
@@ -1444,7 +1446,7 @@ Public Class AddStaff
             If Not loaded AndAlso userData.ContainsKey("UserID") Then
                 Try
                     Dim query As String = "SELECT PhotoPath FROM Users WHERE UserID = @UserID"
-                    Dim parameters() As SqlParameter = {New SqlParameter("@UserID", CInt(userData("UserID")))}
+                    Dim parameters() As NpgsqlParameter = {New NpgsqlParameter("@UserID", CInt(userData("UserID")))}
                     Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters)
                         If reader.Read() AndAlso Not IsDBNull(reader("PhotoPath")) Then
                             Dim dbFileName = reader("PhotoPath").ToString()

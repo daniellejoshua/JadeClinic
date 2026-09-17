@@ -1,5 +1,7 @@
-Imports System.Data.Common
+﻿Imports System.Data.Common
 Imports System.Text
+
+Imports Npgsql
 
 ''' <summary>
 ''' Utility class for managing user passkeys (recovery keys for forgot password)
@@ -20,11 +22,11 @@ Public Class PasskeyManager
             ' Save to Users table
             Dim updateQuery As String = "UPDATE Users SET Passkey1 = @Passkey1, Passkey2 = @Passkey2, Passkey3 = @Passkey3 WHERE UserID = @UserID"
             
-            Dim parameters() As SqlParameter = {
-                New SqlParameter("@UserID", userId),
-                New SqlParameter("@Passkey1", passkeys(0)),
-                New SqlParameter("@Passkey2", passkeys(1)),
-                New SqlParameter("@Passkey3", passkeys(2))
+            Dim parameters() As NpgsqlParameter = {
+                New NpgsqlParameter("@UserID", userId),
+                New NpgsqlParameter("@Passkey1", passkeys(0)),
+                New NpgsqlParameter("@Passkey2", passkeys(1)),
+                New NpgsqlParameter("@Passkey3", passkeys(2))
             }
             
             Utilities.ExecuteNonQuery(updateQuery, parameters)
@@ -51,8 +53,8 @@ Public Class PasskeyManager
             ' Check if passkey matches any of the 3 passkey fields
             Dim query As String = "SELECT UserID FROM Users WHERE (Passkey1 = @Passkey OR Passkey2 = @Passkey OR Passkey3 = @Passkey) AND IsActive = 1"
             
-            Dim parameters() As SqlParameter = {
-                New SqlParameter("@Passkey", cleanPasskey)
+            Dim parameters() As NpgsqlParameter = {
+                New NpgsqlParameter("@Passkey", cleanPasskey)
             }
             
             Dim result = Utilities.ExecuteScalar(query, parameters)
@@ -85,9 +87,9 @@ Public Class PasskeyManager
                                 "Passkey3 = CASE WHEN Passkey3 = @Passkey THEN NULL ELSE Passkey3 END " +
                                 "WHERE UserID = @UserID"
             
-            Dim parameters() As SqlParameter = {
-                New SqlParameter("@Passkey", cleanPasskey),
-                New SqlParameter("@UserID", userId)
+            Dim parameters() As NpgsqlParameter = {
+                New NpgsqlParameter("@Passkey", cleanPasskey),
+                New NpgsqlParameter("@UserID", userId)
             }
             
             Utilities.ExecuteNonQuery(query, parameters)
@@ -109,8 +111,8 @@ Public Class PasskeyManager
         Try
             Dim query As String = "SELECT Passkey1, Passkey2, Passkey3 FROM Users WHERE UserID = @UserID AND IsActive = 1"
             
-            Dim parameters() As SqlParameter = {
-                New SqlParameter("@UserID", userId)
+            Dim parameters() As NpgsqlParameter = {
+                New NpgsqlParameter("@UserID", userId)
             }
             
             Dim passkeys As New List(Of String)()
@@ -143,8 +145,8 @@ Public Class PasskeyManager
         Try
             Dim query As String = "SELECT UserID, FullName, Email FROM Users WHERE Username = @Username AND IsActive = 1"
             
-            Dim parameters() As SqlParameter = {
-                New SqlParameter("@Username", username.Trim())
+            Dim parameters() As NpgsqlParameter = {
+                New NpgsqlParameter("@Username", username.Trim())
             }
             
             Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters)
@@ -183,8 +185,8 @@ Public Class PasskeyManager
                                 "(CASE WHEN Passkey3 IS NOT NULL AND Passkey3 <> '' THEN 1 ELSE 0 END) AS PasskeyCount " +
                                 "FROM Users WHERE UserID = @UserID"
             
-            Dim parameters() As SqlParameter = {
-                New SqlParameter("@UserID", userId)
+            Dim parameters() As NpgsqlParameter = {
+                New NpgsqlParameter("@UserID", userId)
             }
             
             Dim result = Utilities.ExecuteScalar(query, parameters)
@@ -209,8 +211,8 @@ Public Class PasskeyManager
         Try
             Dim query As String = "UPDATE Users SET Passkey1 = NULL, Passkey2 = NULL, Passkey3 = NULL WHERE UserID = @UserID"
             
-            Dim parameters() As SqlParameter = {
-                New SqlParameter("@UserID", userId)
+            Dim parameters() As NpgsqlParameter = {
+                New NpgsqlParameter("@UserID", userId)
             }
             
             Utilities.ExecuteNonQuery(query, parameters)

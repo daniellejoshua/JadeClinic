@@ -1,6 +1,6 @@
-Imports System.IO
+﻿Imports System.IO
 Imports System.Collections.Generic
-Imports Microsoft.Data.Sqlite
+Imports Npgsql
 Imports Newtonsoft.Json
 
 ' Wipes the demo tables and reseeds realistic dental-clinic demo data.
@@ -39,12 +39,16 @@ Public Class DemoDataSeeder
             Throw New Exception("Database connection string is not configured.")
         End If
 
-        Using conn As New SqliteConnection(connStr)
+        Using conn As New NpgsqlConnection(connStr)
             conn.Open()
-            Using tran As SqliteTransaction = conn.BeginTransaction()
+
+            ' Reset sequences: each setval is isolated in a SAVEPOINT so a missing
+            ' sequence can never abort the whole seed transaction.
+                    ResetSequences(conn)
+
+            Using tran As NpgsqlTransaction = conn.BeginTransaction()
                 Try
                     WipeDemoTables(conn, tran)
-                    ResetSequences(conn, tran)
 
                     Dim stats As New Dictionary(Of String, Integer)()
 
@@ -86,7 +90,7 @@ Public Class DemoDataSeeder
         End Using
     End Function
 
-    Private Shared Sub WipeDemoTables(conn As SqliteConnection, tran As SqliteTransaction)
+    Private Shared Sub WipeDemoTables(conn As NpgsqlConnection, tran As NpgsqlTransaction)
         Dim tables As String() = {
             "SaleItems",
             "Sales",
@@ -98,44 +102,46 @@ Public Class DemoDataSeeder
             "Suppliers"
         }
         For Each t As String In tables
-            Using cmd As New SqliteCommand($"DELETE FROM {t}", conn, tran)
+            Using cmd As New NpgsqlCommand($"DELETE FROM {t}", conn, tran)
                 cmd.ExecuteNonQuery()
             End Using
         Next
     End Sub
 
-    Private Shared Sub ResetSequences(conn As SqliteConnection, tran As SqliteTransaction)
-        Dim tables As String() = {
-            "SaleItems",
-            "Sales",
-            "InventoryLog",
-            "AuditLog",
-            "ProductImageMapping",
-            "ProductImages",
-            "Products",
-            "Suppliers"
+    Private Shared Sub ResetSequences(conn As NpgsqlConnection)
+        ' Called OUTSIDE the seed transaction (each setval autocommits on its own),
+        ' so a missing/odd sequence can never abort or poison the seed tran.
+        Dim pkByTable As New Dictionary(Of String, String)() From {
+            {"SaleItems", "SaleItemID"},
+            {"Sales", "SaleID"},
+            {"InventoryLog", "LogID"},
+            {"AuditLog", "AuditID"},
+            {"ProductImageMapping", "MappingID"},
+            {"ProductImages", "ImageID"},
+            {"Products", "ProductID"},
+            {"Suppliers", "SupplierID"}
         }
-        For Each t As String In tables
+        For Each pair In pkByTable
             Try
-                Using cmd As New SqliteCommand("DELETE FROM sqlite_sequence WHERE name = @name", conn, tran)
-                    cmd.Parameters.AddWithValue("@name", t)
+                Using cmd As New NpgsqlCommand(
+                    $"SELECT setval(pg_get_serial_sequence('{pair.Key}', '{pair.Value}'), 1, FALSE)", conn)
                     cmd.ExecuteNonQuery()
                 End Using
             Catch
-                ' sqlite_sequence may not exist yet on a brand-new db
+                ' sequence may not exist yet on a brand-new database
             End Try
         Next
     End Sub
 
-    Private Shared Function GetAdminUserId(conn As SqliteConnection, tran As SqliteTransaction) As Integer
-        Using cmd As New SqliteCommand("SELECT UserID FROM Users WHERE Username = 'admin' LIMIT 1", conn, tran)
+    Private Shared Function GetAdminUserId(conn As NpgsqlConnection, tran As NpgsqlTransaction) As Integer
+        Using cmd As New NpgsqlCommand("SELECT UserID FROM Users WHERE Username = 'admin' LIMIT 1", conn, tran)
             Dim result As Object = cmd.ExecuteScalar()
             If result IsNot Nothing AndAlso Not IsDBNull(result) Then
                 Return Convert.ToInt32(result)
             End If
         End Using
 
-        Using cmd As New SqliteCommand("SELECT UserID FROM Users ORDER BY UserID LIMIT 1", conn, tran)
+        Using cmd As New NpgsqlCommand("SELECT UserID FROM Users ORDER BY UserID LIMIT 1", conn, tran)
             Dim result As Object = cmd.ExecuteScalar()
             If result Is Nothing OrElse IsDBNull(result) Then
                 Throw New Exception("No user found in the Users table. Please create at least one user first.")
@@ -144,7 +150,7 @@ Public Class DemoDataSeeder
         End Using
     End Function
 
-    Private Shared Function SeedUsers(conn As SqliteConnection, tran As SqliteTransaction,
+    Private Shared Function SeedUsers(conn As NpgsqlConnection, tran As NpgsqlTransaction,
                                       adminUserId As Integer) As List(Of DemoUser)
         Dim startDate As DateTime = DateTime.Today.AddYears(-3)
 
@@ -161,7 +167,7 @@ Public Class DemoDataSeeder
 
         For Each def In definitions
             Dim exists As Boolean = False
-            Using chk As New SqliteCommand("SELECT COUNT(*) FROM Users WHERE Username = @u", conn, tran)
+            Using chk As New NpgsqlCommand("SELECT COUNT(*) FROM Users WHERE Username = @u", conn, tran)
                 chk.Parameters.AddWithValue("@u", def.Username)
                 exists = Convert.ToInt32(chk.ExecuteScalar()) > 0
             End Using
@@ -169,9 +175,9 @@ Public Class DemoDataSeeder
             If Not exists Then
                 Dim hashed As String = frmLoginvb.HashPassword(def.Password)
 
-                Using cmd As New SqliteCommand(
+                Using cmd As New NpgsqlCommand(
                     "INSERT INTO Users (Username, PasswordHash, FullName, Email, Phone, UserRole, pin, IsActive, CreatedAt, UpdatedAt) " &
-                    "VALUES (@u, @p, @fn, @em, @ph, @role, @pin, @act, @created, @created); SELECT last_insert_rowid()", conn, tran)
+                    "VALUES (@u, @p, @fn, @em, @ph, @role, @pin, @act, @created, @created) RETURNING UserID", conn, tran)
                     cmd.Parameters.AddWithValue("@u", def.Username)
                     cmd.Parameters.AddWithValue("@p", hashed)
                     cmd.Parameters.AddWithValue("@fn", def.FullName)
@@ -184,7 +190,7 @@ Public Class DemoDataSeeder
 
                     Dim newId As Integer = Convert.ToInt32(cmd.ExecuteScalar())
 
-                    Using upd As New SqliteCommand(
+                    Using upd As New NpgsqlCommand(
                         "UPDATE Users SET QRCode = @qr, Passkeys = @pk WHERE UserID = @id", conn, tran)
                         upd.Parameters.AddWithValue("@qr", $"User-{newId:D4}-{DateTime.Now:yyyyMMddHHmmssfff}")
                         upd.Parameters.AddWithValue("@pk", String.Join(",", DatabaseInitializer.GenerateRandomPasskeys(3)))
@@ -197,9 +203,9 @@ Public Class DemoDataSeeder
 
         ' Build the full user list (includes any users that already existed)
         Dim users As New List(Of DemoUser)()
-        Using cmd As New SqliteCommand(
+        Using cmd As New NpgsqlCommand(
             "SELECT UserID, Username, FullName, UserRole, IsActive FROM Users", conn, tran)
-            Using reader As SqliteDataReader = cmd.ExecuteReader()
+            Using reader As NpgsqlDataReader = cmd.ExecuteReader()
                 While reader.Read()
                     users.Add(New DemoUser With {
                         .Id = Convert.ToInt32(reader("UserID")),
@@ -215,7 +221,7 @@ Public Class DemoDataSeeder
         Return users
     End Function
 
-    Private Shared Sub SeedSuppliers(conn As SqliteConnection, tran As SqliteTransaction,
+    Private Shared Sub SeedSuppliers(conn As NpgsqlConnection, tran As NpgsqlTransaction,
                                      supplierIds As Dictionary(Of String, Integer))
         Dim suppliers As String() = {
             "Dental Supply Co.",
@@ -234,9 +240,9 @@ Public Class DemoDataSeeder
             Dim phone As String = $"(02) 8{100 + i * 97}-{2000 + i * 863}"
             Dim email As String = $"sales@supplier{i + 1}.com"
 
-            Using cmd As New SqliteCommand(
+            Using cmd As New NpgsqlCommand(
                 "INSERT INTO Suppliers (SupplierCode, SupplierName, ContactPerson, Phone, Email, IsActive) " &
-                "VALUES (@code, @name, @contact, @phone, @email, 1); SELECT last_insert_rowid()", conn, tran)
+                "VALUES (@code, @name, @contact, @phone, @email, 1) RETURNING SupplierID", conn, tran)
                 cmd.Parameters.AddWithValue("@code", code)
                 cmd.Parameters.AddWithValue("@name", suppliers(i))
                 cmd.Parameters.AddWithValue("@contact", contact)
@@ -258,7 +264,7 @@ Public Class DemoDataSeeder
         "Grace Torres"
     }
 
-    Private Shared Function SeedProducts(conn As SqliteConnection, tran As SqliteTransaction,
+    Private Shared Function SeedProducts(conn As NpgsqlConnection, tran As NpgsqlTransaction,
                                          supplierIds As Dictionary(Of String, Integer),
                                          adminUserId As Integer) As List(Of DemoProduct)
         ' Category, Name, Unit, Cost, Sell, Wholesale, OpeningStock, Reorder
@@ -329,10 +335,10 @@ Public Class DemoDataSeeder
 
             Dim createdAt As DateTime = startDate.AddDays(i * 3)
 
-            Using cmd As New SqliteCommand(
+            Using cmd As New NpgsqlCommand(
                 "INSERT INTO Products (ProductCode, ProductName, Category, Unit, CurrentStock, ReorderLevel, " &
                 "CostPrice, SellingPrice, WholesalePrice, SupplierID, IsActive, Created, UpdatedAt) " &
-                "VALUES (@code, @name, @category, @unit, @stock, @reorder, @cost, @sell, @wholesale, @supplier, 1, @created, @created); SELECT last_insert_rowid()", conn, tran)
+                "VALUES (@code, @name, @category, @unit, @stock, @reorder, @cost, @sell, @wholesale, @supplier, 1, @created, @created) RETURNING ProductID", conn, tran)
                 cmd.Parameters.AddWithValue("@code", "TEMP_CODE")
                 cmd.Parameters.AddWithValue("@name", name)
                 cmd.Parameters.AddWithValue("@category", category)
@@ -348,7 +354,7 @@ Public Class DemoDataSeeder
                 Dim productId As Integer = Convert.ToInt32(cmd.ExecuteScalar())
                 Dim productCode As String = Utilities.GenerateProductCode(productId)
 
-                Using cmdUpdate As New SqliteCommand(
+                Using cmdUpdate As New NpgsqlCommand(
                     "UPDATE Products SET ProductCode = @code WHERE ProductID = @id", conn, tran)
                     cmdUpdate.Parameters.AddWithValue("@code", productCode)
                     cmdUpdate.Parameters.AddWithValue("@id", productId)
@@ -357,7 +363,7 @@ Public Class DemoDataSeeder
 
                 ' Opening stock IN log
                 If stock > 0 Then
-                    Using logCmd As New SqliteCommand(
+                    Using logCmd As New NpgsqlCommand(
                         "INSERT INTO InventoryLog (ProductID, TransactionType, Quantity, PreviousStock, NewStock, " &
                         "BatchNumber, SupplierID, UserID, Reference, Notes, CreatedAt) " &
                         "VALUES (@pid, 'IN', @qty, 0, @newstock, @batch, @supplier, @user, 'Initial Stock', 'Seeded demo opening stock', @created)", conn, tran)
@@ -391,7 +397,7 @@ Public Class DemoDataSeeder
         Return result
     End Function
 
-    Private Shared Sub SeedSales(conn As SqliteConnection, tran As SqliteTransaction,
+    Private Shared Sub SeedSales(conn As NpgsqlConnection, tran As NpgsqlTransaction,
                                  products As List(Of DemoProduct), users As List(Of DemoUser),
                                  stats As Dictionary(Of String, Integer), adminUserId As Integer)
         If products.Count = 0 Then
@@ -482,11 +488,11 @@ Public Class DemoDataSeeder
 
                 Dim saleNumber As String = $"{saleDateTime:yyyyMMdd}{(saleCount + 1).ToString("D6")}"
 
-                Using cmd As New SqliteCommand(
+                Using cmd As New NpgsqlCommand(
                     "INSERT INTO Sales (SaleNumber, SaleDate, CustomerName, CustomerTIN, UserID, TotalAmount, " &
                     "AmountPaid, PaymentMethod, Reference, SalesData, Status, DiscountType, DiscountAmount) " &
                     "VALUES (@salenum, @saledate, @customer, @tin, @user, @total, @paid, @method, @reference, " &
-                    "@salesdata, 'Completed', NULL, 0); SELECT last_insert_rowid()", conn, tran)
+                    "@salesdata, 'Completed', NULL, 0) RETURNING SaleID", conn, tran)
                     cmd.Parameters.AddWithValue("@salenum", saleNumber)
                     cmd.Parameters.AddWithValue("@saledate", saleDateTime)
                     cmd.Parameters.AddWithValue("@customer", If(String.IsNullOrWhiteSpace(customerName), CType(DBNull.Value, Object), CType(customerName, Object)))
@@ -507,7 +513,7 @@ Public Class DemoDataSeeder
                         Dim price As Decimal = Convert.ToDecimal(item("Price"))
                         Dim subTotal As Decimal = price * qty
 
-                        Using itemCmd As New SqliteCommand(
+                        Using itemCmd As New NpgsqlCommand(
                             "INSERT INTO SaleItems (SaleID, ProductID, Quantity, UnitPrice, OriginalUnitPrice, SubTotal) " &
                             "VALUES (@saleid, @pid, @qty, @price, @price, @subtotal)", conn, tran)
                             itemCmd.Parameters.AddWithValue("@saleid", saleId)
@@ -525,7 +531,7 @@ Public Class DemoDataSeeder
                         Dim newStock As Integer = Math.Max(0, prevStock - qty)
                         p.RunningStock = newStock
 
-                        Using logCmd As New SqliteCommand(
+                        Using logCmd As New NpgsqlCommand(
                             "INSERT INTO InventoryLog (ProductID, TransactionType, Quantity, PreviousStock, NewStock, " &
                             "SupplierID, UserID, Reference, Notes, CreatedAt) " &
                             "VALUES (@pid, 'OUT', @qty, @prev, @new, @supplier, @user, @salenum, 'Sale', @created)", conn, tran)
@@ -552,7 +558,7 @@ Public Class DemoDataSeeder
                     Dim prevStock As Integer = p.RunningStock
                     p.RunningStock -= adjQty
                     Dim adjUser As Integer = PickRestockUser(users, adminUserId, rng)
-                    Using logCmd As New SqliteCommand(
+                    Using logCmd As New NpgsqlCommand(
                         "INSERT INTO InventoryLog (ProductID, TransactionType, Quantity, PreviousStock, NewStock, " &
                         "UserID, Reference, Notes, CreatedAt) " &
                         "VALUES (@pid, 'ADJUST', @qty, @prev, @new, @user, 'Stock Adjustment', 'Damaged/expired stock write-off', @created)", conn, tran)
@@ -571,7 +577,7 @@ Public Class DemoDataSeeder
 
         ' Sync final running stock into Products.CurrentStock
         For Each p As DemoProduct In products
-            Using upCmd As New SqliteCommand(
+            Using upCmd As New NpgsqlCommand(
                 "UPDATE Products SET CurrentStock = @new, UpdatedAt = @now WHERE ProductID = @pid", conn, tran)
                 upCmd.Parameters.AddWithValue("@new", p.RunningStock)
                 upCmd.Parameters.AddWithValue("@now", DateTime.Now)
@@ -585,7 +591,7 @@ Public Class DemoDataSeeder
         stats("InventoryLogs") = logCount
     End Sub
 
-    Private Shared Sub EnsureStock(conn As SqliteConnection, tran As SqliteTransaction,
+    Private Shared Sub EnsureStock(conn As NpgsqlConnection, tran As NpgsqlTransaction,
                                    p As DemoProduct, rng As Random, atTime As DateTime,
                                    users As List(Of DemoUser), adminUserId As Integer,
                                    ByRef logCount As Integer)
@@ -594,7 +600,7 @@ Public Class DemoDataSeeder
         End If
     End Sub
 
-    Private Shared Sub EnsureStockQty(conn As SqliteConnection, tran As SqliteTransaction,
+    Private Shared Sub EnsureStockQty(conn As NpgsqlConnection, tran As NpgsqlTransaction,
                                       p As DemoProduct, qty As Integer, rng As Random, atTime As DateTime,
                                       users As List(Of DemoUser), adminUserId As Integer,
                                       ByRef logCount As Integer)
@@ -603,7 +609,7 @@ Public Class DemoDataSeeder
         End While
     End Sub
 
-    Private Shared Sub DoRestock(conn As SqliteConnection, tran As SqliteTransaction,
+    Private Shared Sub DoRestock(conn As NpgsqlConnection, tran As NpgsqlTransaction,
                                  p As DemoProduct, rng As Random, atTime As DateTime,
                                  users As List(Of DemoUser), adminUserId As Integer,
                                  ByRef logCount As Integer)
@@ -615,7 +621,7 @@ Public Class DemoDataSeeder
         Dim batch As String = $"BATCH-{p.Id:D4}-{atTime:yyyyMM}"
         Dim expiry As Object = GetExpiryFor(p, atTime, rng)
 
-        Using logCmd As New SqliteCommand(
+        Using logCmd As New NpgsqlCommand(
             "INSERT INTO InventoryLog (ProductID, TransactionType, Quantity, PreviousStock, NewStock, " &
             "BatchNumber, ExpiryDate, SupplierID, UserID, Reference, Notes, CreatedAt) " &
             "VALUES (@pid, 'IN', @qty, @prev, @new, @batch, @expiry, @supplier, @user, 'Restock', 'Restocked to maintain inventory levels', @created)", conn, tran)
@@ -675,7 +681,7 @@ Public Class DemoDataSeeder
         Return pool(rng.Next(pool.Length))
     End Function
 
-    Private Shared Function SeedAuditLogs(conn As SqliteConnection, tran As SqliteTransaction,
+    Private Shared Function SeedAuditLogs(conn As NpgsqlConnection, tran As NpgsqlTransaction,
                                           products As List(Of DemoProduct), users As List(Of DemoUser),
                                           adminUserId As Integer) As Integer
         Dim rng As New Random(2026)
@@ -737,7 +743,7 @@ Public Class DemoDataSeeder
 
         Dim count As Integer = 0
         For Each ev In events
-            Using cmd As New SqliteCommand(
+            Using cmd As New NpgsqlCommand(
                 "INSERT INTO AuditLog (UserID, Action, Details, ActionTime) VALUES (@user, @action, @details, @time)", conn, tran)
                 cmd.Parameters.AddWithValue("@user", ev.ByUser)
                 cmd.Parameters.AddWithValue("@action", ev.Action)

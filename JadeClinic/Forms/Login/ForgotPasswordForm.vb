@@ -1,6 +1,8 @@
-Imports System.Windows.Forms
+﻿Imports System.Windows.Forms
 Imports System.Data.Common
 Imports System.Linq
+
+Imports Npgsql
 
 Public Class ForgotPasswordForm
     Inherits Form
@@ -290,7 +292,7 @@ Public Class ForgotPasswordForm
             End If
 
             Dim query = "SELECT COUNT(*) FROM Users WHERE Username = @Username"
-            Dim param = New SqlParameter("@Username", username)
+            Dim param = New NpgsqlParameter("@Username", username)
             Dim count = Convert.ToInt32(Utilities.ExecuteScalar(query, {param}))
             If count = 0 Then
                 MessageBox.Show("Username not found.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
@@ -315,7 +317,7 @@ Public Class ForgotPasswordForm
 
             ' Read single comma-separated Passkey column
             Dim query = "SELECT Passkeys FROM Users WHERE Username = @Username"
-            Dim param = New SqlParameter("@Username", username)
+            Dim param = New NpgsqlParameter("@Username", username)
 
             Dim storedList As New List(Of String)()
             Try
@@ -373,8 +375,8 @@ Public Class ForgotPasswordForm
                 Dim hashed As String = BCrypt.Net.BCrypt.HashPassword(newPass, workFactor:=12)
 
                 Dim q = "UPDATE Users SET PasswordHash = @PasswordHash WHERE Username = @Username"
-                Dim param1 = New SqlParameter("@PasswordHash", hashed)
-                Dim param2 = New SqlParameter("@Username", username)
+                Dim param1 = New NpgsqlParameter("@PasswordHash", hashed)
+                Dim param2 = New NpgsqlParameter("@Username", username)
                 Utilities.ExecuteNonQuery(q, {param1, param2})
 
                 MessageBox.Show("Password updated successfully! You may now log in.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information)

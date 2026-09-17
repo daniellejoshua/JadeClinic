@@ -202,11 +202,11 @@ Partial Class Sys
         btnTerminalSetup.Location = New Point(870, 58)
         btnTerminalSetup.Name = "btnTerminalSetup"
         btnTerminalSetup.ShadowDecoration.CustomizableEdges = CustomizableEdges18
-        btnTerminalSetup.ShadowDecoration.Depth = 6
-        btnTerminalSetup.ShadowDecoration.Enabled = True
+        btnTerminalSetup.ShadowDecoration.Depth = 0
+        btnTerminalSetup.ShadowDecoration.Enabled = False
         btnTerminalSetup.Size = New Size(360, 150)
         btnTerminalSetup.TabIndex = 7
-        btnTerminalSetup.Text = "PC Terminals" & vbCrLf & "Name & control connected computers"
+        btnTerminalSetup.Text = "🖥️  PC Terminals" & vbCrLf & "Name & control connected computers"
         btnTerminalSetup.TextAlign = HorizontalAlignment.Left
         ' 
         ' btnSyncLogs
@@ -227,11 +227,11 @@ Partial Class Sys
         btnSyncLogs.Location = New Point(460, 238)
         btnSyncLogs.Name = "btnSyncLogs"
         btnSyncLogs.ShadowDecoration.CustomizableEdges = CustomizableEdges1
-        btnSyncLogs.ShadowDecoration.Depth = 6
-        btnSyncLogs.ShadowDecoration.Enabled = True
+        btnSyncLogs.ShadowDecoration.Depth = 0
+        btnSyncLogs.ShadowDecoration.Enabled = False
         btnSyncLogs.Size = New Size(360, 150)
         btnSyncLogs.TabIndex = 8
-        btnSyncLogs.Text = "Sync Logs" & vbCrLf & "View history & connected PCs"
+        btnSyncLogs.Text = "🔄  Sync Logs" & vbCrLf & "View history & connected PCs"
         btnSyncLogs.TextAlign = HorizontalAlignment.Left
         ' 
         ' btnDatabaseBackup
@@ -252,11 +252,11 @@ btnDatabaseBackup.FillColor = Color.White
         btnDatabaseBackup.Location = New Point(460, 58)
         btnDatabaseBackup.Name = "btnDatabaseBackup"
         btnDatabaseBackup.ShadowDecoration.CustomizableEdges = CustomizableEdges9
-        btnDatabaseBackup.ShadowDecoration.Depth = 6
-        btnDatabaseBackup.ShadowDecoration.Enabled = True
+        btnDatabaseBackup.ShadowDecoration.Depth = 0
+        btnDatabaseBackup.ShadowDecoration.Enabled = False
         btnDatabaseBackup.Size = New Size(360, 150)
         btnDatabaseBackup.TabIndex = 1
-        btnDatabaseBackup.Text = "Database Backup" & vbCrLf & "Backup & restore database"
+        btnDatabaseBackup.Text = "🗄️  Database Backup" & vbCrLf & "Backup & restore database"
         btnDatabaseBackup.TextAlign = HorizontalAlignment.Left
         ' 
         ' btnCompanySettings
@@ -277,11 +277,11 @@ btnDatabaseBackup.FillColor = Color.White
         btnCompanySettings.Location = New Point(50, 58)
         btnCompanySettings.Name = "btnCompanySettings"
         btnCompanySettings.ShadowDecoration.CustomizableEdges = CustomizableEdges12
-        btnCompanySettings.ShadowDecoration.Depth = 6
-        btnCompanySettings.ShadowDecoration.Enabled = True
+        btnCompanySettings.ShadowDecoration.Depth = 0
+        btnCompanySettings.ShadowDecoration.Enabled = False
         btnCompanySettings.Size = New Size(360, 150)
         btnCompanySettings.TabIndex = 0
-        btnCompanySettings.Text = "Company Settings" & vbCrLf & "Configure business information"
+        btnCompanySettings.Text = "🏢  Company Settings" & vbCrLf & "Configure business information"
         btnCompanySettings.TextAlign = HorizontalAlignment.Left
         ' 
         ' btnSyncCloud
@@ -302,11 +302,11 @@ btnDatabaseBackup.FillColor = Color.White
         btnSyncCloud.Location = New Point(50, 238)
         btnSyncCloud.Name = "btnSyncCloud"
         btnSyncCloud.ShadowDecoration.CustomizableEdges = CustomizableEdges14
-        btnSyncCloud.ShadowDecoration.Depth = 6
-        btnSyncCloud.ShadowDecoration.Enabled = True
+        btnSyncCloud.ShadowDecoration.Depth = 0
+        btnSyncCloud.ShadowDecoration.Enabled = False
         btnSyncCloud.Size = New Size(360, 150)
         btnSyncCloud.TabIndex = 3
-        btnSyncCloud.Text = "Sync to Cloud" & vbCrLf & "Push data to Supabase"
+        btnSyncCloud.Text = "☁️  Sync to Cloud" & vbCrLf & "Push data to Supabase"
         btnSyncCloud.TextAlign = HorizontalAlignment.Left
         ' 
         ' btnLoadDemoData
@@ -327,11 +327,11 @@ btnDatabaseBackup.FillColor = Color.White
         btnLoadDemoData.Location = New Point(870, 238)
         btnLoadDemoData.Name = "btnLoadDemoData"
         btnLoadDemoData.ShadowDecoration.CustomizableEdges = CustomizableEdges16
-        btnLoadDemoData.ShadowDecoration.Depth = 6
-        btnLoadDemoData.ShadowDecoration.Enabled = True
+        btnLoadDemoData.ShadowDecoration.Depth = 0
+        btnLoadDemoData.ShadowDecoration.Enabled = False
         btnLoadDemoData.Size = New Size(360, 150)
         btnLoadDemoData.TabIndex = 6
-        btnLoadDemoData.Text = "Load Demo Data" & vbCrLf & "Wipe & seed sample data"
+        btnLoadDemoData.Text = "🧪  Load Demo Data" & vbCrLf & "Wipe & seed sample data"
         btnLoadDemoData.TextAlign = HorizontalAlignment.Left
         ' 
         ' chkForceFull

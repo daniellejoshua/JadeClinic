@@ -1,6 +1,8 @@
-Imports System.Data.Common
+﻿Imports System.Data.Common
 Imports System.Linq
 Imports System.Reflection
+
+Imports Npgsql
 
 Public Class Supplier
     Private isNavigating As Boolean = False
@@ -371,12 +373,12 @@ Public Class Supplier
             _allSuppliers.Clear()
 
             Dim query As String = "SELECT SupplierID, SupplierCode, SupplierName, ContactPerson, Phone, Email, IsActive FROM Suppliers"
-            Dim params As New List(Of SqlParameter)()
+            Dim params As New List(Of NpgsqlParameter)()
             Dim conditions As New List(Of String)()
 
             If Not String.IsNullOrWhiteSpace(_currentSearch) Then
                 conditions.Add("(SupplierName LIKE @SearchText OR ContactPerson LIKE @SearchText OR SupplierCode LIKE @SearchText)")
-                params.Add(New SqlParameter("@SearchText", "%" & _currentSearch & "%"))
+                params.Add(New NpgsqlParameter("@SearchText", "%" & _currentSearch & "%"))
             End If
 
             If _currentFilter = "Active" Then
@@ -416,8 +418,8 @@ Public Class Supplier
         Try
             Dim query As String = "SELECT COUNT(1) FROM InventoryLog WHERE SupplierID = @SupplierID AND " &
                               "(TransactionType IN ('IN', 'INBOUND', 'Stock In', 'stock in') OR LOWER(TransactionType) = 'in')"
-            Dim param As New SqlParameter("@SupplierID", supplierId)
-            Dim result As Object = Utilities.ExecuteScalar(query, New SqlParameter() {param})
+            Dim param As New NpgsqlParameter("@SupplierID", supplierId)
+            Dim result As Object = Utilities.ExecuteScalar(query, New NpgsqlParameter() {param})
             If result Is Nothing OrElse IsDBNull(result) Then Return 0
             Return Convert.ToInt32(result)
         Catch
@@ -675,11 +677,11 @@ Public Class Supplier
             dgvRecent.ColumnHeadersHeight = 40
 
             Try
-                Dim stockQuery As String = "SELECT il.CreatedAt, IFNULL(p.ProductName, '') AS ProductName, il.Quantity, IFNULL(il.Reference, '') AS Reference " &
+                Dim stockQuery As String = "SELECT il.CreatedAt, COALESCE(p.ProductName, '') AS ProductName, il.Quantity, COALESCE(il.Reference, '') AS Reference " &
                                        "FROM InventoryLog il LEFT JOIN Products p ON il.ProductID = p.ProductID " &
                                        "WHERE il.SupplierID = @SupplierID AND (LOWER(il.TransactionType) = 'in' OR il.TransactionType IN ('IN','INBOUND','Stock In','stock in')) " &
                                        "ORDER BY il.CreatedAt DESC LIMIT 12"
-                Using reader As DbDataReader = Utilities.ExecuteReader(stockQuery, New SqlParameter() {New SqlParameter("@SupplierID", supplierId)})
+                Using reader As DbDataReader = Utilities.ExecuteReader(stockQuery, New NpgsqlParameter() {New NpgsqlParameter("@SupplierID", supplierId)})
                     While reader.Read()
                         Dim dt As DateTime = If(IsDBNull(reader("CreatedAt")), DateTime.MinValue, Convert.ToDateTime(reader("CreatedAt")))
                         Dim prod As String = If(IsDBNull(reader("ProductName")), "", reader("ProductName").ToString())
@@ -770,13 +772,13 @@ Public Class Supplier
                                               End If
 
                                               Dim updateQuery As String = "UPDATE Suppliers SET SupplierName = @Name, ContactPerson = @Contact, Phone = @Phone, Email = @Email, IsActive = @IsActive WHERE SupplierID = @SupplierID"
-                                              Dim parms As SqlParameter() = {
-                                                  New SqlParameter("@Name", txtName.Text.Trim()),
-                                                  New SqlParameter("@Contact", txtContact.Text.Trim()),
-                                                  New SqlParameter("@Phone", txtPhone.Text.Trim()),
-                                                  New SqlParameter("@Email", txtEmail.Text.Trim()),
-                                                  New SqlParameter("@IsActive", If(chkActive.Checked, 1, 0)),
-                                                  New SqlParameter("@SupplierID", supplierId)
+                                              Dim parms As NpgsqlParameter() = {
+                                                  New NpgsqlParameter("@Name", txtName.Text.Trim()),
+                                                  New NpgsqlParameter("@Contact", txtContact.Text.Trim()),
+                                                  New NpgsqlParameter("@Phone", txtPhone.Text.Trim()),
+                                                  New NpgsqlParameter("@Email", txtEmail.Text.Trim()),
+                                                  New NpgsqlParameter("@IsActive", If(chkActive.Checked, 1, 0)),
+                                                  New NpgsqlParameter("@SupplierID", supplierId)
                                               }
 
                                               Dim rowsAffected As Integer = Utilities.ExecuteNonQuery(updateQuery, parms)
@@ -938,12 +940,12 @@ Public Class Supplier
                                               Dim supplierCode As String = GenerateNextSupplierCode()
                                               Dim insertQuery As String = "INSERT INTO Suppliers (SupplierCode, SupplierName, ContactPerson, Phone, Email, IsActive) " &
                                                                          "VALUES (@SupplierCode, @SupplierName, @ContactPerson, @Phone, @Email, 1)"
-                                              Dim parms As SqlParameter() = {
-                                                  New SqlParameter("@SupplierCode", supplierCode),
-                                                  New SqlParameter("@SupplierName", txtName.Text.Trim()),
-                                                  New SqlParameter("@ContactPerson", If(String.IsNullOrWhiteSpace(txtContact.Text), DBNull.Value, CObj(txtContact.Text.Trim()))),
-                                                  New SqlParameter("@Phone", If(String.IsNullOrWhiteSpace(txtPhone.Text), DBNull.Value, CObj(txtPhone.Text.Trim()))),
-                                                  New SqlParameter("@Email", If(String.IsNullOrWhiteSpace(txtEmail.Text), DBNull.Value, CObj(txtEmail.Text.Trim())))
+                                              Dim parms As NpgsqlParameter() = {
+                                                  New NpgsqlParameter("@SupplierCode", supplierCode),
+                                                  New NpgsqlParameter("@SupplierName", txtName.Text.Trim()),
+                                                  New NpgsqlParameter("@ContactPerson", If(String.IsNullOrWhiteSpace(txtContact.Text), DBNull.Value, CObj(txtContact.Text.Trim()))),
+                                                  New NpgsqlParameter("@Phone", If(String.IsNullOrWhiteSpace(txtPhone.Text), DBNull.Value, CObj(txtPhone.Text.Trim()))),
+                                                  New NpgsqlParameter("@Email", If(String.IsNullOrWhiteSpace(txtEmail.Text), DBNull.Value, CObj(txtEmail.Text.Trim())))
                                               }
 
                                               Dim rowsAffected As Integer = Utilities.ExecuteNonQuery(insertQuery, parms)
@@ -971,8 +973,8 @@ Public Class Supplier
 
     Private Function GenerateNextSupplierCode() As String
         Try
-            Dim query As String = "SELECT IFNULL(MAX(CAST(SUBSTR(SupplierCode, 2) AS INTEGER)), 0) + 1 FROM Suppliers WHERE SupplierCode LIKE 'S%'"
-            Dim result As Object = Utilities.ExecuteScalar(query, New SqlParameter() {})
+            Dim query As String = "SELECT COALESCE(MAX(CAST(SUBSTR(SupplierCode, 2) AS INTEGER)), 0) + 1 FROM Suppliers WHERE SupplierCode LIKE 'S%'"
+            Dim result As Object = Utilities.ExecuteScalar(query, New NpgsqlParameter() {})
             Dim nextId As Integer = If(result Is Nothing OrElse IsDBNull(result), 1, Convert.ToInt32(result))
             Return "S" & nextId.ToString("D5")
         Catch

@@ -1,4 +1,4 @@
-Imports Microsoft.Data.Sqlite
+﻿Imports Npgsql
 Imports System.Data.Common
 Imports System.Data
 Imports System.IO
@@ -331,7 +331,7 @@ Public Class Inventory
     Private Sub LoadProductsFromDatabase()
         Try
             Dim connStr As String = Connection.GetConnectionString()
-            Using conn As New SqliteConnection(connStr)
+            Using conn As New NpgsqlConnection(connStr)
                 conn.Open()
 
                 Dim query As String = "SELECT p.ProductID, p.ProductCode, p.ProductName, p.Category, " &
@@ -342,7 +342,7 @@ Public Class Inventory
                       "LEFT JOIN ProductImages pi ON pim.ImageID = pi.ImageID " &
                       "ORDER BY p.ProductName"
 
-                Using cmd As New SqliteCommand(query, conn)
+                Using cmd As New NpgsqlCommand(query, conn)
                     Using reader As DbDataReader = cmd.ExecuteReader()
                         allProducts.Clear()
 
@@ -469,12 +469,12 @@ Public Class Inventory
     Private Sub LoadCategoriesForFilter()
         Try
             Dim connStr As String = Connection.GetConnectionString()
-            Using conn As New SqliteConnection(connStr)
+            Using conn As New NpgsqlConnection(connStr)
                 conn.Open()
 
                 ' Get distinct categories from existing products
                 Dim query As String = "SELECT DISTINCT Category FROM Products WHERE Category IS NOT NULL AND IsActive = 1 ORDER BY Category"
-                Using cmd As New SqliteCommand(query, conn)
+                Using cmd As New NpgsqlCommand(query, conn)
                     Using reader As DbDataReader = cmd.ExecuteReader()
                         Guna2ComboBox1.Items.Clear()
                         Guna2ComboBox1.Items.Add("All Categories") ' Add default option

@@ -5,6 +5,8 @@ Imports QuestPDF.Fluent
 Imports QuestPDF.Helpers
 Imports QuestPDF.Infrastructure
 
+Imports Npgsql
+
 Public Class InventoryLogExporter
 
     Shared Sub New()
@@ -31,11 +33,11 @@ Public Class InventoryLogExporter
 
             Select Case filterType
                 Case "Today's Logs"
-                    whereClauses.Add("DATE(il.CreatedAt) = date('now')")
+                    whereClauses.Add("(il.CreatedAt AT TIME ZONE 'UTC')::date = (now() AT TIME ZONE 'UTC')::date")
                 Case "This Week's Logs"
-                    whereClauses.Add("il.CreatedAt >= datetime('now', 'start of week')")
+                    whereClauses.Add("il.CreatedAt >= date_trunc('week', now())")
                 Case "This Month's Logs"
-                    whereClauses.Add("CAST(strftime('%m', il.CreatedAt) AS INTEGER) = CAST(strftime('%m', 'now') AS INTEGER) AND CAST(strftime('%Y', il.CreatedAt) AS INTEGER) = CAST(strftime('%Y', 'now') AS INTEGER)")
+                    whereClauses.Add("EXTRACT(MONTH FROM il.CreatedAt AT TIME ZONE 'UTC')::int = EXTRACT(MONTH FROM now() AT TIME ZONE 'UTC')::int AND EXTRACT(YEAR FROM il.CreatedAt AT TIME ZONE 'UTC')::int = EXTRACT(YEAR FROM now() AT TIME ZONE 'UTC')::int")
                 Case "Stock In Only"
                     whereClauses.Add("LOWER(il.TransactionType) IN ('stock in', 'in', 'stock_in', 'inbound')")
                 Case "Stock Out Only"
@@ -50,7 +52,7 @@ Public Class InventoryLogExporter
             End Select
 
             If filterDate.HasValue Then
-                whereClauses.Add("DATE(il.CreatedAt) = @FilterDate")
+                whereClauses.Add("DATE(il.CreatedAt) = @FilterDate::date")
             End If
 
             If whereClauses.Count > 0 Then
@@ -77,9 +79,9 @@ Public Class InventoryLogExporter
             End Select
 
             Dim inventoryDataList As New List(Of InventoryLogReportData)()
-            Dim parameters As New List(Of SqlParameter)()
+            Dim parameters As New List(Of NpgsqlParameter)()
             If filterDate.HasValue Then
-                parameters.Add(New SqlParameter("@FilterDate", filterDate.Value.Date.ToString("yyyy-MM-dd")))
+                parameters.Add(New NpgsqlParameter("@FilterDate", filterDate.Value.Date.ToString("yyyy-MM-dd")))
             End If
 
             Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters.ToArray())

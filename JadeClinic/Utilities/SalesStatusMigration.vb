@@ -81,14 +81,14 @@ Public Class SalesStatusMigration
                     cmd.Transaction = tx
                     cmd.CommandText =
                         "CREATE TABLE Sales (" &
-                        "SaleID INTEGER PRIMARY KEY AUTOINCREMENT, " &
+                        "SaleID BIGSERIAL PRIMARY KEY, " &
                         "SaleNumber TEXT, " &
-                        "SaleDate DATETIME DEFAULT (CURRENT_TIMESTAMP), " &
+                        "SaleDate TIMESTAMPTZ DEFAULT now(), " &
                         "CustomerName TEXT NULL, " &
                         "CustomerTIN TEXT NULL, " &
                         "UserID INTEGER NULL, " &
-                        "TotalAmount REAL DEFAULT 0, " &
-                        "AmountPaid REAL DEFAULT 0, " &
+                        "TotalAmount DOUBLE PRECISION DEFAULT 0, " &
+                        "AmountPaid DOUBLE PRECISION DEFAULT 0, " &
                         "PaymentMethod TEXT DEFAULT 'Cash', " &
                         "Reference TEXT NULL, " &
                         "SalesData TEXT NOT NULL, " &
@@ -96,7 +96,7 @@ Public Class SalesStatusMigration
                         "ApprovedBy TEXT NULL, " &
                         "AbortReason TEXT NULL, " &
                         "DiscountType TEXT NULL, " &
-                        "DiscountAmount REAL NOT NULL DEFAULT 0, " &
+                        "DiscountAmount DOUBLE PRECISION NOT NULL DEFAULT 0, " &
                         "FOREIGN KEY (UserID) REFERENCES Users(UserID))"
                     cmd.ExecuteNonQuery()
                 End Using

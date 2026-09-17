@@ -1,7 +1,7 @@
-Imports System.Data.Common
+﻿Imports System.Data.Common
 Imports System.IO
 Imports System.Text.Json
-Imports Microsoft.Data.Sqlite
+Imports Npgsql
 
 ' Tracks the PCs that connect to the shared JadeClinic database so the admin
 ' can name them and control their access. Each PC keeps a small identity file
@@ -129,22 +129,23 @@ Public Class TerminalManager
                 conn.Open()
                 Using cmd As DbCommand = conn.CreateCommand()
                     cmd.CommandText =
-                        "INSERT OR IGNORE INTO Terminals (TerminalID, TerminalName, HostName, IsActive, Status, LastSeenAt) " &
-                        "VALUES (@id, @name, @host, 0, 'pending', @now)"
-                    cmd.Parameters.Add(New SqliteParameter("@id", info.TerminalID))
-                    cmd.Parameters.Add(New SqliteParameter("@name", info.TerminalName))
-                    cmd.Parameters.Add(New SqliteParameter("@host", info.HostName))
-                    cmd.Parameters.Add(New SqliteParameter("@now", DateTime.Now))
+                        "INSERT INTO Terminals (TerminalID, TerminalName, HostName, IsActive, Status, LastSeenAt) " &
+                        "VALUES (@id, @name, @host, 0, 'pending', @now) " &
+                        "ON CONFLICT (TerminalID) DO NOTHING"
+                    cmd.Parameters.Add(New NpgsqlParameter("@id", info.TerminalID))
+                    cmd.Parameters.Add(New NpgsqlParameter("@name", info.TerminalName))
+                    cmd.Parameters.Add(New NpgsqlParameter("@host", info.HostName))
+                    cmd.Parameters.Add(New NpgsqlParameter("@now", DateTime.Now))
                     cmd.ExecuteNonQuery()
                 End Using
                 Using cmd As DbCommand = conn.CreateCommand()
                     cmd.CommandText =
                         "UPDATE Terminals SET HostName = @host, LastSeenAt = @now, " &
                         "TerminalName = COALESCE(NULLIF(Trim(TerminalName), ''), @name) WHERE TerminalID = @id"
-                    cmd.Parameters.Add(New SqliteParameter("@id", info.TerminalID))
-                    cmd.Parameters.Add(New SqliteParameter("@host", info.HostName))
-                    cmd.Parameters.Add(New SqliteParameter("@name", info.TerminalName))
-                    cmd.Parameters.Add(New SqliteParameter("@now", DateTime.Now))
+                    cmd.Parameters.Add(New NpgsqlParameter("@id", info.TerminalID))
+                    cmd.Parameters.Add(New NpgsqlParameter("@host", info.HostName))
+                    cmd.Parameters.Add(New NpgsqlParameter("@name", info.TerminalName))
+                    cmd.Parameters.Add(New NpgsqlParameter("@now", DateTime.Now))
                     cmd.ExecuteNonQuery()
                 End Using
             End Using
@@ -200,7 +201,7 @@ Public Class TerminalManager
                 conn.Open()
                 Using cmd As DbCommand = conn.CreateCommand()
                     cmd.CommandText = "SELECT Status FROM Terminals WHERE TerminalID = @id"
-                    cmd.Parameters.Add(New SqliteParameter("@id", info.TerminalID))
+                    cmd.Parameters.Add(New NpgsqlParameter("@id", info.TerminalID))
                     Dim result As Object = cmd.ExecuteScalar()
                     If result Is Nothing OrElse IsDBNull(result) Then
                         ' Registered moments ago but not visible yet - keep pending.
@@ -240,9 +241,9 @@ Public Class TerminalManager
                 conn.Open()
                 Using cmd As DbCommand = conn.CreateCommand()
                     cmd.CommandText = "UPDATE Terminals SET Status = @status, IsActive = @active WHERE TerminalID = @id"
-                    cmd.Parameters.Add(New SqliteParameter("@status", normalized))
-                    cmd.Parameters.Add(New SqliteParameter("@active", If(normalized = "approved", 1, 0)))
-                    cmd.Parameters.Add(New SqliteParameter("@id", terminalId))
+                    cmd.Parameters.Add(New NpgsqlParameter("@status", normalized))
+                    cmd.Parameters.Add(New NpgsqlParameter("@active", If(normalized = "approved", 1, 0)))
+                    cmd.Parameters.Add(New NpgsqlParameter("@id", terminalId))
                     cmd.ExecuteNonQuery()
                 End Using
             End Using
@@ -272,7 +273,7 @@ Public Class TerminalManager
                     conn.Open()
                     Using cmd As DbCommand = conn.CreateCommand()
                         cmd.CommandText = "SELECT TerminalName FROM Terminals WHERE TerminalID = @id"
-                        cmd.Parameters.Add(New SqliteParameter("@id", _currentTerminalId))
+                        cmd.Parameters.Add(New NpgsqlParameter("@id", _currentTerminalId))
                         Dim value As Object = cmd.ExecuteScalar()
                         If value IsNot Nothing AndAlso Not IsDBNull(value) AndAlso
                            Not String.IsNullOrWhiteSpace(Convert.ToString(value)) Then
@@ -358,8 +359,8 @@ Public Class TerminalManager
                 conn.Open()
                 Using cmd As DbCommand = conn.CreateCommand()
                     cmd.CommandText = "UPDATE Terminals SET TerminalName = @name WHERE TerminalID = @id"
-                    cmd.Parameters.Add(New SqliteParameter("@name", newName.Trim()))
-                    cmd.Parameters.Add(New SqliteParameter("@id", terminalId))
+                    cmd.Parameters.Add(New NpgsqlParameter("@name", newName.Trim()))
+                    cmd.Parameters.Add(New NpgsqlParameter("@id", terminalId))
                     cmd.ExecuteNonQuery()
                 End Using
             End Using
@@ -380,8 +381,8 @@ Public Class TerminalManager
                 conn.Open()
                 Using cmd As DbCommand = conn.CreateCommand()
                     cmd.CommandText = "UPDATE Terminals SET LastSeenAt = @now WHERE TerminalID = @id"
-                    cmd.Parameters.Add(New SqliteParameter("@id", id))
-                    cmd.Parameters.Add(New SqliteParameter("@now", DateTime.Now))
+                    cmd.Parameters.Add(New NpgsqlParameter("@id", id))
+                    cmd.Parameters.Add(New NpgsqlParameter("@now", DateTime.Now))
                     cmd.ExecuteNonQuery()
                 End Using
             End Using

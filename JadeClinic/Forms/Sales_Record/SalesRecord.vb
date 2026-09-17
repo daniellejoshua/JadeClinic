@@ -7,6 +7,8 @@ Imports QuestPDF.Fluent
 Imports QuestPDF.Helpers
 Imports QuestPDF.Infrastructure
 
+Imports Npgsql
+
 Public Class SalesRecord
     ' Navigation flag to prevent exit confirmation on programmatic close
     Private isNavigating As Boolean = False
@@ -289,37 +291,37 @@ Public Class SalesRecord
     Private Function LoadOrderRecordsData(Optional sortOrder As String = "Sale Date (Newest First)", Optional filterDate As DateTime? = Nothing, Optional searchTerm As String = "", Optional pageNumber As Integer = 1, Optional pageSize As Integer = 50, Optional paymentFilter As String = Nothing, Optional statusFilter As String = Nothing) As List(Of Dictionary(Of String, Object))
         Dim sales As New List(Of Dictionary(Of String, Object))()
         Try
-            Dim query As String = "SELECT s.SaleID, IFNULL(s.SaleNumber, '') AS SaleNumber, u.Username, s.SaleDate, s.PaymentMethod, s.TotalAmount, s.AmountPaid, " &
-                          "(s.AmountPaid - s.TotalAmount) AS Change, s.SalesData, IFNULL(s.Status, 'Completed') AS Status " &
+            Dim query As String = "SELECT s.SaleID, COALESCE(s.SaleNumber, '') AS SaleNumber, u.Username, s.SaleDate, s.PaymentMethod, s.TotalAmount, s.AmountPaid, " &
+                          "(s.AmountPaid - s.TotalAmount) AS Change, s.SalesData, COALESCE(s.Status, 'Completed') AS Status " &
                           "FROM Sales s LEFT JOIN Users u ON s.UserID = u.UserID"
 
             Dim whereClauses As New List(Of String)()
-            Dim parameters As New List(Of SqlParameter)()
+            Dim parameters As New List(Of NpgsqlParameter)()
 
             If filterDate.HasValue Then
-                whereClauses.Add("DATE(s.SaleDate) = @FilterDate")
-                parameters.Add(New SqlParameter("@FilterDate", filterDate.Value.Date.ToString("yyyy-MM-dd")))
+                whereClauses.Add("DATE(s.SaleDate) = @FilterDate::date")
+                parameters.Add(New NpgsqlParameter("@FilterDate", filterDate.Value.Date.ToString("yyyy-MM-dd")))
             End If
 
             If Not String.IsNullOrWhiteSpace(searchTerm) Then
-                whereClauses.Add("(IFNULL(s.SaleNumber, '') LIKE @Search OR IFNULL(u.Username, '') LIKE @Search)")
-                parameters.Add(New SqlParameter("@Search", "%" & searchTerm & "%"))
+                whereClauses.Add("(COALESCE(s.SaleNumber, '') LIKE @Search OR COALESCE(u.Username, '') LIKE @Search)")
+                parameters.Add(New NpgsqlParameter("@Search", "%" & searchTerm & "%"))
             End If
 
             If Not String.IsNullOrWhiteSpace(paymentFilter) AndAlso paymentFilter <> "All Methods" Then
                 If String.Equals(paymentFilter, "E-Wallet", StringComparison.OrdinalIgnoreCase) Then
                     whereClauses.Add("(s.PaymentMethod = @PmGCash OR s.PaymentMethod = @PmMaya)")
-                    parameters.Add(New SqlParameter("@PmGCash", "GCash"))
-                    parameters.Add(New SqlParameter("@PmMaya", "Maya"))
+                    parameters.Add(New NpgsqlParameter("@PmGCash", "GCash"))
+                    parameters.Add(New NpgsqlParameter("@PmMaya", "Maya"))
                 Else
                     whereClauses.Add("s.PaymentMethod = @PaymentMethod")
-                    parameters.Add(New SqlParameter("@PaymentMethod", paymentFilter))
+                    parameters.Add(New NpgsqlParameter("@PaymentMethod", paymentFilter))
                 End If
             End If
 
             If Not String.IsNullOrWhiteSpace(statusFilter) AndAlso statusFilter <> "All Status" Then
-                whereClauses.Add("IFNULL(s.Status, 'Completed') = @SaleStatus")
-                parameters.Add(New SqlParameter("@SaleStatus", statusFilter))
+                whereClauses.Add("COALESCE(s.Status, 'Completed') = @SaleStatus")
+                parameters.Add(New NpgsqlParameter("@SaleStatus", statusFilter))
             End If
 
             If whereClauses.Count > 0 Then
@@ -400,32 +402,32 @@ Public Class SalesRecord
         Try
             Dim query As String = "SELECT COUNT(*) FROM Sales s LEFT JOIN Users u ON s.UserID = u.UserID"
             Dim whereClauses As New List(Of String)()
-            Dim parameters As New List(Of SqlParameter)()
+            Dim parameters As New List(Of NpgsqlParameter)()
 
             If filterDate.HasValue Then
-                whereClauses.Add("DATE(s.SaleDate) = @FilterDate")
-                parameters.Add(New SqlParameter("@FilterDate", filterDate.Value.Date.ToString("yyyy-MM-dd")))
+                whereClauses.Add("DATE(s.SaleDate) = @FilterDate::date")
+                parameters.Add(New NpgsqlParameter("@FilterDate", filterDate.Value.Date.ToString("yyyy-MM-dd")))
             End If
 
             If Not String.IsNullOrWhiteSpace(searchTerm) Then
-                whereClauses.Add("(IFNULL(s.SaleNumber, '') LIKE @Search OR IFNULL(u.Username, '') LIKE @Search)")
-                parameters.Add(New SqlParameter("@Search", "%" & searchTerm & "%"))
+                whereClauses.Add("(COALESCE(s.SaleNumber, '') LIKE @Search OR COALESCE(u.Username, '') LIKE @Search)")
+                parameters.Add(New NpgsqlParameter("@Search", "%" & searchTerm & "%"))
             End If
 
             If Not String.IsNullOrWhiteSpace(paymentFilter) AndAlso paymentFilter <> "All Methods" Then
                 If String.Equals(paymentFilter, "E-Wallet", StringComparison.OrdinalIgnoreCase) Then
                     whereClauses.Add("(s.PaymentMethod = @PmGCash OR s.PaymentMethod = @PmMaya)")
-                    parameters.Add(New SqlParameter("@PmGCash", "GCash"))
-                    parameters.Add(New SqlParameter("@PmMaya", "Maya"))
+                    parameters.Add(New NpgsqlParameter("@PmGCash", "GCash"))
+                    parameters.Add(New NpgsqlParameter("@PmMaya", "Maya"))
                 Else
                     whereClauses.Add("s.PaymentMethod = @PaymentMethod")
-                    parameters.Add(New SqlParameter("@PaymentMethod", paymentFilter))
+                    parameters.Add(New NpgsqlParameter("@PaymentMethod", paymentFilter))
                 End If
             End If
 
             If Not String.IsNullOrWhiteSpace(statusFilter) AndAlso statusFilter <> "All Status" Then
-                whereClauses.Add("IFNULL(s.Status, 'Completed') = @SaleStatus")
-                parameters.Add(New SqlParameter("@SaleStatus", statusFilter))
+                whereClauses.Add("COALESCE(s.Status, 'Completed') = @SaleStatus")
+                parameters.Add(New NpgsqlParameter("@SaleStatus", statusFilter))
             End If
 
             If whereClauses.Count > 0 Then
@@ -590,8 +592,8 @@ Public Class SalesRecord
     Private Function GetOpeningCapitalForDate(targetDate As Date) As Decimal
         Try
             Dim capitalObj = Utilities.ExecuteScalar(
-                "SELECT OpeningAmount FROM DailyOpeningCapital WHERE CashDate = @CashDate",
-                New SqlParameter("@CashDate", targetDate.Date))
+                "SELECT OpeningAmount FROM DailyOpeningCapital WHERE CashDate = @CashDate::text",
+                New NpgsqlParameter("@CashDate", targetDate.Date.ToString("yyyy-MM-dd")))
             If capitalObj Is Nothing OrElse capitalObj Is DBNull.Value Then
                 Return 0D
             End If

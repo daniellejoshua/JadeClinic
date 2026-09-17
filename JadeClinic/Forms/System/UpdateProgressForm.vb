@@ -106,9 +106,10 @@ Public Class UpdateProgressForm
             AutoUpdater.DownloadUpdate(_updatePath, updateDir,
                 Sub(pct, text) ReportProgress(pct, text))
 
-            ReportProgress(100, "Applying update and restarting...")
+            ReportProgress(100, "Restarting to install the update...")
+            System.Threading.Thread.Sleep(800)
             Dim appDir As String = AppDomain.CurrentDomain.BaseDirectory
-            Me.Invoke(Sub() AutoUpdater.ApplyUpdateAndRestart(updateDir, appDir))
+            Me.Invoke(Sub() AutoUpdater.LaunchUpdater(updateDir, appDir))
         Catch ex As Exception
             Me.Invoke(Sub()
                           ReportProgress(_bar.Value, "Update failed: " & ex.Message)

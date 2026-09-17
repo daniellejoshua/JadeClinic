@@ -1,6 +1,6 @@
-Imports System.IO
+﻿Imports System.IO
 Imports System.Data
-Imports Microsoft.Data.Sqlite
+Imports Npgsql
 
 ' Local SQLite log of sync / backup / restore / seed events.
 ' Source of truth for the Sync Logs page. The cloud sync_log table is kept
@@ -9,8 +9,8 @@ Public Module LocalSyncLog
 
     Public Const MaxRows As Integer = 500
 
-    Private Function Conn() As SqliteConnection
-        Return New SqliteConnection(Connection.GetConnectionString())
+    Private Function Conn() As NpgsqlConnection
+        Return New NpgsqlConnection(Connection.GetConnectionString())
     End Function
 
     ' Called once at startup: creates the table (existing DBs included), marks
@@ -28,9 +28,9 @@ Public Module LocalSyncLog
     Public Sub EnsureTable()
         Dim sql As String =
             "CREATE TABLE IF NOT EXISTS SyncLog (" &
-            "LogID INTEGER PRIMARY KEY AUTOINCREMENT, " &
-            "StartedAt DATETIME NOT NULL, " &
-            "CompletedAt DATETIME, " &
+            "LogID BIGSERIAL PRIMARY KEY, " &
+            "StartedAt TIMESTAMPTZ NOT NULL, " &
+            "CompletedAt TIMESTAMPTZ, " &
             "RowsSynced INTEGER NOT NULL DEFAULT 0, " &
             "Status TEXT NOT NULL DEFAULT 'running', " &
             "Error TEXT, " &
@@ -42,13 +42,13 @@ Public Module LocalSyncLog
             "EventType TEXT NOT NULL DEFAULT 'sync', " &
             "Source TEXT)"
 
-        Using c As SqliteConnection = Conn()
+        Using c As NpgsqlConnection = Conn()
             c.Open()
-            Using cmd As New SqliteCommand(sql, c)
+            Using cmd As New NpgsqlCommand(sql, c)
                 cmd.ExecuteNonQuery()
             End Using
             Try
-                Using cmd As New SqliteCommand("CREATE INDEX IF NOT EXISTS IX_SyncLog_Started ON SyncLog (StartedAt DESC)", c)
+                Using cmd As New NpgsqlCommand("CREATE INDEX IF NOT EXISTS IX_SyncLog_Started ON SyncLog (StartedAt DESC)", c)
                     cmd.ExecuteNonQuery()
                 End Using
             Catch
@@ -63,12 +63,12 @@ Public Module LocalSyncLog
                                Optional reconcile As Boolean = False) As Integer
         EnsureTable()
         MarkStaleRunningAsFailed()
-        Using c As SqliteConnection = Conn()
+        Using c As NpgsqlConnection = Conn()
             c.Open()
-            Using cmd As New SqliteCommand(
+            Using cmd As New NpgsqlCommand(
                 "INSERT INTO SyncLog (StartedAt, Status, Mode, EventType, Source, ReconcileDeleted) " &
-                "VALUES (@t, 'running', @mode, @et, @src, @rec); SELECT last_insert_rowid()", c)
-                cmd.Parameters.AddWithValue("@t", DateTime.Now)
+                "VALUES (@t, 'running', @mode, @et, @src, @rec) RETURNING LogID", c)
+                cmd.Parameters.AddWithValue("@t", DateTime.UtcNow)
                 cmd.Parameters.AddWithValue("@mode", If(String.IsNullOrEmpty(mode), CObj(DBNull.Value), CObj(mode)))
                 cmd.Parameters.AddWithValue("@et", eventType)
                 cmd.Parameters.AddWithValue("@src", If(String.IsNullOrEmpty(source), CObj(DBNull.Value), CObj(source)))
@@ -86,13 +86,13 @@ Public Module LocalSyncLog
                              Optional reconcileDeleted As Integer = 0)
         If logId <= 0 Then Return
         Try
-            Using c As SqliteConnection = Conn()
+            Using c As NpgsqlConnection = Conn()
                 c.Open()
-                Using cmd As New SqliteCommand(
+                Using cmd As New NpgsqlCommand(
                     "UPDATE SyncLog SET CompletedAt = @done, Status = @st, RowsSynced = @rows, Error = @err, " &
                     "SnapshotLocal = @sl, SnapshotCloud = @sc, SnapshotSizeBytes = @sz, ReconcileDeleted = @rd " &
                     "WHERE LogID = @id", c)
-                    cmd.Parameters.AddWithValue("@done", DateTime.Now)
+                    cmd.Parameters.AddWithValue("@done", DateTime.UtcNow)
                     cmd.Parameters.AddWithValue("@st", status)
                     cmd.Parameters.AddWithValue("@rows", rows)
                     cmd.Parameters.AddWithValue("@err", If(String.IsNullOrEmpty(err), CObj(DBNull.Value), CObj(err)))
@@ -112,12 +112,12 @@ Public Module LocalSyncLog
     ' Any event still 'running' was interrupted (app closed/crashed mid-run).
     Public Sub MarkStaleRunningAsFailed()
         Try
-            Using c As SqliteConnection = Conn()
+            Using c As NpgsqlConnection = Conn()
                 c.Open()
-                Using cmd As New SqliteCommand(
+                Using cmd As New NpgsqlCommand(
                     "UPDATE SyncLog SET CompletedAt = @done, Status = 'failed', " &
                     "Error = 'Interrupted (application closed before completion)' WHERE Status = 'running'", c)
-                    cmd.Parameters.AddWithValue("@done", DateTime.Now)
+                    cmd.Parameters.AddWithValue("@done", DateTime.UtcNow)
                     cmd.ExecuteNonQuery()
                 End Using
             End Using
@@ -128,9 +128,9 @@ Public Module LocalSyncLog
 
     Public Sub TrimRows()
         Try
-            Using c As SqliteConnection = Conn()
+            Using c As NpgsqlConnection = Conn()
                 c.Open()
-                Using cmd As New SqliteCommand(
+                Using cmd As New NpgsqlCommand(
                     "DELETE FROM SyncLog WHERE LogID NOT IN " &
                     "(SELECT LogID FROM SyncLog ORDER BY LogID DESC LIMIT " & MaxRows & ")", c)
                     cmd.ExecuteNonQuery()
@@ -158,14 +158,14 @@ Public Module LocalSyncLog
         dt.Columns.Add("Error", GetType(String))
 
         Try
-            Using c As SqliteConnection = Conn()
+            Using c As NpgsqlConnection = Conn()
                 c.Open()
-                Using cmd As New SqliteCommand(
+                Using cmd As New NpgsqlCommand(
                     "SELECT LogID, EventType, Source, Mode, StartedAt, CompletedAt, RowsSynced, Status, Error, " &
                     "ReconcileDeleted, SnapshotLocal, SnapshotCloud, SnapshotSizeBytes " &
                     "FROM SyncLog ORDER BY LogID DESC LIMIT @lim", c)
                     cmd.Parameters.AddWithValue("@lim", limit)
-                    Using rdr As SqliteDataReader = cmd.ExecuteReader()
+                    Using rdr As NpgsqlDataReader = cmd.ExecuteReader()
                         While rdr.Read()
                             Dim row As DataRow = dt.NewRow()
                             row("LogID") = Convert.ToInt32(rdr("LogID"))

@@ -5,6 +5,8 @@ Imports QuestPDF.Fluent
 Imports QuestPDF.Helpers
 Imports QuestPDF.Infrastructure
 
+Imports Npgsql
+
 Public Class SalesRecordExporter
 
     Shared Sub New()
@@ -20,15 +22,15 @@ Public Class SalesRecordExporter
 
             Dim query As String = "SELECT s.SaleID, u.Username, s.SaleDate, s.TotalAmount, s.AmountPaid, " &
                                   "(s.AmountPaid - s.TotalAmount) AS ChangeAmount, " &
-                                  "IFNULL(s.PaymentMethod, '') AS PaymentMethod, " &
-                                  "IFNULL(s.DiscountType, '') AS DiscountType, " &
-                                  "IFNULL(s.DiscountAmount, 0) AS DiscountAmount, " &
-                                   "IFNULL(s.Status, 'Completed') AS Status, " &
-                                   "IFNULL((SELECT SUM(si.Quantity * IFNULL(p.CostPrice, 0)) " &
+                                  "COALESCE(s.PaymentMethod, '') AS PaymentMethod, " &
+                                  "COALESCE(s.DiscountType, '') AS DiscountType, " &
+                                  "COALESCE(s.DiscountAmount, 0) AS DiscountAmount, " &
+                                   "COALESCE(s.Status, 'Completed') AS Status, " &
+                                   "COALESCE((SELECT SUM(si.Quantity * COALESCE(p.CostPrice, 0)) " &
                                    "        FROM SaleItems si " &
                                    "        LEFT JOIN Products p ON p.ProductID = si.ProductID " &
                                    "        WHERE si.SaleID = s.SaleID), 0) AS TotalCost, " &
-                                   "(s.TotalAmount - IFNULL(s.DiscountAmount, 0)) - IFNULL((SELECT SUM(si.Quantity * IFNULL(p.CostPrice, 0)) " &
+                                   "(s.TotalAmount - COALESCE(s.DiscountAmount, 0)) - COALESCE((SELECT SUM(si.Quantity * COALESCE(p.CostPrice, 0)) " &
                                    "                                             FROM SaleItems si " &
                                    "                                             LEFT JOIN Products p ON p.ProductID = si.ProductID " &
                                    "                                             WHERE si.SaleID = s.SaleID), 0) AS ProfitAmount " &
@@ -36,32 +38,32 @@ Public Class SalesRecordExporter
                                   "LEFT JOIN Users u ON s.UserID = u.UserID"
 
             Dim whereClauses As New List(Of String)()
-            Dim parameters As New List(Of SqlParameter)()
+            Dim parameters As New List(Of NpgsqlParameter)()
 
             If filterDate.HasValue Then
-                whereClauses.Add("DATE(s.SaleDate) = @FilterDate")
-                parameters.Add(New SqlParameter("@FilterDate", filterDate.Value.Date.ToString("yyyy-MM-dd")))
+                whereClauses.Add("DATE(s.SaleDate) = @FilterDate::date")
+                parameters.Add(New NpgsqlParameter("@FilterDate", filterDate.Value.Date.ToString("yyyy-MM-dd")))
             End If
 
             If Not String.IsNullOrWhiteSpace(searchTerm) Then
-                whereClauses.Add("(IFNULL(s.SaleNumber, '') LIKE @Search OR IFNULL(u.Username, '') LIKE @Search)")
-                parameters.Add(New SqlParameter("@Search", "%" & searchTerm & "%"))
+                whereClauses.Add("(COALESCE(s.SaleNumber, '') LIKE @Search OR COALESCE(u.Username, '') LIKE @Search)")
+                parameters.Add(New NpgsqlParameter("@Search", "%" & searchTerm & "%"))
             End If
 
             If Not String.IsNullOrWhiteSpace(paymentFilter) AndAlso paymentFilter <> "All Methods" Then
                 If String.Equals(paymentFilter, "E-Wallet", StringComparison.OrdinalIgnoreCase) Then
                     whereClauses.Add("(s.PaymentMethod = @PmGCash OR s.PaymentMethod = @PmMaya)")
-                    parameters.Add(New SqlParameter("@PmGCash", "GCash"))
-                    parameters.Add(New SqlParameter("@PmMaya", "Maya"))
+                    parameters.Add(New NpgsqlParameter("@PmGCash", "GCash"))
+                    parameters.Add(New NpgsqlParameter("@PmMaya", "Maya"))
                 Else
                     whereClauses.Add("s.PaymentMethod = @PaymentMethod")
-                    parameters.Add(New SqlParameter("@PaymentMethod", paymentFilter))
+                    parameters.Add(New NpgsqlParameter("@PaymentMethod", paymentFilter))
                 End If
             End If
 
             If Not String.IsNullOrWhiteSpace(statusFilter) AndAlso statusFilter <> "All Status" Then
-                whereClauses.Add("IFNULL(s.Status, 'Completed') = @SaleStatus")
-                parameters.Add(New SqlParameter("@SaleStatus", statusFilter))
+                whereClauses.Add("COALESCE(s.Status, 'Completed') = @SaleStatus")
+                parameters.Add(New NpgsqlParameter("@SaleStatus", statusFilter))
             End If
 
             If whereClauses.Count > 0 Then
@@ -179,7 +181,7 @@ Public Class SalesRecordExporter
     Private Shared Function GetReportCapital(Optional filterDate As DateTime? = Nothing) As Decimal
         Try
             Dim targetDate As Date = If(filterDate.HasValue, filterDate.Value.Date, Date.Today)
-            Dim capitalObj = Utilities.ExecuteScalar("SELECT OpeningAmount FROM DailyOpeningCapital WHERE CashDate = @CashDate", New SqlParameter("@CashDate", targetDate))
+            Dim capitalObj = Utilities.ExecuteScalar("SELECT OpeningAmount FROM DailyOpeningCapital WHERE CashDate = @CashDate::text", New NpgsqlParameter("@CashDate", targetDate.ToString("yyyy-MM-dd")))
             If capitalObj Is Nothing OrElse capitalObj Is DBNull.Value Then
                 Return 0D
             End If

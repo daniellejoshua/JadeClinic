@@ -1,4 +1,4 @@
-Imports Microsoft.Data.Sqlite
+﻿Imports Npgsql
 Imports System.Data.Common
 Imports System.IO
 Imports System.Drawing.Imaging
@@ -225,12 +225,12 @@ Public Class AddProduct
         Try
             Dim baseUnits As String() = {"PCS", "BOX", "PACK", "BOTTLE", "TUBE", "SET", "PAIR", "DOZEN", "REAM"}
             Dim connStr As String = Connection.GetConnectionString()
-            Using conn As New SqliteConnection(connStr)
+            Using conn As New NpgsqlConnection(connStr)
                 conn.Open()
 
                 Dim baseUnitsFilter As String = String.Join(",", baseUnits.Select(Function(u) $"'{u}'"))
                 Dim query As String = $"SELECT DISTINCT Unit FROM Products WHERE Unit IS NOT NULL AND Unit NOT IN ({baseUnitsFilter}) ORDER BY Unit"
-                Using cmd As New SqliteCommand(query, conn)
+                Using cmd As New NpgsqlCommand(query, conn)
                     Using reader As DbDataReader = cmd.ExecuteReader()
                         While reader.Read()
                             If Not IsDBNull(reader("Unit")) Then
@@ -277,11 +277,11 @@ Public Class AddProduct
     Public Function UpdateProductStatus(productId As Integer, isActive As Boolean) As Boolean
         Try
             Dim connStr As String = Connection.GetConnectionString()
-            Using conn As New SqliteConnection(connStr)
+            Using conn As New NpgsqlConnection(connStr)
                 conn.Open()
 
-                Dim updateQuery As String = "UPDATE Products SET IsActive = @IsActive, UpdatedAt = datetime('now') WHERE ProductID = @ProductID"
-                Using cmd As New SqliteCommand(updateQuery, conn)
+                Dim updateQuery As String = "UPDATE Products SET IsActive = @IsActive, UpdatedAt = (now() AT TIME ZONE 'UTC') WHERE ProductID = @ProductID"
+                Using cmd As New NpgsqlCommand(updateQuery, conn)
                     cmd.Parameters.AddWithValue("@IsActive", If(isActive, 1, 0))
                     cmd.Parameters.AddWithValue("@ProductID", productId)
 
@@ -409,9 +409,9 @@ Public Class AddProduct
     Private Function SaveProduct() As Boolean
         Try
             Dim connStr As String = Connection.GetConnectionString()
-            Using conn As New SqliteConnection(connStr)
+            Using conn As New NpgsqlConnection(connStr)
                 conn.Open()
-                Using transaction As SqliteTransaction = conn.BeginTransaction()
+                Using transaction As NpgsqlTransaction = conn.BeginTransaction()
                     Try
                         Dim selectedCategory As String = cmbCategory.SelectedItem.ToString()
 
@@ -420,11 +420,11 @@ Public Class AddProduct
                                                    "IsActive, Created, UpdatedAt) " &
                                                    "VALUES (@ProductCode, @ProductName, @Category, @Unit, " &
                                                    "@CurrentStock, @ReorderLevel, @CostPrice, @SellingPrice, @WholesalePrice, " &
-                                                    "1, datetime('now'), datetime('now')); SELECT last_insert_rowid()"
+                                                    "1, (now() AT TIME ZONE 'UTC'), (now() AT TIME ZONE 'UTC')) RETURNING ProductID"
 
                         Dim productId As Integer
 
-                        Using cmd As New SqliteCommand(insertQuery, conn, transaction)
+                        Using cmd As New NpgsqlCommand(insertQuery, conn, transaction)
                             cmd.Parameters.AddWithValue("@ProductCode", "TEMP_CODE")
                             cmd.Parameters.AddWithValue("@ProductName", txtProductName.Text.Trim())
                             cmd.Parameters.AddWithValue("@Category", selectedCategory)
@@ -442,7 +442,7 @@ Public Class AddProduct
                         Dim finalProductCode As String = Utilities.GenerateProductCode(productId)
 
                         Dim updateQuery As String = "UPDATE Products SET ProductCode = @ProductCode WHERE ProductID = @ProductID"
-                        Using cmdUpdate As New SqliteCommand(updateQuery, conn, transaction)
+                        Using cmdUpdate As New NpgsqlCommand(updateQuery, conn, transaction)
                             cmdUpdate.Parameters.AddWithValue("@ProductCode", finalProductCode)
                             cmdUpdate.Parameters.AddWithValue("@ProductID", productId)
                             cmdUpdate.ExecuteNonQuery()
@@ -471,17 +471,17 @@ Public Class AddProduct
     Private Function UpdateProduct() As Boolean
         Try
             Dim connStr As String = Connection.GetConnectionString()
-            Using conn As New SqliteConnection(connStr)
+            Using conn As New NpgsqlConnection(connStr)
                 conn.Open()
-                Using transaction As SqliteTransaction = conn.BeginTransaction()
+                Using transaction As NpgsqlTransaction = conn.BeginTransaction()
                     Try
                         Dim selectedCategory As String = cmbCategory.SelectedItem.ToString()
 
                         Dim updateQuery As String = "UPDATE Products SET ProductName = @ProductName, Category = @Category, Unit = @Unit, " &
                                                "ReorderLevel = @ReorderLevel, CostPrice = @CostPrice, SellingPrice = @SellingPrice, " &
-                                                "WholesalePrice = @WholesalePrice, IsActive = @IsActive, UpdatedAt = datetime('now') WHERE ProductID = @ProductID"
+                                                "WholesalePrice = @WholesalePrice, IsActive = @IsActive, UpdatedAt = (now() AT TIME ZONE 'UTC') WHERE ProductID = @ProductID"
 
-                        Using cmd As New SqliteCommand(updateQuery, conn, transaction)
+                        Using cmd As New NpgsqlCommand(updateQuery, conn, transaction)
                             cmd.Parameters.AddWithValue("@ProductName", txtProductName.Text.Trim())
                             cmd.Parameters.AddWithValue("@Category", selectedCategory)
                             cmd.Parameters.AddWithValue("@Unit", If(UnitCmbBox.SelectedItem IsNot Nothing, UnitCmbBox.SelectedItem.ToString(), "PCS"))
@@ -504,7 +504,7 @@ Public Class AddProduct
 
                         If Not String.IsNullOrWhiteSpace(selectedImagePath) AndAlso IO.File.Exists(selectedImagePath) Then
                             Dim deleteMappingQuery As String = "DELETE FROM ProductImageMapping WHERE ProductID = @ProductID"
-                            Using cmdDelete As New SqliteCommand(deleteMappingQuery, conn, transaction)
+                            Using cmdDelete As New NpgsqlCommand(deleteMappingQuery, conn, transaction)
                                 cmdDelete.Parameters.AddWithValue("@ProductID", editProductId)
                                 cmdDelete.ExecuteNonQuery()
                             End Using
@@ -520,7 +520,7 @@ Public Class AddProduct
                         End If
 
                         Dim getCodeQuery As String = "SELECT ProductCode FROM Products WHERE ProductID = @ProductID"
-                        Using getCodeCmd As New SqliteCommand(getCodeQuery, conn)
+                        Using getCodeCmd As New NpgsqlCommand(getCodeQuery, conn)
                             getCodeCmd.Parameters.AddWithValue("@ProductID", editProductId)
                             Dim existingProductCode As String = getCodeCmd.ExecuteScalar()?.ToString()
                             If Not String.IsNullOrEmpty(existingProductCode) Then
@@ -542,14 +542,14 @@ Public Class AddProduct
         End Try
     End Function
 
-    Private Sub SaveProductImage(conn As SqliteConnection, transaction As SqliteTransaction, productId As Integer, imagePath As String)
+    Private Sub SaveProductImage(conn As NpgsqlConnection, transaction As NpgsqlTransaction, productId As Integer, imagePath As String)
         Try
             Dim imageBytes As Byte() = File.ReadAllBytes(imagePath)
             Dim imageHash As String = Convert.ToBase64String(System.Security.Cryptography.SHA256.Create().ComputeHash(imageBytes))
 
             Dim existingImageId As Object = Nothing
             Dim checkImageQuery As String = "SELECT ImageID FROM ProductImages WHERE ImageHash = @ImageHash"
-            Using checkCmd As New SqliteCommand(checkImageQuery, conn, transaction)
+            Using checkCmd As New NpgsqlCommand(checkImageQuery, conn, transaction)
                 checkCmd.Parameters.AddWithValue("@ImageHash", imageHash)
                 existingImageId = checkCmd.ExecuteScalar()
             End Using
@@ -559,8 +559,8 @@ Public Class AddProduct
             If existingImageId IsNot Nothing Then
                 imageId = Convert.ToInt32(existingImageId)
             Else
-                Dim insertImageQuery As String = "INSERT INTO ProductImages (ImageHash, ImageType, FilePath, CreatedAt, UpdatedAt) VALUES (@ImageHash, @ImageType, '', datetime('now'), datetime('now')); SELECT last_insert_rowid()"
-                Using cmdImage As New SqliteCommand(insertImageQuery, conn, transaction)
+                Dim insertImageQuery As String = "INSERT INTO ProductImages (ImageHash, ImageType, FilePath, CreatedAt, UpdatedAt) VALUES (@ImageHash, @ImageType, '', (now() AT TIME ZONE 'UTC'), (now() AT TIME ZONE 'UTC')) RETURNING ImageID"
+                Using cmdImage As New NpgsqlCommand(insertImageQuery, conn, transaction)
                     cmdImage.Parameters.AddWithValue("@ImageHash", imageHash)
                     cmdImage.Parameters.AddWithValue("@ImageType", "thumb")
                     imageId = Convert.ToInt32(cmdImage.ExecuteScalar())
@@ -574,15 +574,15 @@ Public Class AddProduct
                 File.WriteAllBytes(destPath, compressed)
 
                 Dim updatePathQuery As String = "UPDATE ProductImages SET FilePath = @FilePath WHERE ImageID = @ImageID"
-                Using cmdUpdate As New SqliteCommand(updatePathQuery, conn, transaction)
+                Using cmdUpdate As New NpgsqlCommand(updatePathQuery, conn, transaction)
                     cmdUpdate.Parameters.AddWithValue("@FilePath", fileName)
                     cmdUpdate.Parameters.AddWithValue("@ImageID", imageId)
                     cmdUpdate.ExecuteNonQuery()
                 End Using
             End If
 
-            Dim insertMappingQuery As String = "INSERT INTO ProductImageMapping (ProductID, ImageID, CreatedAt) VALUES (@ProductID, @ImageID, datetime('now'))"
-            Using cmdMapping As New SqliteCommand(insertMappingQuery, conn, transaction)
+            Dim insertMappingQuery As String = "INSERT INTO ProductImageMapping (ProductID, ImageID, CreatedAt) VALUES (@ProductID, @ImageID, (now() AT TIME ZONE 'UTC'))"
+            Using cmdMapping As New NpgsqlCommand(insertMappingQuery, conn, transaction)
                 cmdMapping.Parameters.AddWithValue("@ProductID", productId)
                 cmdMapping.Parameters.AddWithValue("@ImageID", imageId)
                 cmdMapping.ExecuteNonQuery()
@@ -596,7 +596,7 @@ Public Class AddProduct
     Private Sub LoadProductData()
         Try
             Dim connStr As String = Connection.GetConnectionString()
-            Using conn As New SqliteConnection(connStr)
+            Using conn As New NpgsqlConnection(connStr)
                 conn.Open()
 
                 Dim query As String = "SELECT p.*, pi.FilePath AS ProductImage " &
@@ -605,7 +605,7 @@ Public Class AddProduct
                                   "LEFT JOIN ProductImages pi ON pim.ImageID = pi.ImageID " &
                                   "WHERE p.ProductID = @ProductID"
 
-                Using cmd As New SqliteCommand(query, conn)
+                Using cmd As New NpgsqlCommand(query, conn)
                     cmd.Parameters.AddWithValue("@ProductID", editProductId)
 
                     Using reader As DbDataReader = cmd.ExecuteReader()
@@ -714,13 +714,13 @@ Public Class AddProduct
     Private Sub LoadAdditionalCategories()
         Try
             Dim connStr As String = Connection.GetConnectionString()
-            Using conn As New SqliteConnection(connStr)
+            Using conn As New NpgsqlConnection(connStr)
                 conn.Open()
 
                 Dim mainCategoriesString As String = "'ORTHO','CONSUMABLES','SURGERY','RESTO','ENDO','COSMETIC'"
                 Dim query As String = $"SELECT DISTINCT Category FROM Products WHERE Category IS NOT NULL AND Category NOT IN ({mainCategoriesString}) ORDER BY Category"
 
-                Using cmd As New SqliteCommand(query, conn)
+                Using cmd As New NpgsqlCommand(query, conn)
                     Using reader As DbDataReader = cmd.ExecuteReader()
                         While reader.Read()
                             If Not IsDBNull(reader("Category")) Then
@@ -819,12 +819,12 @@ Public Class AddProduct
     Private Sub CleanupOrphanedImages()
         Try
             Dim connStr As String = Connection.GetConnectionString()
-            Using cleanupConn As New SqliteConnection(connStr)
+            Using cleanupConn As New NpgsqlConnection(connStr)
                 cleanupConn.Open()
 
                 Dim orphanQuery As String = "SELECT FilePath FROM ProductImages WHERE ImageID NOT IN (SELECT DISTINCT ImageID FROM ProductImageMapping)"
                 Dim orphanFiles As New List(Of String)
-                Using orphanCmd As New SqliteCommand(orphanQuery, cleanupConn)
+                Using orphanCmd As New NpgsqlCommand(orphanQuery, cleanupConn)
                     Using reader As DbDataReader = orphanCmd.ExecuteReader()
                         While reader.Read()
                             If Not IsDBNull(reader("FilePath")) Then
@@ -836,14 +836,14 @@ Public Class AddProduct
 
                 Dim countQuery As String = "SELECT COUNT(*) FROM ProductImages WHERE ImageID NOT IN (SELECT DISTINCT ImageID FROM ProductImageMapping)"
                 Dim orphanCount As Integer
-                Using countCmd As New SqliteCommand(countQuery, cleanupConn)
+                Using countCmd As New NpgsqlCommand(countQuery, cleanupConn)
                     orphanCount = Convert.ToInt32(countCmd.ExecuteScalar())
                 End Using
 
                 If orphanCount > 0 Then
                     Dim deleteQuery As String = "DELETE FROM ProductImages WHERE ImageID NOT IN (SELECT DISTINCT ImageID FROM ProductImageMapping)"
                     Dim deletedCount As Integer
-                    Using deleteCmd As New SqliteCommand(deleteQuery, cleanupConn)
+                    Using deleteCmd As New NpgsqlCommand(deleteQuery, cleanupConn)
                         deletedCount = deleteCmd.ExecuteNonQuery()
                     End Using
 

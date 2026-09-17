@@ -1,5 +1,5 @@
-Imports System.Data.Common
-Imports Microsoft.Data.Sqlite
+﻿Imports System.Data.Common
+Imports Npgsql
 
 Public Class BatchTrackingMigration
     ''' <summary>
@@ -96,17 +96,17 @@ Public Class BatchTrackingMigration
                 ' Create sample batch entries for each ENDO product
                 For Each product In endoProducts
                     ' open a connection per entry to reuse existing helper methods
-                    Dim insertQuery As String = "INSERT INTO InventoryLog (ProductID, TransactionType, Quantity, PreviousStock, NewStock, BatchNumber, ExpiryDate, UserID, Notes, CreatedAt) VALUES (@ProductID, 'IN', 10, 0, 10, @BatchNumber, @ExpiryDate, 1, @Notes, datetime('now'))"
-                    Dim parameters() As SqlParameter = {
-                        New SqlParameter("@ProductID", product.ProductID),
-                        New SqlParameter("@BatchNumber", $"ENDO-BATCH-{DateTime.Now:yyyyMMdd}-001"),
-                        New SqlParameter("@ExpiryDate", DateTime.Now.AddYears(2).ToString("yyyy-MM-dd")),
-                        New SqlParameter("@Notes", $"Sample batch entry for {product.ProductName} - Testing batch tracking system")
+                    Dim insertQuery As String = "INSERT INTO InventoryLog (ProductID, TransactionType, Quantity, PreviousStock, NewStock, BatchNumber, ExpiryDate, UserID, Notes, CreatedAt) VALUES (@ProductID, 'IN', 10, 0, 10, @BatchNumber, @ExpiryDate, 1, @Notes, (now() AT TIME ZONE 'UTC'))"
+                    Dim parameters() As NpgsqlParameter = {
+                        New NpgsqlParameter("@ProductID", product.ProductID),
+                        New NpgsqlParameter("@BatchNumber", $"ENDO-BATCH-{DateTime.Now:yyyyMMdd}-001"),
+                        New NpgsqlParameter("@ExpiryDate", DateTime.Now.AddYears(2).ToString("yyyy-MM-dd")),
+                        New NpgsqlParameter("@Notes", $"Sample batch entry for {product.ProductName} - Testing batch tracking system")
                     }
                     DatabaseHelper.ExecuteNonQuery(insertQuery, parameters)
 
                     Dim updateStockQuery As String = "UPDATE Products SET CurrentStock = 10 WHERE ProductID = @ProductID"
-                    Dim updateParams() As SqlParameter = {New SqlParameter("@ProductID", product.ProductID)}
+                    Dim updateParams() As NpgsqlParameter = {New NpgsqlParameter("@ProductID", product.ProductID)}
                     DatabaseHelper.ExecuteNonQuery(updateStockQuery, updateParams)
                 Next
             End Using
@@ -118,7 +118,7 @@ Public Class BatchTrackingMigration
         End Try
     End Sub
     
-    Private Shared Sub CreateSampleBatchEntry(conn As SqliteConnection, productId As Integer, productName As String)
+    Private Shared Sub CreateSampleBatchEntry(conn As NpgsqlConnection, productId As Integer, productName As String)
         Try
             ' Create a sample inventory log entry with batch information
             Dim batchNumber As String = $"ENDO-BATCH-{DateTime.Now:yyyyMMdd}-001"
@@ -126,9 +126,9 @@ Public Class BatchTrackingMigration
             
             Dim insertQuery As String = "INSERT INTO InventoryLog (ProductID, TransactionType, Quantity, PreviousStock, NewStock, " &
                 "BatchNumber, ExpiryDate, UserID, Notes, CreatedAt) " &
-                "VALUES (@ProductID, 'IN', 10, 0, 10, @BatchNumber, @ExpiryDate, 1, @Notes, datetime('now'))"
+                "VALUES (@ProductID, 'IN', 10, 0, 10, @BatchNumber, @ExpiryDate, 1, @Notes, (now() AT TIME ZONE 'UTC'))"
             
-            Using cmd As New SqliteCommand(insertQuery, conn)
+            Using cmd As New NpgsqlCommand(insertQuery, conn)
                 cmd.Parameters.AddWithValue("@ProductID", productId)
                 cmd.Parameters.AddWithValue("@BatchNumber", batchNumber)
                 cmd.Parameters.AddWithValue("@ExpiryDate", expiryDate)
@@ -139,7 +139,7 @@ Public Class BatchTrackingMigration
             
             ' Update product stock
             Dim updateStockQuery As String = "UPDATE Products SET CurrentStock = 10 WHERE ProductID = @ProductID"
-            Using cmd As New SqliteCommand(updateStockQuery, conn)
+            Using cmd As New NpgsqlCommand(updateStockQuery, conn)
                 cmd.Parameters.AddWithValue("@ProductID", productId)
                 cmd.ExecuteNonQuery()
             End Using
@@ -161,13 +161,13 @@ Public Class BatchTrackingMigration
                 conn.Open()
 
                 Dim query As String = "SELECT il.BatchNumber, p.ProductName, p.Category, il.ExpiryDate, " &
-                    "CAST(julianday(il.ExpiryDate) - julianday('now') AS INTEGER) AS DaysUntilExpiry, " &
+                    "EXTRACT(DAY FROM (il.ExpiryDate::date - now()))::int AS DaysUntilExpiry, " &
                     "il.Quantity, il.CreatedAt " &
                     "FROM InventoryLog il " &
                     "INNER JOIN Products p ON il.ProductID = p.ProductID " &
                     "WHERE il.ExpiryDate IS NOT NULL " &
-                    "AND il.ExpiryDate BETWEEN datetime('now') AND datetime('now', '+' || @DaysAhead || ' days') " &
-                    "ORDER BY il.ExpiryDate ASC"
+                    "AND il.ExpiryDate::date BETWEEN (now() AT TIME ZONE 'UTC')::date AND ((now() AT TIME ZONE 'UTC') + make_interval(days := @DaysAhead))::date " &
+                    "ORDER BY il.ExpiryDate::date ASC"
 
                 Using cmd As DbCommand = conn.CreateCommand()
                     cmd.CommandText = query

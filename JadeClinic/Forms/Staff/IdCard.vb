@@ -1,8 +1,10 @@
-Imports System.IO
+﻿Imports System.IO
 Imports System.Drawing.Imaging
 Imports MessagingToolkit.QRCode.Codec
 Imports System.Data.Common
 Imports System.Drawing.Printing
+
+Imports Npgsql
 
 Public Class IdCard
     Private Sub IdCard_Load(sender As Object, e As EventArgs) Handles MyBase.Load
@@ -92,7 +94,7 @@ Public Class IdCard
 
             If (Not photoSet OrElse String.IsNullOrWhiteSpace(qrText)) AndAlso Not String.IsNullOrWhiteSpace(userId) Then
                 Try
-                    Using rdr As DbDataReader = Utilities.ExecuteReader("SELECT PhotoPath, QRCode, EmployeeCode FROM Users WHERE UserID = @UserID", New SqlParameter("@UserID", userId))
+                    Using rdr As DbDataReader = Utilities.ExecuteReader("SELECT PhotoPath, QRCode, EmployeeCode FROM Users WHERE UserID = @UserID", New NpgsqlParameter("@UserID", userId))
                         If rdr.Read() Then
                             If (Not photoSet) AndAlso Not IsDBNull(rdr("PhotoPath")) Then
                                 Dim dbFileName = rdr("PhotoPath").ToString()

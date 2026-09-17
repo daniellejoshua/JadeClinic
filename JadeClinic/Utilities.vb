@@ -1,6 +1,6 @@
-Imports System.Data
+﻿Imports System.Data
 Imports System.Data.Common
-Imports Microsoft.Data.Sqlite
+Imports Npgsql
 Imports System.Security.Cryptography
 Imports System.Text
 
@@ -21,9 +21,9 @@ Module Utilities
                 Dim combined As String = String.Join(",", passkeys)
 
                 Dim updateQuery As String = "UPDATE Users SET Passkeys = @Passkeys WHERE UserID = @UserID"
-                Dim parameters() As SqlParameter = {
-                New SqlParameter("@Passkeys", combined),
-                New SqlParameter("@UserID", userId)
+                Dim parameters() As NpgsqlParameter = {
+                New NpgsqlParameter("@Passkeys", combined),
+                New NpgsqlParameter("@UserID", userId)
             }
 
                 Utilities.ExecuteNonQuery(updateQuery, parameters)
@@ -46,10 +46,10 @@ Module Utilities
 
                 Dim query As String =
                 "SELECT UserID FROM Users " &
-                "WHERE IsActive = 1 AND (',' + IFNULL(Passkeys, '') + ',') LIKE '%,' + @Passkey + ',%'"
+                "WHERE IsActive = 1 AND (',' + COALESCE(Passkeys, '') + ',') LIKE '%,' + @Passkey + ',%'"
 
-                Dim parameters() As SqlParameter = {
-                New SqlParameter("@Passkey", cleanPasskey)
+                Dim parameters() As NpgsqlParameter = {
+                New NpgsqlParameter("@Passkey", cleanPasskey)
             }
 
                 Dim result = Utilities.ExecuteScalar(query, parameters)
@@ -74,7 +74,7 @@ Module Utilities
 
                 ' Read existing passkeys
                 Dim queryRead As String = "SELECT Passkeys FROM Users WHERE UserID = @UserID"
-                Dim paramRead() As SqlParameter = {New SqlParameter("@UserID", userId)}
+                Dim paramRead() As NpgsqlParameter = {New NpgsqlParameter("@UserID", userId)}
                 Dim existing As Object = Utilities.ExecuteScalar(queryRead, paramRead)
 
                 If existing Is Nothing OrElse IsDBNull(existing) Then
@@ -93,9 +93,9 @@ Module Utilities
                 End If
 
                 Dim updateQuery As String = "UPDATE Users SET Passkeys = @Passkeys WHERE UserID = @UserID"
-                Dim parameters() As SqlParameter = {
-                New SqlParameter("@Passkeys", If(newValue Is DBNull.Value, CType(DBNull.Value, Object), newValue)),
-                New SqlParameter("@UserID", userId)
+                Dim parameters() As NpgsqlParameter = {
+                New NpgsqlParameter("@Passkeys", If(newValue Is DBNull.Value, CType(DBNull.Value, Object), newValue)),
+                New NpgsqlParameter("@UserID", userId)
             }
                 Utilities.ExecuteNonQuery(updateQuery, parameters)
 
@@ -111,7 +111,7 @@ Module Utilities
         Public Shared Function GetAvailablePasskeys(userId As Integer) As String()
             Try
                 Dim query As String = "SELECT Passkeys FROM Users WHERE UserID = @UserID AND IsActive = 1"
-                Dim parameters() As SqlParameter = {New SqlParameter("@UserID", userId)}
+                Dim parameters() As NpgsqlParameter = {New NpgsqlParameter("@UserID", userId)}
                 Dim result = Utilities.ExecuteScalar(query, parameters)
 
                 If result Is Nothing OrElse IsDBNull(result) Then
@@ -145,7 +145,7 @@ Module Utilities
         Public Shared Sub ClearAllPasskeys(userId As Integer)
             Try
                 Dim query As String = "UPDATE Users SET Passkeys = NULL WHERE UserID = @UserID"
-                Dim parameters() As SqlParameter = {New SqlParameter("@UserID", userId)}
+                Dim parameters() As NpgsqlParameter = {New NpgsqlParameter("@UserID", userId)}
                 Utilities.ExecuteNonQuery(query, parameters)
             Catch ex As Exception
                 Console.WriteLine($"Error clearing all passkeys: {ex.Message}")
@@ -170,7 +170,7 @@ Module Utilities
 
     End Class
     ' Execute a SELECT query and return a DbDataReader
-    Public Function ExecuteReader(query As String, ParamArray parameters As SqlParameter()) As DbDataReader
+    Public Function ExecuteReader(query As String, ParamArray parameters As NpgsqlParameter()) As DbDataReader
         Try
             Dim connStr As String = Connection.GetConnectionString()
             Dim conn As DbConnection = DbProvider.CreateConnection(connStr)
@@ -180,7 +180,7 @@ Module Utilities
             Dim cmd As DbCommand = conn.CreateCommand()
             cmd.CommandText = query
             If parameters IsNot Nothing Then
-                Dim dbParams = DbProvider.ConvertSqlParameters(parameters)
+                Dim dbParams = DbProvider.ConvertNpgsqlParameters(parameters)
                 cmd.Parameters.AddRange(dbParams)
             End If
 
@@ -191,14 +191,14 @@ Module Utilities
     End Function
 
     ' Execute INSERT, UPDATE, DELETE queries
-    Public Function ExecuteNonQuery(query As String, ParamArray parameters As SqlParameter()) As Integer
+    Public Function ExecuteNonQuery(query As String, ParamArray parameters As NpgsqlParameter()) As Integer
         Try
             Dim connStr As String = Connection.GetConnectionString()
             Using conn As DbConnection = DbProvider.CreateConnection(connStr)
                 Using cmd As DbCommand = conn.CreateCommand()
                     cmd.CommandText = query
                     If parameters IsNot Nothing Then
-                        Dim dbParams = DbProvider.ConvertSqlParameters(parameters)
+                        Dim dbParams = DbProvider.ConvertNpgsqlParameters(parameters)
                         cmd.Parameters.AddRange(dbParams)
                     End If
                     conn.Open()
@@ -212,14 +212,14 @@ Module Utilities
     End Function
 
     ' Execute a query that returns a single value (like COUNT, MAX, etc.)
-    Public Function ExecuteScalar(query As String, ParamArray parameters As SqlParameter()) As Object
+    Public Function ExecuteScalar(query As String, ParamArray parameters As NpgsqlParameter()) As Object
         Try
             Dim connStr As String = Connection.GetConnectionString()
             Using conn As DbConnection = DbProvider.CreateConnection(connStr)
                 Using cmd As DbCommand = conn.CreateCommand()
                     cmd.CommandText = query
                     If parameters IsNot Nothing Then
-                        Dim dbParams = DbProvider.ConvertSqlParameters(parameters)
+                        Dim dbParams = DbProvider.ConvertNpgsqlParameters(parameters)
                         cmd.Parameters.AddRange(dbParams)
                     End If
                     conn.Open()
@@ -318,7 +318,7 @@ Module Utilities
             If Not finalUserID.HasValue AndAlso Not String.IsNullOrEmpty(username) Then
                 Try
                     Dim userQuery As String = "SELECT UserID FROM Users WHERE Username = @Username"
-                    Dim userParams As SqlParameter() = {New SqlParameter("@Username", username)}
+                    Dim userParams As NpgsqlParameter() = {New NpgsqlParameter("@Username", username)}
                     Dim result = ExecuteScalar(userQuery, userParams)
                     If result IsNot Nothing AndAlso Not IsDBNull(result) Then
                         finalUserID = Convert.ToInt32(result)
@@ -331,11 +331,11 @@ Module Utilities
 
             ' Insert audit log with UserID only (no Username column)
             Dim query As String = "INSERT INTO AuditLog (UserID, Action, Details, ActionTime) VALUES (@UserID, @Action, @Details, @ActionTime)"
-            Dim parameters As SqlParameter() = {
-                New SqlParameter("@UserID", If(finalUserID.HasValue, finalUserID.Value, DBNull.Value)),
-                New SqlParameter("@Action", action),
-                New SqlParameter("@Details", details),
-                New SqlParameter("@ActionTime", DateTime.Now)
+            Dim parameters As NpgsqlParameter() = {
+                New NpgsqlParameter("@UserID", If(finalUserID.HasValue, finalUserID.Value, DBNull.Value)),
+                New NpgsqlParameter("@Action", action),
+                New NpgsqlParameter("@Details", details),
+                New NpgsqlParameter("@ActionTime", DateTime.Now)
             }
             ExecuteNonQuery(query, parameters)
         Catch ex As Exception
@@ -438,14 +438,14 @@ Module Utilities
     End Sub
 
     ''' <summary>
-    ''' Sets a SQLite busy timeout so concurrent writers (2-3 staff PCs on the
-    ''' same shared database) wait briefly instead of throwing "database is locked"
+    ''' Sets a PostgreSQL lock timeout so concurrent writers (2-3 staff PCs on
+    ''' the same LAN database) wait briefly instead of throwing an error
     ''' immediately when a write lock is briefly contested.
     ''' </summary>
     Private Sub ApplyBusyTimeout(conn As DbConnection)
         Try
             Using cmd As DbCommand = conn.CreateCommand()
-                cmd.CommandText = "PRAGMA busy_timeout = 5000"
+                cmd.CommandText = "SET lock_timeout = '5s'"
                 cmd.ExecuteNonQuery()
             End Using
         Catch

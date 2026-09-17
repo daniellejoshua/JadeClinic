@@ -5,6 +5,8 @@ Imports QuestPDF.Fluent
 Imports QuestPDF.Helpers
 Imports QuestPDF.Infrastructure
 
+Imports Npgsql
+
 Public Class SupplierExporter
 
     Shared Sub New()
@@ -19,13 +21,13 @@ Public Class SupplierExporter
             End If
 
             Dim query As String = "SELECT s.SupplierID, s.SupplierCode, s.SupplierName, s.ContactPerson, s.Phone, s.Email, s.IsActive, " &
-                                  "IFNULL((SELECT COUNT(1) FROM InventoryLog il WHERE il.SupplierID = s.SupplierID " &
+                                  "COALESCE((SELECT COUNT(1) FROM InventoryLog il WHERE il.SupplierID = s.SupplierID " &
                                   "AND (LOWER(il.TransactionType) = 'in' OR il.TransactionType IN ('IN','INBOUND','Stock In','stock in'))" &
-                                  If(filterDate.HasValue, " AND DATE(il.CreatedAt) = @FilterDate", "") &
+                                  If(filterDate.HasValue, " AND DATE(il.CreatedAt) = @FilterDate::date", "") &
                                   "), 0) AS StockInCount, " &
                                   "(SELECT MAX(il.CreatedAt) FROM InventoryLog il WHERE il.SupplierID = s.SupplierID " &
                                   "AND (LOWER(il.TransactionType) = 'in' OR il.TransactionType IN ('IN','INBOUND','Stock In','stock in'))" &
-                                  If(filterDate.HasValue, " AND DATE(il.CreatedAt) = @FilterDate", "") &
+                                  If(filterDate.HasValue, " AND DATE(il.CreatedAt) = @FilterDate::date", "") &
                                   ") AS LastStockInDate " &
                                   "FROM Suppliers s"
 
@@ -33,17 +35,17 @@ Public Class SupplierExporter
 
             Select Case filterType
                 Case "Active Suppliers"
-                    whereClauses.Add("IFNULL(s.IsActive, 1) = 1")
+                    whereClauses.Add("COALESCE(s.IsActive, 1) = 1")
                 Case "Inactive Suppliers"
-                    whereClauses.Add("IFNULL(s.IsActive, 1) = 0")
+                    whereClauses.Add("COALESCE(s.IsActive, 1) = 0")
                 Case "With Stock In"
                     whereClauses.Add("EXISTS (SELECT 1 FROM InventoryLog il WHERE il.SupplierID = s.SupplierID " &
                                      "AND (LOWER(il.TransactionType) = 'in' OR il.TransactionType IN ('IN','INBOUND','Stock In','stock in'))" &
-                                     If(filterDate.HasValue, " AND DATE(il.CreatedAt) = @FilterDate", "") & ")")
+                                     If(filterDate.HasValue, " AND DATE(il.CreatedAt) = @FilterDate::date", "") & ")")
                 Case "Without Stock In"
                     whereClauses.Add("NOT EXISTS (SELECT 1 FROM InventoryLog il WHERE il.SupplierID = s.SupplierID " &
                                      "AND (LOWER(il.TransactionType) = 'in' OR il.TransactionType IN ('IN','INBOUND','Stock In','stock in'))" &
-                                     If(filterDate.HasValue, " AND DATE(il.CreatedAt) = @FilterDate", "") & ")")
+                                     If(filterDate.HasValue, " AND DATE(il.CreatedAt) = @FilterDate::date", "") & ")")
                 Case Else
                     ' All Suppliers
             End Select
@@ -68,9 +70,9 @@ Public Class SupplierExporter
             End Select
 
             Dim supplierDataList As New List(Of SupplierReportData)()
-            Dim parameters As New List(Of SqlParameter)()
+            Dim parameters As New List(Of NpgsqlParameter)()
             If filterDate.HasValue Then
-                parameters.Add(New SqlParameter("@FilterDate", filterDate.Value.Date))
+                parameters.Add(New NpgsqlParameter("@FilterDate", filterDate.Value.Date))
             End If
 
             Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters.ToArray())

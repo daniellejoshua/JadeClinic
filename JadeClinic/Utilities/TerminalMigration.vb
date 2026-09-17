@@ -19,8 +19,8 @@ Public Class TerminalMigration
                 "HostName TEXT NULL, " &
                 "IsActive INTEGER NOT NULL DEFAULT 0, " &
                 "Status TEXT NOT NULL DEFAULT 'pending', " &
-                "LastSeenAt DATETIME NULL, " &
-                "CreatedAt DATETIME NOT NULL DEFAULT (CURRENT_TIMESTAMP))"
+                "LastSeenAt TIMESTAMPTZ NULL, " &
+                "CreatedAt TIMESTAMPTZ NOT NULL DEFAULT (now()))"
 
             Dim connStr As String = Connection.GetConnectionString()
             Using conn As DbConnection = DbProvider.CreateConnection(connStr)
@@ -34,19 +34,16 @@ Public Class TerminalMigration
                 ' now and derive an initial value from each row's IsActive flag.
                 Dim hasStatus As Boolean = False
                 Using checkCmd As DbCommand = conn.CreateCommand()
-                    checkCmd.CommandText = "PRAGMA table_info(Terminals)"
+                    checkCmd.CommandText =
+                        "SELECT column_name FROM information_schema.columns WHERE table_name = 'Terminals' AND column_name = 'Status'"
                     Using rdr As DbDataReader = checkCmd.ExecuteReader()
-                        While rdr.Read()
-                            If String.Equals(Convert.ToString(rdr("name")), "Status", StringComparison.OrdinalIgnoreCase) Then
-                                hasStatus = True
-                            End If
-                        End While
+                        hasStatus = rdr.Read()
                     End Using
                 End Using
 
                 If Not hasStatus Then
                     Using alterCmd As DbCommand = conn.CreateCommand()
-                        alterCmd.CommandText = "ALTER TABLE Terminals ADD COLUMN Status TEXT NOT NULL DEFAULT 'pending'"
+                        alterCmd.CommandText = "ALTER TABLE Terminals ADD COLUMN IF NOT EXISTS Status TEXT NOT NULL DEFAULT 'pending'"
                         alterCmd.ExecuteNonQuery()
                     End Using
                     Using migrateCmd As DbCommand = conn.CreateCommand()

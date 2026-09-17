@@ -1,7 +1,9 @@
-Imports System.Windows.Forms
+﻿Imports System.Windows.Forms
 Imports System.Data.Common
 Imports BCrypt.Net
 Imports System.Threading.Tasks
+
+Imports Npgsql
 
 Public Class IdleTimeoutManager
     ' Singleton instance
@@ -491,8 +493,8 @@ Public Class IdleTimeoutManager
 
             ' Get user's password hash from database
             Dim query As String = "SELECT PasswordHash FROM Users WHERE Username = @Username"
-            Dim parameters As SqlParameter() = {
-                New SqlParameter("@Username", frmLoginvb.LoggedInUsername)
+            Dim parameters As NpgsqlParameter() = {
+                New NpgsqlParameter("@Username", frmLoginvb.LoggedInUsername)
             }
 
             Using reader As DbDataReader = Utilities.ExecuteReader(query, parameters)
