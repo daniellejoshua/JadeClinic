@@ -9,64 +9,64 @@ Imports Guna.UI2.WinForms
 Public Class BaseForm
     Inherits Form
 
-    ' Dynamic color properties that connect to CompanySettingsManager
+    ' Dynamic color properties that connect to Branding
     Protected ReadOnly Property PrimaryColor As Color
         Get
-            Return CompanySettingsManager.Instance.GetColor("PrimaryColor")
+            Return Branding.Instance.GetColor("PrimaryColor")
         End Get
     End Property
 
     Protected ReadOnly Property SecondaryColor As Color
         Get
-            Return CompanySettingsManager.Instance.GetColor("SecondaryColor")
+            Return Branding.Instance.GetColor("SecondaryColor")
         End Get
     End Property
 
     Protected ReadOnly Property BackgroundDark As Color
         Get
-            Return CompanySettingsManager.Instance.GetColor("BackgroundDark")
+            Return Branding.Instance.GetColor("BackgroundDark")
         End Get
     End Property
 
     Protected ReadOnly Property BackgroundMid As Color
         Get
-            Return CompanySettingsManager.Instance.GetColor("BackgroundMid")
+            Return Branding.Instance.GetColor("BackgroundMid")
         End Get
     End Property
 
     Protected ReadOnly Property BackgroundLight As Color
         Get
-            Return CompanySettingsManager.Instance.GetColor("BackgroundLight")
+            Return Branding.Instance.GetColor("BackgroundLight")
         End Get
     End Property
 
     Protected ReadOnly Property InteractiveColor As Color
         Get
-            Return CompanySettingsManager.Instance.GetColor("InteractiveColor")
+            Return Branding.Instance.GetColor("InteractiveColor")
         End Get
     End Property
 
     Protected ReadOnly Property TextPrimary As Color
         Get
-            Return CompanySettingsManager.Instance.GetColor("TextPrimary")
+            Return Branding.Instance.GetColor("TextPrimary")
         End Get
     End Property
 
     Protected ReadOnly Property TextSecondary As Color
         Get
-            Return CompanySettingsManager.Instance.GetColor("TextSecondary")
+            Return Branding.Instance.GetColor("TextSecondary")
         End Get
     End Property
 
     Protected ReadOnly Property SuccessColor As Color
         Get
-            Return CompanySettingsManager.Instance.GetColor("SuccessColor")
+            Return Branding.Instance.GetColor("SuccessColor")
         End Get
     End Property
 
     Protected ReadOnly Property ErrorColor As Color
         Get
-            Return CompanySettingsManager.Instance.GetColor("ErrorColor")
+            Return Branding.Instance.GetColor("ErrorColor")
         End Get
     End Property
 

@@ -31,7 +31,7 @@ Public NotInheritable Class NavigationBuilder
                 Dim pb As PictureBox = TryCast(logoCtrl(0), PictureBox)
                 If pb IsNot Nothing Then
                     Try
-                        Dim logoImg As System.Drawing.Image = CompanySettingsManager.Instance.GetCompanyLogo()
+                        Dim logoImg As System.Drawing.Image = Branding.Instance.GetCompanyLogo()
                         If logoImg IsNot Nothing Then
                             pb.Image = logoImg
                             pb.Location = New Point(81, 15)
@@ -50,7 +50,7 @@ Public NotInheritable Class NavigationBuilder
             Dim buttonWidth As Integer = Math.Max(120, availableWidth - 5)
             Dim buttonIndex As Integer = 0
 
-            Dim companyName As String = CompanySettingsManager.Instance.GetSettingString("CompanyName", "JADE CLINIC")
+            Dim companyName As String = Branding.Instance.GetSettingString("CompanyName", "JADE CLINIC")
 
             Dim titleLabel As New Label() With {
                 .Text = companyName,
@@ -94,8 +94,6 @@ Public NotInheritable Class NavigationBuilder
                 .TextAlign = ContentAlignment.MiddleCenter
             }
             dashboardPanel.Controls.Add(navLabel)
-
-            Dim currentRole As String = If(frmLoginvb.LoggedInRole, "Staff").ToString().ToUpper()
 
             Dim createBtn As Action(Of String, Type, Integer, Action) = Sub(text, targetType, yPos, clickAction)
                                                                             Dim isActiveBtn As Boolean = String.Equals(activeItem, targetType.Name, StringComparison.OrdinalIgnoreCase) OrElse String.Equals(owner.GetType().Name, targetType.Name, StringComparison.OrdinalIgnoreCase)
@@ -148,16 +146,16 @@ AddHandler btn.MouseEnter, Sub()
                                                                             dashboardPanel.Controls.Add(btn)
                                                                         End Sub
 
-' Navigation buttons - role based. Staff only get POS / Sales. Managers get
-            ' everything except System Settings. Admins get everything.
-            Dim isStaff As Boolean = currentRole = "STAFF"
-            Dim isManagerOrAbove As Boolean = currentRole = "MANAGER" OrElse currentRole = "ADMIN" OrElse currentRole = "ADMINISTRATOR"
-            Dim isAdmin As Boolean = currentRole = "ADMIN" OrElse currentRole = "ADMINISTRATOR"
+            ' Navigation buttons - role based. Staff only get POS / Sales. Managers get
+            ' everything except System Settings. Admin and Super Admin get everything.
+            Dim isStaff As Boolean = Rbac.IsStaff()
+            Dim isManagerOrAbove As Boolean = Rbac.IsManagerOrAbove()
+            Dim isAdmin As Boolean = Rbac.IsAdminOrAbove()
 
             If Not isStaff Then
                 createBtn("🏠 Dashboard", GetType(Dashboard), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
-                                                                                                                      NavigateToFormImpl(owner, GetType(Dashboard))
-                                                                                                                  End Sub)
+                                                                                                                         NavigateToFormImpl(owner, GetType(Dashboard))
+                                                                                                                     End Sub)
                 buttonIndex += 1
             End If
 

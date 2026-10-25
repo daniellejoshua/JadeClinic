@@ -13,6 +13,19 @@ Public Class SalesDetails
     Private saleRecord As Dictionary(Of String, Object) = Nothing
     Private saleItems As New List(Of Dictionary(Of String, Object))()
 
+    Private returnFooter As Panel
+    Private btnReturn As Guna.UI2.WinForms.Guna2Button
+    Private lblReturnsSummary As Label
+
+    Private ReadOnly JadeOlive As Color = Color.FromArgb(190, 154, 48)
+    Private ReadOnly GoldenYellow As Color = Color.FromArgb(254, 191, 16)
+    Private ReadOnly OffWhite As Color = Color.FromArgb(247, 246, 243)
+    Private ReadOnly PureWhite As Color = Color.FromArgb(255, 255, 255)
+    Private ReadOnly DarkText As Color = Color.FromArgb(45, 47, 49)
+    Private ReadOnly MediumText As Color = Color.FromArgb(120, 120, 120)
+    Private ReadOnly BorderGray As Color = Color.FromArgb(228, 226, 221)
+    Private ReadOnly SuccessGreen As Color = Color.FromArgb(16, 190, 96)
+
     Public Sub New(saleId As Integer)
         ' This call is required by the designer.
         InitializeComponent()
@@ -45,6 +58,8 @@ Public Class SalesDetails
             End If
 
             ShowReceiptPreviewLikeSalesForm()
+            BuildReturnFooter()
+            RefreshReturnsSummary()
             Dim isAborted As Boolean = String.Equals(Convert.ToString(saleRecord("Status")), "Aborted", StringComparison.OrdinalIgnoreCase)
             Me.Text = $"{(If(isAborted, "Aborted Sale", "Receipt"))} - Sale #{DisplaySaleNumber()}"
         Catch ex As Exception
@@ -273,6 +288,136 @@ Public Class SalesDetails
             Next
         Catch
             ' Malformed/legacy SalesData without a voidedItems array: ignore.
+        End Try
+    End Sub
+
+    ' -----------------------------------------------------------------------
+    '  Returns / Exchanges footer
+    ' -----------------------------------------------------------------------
+    Private Sub BuildReturnFooter()
+        If returnFooter IsNot Nothing Then Return
+
+        returnFooter = New Panel() With {
+            .Dock = DockStyle.Bottom,
+            .Height = 84,
+            .BackColor = OffWhite,
+            .Padding = New Padding(14, 12, 14, 12)
+        }
+
+        Dim summaryCard As New Panel() With {
+            .Dock = DockStyle.Fill,
+            .BackColor = PureWhite,
+            .Padding = New Padding(14, 8, 14, 8)
+        }
+        AddHandler summaryCard.Paint, Sub(s, e)
+                                          Using p As New Pen(BorderGray, 1)
+                                              e.Graphics.DrawRectangle(p, 0, 0, summaryCard.ClientSize.Width - 1, summaryCard.ClientSize.Height - 1)
+                                          End Using
+                                      End Sub
+
+        Dim lblCaption As New Label() With {
+            .Text = "RETURNS",
+            .Font = New Font("Poppins", 7.5F, FontStyle.Bold),
+            .ForeColor = JadeOlive,
+            .AutoSize = True,
+            .Location = New Point(14, 8)
+        }
+        lblReturnsSummary = New Label() With {
+            .Text = "Checking...",
+            .Font = New Font("Poppins", 9.0F, FontStyle.Regular),
+            .ForeColor = DarkText,
+            .AutoSize = False,
+            .Size = New Size(220, 34),
+            .Location = New Point(14, 26)
+        }
+        summaryCard.Controls.Add(lblCaption)
+        summaryCard.Controls.Add(lblReturnsSummary)
+
+        Dim canReturn As Boolean = String.Equals(Convert.ToString(saleRecord("Status")), "Completed", StringComparison.OrdinalIgnoreCase) AndAlso
+                                   frmLoginvb.LoggedInUserID > 0
+
+        btnReturn = New Guna.UI2.WinForms.Guna2Button() With {
+            .Text = "Return/Exchange",
+            .Size = New Size(210, 44),
+            .Dock = DockStyle.Right,
+            .BorderRadius = 8,
+            .FillColor = JadeOlive,
+            .ForeColor = PureWhite,
+            .Font = New Font("Poppins", 9.0F, FontStyle.Bold),
+            .TextAlign = HorizontalAlignment.Center,
+            .Padding = New Padding(0),
+            .Cursor = Cursors.Hand,
+            .Visible = canReturn
+        }
+        btnReturn.ShadowDecoration.Enabled = False
+        AddHandler btnReturn.Click, AddressOf OpenReturnDialog
+
+        ' Right-docked button must be added before the fill card.
+        returnFooter.Controls.Add(summaryCard)
+        returnFooter.Controls.Add(btnReturn)
+        Me.Controls.Add(returnFooter)
+    End Sub
+
+    Private Sub RefreshReturnsSummary()
+        If lblReturnsSummary Is Nothing Then Return
+        Try
+            Dim count As Integer = 0
+            Dim refund As Decimal = 0D
+            Dim collected As Decimal = 0D
+            Dim exchanged As Integer = 0
+            Dim remaining As Integer = 0
+            Dim sql As String =
+                "SELECT " &
+                "(SELECT COUNT(*) FROM SalesReturns WHERE SaleID = @SaleID AND Status = 'Completed') AS Cnt, " &
+                "(SELECT COALESCE(SUM(RefundAmount),0) FROM SalesReturns WHERE SaleID = @SaleID AND Status = 'Completed') AS Refund, " &
+                "(SELECT COALESCE(SUM(AdditionalPaymentAmount),0) FROM SalesReturns WHERE SaleID = @SaleID AND Status = 'Completed') AS Collected, " &
+                "(SELECT COALESCE(SUM(sri.ReplacementQuantity),0) FROM SalesReturnItems sri JOIN SalesReturns sr ON sr.ReturnID = sri.ReturnID WHERE sr.SaleID = @SaleID AND sr.Status = 'Completed') AS Exchanged, " &
+                "(SELECT GREATEST(0, COALESCE(SUM(si.Quantity),0) - COALESCE((SELECT SUM(sri.Quantity) FROM SalesReturnItems sri JOIN SalesReturns sr ON sr.ReturnID = sri.ReturnID WHERE sr.SaleID = @SaleID AND sr.Status = 'Completed'),0)) FROM SaleItems si WHERE si.SaleID = @SaleID) AS Remaining"
+            Using reader As DbDataReader = Utilities.ExecuteReader(sql, New NpgsqlParameter("@SaleID", _saleId))
+                If reader.Read() Then
+                    count = Convert.ToInt32(reader("Cnt"))
+                    refund = Convert.ToDecimal(reader("Refund"))
+                    collected = Convert.ToDecimal(reader("Collected"))
+                    exchanged = Convert.ToInt32(reader("Exchanged"))
+                    remaining = Convert.ToInt32(reader("Remaining"))
+                End If
+            End Using
+
+            If btnReturn IsNot Nothing Then
+                btnReturn.Enabled = remaining > 0
+                btnReturn.Text = If(remaining > 0, "Return/Exchange", "Fully Returned")
+            End If
+
+            If count = 0 Then
+                lblReturnsSummary.Text = "No returns recorded for this sale."
+                lblReturnsSummary.ForeColor = MediumText
+            Else
+                Dim refundText As String = If(refund > 0, $" | Refunded {ChrW(&H20B1)}{refund:N2}", "")
+                Dim collectedText As String = If(collected > 0, $" | Collected {ChrW(&H20B1)}{collected:N2}", "")
+                Dim exchangeText As String = If(exchanged > 0, $" | {exchanged} exchanged", "")
+                lblReturnsSummary.Text = $"{count} return(s){refundText}{collectedText}{exchangeText}"
+                lblReturnsSummary.ForeColor = DarkText
+            End If
+        Catch ex As Exception
+            lblReturnsSummary.Text = "Unable to read returns."
+            lblReturnsSummary.ForeColor = MediumText
+        End Try
+    End Sub
+
+    Private Sub OpenReturnDialog(sender As Object, e As EventArgs)
+        Try
+            Using dlg As New ReturnExchangeForm(_saleId)
+                Utilities.EnableEscCloseModal(dlg)
+                If dlg.ShowDialog(Me) = DialogResult.OK Then
+                    LoadSaleData(_saleId)
+                    RefreshReturnsSummary()
+                    If receiptScrollPanel IsNot Nothing Then
+                        RebuildReceipt(receiptScrollPanel, EventArgs.Empty)
+                    End If
+                End If
+            End Using
+        Catch ex As Exception
+            MessageBox.Show($"Unable to open the return window: {ex.Message}", "Return / Exchange", MessageBoxButtons.OK, MessageBoxIcon.Error)
         End Try
     End Sub
 End Class

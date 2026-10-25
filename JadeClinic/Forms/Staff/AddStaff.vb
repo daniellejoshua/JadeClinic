@@ -85,7 +85,9 @@ Public Class AddStaff
         ' Role combo - populate if needed
         Try
             If cmbRole.Items.Count = 0 Then
-                cmbRole.Items.AddRange(New String() {"Staff", "Admin", "Manager"})
+                Dim roles As String() = Rbac.AssignableRoleNames()
+                If roles Is Nothing OrElse roles.Length = 0 Then roles = New String() {"Staff"}
+                cmbRole.Items.AddRange(CType(roles, Object()))
             End If
         Catch
         End Try
@@ -265,8 +267,10 @@ Public Class AddStaff
     End Sub
     Private Sub InitializeRoleComboBox()
         cmbRole.Items.Clear()
-        ' Limit roles to only Staff, Admin, and Manager as requested
-        cmbRole.Items.AddRange(New String() {"Staff", "Admin", "Manager"})
+        ' Only roles the current user is allowed to assign.
+        Dim roles As String() = Rbac.AssignableRoleNames()
+        If roles Is Nothing OrElse roles.Length = 0 Then roles = New String() {"Staff"}
+        cmbRole.Items.AddRange(CType(roles, Object()))
         cmbRole.SelectedIndex = 0 ' Default to "Staff"
     End Sub
 
@@ -1417,12 +1421,19 @@ Public Class AddStaff
             ' Try set role display if available
             If userData.ContainsKey("UserRole") Then
                 Dim userRole As String = If(userData("UserRole") IsNot Nothing, userData("UserRole").ToString(), "Staff")
+                Dim matched As Boolean = False
                 For i As Integer = 0 To cmbRole.Items.Count - 1
                     If cmbRole.Items(i).ToString().Equals(userRole, StringComparison.OrdinalIgnoreCase) Then
                         cmbRole.SelectedIndex = i
+                        matched = True
                         Exit For
                     End If
                 Next
+                ' Ensure the existing role is shown even if not assignable.
+                If Not matched Then
+                    cmbRole.Items.Add(userRole)
+                    cmbRole.SelectedIndex = cmbRole.Items.Count - 1
+                End If
             End If
 
             Dim loaded As Boolean = False

@@ -20,7 +20,6 @@ Public Class DatabaseInitializer
             CreateSaleItemsTableActual()
             CreateInventoryLogTableActual()
             CreateAuditLogTableActual()
-            CreateCompanySettingsTableActual()
 
             CreateInitialData()
 
@@ -45,6 +44,12 @@ Public Class DatabaseInitializer
             ' Create the shared Terminals table (multi-PC access control)
             Try
                 TerminalMigration.EnsureTable()
+            Catch
+            End Try
+
+            ' Create the customer returns/exchanges tables
+            Try
+                ReturnMigration.EnsureTables()
             Catch
             End Try
 
@@ -396,78 +401,11 @@ Public Class DatabaseInitializer
         End Try
     End Sub
 
-    ' FIXED: Restore the proper function name and add the actual logo resource conversion
-    Private Shared Sub CreateCompanySettingsTableActual()
-        Dim query As String = "CREATE TABLE IF NOT EXISTS CompanySettings (" &
-        "SettingID BIGSERIAL PRIMARY KEY, " &
-        "CompanyName TEXT NOT NULL, " &
-        "TIN TEXT NULL, " &
-        "Address TEXT NULL, " &
-        "Phone TEXT NULL, " &
-        "Email TEXT NULL, " &
-        "Website TEXT NULL, " &
-        "LogoPath TEXT NULL, " &
-        "BIRAuthNumber TEXT NULL, " &
-        "PTUNumber TEXT NULL, " &
-        "ValidityYears INTEGER NOT NULL DEFAULT 5, " &
-        "ReceiptFooter TEXT NULL, " &
-        "CompanyHours TEXT NULL, " &          ' <-- new column
-        "IsActive INTEGER NOT NULL DEFAULT 1, " &
-        "DateCreated TIMESTAMPTZ NOT NULL DEFAULT (now()), " &
-        "LastModified TIMESTAMPTZ NOT NULL DEFAULT (now())" &
-        ")"
-
-        DatabaseHelper.ExecuteNonQuery(query, Nothing)
-    End Sub
-
-    Private Shared Sub CreateDefaultCompanySettings()
-        Try
-            Dim checkSql As String = "SELECT COUNT(*) FROM CompanySettings WHERE IsActive = 1"
-            Dim settingsCount = Utilities.ExecuteScalar(checkSql, Nothing)
-
-            If Convert.ToInt32(settingsCount) = 0 Then
-                Dim logoPath As Object = DBNull.Value
-                Try
-                    Dim imagesDir As String = Connection.GetImagesFolder("company")
-                    Dim destPath As String = Path.Combine(imagesDir, "logo.png")
-                    Using logoImage As System.Drawing.Image = My.Resources.CleanJadeLogo_1_
-                        If logoImage IsNot Nothing Then
-                            logoImage.Save(destPath, System.Drawing.Imaging.ImageFormat.Png)
-                            logoPath = "logo.png"
-                        End If
-                    End Using
-                Catch logoEx As Exception
-                    Console.WriteLine($"Note: Could not load Jade Dental Logo from resources: {logoEx.Message}")
-                End Try
-
-                Dim sql As String = "INSERT INTO CompanySettings (CompanyName, TIN, Address, Phone, Email, Website, LogoPath, BIRAuthNumber, PTUNumber, ReceiptFooter, CompanyHours) VALUES (@CompanyName, @TIN, @Address, @Phone, @Email, @Website, @LogoPath, @BIRAuthNumber, @PTUNumber, @ReceiptFooter, @CompanyHours)"
-                Dim params As NpgsqlParameter() = {
-                New NpgsqlParameter("@CompanyName", "JADE CLINIC"),
-                New NpgsqlParameter("@TIN", "123-456-789-000"),
-                New NpgsqlParameter("@Address", "123 Medical Plaza, Makati City, Philippines"),
-                New NpgsqlParameter("@Phone", "(02) 8123-4567"),
-                New NpgsqlParameter("@Email", "admin@jadeclinic.com"),
-                New NpgsqlParameter("@Website", "www.jadeclinic.com"),
-                New NpgsqlParameter("@LogoPath", logoPath),
-                New NpgsqlParameter("@BIRAuthNumber", "ATP-2024-000001"),
-                New NpgsqlParameter("@PTUNumber", "PTU-2024-001"),
-                New NpgsqlParameter("@ReceiptFooter", "Thank you for your business!" & vbCrLf & "Have a great day!"),
-                New NpgsqlParameter("@CompanyHours", "Mon-Fri: 9:00 AM - 5:00 PM" & vbCrLf & "Sat: 9:00 AM - 1:00 PM" & vbCrLf & "Sun: Closed")
-            }
-
-                Utilities.ExecuteNonQuery(sql, params)
-                Console.WriteLine("? Default company settings created with Jade Dental Clinic logo")
-            End If
-        Catch ex As Exception
-            Console.WriteLine($"Warning: Could not create default company settings: {ex.Message}")
-        End Try
-    End Sub
-
     Private Shared Sub CreateInitialData()
         CreateDefaultAdminUser()
         CreateDefaultSuppliers()
         ' Default customers intentionally not created when customers are ephemeral
-        CreateDefaultCompanySettings() ' Add default company settings
+        SuperAdminSeeder.EnsureSuperAdmin() ' Seed the highest-privilege account
     End Sub
 
     Private Shared Sub CreateDefaultAdminUser()

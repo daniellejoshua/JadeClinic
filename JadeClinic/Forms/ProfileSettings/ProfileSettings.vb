@@ -1,4 +1,4 @@
-﻿Imports System.Data.Common
+Imports System.Data.Common
 Imports System.IO
 Imports System.Text.RegularExpressions
 Imports System.Drawing.Imaging
@@ -194,7 +194,7 @@ Public Class ProfileSettings
             Try
                 Dim companyLogo As Image = Nothing
                 Try
-                    companyLogo = CompanySettingsManager.Instance.GetCompanyLogo()
+                    companyLogo = Branding.Instance.GetCompanyLogo()
                 Catch
                     companyLogo = Nothing
                 End Try
@@ -1229,7 +1229,7 @@ Public Class ProfileSettings
                 Try
                     Dim companyLogo As Image = Nothing
                     Try
-                        companyLogo = CompanySettingsManager.Instance.GetCompanyLogo()
+                        companyLogo = Branding.Instance.GetCompanyLogo()
                     Catch
                         companyLogo = Nothing
                     End Try

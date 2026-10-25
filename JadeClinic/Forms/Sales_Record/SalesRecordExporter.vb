@@ -41,8 +41,11 @@ Public Class SalesRecordExporter
             Dim parameters As New List(Of NpgsqlParameter)()
 
             If filterDate.HasValue Then
-                whereClauses.Add("DATE(s.SaleDate) = @FilterDate::date")
-                parameters.Add(New NpgsqlParameter("@FilterDate", filterDate.Value.Date.ToString("yyyy-MM-dd")))
+                whereClauses.Add("s.SaleDate >= (@FilterDate::date AT TIME ZONE 'Asia/Manila') " &
+                                 "AND s.SaleDate < ((@FilterDate::date + 1) AT TIME ZONE 'Asia/Manila')")
+                parameters.Add(New NpgsqlParameter("@FilterDate", NpgsqlTypes.NpgsqlDbType.Date) With {
+                    .Value = filterDate.Value.Date
+                })
             End If
 
             If Not String.IsNullOrWhiteSpace(searchTerm) Then
@@ -195,15 +198,15 @@ Public Class SalesRecordExporter
         Dim tempLogoPath As String = Nothing
 
         Try
-            Dim companyName As String = CompanySettingsManager.Instance.GetSettingString("CompanyName", "JADE CLINIC")
-            Dim companyTagline As String = CompanySettingsManager.Instance.GetSettingString("CompanyTagline", "Professional Order Management & Transaction Reporting")
-            Dim companyPhone As String = CompanySettingsManager.Instance.GetSettingString("Phone", "")
-            Dim companyAddress As String = CompanySettingsManager.Instance.GetSettingString("Address", "")
-            Dim companyTIN As String = CompanySettingsManager.Instance.GetSettingString("TIN", "")
+            Dim companyName As String = Branding.Instance.GetSettingString("CompanyName", "JADE CLINIC")
+            Dim companyTagline As String = Branding.Instance.GetSettingString("CompanyTagline", "Professional Order Management & Transaction Reporting")
+            Dim companyPhone As String = Branding.Instance.GetSettingString("Phone", "")
+            Dim companyAddress As String = Branding.Instance.GetSettingString("Address", "")
+            Dim companyTIN As String = Branding.Instance.GetSettingString("TIN", "")
 
             ' Save logo to a temporary file for QuestPDF image usage
             Try
-                Dim logoImg As System.Drawing.Image = CompanySettingsManager.Instance.GetCompanyLogo()
+                Dim logoImg As System.Drawing.Image = Branding.Instance.GetCompanyLogo()
                 If logoImg IsNot Nothing Then
                     Dim outDir = Path.GetDirectoryName(filePath)
                     If String.IsNullOrEmpty(outDir) Then outDir = Application.StartupPath

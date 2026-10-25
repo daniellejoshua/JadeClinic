@@ -68,6 +68,7 @@ Public Class Sys
             Console.WriteLine("Sys_Load: initializing buttons")
             ' Initialize UI
             InitializeButtons()
+            ApplyRoleGating()
 
             Console.WriteLine($"Sys_Load: completed. Controls count={Me.Controls.Count}")
 
@@ -90,30 +91,27 @@ Public Class Sys
     End Sub
 
     Private Sub SetupTabIndex()
-        btnCompanySettings.TabIndex = 0
-        btnDatabaseBackup.TabIndex = 1
-        btnColorCustomization.TabIndex = 2
-        btnSyncCloud.TabIndex = 3
+        btnDatabaseBackup.TabIndex = 0
+        btnColorCustomization.TabIndex = 1
+        btnSyncCloud.TabIndex = 2
         Utilities.ApplyInputFocusEffects(Me)
     End Sub
 
+    ' Hide capabilities the signed-in role is not allowed to use. The System
+    ' Settings page itself is only reachable by Admin/SuperAdmin, so this only
+    ' further restricts the SuperAdmin-only tiles for plain Admins.
+    Private Sub ApplyRoleGating()
+        btnDatabaseBackup.Visible = Rbac.CanCreateBackup()
+        btnSyncCloud.Visible = Rbac.CanRunCloudSync()
+        btnSyncLogs.Visible = Rbac.CanViewSyncLogs()
+        btnTerminalSetup.Visible = Rbac.CanManageTerminals()
+        btnLoadDemoData.Visible = Rbac.CanLoadDemoData()
+
+        chkForceFull.Enabled = Rbac.CanForceFullSync()
+        chkForceFull.Visible = Rbac.CanForceFullSync()
+    End Sub
+
     Private Sub InitializeButtons()
-        ' Company Settings button
-        btnCompanySettings.FillColor = PureWhite
-
-        AddHandler btnCompanySettings.MouseEnter, Sub()
-                                                      btnCompanySettings.FillColor = GoldenYellow
-                                                      btnCompanySettings.ForeColor = DeepCharcoal
-                                                      btnCompanySettings.BorderColor = GoldenYellow
-                                                      btnCompanySettings.BorderThickness = 1
-                                                  End Sub
-        AddHandler btnCompanySettings.MouseLeave, Sub()
-                                                      btnCompanySettings.FillColor = PureWhite
-                                                      btnCompanySettings.ForeColor = Color.FromArgb(51, 51, 51)
-                                                      btnCompanySettings.BorderColor = Color.FromArgb(232, 232, 232)
-                                                      btnCompanySettings.BorderThickness = 1
-                                                  End Sub
-
         ' Database Backup button
         btnDatabaseBackup.FillColor = PureWhite
 
@@ -236,18 +234,12 @@ Public Class Sys
     End Sub
 
     ' Button click handlers
-    Private Sub btnCompanySettings_Click(sender As Object, e As EventArgs) Handles btnCompanySettings.Click
-        Try
-            Dim companySettingsForm As New CompanySettings()
-            Utilities.EnableEscCloseModal(companySettingsForm)
-            companySettingsForm.ShowDialog()
-        Catch ex As Exception
-            MessageBox.Show($"Error opening Company Settings: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-        End Try
-    End Sub
-
     Private Sub btnTerminalSetup_Click(sender As Object, e As EventArgs) Handles btnTerminalSetup.Click
         Try
+            If Not Rbac.CanManageTerminals() Then
+                MessageBox.Show("Only a Super Admin can manage terminals.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                Return
+            End If
             NavigationBuilder.NavigateToForm(Me, GetType(TerminalSetup))
         Catch ex As Exception
             MessageBox.Show($"Error opening PC Terminals: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
@@ -256,6 +248,10 @@ Public Class Sys
 
     Private Sub btnSyncLogs_Click(sender As Object, e As EventArgs) Handles btnSyncLogs.Click
         Try
+            If Not Rbac.CanViewSyncLogs() Then
+                MessageBox.Show("You do not have permission to view sync logs.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                Return
+            End If
             NavigationBuilder.NavigateToForm(Me, GetType(SyncLogs))
         Catch ex As Exception
             MessageBox.Show($"Error opening Sync Logs: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
@@ -264,6 +260,10 @@ Public Class Sys
 
     Private Sub btnDatabaseBackup_Click(sender As Object, e As EventArgs) Handles btnDatabaseBackup.Click
         Try
+            If Not Rbac.CanCreateBackup() Then
+                MessageBox.Show("You do not have permission to back up the database.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                Return
+            End If
             ShowDatabaseBackupDialog()
         Catch ex As Exception
             MessageBox.Show($"Error accessing database backup: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
@@ -272,6 +272,10 @@ Public Class Sys
 
     Private Sub btnSyncCloud_Click(sender As Object, e As EventArgs) Handles btnSyncCloud.Click
         Try
+            If Not Rbac.CanRunCloudSync() Then
+                MessageBox.Show("You do not have permission to run cloud sync.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                Return
+            End If
             SyncQueue.Instance.EnqueueSmart(forceFull:=chkForceFull.Checked)
             lblSyncStatus.Text = If(chkForceFull.Checked,
                 "Cloud sync queued (full) - running in the background...",
@@ -285,6 +289,11 @@ Public Class Sys
 
     Private Sub btnLoadDemoData_Click(sender As Object, e As EventArgs) Handles btnLoadDemoData.Click
         Try
+            If Not Rbac.CanLoadDemoData() Then
+                MessageBox.Show("Only a Super Admin can load demo data.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                Return
+            End If
+
             Dim result As DialogResult = MessageBox.Show(
                 "Load demo data?" & vbCrLf & vbCrLf &
                 "This will DELETE all products, suppliers, sales, sale items, inventory logs, and audit logs " &
@@ -438,33 +447,35 @@ Public Class Sys
         AddHandler btnBackup.Click, Sub() PerformDatabaseBackup()
         backupForm.Controls.Add(btnBackup)
 
-        ' Restore section
-        Dim lblRestore As New Label()
-        lblRestore.Text = "Restore Database"
-        lblRestore.Font = New Font("Poppins", 12, FontStyle.Bold)
-        lblRestore.ForeColor = RichOlive
-        lblRestore.Location = New Point(20, 190)
-        lblRestore.Size = New Size(200, 25)
-        backupForm.Controls.Add(lblRestore)
+        ' Restore section (Super Admin only)
+        If Rbac.CanRestoreDatabase() Then
+            Dim lblRestore As New Label()
+            lblRestore.Text = "Restore Database"
+            lblRestore.Font = New Font("Poppins", 12, FontStyle.Bold)
+            lblRestore.ForeColor = RichOlive
+            lblRestore.Location = New Point(20, 190)
+            lblRestore.Size = New Size(200, 25)
+            backupForm.Controls.Add(lblRestore)
 
-        Dim lblRestoreDesc As New Label()
-        lblRestoreDesc.Text = "Restore database from backup file"
-        lblRestoreDesc.Font = New Font("Poppins", 9, FontStyle.Regular)
-        lblRestoreDesc.ForeColor = Color.FromArgb(119, 119, 119)
-        lblRestoreDesc.Location = New Point(20, 215)
-        lblRestoreDesc.Size = New Size(300, 20)
-        backupForm.Controls.Add(lblRestoreDesc)
+            Dim lblRestoreDesc As New Label()
+            lblRestoreDesc.Text = "Restore database from backup file"
+            lblRestoreDesc.Font = New Font("Poppins", 9, FontStyle.Regular)
+            lblRestoreDesc.ForeColor = Color.FromArgb(119, 119, 119)
+            lblRestoreDesc.Location = New Point(20, 215)
+            lblRestoreDesc.Size = New Size(300, 20)
+            backupForm.Controls.Add(lblRestoreDesc)
 
-        Dim btnRestore As New Guna.UI2.WinForms.Guna2Button()
-        btnRestore.Text = "Restore Backup"
-        btnRestore.Size = New Size(200, 40)
-        btnRestore.Location = New Point(20, 245)
-        btnRestore.BorderRadius = 8
-        btnRestore.FillColor = Color.FromArgb(255, 140, 0)
-        btnRestore.Font = New Font("Poppins", 10, FontStyle.Bold)
-        btnRestore.ForeColor = PureWhite
-        AddHandler btnRestore.Click, Sub() PerformDatabaseRestore()
-        backupForm.Controls.Add(btnRestore)
+            Dim btnRestore As New Guna.UI2.WinForms.Guna2Button()
+            btnRestore.Text = "Restore Backup"
+            btnRestore.Size = New Size(200, 40)
+            btnRestore.Location = New Point(20, 245)
+            btnRestore.BorderRadius = 8
+            btnRestore.FillColor = Color.FromArgb(255, 140, 0)
+            btnRestore.Font = New Font("Poppins", 10, FontStyle.Bold)
+            btnRestore.ForeColor = PureWhite
+            AddHandler btnRestore.Click, Sub() PerformDatabaseRestore()
+            backupForm.Controls.Add(btnRestore)
+        End If
 
         ' Close button
         Dim btnClose As New Guna.UI2.WinForms.Guna2Button()
@@ -543,6 +554,11 @@ Public Class Sys
 
     Private Sub PerformDatabaseRestore()
         Try
+            If Not Rbac.CanRestoreDatabase() Then
+                MessageBox.Show("Only a Super Admin can restore the database.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                Return
+            End If
+
             Dim openDialog As New OpenFileDialog()
             openDialog.Filter = "Backup files (*.bak)|*.bak|All files (*.*)|*.*"
             openDialog.Title = "Select Database Backup File"

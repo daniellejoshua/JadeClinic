@@ -140,6 +140,14 @@ Module Connection
                             TerminalMigration.EnsureTable()
                         Catch
                         End Try
+                        Try
+                            ReturnMigration.EnsureTables()
+                        Catch
+                        End Try
+                        Try
+                            SuperAdminSeeder.EnsureSuperAdmin()
+                        Catch
+                        End Try
                     End If
                 End Using
             End Using

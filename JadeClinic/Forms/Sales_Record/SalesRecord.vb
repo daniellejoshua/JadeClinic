@@ -299,8 +299,11 @@ Public Class SalesRecord
             Dim parameters As New List(Of NpgsqlParameter)()
 
             If filterDate.HasValue Then
-                whereClauses.Add("DATE(s.SaleDate) = @FilterDate::date")
-                parameters.Add(New NpgsqlParameter("@FilterDate", filterDate.Value.Date.ToString("yyyy-MM-dd")))
+                whereClauses.Add("s.SaleDate >= (@FilterDate::date AT TIME ZONE 'Asia/Manila') " &
+                                 "AND s.SaleDate < ((@FilterDate::date + 1) AT TIME ZONE 'Asia/Manila')")
+                parameters.Add(New NpgsqlParameter("@FilterDate", NpgsqlTypes.NpgsqlDbType.Date) With {
+                    .Value = filterDate.Value.Date
+                })
             End If
 
             If Not String.IsNullOrWhiteSpace(searchTerm) Then
@@ -405,8 +408,11 @@ Public Class SalesRecord
             Dim parameters As New List(Of NpgsqlParameter)()
 
             If filterDate.HasValue Then
-                whereClauses.Add("DATE(s.SaleDate) = @FilterDate::date")
-                parameters.Add(New NpgsqlParameter("@FilterDate", filterDate.Value.Date.ToString("yyyy-MM-dd")))
+                whereClauses.Add("s.SaleDate >= (@FilterDate::date AT TIME ZONE 'Asia/Manila') " &
+                                 "AND s.SaleDate < ((@FilterDate::date + 1) AT TIME ZONE 'Asia/Manila')")
+                parameters.Add(New NpgsqlParameter("@FilterDate", NpgsqlTypes.NpgsqlDbType.Date) With {
+                    .Value = filterDate.Value.Date
+                })
             End If
 
             If Not String.IsNullOrWhiteSpace(searchTerm) Then
@@ -438,7 +444,8 @@ Public Class SalesRecord
             If result IsNot Nothing AndAlso Not IsDBNull(result) Then
                 count = Convert.ToInt32(result)
             End If
-        Catch
+        Catch ex As Exception
+            Console.WriteLine($"Error counting sales records: {ex.Message}")
         End Try
         Return count
     End Function
@@ -517,25 +524,26 @@ Public Class SalesRecord
 
     Private Sub ApplyFilters()
         isSyncingFilters = True
-        _currentPage = 1
+        Try
+            _currentPage = 1
 
-        If Guna2DateTimePicker1 IsNot Nothing AndAlso Guna2DateTimePicker1.Checked Then
-            selectedDate = Guna2DateTimePicker1.Value.Date
-        Else
-            selectedDate = Nothing
-        End If
+            If Guna2DateTimePicker1 IsNot Nothing AndAlso Guna2DateTimePicker1.Checked Then
+                selectedDate = Guna2DateTimePicker1.Value.Date
+            Else
+                selectedDate = Nothing
+            End If
 
-        LoadPage()
-        isSyncingFilters = False
+            LoadPage()
+        Finally
+            isSyncingFilters = False
+        End Try
     End Sub
 
     Private Sub LoadPage()
         Dim paymentFilter As String = GetFilterValue(FilterMethod, "All Methods")
         Dim statusFilter As String = GetFilterValue(FilterStatus, "All Status")
 
-        Dim hasSearch As Boolean = Not String.IsNullOrWhiteSpace(_searchTerm)
-
-        Dim filterDate As DateTime? = If(hasSearch, Nothing, selectedDate)
+        Dim filterDate As DateTime? = selectedDate
 
         Dim totalCount As Integer = CountSalesRecords(filterDate, _searchTerm, paymentFilter, statusFilter)
         Dim data = LoadOrderRecordsData("Sale Date (Newest First)", filterDate, _searchTerm, _currentPage, PageSize, paymentFilter, statusFilter)
@@ -681,9 +689,9 @@ Public Class SalesRecord
     Public Sub ClearDateFilter()
         If Guna2DateTimePicker1 IsNot Nothing Then
             Guna2DateTimePicker1.Value = Date.Today
-            Guna2DateTimePicker1.Checked = True
+            Guna2DateTimePicker1.Checked = False
         End If
-        selectedDate = Date.Today
+        selectedDate = Nothing
         ApplyFilters()
     End Sub
 
@@ -751,6 +759,8 @@ Public Class SalesRecord
                     detailsForm.StartPosition = FormStartPosition.CenterParent
                     Utilities.EnableEscCloseModal(detailsForm)
                     detailsForm.ShowDialog(Me)
+                    ' A return/exchange may have been processed from the detail window.
+                    LoadPage()
                 End If
             End If
         Catch ex As Exception

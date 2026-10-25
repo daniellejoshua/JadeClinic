@@ -1,4 +1,4 @@
-﻿Imports System.IO
+Imports System.IO
 Imports System.Data.Common
 Imports QuestPDF.Fluent
 Imports QuestPDF.Helpers
@@ -153,11 +153,11 @@ Public Class InventoryExporter
 
     ' Professional QuestPDF inventory report creation with company settings integration
     Private Shared Sub CreateQuestPDFInventoryReport(inventoryDataList As List(Of InventoryReportData), filePath As String, filterDescription As String)
-        Dim companyName As String = CompanySettingsManager.Instance.GetSettingString("CompanyName", "LOKAL RECIPE POS System")
-        Dim companyTagline As String = CompanySettingsManager.Instance.GetSettingString("CompanyTagline", "Professional Inventory Management & Reporting Solutions")
+        Dim companyName As String = Branding.Instance.GetSettingString("CompanyName", "LOKAL RECIPE POS System")
+        Dim companyTagline As String = Branding.Instance.GetSettingString("CompanyTagline", "Professional Inventory Management & Reporting Solutions")
         Dim logoImg As System.Drawing.Image = Nothing
         Try
-            logoImg = CompanySettingsManager.Instance.GetCompanyLogo()
+            logoImg = Branding.Instance.GetCompanyLogo()
         Catch
             logoImg = Nothing
         End Try

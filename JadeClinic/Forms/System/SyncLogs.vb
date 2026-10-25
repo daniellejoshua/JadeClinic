@@ -7,13 +7,15 @@ Public Class SyncLogs
     Private _headerUserControl As HeaderUserControl
     Private _refreshTimer As Timer
     Private _refreshing As Boolean = False
+    Private _pagination As PaginationControl
+    Private _currentPage As Integer = 1
+    Private ReadOnly _pageSize As Integer = 15
+    Private _allSyncEvents As DataTable
 
     Private ReadOnly GoldenYellow As Color = Color.FromArgb(254, 191, 16)
     Private ReadOnly RichOlive As Color = Color.FromArgb(190, 154, 48)
     Private ReadOnly SuccessGreen As Color = Color.FromArgb(16, 216, 98)
     Private ReadOnly AlertRed As Color = Color.FromArgb(255, 71, 87)
-
-    Private Const OnlineWindowMinutes As Integer = 2
 
     Private Sub SyncLogs_Load(sender As Object, e As EventArgs) Handles MyBase.Load
         Me.BackColor = Color.FromArgb(248, 248, 247)
@@ -34,8 +36,7 @@ Public Class SyncLogs
 
             InitializeDataGrids()
 
-            AddHandler btnRefresh.Click, AddressOf btnRefresh_Click
-            AddHandler btnExport.Click, AddressOf btnExport_Click
+            AddHandler btnBack.Click, AddressOf NavigateBackToSystem
 
             RefreshAll()
 
@@ -57,6 +58,10 @@ Public Class SyncLogs
         End If
     End Sub
 
+    Private Sub SyncLogs_Disposed(sender As Object, e As EventArgs) Handles MyBase.Disposed
+        If _refreshTimer IsNot Nothing Then _refreshTimer.Stop()
+    End Sub
+
     Private Function ValidateAdminSession() As Boolean
         If String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
             MessageBox.Show("User session expired. Please log in again.", "Session Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
@@ -69,8 +74,7 @@ Public Class SyncLogs
             Return False
         End If
 
-        Dim role As String = If(frmLoginvb.LoggedInRole, "").ToUpperInvariant()
-        If role <> "ADMIN" AndAlso role <> "ADMINISTRATOR" Then
+        If Not Rbac.CanViewSyncLogs() Then
             MessageBox.Show("Only administrators can view sync logs.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning)
             NavigationBuilder.NavigateToForm(Me, GetType(Dashboard))
             Return False
@@ -98,44 +102,12 @@ Public Class SyncLogs
         End Try
     End Sub
 
-    Private Sub btnRefresh_Click(sender As Object, e As EventArgs)
-        RefreshAll()
-    End Sub
-
     Private Sub RefreshTimer_Tick(sender As Object, e As EventArgs)
         RefreshAll()
     End Sub
 
     Private Sub InitializeDataGrids()
-        StyleGrid(dgvPCs)
         StyleGrid(dgvSync)
-
-        dgvPCs.Columns.Clear()
-        dgvPCs.AutoGenerateColumns = False
-        dgvPCs.Columns.Add(New DataGridViewTextBoxColumn() With {
-            .Name = "TerminalName", .HeaderText = "Terminal Name", .ReadOnly = True,
-            .DefaultCellStyle = New DataGridViewCellStyle() With {
-                .Alignment = DataGridViewContentAlignment.MiddleCenter,
-                .Font = New Font("Poppins SemiBold", 9.0F, FontStyle.Regular),
-                .WrapMode = DataGridViewTriState.False
-            },
-            .FillWeight = 32
-        })
-        dgvPCs.Columns.Add(New DataGridViewTextBoxColumn() With {
-            .Name = "HostName", .HeaderText = "PC Name", .ReadOnly = True,
-            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter},
-            .FillWeight = 22
-        })
-        dgvPCs.Columns.Add(New DataGridViewTextBoxColumn() With {
-            .Name = "LastSeen", .HeaderText = "Last Seen", .ReadOnly = True,
-            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter},
-            .FillWeight = 24
-        })
-        dgvPCs.Columns.Add(New DataGridViewTextBoxColumn() With {
-            .Name = "Status", .HeaderText = "Status", .ReadOnly = True,
-            .DefaultCellStyle = New DataGridViewCellStyle() With {.Alignment = DataGridViewContentAlignment.MiddleCenter},
-            .FillWeight = 22
-        })
 
         dgvSync.Columns.Clear()
         dgvSync.AutoGenerateColumns = False
@@ -193,7 +165,7 @@ Public Class SyncLogs
             .FillWeight = 30
         })
 
-        AlignGridsToPanel()
+        AlignGridToPanel()
     End Sub
 
     Private Sub StyleGrid(grid As Guna.UI2.WinForms.Guna2DataGridView)
@@ -217,7 +189,7 @@ Public Class SyncLogs
             .SelectionForeColor = Color.FromArgb(51, 51, 51),
             .Font = New Font("Poppins", 9.0F, FontStyle.Regular),
             .Alignment = DataGridViewContentAlignment.MiddleCenter,
-            .Padding = New Padding(6, 5, 6, 5)
+            .Padding = New Padding(8, 6, 8, 6)
         }
 
         grid.AlternatingRowsDefaultCellStyle = New DataGridViewCellStyle() With {
@@ -232,7 +204,8 @@ Public Class SyncLogs
             .Font = New Font("Poppins", 8.5F, FontStyle.Bold),
             .Alignment = DataGridViewContentAlignment.MiddleCenter
         }
-        grid.ColumnHeadersHeight = 40
+        grid.ColumnHeadersHeight = 44
+        grid.RowTemplate.Height = 50
         grid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing
         grid.AllowUserToResizeColumns = False
         grid.AllowUserToResizeRows = False
@@ -242,7 +215,6 @@ Public Class SyncLogs
         If _refreshing Then Return
         _refreshing = True
         Try
-            LoadPCs()
             LoadSyncEvents()
         Catch ex As Exception
             Console.WriteLine($"SyncLogs.RefreshAll error: {ex.Message}")
@@ -251,46 +223,37 @@ Public Class SyncLogs
         End Try
     End Sub
 
-    Private Sub LoadPCs()
+    Private Sub LoadSyncEvents()
         Try
-            Dim list As List(Of TerminalManager.TerminalInfo) = TerminalManager.GetAllTerminals()
-            dgvPCs.Rows.Clear()
-            Dim onlineCount As Integer = 0
+            _allSyncEvents = LocalSyncLog.GetEvents(500)
+            If _pagination Is Nothing Then
+                _pagination = New PaginationControl()
+                AddHandler _pagination.PageChanged, AddressOf OnPaginationPageChanged
+                Guna2Panel1.Controls.Add(_pagination)
+                _pagination.BringToFront()
+            End If
 
-            For Each t In list
-                Dim isOnline As Boolean = t.LastSeenAt IsNot Nothing AndAlso
-                                          DateTime.Now.Subtract(t.LastSeenAt.Value).TotalMinutes <= OnlineWindowMinutes
-                If isOnline Then onlineCount += 1
-
-                Dim rowIndex As Integer = dgvPCs.Rows.Add()
-                dgvPCs.Rows(rowIndex).Cells("TerminalName").Value = If(String.IsNullOrWhiteSpace(t.TerminalName), t.HostName, t.TerminalName)
-                dgvPCs.Rows(rowIndex).Cells("HostName").Value = t.HostName
-                dgvPCs.Rows(rowIndex).Cells("LastSeen").Value = If(t.LastSeenAt Is Nothing, "-", t.LastSeenAt.Value.ToString("MMM dd, yyyy HH:mm"))
-
-                Dim statusText As String = If(isOnline, "Online", "Offline") & "  /  " & If(t.IsActive, "Allowed", "Blocked")
-                dgvPCs.Rows(rowIndex).Cells("Status").Value = statusText
-                If isOnline AndAlso t.IsActive Then
-                    dgvPCs.Rows(rowIndex).Cells("Status").Style.ForeColor = SuccessGreen
-                ElseIf Not t.IsActive Then
-                    dgvPCs.Rows(rowIndex).Cells("Status").Style.ForeColor = AlertRed
-                Else
-                    dgvPCs.Rows(rowIndex).Cells("Status").Style.ForeColor = Color.FromArgb(150, 150, 150)
-                End If
-            Next
-
-            lblInfo.Text = $"{list.Count} connected PC(s) - {onlineCount} online now"
-            dgvPCs.ClearSelection()
+            _pagination.Configure(_allSyncEvents.Rows.Count, _pageSize, _currentPage)
+            _currentPage = _pagination.CurrentPage
+            _pagination.Visible = _allSyncEvents.Rows.Count > 0
+            RenderCurrentPage()
+            AlignGridToPanel()
         Catch ex As Exception
-            Console.WriteLine($"SyncLogs.LoadPCs error: {ex.Message}")
+            Console.WriteLine($"SyncLogs.LoadSyncEvents error: {ex.Message}")
         End Try
     End Sub
 
-    Private Sub LoadSyncEvents()
-        Try
-            Dim dt As DataTable = LocalSyncLog.GetEvents(500)
-            dgvSync.Rows.Clear()
+    Private Sub OnPaginationPageChanged(page As Integer)
+        _currentPage = page
+        RenderCurrentPage()
+    End Sub
 
-            For Each row As DataRow In dt.Rows
+    Private Sub RenderCurrentPage()
+        dgvSync.Rows.Clear()
+        If _allSyncEvents Is Nothing OrElse _allSyncEvents.Rows.Count = 0 Then Return
+
+        Dim pageRows = _allSyncEvents.AsEnumerable().Skip((_currentPage - 1) * _pageSize).Take(_pageSize)
+        For Each row As DataRow In pageRows
                 Dim status As String = Convert.ToString(row("Status"))
                 If String.IsNullOrEmpty(status) Then status = "running"
 
@@ -317,70 +280,50 @@ Public Class SyncLogs
                     Case Else
                         dgvSync.Rows(rowIndex).Cells("Status").Style.ForeColor = RichOlive
                 End Select
-            Next
-
-            dgvSync.ClearSelection()
-        Catch ex As Exception
-            Console.WriteLine($"SyncLogs.LoadSyncEvents error: {ex.Message}")
-        End Try
+        Next
+        dgvSync.ClearSelection()
     End Sub
 
-    Private Sub btnExport_Click(sender As Object, e As EventArgs)
-        Try
-            If dgvSync.Rows.Count = 0 Then
-                MessageBox.Show("No sync events to export.", "Export", MessageBoxButtons.OK, MessageBoxIcon.Information)
-                Return
-            End If
-            Using sfd As New SaveFileDialog()
-                sfd.Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*"
-                sfd.FileName = $"SyncLog_{DateTime.Now:yyyyMMdd_HHmmss}.csv"
-                If sfd.ShowDialog() = DialogResult.OK Then
-                    Using sw As New IO.StreamWriter(sfd.FileName, False, System.Text.Encoding.UTF8)
-                        Dim headerParts As New List(Of String)()
-                        For Each col As DataGridViewColumn In dgvSync.Columns
-                            headerParts.Add(col.HeaderText.Replace(",", " "))
-                        Next
-                        sw.WriteLine(String.Join(",", headerParts))
-
-                        For Each r As DataGridViewRow In dgvSync.Rows
-                            If r.IsNewRow Then Continue For
-                            Dim parts As New List(Of String)()
-                            For Each cell As DataGridViewCell In r.Cells
-                                Dim val As String = If(cell.Value Is Nothing, "", cell.Value.ToString().Replace(","c, " "))
-                                parts.Add(val)
-                            Next
-                            sw.WriteLine(String.Join(",", parts))
-                        Next
-                        sw.Flush()
-                    End Using
-                    MessageBox.Show("Export completed.", "Export", MessageBoxButtons.OK, MessageBoxIcon.Information)
-                End If
-            End Using
-        Catch ex As Exception
-            MessageBox.Show($"Export failed: {ex.Message}", "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
-        End Try
-    End Sub
-
-    Private Sub AlignGridsToPanel()
+    Private Sub AlignGridToPanel()
         Try
             If Guna2Panel1 Is Nothing Then Return
-            If dgvPCs IsNot Nothing Then
-                dgvPCs.Location = New Point(8, 44)
-                dgvPCs.Width = Guna2Panel1.Width - 16
-                dgvPCs.Height = 250
-            End If
             If dgvSync IsNot Nothing Then
-                dgvSync.Location = New Point(8, 336)
+                Dim gridTop As Integer = 8
+                Dim paginationHeight As Integer = If(_pagination IsNot Nothing AndAlso _pagination.Visible, _pagination.Height + 4, 0)
+                dgvSync.Location = New Point(8, gridTop)
                 dgvSync.Width = Guna2Panel1.Width - 16
-                dgvSync.Height = Math.Max(100, Guna2Panel1.Height - 336 - 16)
+                dgvSync.Height = Math.Max(100, Guna2Panel1.Height - gridTop - paginationHeight - 8)
+            End If
+            If _pagination IsNot Nothing AndAlso _pagination.Visible Then
+                _pagination.Location = New Point(4, Guna2Panel1.Height - _pagination.Height - 2)
+                _pagination.Width = Guna2Panel1.Width - 8
             End If
         Catch
         End Try
     End Sub
 
     Private Sub SyncLogs_Resize(sender As Object, e As EventArgs) Handles Me.Resize
-        AlignGridsToPanel()
+        AlignGridToPanel()
     End Sub
+
+    Private Sub NavigateBackToSystem(sender As Object, e As EventArgs)
+        NavigateBackToSystem()
+    End Sub
+
+    Private Sub NavigateBackToSystem()
+        If isNavigating Then Return
+        isNavigating = True
+        If _refreshTimer IsNot Nothing Then _refreshTimer.Stop()
+        NavigationBuilder.NavigateToForm(Me, GetType(Sys))
+    End Sub
+
+    Protected Overrides Function ProcessCmdKey(ByRef msg As Message, keyData As Keys) As Boolean
+        If keyData = Keys.Escape Then
+            NavigateBackToSystem()
+            Return True
+        End If
+        Return MyBase.ProcessCmdKey(msg, keyData)
+    End Function
 
     Private Function IsHostedInMainShell() As Boolean
         Dim parent As Control = Me.Parent

@@ -1,4 +1,4 @@
-﻿Imports Guna.UI2.WinForms
+Imports Guna.UI2.WinForms
 Imports System.Data.Common
 Imports System.IO
 Imports LiveChartsCore
@@ -1659,7 +1659,7 @@ Public Class Dashboard
         closing = TimeSpan.FromHours(17)
 
         Try
-            Dim rawHours As String = CompanySettingsManager.Instance.GetSettingString("CompanyHours", "")
+            Dim rawHours As String = Branding.Instance.GetSettingString("CompanyHours", "")
             If String.IsNullOrWhiteSpace(rawHours) Then
                 Return False
             End If

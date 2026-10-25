@@ -1,4 +1,4 @@
-﻿Imports Npgsql
+Imports Npgsql
 Imports System.Data.Common
 Imports System.Data
 Imports System.IO
@@ -12,6 +12,7 @@ Public Class Inventory
     Private itemHeight As Integer = 80 ' Height of each product panel
     Private loadingOverlay As Panel
     Private _cachedLogo As Image = Nothing
+    Private _quarantineButton As Guna.UI2.WinForms.Guna2Button
 
     ' Navigation flag to prevent exit confirmation on programmatic close
     Private isNavigating As Boolean = False
@@ -76,6 +77,7 @@ Public Class Inventory
 
         ' Create navigation menu using shared NavigationBuilder
         NavigationBuilder.Build(DashboardPanel, Me, "Inventory")
+        AddQuarantineButton()
 
         ' Initialize profile section
         InitializeProfileSection()
@@ -98,6 +100,31 @@ Public Class Inventory
 
         ' Realtime stock polling: every 2s check whether another PC changed stock
         RealtimeStartPolling()
+    End Sub
+
+    Private Sub AddQuarantineButton()
+        If _quarantineButton IsNot Nothing OrElse Not Rbac.IsManagerOrAbove() Then Return
+        _quarantineButton = New Guna.UI2.WinForms.Guna2Button With {
+            .Name = "btnReturnQuarantine",
+            .Text = "Return Quarantine",
+            .Size = New Size(150, Guna2Button1.Height),
+            .Location = New Point(Math.Max(8, Guna2Button1.Left - 160), Guna2Button1.Top),
+            .Anchor = Guna2Button1.Anchor,
+            .BorderRadius = 7,
+            .FillColor = Color.FromArgb(90, 105, 120),
+            .ForeColor = Color.White,
+            .Font = New Font("Poppins", 9, FontStyle.Bold),
+            .Cursor = Cursors.Hand
+        }
+        AddHandler _quarantineButton.Click,
+            Async Sub()
+                Using dialog As New QuarantineInspectionForm()
+                    dialog.ShowDialog(Me)
+                End Using
+                Await LoadProductsAsync()
+            End Sub
+        Guna2Button1.Parent.Controls.Add(_quarantineButton)
+        _quarantineButton.BringToFront()
     End Sub
     ' Helper: find a control by name anywhere in the form (recursive)
     Private Function FindControlRecursive(parent As Control, name As String) As Control
@@ -1022,7 +1049,7 @@ Public Class Inventory
 
     Private Function GetCachedLogo() As Image
         If _cachedLogo Is Nothing Then
-            _cachedLogo = CompanySettingsManager.Instance.GetCompanyLogo()
+            _cachedLogo = Branding.Instance.GetCompanyLogo()
         End If
         Return _cachedLogo
     End Function
@@ -1120,7 +1147,7 @@ Public Class Inventory
 
                         ' Calculate text area with proper spacing
                         Dim textStartX As Integer = imageRect.Right + (padding * 2)
-                        Dim textWidth As Integer = e.CellBounds.Width - textStartX - padding
+                        Dim textWidth As Integer = Math.Max(0, e.CellBounds.Right - textStartX - padding)
                         Dim textRect As New Rectangle(textStartX, e.CellBounds.Top + 8, textWidth, e.CellBounds.Height - 16)
 
                         ' Get clean product name
@@ -1137,19 +1164,14 @@ Public Class Inventory
 
                         ' Choose main text color based on selection (dark text idle, dark text on selection)
                         Dim productNameColor As Color = If(isRowSelected, DarkText, DarkText)
-                        Using productNameFont As New Font("Poppins SemiBold", 10.5F, FontStyle.Bold)
-                            Using productNameBrush As New SolidBrush(productNameColor)
-                                Dim nameFormat As New StringFormat() With {
-                                .LineAlignment = StringAlignment.Near,
-                                .Alignment = StringAlignment.Near,
-                                .Trimming = StringTrimming.EllipsisCharacter,
-                                .FormatFlags = StringFormatFlags.NoWrap
-                            }
-
-                                ' Calculate name area (upper portion)
-                                Dim nameRect As New Rectangle(textRect.X, textRect.Y + 2, textRect.Width, (textRect.Height * 60) \ 100)
-                                e.Graphics.DrawString(displayName, productNameFont, productNameBrush, nameRect, nameFormat)
-                            End Using
+                        Using productNameFont As New Font("Poppins SemiBold", 10.5F, FontStyle.Regular)
+                            ' Calculate name area (upper portion). TextRenderer
+                            ' matches the grid's ClearType text instead of looking over-painted.
+                            Dim nameRect As New Rectangle(textRect.X, textRect.Y + 2, textRect.Width, (textRect.Height * 60) \ 100)
+                            TextRenderer.DrawText(e.Graphics, displayName, productNameFont, nameRect, productNameColor,
+                                                  TextFormatFlags.Left Or TextFormatFlags.Top Or
+                                                  TextFormatFlags.EndEllipsis Or TextFormatFlags.SingleLine Or
+                                                  TextFormatFlags.NoPadding)
                         End Using
 
                         ' Draw product code as subtitle with consistent spacing
@@ -1213,7 +1235,9 @@ Public Class Inventory
                 End If
             End If
         Catch ex As Exception
-            ' Silent fail for custom painting to prevent crashes
+            ' Fall back to the grid's normal renderer instead of leaving a
+            ' partially painted product-name cell.
+            e.Handled = False
         End Try
     End Sub
 

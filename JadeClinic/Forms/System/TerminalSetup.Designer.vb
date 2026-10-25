@@ -24,6 +24,7 @@ Partial Class TerminalSetup
     Private Sub InitializeComponent()
         LabelTitle = New Label()
         lblSubtitle = New Label()
+        btnBack = New Guna.UI2.WinForms.Guna2Button()
         NavigationPanel = New Guna.UI2.WinForms.Guna2Panel()
         PictureBox9 = New PictureBox()
         Guna2Panel1 = New Guna.UI2.WinForms.Guna2Panel()
@@ -41,7 +42,7 @@ Partial Class TerminalSetup
         LabelTitle.AutoSize = True
         LabelTitle.Font = New Font("Poppins Medium", 16.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         LabelTitle.ForeColor = Color.FromArgb(CByte(42), CByte(42), CByte(42))
-        LabelTitle.Location = New Point(262, 20)
+        LabelTitle.Location = New Point(310, 20)
         LabelTitle.Name = "LabelTitle"
         LabelTitle.Size = New Size(196, 50)
         LabelTitle.TabIndex = 0
@@ -52,11 +53,28 @@ Partial Class TerminalSetup
         lblSubtitle.AutoSize = True
         lblSubtitle.Font = New Font("Poppins", 9.5F)
         lblSubtitle.ForeColor = Color.FromArgb(CByte(119), CByte(119), CByte(119))
-        lblSubtitle.Location = New Point(264, 68)
+        lblSubtitle.Location = New Point(312, 68)
         lblSubtitle.Name = "lblSubtitle"
         lblSubtitle.Size = New Size(560, 28)
         lblSubtitle.TabIndex = 1
         lblSubtitle.Text = "Name the computers connected to the clinic system and control their access"
+        '
+        'btnBack
+        '
+        btnBack.BorderColor = Color.FromArgb(CByte(220), CByte(220), CByte(220))
+        btnBack.BorderRadius = 10
+        btnBack.BorderThickness = 1
+        btnBack.FillColor = Color.White
+        btnBack.Font = New Font("Segoe UI", 18F, FontStyle.Regular)
+        btnBack.ForeColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
+        btnBack.Location = New Point(246, 24)
+        btnBack.Name = "btnBack"
+        btnBack.ShadowDecoration.Depth = 0
+        btnBack.ShadowDecoration.Enabled = False
+        btnBack.Size = New Size(48, 44)
+        btnBack.TabIndex = 2
+        btnBack.Text = "<"
+        btnBack.TextOffset = New Point(0, -2)
         '
         'NavigationPanel
         '
@@ -163,6 +181,7 @@ Partial Class TerminalSetup
         BackColor = Color.FromArgb(CByte(248), CByte(248), CByte(247))
         ClientSize = New Size(1900, 1080)
         Controls.Add(lblSubtitle)
+        Controls.Add(btnBack)
         Controls.Add(NavigationPanel)
         Controls.Add(LabelTitle)
         Controls.Add(Guna2Panel1)
@@ -181,6 +200,7 @@ Partial Class TerminalSetup
 
     Friend WithEvents LabelTitle As Label
     Friend WithEvents lblSubtitle As Label
+    Friend WithEvents btnBack As Guna.UI2.WinForms.Guna2Button
     Friend WithEvents NavigationPanel As Guna.UI2.WinForms.Guna2Panel
     Friend WithEvents PictureBox9 As PictureBox
     Friend WithEvents Guna2Panel1 As Guna.UI2.WinForms.Guna2Panel

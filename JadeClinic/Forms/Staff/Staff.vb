@@ -41,13 +41,8 @@ Public Class Staff
             Return
         End If
 
-        ' Hide Add Staff button for Manager role (only allow for Admin)
-        Dim currentRole As String = If(frmLoginvb.LoggedInRole, "").ToUpper()
-        If currentRole = "MANAGER" Then
-            btnDiscount.Visible = False
-        Else
-            btnDiscount.Visible = True
-        End If
+        ' Hide Add Staff button for Manager role (only allow for Admin/Super Admin)
+        btnDiscount.Visible = Rbac.IsAdminOrAbove()
 
         ' Create navigation menu (hardcoded from Dashboard)
         CreateNavigationMenu()
@@ -106,12 +101,11 @@ Public Class Staff
         Return True
     End Function
 
-    ' Helper method to check if current user is Admin
+    ' Helper method to check if current user can access Staff Management
     Private Function IsUserAdmin() As Boolean
         Try
-            Dim currentRole As String = If(frmLoginvb.LoggedInRole, "").ToUpper()
-            ' Allow both Manager and Admin to access Staff Management page
-            Return currentRole = "ADMIN" Or currentRole = "ADMINISTRATOR" Or currentRole = "MANAGER"
+            ' Allow Manager, Admin and Super Admin to access Staff Management page
+            Return Rbac.IsManagerOrAbove()
         Catch ex As Exception
             Console.WriteLine($"Error checking admin role: {ex.Message}")
             Return False
@@ -628,9 +622,8 @@ Dim photoCol As New DataGridViewImageColumn() With {
                 Return
             End If
 
-            ' Check if current user is Manager - restrict editing for Managers
-            Dim currentRole As String = If(frmLoginvb.LoggedInRole, "").ToUpper()
-            If currentRole = "MANAGER" Then
+            ' Managers may only view staff information, not edit.
+            If Not Rbac.IsAdminOrAbove() Then
                 MessageBox.Show("Access denied. Managers can only view staff information, not edit.", "Edit Restricted", MessageBoxButtons.OK, MessageBoxIcon.Warning)
                 Return
             End If

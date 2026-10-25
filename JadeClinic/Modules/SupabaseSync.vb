@@ -67,7 +67,37 @@ Public Module SupabaseSync
     Private ReadOnly SaleItemsSuffix As String = "ON CONFLICT (local_id) DO UPDATE SET " &
         "sale_id = EXCLUDED.sale_id, product_id = EXCLUDED.product_id, quantity = EXCLUDED.quantity, " &
         "unit_price = EXCLUDED.unit_price, original_unit_price = EXCLUDED.original_unit_price, " &
-        "line_discount = EXCLUDED.line_discount, sub_total = EXCLUDED.sub_total, synced_at = NOW()"
+        "line_discount = EXCLUDED.line_discount, sub_total = EXCLUDED.sub_total, synced_at = NOW() " &
+        "RETURNING id, local_id"
+
+    Private ReadOnly SalesReturnsInsert As String = "INSERT INTO sales_returns (local_id, sale_id, return_number, return_date, return_type, reason, " &
+        "refund_amount, additional_payment_amount, settlement_method, settlement_reference, approved_by, approved_by_user_id, " &
+        "processed_by, initiated_by, notes, status, synced_at)"
+    Private ReadOnly SalesReturnsSuffix As String = "ON CONFLICT (local_id) DO UPDATE SET " &
+        "sale_id = EXCLUDED.sale_id, return_number = EXCLUDED.return_number, return_date = EXCLUDED.return_date, " &
+        "return_type = EXCLUDED.return_type, reason = EXCLUDED.reason, refund_amount = EXCLUDED.refund_amount, " &
+        "additional_payment_amount = EXCLUDED.additional_payment_amount, settlement_method = EXCLUDED.settlement_method, " &
+        "settlement_reference = EXCLUDED.settlement_reference, approved_by = EXCLUDED.approved_by, " &
+        "approved_by_user_id = EXCLUDED.approved_by_user_id, processed_by = EXCLUDED.processed_by, initiated_by = EXCLUDED.initiated_by, notes = EXCLUDED.notes, " &
+        "status = EXCLUDED.status, synced_at = NOW() " &
+        "RETURNING id, local_id"
+
+    Private ReadOnly SalesReturnItemsInsert As String = "INSERT INTO sales_return_items (local_id, return_id, original_sale_item_id, product_id, " &
+        "quantity, unit_price, condition, disposition, line_refund_amount, return_credit_amount, replacement_product_id, replacement_quantity, replacement_unit_price, created_at, synced_at)"
+    Private ReadOnly SalesReturnItemsSuffix As String = "ON CONFLICT (local_id) DO UPDATE SET " &
+        "return_id = EXCLUDED.return_id, original_sale_item_id = EXCLUDED.original_sale_item_id, product_id = EXCLUDED.product_id, " &
+        "quantity = EXCLUDED.quantity, unit_price = EXCLUDED.unit_price, condition = EXCLUDED.condition, " &
+        "disposition = EXCLUDED.disposition, line_refund_amount = EXCLUDED.line_refund_amount, return_credit_amount = EXCLUDED.return_credit_amount, " &
+        "replacement_product_id = EXCLUDED.replacement_product_id, replacement_quantity = EXCLUDED.replacement_quantity, " &
+        "replacement_unit_price = EXCLUDED.replacement_unit_price, synced_at = NOW() " &
+        "RETURNING id, local_id"
+
+    Private ReadOnly ReturnQuarantineInsert As String = "INSERT INTO return_quarantine (local_id, return_item_id, product_id, quantity, item_condition, " &
+        "status, received_at, resolved_at, resolved_by, notes, synced_at)"
+    Private ReadOnly ReturnQuarantineSuffix As String = "ON CONFLICT (local_id) DO UPDATE SET " &
+        "return_item_id = EXCLUDED.return_item_id, product_id = EXCLUDED.product_id, quantity = EXCLUDED.quantity, " &
+        "item_condition = EXCLUDED.item_condition, status = EXCLUDED.status, received_at = EXCLUDED.received_at, " &
+        "resolved_at = EXCLUDED.resolved_at, resolved_by = EXCLUDED.resolved_by, notes = EXCLUDED.notes, synced_at = NOW()"
 
     Private ReadOnly InventoryLogsInsert As String = "INSERT INTO inventory_logs (local_id, product_id, transaction_type, quantity, previous_stock, new_stock, " &
         "batch_number, expiry_date, supplier_id, user_id, reference, notes, created_at, synced_at)"
@@ -82,23 +112,14 @@ Public Module SupabaseSync
         "action = EXCLUDED.action, details = EXCLUDED.details, user_id = EXCLUDED.user_id, " &
         "action_time = EXCLUDED.action_time, synced_at = NOW()"
 
-    Private ReadOnly CompanySettingsInsert As String = "INSERT INTO company_settings (local_id, company_name, tin, address, phone, email, website, logo_url, " &
-        "bir_auth_number, ptu_number, validity_years, receipt_footer, company_hours, is_active, created_at, updated_at, synced_at)"
-    Private ReadOnly CompanySettingsSuffix As String = "ON CONFLICT (local_id) DO UPDATE SET " &
-        "company_name = EXCLUDED.company_name, tin = EXCLUDED.tin, address = EXCLUDED.address, phone = EXCLUDED.phone, " &
-        "email = EXCLUDED.email, website = EXCLUDED.website, bir_auth_number = EXCLUDED.bir_auth_number, " &
-        "ptu_number = EXCLUDED.ptu_number, validity_years = EXCLUDED.validity_years, " &
-        "receipt_footer = EXCLUDED.receipt_footer, company_hours = EXCLUDED.company_hours, " &
-        "is_active = EXCLUDED.is_active, logo_url = COALESCE(EXCLUDED.logo_url, company_settings.logo_url), " &
-        "updated_at = EXCLUDED.updated_at, synced_at = NOW()"
-
     ' DDL to recreate cloud tables if they were dropped, so the sync self-heals.
     ' Mirrors database/supabase_schema.sql (CREATE TABLE IF NOT EXISTS is idempotent).
     Private ReadOnly EnsureSchemaStatements As String() = {
         "CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, local_id INTEGER UNIQUE NOT NULL, " &
         "username TEXT NOT NULL, full_name TEXT NOT NULL, user_role TEXT DEFAULT 'Staff', " &
         "is_active BOOLEAN DEFAULT TRUE, email TEXT, phone TEXT, photo_url TEXT, employee_code TEXT, " &
-        "created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW(), synced_at TIMESTAMPTZ)",
+         "created_at TIMESTAMPTZ DEFAULT NOW(), updated_at TIMESTAMPTZ DEFAULT NOW(), synced_at TIMESTAMPTZ)",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS employee_code TEXT",
         "CREATE TABLE IF NOT EXISTS suppliers (id SERIAL PRIMARY KEY, local_id INTEGER UNIQUE NOT NULL, " &
         "supplier_code TEXT NOT NULL, supplier_name TEXT NOT NULL, contact_person TEXT, phone TEXT, email TEXT, " &
         "is_active BOOLEAN DEFAULT TRUE, created_at TIMESTAMPTZ DEFAULT NOW(), " &
@@ -122,6 +143,35 @@ Public Module SupabaseSync
         "quantity INTEGER NOT NULL, unit_price DECIMAL(10,2) NOT NULL, original_unit_price DECIMAL(10,2), " &
         "line_discount DECIMAL(10,2) DEFAULT 0, sub_total DECIMAL(10,2), " &
         "created_at TIMESTAMPTZ DEFAULT NOW(), synced_at TIMESTAMPTZ)",
+        "CREATE TABLE IF NOT EXISTS sales_returns (id SERIAL PRIMARY KEY, local_id INTEGER UNIQUE NOT NULL, " &
+        "sale_id INTEGER REFERENCES sales(id), return_number TEXT, return_date TIMESTAMPTZ DEFAULT NOW(), " &
+        "return_type TEXT, reason TEXT, refund_amount DECIMAL(10,2) DEFAULT 0, approved_by TEXT, " &
+        "approved_by_user_id INTEGER REFERENCES users(id), processed_by INTEGER REFERENCES users(id), initiated_by INTEGER REFERENCES users(id), " &
+        "additional_payment_amount DECIMAL(18,2) NOT NULL DEFAULT 0, settlement_method TEXT, settlement_reference TEXT, " &
+        "notes TEXT, status TEXT DEFAULT 'Completed', " &
+        "created_at TIMESTAMPTZ DEFAULT NOW(), synced_at TIMESTAMPTZ)",
+        "CREATE TABLE IF NOT EXISTS sales_return_items (id SERIAL PRIMARY KEY, local_id INTEGER UNIQUE NOT NULL, " &
+        "return_id INTEGER REFERENCES sales_returns(id), original_sale_item_id INTEGER REFERENCES sale_items(id), product_id INTEGER REFERENCES products(id), " &
+        "quantity INTEGER NOT NULL, unit_price DECIMAL(10,2) DEFAULT 0, condition TEXT, disposition TEXT, " &
+        "line_refund_amount DECIMAL(10,2) DEFAULT 0, return_credit_amount DECIMAL(18,2) NOT NULL DEFAULT 0, " &
+        "replacement_product_id INTEGER REFERENCES products(id), replacement_quantity INTEGER, " &
+        "replacement_unit_price DECIMAL(10,2), created_at TIMESTAMPTZ DEFAULT NOW(), synced_at TIMESTAMPTZ)",
+        "CREATE TABLE IF NOT EXISTS return_quarantine (id SERIAL PRIMARY KEY, local_id INTEGER UNIQUE NOT NULL, " &
+        "return_item_id INTEGER UNIQUE NOT NULL REFERENCES sales_return_items(id), product_id INTEGER NOT NULL REFERENCES products(id), " &
+        "quantity INTEGER NOT NULL CHECK (quantity > 0), item_condition TEXT NOT NULL, " &
+        "status TEXT NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending','Restocked','WrittenOff','ReturnedToVendor')), " &
+        "received_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), resolved_at TIMESTAMPTZ, resolved_by INTEGER REFERENCES users(id), " &
+        "notes TEXT, synced_at TIMESTAMPTZ)",
+        "ALTER TABLE sales_returns ADD COLUMN IF NOT EXISTS approved_by_user_id INTEGER REFERENCES users(id)",
+        "ALTER TABLE sales_returns ADD COLUMN IF NOT EXISTS initiated_by INTEGER REFERENCES users(id)",
+        "ALTER TABLE sales_returns ADD COLUMN IF NOT EXISTS additional_payment_amount DECIMAL(18,2) NOT NULL DEFAULT 0",
+        "ALTER TABLE sales_returns ADD COLUMN IF NOT EXISTS settlement_method TEXT",
+        "ALTER TABLE sales_returns ADD COLUMN IF NOT EXISTS settlement_reference TEXT",
+        "ALTER TABLE sales_return_items ADD COLUMN IF NOT EXISTS return_credit_amount DECIMAL(18,2) NOT NULL DEFAULT 0",
+        "CREATE INDEX IF NOT EXISTS idx_sales_returns_approved_by_user ON sales_returns(approved_by_user_id)",
+        "CREATE INDEX IF NOT EXISTS idx_sales_returns_initiated_by ON sales_returns(initiated_by)",
+        "CREATE INDEX IF NOT EXISTS idx_return_quarantine_status ON return_quarantine(status, product_id)",
+        "CREATE INDEX IF NOT EXISTS idx_return_quarantine_resolved_by ON return_quarantine(resolved_by)",
         "CREATE TABLE IF NOT EXISTS inventory_logs (id SERIAL PRIMARY KEY, local_id INTEGER UNIQUE NOT NULL, " &
         "product_id INTEGER REFERENCES products(id), transaction_type TEXT NOT NULL " &
         "CHECK (transaction_type IN ('IN', 'OUT', 'ADJUST')), quantity INTEGER NOT NULL, " &
@@ -131,11 +181,6 @@ Public Module SupabaseSync
         "CREATE TABLE IF NOT EXISTS audit_logs (id SERIAL PRIMARY KEY, local_id INTEGER UNIQUE NOT NULL, " &
         "action TEXT NOT NULL, details TEXT, user_id INTEGER REFERENCES users(id), " &
         "action_time TIMESTAMPTZ DEFAULT NOW(), synced_at TIMESTAMPTZ)",
-        "CREATE TABLE IF NOT EXISTS company_settings (id SERIAL PRIMARY KEY, local_id INTEGER UNIQUE NOT NULL, " &
-        "company_name TEXT NOT NULL, tin TEXT, address TEXT, phone TEXT, email TEXT, website TEXT, logo_url TEXT, " &
-        "bir_auth_number TEXT, ptu_number TEXT, validity_years INTEGER DEFAULT 5, receipt_footer TEXT, " &
-        "company_hours TEXT, is_active BOOLEAN DEFAULT TRUE, created_at TIMESTAMPTZ DEFAULT NOW(), " &
-        "updated_at TIMESTAMPTZ DEFAULT NOW(), synced_at TIMESTAMPTZ)",
         "CREATE TABLE IF NOT EXISTS sync_log (id SERIAL PRIMARY KEY, started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), " &
         "completed_at TIMESTAMPTZ, rows_synced INTEGER DEFAULT 0, status TEXT DEFAULT 'running', error TEXT)"
     }
@@ -392,7 +437,7 @@ Public Module SupabaseSync
     ' thread (typically the background worker). When full = False, the
     ' append-only tables (sales, sale_items, inventory_logs, audit_logs)
     ' sync only NEW rows (delta) based on the max local_id already in the
-    ' cloud. Products/Users/Suppliers/CompanySettings always upsert fully
+    ' cloud. Products/Users/Suppliers always upsert fully
     ' so stock levels, prices and roles stay current.
     ' ------------------------------------------------------------
     Public Function RunFullSync(Optional progress As Action(Of String) = Nothing,
@@ -466,6 +511,18 @@ Public Module SupabaseSync
                 Dim userIdMap As New Dictionary(Of Integer, Integer)()       ' LAN UserID -> supabase id
                 Dim productIdMap As New Dictionary(Of Integer, Integer)()    ' LAN ProductID -> supabase id
                 Dim saleIdMap As New Dictionary(Of Integer, Integer)()       ' LAN SaleID -> supabase id
+                Dim saleItemIdMap As New Dictionary(Of Integer, Integer)()   ' LAN SaleItemID -> supabase id
+                Dim returnIdMap As New Dictionary(Of Integer, Integer)()     ' LAN ReturnID -> supabase id
+                Dim returnItemIdMap As New Dictionary(Of Integer, Integer)() ' LAN ReturnItemID -> supabase id
+
+                If Not full Then
+                    PopulateCloudIdMap(pg, "users", userIdMap)
+                    PopulateCloudIdMap(pg, "products", productIdMap)
+                    PopulateCloudIdMap(pg, "sales", saleIdMap)
+                    PopulateCloudIdMap(pg, "sale_items", saleItemIdMap)
+                    PopulateCloudIdMap(pg, "sales_returns", returnIdMap)
+                    PopulateCloudIdMap(pg, "sales_return_items", returnItemIdMap)
+                End If
 
                 ReportProgress(progress, "Sync started (delta: " & (Not full).ToString() & ")")
 
@@ -473,21 +530,25 @@ Public Module SupabaseSync
                 Dim nUsers As Integer = SyncStep(progress, "users", Function() SyncUsers(local, pg, userIdMap, progress))
                 Dim nProducts As Integer = SyncStep(progress, "products", Function() SyncProducts(local, pg, supplierIdMap, productIdMap, progress))
                 Dim nSales As Integer = SyncStep(progress, "sales", Function() SyncSales(local, pg, userIdMap, saleIdMap, progress, full))
-                Dim nSaleItems As Integer = SyncStep(progress, "sale_items", Function() SyncSaleItems(local, pg, saleIdMap, productIdMap, progress, full))
+                Dim nSaleItems As Integer = SyncStep(progress, "sale_items", Function() SyncSaleItems(local, pg, saleIdMap, productIdMap, saleItemIdMap, progress, full))
+                Dim nSalesReturns As Integer = SyncStep(progress, "sales_returns", Function() SyncSalesReturns(local, pg, saleIdMap, userIdMap, returnIdMap, progress, full))
+                Dim nSalesReturnItems As Integer = SyncStep(progress, "sales_return_items", Function() SyncSalesReturnItems(local, pg, returnIdMap, saleItemIdMap, productIdMap, returnItemIdMap, progress, full))
+                Dim nReturnQuarantine As Integer = SyncStep(progress, "return_quarantine", Function() SyncReturnQuarantine(local, pg, returnItemIdMap, productIdMap, userIdMap, progress, full))
                 Dim nInvLogs As Integer = SyncStep(progress, "inventory_logs", Function() SyncInventoryLogs(local, pg, productIdMap, supplierIdMap, userIdMap, progress, full))
                 Dim nAuditLogs As Integer = SyncStep(progress, "audit_logs", Function() SyncAuditLogs(local, pg, userIdMap, progress, full))
-                Dim nCompanySettings As Integer = SyncStep(progress, "company_settings", Function() SyncCompanySettings(local, pg, progress))
                 Dim nWebAdmins As Integer = SyncStep(progress, "web_admins", Function() SyncAuthUsers(local, pg))
-                totalRows = nSuppliers + nUsers + nProducts + nSales + nSaleItems + nInvLogs + nAuditLogs + nCompanySettings + nWebAdmins
+                totalRows = nSuppliers + nUsers + nProducts + nSales + nSaleItems + nSalesReturns + nSalesReturnItems + nReturnQuarantine + nInvLogs + nAuditLogs + nWebAdmins
 
                 result.Summary.Add($"suppliers: {nSuppliers}")
                 result.Summary.Add($"users: {nUsers}")
                 result.Summary.Add($"products: {nProducts}")
                 result.Summary.Add($"sales: {nSales}")
                 result.Summary.Add($"sale_items: {nSaleItems}")
+                result.Summary.Add($"sales_returns: {nSalesReturns}")
+                result.Summary.Add($"sales_return_items: {nSalesReturnItems}")
+                result.Summary.Add($"return_quarantine: {nReturnQuarantine}")
                 result.Summary.Add($"inventory_logs: {nInvLogs}")
                 result.Summary.Add($"audit_logs: {nAuditLogs}")
-                result.Summary.Add($"company_settings: {nCompanySettings}")
                 result.Summary.Add($"web_admins: {nWebAdmins}")
 
                 ' 1:1 mirror: delete any cloud rows that no longer exist locally
@@ -1028,6 +1089,7 @@ Public Module SupabaseSync
     Private Function SyncSaleItems(local As NpgsqlConnection, pg As NpgsqlConnection,
                                    saleIdMap As Dictionary(Of Integer, Integer),
                                    productIdMap As Dictionary(Of Integer, Integer),
+                                   saleItemIdMap As Dictionary(Of Integer, Integer),
                                    progress As Action(Of String),
                                    full As Boolean) As Integer
         Dim count As Integer = 0
@@ -1047,10 +1109,11 @@ Public Module SupabaseSync
                 While reader.Read()
                     Dim localId As Integer = Convert.ToInt32(reader("SaleItemID"))
 
-                    ' sale_id is NOT NULL in supabase — skip orphans
+                    ' sale_id is required; silently skipping would leave the cloud incomplete.
                     Dim lanSaleId As Integer = Convert.ToInt32(reader("SaleID"))
                     If Not saleIdMap.ContainsKey(lanSaleId) Then
-                        Continue While
+                        Throw New InvalidOperationException(
+                            $"Cannot sync sale_items local_id {localId}: required sales parent local_id {lanSaleId} has no cloud ID mapping.")
                     End If
                     Dim saleId As Object = saleIdMap(lanSaleId)
 
@@ -1077,7 +1140,8 @@ Public Module SupabaseSync
                     chunk.Add(vals)
 
                     If chunk.Count >= ChunkSize Then
-                        UpsertChunk(pg, chunk, SaleItemsInsert, SaleItemsSuffix, Nothing)
+                        UpsertChunk(pg, chunk, SaleItemsInsert, SaleItemsSuffix,
+                                    Sub(lanId, cloudId) saleItemIdMap(lanId) = cloudId)
                         count += chunk.Count
                         chunk.Clear()
                         ReportProgress(progress, $"sale_items synced: {count}")
@@ -1086,9 +1150,210 @@ Public Module SupabaseSync
             End Using
         End Using
         If chunk.Count > 0 Then
-            UpsertChunk(pg, chunk, SaleItemsInsert, SaleItemsSuffix, Nothing)
+            UpsertChunk(pg, chunk, SaleItemsInsert, SaleItemsSuffix,
+                        Sub(lanId, cloudId) saleItemIdMap(lanId) = cloudId)
             count += chunk.Count
             ReportProgress(progress, $"sale_items synced: {count}")
+        End If
+        Return count
+    End Function
+
+    Private Function SyncSalesReturns(local As NpgsqlConnection, pg As NpgsqlConnection,
+                                      saleIdMap As Dictionary(Of Integer, Integer),
+                                      userIdMap As Dictionary(Of Integer, Integer),
+                                      returnIdMap As Dictionary(Of Integer, Integer),
+                                      progress As Action(Of String),
+                                      full As Boolean) As Integer
+        Dim count As Integer = 0
+        Dim chunk As New List(Of List(Of SyncVal))()
+        Dim selectSql As String =
+            "SELECT ReturnID, SaleID, ReturnNumber, ReturnDate, ReturnType, Reason, RefundAmount, AdditionalPaymentAmount, " &
+            "SettlementMethod, SettlementReference, ApprovedBy, ApprovedByUserID, ProcessedBy, InitiatedBy, Notes, Status FROM SalesReturns"
+        Using cmd As New NpgsqlCommand(selectSql, local)
+            Using reader As NpgsqlDataReader = cmd.ExecuteReader()
+                While reader.Read()
+                    Dim localId As Integer = Convert.ToInt32(reader("ReturnID"))
+
+                    ' sale_id is required; silently skipping would lose the return.
+                    Dim lanSaleId As Integer = Convert.ToInt32(reader("SaleID"))
+                    If Not saleIdMap.ContainsKey(lanSaleId) Then
+                        Throw New InvalidOperationException(
+                            $"Cannot sync sales_returns local_id {localId}: required sales parent local_id {lanSaleId} has no cloud ID mapping.")
+                    End If
+                    Dim saleId As Object = saleIdMap(lanSaleId)
+
+                    Dim approvedByUserId As Object = ResolveForeignKey(
+                        reader, "ApprovedByUserID", userIdMap, "sales_returns", localId, "users", False)
+                    Dim processedBy As Object = ResolveForeignKey(
+                        reader, "ProcessedBy", userIdMap, "sales_returns", localId, "users", False)
+                    Dim initiatedBy As Object = ResolveForeignKey(
+                        reader, "InitiatedBy", userIdMap, "sales_returns", localId, "users", False)
+
+                    Dim vals As New List(Of SyncVal)()
+                    vals.Add(New SyncVal(localId, NpgsqlDbType.Integer))
+                    vals.Add(New SyncVal(saleId, NpgsqlDbType.Integer))
+                    vals.Add(New SyncVal(GetStr(reader, "ReturnNumber"), NpgsqlDbType.Text))
+                    vals.Add(New SyncVal(Dcoalesce(GetDateDb(reader, "ReturnDate"), Date.UtcNow), NpgsqlDbType.TimestampTz))
+                    vals.Add(New SyncVal(Dcoalesce(GetStr(reader, "ReturnType"), "Exchange"), NpgsqlDbType.Text))
+                    vals.Add(New SyncVal(GetStr(reader, "Reason"), NpgsqlDbType.Text))
+                    vals.Add(New SyncVal(Dcoalesce(GetDecimalDb(reader, "RefundAmount"), 0D), NpgsqlDbType.Numeric))
+                    vals.Add(New SyncVal(Dcoalesce(GetDecimalDb(reader, "AdditionalPaymentAmount"), 0D), NpgsqlDbType.Numeric))
+                    vals.Add(New SyncVal(GetStr(reader, "SettlementMethod"), NpgsqlDbType.Text))
+                    vals.Add(New SyncVal(GetStr(reader, "SettlementReference"), NpgsqlDbType.Text))
+                    vals.Add(New SyncVal(GetStr(reader, "ApprovedBy"), NpgsqlDbType.Text))
+                    vals.Add(New SyncVal(approvedByUserId, NpgsqlDbType.Integer))
+                    vals.Add(New SyncVal(processedBy, NpgsqlDbType.Integer))
+                    vals.Add(New SyncVal(initiatedBy, NpgsqlDbType.Integer))
+                    vals.Add(New SyncVal(GetStr(reader, "Notes"), NpgsqlDbType.Text))
+                    vals.Add(New SyncVal(Dcoalesce(GetStr(reader, "Status"), "Completed"), NpgsqlDbType.Text))
+                    vals.Add(New SyncVal(Date.UtcNow, NpgsqlDbType.TimestampTz))
+                    chunk.Add(vals)
+
+                    If chunk.Count >= ChunkSize Then
+                        UpsertChunk(pg, chunk, SalesReturnsInsert, SalesReturnsSuffix,
+                                    Sub(lanId, cloudId) returnIdMap(lanId) = cloudId)
+                        count += chunk.Count
+                        chunk.Clear()
+                        ReportProgress(progress, $"sales_returns synced: {count}")
+                    End If
+                End While
+            End Using
+        End Using
+        If chunk.Count > 0 Then
+            UpsertChunk(pg, chunk, SalesReturnsInsert, SalesReturnsSuffix,
+                        Sub(lanId, cloudId) returnIdMap(lanId) = cloudId)
+            count += chunk.Count
+            ReportProgress(progress, $"sales_returns synced: {count}")
+        End If
+        Return count
+    End Function
+
+    Private Function SyncSalesReturnItems(local As NpgsqlConnection, pg As NpgsqlConnection,
+                                          returnIdMap As Dictionary(Of Integer, Integer),
+                                          saleItemIdMap As Dictionary(Of Integer, Integer),
+                                          productIdMap As Dictionary(Of Integer, Integer),
+                                          returnItemIdMap As Dictionary(Of Integer, Integer),
+                                          progress As Action(Of String),
+                                          full As Boolean) As Integer
+        Dim count As Integer = 0
+        Dim chunk As New List(Of List(Of SyncVal))()
+        Dim selectSql As String =
+            "SELECT ReturnItemID, ReturnID, OriginalSaleItemID, ProductID, Quantity, UnitPrice, Condition, Disposition, " &
+            "LineRefundAmount, ReturnCreditAmount, ReplacementProductID, ReplacementQuantity, ReplacementUnitPrice FROM SalesReturnItems"
+        Using cmd As New NpgsqlCommand(selectSql, local)
+            Using reader As NpgsqlDataReader = cmd.ExecuteReader()
+                While reader.Read()
+                    Dim localId As Integer = Convert.ToInt32(reader("ReturnItemID"))
+
+                    ' return_id is required; silently skipping would lose the return item.
+                    Dim lanReturnId As Integer = Convert.ToInt32(reader("ReturnID"))
+                    If Not returnIdMap.ContainsKey(lanReturnId) Then
+                        Throw New InvalidOperationException(
+                            $"Cannot sync sales_return_items local_id {localId}: required sales_returns parent local_id {lanReturnId} has no cloud ID mapping.")
+                    End If
+                    Dim returnId As Object = returnIdMap(lanReturnId)
+
+                    Dim originalSaleItemId As Object = DBNull.Value
+                    Dim rawOriginalSaleItem = GetValue(reader, "OriginalSaleItemID")
+                    If Not IsDBNull(rawOriginalSaleItem) AndAlso rawOriginalSaleItem IsNot Nothing Then
+                        Dim lanOriginalSaleItemId As Integer = Convert.ToInt32(rawOriginalSaleItem)
+                        If Not saleItemIdMap.ContainsKey(lanOriginalSaleItemId) Then
+                            Throw New InvalidOperationException(
+                                $"Cannot sync sales_return_items local_id {localId}: required sale_items parent local_id {lanOriginalSaleItemId} has no cloud ID mapping.")
+                        End If
+                        originalSaleItemId = saleItemIdMap(lanOriginalSaleItemId)
+                    End If
+
+                    Dim productId As Object = ResolveForeignKey(
+                        reader, "ProductID", productIdMap, "sales_return_items", localId, "products", True)
+                    Dim replacementProductId As Object = ResolveForeignKey(
+                        reader, "ReplacementProductID", productIdMap, "sales_return_items", localId, "products", False)
+
+                    Dim vals As New List(Of SyncVal)()
+                    vals.Add(New SyncVal(localId, NpgsqlDbType.Integer))
+                    vals.Add(New SyncVal(returnId, NpgsqlDbType.Integer))
+                    vals.Add(New SyncVal(originalSaleItemId, NpgsqlDbType.Integer))
+                    vals.Add(New SyncVal(productId, NpgsqlDbType.Integer))
+                    vals.Add(New SyncVal(GetIntDb(reader, "Quantity"), NpgsqlDbType.Integer))
+                    vals.Add(New SyncVal(Dcoalesce(GetDecimalDb(reader, "UnitPrice"), 0D), NpgsqlDbType.Numeric))
+                    vals.Add(New SyncVal(Dcoalesce(GetStr(reader, "Condition"), "Good"), NpgsqlDbType.Text))
+                    vals.Add(New SyncVal(Dcoalesce(GetStr(reader, "Disposition"), "Quarantine"), NpgsqlDbType.Text))
+                    vals.Add(New SyncVal(Dcoalesce(GetDecimalDb(reader, "LineRefundAmount"), 0D), NpgsqlDbType.Numeric))
+                    vals.Add(New SyncVal(Dcoalesce(GetDecimalDb(reader, "ReturnCreditAmount"), 0D), NpgsqlDbType.Numeric))
+                    vals.Add(New SyncVal(replacementProductId, NpgsqlDbType.Integer))
+                    vals.Add(New SyncVal(GetIntDb(reader, "ReplacementQuantity"), NpgsqlDbType.Integer))
+                    vals.Add(New SyncVal(GetDecimalDb(reader, "ReplacementUnitPrice"), NpgsqlDbType.Numeric))
+                    vals.Add(New SyncVal(Date.UtcNow, NpgsqlDbType.TimestampTz))
+                    vals.Add(New SyncVal(Date.UtcNow, NpgsqlDbType.TimestampTz))
+                    chunk.Add(vals)
+
+                    If chunk.Count >= ChunkSize Then
+                        UpsertChunk(pg, chunk, SalesReturnItemsInsert, SalesReturnItemsSuffix,
+                                    Sub(lanId, cloudId) returnItemIdMap(lanId) = cloudId)
+                        count += chunk.Count
+                        chunk.Clear()
+                        ReportProgress(progress, $"sales_return_items synced: {count}")
+                    End If
+                End While
+            End Using
+        End Using
+        If chunk.Count > 0 Then
+            UpsertChunk(pg, chunk, SalesReturnItemsInsert, SalesReturnItemsSuffix,
+                        Sub(lanId, cloudId) returnItemIdMap(lanId) = cloudId)
+            count += chunk.Count
+            ReportProgress(progress, $"sales_return_items synced: {count}")
+        End If
+        Return count
+    End Function
+
+    Private Function SyncReturnQuarantine(local As NpgsqlConnection, pg As NpgsqlConnection,
+                                          returnItemIdMap As Dictionary(Of Integer, Integer),
+                                          productIdMap As Dictionary(Of Integer, Integer),
+                                          userIdMap As Dictionary(Of Integer, Integer),
+                                          progress As Action(Of String),
+                                          full As Boolean) As Integer
+        Dim count As Integer = 0
+        Dim chunk As New List(Of List(Of SyncVal))()
+        Dim selectSql As String =
+            "SELECT QuarantineID, ReturnItemID, ProductID, Quantity, ItemCondition, Status, ReceivedAt, ResolvedAt, ResolvedBy, Notes FROM ReturnQuarantine"
+        Using cmd As New NpgsqlCommand(selectSql, local)
+            Using reader As NpgsqlDataReader = cmd.ExecuteReader()
+                While reader.Read()
+                    Dim localId As Integer = Convert.ToInt32(reader("QuarantineID"))
+                    Dim returnItemId As Object = ResolveForeignKey(
+                        reader, "ReturnItemID", returnItemIdMap, "return_quarantine", localId, "sales_return_items", True)
+                    Dim productId As Object = ResolveForeignKey(
+                        reader, "ProductID", productIdMap, "return_quarantine", localId, "products", True)
+                    Dim resolvedBy As Object = ResolveForeignKey(
+                        reader, "ResolvedBy", userIdMap, "return_quarantine", localId, "users", False)
+
+                    Dim vals As New List(Of SyncVal)()
+                    vals.Add(New SyncVal(localId, NpgsqlDbType.Integer))
+                    vals.Add(New SyncVal(returnItemId, NpgsqlDbType.Integer))
+                    vals.Add(New SyncVal(productId, NpgsqlDbType.Integer))
+                    vals.Add(New SyncVal(GetIntDb(reader, "Quantity"), NpgsqlDbType.Integer))
+                    vals.Add(New SyncVal(GetStr(reader, "ItemCondition"), NpgsqlDbType.Text))
+                    vals.Add(New SyncVal(Dcoalesce(GetStr(reader, "Status"), "Pending"), NpgsqlDbType.Text))
+                    vals.Add(New SyncVal(Dcoalesce(GetDateDb(reader, "ReceivedAt"), Date.UtcNow), NpgsqlDbType.TimestampTz))
+                    vals.Add(New SyncVal(GetDateDb(reader, "ResolvedAt"), NpgsqlDbType.TimestampTz))
+                    vals.Add(New SyncVal(resolvedBy, NpgsqlDbType.Integer))
+                    vals.Add(New SyncVal(GetStr(reader, "Notes"), NpgsqlDbType.Text))
+                    vals.Add(New SyncVal(Date.UtcNow, NpgsqlDbType.TimestampTz))
+                    chunk.Add(vals)
+
+                    If chunk.Count >= ChunkSize Then
+                        UpsertChunk(pg, chunk, ReturnQuarantineInsert, ReturnQuarantineSuffix, Nothing)
+                        count += chunk.Count
+                        chunk.Clear()
+                        ReportProgress(progress, $"return_quarantine synced: {count}")
+                    End If
+                End While
+            End Using
+        End Using
+        If chunk.Count > 0 Then
+            UpsertChunk(pg, chunk, ReturnQuarantineInsert, ReturnQuarantineSuffix, Nothing)
+            count += chunk.Count
+            ReportProgress(progress, $"return_quarantine synced: {count}")
         End If
         Return count
     End Function
@@ -1197,66 +1462,6 @@ Public Module SupabaseSync
         Return count
     End Function
 
-    Private Function SyncCompanySettings(local As NpgsqlConnection, pg As NpgsqlConnection,
-                                         progress As Action(Of String)) As Integer
-        Dim count As Integer = 0
-        Dim chunk As New List(Of List(Of SyncVal))()
-        ' Only the active settings row is synced (SettingID becomes local_id)
-        Using cmd As New NpgsqlCommand(
-            "SELECT SettingID, CompanyName, TIN, Address, Phone, Email, Website, LogoPath, BIRAuthNumber, PTUNumber, " &
-            "ValidityYears, ReceiptFooter, CompanyHours, IsActive, DateCreated, LastModified " &
-            "FROM CompanySettings WHERE IsActive = 1 ORDER BY DateCreated DESC LIMIT 1", local)
-            Using reader As NpgsqlDataReader = cmd.ExecuteReader()
-                While reader.Read()
-                    Dim localId As Integer = Convert.ToInt32(reader("SettingID"))
-
-                    Dim logoUrl As Object = DBNull.Value
-                    Dim rawLogo = GetStr(reader, "LogoPath")
-                    If Not IsDBNull(rawLogo) Then
-                        Dim logoFileName As String = rawLogo.ToString()
-                        If Not String.IsNullOrWhiteSpace(logoFileName) Then
-                            Dim localLogo As String = Path.Combine(Connection.GetImagesFolder("company"), logoFileName)
-                            Dim url = UploadImageToBucket(localLogo, "company", logoFileName)
-                            If url IsNot Nothing Then logoUrl = url
-                        End If
-                    End If
-
-                    Dim vals As New List(Of SyncVal)()
-                    vals.Add(New SyncVal(localId, NpgsqlDbType.Integer))
-                    vals.Add(New SyncVal(GetStr(reader, "CompanyName"), NpgsqlDbType.Text))
-                    vals.Add(New SyncVal(GetStr(reader, "TIN"), NpgsqlDbType.Text))
-                    vals.Add(New SyncVal(GetStr(reader, "Address"), NpgsqlDbType.Text))
-                    vals.Add(New SyncVal(GetStr(reader, "Phone"), NpgsqlDbType.Text))
-                    vals.Add(New SyncVal(GetStr(reader, "Email"), NpgsqlDbType.Text))
-                    vals.Add(New SyncVal(GetStr(reader, "Website"), NpgsqlDbType.Text))
-                    vals.Add(New SyncVal(logoUrl, NpgsqlDbType.Text))
-                    vals.Add(New SyncVal(GetStr(reader, "BIRAuthNumber"), NpgsqlDbType.Text))
-                    vals.Add(New SyncVal(GetStr(reader, "PTUNumber"), NpgsqlDbType.Text))
-                    vals.Add(New SyncVal(Dcoalesce(GetIntDb(reader, "ValidityYears"), 5), NpgsqlDbType.Integer))
-                    vals.Add(New SyncVal(GetStr(reader, "ReceiptFooter"), NpgsqlDbType.Text))
-                    vals.Add(New SyncVal(GetStr(reader, "CompanyHours"), NpgsqlDbType.Text))
-                    vals.Add(New SyncVal(GetBoolDb(reader, "IsActive"), NpgsqlDbType.Boolean))
-                    vals.Add(New SyncVal(Dcoalesce(GetDateDb(reader, "DateCreated"), Date.UtcNow), NpgsqlDbType.TimestampTz))
-                    vals.Add(New SyncVal(Dcoalesce(GetDateDb(reader, "LastModified"), Date.UtcNow), NpgsqlDbType.TimestampTz))
-                    vals.Add(New SyncVal(Date.UtcNow, NpgsqlDbType.TimestampTz))
-                    chunk.Add(vals)
-
-                    If chunk.Count >= ChunkSize Then
-                        UpsertChunk(pg, chunk, CompanySettingsInsert, CompanySettingsSuffix, Nothing)
-                        count += chunk.Count
-                        chunk.Clear()
-                    End If
-                End While
-            End Using
-        End Using
-        If chunk.Count > 0 Then
-            UpsertChunk(pg, chunk, CompanySettingsInsert, CompanySettingsSuffix, Nothing)
-            count += chunk.Count
-        End If
-        ReportProgress(progress, $"company_settings synced: {count}")
-        Return count
-    End Function
-
     ' ------------------------------------------------------------
     ' Helpers
     ' ------------------------------------------------------------
@@ -1328,17 +1533,19 @@ Public Module SupabaseSync
     Private Function ReconcileCloudToLocal(local As NpgsqlConnection, pg As NpgsqlConnection,
                                            progress As Action(Of String)) As Integer
         Dim total As Integer = 0
+        ReconcileSimpleTable(local, pg, "return_quarantine", "QuarantineID", progress, total, Nothing)
+        ReconcileSimpleTable(local, pg, "sales_return_items", "ReturnItemID", progress, total, Nothing)
         ReconcileSimpleTable(local, pg, "sale_items", "SaleItemID", progress, total, Nothing)
+        ReconcileSimpleTable(local, pg, "sales_returns", "ReturnID", progress, total, Nothing)
         ReconcileSimpleTable(local, pg, "inventory_logs", "LogID", progress, total, Nothing)
         ReconcileSimpleTable(local, pg, "audit_logs", "AuditID", progress, total, Nothing)
         ReconcileSimpleTable(local, pg, "sales", "SaleID", progress, total, Nothing)
-        ReconcileCompanySettings(local, pg, total)
         ReconcileSimpleTable(local, pg, "products", "ProductID", progress, total,
-            New String() {"sale_items/product_id", "inventory_logs/product_id"})
+            New String() {"sale_items/product_id", "inventory_logs/product_id", "sales_return_items/product_id", "sales_return_items/replacement_product_id", "return_quarantine/product_id"})
         ReconcileSimpleTable(local, pg, "suppliers", "SupplierID", progress, total,
             New String() {"products/supplier_id"})
         ReconcileSimpleTable(local, pg, "users", "UserID", progress, total,
-            New String() {"sales/user_id", "inventory_logs/user_id", "audit_logs/user_id"})
+            New String() {"sales/user_id", "inventory_logs/user_id", "audit_logs/user_id", "sales_returns/approved_by_user_id", "sales_returns/processed_by", "sales_returns/initiated_by", "return_quarantine/resolved_by"})
         Return total
     End Function
 
@@ -1393,26 +1600,6 @@ Public Module SupabaseSync
         ReportProgress(progress, $"{cloudTable}: reconcile - deleted {actuallyDeleted} row(s) removed locally")
     End Sub
 
-    Private Sub ReconcileCompanySettings(local As NpgsqlConnection, pg As NpgsqlConnection, ByRef total As Integer)
-        Dim activeId As Integer = -1
-        Using cmd As New NpgsqlCommand(
-            "SELECT SettingID FROM CompanySettings WHERE IsActive = 1 ORDER BY DateCreated DESC LIMIT 1", local)
-            Dim res As Object = cmd.ExecuteScalar()
-            If res IsNot Nothing AndAlso Not IsDBNull(res) Then activeId = Convert.ToInt32(res)
-        End Using
-        If activeId < 0 Then
-            Using cmd As New NpgsqlCommand("DELETE FROM company_settings", pg)
-                total += cmd.ExecuteNonQuery()
-            End Using
-            Return
-        End If
-        ' Only the active settings row is mirrored; drop stale ones.
-        Using cmd As New NpgsqlCommand("DELETE FROM company_settings WHERE local_id <> @id", pg)
-            cmd.Parameters.Add("@id", NpgsqlDbType.Integer).Value = activeId
-            total += cmd.ExecuteNonQuery()
-        End Using
-    End Sub
-
     Private Sub NullOutReferences(pg As NpgsqlConnection, childTable As String, fkColumn As String,
                                   parentTable As String, ids As List(Of Integer))
         For i As Integer = 0 To ids.Count - 1 Step ChunkSize
@@ -1434,6 +1621,9 @@ Public Module SupabaseSync
     Private Function GetLocalTableName(cloudTable As String) As String
         Select Case cloudTable
             Case "sale_items" : Return "SaleItems"
+            Case "sales_returns" : Return "SalesReturns"
+            Case "sales_return_items" : Return "SalesReturnItems"
+            Case "return_quarantine" : Return "ReturnQuarantine"
             Case "inventory_logs" : Return "InventoryLog"
             Case "audit_logs" : Return "AuditLog"
             Case "sales" : Return "Sales"
@@ -1457,7 +1647,8 @@ Public Module SupabaseSync
 
         Dim readOnlyTables As String() = {
             "users", "suppliers", "products", "sales", "sale_items",
-            "inventory_logs", "audit_logs", "company_settings"
+            "sales_returns", "sales_return_items", "return_quarantine",
+            "inventory_logs", "audit_logs"
         }
         For Each t As String In readOnlyTables
             Try
@@ -1542,6 +1733,17 @@ Public Module SupabaseSync
         End Try
     End Function
 
+    Private Sub PopulateCloudIdMap(pg As NpgsqlConnection, table As String,
+                                   idMap As Dictionary(Of Integer, Integer))
+        Using cmd As New NpgsqlCommand("SELECT local_id, id FROM " & table, pg)
+            Using reader As NpgsqlDataReader = cmd.ExecuteReader()
+                While reader.Read()
+                    idMap(Convert.ToInt32(reader("local_id"))) = Convert.ToInt32(reader("id"))
+                End While
+            End Using
+        End Using
+    End Sub
+
     Private Function GetFirstProductImagePath(local As NpgsqlConnection, productId As Integer) As String
         Try
             Using cmd As New NpgsqlCommand(
@@ -1570,6 +1772,26 @@ Public Module SupabaseSync
             Return CObj(idMap(lanId))
         End If
         Return DBNull.Value
+    End Function
+
+    Private Function ResolveForeignKey(reader As NpgsqlDataReader, column As String,
+                                       idMap As Dictionary(Of Integer, Integer), childTable As String,
+                                       childLocalId As Integer, parentTable As String, required As Boolean) As Object
+        Dim raw As Object = GetValue(reader, column)
+        If raw Is Nothing OrElse IsDBNull(raw) Then
+            If required Then
+                Throw New InvalidOperationException(
+                    $"Cannot sync {childTable} local_id {childLocalId}: required {parentTable} parent in {column} is missing.")
+            End If
+            Return DBNull.Value
+        End If
+
+        Dim lanId As Integer = Convert.ToInt32(raw)
+        If Not idMap.ContainsKey(lanId) Then
+            Throw New InvalidOperationException(
+                $"Cannot sync {childTable} local_id {childLocalId}: {column} references {parentTable} local_id {lanId}, which has no cloud ID mapping.")
+        End If
+        Return CObj(idMap(lanId))
     End Function
 
     Private Sub AddParam(cmd As NpgsqlCommand, name As String, value As Object, dbType As NpgsqlDbType)

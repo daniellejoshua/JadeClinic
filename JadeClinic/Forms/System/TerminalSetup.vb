@@ -37,6 +37,7 @@ Public Class TerminalSetup
             InitializeDataGridView()
 
             AddHandler btnRefresh.Click, AddressOf btnRefresh_Click
+            AddHandler btnBack.Click, AddressOf NavigateBackToSystem
 
             LoadTerminals()
 
@@ -58,6 +59,29 @@ Public Class TerminalSetup
         End If
     End Sub
 
+    Private Sub TerminalSetup_Disposed(sender As Object, e As EventArgs) Handles MyBase.Disposed
+        If _refreshTimer IsNot Nothing Then _refreshTimer.Stop()
+    End Sub
+
+    Private Sub NavigateBackToSystem(sender As Object, e As EventArgs)
+        NavigateBackToSystem()
+    End Sub
+
+    Private Sub NavigateBackToSystem()
+        If isNavigating Then Return
+        isNavigating = True
+        If _refreshTimer IsNot Nothing Then _refreshTimer.Stop()
+        NavigationBuilder.NavigateToForm(Me, GetType(Sys))
+    End Sub
+
+    Protected Overrides Function ProcessCmdKey(ByRef msg As Message, keyData As Keys) As Boolean
+        If keyData = Keys.Escape Then
+            NavigateBackToSystem()
+            Return True
+        End If
+        Return MyBase.ProcessCmdKey(msg, keyData)
+    End Function
+
     Private Function ValidateAdminSession() As Boolean
         If String.IsNullOrEmpty(frmLoginvb.LoggedInUsername) Then
             MessageBox.Show("User session expired. Please log in again.", "Session Error", MessageBoxButtons.OK, MessageBoxIcon.Error)
@@ -70,9 +94,8 @@ Public Class TerminalSetup
             Return False
         End If
 
-        Dim role As String = If(frmLoginvb.LoggedInRole, "").ToUpperInvariant()
-        If role <> "ADMIN" AndAlso role <> "ADMINISTRATOR" Then
-            MessageBox.Show("Only administrators can manage PC terminals.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+        If Not Rbac.CanManageTerminals() Then
+            MessageBox.Show("Only a Super Admin can manage PC terminals.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning)
             NavigationBuilder.NavigateToForm(Me, GetType(Dashboard))
             Return False
         End If

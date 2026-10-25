@@ -24,6 +24,7 @@ Partial Class SyncLogs
     Private Sub InitializeComponent()
         LabelTitle = New Label()
         lblSubtitle = New Label()
+        btnBack = New Guna.UI2.WinForms.Guna2Button()
         NavigationPanel = New Guna.UI2.WinForms.Guna2Panel()
         PictureBox9 = New PictureBox()
         Guna2Panel1 = New Guna.UI2.WinForms.Guna2Panel()
@@ -46,7 +47,7 @@ Partial Class SyncLogs
         LabelTitle.AutoSize = True
         LabelTitle.Font = New Font("Poppins Medium", 16.2F, FontStyle.Regular, GraphicsUnit.Point, CByte(0))
         LabelTitle.ForeColor = Color.FromArgb(CByte(42), CByte(42), CByte(42))
-        LabelTitle.Location = New Point(262, 20)
+        LabelTitle.Location = New Point(310, 20)
         LabelTitle.Name = "LabelTitle"
         LabelTitle.Size = New Size(148, 50)
         LabelTitle.TabIndex = 0
@@ -57,11 +58,28 @@ Partial Class SyncLogs
         lblSubtitle.AutoSize = True
         lblSubtitle.Font = New Font("Poppins", 9.5F)
         lblSubtitle.ForeColor = Color.FromArgb(CByte(119), CByte(119), CByte(119))
-        lblSubtitle.Location = New Point(264, 68)
+        lblSubtitle.Location = New Point(312, 68)
         lblSubtitle.Name = "lblSubtitle"
-        lblSubtitle.Size = New Size(560, 28)
+        lblSubtitle.Size = New Size(372, 28)
         lblSubtitle.TabIndex = 1
-        lblSubtitle.Text = "Cloud sync history and the computers connected to the clinic system"
+        lblSubtitle.Text = "Review the clinic's cloud synchronization history"
+        '
+        'btnBack
+        '
+        btnBack.BorderColor = Color.FromArgb(CByte(220), CByte(220), CByte(220))
+        btnBack.BorderRadius = 10
+        btnBack.BorderThickness = 1
+        btnBack.FillColor = Color.White
+        btnBack.Font = New Font("Segoe UI", 18F, FontStyle.Regular)
+        btnBack.ForeColor = Color.FromArgb(CByte(61), CByte(65), CByte(66))
+        btnBack.Location = New Point(246, 24)
+        btnBack.Name = "btnBack"
+        btnBack.ShadowDecoration.Depth = 0
+        btnBack.ShadowDecoration.Enabled = False
+        btnBack.Size = New Size(48, 44)
+        btnBack.TabIndex = 2
+        btnBack.Text = "<"
+        btnBack.TextOffset = New Point(0, -2)
         '
         'NavigationPanel
         '
@@ -92,18 +110,12 @@ Partial Class SyncLogs
         'Guna2Panel1
         '
         Guna2Panel1.Anchor = AnchorStyles.Top Or AnchorStyles.Left
-        Guna2Panel1.AutoScroll = True
+        Guna2Panel1.AutoScroll = False
         Guna2Panel1.BackColor = Color.Transparent
         Guna2Panel1.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
         Guna2Panel1.BorderRadius = 10
         Guna2Panel1.BorderThickness = 2
         Guna2Panel1.Controls.Add(dgvSync)
-        Guna2Panel1.Controls.Add(dgvPCs)
-        Guna2Panel1.Controls.Add(lblSectionSync)
-        Guna2Panel1.Controls.Add(lblSectionPCs)
-        Guna2Panel1.Controls.Add(lblInfo)
-        Guna2Panel1.Controls.Add(btnRefresh)
-        Guna2Panel1.Controls.Add(btnExport)
         Guna2Panel1.CustomizableEdges = New Guna.UI2.WinForms.Suite.CustomizableEdges()
         Guna2Panel1.FillColor = Color.White
         Guna2Panel1.Location = New Point(240, 113)
@@ -122,13 +134,13 @@ Partial Class SyncLogs
         dgvSync.Anchor = AnchorStyles.Top Or AnchorStyles.Left
         dgvSync.BackgroundColor = Color.FromArgb(CByte(250), CByte(249), CByte(246))
         dgvSync.BorderStyle = System.Windows.Forms.BorderStyle.None
-        dgvSync.ColumnHeadersHeight = 40
+        dgvSync.ColumnHeadersHeight = 44
         dgvSync.GridColor = Color.FromArgb(CByte(220), CByte(220), CByte(220))
-        dgvSync.Location = New Point(8, 336)
+        dgvSync.Location = New Point(8, 8)
         dgvSync.Name = "dgvSync"
         dgvSync.RowHeadersVisible = False
-        dgvSync.RowTemplate.Height = 44
-        dgvSync.Size = New Size(1641, 540)
+        dgvSync.RowTemplate.Height = 50
+        dgvSync.Size = New Size(1641, 832)
         dgvSync.TabIndex = 45
         dgvSync.ThemeStyle.BackColor = Color.White
         dgvSync.ThemeStyle.HeaderStyle.BackColor = Color.FromArgb(CByte(250), CByte(249), CByte(246))
@@ -136,7 +148,7 @@ Partial Class SyncLogs
         dgvSync.ThemeStyle.ReadOnly = True
         dgvSync.ThemeStyle.RowsStyle.BackColor = Color.White
         dgvSync.ThemeStyle.RowsStyle.ForeColor = Color.FromArgb(CByte(51), CByte(51), CByte(51))
-        dgvSync.ThemeStyle.RowsStyle.Height = 44
+        dgvSync.ThemeStyle.RowsStyle.Height = 50
         '
         'dgvPCs
         '
@@ -236,6 +248,7 @@ Partial Class SyncLogs
         BackColor = Color.FromArgb(CByte(248), CByte(248), CByte(247))
         ClientSize = New Size(1900, 1080)
         Controls.Add(lblSubtitle)
+        Controls.Add(btnBack)
         Controls.Add(NavigationPanel)
         Controls.Add(LabelTitle)
         Controls.Add(Guna2Panel1)
@@ -255,6 +268,7 @@ Partial Class SyncLogs
 
     Friend WithEvents LabelTitle As Label
     Friend WithEvents lblSubtitle As Label
+    Friend WithEvents btnBack As Guna.UI2.WinForms.Guna2Button
     Friend WithEvents NavigationPanel As Guna.UI2.WinForms.Guna2Panel
     Friend WithEvents PictureBox9 As PictureBox
     Friend WithEvents Guna2Panel1 As Guna.UI2.WinForms.Guna2Panel

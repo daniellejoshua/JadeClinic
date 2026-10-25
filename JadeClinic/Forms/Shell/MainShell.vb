@@ -22,6 +22,7 @@ Public Class MainShell
     Private WithEvents _approvalTimer As New Timer() With {.Interval = 10000}
     Private _approvalPromptOpen As Boolean = False
     Private _approvalPromptedIds As New HashSet(Of String)()
+    Private _exitApplicationAfterClose As Boolean = False
 
     ' Transparent version tag shown in the bottom-right of every page.
     Private _versionLabel As Label
@@ -400,6 +401,17 @@ Public Class MainShell
     ' Pages are disposed without FormClosing (see IDraftPersistable comment above),
     ' so the shell is the reliable place to save the live page state before exit.
     Private Sub MainShell_FormClosing(sender As Object, e As FormClosingEventArgs) Handles MyBase.FormClosing
+        ' frmLoginvb is the VB application main form and remains hidden after
+        ' login. Alt+F4 therefore closes only this shell unless we explicitly
+        ' shut down the application after the shell has closed.
+        If e.CloseReason = CloseReason.UserClosing Then
+            If EscForm.ConfirmExit(Me) <> DialogResult.Yes Then
+                e.Cancel = True
+                Return
+            End If
+            _exitApplicationAfterClose = True
+        End If
+
         Try
             If _currentPage IsNot Nothing Then
                 Dim persistable As IDraftPersistable = TryCast(_currentPage, IDraftPersistable)
@@ -409,6 +421,12 @@ Public Class MainShell
             End If
         Catch
         End Try
+    End Sub
+
+    Private Sub MainShell_FormClosed(sender As Object, e As FormClosedEventArgs) Handles MyBase.FormClosed
+        If _exitApplicationAfterClose Then
+            Application.Exit()
+        End If
     End Sub
 
     Private Sub ShowOverlay(visible As Boolean)
@@ -425,15 +443,25 @@ Public Class MainShell
         ShowPage(startType)
     End Sub
 
-    ' Central role guard: Staff can only ever open the POS/Sales page and
-    ' Managers can open everything except the System Settings tools. Admin is
-    ' unrestricted. Guards even programmatic navigation attempts.
+    ' Central role guard: Staff can only ever open the POS/Sales page, Managers
+    ' can open everything except the System Settings tools, Admin can open
+    ' everything except terminal configuration, and Super Admin is unrestricted.
+    ' Guards even programmatic navigation attempts.
     Private Function EnforceRoleAccess(pageType As Type) As Type
         Try
-            Dim role As String = If(frmLoginvb.LoggedInRole, String.Empty).ToUpperInvariant()
-            If role = "ADMIN" OrElse role = "ADMINISTRATOR" Then Return pageType
+            Dim access As Rbac.AccessRole = Rbac.CurrentRole()
 
-            If role = "MANAGER" Then
+            ' Super Admin is unrestricted.
+            If access >= Rbac.AccessRole.SuperAdmin Then Return pageType
+
+            ' Admin: everything except terminal configuration (Super Admin only).
+            If access = Rbac.AccessRole.Admin Then
+                If pageType Is GetType(TerminalSetup) Then Return GetType(Dashboard)
+                Return pageType
+            End If
+
+            ' Manager: everything except System Settings and its tools.
+            If access = Rbac.AccessRole.Manager Then
                 If pageType Is GetType(Sys) OrElse
                    pageType Is GetType(TerminalSetup) OrElse
                    pageType Is GetType(SyncLogs) Then

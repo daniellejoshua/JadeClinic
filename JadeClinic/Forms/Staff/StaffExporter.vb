@@ -147,15 +147,15 @@ Public Class StaffExporter
         Dim tempLogoPath As String = Nothing
 
         Try
-            Dim companyName As String = CompanySettingsManager.Instance.GetSettingString("CompanyName", "JADE CLINIC")
-            Dim companyTagline As String = CompanySettingsManager.Instance.GetSettingString("CompanyTagline", "Professional Staff Management & Human Resources")
-            Dim companyPhone As String = CompanySettingsManager.Instance.GetSettingString("Phone", "")
-            Dim companyAddress As String = CompanySettingsManager.Instance.GetSettingString("Address", "")
-            Dim companyTIN As String = CompanySettingsManager.Instance.GetSettingString("TIN", "")
+            Dim companyName As String = Branding.Instance.GetSettingString("CompanyName", "JADE CLINIC")
+            Dim companyTagline As String = Branding.Instance.GetSettingString("CompanyTagline", "Professional Staff Management & Human Resources")
+            Dim companyPhone As String = Branding.Instance.GetSettingString("Phone", "")
+            Dim companyAddress As String = Branding.Instance.GetSettingString("Address", "")
+            Dim companyTIN As String = Branding.Instance.GetSettingString("TIN", "")
 
             ' Save logo to a temporary file for QuestPDF image usage
             Try
-                Dim logoImg As System.Drawing.Image = CompanySettingsManager.Instance.GetCompanyLogo()
+                Dim logoImg As System.Drawing.Image = Branding.Instance.GetCompanyLogo()
                 If logoImg IsNot Nothing Then
                     Dim outDir = Path.GetDirectoryName(filePath)
                     If String.IsNullOrEmpty(outDir) Then outDir = Application.StartupPath
@@ -170,6 +170,7 @@ Public Class StaffExporter
             Dim totalStaff As Integer = staffDataList.Count
             Dim activeStaff As Integer = staffDataList.Where(Function(s) s.IsActive).Count()
             Dim inactiveStaff As Integer = totalStaff - activeStaff
+            Dim superAdminCount As Integer = staffDataList.Where(Function(s) s.UserRole.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase)).Count()
             Dim adminCount As Integer = staffDataList.Where(Function(s) s.UserRole.Equals("Admin", StringComparison.OrdinalIgnoreCase)).Count()
             Dim managerCount As Integer = staffDataList.Where(Function(s) s.UserRole.Equals("Manager", StringComparison.OrdinalIgnoreCase)).Count()
             Dim staffCount As Integer = staffDataList.Where(Function(s) s.UserRole.Equals("Staff", StringComparison.OrdinalIgnoreCase)).Count()
@@ -223,8 +224,9 @@ Public Class StaffExporter
                                                                                                                                                                                                                                                                                   left.Item().Text($"Active Staff: {activeStaff}").FontSize(9).FontColor(Colors.Green.Medium)
                                                                                                                                                                                                                                                                                   left.Item().Text($"Inactive Staff: {inactiveStaff}").FontSize(9).FontColor(Colors.Red.Medium)
                                                                                                                                                                                                                                                                               End Sub)
-                                                                                                                                                                                                                                                   sRow.RelativeItem().Column(Sub(right)
-                                                                                                                                                                                                                                                                                  right.Item().Text($"Administrators: {adminCount}").FontSize(9).FontColor(Colors.Blue.Medium)
+                                                                                                                                                                                                                                                    sRow.RelativeItem().Column(Sub(right)
+                                                                                                                                                                                                                                                                                   right.Item().Text($"Super Admins: {superAdminCount}").FontSize(9).FontColor(Colors.Red.Medium)
+                                                                                                                                                                                                                                                                                   right.Item().Text($"Administrators: {adminCount}").FontSize(9).FontColor(Colors.Blue.Medium)
                                                                                                                                                                                                                                                                                   right.Item().Text($"Managers: {managerCount}").FontSize(9).FontColor(Colors.Purple.Medium)
                                                                                                                                                                                                                                                                                   right.Item().Text($"Staff Members: {staffCount}").FontSize(9).FontColor(Colors.Orange.Medium)
                                                                                                                                                                                                                                                                               End Sub)
@@ -264,6 +266,8 @@ Public Class StaffExporter
                                                                                                                                        ' Role with color coding
                                                                                                                                        Dim roleColor = Colors.Grey.Medium
                                                                                                                                        Select Case staff.UserRole.ToUpper()
+                                                                                                                                           Case "SUPERADMIN", "SUPER ADMIN", "SUPER_ADMIN"
+                                                                                                                                               roleColor = Colors.Red.Medium
                                                                                                                                            Case "ADMIN", "ADMINISTRATOR"
                                                                                                                                                roleColor = Colors.Blue.Medium
                                                                                                                                            Case "MANAGER"

@@ -108,7 +108,7 @@ Public Class InventoryLog
 
             ' Load company logo dynamically
             Try
-                Dim companyLogo As Image = CompanySettingsManager.Instance.GetCompanyLogo()
+                Dim companyLogo As Image = Branding.Instance.GetCompanyLogo()
                 If PictureBox9 IsNot Nothing AndAlso companyLogo IsNot Nothing Then
                     PictureBox9.Image = companyLogo
                     PictureBox9.SizeMode = PictureBoxSizeMode.StretchImage
@@ -1127,7 +1127,7 @@ Public Class InventoryLog
         ' Create overlay panel for modal effect
         Dim overlayPanel As New Panel()
         ' use darker overlay that matches the app dark background (semi-opaque)
-        Dim baseColor = CompanySettingsManager.Instance.GetColor("backgrounddark")
+        Dim baseColor = Branding.Instance.GetColor("backgrounddark")
         overlayPanel.BackColor = Color.FromArgb(200, baseColor.R, baseColor.G, baseColor.B)
         overlayPanel.Dock = DockStyle.Fill
         overlayPanel.Location = New Point(0, 0)
@@ -1190,13 +1190,13 @@ Public Class InventoryLog
         btn.Font = New Font("Poppins", 10, FontStyle.Regular)
         btn.TextAlign = HorizontalAlignment.Left
 
-        ' Colors consistent with SalesRecord navigation using CompanySettingsManager palette
-        Dim primary = CompanySettingsManager.Instance.GetColor("primarycolor")
-        Dim textPrimary = CompanySettingsManager.Instance.GetColor("backgrounddark")
+        ' Colors consistent with SalesRecord navigation using Branding palette
+        Dim primary = Branding.Instance.GetColor("primarycolor")
+        Dim textPrimary = Branding.Instance.GetColor("backgrounddark")
         Dim borderColor = System.Drawing.Color.FromArgb(200, 200, 200)
 
         btn.FillColor = If(isActive, primary, System.Drawing.Color.Transparent)
-        btn.ForeColor = If(isActive, textPrimary, CompanySettingsManager.Instance.GetColor("textsecondary"))
+        btn.ForeColor = If(isActive, textPrimary, Branding.Instance.GetColor("textsecondary"))
         btn.BorderThickness = If(isActive, 0, 1)
         btn.BorderColor = If(isActive, System.Drawing.Color.Transparent, borderColor)
         btn.BackColor = System.Drawing.Color.Transparent
@@ -1209,7 +1209,7 @@ Public Class InventoryLog
         AddHandler btn.MouseEnter, Sub()
                                        If Not isActive Then
                                            btn.FillColor = System.Drawing.Color.FromArgb(240, 240, 240)
-                                           btn.BorderColor = CompanySettingsManager.Instance.GetColor("secondarycolor")
+                                           btn.BorderColor = Branding.Instance.GetColor("secondarycolor")
                                            btn.Font = New Font("Poppins", 9, FontStyle.Bold)
                                        End If
                                    End Sub

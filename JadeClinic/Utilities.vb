@@ -290,6 +290,16 @@ Module Utilities
         Return SanitizeTerminalCode(terminalCode) & "-" & Date.Now.ToString("yyyyMMdd") & "-" & saleId.ToString("D6")
     End Function
 
+    ' Generates a readable ReturnNumber from a ReturnID, prefixed with "RTN".
+    ' Without a terminal code: RTN-yyyyMMdd-6-digit ReturnID
+    ' With a terminal code: RTN-{CODE}-yyyyMMdd-6-digit ReturnID
+    Public Function FormatReturnNumber(returnId As Integer, Optional terminalCode As String = "") As String
+        If String.IsNullOrWhiteSpace(terminalCode) Then
+            Return "RTN-" & Date.Now.ToString("yyyyMMdd") & "-" & returnId.ToString("D6")
+        End If
+        Return "RTN-" & SanitizeTerminalCode(terminalCode) & "-" & Date.Now.ToString("yyyyMMdd") & "-" & returnId.ToString("D6")
+    End Function
+
     ' Normalises a terminal name into a short, safe code for use inside a
     ' SaleNumber (uppercase alphanumerics only, max 10 chars).
     Public Function SanitizeTerminalCode(terminalName As String) As String
@@ -308,6 +318,8 @@ Module Utilities
     Public Function FormatEmployeeCode(userId As Integer, createdAt As Date) As String
         Return userId.ToString() & createdAt.ToString("yyyyMMddHHmmss")
     End Function
+
+
 
     ' Log audit trail - Updated for new AuditLog structure (UserID only, no Username column)
     Public Sub LogAudit(username As String, action As String, details As String, Optional userID As Integer? = Nothing)

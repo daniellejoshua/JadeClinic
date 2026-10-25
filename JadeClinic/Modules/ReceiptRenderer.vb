@@ -148,7 +148,7 @@ Public Module ReceiptRenderer
             Dim separator As String = New String("="c, Math.Max(45, CInt(contentWidth / g.MeasureString("=", regularFont).Width)))
 
             ' Company header
-            Dim cm As CompanySettingsManager = CompanySettingsManager.Instance
+            Dim cm As Branding = Branding.Instance
             Dim companyName As String = cm.GetSettingString("CompanyName", "JADE CLINIC")
             Dim companyPhone As String = cm.GetSettingString("Phone", "")
             Dim companyAddress As String = cm.GetSettingString("Address", "")

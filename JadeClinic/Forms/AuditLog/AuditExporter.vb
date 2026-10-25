@@ -134,9 +134,9 @@ Public Class AuditExporter
                                                       filterType As String,
                                                       filterDate As DateTime?,
                                                       selectedUser As String)
-        Dim companyName As String = CompanySettingsManager.Instance.GetSettingString("CompanyName", "JADE CLINIC")
-        Dim companyPhone As String = CompanySettingsManager.Instance.GetSettingString("Phone", "")
-        Dim companyAddress As String = CompanySettingsManager.Instance.GetSettingString("Address", "")
+        Dim companyName As String = Branding.Instance.GetSettingString("CompanyName", "JADE CLINIC")
+        Dim companyPhone As String = Branding.Instance.GetSettingString("Phone", "")
+        Dim companyAddress As String = Branding.Instance.GetSettingString("Address", "")
 
         Dim totalCount As Integer = logs.Count
         Dim authCount As Integer = logs.Where(Function(x) GetActionTypeLabel(x.Action) = "AUTH").Count()

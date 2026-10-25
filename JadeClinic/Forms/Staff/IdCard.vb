@@ -1,4 +1,4 @@
-﻿Imports System.IO
+Imports System.IO
 Imports System.Drawing.Imaging
 Imports MessagingToolkit.QRCode.Codec
 Imports System.Data.Common
@@ -56,7 +56,7 @@ Public Class IdCard
             Try
                 Dim logoImg As System.Drawing.Image = Nothing
                 Try
-                    logoImg = CompanySettingsManager.Instance.GetCompanyLogo()
+                    logoImg = Branding.Instance.GetCompanyLogo()
                 Catch ex As Exception
                     Console.WriteLine($"Unable to get company logo: {ex.Message}")
                 End Try

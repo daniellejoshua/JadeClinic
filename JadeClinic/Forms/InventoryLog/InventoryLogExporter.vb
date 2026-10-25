@@ -158,15 +158,15 @@ Public Class InventoryLogExporter
         Dim tempLogoPath As String = Nothing
 
         Try
-            Dim companyName As String = CompanySettingsManager.Instance.GetSettingString("CompanyName", "JADE CLINIC")
-            Dim companyTagline As String = CompanySettingsManager.Instance.GetSettingString("CompanyTagline", "Professional Inventory Management & Tracking")
-            Dim companyPhone As String = CompanySettingsManager.Instance.GetSettingString("Phone", "")
-            Dim companyAddress As String = CompanySettingsManager.Instance.GetSettingString("Address", "")
-            Dim companyTIN As String = CompanySettingsManager.Instance.GetSettingString("TIN", "")
+            Dim companyName As String = Branding.Instance.GetSettingString("CompanyName", "JADE CLINIC")
+            Dim companyTagline As String = Branding.Instance.GetSettingString("CompanyTagline", "Professional Inventory Management & Tracking")
+            Dim companyPhone As String = Branding.Instance.GetSettingString("Phone", "")
+            Dim companyAddress As String = Branding.Instance.GetSettingString("Address", "")
+            Dim companyTIN As String = Branding.Instance.GetSettingString("TIN", "")
 
             ' Save logo to a temporary file for QuestPDF image usage
             Try
-                Dim logoImg As System.Drawing.Image = CompanySettingsManager.Instance.GetCompanyLogo()
+                Dim logoImg As System.Drawing.Image = Branding.Instance.GetCompanyLogo()
                 If logoImg IsNot Nothing Then
                     Dim outDir = Path.GetDirectoryName(filePath)
                     If String.IsNullOrEmpty(outDir) Then outDir = Application.StartupPath

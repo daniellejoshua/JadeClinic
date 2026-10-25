@@ -49,7 +49,6 @@ Partial Class Sys
         lblSyncLogs = New Guna.UI2.WinForms.Guna2HtmlLabel()
         btnColorCustomization = New Guna.UI2.WinForms.Guna2Button()
         btnDatabaseBackup = New Guna.UI2.WinForms.Guna2Button()
-        btnCompanySettings = New Guna.UI2.WinForms.Guna2Button()
         btnSyncCloud = New Guna.UI2.WinForms.Guna2Button()
         btnLoadDemoData = New Guna.UI2.WinForms.Guna2Button()
         btnTerminalSetup = New Guna.UI2.WinForms.Guna2Button()
@@ -107,7 +106,6 @@ Partial Class Sys
         Guna2Panel1.Controls.Add(btnLoadDemoData)
         Guna2Panel1.Controls.Add(btnSyncCloud)
         Guna2Panel1.Controls.Add(btnDatabaseBackup)
-        Guna2Panel1.Controls.Add(btnCompanySettings)
         Guna2Panel1.Controls.Add(btnColorCustomization)
         Guna2Panel1.CustomizableEdges = CustomizableEdges3
         Guna2Panel1.FillColor = Color.White
@@ -231,7 +229,7 @@ Partial Class Sys
         btnSyncLogs.ShadowDecoration.Enabled = False
         btnSyncLogs.Size = New Size(360, 150)
         btnSyncLogs.TabIndex = 8
-        btnSyncLogs.Text = "🔄  Sync Logs" & vbCrLf & "View history & connected PCs"
+        btnSyncLogs.Text = "🔄  Sync Logs" & vbCrLf & "Review synchronization history"
         btnSyncLogs.TextAlign = HorizontalAlignment.Left
         ' 
         ' btnDatabaseBackup
@@ -258,31 +256,6 @@ btnDatabaseBackup.FillColor = Color.White
         btnDatabaseBackup.TabIndex = 1
         btnDatabaseBackup.Text = "🗄️  Database Backup" & vbCrLf & "Backup & restore database"
         btnDatabaseBackup.TextAlign = HorizontalAlignment.Left
-        ' 
-        ' btnCompanySettings
-        ' 
-        btnCompanySettings.BorderColor = Color.FromArgb(CByte(232), CByte(232), CByte(232))
-        btnCompanySettings.BorderRadius = 12
-        btnCompanySettings.BorderThickness = 1
-        btnCompanySettings.CustomizableEdges = CustomizableEdges11
-        btnCompanySettings.DisabledState.BorderColor = Color.DarkGray
-        btnCompanySettings.DisabledState.CustomBorderColor = Color.DarkGray
-        btnCompanySettings.DisabledState.FillColor = Color.FromArgb(CByte(169), CByte(169), CByte(169))
-        btnCompanySettings.DisabledState.ForeColor = Color.FromArgb(CByte(141), CByte(141), CByte(141))
-        btnCompanySettings.FillColor = Color.White
-        btnCompanySettings.Font = New Font("Poppins", 12F, FontStyle.Bold)
-        btnCompanySettings.ForeColor = Color.FromArgb(CByte(51), CByte(51), CByte(51))
-        btnCompanySettings.ImageAlign = HorizontalAlignment.Left
-        btnCompanySettings.ImageSize = New Size(40, 40)
-        btnCompanySettings.Location = New Point(50, 58)
-        btnCompanySettings.Name = "btnCompanySettings"
-        btnCompanySettings.ShadowDecoration.CustomizableEdges = CustomizableEdges12
-        btnCompanySettings.ShadowDecoration.Depth = 0
-        btnCompanySettings.ShadowDecoration.Enabled = False
-        btnCompanySettings.Size = New Size(360, 150)
-        btnCompanySettings.TabIndex = 0
-        btnCompanySettings.Text = "🏢  Company Settings" & vbCrLf & "Configure business information"
-        btnCompanySettings.TextAlign = HorizontalAlignment.Left
         ' 
         ' btnSyncCloud
         ' 
@@ -421,7 +394,6 @@ btnDatabaseBackup.FillColor = Color.White
     Friend WithEvents lblSyncLogs As Guna.UI2.WinForms.Guna2HtmlLabel
     Friend WithEvents btnColorCustomization As Guna.UI2.WinForms.Guna2Button
     Friend WithEvents btnDatabaseBackup As Guna.UI2.WinForms.Guna2Button
-    Friend WithEvents btnCompanySettings As Guna.UI2.WinForms.Guna2Button
     Friend WithEvents btnSyncCloud As Guna.UI2.WinForms.Guna2Button
     Friend WithEvents btnLoadDemoData As Guna.UI2.WinForms.Guna2Button
     Friend WithEvents btnTerminalSetup As Guna.UI2.WinForms.Guna2Button
