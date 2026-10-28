@@ -70,6 +70,10 @@ Public Class ReturnExchangeForm
     Private Const DispositionWriteOff As String = "Write Off"
     Private Const DispositionReturnToVendor As String = "Return to Vendor"
 
+    Private Const ReturnWindowGoodDays As Integer = 7
+    Private Const ReturnWindowDefectiveDays As Integer = 7
+    Private Const ReturnWindowClinicErrorDays As Integer = 14
+
     Private ReadOnly _saleId As Integer
     Private ReadOnly _lines As New List(Of ReturnLineState)()
     Private ReadOnly _loadCancellation As New CancellationTokenSource()
@@ -77,6 +81,8 @@ Public Class ReturnExchangeForm
 
     Private _saleNumber As String = ""
     Private _customer As String = ""
+    Private _saleDate As DateTime = DateTime.MinValue
+    Private _returnWindowLabel As Label
     Private _loadStarted As Boolean
     Private _loading As Boolean
     Private _processing As Boolean
@@ -162,9 +168,9 @@ Public Class ReturnExchangeForm
         Text = "Return / Exchange"
         StartPosition = FormStartPosition.CenterParent
         FormBorderStyle = FormBorderStyle.Sizable
-        Size = New Size(1050, 620)
-        MinimumSize = New Size(960, 580)
-        MaximizeBox = False
+        Size = New Size(1380, 820)
+        MinimumSize = New Size(1300, 760)
+        MaximizeBox = True
         MinimizeBox = False
         ShowInTaskbar = False
         KeyPreview = True
@@ -181,9 +187,9 @@ Public Class ReturnExchangeForm
             .Padding = New Padding(0)
         }
         root.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100))
-        root.RowStyles.Add(New RowStyle(SizeType.Absolute, 60))
+        root.RowStyles.Add(New RowStyle(SizeType.Absolute, 72))
         root.RowStyles.Add(New RowStyle(SizeType.Percent, 100))
-        root.RowStyles.Add(New RowStyle(SizeType.Absolute, 64))
+        root.RowStyles.Add(New RowStyle(SizeType.Absolute, 80))
         Controls.Add(root)
 
         BuildHeader(root)
@@ -211,24 +217,24 @@ Public Class ReturnExchangeForm
 
         Dim lblTitle As New Label With {
             .Text = "Return / Exchange",
-            .Font = ReturnExchangeTheme.MakeFont(16, FontStyle.Bold),
+            .Font = ReturnExchangeTheme.MakeFont(18, FontStyle.Bold),
             .ForeColor = ReturnExchangeTheme.PrimaryText,
             .AutoSize = True,
-            .Location = New Point(16, 8)
+            .Location = New Point(20, 10)
         }
         header.Controls.Add(lblTitle)
 
         lblSubtitle = New Label With {
             .Text = "Loading transaction items...",
-            .Font = ReturnExchangeTheme.MakeFont(9.5),
+            .Font = ReturnExchangeTheme.MakeFont(10),
             .ForeColor = ReturnExchangeTheme.SecondaryText,
             .AutoSize = True,
-            .Location = New Point(18, 35)
+            .Location = New Point(22, 38)
         }
         header.Controls.Add(lblSubtitle)
 
         Dim btnClose As New Button With {
-            .Text = "×",
+            .Text = "  ",
             .Font = New Font("Segoe UI", 14, FontStyle.Regular),
             .FlatStyle = FlatStyle.Flat,
             .ForeColor = ReturnExchangeTheme.SecondaryText,
@@ -264,15 +270,15 @@ Public Class ReturnExchangeForm
             .Padding = New Padding(12),
             .Margin = New Padding(0)
         }
-        content.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 70))
-        content.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 30))
+        content.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 74))
+        content.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 26))
         content.RowStyles.Add(New RowStyle(SizeType.Percent, 100))
         root.Controls.Add(content, 0, 1)
 
         Dim gridHost As New Panel With {
             .Dock = DockStyle.Fill,
             .BackColor = Color.White,
-            .Margin = New Padding(0, 0, 6, 0),
+            .Margin = New Padding(0, 0, 14, 0),
             .Padding = New Padding(0)
         }
         content.Controls.Add(gridHost, 0, 0)
@@ -294,18 +300,19 @@ Public Class ReturnExchangeForm
         Dim rightPanel As New TableLayoutPanel With {
             .Dock = DockStyle.Fill,
             .ColumnCount = 1,
-            .RowCount = 11,
+            .RowCount = 12,
             .BackColor = ReturnExchangeTheme.SecondaryBg,
-            .Padding = New Padding(12),
-            .Margin = New Padding(6, 0, 0, 0)
+            .Padding = New Padding(20, 18, 20, 18),
+            .Margin = New Padding(14, 0, 0, 0)
         }
         rightPanel.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100))
         rightPanel.RowStyles.Add(New RowStyle(SizeType.AutoSize))
-        rightPanel.RowStyles.Add(New RowStyle(SizeType.Absolute, 38))
+        rightPanel.RowStyles.Add(New RowStyle(SizeType.Absolute, 44))
+        rightPanel.RowStyles.Add(New RowStyle(SizeType.AutoSize))
         customReasonRowStyle = New RowStyle(SizeType.Absolute, 0)
         rightPanel.RowStyles.Add(customReasonRowStyle)
         rightPanel.RowStyles.Add(New RowStyle(SizeType.AutoSize))
-        rightPanel.RowStyles.Add(New RowStyle(SizeType.Absolute, 90))
+        rightPanel.RowStyles.Add(New RowStyle(SizeType.Absolute, 110))
         rightPanel.RowStyles.Add(New RowStyle(SizeType.AutoSize))
         rightPanel.RowStyles.Add(New RowStyle(SizeType.AutoSize))
         rightPanel.RowStyles.Add(New RowStyle(SizeType.AutoSize))
@@ -336,6 +343,14 @@ Public Class ReturnExchangeForm
         cmbReason.SelectedIndex = -1
         rightPanel.Controls.Add(cmbReason, 0, 1)
 
+        _returnWindowLabel = New Label With {
+            .AutoSize = True,
+            .Font = ReturnExchangeTheme.MakeFont(8.5),
+            .ForeColor = ReturnExchangeTheme.SecondaryText,
+            .Margin = New Padding(0, 4, 0, 6)
+        }
+        rightPanel.Controls.Add(_returnWindowLabel, 0, 2)
+
         txtCustomReason = New Guna2TextBox With {
             .Dock = DockStyle.Fill,
             .Visible = False,
@@ -355,7 +370,7 @@ Public Class ReturnExchangeForm
                     UpdateValidation(True)
                 End If
             End Sub
-        rightPanel.Controls.Add(txtCustomReason, 0, 2)
+        rightPanel.Controls.Add(txtCustomReason, 0, 3)
 
         Dim notesHeader As New TableLayoutPanel With {
             .Dock = DockStyle.Fill,
@@ -380,7 +395,7 @@ Public Class ReturnExchangeForm
             .ForeColor = ReturnExchangeTheme.MutedText
         }
         notesHeader.Controls.Add(lblCharCount, 1, 0)
-        rightPanel.Controls.Add(notesHeader, 0, 3)
+        rightPanel.Controls.Add(notesHeader, 0, 4)
 
         txtNotes = New Guna2TextBox With {
             .Dock = DockStyle.Fill,
@@ -397,7 +412,7 @@ Public Class ReturnExchangeForm
         }
         AddHandler txtNotes.TextChanged,
             Sub() lblCharCount.Text = txtNotes.TextLength.ToString(CultureInfo.InvariantCulture) & "/300"
-        rightPanel.Controls.Add(txtNotes, 0, 4)
+        rightPanel.Controls.Add(txtNotes, 0, 5)
 
         rightPanel.Controls.Add(New Label With {
             .Text = "Summary",
@@ -405,16 +420,16 @@ Public Class ReturnExchangeForm
             .Font = ReturnExchangeTheme.MakeFont(10, FontStyle.Bold),
             .ForeColor = ReturnExchangeTheme.PrimaryText,
             .Margin = New Padding(0, 14, 0, 4)
-        }, 0, 5)
+        }, 0, 6)
 
-        lblItemsCount = AddSummaryLine(rightPanel, "Return quantity", 6)
+        lblItemsCount = AddSummaryLine(rightPanel, "Return quantity", 7)
         lblSettlement = New Label With {
             .AutoSize = True,
             .Margin = New Padding(0, 10, 0, 0),
             .Font = ReturnExchangeTheme.MakeFont(10, FontStyle.Bold),
             .ForeColor = ReturnExchangeTheme.PrimaryText
         }
-        rightPanel.Controls.Add(lblSettlement, 0, 7)
+        rightPanel.Controls.Add(lblSettlement, 0, 8)
 
         rightPanel.Controls.Add(New Label With {
             .Text = "Good returns restock. Damaged -> Write Off. Use Return to Vendor if supplier takes it back.",
@@ -423,7 +438,7 @@ Public Class ReturnExchangeForm
             .ForeColor = ReturnExchangeTheme.SecondaryText,
             .Margin = New Padding(0, 12, 0, 0),
             .MaximumSize = New Size(240, 0)
-        }, 0, 8)
+        }, 0, 9)
 
         AddHandler cmbReason.SelectedIndexChanged, AddressOf Reason_SelectedIndexChanged
     End Sub
@@ -437,8 +452,47 @@ Public Class ReturnExchangeForm
         If Not useCustomReason Then txtCustomReason.Clear()
 
         _userInteracted = True
+        UpdateReturnWindowLabel()
         UpdateValidation(True)
         If useCustomReason Then txtCustomReason.Focus()
+    End Sub
+
+    Private Sub UpdateReturnWindowLabel()
+        If _returnWindowLabel Is Nothing Then Return
+        If cmbReason.SelectedItem Is Nothing Then
+            _returnWindowLabel.Text = ""
+            _returnWindowLabel.Visible = False
+            Return
+        End If
+
+        Dim reason As String = Convert.ToString(cmbReason.SelectedItem)
+        Dim windowDays As Integer
+        Select Case reason
+            Case "Wrong Item"
+                windowDays = ReturnWindowClinicErrorDays
+            Case "Damaged / Defective"
+                windowDays = ReturnWindowDefectiveDays
+            Case Else
+                windowDays = ReturnWindowGoodDays
+        End Select
+
+        If _saleDate = DateTime.MinValue Then
+            _returnWindowLabel.Text = $"Return window: {windowDays} day(s) from sale date (sale date not available)"
+            _returnWindowLabel.ForeColor = ReturnExchangeTheme.SecondaryText
+            _returnWindowLabel.Visible = True
+            Return
+        End If
+
+        Dim cutoff As DateTime = _saleDate.AddDays(windowDays)
+        Dim daysLeft As Integer = (cutoff.Date - DateTime.Today).Days
+        If daysLeft < 0 Then
+            _returnWindowLabel.Text = $"Return window expired on {cutoff:MMM d, yyyy} ({windowDays} day limit for '{reason}')"
+            _returnWindowLabel.ForeColor = ReturnExchangeTheme.ErrorRed
+        Else
+            _returnWindowLabel.Text = $"Return window ends {cutoff:MMM d, yyyy} ({windowDays} day limit, {daysLeft} day(s) left)"
+            _returnWindowLabel.ForeColor = ReturnExchangeTheme.SecondaryText
+        End If
+        _returnWindowLabel.Visible = True
     End Sub
 
     Private Function CreateItemsGrid() As DataGridView
@@ -491,7 +545,8 @@ Public Class ReturnExchangeForm
             .Name = "Item",
             .HeaderText = "ITEM / SKU",
             .ReadOnly = True,
-            .FillWeight = 32
+            .FillWeight = 44,
+            .MinimumWidth = 320
         })
 
         Dim actionColumn As New DataGridViewComboBoxColumn With {
@@ -499,7 +554,8 @@ Public Class ReturnExchangeForm
             .HeaderText = "ACTION",
             .FlatStyle = FlatStyle.Flat,
             .DisplayStyle = DataGridViewComboBoxDisplayStyle.DropDownButton,
-            .FillWeight = 12
+            .FillWeight = 9,
+            .MinimumWidth = 100
         }
         actionColumn.Items.AddRange(ActionNone, ActionRefund, ActionExchange)
         grid.Columns.Add(actionColumn)
@@ -507,7 +563,8 @@ Public Class ReturnExchangeForm
         grid.Columns.Add(New DataGridViewTextBoxColumn With {
             .Name = "Quantity",
             .HeaderText = "QTY",
-            .FillWeight = 8,
+            .FillWeight = 6,
+            .MinimumWidth = 70,
             .DefaultCellStyle = New DataGridViewCellStyle With {
                 .Alignment = DataGridViewContentAlignment.MiddleCenter,
                 .NullValue = "0"
@@ -519,7 +576,8 @@ Public Class ReturnExchangeForm
             .HeaderText = "CONDITION",
             .FlatStyle = FlatStyle.Flat,
             .DisplayStyle = DataGridViewComboBoxDisplayStyle.DropDownButton,
-            .FillWeight = 12
+            .FillWeight = 9,
+            .MinimumWidth = 100
         }
         conditionColumn.Items.AddRange("Good", "Damaged")
         grid.Columns.Add(conditionColumn)
@@ -529,7 +587,8 @@ Public Class ReturnExchangeForm
             .HeaderText = "DISPOSITION",
             .FlatStyle = FlatStyle.Flat,
             .DisplayStyle = DataGridViewComboBoxDisplayStyle.DropDownButton,
-            .FillWeight = 16
+            .FillWeight = 16,
+            .MinimumWidth = 160
         }
         dispositionColumn.Items.AddRange(DispositionRestock, DispositionWriteOff, DispositionReturnToVendor)
         grid.Columns.Add(dispositionColumn)
@@ -538,7 +597,8 @@ Public Class ReturnExchangeForm
             .Name = "Replacement",
             .HeaderText = "REPLACEMENT",
             .FlatStyle = FlatStyle.Flat,
-            .FillWeight = 20,
+            .FillWeight = 16,
+            .MinimumWidth = 210,
             .UseColumnTextForButtonValue = False
         })
 
@@ -588,7 +648,7 @@ Public Class ReturnExchangeForm
             .ColumnCount = 2,
             .RowCount = 1,
             .BackColor = Color.White,
-            .Padding = New Padding(12, 8, 12, 8),
+            .Padding = New Padding(18, 10, 18, 10),
             .Margin = New Padding(0)
         }
         footer.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100))
@@ -667,9 +727,11 @@ Public Class ReturnExchangeForm
             Dim loadedLines As New List(Of ReturnLineState)()
             Dim saleNumber As String = ""
             Dim customer As String = ""
+            Dim saleDate As DateTime = DateTime.MinValue
 
             Const sql As String =
                 "SELECT COALESCE(s.SaleNumber,'') AS SaleNumber, COALESCE(s.CustomerName,'') AS CustomerName, " &
+                "s.SaleDate AS SaleDate, " &
                 "si.SaleItemID, si.ProductID, COALESCE(p.ProductName,'Unknown') AS ProductName, " &
                 "COALESCE(p.ProductCode,'') AS ProductCode, COALESCE(p.Category,'') AS Category, " &
                 "si.Quantity AS SoldQty, si.UnitPrice, COALESCE(si.LineDiscountAmount,0) AS LineDiscountAmount, " &
@@ -696,6 +758,7 @@ Public Class ReturnExchangeForm
                         While Await reader.ReadAsync(cancellationToken)
                             saleNumber = Convert.ToString(reader("SaleNumber"))
                             customer = Convert.ToString(reader("CustomerName"))
+                            If Not reader.IsDBNull(reader.GetOrdinal("SaleDate")) Then saleDate = Convert.ToDateTime(reader("SaleDate"))
 
                             If reader.IsDBNull(reader.GetOrdinal("SaleItemID")) Then Continue While
 
@@ -741,6 +804,8 @@ Public Class ReturnExchangeForm
 
             _saleNumber = If(String.IsNullOrWhiteSpace(saleNumber), _saleId.ToString(CultureInfo.InvariantCulture), saleNumber)
             _customer = customer
+            _saleDate = saleDate
+            UpdateReturnWindowLabel()
             _lines.Clear()
             _lines.AddRange(loadedLines)
 
@@ -748,7 +813,7 @@ Public Class ReturnExchangeForm
             PopulateGrid()
             gridTimer.Stop()
 
-            lblSubtitle.Text = $"Sale #{_saleNumber}" & If(String.IsNullOrWhiteSpace(_customer), "", $"  ·  {_customer}")
+            lblSubtitle.Text = $"Sale #{_saleNumber}" & If(String.IsNullOrWhiteSpace(_customer), "", $"      {_customer}")
             lblGridStatus.Visible = _lines.Count = 0
             If _lines.Count = 0 Then
                 lblGridStatus.Text = "This sale has no returnable items."
@@ -787,7 +852,7 @@ Public Class ReturnExchangeForm
             gridItems.Rows.Clear()
             For Each line As ReturnLineState In _lines
                 Dim itemText As String = line.ProductName
-                If Not String.IsNullOrWhiteSpace(line.ProductCode) Then itemText &= "  ·  " & line.ProductCode
+                If Not String.IsNullOrWhiteSpace(line.ProductCode) Then itemText &= "      " & line.ProductCode
                 If line.AlreadyReturned > 0 Then itemText &= $"  ({line.AlreadyReturned} returned)"
 
                 Dim defaultDisposition As String = If(String.Equals(line.Condition, "Damaged", StringComparison.OrdinalIgnoreCase), DispositionWriteOff, DispositionRestock)
@@ -803,6 +868,9 @@ Public Class ReturnExchangeForm
             gridItems.ResumeLayout()
             _suppressGridEvents = False
         End Try
+        For Each r As DataGridViewRow In gridItems.Rows
+            ApplyGridRow(r)
+        Next
     End Sub
 
     Private Shared Function CountControls(parent As Control) As Integer
@@ -847,10 +915,10 @@ Public Class ReturnExchangeForm
 
         Dim row As DataGridViewRow = gridItems.Rows(e.RowIndex)
         Dim line As ReturnLineState = DirectCast(row.Tag, ReturnLineState)
+        If line Is Nothing Then Return
 
         ApplyGridRow(row)
         If line.ExchangeQty <= 0 Then
-            SetValidation("Choose Exchange and enter a quantity before selecting a replacement.", True)
             Return
         End If
         If ShowReplacementDialog(line) Then
@@ -880,77 +948,111 @@ Public Class ReturnExchangeForm
         If line Is Nothing Then Return
 
         row.ErrorText = ""
-        row.Cells("Quantity").ErrorText = ""
+        If gridItems.Columns.Contains("Quantity") Then row.Cells("Quantity").ErrorText = ""
 
         Dim quantity As Integer
-        If Not Integer.TryParse(Convert.ToString(row.Cells("Quantity").Value), quantity) Then quantity = 0
+        If gridItems.Columns.Contains("Quantity") Then
+            If Not Integer.TryParse(Convert.ToString(row.Cells("Quantity").Value), quantity) Then quantity = 0
+        End If
         If quantity < 0 OrElse quantity > line.MaxReturnable Then
-            row.Cells("Quantity").ErrorText = $"Quantity must be between 0 and {line.MaxReturnable}."
-            SetValidation(row.Cells("Quantity").ErrorText, True)
+            If gridItems.Columns.Contains("Quantity") Then
+                row.Cells("Quantity").ErrorText = $"Quantity must be between 0 and {line.MaxReturnable}."
+            End If
+            SetValidation(If(row.Cells("Quantity").ErrorText, ""), True)
             btnProcess.Enabled = False
             Return
         End If
 
-        Dim condition As String = Convert.ToString(row.Cells("Condition").Value)
+        Dim condition As String = If(gridItems.Columns.Contains("Condition"), Convert.ToString(row.Cells("Condition").Value), "Good")
         If condition <> "Damaged" Then condition = "Good"
-        Dim action As String = Convert.ToString(row.Cells("Action").Value)
+        Dim action As String = If(gridItems.Columns.Contains("Action"), Convert.ToString(row.Cells("Action").Value), "")
         If String.IsNullOrWhiteSpace(action) OrElse (action <> ActionRefund AndAlso action <> ActionExchange) Then action = ActionNone
 
         If condition = "Damaged" AndAlso action <> ActionNone AndAlso action <> ActionExchange Then
             _suppressGridEvents = True
-            row.Cells("Action").Value = ActionExchange
+            If gridItems.Columns.Contains("Action") Then row.Cells("Action").Value = ActionExchange
             _suppressGridEvents = False
             action = ActionExchange
             SetValidation("Damaged items are exchange only.", True)
         End If
-
         line.Condition = condition
         If condition = "Damaged" AndAlso action = ActionRefund Then
             _suppressGridEvents = True
-            row.Cells("Action").Value = ActionExchange
+            If gridItems.Columns.Contains("Action") Then row.Cells("Action").Value = ActionExchange
             _suppressGridEvents = False
             action = ActionExchange
             SetValidation("Damaged items are exchange only.", True)
         End If
 
-        Dim disposition As String = Convert.ToString(row.Cells("Disposition").Value)
+        Dim disposition As String = If(gridItems.Columns.Contains("Disposition"), Convert.ToString(row.Cells("Disposition").Value), "")
         If String.IsNullOrWhiteSpace(disposition) Then
             disposition = If(condition = "Damaged", DispositionWriteOff, DispositionRestock)
         End If
-        If condition = "Damaged" AndAlso String.Equals(disposition, DispositionRestock, StringComparison.OrdinalIgnoreCase) Then
+        If condition = "Damaged" AndAlso String.Equals(disposition, "Restock", StringComparison.OrdinalIgnoreCase) Then
             disposition = DispositionWriteOff
             _suppressGridEvents = True
-            row.Cells("Disposition").Value = disposition
+            If gridItems.Columns.Contains("Disposition") Then row.Cells("Disposition").Value = disposition
             _suppressGridEvents = False
         End If
         If disposition <> DispositionRestock AndAlso disposition <> DispositionWriteOff AndAlso disposition <> DispositionReturnToVendor Then
             disposition = If(condition = "Damaged", DispositionWriteOff, DispositionRestock)
         End If
-        If condition = "Good" AndAlso String.Equals(disposition, DispositionWriteOff, StringComparison.OrdinalIgnoreCase) Then
-            ' keep as-is only if user explicitly chose return to vendor is handled via DispositionReturnToVendor; write off good is unusual, leave as user chose or enforce via vendor
-        End If
         line.Disposition = disposition
-        If Not _suppressGridEvents Then row.Cells("Disposition").Value = disposition
+        If Not _suppressGridEvents AndAlso gridItems.Columns.Contains("Disposition") Then row.Cells("Disposition").Value = disposition
 
         Select Case action
             Case ActionRefund
                 line.ReturnQty = quantity
                 line.RefundQty = quantity
                 line.ExchangeQty = 0
+                line.ReplacementProductID = 0
+                line.ReplacementProductName = ""
+                If gridItems.Columns.Contains("Replacement") Then
+                    _suppressGridEvents = True
+                    row.Cells("Replacement").Value = "Not required"
+                    row.Cells("Replacement").ReadOnly = True
+                    _suppressGridEvents = False
+                End If
             Case ActionExchange
                 line.ReturnQty = quantity
                 line.RefundQty = 0
                 line.ExchangeQty = quantity
+                If String.IsNullOrWhiteSpace(line.ReplacementProductName) OrElse String.Equals(line.ReplacementProductName, "Not required", StringComparison.OrdinalIgnoreCase) OrElse String.Equals(line.ReplacementProductName, "-", StringComparison.OrdinalIgnoreCase) Then
+                    line.ReplacementProductID = 0
+                    line.ReplacementProductName = ""
+                End If
+                If gridItems.Columns.Contains("Replacement") Then
+                    _suppressGridEvents = True
+                    row.Cells("Replacement").ReadOnly = False
+                    If String.IsNullOrWhiteSpace(line.ReplacementProductName) Then
+                        row.Cells("Replacement").Value = "Select item"
+                    Else
+                        row.Cells("Replacement").Value = line.ReplacementProductName
+                    End If
+                    _suppressGridEvents = False
+                End If
             Case Else
                 line.ReturnQty = 0
                 line.RefundQty = 0
                 line.ExchangeQty = 0
+                line.ReplacementProductID = 0
+                line.ReplacementProductName = ""
+                If gridItems.Columns.Contains("Quantity") Then
+                    _suppressGridEvents = True
+                    row.Cells("Quantity").Value = 0
+                    _suppressGridEvents = False
+                End If
+                If gridItems.Columns.Contains("Replacement") Then
+                    _suppressGridEvents = True
+                    row.Cells("Replacement").Value = "-"
+                    row.Cells("Replacement").ReadOnly = True
+                    _suppressGridEvents = False
+                End If
         End Select
 
         RefreshSummary()
         UpdateValidation(True)
     End Sub
-
     Private Function ShowSplitAllocationDialog(line As ReturnLineState, totalQuantity As Integer) As Boolean
         Using dialog As New Form With {
             .Text = "Split Allocation",
@@ -978,7 +1080,7 @@ Public Class ReturnExchangeForm
             dialog.Controls.Add(layout)
 
             layout.Controls.Add(New Label With {
-                .Text = $"Allocate {totalQuantity} × {line.ProductName}",
+                .Text = $"Allocate {totalQuantity}    {line.ProductName}",
                 .AutoSize = True,
                 .Font = ReturnExchangeTheme.MakeFont(10, FontStyle.Bold),
                 .ForeColor = ReturnExchangeTheme.PrimaryText,
@@ -1058,7 +1160,7 @@ Public Class ReturnExchangeForm
         End Using
     End Function
 
-    Private Function ShowReplacementDialog(line As ReturnLineState) As Boolean
+        Private Function ShowReplacementDialog(line As ReturnLineState) As Boolean
         Dim products As New List(Of ReplacementProductOption)()
         Const sql As String =
             "SELECT ProductID, COALESCE(ProductCode,''), COALESCE(ProductName,''), " &
@@ -1084,75 +1186,200 @@ Public Class ReturnExchangeForm
         Using dialog As New Form With {
             .Text = "Select Replacement Product",
             .StartPosition = FormStartPosition.CenterParent,
-            .FormBorderStyle = FormBorderStyle.FixedDialog,
-            .ClientSize = New Size(540, 170),
-            .MaximizeBox = False,
+            .FormBorderStyle = FormBorderStyle.Sizable,
+            .MinimumSize = New Size(640, 420),
+            .Size = New Size(680, 460),
+            .MaximizeBox = True,
             .MinimizeBox = False,
             .ShowInTaskbar = False,
-            .BackColor = Color.White
+            .BackColor = Color.White,
+            .AutoScaleMode = AutoScaleMode.Dpi
         }
-            Dim layout As New TableLayoutPanel With {.Dock = DockStyle.Fill, .RowCount = 4, .ColumnCount = 1, .Padding = New Padding(16)}
-            layout.RowStyles.Add(New RowStyle(SizeType.AutoSize))
-            layout.RowStyles.Add(New RowStyle(SizeType.Absolute, 44))
-            layout.RowStyles.Add(New RowStyle(SizeType.Percent, 100))
-            layout.RowStyles.Add(New RowStyle(SizeType.Absolute, 38))
-            dialog.Controls.Add(layout)
-            layout.Controls.Add(New Label With {
-                .Text = $"Replacement for {line.ExchangeQty} x {line.ProductName}",
+            Dim root As New TableLayoutPanel With {
+                .Dock = DockStyle.Fill,
+                .ColumnCount = 1,
+                .RowCount = 7,
+                .Padding = New Padding(20, 18, 20, 18),
+                .BackColor = Color.White
+            }
+            root.RowStyles.Add(New RowStyle(SizeType.AutoSize))
+            root.RowStyles.Add(New RowStyle(SizeType.AutoSize))
+            root.RowStyles.Add(New RowStyle(SizeType.Absolute, 42))
+            root.RowStyles.Add(New RowStyle(SizeType.Percent, 100))
+            root.RowStyles.Add(New RowStyle(SizeType.AutoSize))
+            root.RowStyles.Add(New RowStyle(SizeType.AutoSize))
+            root.RowStyles.Add(New RowStyle(SizeType.Absolute, 44))
+            dialog.Controls.Add(root)
+
+            root.Controls.Add(New Label With {
+                .Text = $"Select replacement for {line.ExchangeQty} x {line.ProductName}",
                 .AutoSize = True,
-                .Font = ReturnExchangeTheme.MakeFont(10, FontStyle.Bold),
-                .ForeColor = ReturnExchangeTheme.PrimaryText
+                .Font = ReturnExchangeTheme.MakeFont(11, FontStyle.Bold),
+                .ForeColor = ReturnExchangeTheme.PrimaryText,
+                .Margin = New Padding(0, 0, 0, 4)
             }, 0, 0)
 
-            Dim picker As New ComboBox With {
-                .Dock = DockStyle.Fill,
-                .DropDownStyle = ComboBoxStyle.DropDownList,
+            root.Controls.Add(New Label With {
+                .Text = "Search by product name or code",
+                .AutoSize = True,
                 .Font = ReturnExchangeTheme.MakeFont(9),
-                .DataSource = products,
-                .Margin = New Padding(0, 6, 0, 0)
-            }
-            layout.Controls.Add(picker, 0, 1)
-            Dim selectedIndex As Integer = products.FindIndex(Function(product) product.ProductID = line.ReplacementProductID)
-            If selectedIndex >= 0 Then
-                AddHandler dialog.Shown,
-                    Sub()
-                        If selectedIndex < picker.Items.Count Then picker.SelectedIndex = selectedIndex
-                    End Sub
-            End If
+                .ForeColor = ReturnExchangeTheme.SecondaryText,
+                .Margin = New Padding(0, 6, 0, 4)
+            }, 0, 1)
 
-            Dim hint As New Label With {
-                .Text = "Only sellable stock is available for exchange; returned goods remain in quarantine.",
+            Dim searchBox As New TextBox With {
+                .Dock = DockStyle.Fill,
+                .Font = ReturnExchangeTheme.MakeFont(9.5),
+                .Margin = New Padding(0, 0, 0, 10)
+            }
+            root.Controls.Add(searchBox, 0, 2)
+
+            Dim grid As New DataGridView With {
+                .Dock = DockStyle.Fill,
+                .BackgroundColor = Color.White,
+                .BorderStyle = BorderStyle.FixedSingle,
+                .AllowUserToAddRows = False,
+                .AllowUserToDeleteRows = False,
+                .AllowUserToResizeRows = False,
+                .ReadOnly = True,
+                .MultiSelect = False,
+                .SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                .RowHeadersVisible = False,
+                .AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                .ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize,
+                .Font = ReturnExchangeTheme.MakeFont(9),
+                .Margin = New Padding(0, 0, 0, 10)
+            }
+            grid.EnableHeadersVisualStyles = False
+            grid.ColumnHeadersDefaultCellStyle.BackColor = ReturnExchangeTheme.SecondaryBg
+            grid.ColumnHeadersDefaultCellStyle.ForeColor = ReturnExchangeTheme.PrimaryText
+            grid.ColumnHeadersDefaultCellStyle.Font = ReturnExchangeTheme.MakeFont(9, FontStyle.Bold)
+            grid.ColumnHeadersDefaultCellStyle.Padding = New Padding(6, 4, 6, 4)
+            grid.ColumnHeadersHeight = 32
+            grid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(255, 248, 225)
+            grid.DefaultCellStyle.SelectionForeColor = ReturnExchangeTheme.PrimaryText
+            grid.RowTemplate.Height = 28
+            grid.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(252, 252, 252)
+
+            grid.Columns.Add(New DataGridViewTextBoxColumn With {.Name = "ProductCode", .HeaderText = "CODE", .FillWeight = 14})
+            grid.Columns.Add(New DataGridViewTextBoxColumn With {.Name = "ProductName", .HeaderText = "PRODUCT", .FillWeight = 42})
+            grid.Columns.Add(New DataGridViewTextBoxColumn With {.Name = "Price", .HeaderText = "PRICE", .FillWeight = 16, .DefaultCellStyle = New DataGridViewCellStyle With {.Alignment = DataGridViewContentAlignment.MiddleRight}})
+            grid.Columns.Add(New DataGridViewTextBoxColumn With {.Name = "Stock", .HeaderText = "AVAILABLE", .FillWeight = 14, .DefaultCellStyle = New DataGridViewCellStyle With {.Alignment = DataGridViewContentAlignment.MiddleCenter}})
+
+            For Each p As ReplacementProductOption In products
+                Dim idx As Integer = grid.Rows.Add()
+                grid.Rows(idx).Cells("ProductCode").Value = p.ProductCode
+                grid.Rows(idx).Cells("ProductName").Value = p.ProductName
+                grid.Rows(idx).Cells("Price").Value = FormatPeso(p.SellingPrice)
+                grid.Rows(idx).Cells("Stock").Value = p.CurrentStock.ToString(CultureInfo.InvariantCulture)
+                grid.Rows(idx).Tag = p
+                If p.ProductID = line.ReplacementProductID Then grid.Rows(idx).Selected = True
+            Next
+
+            If grid.SelectedRows.Count = 0 AndAlso grid.Rows.Count > 0 Then grid.Rows(0).Selected = True
+
+            AddHandler searchBox.TextChanged,
+                Sub()
+                    Dim term As String = searchBox.Text.Trim().ToLowerInvariant()
+                    For Each r As DataGridViewRow In grid.Rows
+                        Dim p As ReplacementProductOption = TryCast(r.Tag, ReplacementProductOption)
+                        If p Is Nothing Then
+                            r.Visible = String.IsNullOrEmpty(term)
+                            Continue For
+                        End If
+                        If String.IsNullOrEmpty(term) Then
+                            r.Visible = True
+                        Else
+                            r.Visible = p.ProductName.ToLowerInvariant().Contains(term) OrElse p.ProductCode.ToLowerInvariant().Contains(term)
+                        End If
+                    Next
+                    If grid.SelectedRows.Count = 0 Then
+                        For Each r As DataGridViewRow In grid.Rows
+                            If r.Visible Then
+                                r.Selected = True
+                                Exit For
+                            End If
+                        Next
+                    End If
+                End Sub
+
+            root.Controls.Add(grid, 0, 3)
+
+            Dim detail As New Label With {
+                .AutoSize = True,
+                .Font = ReturnExchangeTheme.MakeFont(9),
+                .ForeColor = ReturnExchangeTheme.SecondaryText,
+                .Margin = New Padding(0, 0, 0, 6)
+            }
+            AddHandler grid.SelectionChanged,
+                Sub()
+                    If grid.SelectedRows.Count = 0 Then
+                        detail.Text = "No replacement selected"
+                        Return
+                    End If
+                    Dim p As ReplacementProductOption = TryCast(grid.SelectedRows(0).Tag, ReplacementProductOption)
+                    If p Is Nothing Then
+                        detail.Text = "No replacement selected"
+                        Return
+                    End If
+                    detail.Text = $"Selected: {p.ProductName} - {FormatPeso(p.SellingPrice)} | Available: {p.CurrentStock}"
+                End Sub
+            If grid.SelectedRows.Count > 0 Then
+                Dim psel As ReplacementProductOption = TryCast(grid.SelectedRows(0).Tag, ReplacementProductOption)
+                If psel IsNot Nothing Then detail.Text = $"Selected: {psel.ProductName} - {FormatPeso(psel.SellingPrice)} | Available: {psel.CurrentStock}"
+            End If
+            root.Controls.Add(detail, 0, 4)
+
+            root.Controls.Add(New Label With {
+                .Text = "Only active items with available stock are shown.",
                 .AutoSize = True,
                 .ForeColor = ReturnExchangeTheme.SecondaryText,
-                .Font = ReturnExchangeTheme.MakeFont(8.5)
-            }
-            layout.Controls.Add(hint, 0, 2)
+                .Font = ReturnExchangeTheme.MakeFont(8.5),
+                .Margin = New Padding(0, 0, 0, 10)
+            }, 0, 5)
 
             Dim buttons As New FlowLayoutPanel With {.Dock = DockStyle.Fill, .FlowDirection = FlowDirection.RightToLeft, .WrapContents = False}
-            Dim applyButton As New Button With {.Text = "Select", .Size = New Size(90, 30), .BackColor = ReturnExchangeTheme.PrimaryGold, .ForeColor = Color.White, .FlatStyle = FlatStyle.Flat}
-            applyButton.FlatAppearance.BorderSize = 0
-            Dim cancelButton As New Button With {.Text = "Cancel", .Size = New Size(80, 30), .DialogResult = DialogResult.Cancel}
-            buttons.Controls.Add(applyButton)
-            buttons.Controls.Add(cancelButton)
-            layout.Controls.Add(buttons, 0, 3)
-            dialog.CancelButton = cancelButton
+            Dim btnSelect As New Button With {.Text = "Select Replacement", .AutoSize = True, .AutoSizeMode = AutoSizeMode.GrowAndShrink, .Padding = New Padding(16, 8, 16, 8), .BackColor = ReturnExchangeTheme.PrimaryGold, .ForeColor = Color.White, .FlatStyle = FlatStyle.Flat}
+            btnSelect.FlatAppearance.BorderSize = 0
+            Dim btnCancel As New Button With {.Text = "Cancel", .Size = New Size(90, 36), .DialogResult = DialogResult.Cancel, .FlatStyle = FlatStyle.Flat}
+            buttons.Controls.Add(btnSelect)
+            buttons.Controls.Add(btnCancel)
+            root.Controls.Add(buttons, 0, 6)
+            dialog.CancelButton = btnCancel
+            dialog.AcceptButton = btnSelect
 
-            AddHandler applyButton.Click,
+            AddHandler btnSelect.Click,
                 Sub()
-                    Dim selected As ReplacementProductOption = TryCast(picker.SelectedItem, ReplacementProductOption)
-                    If selected Is Nothing Then
+                    Dim selRow As DataGridViewRow = Nothing
+                    For Each r As DataGridViewRow In grid.Rows
+                        If r.Visible AndAlso r.Selected Then
+                            selRow = r
+                            Exit For
+                        End If
+                    Next
+                    If selRow Is Nothing Then
                         MessageBox.Show("Select a replacement product.", "Replacement", MessageBoxButtons.OK, MessageBoxIcon.Warning)
                         Return
                     End If
-                    If selected.CurrentStock < line.ExchangeQty Then
-                        MessageBox.Show($"Only {selected.CurrentStock} unit(s) are available for replacement.", "Insufficient Stock", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                    Dim selectedProd As ReplacementProductOption = TryCast(selRow.Tag, ReplacementProductOption)
+                    If selectedProd Is Nothing Then
+                        MessageBox.Show("Select a replacement product.", "Replacement", MessageBoxButtons.OK, MessageBoxIcon.Warning)
                         Return
                     End If
-                    line.ReplacementProductID = selected.ProductID
-                    line.ReplacementProductName = selected.ProductName
-                    line.ReplacementUnitPrice = selected.SellingPrice
+                    If selectedProd.CurrentStock < line.ExchangeQty Then
+                        MessageBox.Show($"Only {selectedProd.CurrentStock} unit(s) are available for replacement.", "Insufficient Stock", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                        Return
+                    End If
+                    line.ReplacementProductID = selectedProd.ProductID
+                    line.ReplacementProductName = selectedProd.ProductName
+                    line.ReplacementUnitPrice = selectedProd.SellingPrice
                     dialog.DialogResult = DialogResult.OK
                     dialog.Close()
+                End Sub
+
+            AddHandler grid.CellDoubleClick,
+                Sub(s As Object, e As DataGridViewCellEventArgs)
+                    If e.RowIndex >= 0 Then btnSelect.PerformClick()
                 End Sub
 
             Return dialog.ShowDialog(Me) = DialogResult.OK
@@ -1166,7 +1393,7 @@ Public Class ReturnExchangeForm
             Case ActionExchange
                 Return If(line.ReturnQty > 0, $"{line.ReturnQty} exchange", "Automatic")
             Case Else
-                Return "—"
+                Return "-"
         End Select
     End Function
 
@@ -1219,6 +1446,26 @@ Public Class ReturnExchangeForm
             message = "Select a return reason."
             Return False
         End If
+
+        ' Return window enforcement
+        If _saleDate <> DateTime.MinValue Then
+            Dim reason As String = Convert.ToString(cmbReason.SelectedItem)
+            Dim windowDays As Integer
+            Select Case reason
+                Case "Wrong Item"
+                    windowDays = ReturnWindowClinicErrorDays
+                Case "Damaged / Defective"
+                    windowDays = ReturnWindowDefectiveDays
+                Case Else
+                    windowDays = ReturnWindowGoodDays
+            End Select
+            Dim cutoff As DateTime = _saleDate.AddDays(windowDays)
+            If DateTime.Today > cutoff.Date Then
+                message = $"Return window for '{reason}' expired on {cutoff:MMM d, yyyy} ({windowDays} day limit from sale date). Returns are no longer allowed for this sale."
+                Return False
+            End If
+        End If
+
         If String.Equals(Convert.ToString(cmbReason.SelectedItem), "Other", StringComparison.OrdinalIgnoreCase) AndAlso
            String.IsNullOrWhiteSpace(txtCustomReason.Text) Then
             message = "Enter the custom return reason."
@@ -1317,7 +1564,7 @@ Public Class ReturnExchangeForm
             btnProcess.Text = "Authorizing..."
 
             Try
-                Dim subtitle As String = $"Sale #{_saleNumber}" & If(String.IsNullOrWhiteSpace(_customer), "", $"  ·  {_customer}")
+                Dim subtitle As String = $"Sale #{_saleNumber}" & If(String.IsNullOrWhiteSpace(_customer), "", $"      {_customer}")
                 Dim authorizationDetail As String = String.Join("; ", selected.Select(
                     Function(line) $"{line.ProductName} x{line.ReturnQty} [{line.Condition} / {line.Disposition}]" &
                         If(line.ExchangeQty > 0, $" -> {line.ReplacementProductName} x{line.ExchangeQty}", "")))
@@ -1327,8 +1574,7 @@ Public Class ReturnExchangeForm
                     If(settlement.AdditionalPayment > 0D, $"Collect {FormatPeso(settlement.AdditionalPayment)} via {settlement.Method}", "Even exchange")) &
                     $" | Reason: {selectedReason}"
                 Dim approver As String = ApprovalDialogs.AuthorizeElevatedUser(
-                    Me, "Return Authorization", subtitle, authorizationDetail, authorizationWarning,
-                    If(frmLoginvb.LoggedInUsername, ""))
+                    Me, "Return Authorization", subtitle, authorizationDetail, authorizationWarning)
                 If String.IsNullOrWhiteSpace(approver) Then
                     SetValidation("Authorization was cancelled. The return was not processed.", True)
                     Return
@@ -1412,37 +1658,37 @@ Public Class ReturnExchangeForm
             .Text = "Return Settlement",
             .StartPosition = FormStartPosition.CenterParent,
             .FormBorderStyle = FormBorderStyle.FixedDialog,
-            .ClientSize = New Size(430, 245),
+            .ClientSize = New Size(460, 290),
             .MaximizeBox = False,
             .MinimizeBox = False,
             .ShowInTaskbar = False,
             .BackColor = Color.White
         }
-            Dim layout As New TableLayoutPanel With {.Dock = DockStyle.Fill, .ColumnCount = 1, .RowCount = 6, .Padding = New Padding(18)}
+            Dim layout As New TableLayoutPanel With {.Dock = DockStyle.Fill, .ColumnCount = 1, .RowCount = 6, .Padding = New Padding(22)}
             layout.RowStyles.Add(New RowStyle(SizeType.AutoSize))
             layout.RowStyles.Add(New RowStyle(SizeType.AutoSize))
-            layout.RowStyles.Add(New RowStyle(SizeType.Absolute, 42))
+            layout.RowStyles.Add(New RowStyle(SizeType.Absolute, 48))
             layout.RowStyles.Add(New RowStyle(SizeType.AutoSize))
-            layout.RowStyles.Add(New RowStyle(SizeType.Absolute, 42))
+            layout.RowStyles.Add(New RowStyle(SizeType.Absolute, 48))
             layout.RowStyles.Add(New RowStyle(SizeType.Percent, 100))
             dialog.Controls.Add(layout)
 
             Dim amountText As String = If(settlement.RefundAmount > 0D,
                 "Refund customer " & FormatPeso(settlement.RefundAmount),
                 "Collect from customer " & FormatPeso(settlement.AdditionalPayment))
-            layout.Controls.Add(New Label With {.Text = amountText, .AutoSize = True, .Font = ReturnExchangeTheme.MakeFont(13, FontStyle.Bold), .ForeColor = ReturnExchangeTheme.PrimaryText}, 0, 0)
-            layout.Controls.Add(New Label With {.Text = "Settlement method", .AutoSize = True, .Font = ReturnExchangeTheme.MakeFont(8.5), .ForeColor = ReturnExchangeTheme.SecondaryText, .Margin = New Padding(0, 10, 0, 2)}, 0, 1)
-            Dim methodPicker As New ComboBox With {.Dock = DockStyle.Fill, .DropDownStyle = ComboBoxStyle.DropDownList, .Font = ReturnExchangeTheme.MakeFont(9)}
+            layout.Controls.Add(New Label With {.Text = amountText, .AutoSize = True, .Font = ReturnExchangeTheme.MakeFont(14, FontStyle.Bold), .ForeColor = ReturnExchangeTheme.PrimaryText, .Margin = New Padding(0, 0, 0, 6)}, 0, 0)
+            layout.Controls.Add(New Label With {.Text = "Settlement method", .AutoSize = True, .Font = ReturnExchangeTheme.MakeFont(9), .ForeColor = ReturnExchangeTheme.SecondaryText, .Margin = New Padding(0, 10, 0, 4)}, 0, 1)
+            Dim methodPicker As New ComboBox With {.Dock = DockStyle.Fill, .DropDownStyle = ComboBoxStyle.DropDownList, .Font = ReturnExchangeTheme.MakeFont(9.5)}
             methodPicker.Items.AddRange(New Object() {"Cash", "Card", "GCash", "Maya", "Bank Transfer"})
             methodPicker.SelectedIndex = 0
             layout.Controls.Add(methodPicker, 0, 2)
-            layout.Controls.Add(New Label With {.Text = "Reference (required for non-cash)", .AutoSize = True, .Font = ReturnExchangeTheme.MakeFont(8.5), .ForeColor = ReturnExchangeTheme.SecondaryText}, 0, 3)
-            Dim referenceBox As New TextBox With {.Dock = DockStyle.Fill, .Font = ReturnExchangeTheme.MakeFont(9), .MaxLength = 100}
+            layout.Controls.Add(New Label With {.Text = "Reference (required for non-cash)", .AutoSize = True, .Font = ReturnExchangeTheme.MakeFont(9), .ForeColor = ReturnExchangeTheme.SecondaryText, .Margin = New Padding(0, 10, 0, 4)}, 0, 3)
+            Dim referenceBox As New TextBox With {.Dock = DockStyle.Fill, .Font = ReturnExchangeTheme.MakeFont(9.5), .MaxLength = 100}
             layout.Controls.Add(referenceBox, 0, 4)
-            Dim buttons As New FlowLayoutPanel With {.Dock = DockStyle.Fill, .FlowDirection = FlowDirection.RightToLeft, .WrapContents = False}
-            Dim continueButton As New Button With {.Text = "Continue", .Size = New Size(100, 32), .BackColor = ReturnExchangeTheme.PrimaryGold, .ForeColor = Color.White, .FlatStyle = FlatStyle.Flat}
+            Dim buttons As New FlowLayoutPanel With {.Dock = DockStyle.Fill, .FlowDirection = FlowDirection.RightToLeft, .WrapContents = False, .Margin = New Padding(0, 16, 0, 0)}
+            Dim continueButton As New Button With {.Text = "Continue", .Size = New Size(110, 36), .BackColor = ReturnExchangeTheme.PrimaryGold, .ForeColor = Color.White, .FlatStyle = FlatStyle.Flat}
             continueButton.FlatAppearance.BorderSize = 0
-            Dim cancelButton As New Button With {.Text = "Cancel", .Size = New Size(80, 32), .DialogResult = DialogResult.Cancel}
+            Dim cancelButton As New Button With {.Text = "Cancel", .Size = New Size(90, 36), .DialogResult = DialogResult.Cancel}
             buttons.Controls.Add(continueButton)
             buttons.Controls.Add(cancelButton)
             layout.Controls.Add(buttons, 0, 5)
@@ -1480,6 +1726,23 @@ Public Class ReturnExchangeForm
         End If
         Dim notes As String = txtNotes.Text.Trim()
 
+        ' Safety check: enforce return window at transaction level
+        If _saleDate <> DateTime.MinValue Then
+            Dim windowDays As Integer
+            Select Case Convert.ToString(cmbReason.SelectedItem)
+                Case "Wrong Item"
+                    windowDays = ReturnWindowClinicErrorDays
+                Case "Damaged / Defective"
+                    windowDays = ReturnWindowDefectiveDays
+                Case Else
+                    windowDays = ReturnWindowGoodDays
+            End Select
+            Dim cutoff As DateTime = _saleDate.AddDays(windowDays)
+            If DateTime.Today > cutoff.Date Then
+                Throw New InvalidOperationException($"Return window for '{cmbReason.SelectedItem}' expired on {cutoff:MMM d, yyyy} ({windowDays} day limit from sale date).")
+            End If
+        End If
+
         Using conn As New NpgsqlConnection(Connection.GetConnectionString())
             conn.Open()
             Using tran As NpgsqlTransaction = conn.BeginTransaction(System.Data.IsolationLevel.Serializable)
@@ -1504,7 +1767,6 @@ Public Class ReturnExchangeForm
                             If Not active OrElse Not Rbac.IsElevated(role) Then Throw New InvalidOperationException("The approving account is no longer authorized.")
                         End Using
                     End Using
-                    If approverUserId = userId Then Throw New InvalidOperationException("A different manager/admin must approve the return.")
 
                     Dim lineCredits As New Dictionary(Of Integer, Decimal)()
                     Dim lineRefunds As New Dictionary(Of Integer, Decimal)()

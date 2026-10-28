@@ -336,6 +336,14 @@ Public Class SalesDetails
         Dim canReturn As Boolean = String.Equals(Convert.ToString(saleRecord("Status")), "Completed", StringComparison.OrdinalIgnoreCase) AndAlso
                                    frmLoginvb.LoggedInUserID > 0
 
+        ' Hide the Return/Exchange button entirely if the sale is past the 7-day return window.
+        If canReturn AndAlso saleRecord.ContainsKey("SaleDate") Then
+            Dim saleDate As DateTime = If(IsDBNull(saleRecord("SaleDate")), DateTime.MinValue, Convert.ToDateTime(saleRecord("SaleDate")))
+            If saleDate <> DateTime.MinValue AndAlso DateTime.Today > saleDate.AddDays(7).Date Then
+                canReturn = False
+            End If
+        End If
+
         btnReturn = New Guna.UI2.WinForms.Guna2Button() With {
             .Text = "Return/Exchange",
             .Size = New Size(210, 44),
@@ -384,8 +392,21 @@ Public Class SalesDetails
             End Using
 
             If btnReturn IsNot Nothing Then
-                btnReturn.Enabled = remaining > 0
-                btnReturn.Text = If(remaining > 0, "Return/Exchange", "Fully Returned")
+                ' Hide the button entirely if past the 7-day return window.
+                Dim windowExpired As Boolean = False
+                If saleRecord IsNot Nothing AndAlso saleRecord.ContainsKey("SaleDate") Then
+                    Dim saleDate As DateTime = If(IsDBNull(saleRecord("SaleDate")), DateTime.MinValue, Convert.ToDateTime(saleRecord("SaleDate")))
+                    If saleDate <> DateTime.MinValue AndAlso DateTime.Today > saleDate.AddDays(7).Date Then
+                        windowExpired = True
+                    End If
+                End If
+                If windowExpired Then
+                    btnReturn.Visible = False
+                Else
+                    btnReturn.Visible = True
+                    btnReturn.Enabled = remaining > 0
+                    btnReturn.Text = If(remaining > 0, "Return/Exchange", "Fully Returned")
+                End If
             End If
 
             If count = 0 Then
@@ -406,6 +427,28 @@ Public Class SalesDetails
 
     Private Sub OpenReturnDialog(sender As Object, e As EventArgs)
         Try
+            ' Enforce return window before opening the dialog. Sales older than 7 days
+            ' cannot be returned or exchanged through this flow.
+            Dim saleDate As DateTime = DateTime.MinValue
+            Using conn As New NpgsqlConnection(Connection.GetConnectionString())
+                conn.Open()
+                Using cmd As New NpgsqlCommand("SELECT SaleDate FROM Sales WHERE SaleID = @SaleID", conn)
+                    cmd.Parameters.AddWithValue("@SaleID", _saleId)
+                    Dim obj As Object = cmd.ExecuteScalar()
+                    If obj IsNot Nothing AndAlso Not IsDBNull(obj) Then
+                        saleDate = Convert.ToDateTime(obj)
+                    End If
+                End Using
+            End Using
+
+            If saleDate <> DateTime.MinValue Then
+                Dim cutoff As DateTime = saleDate.AddDays(7)
+                If DateTime.Today > cutoff.Date Then
+                    MessageBox.Show($"Returns for this sale are no longer allowed. The return window ended on {cutoff:MMM d, yyyy} (7 days from sale date).", "Return Window Expired", MessageBoxButtons.OK, MessageBoxIcon.Information)
+                    Return
+                End If
+            End If
+
             Using dlg As New ReturnExchangeForm(_saleId)
                 Utilities.EnableEscCloseModal(dlg)
                 If dlg.ShowDialog(Me) = DialogResult.OK Then

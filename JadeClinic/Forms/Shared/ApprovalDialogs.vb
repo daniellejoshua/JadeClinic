@@ -236,14 +236,6 @@ Public Module ApprovalDialogs
                     lblStatus.ForeColor = MediumText
                     Dim approvedBy As String = ""
                     If TryAuthorizeByQr(qrRaw, approvedBy) Then
-                        If String.Equals(approvedBy, excludedUsername, StringComparison.OrdinalIgnoreCase) Then
-                            lblStatus.Text = "A different manager/admin must approve this action."
-                            lblStatus.ForeColor = AlertRed
-                            MessageBox.Show("The initiating user cannot approve their own return.", "Different Approver Required", MessageBoxButtons.OK, MessageBoxIcon.Warning)
-                            txtQr.Clear()
-                            txtQr.Focus()
-                            Return
-                        End If
                         approver = approvedBy
                         authorized = True
                         dlg.DialogResult = DialogResult.OK
@@ -307,14 +299,6 @@ Public Module ApprovalDialogs
             Sub()
                 Dim approvedBy As String = ""
                 If TryAuthorizeByPassword(txtUser.Text.Trim(), txtPass.Text, approvedBy) Then
-                    If String.Equals(approvedBy, excludedUsername, StringComparison.OrdinalIgnoreCase) Then
-                        lblStatus.Text = "A different manager/admin must approve this action."
-                        lblStatus.ForeColor = AlertRed
-                        MessageBox.Show("The initiating user cannot approve their own return.", "Different Approver Required", MessageBoxButtons.OK, MessageBoxIcon.Warning)
-                        txtPass.Clear()
-                        txtPass.Focus()
-                        Return
-                    End If
                     approver = approvedBy
                     authorized = True
                     dlg.DialogResult = DialogResult.OK
