@@ -3458,7 +3458,7 @@ New NpgsqlParameter("@CashDate", Date.Today.ToString("yyyy-MM-dd"))
                                   End Sub
         paymentForm.Controls.Add(btnCash)
 
-        ' E-Wallet button (covers GCash + Maya; both are reference-based digital wallet payments)
+        ' E-Wallet button (choose specific wallet type)
         Dim btnEWallet As New Guna.UI2.WinForms.Guna2Button()
         btnEWallet.Text = "📱" & vbCrLf & "E-Wallet"
         btnEWallet.Size = New Size(150, 100)
@@ -3471,9 +3471,10 @@ New NpgsqlParameter("@CashDate", Date.Today.ToString("yyyy-MM-dd"))
         btnEWallet.HoverState.FillColor = Color.FromArgb(0, 102, 190)
         btnEWallet.PressedColor = Color.FromArgb(0, 85, 160)
         AddHandler btnEWallet.Click, Sub()
-                                      selectedPaymentMethod = "GCash"
-                                      paymentForm.DialogResult = DialogResult.Yes
-                                      paymentForm.Close()
+                                      If ShowEWalletTypeModal() Then
+                                          paymentForm.DialogResult = DialogResult.Yes
+                                          paymentForm.Close()
+                                      End If
                                   End Sub
         paymentForm.Controls.Add(btnEWallet)
 
@@ -3588,6 +3589,130 @@ New NpgsqlParameter("@CashDate", Date.Today.ToString("yyyy-MM-dd"))
                 Return
         End Select
     End Sub
+
+    ' E-Wallet Type Selection Modal
+    Private Function ShowEWalletTypeModal() As Boolean
+        Dim ewForm As New Form()
+        ewForm.Text = "Select E-Wallet Type"
+        ewForm.Size = New Size(520, 320)
+        ewForm.StartPosition = FormStartPosition.CenterParent
+        ewForm.FormBorderStyle = FormBorderStyle.FixedDialog
+        ewForm.MaximizeBox = False
+        ewForm.MinimizeBox = False
+        ewForm.BackColor = OffWhite
+        ewForm.ShowInTaskbar = False
+        ewForm.KeyPreview = True
+
+        Dim lblTitle As New Label()
+        lblTitle.Text = "Select E-Wallet Type"
+        lblTitle.Font = New Font("Poppins", 14, FontStyle.Bold)
+        lblTitle.ForeColor = Color.FromArgb(95, 95, 95)
+        lblTitle.Size = New Size(480, 30)
+        lblTitle.Location = New Point((ewForm.Width - lblTitle.Width) \ 2, 15)
+        lblTitle.TextAlign = ContentAlignment.MiddleCenter
+        ewForm.Controls.Add(lblTitle)
+
+        Dim totalAmount As Decimal = 0D
+        If totalLbl IsNot Nothing Then
+            Decimal.TryParse(totalLbl.Text, totalAmount)
+        End If
+
+        Dim lblTotal As New Label()
+        lblTotal.Text = $"Total Amount: ₱{totalAmount:F2}"
+        lblTotal.Font = New Font("Poppins", 10, FontStyle.Bold)
+        lblTotal.ForeColor = Color.FromArgb(95, 95, 95)
+        lblTotal.Size = New Size(480, 25)
+        lblTotal.Location = New Point((ewForm.Width - lblTotal.Width) \ 2, 55)
+        lblTotal.TextAlign = ContentAlignment.MiddleCenter
+        ewForm.Controls.Add(lblTotal)
+
+        Dim eWalletColor As Color = Color.FromArgb(0, 120, 212)
+        Dim btnStartX As Integer = 30
+        Dim btnY As Integer = 100
+        Dim btnW As Integer = 140
+        Dim btnH As Integer = 70
+        Dim gap As Integer = 15
+
+        Dim btnGCash As New Guna.UI2.WinForms.Guna2Button()
+        btnGCash.Text = "GCash"
+        btnGCash.Size = New Size(btnW, btnH)
+        btnGCash.Location = New Point(btnStartX, btnY)
+        btnGCash.Font = New Font("Poppins", 11, FontStyle.Bold)
+        btnGCash.ForeColor = Color.White
+        btnGCash.FillColor = eWalletColor
+        btnGCash.BorderRadius = 12
+        AddHandler btnGCash.Click, Sub()
+                                       selectedPaymentMethod = "GCash"
+                                       ewForm.DialogResult = DialogResult.OK
+                                       ewForm.Close()
+                                   End Sub
+        ewForm.Controls.Add(btnGCash)
+
+        Dim btnMaya As New Guna.UI2.WinForms.Guna2Button()
+        btnMaya.Text = "Maya"
+        btnMaya.Size = New Size(btnW, btnH)
+        btnMaya.Location = New Point(btnStartX + btnW + gap, btnY)
+        btnMaya.Font = New Font("Poppins", 11, FontStyle.Bold)
+        btnMaya.ForeColor = Color.White
+        btnMaya.FillColor = eWalletColor
+        btnMaya.BorderRadius = 12
+        AddHandler btnMaya.Click, Sub()
+                                      selectedPaymentMethod = "Maya"
+                                      ewForm.DialogResult = DialogResult.OK
+                                      ewForm.Close()
+                                  End Sub
+        ewForm.Controls.Add(btnMaya)
+
+        Dim btnOther As New Guna.UI2.WinForms.Guna2Button()
+        btnOther.Text = "Other"
+        btnOther.Size = New Size(btnW, btnH)
+        btnOther.Location = New Point(btnStartX + 2 * (btnW + gap), btnY)
+        btnOther.Font = New Font("Poppins", 11, FontStyle.Bold)
+        btnOther.ForeColor = Color.White
+        btnOther.FillColor = eWalletColor
+        btnOther.BorderRadius = 12
+        AddHandler btnOther.Click, Sub()
+                                       ewForm.Hide()
+                                       Dim otherName = InputBox("Enter E-Wallet name (e.g., GrabPay, ShopeePay):", "Other E-Wallet", "")
+                                       If String.IsNullOrWhiteSpace(otherName) Then
+                                           ewForm.ShowDialog()
+                                           ewForm.DialogResult = DialogResult.Cancel
+                                           ewForm.Close()
+                                           Return
+                                       End If
+                                       selectedPaymentMethod = otherName.Trim()
+                                       ewForm.DialogResult = DialogResult.OK
+                                       ewForm.Close()
+                                   End Sub
+        ewForm.Controls.Add(btnOther)
+
+        Dim btnBack As New Guna.UI2.WinForms.Guna2Button()
+        btnBack.Text = "← Back"
+        btnBack.Size = New Size(120, 45)
+        btnBack.Location = New Point(200, 210)
+        btnBack.Font = New Font("Poppins", 11, FontStyle.Regular)
+        btnBack.ForeColor = Color.FromArgb(95, 95, 95)
+        btnBack.FillColor = Color.FromArgb(250, 249, 246)
+        btnBack.BorderColor = Color.FromArgb(200, 198, 192)
+        btnBack.BorderThickness = 1
+        btnBack.BorderRadius = 12
+        AddHandler btnBack.Click, Sub()
+                                      ewForm.DialogResult = DialogResult.Cancel
+                                      ewForm.Close()
+                                  End Sub
+        ewForm.Controls.Add(btnBack)
+
+        AddHandler ewForm.KeyDown, Sub(sender As Object, e As KeyEventArgs)
+                                       If e.KeyCode = Keys.Escape Then
+                                           btnBack.PerformClick()
+                                           e.Handled = True
+                                       End If
+                                   End Sub
+
+        Dim res As DialogResult = ewForm.ShowDialog()
+        ewForm.Dispose()
+        Return res = DialogResult.OK
+    End Function
 
     ' Reference Input Modal for E-Wallet (GCash/Maya) / Card payments
     Private Function ShowReferenceInputModal() As Boolean

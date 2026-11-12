@@ -91,7 +91,11 @@ Public Class DemoDataSeeder
     End Function
 
     Private Shared Sub WipeDemoTables(conn As NpgsqlConnection, tran As NpgsqlTransaction)
+        ' Delete in FK-safe order (returns first)
         Dim tables As String() = {
+            "SalesReturnItems",
+            "SalesReturns",
+            "ReturnQuarantine",
             "SaleItems",
             "Sales",
             "InventoryLog",
@@ -102,9 +106,13 @@ Public Class DemoDataSeeder
             "Suppliers"
         }
         For Each t As String In tables
-            Using cmd As New NpgsqlCommand($"DELETE FROM {t}", conn, tran)
-                cmd.ExecuteNonQuery()
-            End Using
+            Try
+                Using cmd As New NpgsqlCommand($"DELETE FROM {t}", conn, tran)
+                    cmd.ExecuteNonQuery()
+                End Using
+            Catch
+                ' Ignore if table doesn't exist
+            End Try
         Next
     End Sub
 
@@ -112,6 +120,9 @@ Public Class DemoDataSeeder
         ' Called OUTSIDE the seed transaction (each setval autocommits on its own),
         ' so a missing/odd sequence can never abort or poison the seed tran.
         Dim pkByTable As New Dictionary(Of String, String)() From {
+            {"SalesReturnItems", "ReturnItemID"},
+            {"SalesReturns", "ReturnID"},
+            {"ReturnQuarantine", "QuarantineID"},
             {"SaleItems", "SaleItemID"},
             {"Sales", "SaleID"},
             {"InventoryLog", "LogID"},

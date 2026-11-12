@@ -103,28 +103,7 @@ Public Class Inventory
     End Sub
 
     Private Sub AddQuarantineButton()
-        If _quarantineButton IsNot Nothing OrElse Not Rbac.IsManagerOrAbove() Then Return
-        _quarantineButton = New Guna.UI2.WinForms.Guna2Button With {
-            .Name = "btnReturnQuarantine",
-            .Text = "Return Quarantine",
-            .Size = New Size(150, Guna2Button1.Height),
-            .Location = New Point(Math.Max(8, Guna2Button1.Left - 160), Guna2Button1.Top),
-            .Anchor = Guna2Button1.Anchor,
-            .BorderRadius = 7,
-            .FillColor = Color.FromArgb(90, 105, 120),
-            .ForeColor = Color.White,
-            .Font = New Font("Poppins", 9, FontStyle.Bold),
-            .Cursor = Cursors.Hand
-        }
-        AddHandler _quarantineButton.Click,
-            Async Sub()
-                Using dialog As New QuarantineInspectionForm()
-                    dialog.ShowDialog(Me)
-                End Using
-                Await LoadProductsAsync()
-            End Sub
-        Guna2Button1.Parent.Controls.Add(_quarantineButton)
-        _quarantineButton.BringToFront()
+        Return
     End Sub
     ' Helper: find a control by name anywhere in the form (recursive)
     Private Function FindControlRecursive(parent As Control, name As String) As Control

@@ -43,14 +43,29 @@ Public Class TerminalManager
         Return Path.Combine(dataDir, IdentityFileName)
     End Function
 
-    ' Shared-LAN mode is active only when a DBPath override is configured.
+    ' Shared-LAN mode is active when using a shared database (SQLite with DBPath override or PostgreSQL/Npgsql)
     Public Shared Function IsSharedMode() As Boolean
         Try
             Dim configuredPath As String = System.Configuration.ConfigurationManager.AppSettings("DBPath")
-            Return Not String.IsNullOrWhiteSpace(configuredPath)
+            If Not String.IsNullOrWhiteSpace(configuredPath) Then
+                Return True
+            End If
+
+            Dim provider As String = System.Configuration.ConfigurationManager.AppSettings("Provider")
+            If Not String.IsNullOrWhiteSpace(provider) Then
+                Dim p As String = provider.Trim().ToUpperInvariant()
+                If p = "NPGSQL" OrElse p = "POSTGRESQL" OrElse p = "POSTGRES" Then
+                    Return True
+                End If
+            End If
+
+            Dim pgHost As String = System.Configuration.ConfigurationManager.AppSettings("PgHost")
+            If Not String.IsNullOrWhiteSpace(pgHost) Then
+                Return True
+            End If
         Catch
-            Return False
         End Try
+        Return False
     End Function
 
     ' The admin PC is identified by matching the installed machine name against
@@ -219,8 +234,6 @@ Public Class TerminalManager
             End Using
         Catch ex As Exception
             Console.WriteLine($"TerminalManager.GetTerminalAccessStatus error: {ex.Message}")
-            ' If we cannot read the shared DB the app already fails elsewhere;
-            ' allow startup rather than making the gate the failure point.
             Return TerminalAccessStatus.Allowed
         End Try
     End Function

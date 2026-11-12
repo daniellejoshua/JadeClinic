@@ -429,18 +429,40 @@ Public Class Dashboard
             Dim dr = GetDateRange()
             Dim dateFilter As String = ""
             Dim orderFilter As String = ""
+            Dim saleIdInPeriod As String = "s.SaleID"
 
             If _selectedPeriod <> "All Time" Then
                 dateFilter = $"AND s.SaleDate >= '{dr.StartSql}' AND s.SaleDate <= '{dr.EndSql}'"
                 orderFilter = $"AND si.SaleID IN (SELECT SaleID FROM Sales WHERE SaleDate >= '{dr.StartSql}' AND SaleDate <= '{dr.EndSql}')"
+                saleIdInPeriod = "(SELECT SaleID FROM Sales WHERE SaleDate >= '" & dr.StartSql & "' AND SaleDate <= '" & dr.EndSql & "')"
+            Else
+                saleIdInPeriod = "(SELECT SaleID FROM Sales)"
             End If
 
-            ' Orders + Revenue + COGS in one query
+            ' Orders + Revenue + COGS in one query (net of completed returns)
             Dim query As String = $"
                 SELECT
                     COALESCE((SELECT COUNT(*) FROM Sales s WHERE 1=1 {dateFilter}), 0) AS TotalOrders,
                     COALESCE((SELECT SUM(TotalAmount) FROM Sales s WHERE 1=1 {dateFilter}), 0) AS TotalRevenue,
                     COALESCE((SELECT SUM(si.Quantity * p.CostPrice) FROM SaleItems si JOIN Products p ON si.ProductID = p.ProductID {orderFilter}), 0) AS TotalCOGS,
+                    COALESCE((SELECT SUM(sr.RefundAmount) FROM SalesReturns sr WHERE sr.Status = 'Completed' AND sr.SaleID IN {saleIdInPeriod}), 0) AS ReturnRefunds,
+                    COALESCE((SELECT SUM(sr.AdditionalPaymentAmount) FROM SalesReturns sr WHERE sr.Status = 'Completed' AND sr.SaleID IN {saleIdInPeriod}), 0) AS ReturnCollections,
+                    COALESCE((SELECT SUM(sri.Quantity * op.CostPrice)
+                                FROM SalesReturnItems sri
+                                JOIN SalesReturns sr ON sr.ReturnID = sri.ReturnID
+                                JOIN SaleItems si ON si.SaleItemID = sri.OriginalSaleItemID
+                                JOIN Products op ON op.ProductID = si.ProductID
+                                WHERE sr.Status = 'Completed'
+                                  AND LOWER(COALESCE(sri.Disposition, '')) = 'restock'
+                                  AND sr.SaleID IN {saleIdInPeriod}), 0) AS RestockCogsRecovered,
+                    COALESCE((SELECT SUM(sri.ReplacementQuantity * rp.CostPrice)
+                                FROM SalesReturnItems sri
+                                JOIN SalesReturns sr ON sr.ReturnID = sri.ReturnID
+                                JOIN Products rp ON rp.ProductID = sri.ReplacementProductID
+                                WHERE sr.Status = 'Completed'
+                                  AND sri.ReplacementProductID IS NOT NULL
+                                  AND COALESCE(sri.ReplacementQuantity, 0) > 0
+                                  AND sr.SaleID IN {saleIdInPeriod}), 0) AS ReplacementCogs,
                     COALESCE((SELECT SUM(CostPrice * CurrentStock) FROM Products WHERE IsActive = 1), 0) AS ActiveStockValue,
                     COALESCE((SELECT COUNT(*) FROM Products WHERE IsActive = 1), 0) AS ActiveProductCount"
 
@@ -449,9 +471,18 @@ Public Class Dashboard
                     Dim totalOrders As Integer = Convert.ToInt32(reader("TotalOrders"))
                     Dim totalRevenue As Decimal = Convert.ToDecimal(reader("TotalRevenue"))
                     Dim totalCOGS As Decimal = Convert.ToDecimal(reader("TotalCOGS"))
+                    Dim returnRefunds As Decimal = Convert.ToDecimal(reader("ReturnRefunds"))
+                    Dim returnCollections As Decimal = Convert.ToDecimal(reader("ReturnCollections"))
+                    Dim restockCogsRecovered As Decimal = Convert.ToDecimal(reader("RestockCogsRecovered"))
+                    Dim replacementCogs As Decimal = Convert.ToDecimal(reader("ReplacementCogs"))
                     Dim activeStockValue As Decimal = Convert.ToDecimal(reader("ActiveStockValue"))
                     Dim activeProductCount As Integer = Convert.ToInt32(reader("ActiveProductCount"))
-                    Dim grossProfit As Decimal = totalRevenue - totalCOGS
+
+                    Dim netRevenue As Decimal = totalRevenue - returnRefunds + returnCollections
+                    If netRevenue < 0D Then netRevenue = 0D
+                    Dim netCOGS As Decimal = totalCOGS - restockCogsRecovered + replacementCogs
+                    If netCOGS < 0D Then netCOGS = 0D
+                    Dim grossProfit As Decimal = netRevenue - netCOGS
                     Dim pesoSign As String = ChrW(&H20B1)
 
                     ' Card 1: Total Orders
@@ -470,15 +501,15 @@ Public Class Dashboard
                     If _lblStockValueValue IsNot Nothing Then _lblStockValueValue.Text = String.Format(Globalization.CultureInfo.GetCultureInfo("en-PH"), "{0}{1:N0}", pesoSign, activeStockValue)
                     If _lblStockValueSub IsNot Nothing Then _lblStockValueSub.Text = $"{activeProductCount} products"
 
-                    ' Card 3: Total Revenue
-                    If _lblRevenueValue IsNot Nothing Then _lblRevenueValue.Text = String.Format(Globalization.CultureInfo.GetCultureInfo("en-PH"), "{0}{1:N0}", pesoSign, totalRevenue)
+                    ' Card 3: Net Sales
+                    If _lblRevenueValue IsNot Nothing Then _lblRevenueValue.Text = String.Format(Globalization.CultureInfo.GetCultureInfo("en-PH"), "{0}{1:N0}", pesoSign, netRevenue)
                     If _lblRevenueSub IsNot Nothing Then _lblRevenueSub.Text = dr.Label
 
                     ' Card 4: Gross Profit
                     If _lblGrossProfitValue IsNot Nothing Then _lblGrossProfitValue.Text = String.Format(Globalization.CultureInfo.GetCultureInfo("en-PH"), "{0}{1:N0}", pesoSign, grossProfit)
                     If _lblGrossProfitSub IsNot Nothing Then
-                        If totalRevenue > 0 Then
-                            Dim margin As Decimal = (grossProfit / totalRevenue) * 100
+                        If netRevenue > 0 Then
+                            Dim margin As Decimal = (grossProfit / netRevenue) * 100
                             _lblGrossProfitSub.Text = $"{margin:F0}% margin"
                         Else
                             _lblGrossProfitSub.Text = "0% margin"
@@ -486,7 +517,7 @@ Public Class Dashboard
                     End If
 
                     ' Update the margin summary strip above the performance chart
-                    UpdateMarginSummary(totalRevenue, totalCOGS, grossProfit)
+                    UpdateMarginSummary(netRevenue, netCOGS, grossProfit)
 
                     lastProductCount = totalOrders
                 Else

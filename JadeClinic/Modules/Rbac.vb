@@ -110,7 +110,7 @@ Public Module Rbac
     End Function
 
     Public Function CanManageTerminals() As Boolean
-        Return IsSuperAdmin()
+        Return IsManagerOrAbove()
     End Function
 
     Public Function CanForceFullSync() As Boolean

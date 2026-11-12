@@ -69,6 +69,7 @@ Public Class Sys
             ' Initialize UI
             InitializeButtons()
             ApplyRoleGating()
+            ApplyManagerTerminalOnlyView()
 
             Console.WriteLine($"Sys_Load: completed. Controls count={Me.Controls.Count}")
 
@@ -237,7 +238,7 @@ Public Class Sys
     Private Sub btnTerminalSetup_Click(sender As Object, e As EventArgs) Handles btnTerminalSetup.Click
         Try
             If Not Rbac.CanManageTerminals() Then
-                MessageBox.Show("Only a Super Admin can manage terminals.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                MessageBox.Show("You do not have permission to manage terminals.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning)
                 Return
             End If
             NavigationBuilder.NavigateToForm(Me, GetType(TerminalSetup))
@@ -729,4 +730,40 @@ Public Class Sys
         End While
         Return Nothing
     End Function
+
+    Private Sub ApplyManagerTerminalOnlyView()
+        Try
+            Dim isManagerOrAbove As Boolean = Rbac.IsManagerOrAbove()
+            Dim isAdmin As Boolean = Rbac.IsAdminOrAbove()
+            If Not isManagerOrAbove OrElse isAdmin Then
+                Return
+            End If
+
+            ' Manager (but not Admin) - show only PC Terminals
+            lblPageTitle.Text = "System Settings - PC Terminals"
+            lblPageSubtitle.Text = "Manage connected computers (approve/block terminals)"
+
+            ' Hide all settings tiles except PC Terminals
+            btnDatabaseBackup.Visible = False
+            btnSyncCloud.Visible = False
+            btnLoadDemoData.Visible = False
+            btnSyncLogs.Visible = False
+            btnColorCustomization.Visible = False
+            chkForceFull.Visible = False
+            lblSyncHint.Visible = False
+            pnlSyncStatus.Visible = False
+
+            btnTerminalSetup.Visible = True
+            btnTerminalSetup.Enabled = True
+
+            ' Reposition PC Terminals button to top-left area
+            btnTerminalSetup.Location = New Point(50, 58)
+
+            ' Resize panel to fit just the terminals section
+            Guna2Panel1.Size = New Size(460, 240)
+            Guna2Panel1.AutoScroll = False
+        Catch ex As Exception
+            Console.WriteLine($"ApplyManagerTerminalOnlyView error: {ex.Message}")
+        End Try
+    End Sub
 End Class

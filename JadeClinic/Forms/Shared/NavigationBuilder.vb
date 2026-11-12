@@ -152,17 +152,23 @@ AddHandler btn.MouseEnter, Sub()
             Dim isManagerOrAbove As Boolean = Rbac.IsManagerOrAbove()
             Dim isAdmin As Boolean = Rbac.IsAdminOrAbove()
 
-            If Not isStaff Then
-                createBtn("🏠 Dashboard", GetType(Dashboard), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
-                                                                                                                         NavigateToFormImpl(owner, GetType(Dashboard))
-                                                                                                                     End Sub)
-                buttonIndex += 1
-            End If
-
-            createBtn("🛒 POS / Sales", GetType(Sales), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
+            If isStaff Then
+                createBtn("🛒 POS / Sales", GetType(Sales), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
                                                                                                                   NavigateToFormImpl(owner, GetType(Sales))
                                                                                                               End Sub)
-            buttonIndex += 1
+                buttonIndex += 1
+            Else
+                If Not isStaff Then
+                    createBtn("🏠 Dashboard", GetType(Dashboard), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
+                                                                                                                         NavigateToFormImpl(owner, GetType(Dashboard))
+                                                                                                                     End Sub)
+                    buttonIndex += 1
+                End If
+
+                createBtn("🛒 POS / Sales", GetType(Sales), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
+                                                                                                                  NavigateToFormImpl(owner, GetType(Sales))
+                                                                                                              End Sub)
+                buttonIndex += 1
 
                 ' Inventory
                 createBtn("📦 Inventory", GetType(Inventory), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
@@ -197,12 +203,13 @@ AddHandler btn.MouseEnter, Sub()
                                                                                                                    End Sub)
                 buttonIndex += 1
 
-                If isAdmin Then
+                If isAdmin OrElse isManagerOrAbove Then
                     createBtn("⚙️ System Settings", GetType(Sys), startY + buttonIndex * (buttonHeight + buttonSpacing), Sub()
                                                                                                                           NavigateToFormImpl(owner, GetType(Sys))
                                                                                                                       End Sub)
                     buttonIndex += 1
                 End If
+            End If
 
         Catch ex As Exception
             Console.WriteLine($"NavigationBuilder error: {ex.Message}")

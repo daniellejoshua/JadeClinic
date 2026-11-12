@@ -95,7 +95,7 @@ Public Class TerminalSetup
         End If
 
         If Not Rbac.CanManageTerminals() Then
-            MessageBox.Show("Only a Super Admin can manage PC terminals.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            MessageBox.Show("You do not have permission to manage PC terminals.", "Access Denied", MessageBoxButtons.OK, MessageBoxIcon.Warning)
             NavigationBuilder.NavigateToForm(Me, GetType(Dashboard))
             Return False
         End If

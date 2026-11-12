@@ -46,7 +46,7 @@ Public Class QuarantineInspectionForm
         Dim footer As New FlowLayoutPanel With {.Dock = DockStyle.Fill, .FlowDirection = FlowDirection.RightToLeft, .WrapContents = False, .Padding = New Padding(0, 8, 0, 0)}
         ConfigureButton(_btnRestock, "Approve Restock", Color.FromArgb(16, 160, 90), AddressOf RestockSelected)
         ConfigureButton(_btnWriteOff, "Write Off", Color.FromArgb(210, 70, 70), AddressOf WriteOffSelected)
-        ConfigureButton(_btnVendor, "Return to Vendor", Color.FromArgb(90, 105, 120), AddressOf ReturnToVendorSelected)
+            ' Return to Vendor removed - use dedicated Vendor Returns module when needed
         footer.Controls.Add(_btnRestock)
         footer.Controls.Add(_btnWriteOff)
         footer.Controls.Add(_btnVendor)

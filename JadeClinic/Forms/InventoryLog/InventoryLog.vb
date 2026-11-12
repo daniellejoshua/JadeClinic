@@ -795,21 +795,21 @@ Public Class InventoryLog
             parameters.Add(New NpgsqlParameter("@FilterDate", filterDate.Value.Date.ToString("yyyy-MM-dd")))
         End If
 
-        If Not String.IsNullOrWhiteSpace(sortOrder) AndAlso sortOrder <> "All Types" Then
-            whereClauses.Add("il.TransactionType = @TransType")
-            parameters.Add(New NpgsqlParameter("@TransType", sortOrder))
-        End If
+              If Not String.IsNullOrWhiteSpace(sortOrder) AndAlso sortOrder <> "All Types" Then
+                whereClauses.Add("il.TransactionType = @TransType")
+                parameters.Add(New NpgsqlParameter("@TransType", sortOrder))
+              End If
 
-        If Not String.IsNullOrWhiteSpace(searchTerm) Then
-            whereClauses.Add("(CAST(il.LogID AS TEXT) LIKE @Search OR COALESCE(il.Reference, '') LIKE @Search OR COALESCE(p.ProductName, '') LIKE @Search)")
-            parameters.Add(New NpgsqlParameter("@Search", "%" & searchTerm & "%"))
-        End If
+              If Not String.IsNullOrWhiteSpace(searchTerm) Then
+                whereClauses.Add("(CAST(il.LogID AS TEXT) LIKE @Search OR COALESCE(il.Reference, '') LIKE @Search OR COALESCE(p.ProductName, '') LIKE @Search)")
+                parameters.Add(New NpgsqlParameter("@Search", "%" & searchTerm & "%"))
+              End If
 
-        If whereClauses.Count > 0 Then
-            query += " WHERE " & String.Join(" AND ", whereClauses)
-        End If
+              If whereClauses.Count > 0 Then
+                query += " WHERE " & String.Join(" AND ", whereClauses)
+              End If
 
-        query += " ORDER BY il.CreatedAt DESC"
+              query += " ORDER BY il.CreatedAt DESC, il.LogID DESC"
 
         Dim offset As Integer = (pageNumber - 1) * pageSize
         query &= $" LIMIT {pageSize} OFFSET {offset}"

@@ -68,7 +68,6 @@ Public Class ReturnExchangeForm
     Private Const ActionExchange As String = "Exchange"
     Private Const DispositionRestock As String = "Restock"
     Private Const DispositionWriteOff As String = "Write Off"
-    Private Const DispositionReturnToVendor As String = "Return to Vendor"
 
     Private Const ReturnWindowGoodDays As Integer = 7
     Private Const ReturnWindowDefectiveDays As Integer = 7
@@ -432,7 +431,7 @@ Public Class ReturnExchangeForm
         rightPanel.Controls.Add(lblSettlement, 0, 8)
 
         rightPanel.Controls.Add(New Label With {
-            .Text = "Good returns restock. Damaged -> Write Off. Use Return to Vendor if supplier takes it back.",
+            .Text = "Good returns restock. Damaged -> Write Off.",
             .AutoSize = True,
             .Font = ReturnExchangeTheme.MakeFont(8.2),
             .ForeColor = ReturnExchangeTheme.SecondaryText,
@@ -590,7 +589,7 @@ Public Class ReturnExchangeForm
             .FillWeight = 16,
             .MinimumWidth = 160
         }
-        dispositionColumn.Items.AddRange(DispositionRestock, DispositionWriteOff, DispositionReturnToVendor)
+        dispositionColumn.Items.AddRange(DispositionRestock, DispositionWriteOff)
         grid.Columns.Add(dispositionColumn)
 
         grid.Columns.Add(New DataGridViewButtonColumn With {
@@ -1160,7 +1159,7 @@ Public Class ReturnExchangeForm
         End Using
     End Function
 
-        Private Function ShowReplacementDialog(line As ReturnLineState) As Boolean
+    Private Function ShowReplacementDialog(line As ReturnLineState) As Boolean
         Dim products As New List(Of ReplacementProductOption)()
         Const sql As String =
             "SELECT ProductID, COALESCE(ProductCode,''), COALESCE(ProductName,''), " &
@@ -1490,22 +1489,22 @@ Public Class ReturnExchangeForm
                 message = $"{line.ProductName}: mark damaged/defective returns as Damaged."
                 Return False
             End If
-        If line.RefundQty + line.ExchangeQty <> line.ReturnQty Then
-            message = $"{line.ProductName}: choose Refund or Exchange for the returned quantity."
-            Return False
-        End If
-        If line.ExchangeQty > 0 AndAlso line.ReplacementProductID <= 0 Then
-            message = $"{line.ProductName}: select a replacement product."
-            Return False
-        End If
-        If String.IsNullOrWhiteSpace(line.Disposition) Then
-            message = $"{line.ProductName}: select a disposition."
-            Return False
-        End If
-        If String.Equals(line.Condition, "Damaged", StringComparison.OrdinalIgnoreCase) AndAlso String.Equals(line.Disposition, "Restock", StringComparison.OrdinalIgnoreCase) Then
-            message = $"{line.ProductName}: damaged items cannot be restocked."
-            Return False
-        End If
+            If line.RefundQty + line.ExchangeQty <> line.ReturnQty Then
+                message = $"{line.ProductName}: choose Refund or Exchange for the returned quantity."
+                Return False
+            End If
+            If line.ExchangeQty > 0 AndAlso line.ReplacementProductID <= 0 Then
+                message = $"{line.ProductName}: select a replacement product."
+                Return False
+            End If
+            If String.IsNullOrWhiteSpace(line.Disposition) Then
+                message = $"{line.ProductName}: select a disposition."
+                Return False
+            End If
+            If String.Equals(line.Condition, "Damaged", StringComparison.OrdinalIgnoreCase) AndAlso String.Equals(line.Disposition, "Restock", StringComparison.OrdinalIgnoreCase) Then
+                message = $"{line.ProductName}: damaged items cannot be restocked."
+                Return False
+            End If
         Next
 
         If Not hasSelection Then
@@ -1543,56 +1542,56 @@ Public Class ReturnExchangeForm
         If _processing OrElse _loading Then Return
 
         _userInteracted = True
-            If Not SyncGridToLines() Then Return
+        If Not SyncGridToLines() Then Return
 
-            Dim validationMessage As String = ""
-            If Not ValidateSelections(validationMessage) Then
-                SetValidation(validationMessage, True)
-                btnProcess.Enabled = False
-                Return
-            End If
-
-            Dim selected As List(Of ReturnLineState) = _lines.Where(Function(line) line.HasReturn).ToList()
-            Dim settlement As SettlementInfo = BuildExpectedSettlement(selected)
-            If Not ShowSettlementDialog(settlement) Then
-                SetValidation("Settlement was cancelled. The return was not processed.", True)
-                Return
-            End If
-            _processing = True
+        Dim validationMessage As String = ""
+        If Not ValidateSelections(validationMessage) Then
+            SetValidation(validationMessage, True)
             btnProcess.Enabled = False
-            btnCancel.Enabled = False
-            btnProcess.Text = "Authorizing..."
+            Return
+        End If
 
-            Try
-                Dim subtitle As String = $"Sale #{_saleNumber}" & If(String.IsNullOrWhiteSpace(_customer), "", $"      {_customer}")
-                Dim authorizationDetail As String = String.Join("; ", selected.Select(
+        Dim selected As List(Of ReturnLineState) = _lines.Where(Function(line) line.HasReturn).ToList()
+        Dim settlement As SettlementInfo = BuildExpectedSettlement(selected)
+        If Not ShowSettlementDialog(settlement) Then
+            SetValidation("Settlement was cancelled. The return was not processed.", True)
+            Return
+        End If
+        _processing = True
+        btnProcess.Enabled = False
+        btnCancel.Enabled = False
+        btnProcess.Text = "Authorizing..."
+
+        Try
+            Dim subtitle As String = $"Sale #{_saleNumber}" & If(String.IsNullOrWhiteSpace(_customer), "", $"      {_customer}")
+            Dim authorizationDetail As String = String.Join("; ", selected.Select(
                     Function(line) $"{line.ProductName} x{line.ReturnQty} [{line.Condition} / {line.Disposition}]" &
                         If(line.ExchangeQty > 0, $" -> {line.ReplacementProductName} x{line.ExchangeQty}", "")))
-                Dim selectedReason As String = If(String.Equals(Convert.ToString(cmbReason.SelectedItem), "Other", StringComparison.OrdinalIgnoreCase), txtCustomReason.Text.Trim(), Convert.ToString(cmbReason.SelectedItem))
-                Dim authorizationWarning As String = If(settlement.RefundAmount > 0D,
+            Dim selectedReason As String = If(String.Equals(Convert.ToString(cmbReason.SelectedItem), "Other", StringComparison.OrdinalIgnoreCase), txtCustomReason.Text.Trim(), Convert.ToString(cmbReason.SelectedItem))
+            Dim authorizationWarning As String = If(settlement.RefundAmount > 0D,
                     $"Refund {FormatPeso(settlement.RefundAmount)} via {settlement.Method}",
                     If(settlement.AdditionalPayment > 0D, $"Collect {FormatPeso(settlement.AdditionalPayment)} via {settlement.Method}", "Even exchange")) &
                     $" | Reason: {selectedReason}"
-                Dim approver As String = ApprovalDialogs.AuthorizeElevatedUser(
+            Dim approver As String = ApprovalDialogs.AuthorizeElevatedUser(
                     Me, "Return Authorization", subtitle, authorizationDetail, authorizationWarning)
-                If String.IsNullOrWhiteSpace(approver) Then
-                    SetValidation("Authorization was cancelled. The return was not processed.", True)
-                    Return
-                End If
+            If String.IsNullOrWhiteSpace(approver) Then
+                SetValidation("Authorization was cancelled. The return was not processed.", True)
+                Return
+            End If
 
-                btnProcess.Text = "Processing..."
-                Dim result As ReturnResult = SaveReturn(selected, approver, settlement)
+            btnProcess.Text = "Processing..."
+            Dim result As ReturnResult = SaveReturn(selected, approver, settlement)
 
-                SyncQueue.Instance.MarkDataChanged()
+            SyncQueue.Instance.MarkDataChanged()
 
-                MessageBox.Show($"Return processed successfully.{vbCrLf}{vbCrLf}Reference: {result.ReturnNumber}" &
+            MessageBox.Show($"Return processed successfully.{vbCrLf}{vbCrLf}Reference: {result.ReturnNumber}" &
                                 If(result.RefundAmount > 0, $"{vbCrLf}Refund: {FormatPeso(result.RefundAmount)}", "") &
                                 If(result.AdditionalPayment > 0, $"{vbCrLf}Collected: {FormatPeso(result.AdditionalPayment)}", ""),
                                 "Return Completed", MessageBoxButtons.OK, MessageBoxIcon.Information)
 
-                _completed = True
-                DialogResult = DialogResult.OK
-                Close()
+            _completed = True
+            DialogResult = DialogResult.OK
+            Close()
         Catch ex As Exception
             SetValidation("Could not process: " & ex.Message, True)
             MessageBox.Show($"Could not process the return: {ex.Message}", "Return / Exchange", MessageBoxButtons.OK, MessageBoxIcon.Error)
@@ -1658,7 +1657,7 @@ Public Class ReturnExchangeForm
             .Text = "Return Settlement",
             .StartPosition = FormStartPosition.CenterParent,
             .FormBorderStyle = FormBorderStyle.FixedDialog,
-            .ClientSize = New Size(460, 290),
+            .ClientSize = New Size(460, 330),
             .MaximizeBox = False,
             .MinimizeBox = False,
             .ShowInTaskbar = False,
